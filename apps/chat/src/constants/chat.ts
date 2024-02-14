@@ -14,5 +14,4 @@ export const resetShareEntity: ShareInterface = {
   isShared: false,
   publishedWithMe: false,
   sharedWithMe: false,
-  shareUniqueId: undefined,
 };

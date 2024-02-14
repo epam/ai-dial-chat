@@ -7,8 +7,11 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getRootId } from '@/src/utils/app/id';
+import { ApiKeys } from '@/src/utils/server/api';
+
 import { FeatureType } from '@/src/types/common';
-import { PromptsHistory } from '@/src/types/importExport';
+import { PromptsHistory } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -40,7 +43,11 @@ export function PromptbarSettings() {
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
-          dispatch(PromptsActions.createFolder());
+          dispatch(
+            PromptsActions.createFolder({
+              parentId: getRootId({ apiKey: ApiKeys.Prompts }),
+            }),
+          );
         },
       },
       {

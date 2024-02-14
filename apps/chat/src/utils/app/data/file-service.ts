@@ -9,8 +9,14 @@ import {
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { ApiKeys, ApiUtils } from '../../server/api';
+import {
+  ApiKeys,
+  ApiUtils,
+  decodeApiUrl,
+  encodeApiUrl,
+} from '../../server/api';
 import { constructPath } from '../file';
+import { getRootId } from '../id';
 import { BucketService } from './bucket-service';
 
 export class FileService {
@@ -19,7 +25,7 @@ export class FileService {
     relativePath: string | undefined,
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
-    const resultPath = encodeURI(
+    const resultPath = encodeApiUrl(
       constructPath(BucketService.getBucket(), relativePath, fileName),
     );
 
@@ -46,11 +52,13 @@ export class FileService {
           }
 
           const typedResult = result as BackendFile;
-          const relativePath = typedResult.parentPath || undefined;
+          const relativePath = typedResult.parentPath
+            ? decodeApiUrl(typedResult.parentPath)
+            : undefined;
 
           return {
             result: {
-              id: constructPath(relativePath, typedResult.name),
+              id: decodeApiUrl(typedResult.url),
               name: typedResult.name,
               absolutePath: constructPath(
                 ApiKeys.Files,
@@ -58,7 +66,11 @@ export class FileService {
                 relativePath,
               ),
               relativePath: relativePath,
-              folderId: relativePath,
+              folderId: constructPath(
+                ApiKeys.Files,
+                typedResult.bucket,
+                relativePath,
+              ),
               contentLength: typedResult.contentLength,
               contentType: typedResult.contentType,
               serverSynced: true,
@@ -77,26 +89,38 @@ export class FileService {
     const query = new URLSearchParams({
       filter,
       bucket: BucketService.getBucket(),
-      ...(parentPath && { path: parentPath }),
+      ...(parentPath && {
+        path: parentPath,
+      }),
     });
     const resultQuery = query.toString();
 
     return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
-          const relativePath = folder.parentPath || undefined;
+          const relativePath = folder.parentPath
+            ? decodeApiUrl(folder.parentPath)
+            : undefined;
 
           return {
-            id: constructPath(relativePath, folder.name),
+            id: constructPath(
+              ApiKeys.Files,
+              folder.bucket,
+              relativePath,
+              folder.name,
+            ),
             name: folder.name,
             type: FolderType.File,
             absolutePath: constructPath(
               ApiKeys.Files,
-              BucketService.getBucket(),
+              folder.bucket,
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: relativePath,
+            folderId: constructPath(
+              getRootId({ apiKey: ApiKeys.Files, bucket: folder.bucket }),
+              relativePath,
+            ),
             serverSynced: true,
           };
         });
@@ -105,7 +129,7 @@ export class FileService {
   }
 
   public static removeFile(filePath: string): Observable<void> {
-    const resultPath = encodeURI(
+    const resultPath = encodeApiUrl(
       constructPath(BucketService.getBucket(), filePath),
     );
 
@@ -123,17 +147,26 @@ export class FileService {
     const query = new URLSearchParams({
       filter,
       bucket: BucketService.getBucket(),
-      ...(parentPath && { path: parentPath }),
+      ...(parentPath && {
+        path: parentPath,
+      }),
     });
     const resultQuery = query.toString();
 
     return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {
-          const relativePath = file.parentPath || undefined;
+          const relativePath = file.parentPath
+            ? decodeApiUrl(file.parentPath)
+            : undefined;
 
           return {
-            id: constructPath(relativePath, file.name),
+            id: constructPath(
+              ApiKeys.Files,
+              file.bucket,
+              relativePath,
+              file.name,
+            ),
             name: file.name,
             absolutePath: constructPath(
               ApiKeys.Files,
@@ -141,7 +174,10 @@ export class FileService {
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: relativePath,
+            folderId: constructPath(
+              getRootId({ apiKey: ApiKeys.Files, bucket: file.bucket }),
+              relativePath,
+            ),
             contentLength: file.contentLength,
             contentType: file.contentType,
             serverSynced: true,

@@ -11,17 +11,32 @@ import {
   useState,
 } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import {
+  isEntityNameOnSameLevelUnique,
+  prepareEntityName,
+} from '@/src/utils/app/common';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, isNotLoaded } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+  isNotLoaded,
+} from '@/src/types/common';
+import { MoveToFolderProps } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -30,12 +45,12 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ShareModal from '@/src/components/Chat/ShareModal';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
@@ -96,6 +111,8 @@ interface Props {
 }
 
 export const ConversationComponent = ({ item: conversation, level }: Props) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -129,7 +146,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isShowExportModal, setIsShowExportModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isSharing, setIsSharing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
@@ -140,6 +156,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const newFolderName = useAppSelector((state) =>
     ConversationsSelectors.selectNewFolderName(state, conversation.folderId),
+  );
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
   );
 
   const { refs, context } = useFloating({
@@ -166,22 +185,46 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleRename = useCallback(
     (conversation: ConversationInfo) => {
-      if (renameValue.trim().length > 0) {
+      const newName = prepareEntityName(renameValue);
+      setRenameValue(newName);
+
+      if (
+        !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Conversation with name "{{newName}}" already exists in this folder.',
+              {
+                ns: 'chat',
+                newName,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
+      if (newName.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              name: renameValue.trim(),
+              name: newName,
               isNameChanged: true,
             },
           }),
         );
+
         setRenameValue('');
-        setIsRenaming(false);
         setIsContextMenu(false);
       }
+
+      setIsRenaming(false);
     },
-    [dispatch, renameValue],
+    [allConversations, dispatch, renameValue, t],
   );
 
   const handleEnterDown = useCallback(
@@ -217,11 +260,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             conversationIds: [conversation.id],
           }),
         );
+        setIsDeleting(false);
       } else if (isRenaming) {
         handleRename(conversation);
       }
-      setIsDeleting(false);
-      setIsRenaming(false);
     },
     [conversation, dispatch, handleRename, isDeleting, isRenaming],
   );
@@ -235,15 +277,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [],
   );
 
-  const handleOpenRenameModal: MouseEventHandler<HTMLButtonElement> =
-    useCallback(
-      (e) => {
-        e.stopPropagation();
-        setIsRenaming(true);
-        setRenameValue(conversation.name);
-      },
-      [conversation.name],
-    );
+  const handleStartRename: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsRenaming(true);
+      setRenameValue(conversation.name);
+    },
+    [conversation.name],
+  );
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
     useCallback((e) => {
       e.stopPropagation();
@@ -301,13 +342,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsSharing(true);
+      dispatch(
+        ShareActions.share({
+          resourceType: BackendResourceType.CONVERSATION,
+          resourceId: conversation.id,
+          nodeType: BackendDataNodeType.ITEM,
+        }),
+      );
       setIsContextMenu(false);
-    }, []);
-
-  const handleCloseShareModal = useCallback(() => {
-    setIsSharing(false);
-  }, []);
+    }, [conversation.id, dispatch]);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -330,17 +373,36 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   }, []);
 
   const handleMoveToFolder = useCallback(
-    ({
-      folderId,
-      isNewFolder,
-    }: {
-      folderId?: string;
-      isNewFolder?: boolean;
-    }) => {
-      const folderPath = isNewFolder ? newFolderName : folderId;
+    ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const folderPath = (isNewFolder ? newFolderName : folderId) as string;
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          conversation.name,
+          { ...conversation, folderId: folderPath },
+          allConversations,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Conversation with name "{{name}}" already exists in this folder.',
+              {
+                ns: 'chat',
+                name: conversation.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       if (isNewFolder) {
         dispatch(
           ConversationsActions.createFolder({
+            parentId: getRootId({ apiKey: ApiKeys.Conversations }),
             name: newFolderName,
           }),
         );
@@ -348,11 +410,18 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
-          values: { folderId: folderPath },
+          values: {
+            folderId: isNewFolder
+              ? constructPath(
+                  getRootId({ apiKey: ApiKeys.Conversations }),
+                  folderPath,
+                )
+              : folderPath,
+          },
         }),
       );
     },
-    [conversation.id, dispatch, newFolderName],
+    [allConversations, conversation, dispatch, newFolderName, t],
   );
   const handleOpenExportModal = useCallback(() => {
     setIsShowExportModal(true);
@@ -499,7 +568,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             }}
             onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
-            onRename={handleOpenRenameModal}
+            onRename={handleStartRename}
             onExport={handleExport}
             onOpenExportModal={handleOpenExportModal}
             onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
@@ -549,14 +618,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             />
           </SidebarActionButton>
         </div>
-      )}
-      {isSharing && (
-        <ShareModal
-          entity={conversation}
-          type={SharingType.Conversation}
-          isOpen
-          onClose={handleCloseShareModal}
-        />
       )}
       {isPublishing && (
         <PublishModal

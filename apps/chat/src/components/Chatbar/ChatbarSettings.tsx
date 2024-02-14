@@ -9,8 +9,11 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getRootId } from '@/src/utils/app/id';
+import { ApiKeys } from '@/src/utils/server/api';
+
 import { FeatureType } from '@/src/types/common';
-import { SupportedExportFormats } from '@/src/types/importExport';
+import { SupportedExportFormats } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -83,7 +86,11 @@ export const ChatbarSettings = () => {
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
-          dispatch(ConversationsActions.createFolder());
+          dispatch(
+            ConversationsActions.createFolder({
+              parentId: getRootId({ apiKey: ApiKeys.Conversations }),
+            }),
+          );
         },
       },
       {

@@ -14,15 +14,25 @@ import {
   switchMap,
   takeUntil,
   tap,
+  zip,
 } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
-import { filterOnlyMyEntities } from '@/src/utils/app/common';
+import { combineEntities, filterOnlyMyEntities } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
+import {
+  getOrUploadConversation,
+  getPreparedConversations,
+} from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { getConversationAttachmentWithPath } from '@/src/utils/app/folders';
+import {
+  getConversationAttachmentWithPath,
+  getFoldersFromIds,
+  getParentFolderIdsFromFolderId,
+} from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   cleanData,
@@ -40,7 +50,9 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
-import { LatestExportFormat } from '@/src/types/importExport';
+import { UploadStatus } from '@/src/types/common';
+import { FolderType } from '@/src/types/folder';
+import { LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -52,6 +64,7 @@ import {
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import {
   ImportExportActions,
   ImportExportSelectors,
@@ -62,15 +75,18 @@ const firstConversationIndex = 0;
 const exportConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.exportConversation.match),
-    map(({ payload }) => ({
-      conversation: ConversationsSelectors.selectConversation(
-        state$.value,
-        payload.conversationId,
-      ) as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-      withAttachments: payload.withAttachments,
-      bucket: BucketService.getBucket(),
-    })),
-    switchMap(({ conversation, withAttachments, bucket }) => {
+    switchMap(({ payload }) =>
+      forkJoin({
+        conversationAndPayload: getOrUploadConversation(
+          { id: payload.conversationId },
+          state$.value,
+        ),
+        withAttachments: of(payload.withAttachments),
+        bucket: BucketService.getBucket(),
+      }),
+    ),
+    switchMap(({ conversationAndPayload, withAttachments, bucket }) => {
+      const { conversation } = conversationAndPayload;
       if (!conversation) {
         return of(ImportExportActions.exportFail());
       }
@@ -78,8 +94,12 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       );
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
       if (!withAttachments) {
-        exportConversation(conversation, parentFolders);
+        exportConversation(conversation, parentFolders, appName);
+
         return of(ImportExportActions.exportConversationSuccess());
       }
 
@@ -102,7 +122,9 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
           if (!content) {
             return of(ImportExportActions.exportFail());
           }
-          downloadExportZip(content);
+
+          downloadExportZip(content, appName);
+
           return of(ImportExportActions.exportConversationSuccess());
         }),
         takeUntil(action$.pipe(filter(ImportExportActions.exportCancel.match))),
@@ -113,19 +135,50 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
 const exportConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.exportConversations.match),
-    map(() => ({
-      conversations: ConversationsSelectors.selectConversations(
-        state$.value,
-      ) as Conversation[], //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-      folders: ConversationsSelectors.selectFolders(state$.value),
-    })),
+    switchMap(
+      () => ConversationService.getConversations(undefined, true), //listing of all entities
+    ),
+    switchMap((conversationsListing) => {
+      const foldersIds = Array.from(
+        new Set(conversationsListing.map((info) => info.folderId)),
+      );
+      //calculate all folders;
+      const foldersWithConversation = getFoldersFromIds(
+        Array.from(
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
+        ),
+        FolderType.Chat,
+      );
+
+      const allFolders = ConversationsSelectors.selectFolders(state$.value);
+
+      const folders = combineEntities(foldersWithConversation, allFolders);
+
+      return forkJoin({
+        //get all conversations from api
+        conversations: zip(
+          conversationsListing.map((info) =>
+            ConversationService.getConversation(info),
+          ),
+        ),
+        folders: of(folders),
+      });
+    }),
     tap(({ conversations, folders }) => {
-      exportConversations(conversations, folders);
+      const filteredConversations = conversations.filter(
+        Boolean,
+      ) as Conversation[];
+
+      const appName = SettingsSelectors.selectAppName(state$.value);
+
+      exportConversations(filteredConversations, folders, appName);
     }),
     ignoreElements(),
   );
 
-const exportLocalStorageEntitiesEpic: AppEpic = (action$) => {
+const exportLocalStorageEntitiesEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
@@ -138,27 +191,70 @@ const exportLocalStorageEntitiesEpic: AppEpic = (action$) => {
         conversationFolders: browserStorage.getConversationsFolders(),
         prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
         promptFolders: browserStorage.getPromptsFolders(),
+        appName: SettingsSelectors.selectAppName(state$.value),
       }),
     ),
-    tap(({ conversations, conversationFolders, prompts, promptFolders }) => {
-      exportConversations(conversations, conversationFolders);
-      exportPrompts(prompts, promptFolders);
-    }),
+    tap(
+      ({
+        conversations,
+        conversationFolders,
+        prompts,
+        promptFolders,
+        appName,
+      }) => {
+        exportConversations(conversations, conversationFolders, appName, 4);
+        exportPrompts(prompts, promptFolders);
+      },
+    ),
     ignoreElements(),
   );
 };
 
-const importConversationsEpic: AppEpic = (action$, state$) =>
+const importConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importConversations.match),
-    switchMap(({ payload }) => {
-      const currentConversations = ConversationsSelectors.selectConversations(
-        state$.value,
+    switchMap(({ payload }) =>
+      forkJoin({
+        conversationsListing: ConversationService.getConversations(
+          undefined,
+          true,
+        ), //listing of all entities
+        importedData: of(payload.data),
+      }),
+    ),
+    switchMap(({ conversationsListing, importedData }) => {
+      const foldersIds = Array.from(
+        new Set(conversationsListing.map((info) => info.folderId)),
       );
-      const currentFolders = ConversationsSelectors.selectFolders(state$.value);
+      //calculate all folders;
+      const folders = getFoldersFromIds(
+        Array.from(
+          new Set(
+            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          ),
+        ),
+        FolderType.Chat,
+      );
+
+      return forkJoin({
+        //get all conversations from api
+        currentConversations: zip(
+          conversationsListing.map((info) =>
+            ConversationService.getConversation(info),
+          ),
+        ),
+        currentFolders: of(folders),
+        importedData: of(importedData),
+      });
+    }),
+    switchMap(({ currentConversations, currentFolders, importedData }) => {
+      const filteredConversations = currentConversations.filter(
+        Boolean,
+      ) as Conversation[];
+
       const { history, folders, isError }: ImportConversationsResponse =
-        importConversations(payload.data, {
-          currentConversations,
+        importConversations(importedData, {
+          currentConversations: filteredConversations,
           currentFolders,
         });
 
@@ -167,14 +263,51 @@ const importConversationsEpic: AppEpic = (action$, state$) =>
         return of(ImportExportActions.resetState());
       }
 
-      return concat(
-        of(ImportExportActions.importConversationsSuccess()),
-        of(
-          ConversationsActions.importConversationsSuccess({
-            conversations: history,
-            folders,
-          }),
+      const conversationsInfoToUpload = history.filter((conversation) => {
+        return conversation.status !== UploadStatus.LOADED;
+      });
+
+      const importedConversations = conversationsInfoToUpload
+        .map(({ id }) => {
+          return (importedData as LatestExportFormat).history.find(
+            (conversation) => conversation.id === id,
+          );
+        })
+        .filter(Boolean) as Conversation[];
+
+      const foldersToUpload = folders.filter(({ id }) => {
+        return (importedData as LatestExportFormat).folders.find(
+          (folder) => folder.id === id,
+        );
+      });
+      // upload to the API
+      const preparedConversations = getPreparedConversations({
+        conversations: importedConversations,
+        conversationsFolders: foldersToUpload,
+      });
+
+      const preparedHistory = [
+        ...filteredConversations,
+        ...preparedConversations,
+      ];
+
+      return zip(
+        preparedConversations.map((info) =>
+          ConversationService.createConversation(info),
         ),
+      ).pipe(
+        switchMap(() =>
+          concat(
+            of(ImportExportActions.importConversationsSuccess()),
+            of(
+              ConversationsActions.importConversationsSuccess({
+                conversations: preparedHistory,
+                folders,
+              }),
+            ),
+          ),
+        ),
+        catchError(() => of(ImportExportActions.importFail())),
       );
     }),
   );
@@ -290,6 +423,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
 
       const actions = attachmentsToUpload.map((attachment) => {
         const formData = new FormData();
+
         if (!attachment.fileContent) {
           return of(
             ImportExportActions.uploadSingleFileFail({
@@ -299,7 +433,11 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
         }
 
         formData.append('attachment', attachment.fileContent, attachment.name);
-        const relativePath = `imports/${conversation.id}/${attachment.relativePath}`;
+        const isImports = attachment.relativePath?.startsWith('imports/');
+        const relativePath = isImports
+          ? attachment.relativePath
+          : `imports/${conversation.id}/${attachment.relativePath}`;
+
         return FileService.sendFile(
           formData,
           relativePath,

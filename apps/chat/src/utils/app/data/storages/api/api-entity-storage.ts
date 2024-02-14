@@ -3,6 +3,8 @@ import { EMPTY, Observable, catchError, map, of } from 'rxjs';
 import {
   ApiKeys,
   ApiUtils,
+  decodeApiUrl,
+  encodeApiUrl,
   getFolderTypeByApiKey,
 } from '@/src/utils/server/api';
 
@@ -10,55 +12,53 @@ import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
+  Entity,
   UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
 import { constructPath } from '../../../file';
+import { splitEntityId } from '../../../folders';
 import { BucketService } from '../../bucket-service';
 
 export abstract class ApiEntityStorage<
-  EntityInfo extends { folderId?: string },
-  Entity extends EntityInfo,
-> implements EntityStorage<EntityInfo, Entity>
+  TEntityInfo extends Entity,
+  TEntity extends TEntityInfo,
+> implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
-    const relativePath = folder.parentPath || undefined;
+    const id = decodeApiUrl(folder.url.slice(0, folder.url.length - 1));
+    const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
-      id: constructPath(folder.parentPath, folder.name),
+      id,
       name: folder.name,
-      folderId: relativePath,
+      folderId: constructPath(apiKey, bucket, parentPath),
       type: getFolderTypeByApiKey(this.getStorageKey()),
+      isShared: false,
     };
   }
 
-  private mapEntity(entity: BackendChatEntity) {
-    const relativePath = entity.parentPath || undefined;
+  private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
+    const id = decodeApiUrl(entity.url);
+    const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
       ...info,
-      id: constructPath(entity.parentPath, entity.name),
+      id,
       lastActivityDate: entity.updatedAt,
-      folderId: relativePath,
-    };
+      folderId: constructPath(apiKey, bucket, parentPath),
+      isShared: false,
+    } as unknown as TEntityInfo;
   }
 
-  private getEntityUrl = (entity: EntityInfo): string =>
-    encodeURI(
-      constructPath(
-        'api',
-        this.getStorageKey(),
-        BucketService.getBucket(),
-        entity.folderId,
-        this.getEntityKey(entity),
-      ),
-    );
+  private getEntityUrl = (entity: TEntityInfo): string =>
+    encodeApiUrl(constructPath('api', entity.id));
 
   private getListingUrl = (resultQuery: string): string => {
-    const listingUrl = encodeURI(
+    const listingUrl = encodeApiUrl(
       constructPath('api', this.getStorageKey(), 'listing'),
     );
     return `${listingUrl}?${resultQuery}`;
@@ -66,7 +66,7 @@ export abstract class ApiEntityStorage<
 
   getFoldersAndEntities(
     path?: string | undefined,
-  ): Observable<FoldersAndEntities<EntityInfo>> {
+  ): Observable<FoldersAndEntities<TEntityInfo>> {
     const query = new URLSearchParams({
       bucket: BucketService.getBucket(),
       ...(path && { path }),
@@ -114,7 +114,7 @@ export abstract class ApiEntityStorage<
     );
   }
 
-  getEntities(path?: string, recursive?: boolean): Observable<EntityInfo[]> {
+  getEntities(path?: string, recursive?: boolean): Observable<TEntityInfo[]> {
     const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
@@ -133,9 +133,9 @@ export abstract class ApiEntityStorage<
     );
   }
 
-  getEntity(info: EntityInfo): Observable<Entity | null> {
+  getEntity(info: TEntityInfo): Observable<TEntity | null> {
     return ApiUtils.request(this.getEntityUrl(info)).pipe(
-      map((entity: Entity) => {
+      map((entity: TEntity) => {
         return {
           ...this.mergeGetResult(info, entity),
           status: UploadStatus.LOADED,
@@ -145,21 +145,17 @@ export abstract class ApiEntityStorage<
     );
   }
 
-  createEntity(entity: Entity): Observable<void> {
+  createEntity(entity: TEntity): Observable<void> {
     return ApiUtils.request(this.getEntityUrl(entity), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
-    }).pipe(
-      catchError((err) => {
-        throw new Error(err);
-      }),
-    ); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    }); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
 
-  updateEntity(entity: Entity): Observable<void> {
+  updateEntity(entity: TEntity): Observable<void> {
     return ApiUtils.request(this.getEntityUrl(entity), {
       method: 'PUT',
       headers: {
@@ -169,7 +165,7 @@ export abstract class ApiEntityStorage<
     }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
 
-  deleteEntity(info: EntityInfo): Observable<void> {
+  deleteEntity(info: TEntityInfo): Observable<void> {
     return ApiUtils.request(this.getEntityUrl(info), {
       method: 'DELETE',
       headers: {
@@ -178,13 +174,13 @@ export abstract class ApiEntityStorage<
     }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
 
-  abstract getEntityKey(info: EntityInfo): string;
+  abstract getEntityKey(info: TEntityInfo): string;
 
-  abstract parseEntityKey(key: string): EntityInfo;
+  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId'>;
 
   abstract getStorageKey(): ApiKeys;
 
-  abstract cleanUpEntity(entity: Entity): Entity;
+  abstract cleanUpEntity(entity: TEntity): TEntity;
 
-  abstract mergeGetResult(info: EntityInfo, entity: Entity): Entity;
+  abstract mergeGetResult(info: TEntityInfo, entity: TEntity): TEntity;
 }

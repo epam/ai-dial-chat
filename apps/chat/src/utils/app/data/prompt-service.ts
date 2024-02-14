@@ -1,8 +1,13 @@
 import { Observable } from 'rxjs';
 
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
+import { ApiKeys } from '@/src/utils/server/api';
+
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
+import { getPathToFolderById } from '../folders';
 import { DataService } from './data-service';
 
 export class PromptService {
@@ -41,3 +46,28 @@ export class PromptService {
     return DataService.getDataStorage().deletePrompt(info);
   }
 }
+
+export const getPreparedPrompts = ({
+  prompts,
+  folders,
+  addRoot = false,
+}: {
+  prompts: Prompt[];
+  folders: FolderInterface[];
+  addRoot?: boolean;
+}) =>
+  prompts.map((prompt) => {
+    const { path } = getPathToFolderById(folders, prompt.folderId, true);
+    const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
+
+    return {
+      ...prompt,
+      id: addRoot
+        ? constructPath(getRootId({ apiKey: ApiKeys.Prompts }), path, newName)
+        : constructPath(path, newName),
+      name: newName,
+      folderId: addRoot
+        ? constructPath(getRootId({ apiKey: ApiKeys.Prompts }), path)
+        : path,
+    };
+  }); // to send prompts with proper parentPath

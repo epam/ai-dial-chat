@@ -12,21 +12,6 @@ import {
 
 import { RootState } from '@/src/store';
 
-export const getShareActionByType = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsActions.shareConversation;
-    case SharingType.ConversationFolder:
-      return ConversationsActions.shareFolder;
-    case SharingType.Prompt:
-      return PromptsActions.sharePrompt;
-    case SharingType.PromptFolder:
-      return PromptsActions.shareFolder;
-    default:
-      throw new Error('unknown type');
-  }
-};
-
 export const getPublishActionByType = (type: SharingType) => {
   switch (type) {
     case SharingType.Conversation:
@@ -65,7 +50,7 @@ export const hasExternalParent = (
   folderId: string | undefined,
   featureType: FeatureType,
 ) => {
-  if (!featureType || !folderId) return false;
+  if (!featureType) return false;
 
   return featureType === FeatureType.Chat
     ? ConversationsSelectors.hasExternalParent(state, folderId)

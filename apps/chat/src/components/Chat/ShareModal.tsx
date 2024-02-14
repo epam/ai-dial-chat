@@ -10,36 +10,38 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { getShareActionByType } from '@/src/utils/app/share';
-
-import { ShareEntity } from '@/src/types/common';
-import { SharingType } from '@/src/types/share';
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 
 import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
-import { v4 as uuidv4 } from 'uuid';
-
-interface Props {
-  entity: ShareEntity;
-  type: SharingType;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
+export default function ShareModal() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
-  const shareAction = getShareActionByType(type);
+
   const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [urlCopied, setUrlCopied] = useState(false);
   const [urlWasCopied, setUrlWasCopied] = useState(false);
-  const shareId = useRef(uuidv4());
-  const url = `${window?.location.origin}/share/${shareId.current}`;
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const modalState = useAppSelector(ShareSelectors.selectShareModalState);
+  const invitationId = useAppSelector(ShareSelectors.selectInvitationId);
+  const shareResourceName = useAppSelector(
+    ShareSelectors.selectShareResourceName,
+  );
+  const [url, setUrl] = useState('');
+
+  useEffect(() => {
+    setUrl(`${window?.location.origin}/share/${invitationId || ''}`);
+  }, [invitationId]);
+
+  const handleClose = useCallback(() => {
+    dispatch(ShareActions.setModalState({ modalState: ModalState.CLOSED }));
+  }, [dispatch]);
 
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
@@ -55,13 +57,10 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
         }, 2000);
         if (!urlWasCopied) {
           setUrlWasCopied(true);
-          dispatch(
-            shareAction({ id: entity.id, shareUniqueId: shareId.current }),
-          );
         }
       });
     },
-    [dispatch, entity.id, shareAction, url, urlWasCopied],
+    [url, urlWasCopied],
   );
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
@@ -71,25 +70,13 @@ export default function ShareModal({ entity, isOpen, onClose, type }: Props) {
       portalId="theme-main"
       containerClassName="inline-block w-full max-w-[424px] p-6"
       dataQa="share-modal"
-      isOpen={isOpen}
-      onClose={onClose}
+      state={modalState}
+      onClose={handleClose}
+      heading={`${t('Share')}: ${shareResourceName?.trim()}`}
     >
       <div className="flex flex-col justify-between gap-2">
-        <h4 className="max-h-[50px] text-base font-semibold">
-          <Tooltip tooltip={entity.name.trim()}>
-            <span
-              className="line-clamp-2 break-words"
-              data-qa="share-chat-name"
-            >
-              {`${t('Share')}: ${entity.name.trim()}`}
-            </span>
-          </Tooltip>
-        </h4>
         <p className="text-sm text-secondary">
           {t('share.modal.link.description')}
-        </p>
-        <p className="text-sm text-secondary">
-          {t('share.modal.link', { context: type })}
         </p>
         <div className="relative mt-2">
           <Tooltip tooltip={url}>

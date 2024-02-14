@@ -6,13 +6,15 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ShareEntity, UploadStatus } from '@/src/types/common';
+import { PartialBy, ShareEntity, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+
+import { isRootId } from './id';
 
 import escapeStringRegexp from 'escape-string-regexp';
 
@@ -238,7 +240,7 @@ export const getFilteredFolders = ({
   includeEmptyFolders,
 }: GetFilteredFoldersProps) => {
   const rootFolders = allFolders.filter(
-    (folder) => !folder.folderId && filters.sectionFilter(folder),
+    (folder) => isRootId(folder.folderId) && filters.sectionFilter(folder),
   );
   const filteredIds = new Set(
     rootFolders.flatMap((folder) =>
@@ -321,7 +323,7 @@ export const findRootFromItems = (
   const parentIds = new Set(items.map((item) => item.id));
 
   return items.find((item) => {
-    if (!item.folderId) return true;
+    if (isRootId(item.folderId)) return true;
     return !parentIds.has(item.folderId);
   });
 };
@@ -363,64 +365,84 @@ export const getConversationAttachmentWithPath = (
   ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
 };
 
-export const addGeneratedFolderId = (folder: Omit<FolderInterface, 'id'>) => ({
-  ...folder,
-  id: constructPath(folder.folderId, folder.name),
-});
+const getGeneratedFolderId = (folder: PartialBy<FolderInterface, 'id'>) =>
+  constructPath(folder.folderId, folder.name);
 
-export const splitPath = (id: string) => {
+export const addGeneratedFolderId = (
+  folder: PartialBy<FolderInterface, 'id'>,
+): FolderInterface => {
+  const newId = getGeneratedFolderId(folder);
+  if (!folder.id || newId !== folder.id) {
+    return {
+      ...folder,
+      id: constructPath(folder.folderId, folder.name),
+    };
+  }
+  return folder as FolderInterface;
+};
+
+// {apikey}/{bucket}/path.../name
+export const splitEntityId = (
+  id: string,
+): {
+  bucket: string;
+  name: string;
+  parentPath: string | undefined;
+  apiKey: string;
+} => {
   const parts = id.split('/');
-  const name = parts[parts.length - 1];
   const parentPath =
-    parts.length > 1
-      ? constructPath(...parts.slice(0, parts.length - 1))
+    parts.length > 3
+      ? constructPath(...parts.slice(2, parts.length - 1))
       : undefined;
+
   return {
-    name,
+    apiKey: parts[0],
+    bucket: parts[1],
     parentPath,
+    name: parts[parts.length - 1],
   };
 };
 
-export const getAllPathsFromPath = (path?: string): string[] => {
+export const getParentFolderIdsFromFolderId = (path?: string): string[] => {
   if (!path) {
     return [];
   }
   const parts = path.split('/');
   const paths = [];
-  for (let i = 1; i <= parts.length; i++) {
+  for (let i = 3; i <= parts.length; i++) {
     const path = constructPath(...parts.slice(0, i));
     paths.push(path);
   }
   return paths;
 };
 
-export const getAllPathsFromId = (id: string): string[] => {
-  const { parentPath } = splitPath(id);
-  return getAllPathsFromPath(parentPath);
+export const getParentFolderIdsFromEntityId = (id: string): string[] => {
+  return getParentFolderIdsFromFolderId(id);
 };
 
-export const getFolderFromPath = (
-  path: string,
+export const getFolderFromId = (
+  id: string,
   type: FolderType,
   status?: UploadStatus,
 ): FolderInterface => {
-  const { name, parentPath } = splitPath(path);
+  const { apiKey, bucket, name, parentPath } = splitEntityId(id);
   return {
-    id: path,
+    id,
     name,
     type,
-    folderId: parentPath,
+    folderId: constructPath(apiKey, bucket, parentPath),
     status,
   };
 };
 
-export const getFoldersFromPaths = (
-  paths: (string | undefined)[],
+export const getFoldersFromIds = (
+  ids: (string | undefined)[],
   type: FolderType,
   status?: UploadStatus,
 ): FolderInterface[] => {
-  return (paths.filter(Boolean) as string[]).map((path) =>
-    getFolderFromPath(path, type, status),
+  return (ids.filter(Boolean) as string[]).map((path) =>
+    getFolderFromId(path, type, status),
   );
 };
 
@@ -440,36 +462,30 @@ export const compareEntitiesByName = <
 };
 
 export const updateMovedFolderId = (
-  oldParentFolderId: string | undefined,
-  newParentFolderId: string | undefined,
-  folderId: string | undefined,
-) => {
-  const curr = folderId || '';
-  const old = oldParentFolderId || '';
+  oldParentFolderId: string,
+  newParentFolderId: string,
+  folderId: string,
+): string => {
+  const curr = folderId;
+  const old = oldParentFolderId;
   if (curr === old) {
     return newParentFolderId;
   }
   const prefix = `${old}/`;
   if (curr.startsWith(prefix)) {
-    if (!newParentFolderId) {
-      return curr.replace(prefix, '') || undefined;
-    }
     return curr.replace(old, newParentFolderId);
   }
   return folderId;
 };
 
 export const updateMovedEntityId = (
-  oldParentFolderId: string | undefined,
-  newParentFolderId: string | undefined,
+  oldParentFolderId: string,
+  newParentFolderId: string,
   entityId: string,
 ): string => {
-  const old = oldParentFolderId || '';
+  const old = oldParentFolderId;
   const prefix = `${old}/`;
   if (entityId.startsWith(prefix)) {
-    if (!newParentFolderId) {
-      return entityId.replace(prefix, '');
-    }
     return entityId.replace(old, newParentFolderId);
   }
   return entityId;

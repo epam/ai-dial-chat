@@ -5,7 +5,11 @@ import { FolderInterface } from '@/src/types/folder';
 import { AttachmentToUpload } from '@/src/store/import-export/importExport.reducers';
 
 import { constructPath, triggerDownload } from './file';
-import { prepareConversationsForExport } from './import-export';
+import {
+  currentDate,
+  getDownloadFileName,
+  prepareConversationsForExport,
+} from './import-export';
 
 import JSZip from 'jszip';
 import { contentType } from 'mime-types';
@@ -18,7 +22,7 @@ interface GetZippedFile {
 
 const getAttachmentFromApi = async (file: DialFile) => {
   const fileResult = await fetch(
-    `api/files/file/${constructPath(file.absolutePath, file.name)}`,
+    `api/${constructPath(file.absolutePath, file.name)}`,
   );
   return fileResult.blob();
 };
@@ -43,10 +47,11 @@ export async function getZippedFile({
   return content;
 }
 
-export const downloadExportZip = (content: string) => {
+export const downloadExportZip = (content: string, fileName?: string) => {
+  const downloadName = getDownloadFileName(fileName);
   triggerDownload(
-    'data:application/zip;base64,' + content,
-    'ai_dial_chat_with_attachments.zip',
+    `data:application/zip;base64,${content}`,
+    `${downloadName}_chat_with_attachments_${currentDate()}.zip`,
   );
 };
 

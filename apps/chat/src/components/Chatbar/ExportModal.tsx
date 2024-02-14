@@ -1,5 +1,6 @@
 import { useTranslation } from 'next-i18next';
 
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import Modal from '../Common/Modal';
@@ -15,7 +16,7 @@ export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
     <Modal
       dataQa="single-export-modal"
       onClose={onClose}
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       portalId="theme-main"
       containerClassName="inline-block max-w-[350px] w-full px-3 py-4 rounded"
     >

@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -69,7 +70,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       portalId="theme-main"
       containerClassName="inline-block w-[500px] overflow-y-auto p-4 align-bottom transition-all md:max-h-[400px]"
       dataQa="settings-modal"
-      isOpen={open}
+      state={open ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
       initialFocus={saveBtnRef}
       dismissProps={{ outsidePressEvent: 'mousedown' }}

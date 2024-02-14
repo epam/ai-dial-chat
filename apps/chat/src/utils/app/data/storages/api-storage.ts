@@ -7,12 +7,13 @@ import {
   throwError,
 } from 'rxjs';
 
+import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
-import { constructPath } from '@/src/utils/app/file';
 import { generateNextName } from '@/src/utils/app/folders';
+import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
+import { BackendResourceType, Entity } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
@@ -35,12 +36,12 @@ export class ApiStorage implements DialStorage {
     entity: T,
     entities: T[],
     apiStorage: ApiEntityStorage<T, T>,
+    entityType: BackendResourceType,
   ): Observable<void> {
     let retries = 0;
 
     const retry = (
       entity: T,
-      entities: T[],
       apiStorage: ApiEntityStorage<T, T>,
     ): Observable<void> =>
       apiStorage.createEntity(entity).pipe(
@@ -49,26 +50,32 @@ export class ApiStorage implements DialStorage {
             retries++;
 
             const defaultName =
-              'messages' in entity
+              entityType === BackendResourceType.CONVERSATION
                 ? DEFAULT_CONVERSATION_NAME
                 : DEFAULT_PROMPT_NAME;
-            const newName = generateNextName(defaultName, entity.name, [
-              ...entities,
-            ]);
+            const newName = generateNextName(
+              defaultName,
+              entity.name,
+              entities.filter((e) => e.folderId === entity.folderId),
+            );
             const updatedEntity = {
               ...entity,
-              id: constructPath(entity.folderId, newName),
               name: newName,
             };
 
-            return retry(updatedEntity, entities, apiStorage);
+            const updatedEntityWithRegeneratedId =
+              entityType === BackendResourceType.CONVERSATION
+                ? regenerateConversationId(updatedEntity as Conversation)
+                : addGeneratedPromptId(updatedEntity as Prompt);
+
+            return retry(updatedEntityWithRegeneratedId as T, apiStorage);
           }
 
           return throwError(() => err);
         }),
       );
 
-    return retry(entity, entities, apiStorage);
+    return retry(entity, apiStorage);
   }
 
   getConversationsFolders(path?: string): Observable<FolderInterface[]> {
@@ -117,14 +124,15 @@ export class ApiStorage implements DialStorage {
   }
 
   setConversations(conversations: Conversation[]): Observable<void> {
-    return this.getConversations().pipe(
-      concatMap((apiConversations) =>
-        from(conversations).pipe(
-          concatMap((conversation) =>
+    return from(conversations).pipe(
+      concatMap((conv) =>
+        this.getConversations(conv.folderId).pipe(
+          concatMap((apiConversations) =>
             this.tryCreateEntity(
-              conversation,
+              conv,
               [...conversations, ...apiConversations],
               this._conversationApiStorage,
+              BackendResourceType.CONVERSATION,
             ),
           ),
         ),
@@ -159,14 +167,15 @@ export class ApiStorage implements DialStorage {
   }
 
   setPrompts(prompts: Prompt[]): Observable<void> {
-    return this.getPrompts().pipe(
-      concatMap((apiPrompts) =>
-        from(prompts).pipe(
-          concatMap((prompt) =>
+    return from(prompts).pipe(
+      concatMap((prompt) =>
+        this.getPrompts(prompt.folderId).pipe(
+          concatMap((apiPrompts) =>
             this.tryCreateEntity(
               prompt,
               [...prompts, ...apiPrompts],
               this._promptApiStorage,
+              BackendResourceType.PROMPT,
             ),
           ),
         ),

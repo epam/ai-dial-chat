@@ -15,6 +15,7 @@ import classNames from 'classnames';
 import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
+import { ModalState } from '@/src/types/modal';
 import { RequestAPIKeyBody } from '@/src/types/request-api-key';
 import { Translation } from '@/src/types/translation';
 
@@ -225,11 +226,6 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     ],
   );
 
-  // Render nothing if the dialog is not open.
-  if (!isOpen) {
-    return <></>;
-  }
-
   // Render the dialog.
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
@@ -244,7 +240,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
     <Modal
       initialFocus={projectNameInputRef}
       portalId="theme-main"
-      isOpen={isOpen}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       dataQa="request-api-key-dialog"
       overlayClassName="fixed inset-0"

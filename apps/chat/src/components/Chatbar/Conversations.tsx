@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { compareConversationsByDate } from '@/src/utils/app/conversation';
+import { isRootId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
@@ -49,7 +50,8 @@ export const Conversations = ({ conversations }: Props) => {
   const { t } = useTranslation(Translation.SideBar);
 
   const conversationsToDisplay = useMemo(
-    () => conversations.filter((conversation) => !conversation.folderId),
+    () =>
+      conversations.filter((conversation) => isRootId(conversation.folderId)),
     [conversations],
   );
 

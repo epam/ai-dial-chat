@@ -2,20 +2,23 @@ import { Attachment, Conversation, ConversationInfo } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
-  ExportConversationsFormatV4,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV3,
   ExportFormatV4,
+  ExportFormatV5,
+  LatestExportConversationsFormat,
   LatestExportFormat,
   PromptsHistory,
   SupportedExportFormats,
-} from '@/src/types/importExport';
+} from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
+import { ApiKeys, decodeApiUrl, encodeApiUrl } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
 import { triggerDownload } from './file';
+import { getRootId } from './id';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -37,11 +40,16 @@ export function isExportFormatV4(obj: any): obj is ExportFormatV4 {
   return 'version' in obj && obj.version === 4;
 }
 
-export function isPromtsFormat(obj: PromptsHistory) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isExportFormatV5(obj: any): obj is ExportFormatV5 {
+  return 'version' in obj && obj.version === 5;
+}
+
+export function isPromptsFormat(obj: PromptsHistory) {
   return Object.prototype.hasOwnProperty.call(obj, 'prompts');
 }
 
-export const isLatestExportFormat = isExportFormatV4;
+export const isLatestExportFormat = isExportFormatV5;
 
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
@@ -49,7 +57,7 @@ export interface CleanDataResponse extends LatestExportFormat {
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
-      version: 4,
+      version: 5,
       history: cleanConversationHistory(data as unknown as Conversation[]),
       folders: [],
       prompts: [],
@@ -62,12 +70,13 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
 
   if (isExportFormatV2(data)) {
     return {
-      version: 4,
+      version: 5,
       history: cleanConversationHistory(data.history || []),
       folders: (data.folders || []).map((chatFolder) => ({
         id: chatFolder.id.toString(),
         name: chatFolder.name,
         type: FolderType.Chat,
+        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
       })),
       prompts: [],
       isError: false,
@@ -78,13 +87,23 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
     return {
       history: cleanConversationHistory(data.history),
       folders: [...data.folders],
-      version: 4,
+      version: 5,
       prompts: [],
       isError: false,
     };
   }
 
   if (isExportFormatV4(data)) {
+    return {
+      ...data,
+      version: 5,
+      history: cleanConversationHistory(data.history),
+      prompts: data.prompts || [],
+      isError: false,
+    };
+  }
+
+  if (isExportFormatV5(data)) {
     return {
       ...data,
       history: cleanConversationHistory(data.history),
@@ -94,7 +113,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   }
 
   return {
-    version: 4,
+    version: 5,
     history: [],
     folders: [],
     prompts: [],
@@ -102,7 +121,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   };
 }
 
-function currentDate() {
+export function currentDate() {
   const date = new Date();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -115,46 +134,62 @@ type ExportType =
   | 'prompt'
   | 'prompts_history';
 
+export const getDownloadFileName = (fileName?: string): string =>
+  !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
+
 function downloadChatPromptData(
-  data: ExportConversationsFormatV4 | Prompt[] | PromptsHistory,
+  data: LatestExportConversationsFormat | Prompt[] | PromptsHistory,
   exportType: ExportType,
+  fileName?: string,
 ) {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
+  const downloadName = getDownloadFileName(fileName);
 
-  triggerDownload(url, `ai_dial_chat_${exportType}_${currentDate()}.json`);
+  triggerDownload(
+    url,
+    `${downloadName}_chat_${exportType}_${currentDate()}.json`,
+  );
 }
 
-const triggerDownloadConversation = (data: ExportConversationsFormatV4) => {
-  downloadChatPromptData(data, 'conversation');
+const triggerDownloadConversation = (
+  data: LatestExportConversationsFormat,
+  appName?: string,
+) => {
+  downloadChatPromptData(data, 'conversation', appName);
 };
 const triggerDownloadConversationsHistory = (
-  data: ExportConversationsFormatV4,
+  data: LatestExportConversationsFormat,
+  appName?: string,
 ) => {
-  downloadChatPromptData(data, 'conversations_history');
+  downloadChatPromptData(data, 'conversations_history', appName);
 };
 
-const triggerDownloadPromptsHistory = (data: PromptsHistory) => {
-  downloadChatPromptData(data, 'prompts_history');
+const triggerDownloadPromptsHistory = (
+  data: PromptsHistory,
+  appName?: string,
+) => {
+  downloadChatPromptData(data, 'prompts_history', appName);
 };
 
-const triggerDownloadPrompt = (data: PromptsHistory) => {
-  downloadChatPromptData(data, 'prompt');
+const triggerDownloadPrompt = (data: PromptsHistory, appName?: string) => {
+  downloadChatPromptData(data, 'prompt', appName);
 };
 
 export const exportConversation = (
   conversation: Conversation,
   folders: FolderInterface[],
+  appName?: string,
 ) => {
-  const data: ExportConversationsFormatV4 = {
-    version: 4,
+  const data: LatestExportConversationsFormat = {
+    version: 5,
     history: [conversation] || [],
     folders: folders,
   };
 
-  triggerDownloadConversation(data);
+  triggerDownloadConversation(data, appName);
 };
 
 interface PrepareConversationsForExport {
@@ -166,10 +201,10 @@ export const prepareConversationsForExport = ({
   folders,
 }: PrepareConversationsForExport) => {
   const data = {
-    version: 4,
+    version: 5,
     history: conversations || [],
     folders: folders || [],
-  } as ExportConversationsFormatV4;
+  } as LatestExportConversationsFormat;
 
   return data;
 };
@@ -177,35 +212,42 @@ export const prepareConversationsForExport = ({
 export const exportConversations = (
   conversations: Conversation[],
   folders: FolderInterface[],
+  appName?: string,
+  version = 5,
 ) => {
   const data = {
-    version: 4,
+    version,
     history: conversations || [],
     folders: folders || [],
-  } as ExportConversationsFormatV4;
+  } as LatestExportConversationsFormat;
 
-  triggerDownloadConversationsHistory(data);
+  triggerDownloadConversationsHistory(data, appName);
 };
 
 export const exportPrompts = (
   prompts: Prompt[],
   folders: FolderInterface[],
+  appName?: string,
 ) => {
   const data = {
     prompts,
     folders,
   };
-  triggerDownloadPromptsHistory(data);
+  triggerDownloadPromptsHistory(data, appName);
 };
 
-export const exportPrompt = (prompt: Prompt, folders: FolderInterface[]) => {
+export const exportPrompt = (
+  prompt: Prompt,
+  folders: FolderInterface[],
+  appName?: string,
+) => {
   const promptsToExport: Prompt[] = [prompt];
 
   const data: PromptsHistory = {
     prompts: promptsToExport,
     folders,
   };
-  triggerDownloadPrompt(data);
+  triggerDownloadPrompt(data, appName);
 };
 
 export interface ImportConversationsResponse {
@@ -257,7 +299,7 @@ export const importPrompts = (
     currentFolders: FolderInterface[];
   },
 ): ImportPromtsResponse => {
-  if (!isPromtsFormat(importedData)) {
+  if (!isPromptsFormat(importedData)) {
     return {
       prompts: currentPrompts,
       folders: currentFolders,
@@ -287,7 +329,7 @@ export const getAttachmentId = ({
 }) => {
   const regExpForAttachmentId = /^files\/\w*\//;
 
-  const attachmentId = decodeURI(url).split(regExpForAttachmentId)[
+  const attachmentId = decodeApiUrl(url).split(regExpForAttachmentId)[
     attachmentIdIndex
   ];
 
@@ -307,11 +349,12 @@ const getNewAttachmentFileFromUploaded = ({
     if (!newAttachment.id) {
       return;
     }
-    const regExpForNewAttachmentId = /^imports\/[\w-]*\//;
+    const regExpForNewAttachmentId = /^imports\/[\w\s-]+\//;
 
     const newAttachmentId = newAttachment.id.split(regExpForNewAttachmentId)[
       attachmentIdIndex
     ];
+
     return (
       newAttachmentId === oldAttachmentId ||
       oldAttachmentId.includes(newAttachmentId)
@@ -332,7 +375,6 @@ export const updateAttachment = ({
   }
 
   const attachmentIdIndex = 1;
-
   const oldAttachmentId = getAttachmentId({
     url: oldAttachmentUrl,
     attachmentIdIndex,
@@ -350,17 +392,19 @@ export const updateAttachment = ({
 
   const newAttachmentUrl =
     oldAttachment.url &&
-    encodeURI(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
-
+    encodeApiUrl(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
   const lastSlashIndex = oldAttachmentId.lastIndexOf('/');
   const oldAttachmentNameInPath = oldAttachmentId.slice(lastSlashIndex + 1);
 
   const newReferenceUrl =
     oldAttachment.reference_url &&
-    encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentNameInPath}`);
+    encodeApiUrl(
+      `${newAttachmentFile.absolutePath}/${oldAttachmentNameInPath}`,
+    );
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
+    type: newAttachmentFile.contentType ?? oldAttachment.type,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,
   };

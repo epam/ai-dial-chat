@@ -8,23 +8,36 @@ import {
   useState,
 } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { constructPath } from '@/src/utils/app/file';
+import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { ApiKeys } from '@/src/utils/server/api';
 
-import { FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -33,7 +46,6 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import PublishModal from '../../Chat/Publish/PublishWizard';
-import ShareModal from '../../Chat/ShareModal';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
@@ -45,6 +57,8 @@ interface Props {
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
   const dispatch = useAppDispatch();
+
+  const { t } = useTranslation(Translation.Chat);
 
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
@@ -64,7 +78,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
@@ -74,6 +87,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const newFolderName = useAppSelector((state) =>
     PromptsSelectors.selectNewFolderName(state, prompt.folderId),
   );
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -83,14 +97,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
-  const handleCloseShareModal = useCallback(() => {
-    setIsSharing(false);
-  }, []);
-
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsSharing(true);
-    }, []);
+      dispatch(
+        ShareActions.share({
+          resourceType: BackendResourceType.PROMPT,
+          resourceId: prompt.id,
+          nodeType: BackendDataNodeType.ITEM,
+        }),
+      );
+    }, [dispatch, prompt.id]);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -190,7 +206,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
       dispatch(
         PromptsActions.exportPrompt({
-          promptId: prompt.id,
+          id: prompt.id,
         }),
       );
     },
@@ -199,23 +215,55 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const folderPath = isNewFolder ? newFolderName : folderId;
+      const folderPath = (isNewFolder ? newFolderName : folderId) as string;
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          prompt.name,
+          { ...prompt, folderId: folderPath },
+          allPrompts,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Prompt with name "{{name}}" already exists in this folder.',
+              {
+                ns: 'prompt',
+                name: prompt.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       if (isNewFolder) {
         dispatch(
           PromptsActions.createFolder({
             name: folderPath,
+            parentId: getRootId({ apiKey: ApiKeys.Prompts }),
           }),
         );
       }
       dispatch(
         PromptsActions.updatePrompt({
           id: prompt.id,
-          values: { folderId: folderPath },
+          values: {
+            folderId: isNewFolder
+              ? constructPath(
+                  getRootId({ apiKey: ApiKeys.Prompts }),
+                  folderPath,
+                )
+              : folderPath,
+          },
         }),
       );
       setIsContextMenu(false);
     },
-    [dispatch, newFolderName, prompt.id],
+    [allPrompts, dispatch, newFolderName, prompt, t],
   );
 
   const handleClose = useCallback(() => {
@@ -357,14 +405,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           />
         )}
       </div>
-      {isSharing && (
-        <ShareModal
-          entity={prompt}
-          type={SharingType.Prompt}
-          isOpen
-          onClose={handleCloseShareModal}
-        />
-      )}
 
       {isPublishing && (
         <PublishModal

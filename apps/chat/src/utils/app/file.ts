@@ -3,6 +3,7 @@ import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
+import { decodeApiUrl, encodeApiUrl } from '../server/api';
 import { getPathToFolderById } from './folders';
 
 import escapeStringRegexp from 'escape-string-regexp';
@@ -32,10 +33,8 @@ export const getRelativePath = (
   return absolutePath?.split('/').toSpliced(0, 2).join('/') || undefined;
 };
 
-export const getFileName = (
-  absolutePath: string | undefined,
-): string | undefined => {
-  return absolutePath?.split('/').slice(-1)?.[0] || undefined;
+export const getFileName = (path: string | undefined): string | undefined => {
+  return path?.split('/').slice(-1)?.[0] || undefined;
 };
 
 export const getUserCustomContent = (
@@ -55,7 +54,7 @@ export const getUserCustomContent = (
       .map((file) => ({
         type: file.contentType,
         title: file.name,
-        url: encodeURI(`${file.absolutePath}/${file.name}`),
+        url: encodeApiUrl(`${file.absolutePath}/${file.name}`),
       })),
   };
 };
@@ -105,7 +104,7 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/#?&';
+export const notAllowedSymbols = ':;,=/';
 export const notAllowedSymbolsRegex = new RegExp(
   `[${escapeStringRegexp(notAllowedSymbols)}]|(\r\n|\n|\r)`,
   'gm',
@@ -124,7 +123,7 @@ export const getFilesWithInvalidFileSize = (
 };
 
 const parseAttachmentUrl = (url: string) => {
-  const decodedUrl = decodeURI(url);
+  const decodedUrl = decodeApiUrl(url);
   const lastIndexSlash = decodedUrl.lastIndexOf('/');
 
   return {
@@ -151,12 +150,12 @@ export const getDialFilesFromAttachments = (
       }
 
       const { absolutePath, name } = parseAttachmentUrl(attachment.url);
-      const relativePath = getRelativePath(absolutePath);
 
       return {
-        id: constructPath(relativePath, name),
+        id: absolutePath,
         name,
         contentType: attachment.type,
+        folderId: absolutePath,
         absolutePath,
       };
     })
