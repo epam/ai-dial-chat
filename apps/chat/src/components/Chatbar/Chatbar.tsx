@@ -2,7 +2,10 @@ import { DragEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { getRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -14,7 +17,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
@@ -54,10 +57,15 @@ const ChatActionsBlock = () => {
 };
 
 export const Chatbar = () => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
   const areEntitiesUploaded = useAppSelector(
     ConversationsSelectors.areConversationsUploaded,
   );
@@ -82,17 +90,42 @@ export const Chatbar = () => {
         const conversationData = e.dataTransfer.getData(MoveType.Conversation);
         if (conversationData) {
           const conversation = JSON.parse(conversationData);
+          const folderId = getRootId({ apiKey: ApiKeys.Conversations });
+
+          if (
+            !isEntityNameOnSameLevelUnique(
+              conversation.name,
+              { ...conversation, folderId },
+              allConversations,
+            )
+          ) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  'Prompt with name "{{name}}" already exists at the root.',
+                  {
+                    ns: 'prompt',
+                    name: conversation.name,
+                  },
+                ),
+                type: 'error',
+              }),
+            );
+
+            return;
+          }
+
           dispatch(
             ConversationsActions.updateConversation({
               id: conversation.id,
-              values: { folderId: undefined },
+              values: { folderId },
             }),
           );
           dispatch(ConversationsActions.resetSearch());
         }
       }
     },
-    [dispatch],
+    [allConversations, dispatch, t],
   );
 
   return (
