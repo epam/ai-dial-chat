@@ -7,6 +7,8 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
+
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -230,8 +232,7 @@ export const MigrationFailedWindow = ({
   const isSomeItemsSelected =
     !!conversationsToRetryIds.length || !!promptsToRetryIds.length;
   const isNothingSelected =
-    conversationsToRetryIds.length === 0 &&
-    conversationsToRetryIds.length === 0;
+    !conversationsToRetryIds.length && !promptsToRetryIds.length;
 
   return (
     <div className="flex size-full flex-col items-center justify-center">
@@ -307,20 +308,43 @@ export const MigrationFailedWindow = ({
           </div>
         </div>
         <footer className="flex items-center justify-end px-6 pt-4">
-          <button
-            className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center"
-            data-qa="skip-migration"
-            onClick={onRetryWithoutBackup}
-          >
-            {t('Continue without backup')}
-          </button>
-          <button
-            className="button button-primary flex h-[38px] items-center"
-            data-qa="try-migration-again"
-            onClick={onRetryWithBackup}
-          >
-            {t('Backup to disk and continue')}
-          </button>
+          {isSmallScreen() ? (
+            <>
+              <button
+                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center"
+                data-qa="skip-migration"
+                onClick={() =>
+                  dispatch(ImportExportActions.exportLocalStorageEntities())
+                }
+              >
+                {t('Backup to device')}
+              </button>
+              <button
+                className="button button-primary mr-3 flex h-[38px] items-center"
+                data-qa="skip-migration"
+                onClick={onRetryWithoutBackup}
+              >
+                {t('Continue')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center"
+                data-qa="skip-migration"
+                onClick={onRetryWithoutBackup}
+              >
+                {t('Continue without backup')}
+              </button>
+              <button
+                className="button button-primary flex h-[38px] items-center"
+                data-qa="try-migration-again"
+                onClick={onRetryWithBackup}
+              >
+                {t('Backup to disk and continue')}
+              </button>
+            </>
+          )}
         </footer>
       </div>
       <p className="mt-6 text-secondary">

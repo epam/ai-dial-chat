@@ -26,7 +26,7 @@ import {
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
 
-const MAX_RETRIES_COUNT = 3;
+const MAX_RETRIES_COUNT = 0;
 
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
@@ -75,7 +75,9 @@ export class ApiStorage implements DialStorage {
         }),
       );
 
-    return retry(entity, apiStorage);
+    // it's done to test failed migration window on mobile on review env, don't worry)
+    return throwError(() => new Error());
+    // return retry(entity, apiStorage);
   }
 
   getConversationsFolders(path?: string): Observable<FolderInterface[]> {
