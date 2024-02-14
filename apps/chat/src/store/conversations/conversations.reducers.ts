@@ -266,7 +266,7 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<ConversationInfo>,
     ) => state,
-    createNewConversationSuccess: (
+    saveNewConversation: (
       state,
       {
         payload: { newConversation },
