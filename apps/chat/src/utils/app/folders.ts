@@ -323,7 +323,7 @@ export const findRootFromItems = (
   const parentIds = new Set(items.map((item) => item.id));
 
   return items.find((item) => {
-    if (!item.folderId) return true;
+    if (isRootId(item.folderId)) return true;
     return !parentIds.has(item.folderId);
   });
 };
