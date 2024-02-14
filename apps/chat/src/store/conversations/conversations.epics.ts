@@ -136,7 +136,7 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
               getConversationInfoFromId(id),
             ).pipe(
               catchError((err) => {
-                console.error("Selected conversation wasn't found:", err);
+                console.error('The selected conversation was not found:', err);
                 return of(null);
               }),
             ),
@@ -246,7 +246,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             lastConversation && lastConversation.status !== UploadStatus.LOADED
               ? ConversationService.getConversation(lastConversation).pipe(
                   catchError((err) => {
-                    console.error("Last used conversation wasn't found:", err);
+                    console.error(
+                      'The last used conversation was not found:',
+                      err,
+                    );
                     return of(null);
                   }),
                 )
@@ -255,7 +258,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             ? ConversationService.getConversations().pipe(
                 catchError((err) => {
                   console.error(
-                    "Root conversations weren't upload successfully:",
+                    'The conversations were not upload successfully:',
                     err,
                   );
                   return of([]);
@@ -550,6 +553,11 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         conversations: ConversationService.getConversations(
           payload.folderId,
           true,
+        ).pipe(
+          catchError((err) => {
+            console.error('Error during delete folder:', err);
+            return of([]);
+          }),
         ),
         folders: of(ConversationsSelectors.selectFolders(state$.value)),
       }),
@@ -678,6 +686,10 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
+        catchError((err) => {
+          console.error('Error during upload conversations and folders', err);
+          return of(ConversationsActions.uploadConversationsFail());
+        }),
       );
     }),
   );
@@ -762,11 +774,11 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
           switchMap((failedNames) =>
             concat(
               iif(
-                () => failedNames.length > 0,
+                () => failedNames.filter(Boolean).length > 0,
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                      `An error occurred while saving the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
@@ -2067,7 +2079,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
               ConversationsSelectors.selectConversation(state$.value, id)!,
             ).pipe(
               catchError((err) => {
-                console.error("Selected conversation wasn't found:", err);
+                console.error('The selected conversation was not found:', err);
                 return of(null);
               }),
             ),

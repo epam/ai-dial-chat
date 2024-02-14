@@ -68,7 +68,7 @@ export const getOrUploadConversation = (
     return forkJoin({
       conversation: ConversationService.getConversation(conversation).pipe(
         catchError((err) => {
-          console.error("Conversation wasn't found:", err);
+          console.error('The conversation was not found:', err);
           return of(null);
         }),
       ),

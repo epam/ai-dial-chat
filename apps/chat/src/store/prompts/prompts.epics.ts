@@ -153,7 +153,7 @@ const getOrUploadPrompt = (
     return forkJoin({
       prompt: PromptService.getPrompt(prompt).pipe(
         catchError((err) => {
-          console.error("Prompt wasn't found:", err);
+          console.error('The prompt was not found:', err);
           return of(null);
         }),
       ),
@@ -264,7 +264,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
           return of(
             UIActions.showErrorToast(
               translate(
-                `The prompt "${payload.prompt.name}" has not been deleted successfully`,
+                `An error occurred while saving the prompt "${payload.prompt.name}"`,
               ),
             ),
           );
@@ -296,7 +296,10 @@ const deletePromptsEpic: AppEpic = (action$) =>
           PromptService.deletePrompt(info).pipe(
             switchMap(() => of(null)),
             catchError((err) => {
-              console.error(`Error during deleting "${info.name}"`, err);
+              console.error(
+                `An error occurred while deleting the prompt "${info.name}"`,
+                err,
+              );
               return info.name;
             }),
           ),
@@ -305,11 +308,11 @@ const deletePromptsEpic: AppEpic = (action$) =>
         switchMap((failedNames) =>
           concat(
             iif(
-              () => failedNames.length > 0,
+              () => failedNames.filter(Boolean).length > 0,
               of(
                 UIActions.showErrorToast(
                   translate(
-                    `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                    `An error occurred while saving the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
                   ),
                 ),
               ),
@@ -407,6 +410,14 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
+        catchError((err) => {
+          console.error('An error occurred while updating the folder:', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('An error occurred while updating the folder.'),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -417,7 +428,15 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) =>
       forkJoin({
         folderId: of(payload.folderId),
-        promptsToRemove: PromptService.getPrompts(payload.folderId, true),
+        promptsToRemove: PromptService.getPrompts(payload.folderId, true).pipe(
+          catchError((err) => {
+            console.error(
+              'An error occurred while uploading prompts and folders:',
+              err,
+            );
+            return [];
+          }),
+        ),
         folders: of(PromptsSelectors.selectFolders(state$.value)),
       }),
     ),
@@ -452,8 +471,17 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
 const exportPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.exportPrompts.match),
-    switchMap(
-      () => PromptService.getPrompts(undefined, true), //listing of all entities
+    switchMap(() =>
+      //listing of all entities
+      PromptService.getPrompts(undefined, true).pipe(
+        catchError((err) => {
+          console.error(
+            'An error occurred while uploading prompts and folders:',
+            err,
+          );
+          return [];
+        }),
+      ),
     ),
     switchMap((promptsListing) => {
       const foldersIds = Array.from(
@@ -473,6 +501,11 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
         //get all prompts from api
         prompts: zip(
           promptsListing.map((info) => PromptService.getPrompt(info)),
+        ).pipe(
+          catchError((err) => {
+            console.error('An error occurred while uploading prompts:', err);
+            return [];
+          }),
         ),
         folders: of(folders),
       });
@@ -514,7 +547,15 @@ const importPromptsEpic: AppEpic = (action$) =>
     filter(PromptsActions.importPrompts.match),
     switchMap(({ payload }) =>
       forkJoin({
-        promptsListing: PromptService.getPrompts(undefined, true), //listing of all entities
+        promptsListing: PromptService.getPrompts(undefined, true).pipe(
+          catchError((err) => {
+            console.error(
+              'An error occurred while uploading prompts and folders:',
+              err,
+            );
+            return [];
+          }),
+        ), //listing of all entities
         promptsHistory: of(payload.promptsHistory),
       }),
     ),
@@ -542,6 +583,11 @@ const importPromptsEpic: AppEpic = (action$) =>
       //get all prompts from api
       const currentPrompts = zip(
         promptsListing.map((info) => PromptService.getPrompt(info)),
+      ).pipe(
+        catchError((err) => {
+          console.error('An error occurred while uploading prompts:', err);
+          return [];
+        }),
       );
 
       return forkJoin({
@@ -555,11 +601,9 @@ const importPromptsEpic: AppEpic = (action$) =>
       if (!isPromptsFormat(promptsHistory)) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              translate(errorsMessages.unsupportedDataFormat, {
-                ns: 'common',
-              }),
-            ),
+            translate(errorsMessages.unsupportedDataFormat, {
+              ns: 'common',
+            }),
           ),
         );
       }
@@ -584,11 +628,9 @@ const importPromptsEpic: AppEpic = (action$) =>
       if (isError) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              translate(errorsMessages.unsupportedDataFormat, {
-                ns: 'common',
-              }),
-            ),
+            translate(errorsMessages.unsupportedDataFormat, {
+              ns: 'common',
+            }),
           ),
         );
       }
@@ -759,17 +801,19 @@ const initPromptsEpic: AppEpic = (action$) =>
         of(PromptsActions.initPromptsSuccess()),
       );
     }),
+    catchError((err) => {
+      console.error(
+        'An error occurred while uploading prompts and folders:',
+        err,
+      );
+      return [];
+    }),
   );
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => PromptsActions.init.match(action)),
-    switchMap(() =>
-      concat(
-        // of(PromptsActions.initFolders()),
-        of(PromptsActions.initPrompts()),
-      ),
-    ),
+    switchMap(() => concat(of(PromptsActions.initPrompts()))),
   );
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
@@ -790,6 +834,14 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
         prompt: servicePrompt,
         originalPromptId: originalPrompt.id,
       });
+    }),
+    catchError((err) => {
+      console.error('An error occurred while uploading the prompt:', err);
+      return of(
+        UIActions.showErrorToast(
+          translate('An error occurred while uploading the prompt'),
+        ),
+      );
     }),
   );
 
