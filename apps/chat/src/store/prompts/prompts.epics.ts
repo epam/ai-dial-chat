@@ -42,7 +42,7 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import {
   exportPrompt,
   exportPrompts,
@@ -83,7 +83,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
       const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(
           DEFAULT_PROMPT_NAME,
-          prompts.filter((prompt) => !prompt.folderId),
+          prompts.filter((prompt) => isRootId(prompt.folderId)),
         ),
         description: '',
         content: '',
