@@ -621,6 +621,9 @@ export const conversationsSlice = createSlice({
               }
             : f,
       );
+      if (payload.allLoaded) {
+        state.conversationsLoaded = true;
+      }
       state.foldersStatus = payload.allLoaded
         ? UploadStatus.ALL_LOADED
         : UploadStatus.LOADED;

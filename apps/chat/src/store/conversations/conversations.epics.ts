@@ -34,11 +34,9 @@ import { combineEpics } from 'redux-observable';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   combineEntities,
-  updateEntitiesFoldersAndIds,
-} from '@/src/utils/app/common';
-import {
   filterMigratedEntities,
   filterOnlyMyEntities,
+  updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
   compareConversationsByDate,
@@ -187,9 +185,6 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
           ),
         );
       }
-      actions.push(
-        of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
-      );
 
       return concat(...actions);
     }),
@@ -205,34 +200,14 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
       const paths = selectedIds.flatMap((id) =>
         getParentFolderIdsFromEntityId(id),
       );
-      const uploadPaths = [undefined, ...paths];
-      return zip(
-        uploadPaths.map((path) =>
-          ConversationService.getConversationsAndFolders(path),
+      return concat(
+        of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
+        of(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: paths,
+            featureType: FeatureType.Chat,
+          }),
         ),
-      ).pipe(
-        switchMap((foldersAndEntities) => {
-          const folders = foldersAndEntities.flatMap((f) => f.folders);
-          const conversations = foldersAndEntities.flatMap((f) => f.entities);
-          return concat(
-            of(
-              ConversationsActions.setFolders({
-                folders,
-              }),
-            ),
-            of(
-              ConversationsActions.setConversations({
-                conversations,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: paths,
-                featureType: FeatureType.Chat,
-              }),
-            ),
-          );
-        }),
       );
     }),
   );
