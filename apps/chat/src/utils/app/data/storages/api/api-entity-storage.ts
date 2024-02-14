@@ -3,7 +3,8 @@ import { Observable, map } from 'rxjs';
 import {
   ApiKeys,
   ApiUtils,
-  encodePath,
+  decodeApiUrl,
+  encodeApiUrl,
   getFolderTypeByApiKey,
 } from '@/src/utils/server/api';
 
@@ -40,7 +41,7 @@ export abstract class ApiEntityStorage<
 
   private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
-    const id = decodeURI(entity.url);
+    const id = decodeApiUrl(entity.url);
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -52,7 +53,7 @@ export abstract class ApiEntityStorage<
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
-    encodePath(constructPath('api', entity.id));
+    encodeApiUrl(constructPath('api', entity.id));
 
   private getListingUrl = ({
     path,
@@ -61,7 +62,7 @@ export abstract class ApiEntityStorage<
     path?: string;
     resultQuery?: string;
   }): string => {
-    const listingUrl = encodePath(
+    const listingUrl = encodeApiUrl(
       constructPath(
         'api/listing',
         path || getRootId({ apiKey: this.getStorageKey() }),
