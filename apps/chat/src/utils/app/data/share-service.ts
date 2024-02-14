@@ -20,6 +20,7 @@ import {
 import {
   ApiKeys,
   ApiUtils,
+  decodeApiUrl,
   getFolderTypeByApiKey,
   parseConversationApiKey,
   parsePromptApiKey,
@@ -66,25 +67,26 @@ export class ShareService {
 
             if (entity.nodeType === BackendDataNodeType.ITEM) {
               const conversation = conversationResource as BackendChatEntity;
-              const id = decodeURI(
-                conversation.url.slice(0, conversation.url.length - 1),
-              );
+              const id = decodeApiUrl(conversation.url);
+
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
               entities.push({
                 ...parseConversationApiKey(conversation.name),
-                id: decodeURI(conversation.url),
+                id,
                 lastActivityDate: conversation.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
               });
             }
             if (entity.nodeType === BackendDataNodeType.FOLDER) {
               const folder = conversationResource as BackendChatFolder;
-              const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+              const id = decodeApiUrl(
+                folder.url.slice(0, folder.url.length - 1),
+              );
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
               folders.push({
-                id: decodeURI(folder.url.slice(0, folder.url.length - 1)),
+                id,
                 name: folder.name,
                 folderId: constructPath(apiKey, bucket, parentPath),
                 type: getFolderTypeByApiKey(ApiKeys.Conversations),
@@ -99,25 +101,25 @@ export class ShareService {
 
             if (entity.nodeType === BackendDataNodeType.ITEM) {
               const conversation = conversationResource as BackendChatEntity;
-              const id = decodeURI(
-                conversation.url.slice(0, conversation.url.length - 1),
-              );
+              const id = decodeApiUrl(conversation.url);
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
               entities.push({
                 ...parsePromptApiKey(conversation.name),
-                id: decodeURI(conversation.url),
+                id,
                 lastActivityDate: conversation.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
               });
             }
             if (entity.nodeType === BackendDataNodeType.FOLDER) {
               const folder = conversationResource as BackendChatFolder;
-              const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+              const id = decodeApiUrl(
+                folder.url.slice(0, folder.url.length - 1),
+              );
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
               folders.push({
-                id: decodeURI(folder.url.slice(0, folder.url.length - 1)),
+                id,
                 name: folder.name,
                 folderId: constructPath(apiKey, bucket, parentPath),
                 type: getFolderTypeByApiKey(ApiKeys.Prompts),
