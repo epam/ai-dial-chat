@@ -105,10 +105,8 @@ export const API = {
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
   bucketHost: '/api/bucket',
-  conversationsHost: '/api/conversations',
-  promptsHost: '/api/prompts',
-  conversationsListingHost: () => `${API.conversationsHost}/listing`,
-  promptsListingHost: () => `${API.promptsHost}/listing`,
+  conversationsHost: '/api/listing/conversations',
+  promptsHost: '/api/listing/prompts',
   fileHost: '/api/files',
 };
 

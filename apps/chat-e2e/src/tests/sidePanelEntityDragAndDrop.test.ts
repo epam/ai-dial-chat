@@ -43,7 +43,6 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await folderConversations.expandCollapseFolder(
       conversationInFolder.folders.name,
-      { isHttpMethodTriggered: true },
     );
     await chatBar.drugConversationFromFolder(
       conversationInFolder.folders.name,
@@ -221,7 +220,6 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandCollapseFolder(
           folderConversation.folders.name,
-          { isHttpMethodTriggered: true },
         );
         await chatBar.drugAndDropConversationToFolderConversation(
           folderConversation.folders.name,

@@ -40,7 +40,7 @@ export class PromptModalDialog extends BaseElement {
   ) {
     await this.fillPromptDetails(name, description, value);
     const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'PUT',
+      (resp) => resp.request().method() === 'POST',
     );
     await this.saveButton.click();
     await respPromise;

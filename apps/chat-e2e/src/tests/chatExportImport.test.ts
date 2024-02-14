@@ -85,7 +85,6 @@ dialTest.skip(
         if (!isFolderExpanded) {
           await folderConversations.expandCollapseFolder(
             conversationInFolder.folders.name,
-            { isHttpMethodTriggered: true },
           );
         }
 
@@ -195,9 +194,7 @@ dialTest.skip(
         await chatBar.createNewFolder();
         await chatBar.createNewConversation();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name, {
-            isHttpMethodTriggered: true,
-          });
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
         }
         exportedData = await dialHomePage.downloadData(() =>
           chatBar.exportButton.click(),
@@ -313,7 +310,6 @@ dialTest.skip(
         if (!isFolderExpanded) {
           await folderConversations.expandCollapseFolder(
             conversationsInFolder.folders.name,
-            { isHttpMethodTriggered: true },
           );
         }
         expect
@@ -491,7 +487,6 @@ dialTest.skip(
 
         await folderConversations.expandCollapseFolder(
           Import.oldVersionAppFolderName,
-          { isHttpMethodTriggered: true },
         );
         expect
           .soft(
@@ -633,9 +628,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name, {
-            isHttpMethodTriggered: true,
-          });
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
         }
 
         await folderConversations.openFolderEntityDropdownMenu(
@@ -778,9 +771,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name, {
-            isHttpMethodTriggered: true,
-          });
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
         }
 
         for (let i = 0; i <= 2; i = i + 2) {
@@ -907,9 +898,7 @@ dialTest.skip(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-        await folderConversations.expandCollapseFolder(nestedFolder.name, {
-          isHttpMethodTriggered: true,
-        });
+        await folderConversations.expandCollapseFolder(nestedFolder.name);
       }
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
@@ -940,9 +929,7 @@ dialTest.skip(
       'Verify imported conversations is in 3rd level folder on the root level',
       async () => {
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name, {
-            isHttpMethodTriggered: true,
-          });
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
         }
         await folderConversations
           .getFolderEntity(

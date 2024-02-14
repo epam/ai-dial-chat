@@ -1333,7 +1333,6 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandCollapseFolder(
           firstFolderConversation.folders.name,
-          { isHttpMethodTriggered: true },
         );
         await folderConversations.openFolderEntityDropdownMenu(
           firstFolderConversation.folders.name,

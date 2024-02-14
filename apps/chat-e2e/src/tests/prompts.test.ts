@@ -329,7 +329,6 @@ dialTest(
     await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
     await folderConversations.expandCollapseFolder(
       conversationInFolder.folders.name,
-      { isHttpMethodTriggered: true },
     );
     await promptBar.deleteAllEntities();
     await confirmationDialog.cancelDialog();
@@ -442,7 +441,6 @@ dialTest(
     await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
     await folderConversations.expandCollapseFolder(
       conversationInFolder.folders.name,
-      { isHttpMethodTriggered: true },
     );
     await conversations
       .getConversationByName(singleConversation.name)
@@ -458,7 +456,6 @@ dialTest(
           .waitFor({ state: 'hidden' });
         await folderConversations.expandCollapseFolder(
           conversationInFolder.folders.name,
-          { isHttpMethodTriggered: true },
         );
       } else {
         await folderConversations

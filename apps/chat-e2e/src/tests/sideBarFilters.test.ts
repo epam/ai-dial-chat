@@ -77,17 +77,13 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name, {
-            isHttpMethodTriggered: true,
-          });
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
         }
         await folderConversations.expandCollapseFolder(
           ExpectedConstants.newFolderWithIndexTitle(1),
-          { isHttpMethodTriggered: true },
         );
         await folderConversations.expandCollapseFolder(
           folderConversation.folders.name,
-          { isHttpMethodTriggered: true },
         );
         await chatFilter.openFilterDropdownMenu();
         await chatFilterDropdownMenu.selectMenuOption(

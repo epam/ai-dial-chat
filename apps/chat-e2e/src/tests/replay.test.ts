@@ -200,9 +200,7 @@ dialTest(
           isNewConversationVisible: true,
         });
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name, {
-            isHttpMethodTriggered: true,
-          });
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
         }
         for (let i = 0; i < nestedLevels; i = i + 2) {
           await folderConversations.openFolderEntityDropdownMenu(
@@ -1011,7 +1009,6 @@ dialTest.skip(
         );
         await folderConversations.expandCollapseFolder(
           Import.oldVersionAppFolderName,
-          { isHttpMethodTriggered: true },
         );
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,

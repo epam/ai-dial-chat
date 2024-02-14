@@ -253,8 +253,7 @@ dialTest(
           .toBeFalsy();
 
         await folderConversations.expandCollapseFolder(
-          conversationInFolder.folders.name,
-          { isHttpMethodTriggered: true },
+          conversationInFolder.folders.name
         );
         isFolderCaretExpanded = await folderConversations.isFolderCaretExpanded(
           conversationInFolder.folders.name,
@@ -415,9 +414,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name, {
-            isHttpMethodTriggered: true,
-          });
+          await folderConversations.expandCollapseFolder(nestedFolder.name);
         }
         await folderConversations.openFolderDropdownMenu(
           nestedFolders[levelToDelete].name,

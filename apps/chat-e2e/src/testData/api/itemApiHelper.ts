@@ -6,19 +6,21 @@ import { expect } from '@playwright/test';
 
 export class ItemApiHelper extends BaseApiHelper {
   public async deleteAllData() {
-    const conversations = await this.listItems(API.conversationsListingHost());
-    const prompts = await this.listItems(API.promptsListingHost());
+    const conversations = await this.listItems(API.conversationsHost);
+    const prompts = await this.listItems(API.promptsHost);
     await this.deleteBackendItem(...conversations, ...prompts);
   }
 
   public async listItems(url: string) {
-    const response = await this.request.get(url, {
-      params: {
-        filter: BackendDataNodeType.ITEM,
-        bucket: BucketUtil.getBucket(),
-        recursive: true,
+    const response = await this.request.get(
+      `${url}/${BucketUtil.getBucket()}`,
+      {
+        params: {
+          filter: BackendDataNodeType.ITEM,
+          recursive: true,
+        },
       },
-    });
+    );
     const entities = (await response.json()) as BackendDataEntity[];
     expect(
       response.status(),
