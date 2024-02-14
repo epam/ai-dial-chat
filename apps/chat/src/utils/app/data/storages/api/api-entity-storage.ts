@@ -3,6 +3,8 @@ import { EMPTY, Observable, catchError, map, of } from 'rxjs';
 import {
   ApiKeys,
   ApiUtils,
+  decodeApiUrl,
+  encodeApiUrl,
   getFolderTypeByApiKey,
 } from '@/src/utils/server/api';
 
@@ -26,7 +28,7 @@ export abstract class ApiEntityStorage<
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
-    const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+    const id = decodeApiUrl(folder.url.slice(0, folder.url.length - 1));
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -39,7 +41,7 @@ export abstract class ApiEntityStorage<
 
   private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
-    const id = this.decodePath(entity.url);
+    const id = decodeApiUrl(entity.url);
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -50,17 +52,11 @@ export abstract class ApiEntityStorage<
     } as unknown as TEntityInfo;
   }
 
-  private encodePath = (path: string): string =>
-    constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
-
-  private decodePath = (path: string): string =>
-    constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
-
   private getEntityUrl = (entity: TEntityInfo): string =>
-    this.encodePath(constructPath('api', entity.id));
+    encodeApiUrl(constructPath('api', entity.id));
 
   private getListingUrl = (resultQuery: string): string => {
-    const listingUrl = this.encodePath(
+    const listingUrl = encodeApiUrl(
       constructPath('api', this.getStorageKey(), 'listing'),
     );
     return `${listingUrl}?${resultQuery}`;

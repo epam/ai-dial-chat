@@ -287,7 +287,6 @@ export function PromptFolders() {
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
   );
-  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const commonSearchFilter = useAppSelector(
     PromptsSelectors.selectMyItemsFilters,
   );
@@ -308,7 +307,7 @@ export function PromptFolders() {
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
-          openByDefault: !!searchTerm.length,
+          openByDefault: true,
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
@@ -316,7 +315,7 @@ export function PromptFolders() {
           filters: SharedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
-          openByDefault: !!searchTerm.length,
+          openByDefault: true,
         },
         {
           name: t('Pinned prompts'),
@@ -331,7 +330,6 @@ export function PromptFolders() {
       isFilterEmpty,
       isPublishingEnabled,
       isSharingEnabled,
-      searchTerm.length,
       t,
     ],
   );

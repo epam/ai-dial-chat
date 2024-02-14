@@ -9,7 +9,12 @@ import {
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { ApiKeys, ApiUtils } from '../../server/api';
+import {
+  ApiKeys,
+  ApiUtils,
+  decodeApiUrl,
+  encodeApiUrl,
+} from '../../server/api';
 import { constructPath } from '../file';
 import { getRootId } from '../id';
 import { BucketService } from './bucket-service';
@@ -20,7 +25,7 @@ export class FileService {
     relativePath: string | undefined,
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
-    const resultPath = encodeURI(
+    const resultPath = encodeApiUrl(
       constructPath(BucketService.getBucket(), relativePath, fileName),
     );
 
@@ -47,11 +52,13 @@ export class FileService {
           }
 
           const typedResult = result as BackendFile;
-          const relativePath = typedResult.parentPath || undefined;
+          const relativePath = typedResult.parentPath
+            ? decodeApiUrl(typedResult.parentPath)
+            : undefined;
 
           return {
             result: {
-              id: decodeURI(typedResult.url),
+              id: decodeApiUrl(typedResult.url),
               name: typedResult.name,
               absolutePath: constructPath(
                 ApiKeys.Files,
@@ -91,7 +98,9 @@ export class FileService {
     return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
-          const relativePath = folder.parentPath || undefined;
+          const relativePath = folder.parentPath
+            ? decodeApiUrl(folder.parentPath)
+            : undefined;
 
           return {
             id: constructPath(
@@ -120,7 +129,7 @@ export class FileService {
   }
 
   public static removeFile(filePath: string): Observable<void> {
-    const resultPath = encodeURI(
+    const resultPath = encodeApiUrl(
       constructPath(BucketService.getBucket(), filePath),
     );
 
@@ -147,7 +156,9 @@ export class FileService {
     return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {
-          const relativePath = file.parentPath || undefined;
+          const relativePath = file.parentPath
+            ? decodeApiUrl(file.parentPath)
+            : undefined;
 
           return {
             id: constructPath(
