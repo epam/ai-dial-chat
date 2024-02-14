@@ -9,7 +9,6 @@ import {
 
 import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
-import { constructPath } from '@/src/utils/app/file';
 import { generateNextName } from '@/src/utils/app/folders';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 
