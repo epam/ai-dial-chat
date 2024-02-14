@@ -2,7 +2,10 @@ import { DragEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { getRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
@@ -14,7 +17,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
@@ -46,8 +49,11 @@ const PromptActionsBlock = () => {
 };
 
 const Promptbar = () => {
+  const { t } = useTranslation(Translation.PromptBar);
+
   const dispatch = useAppDispatch();
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const myItemsFilters = useAppSelector(PromptsSelectors.selectMyItemsFilters);
   const areEntitiesUploaded = useAppSelector(
@@ -64,20 +70,44 @@ const Promptbar = () => {
     (e: DragEvent<HTMLDivElement>) => {
       if (e.dataTransfer) {
         const promptData = e.dataTransfer.getData(MoveType.Prompt);
+        const folderId = getRootId({ apiKey: ApiKeys.Prompts });
+
         if (promptData) {
           const prompt = JSON.parse(promptData);
+
+          if (
+            !isEntityNameOnSameLevelUnique(
+              prompt.name,
+              { ...prompt, folderId },
+              allPrompts,
+            )
+          ) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  'Prompt with name "{{name}}" already exists at the root.',
+                  {
+                    ns: 'prompt',
+                    name: prompt.name,
+                  },
+                ),
+                type: 'error',
+              }),
+            );
+
+            return;
+          }
+
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
-              values: {
-                folderId: e.currentTarget.dataset.folderId,
-              },
+              values: { folderId },
             }),
           );
         }
       }
     },
-    [dispatch],
+    [allPrompts, dispatch, t],
   );
 
   return (
