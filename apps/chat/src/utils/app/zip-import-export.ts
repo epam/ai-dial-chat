@@ -21,9 +21,9 @@ interface GetZippedFile {
 }
 
 const getAttachmentFromApi = async (file: DialFile) => {
-  const fileResult = await fetch(
-    `api/${constructPath(file.absolutePath, file.name)}`,
-  );
+  const path = encodeURI(constructPath(file.absolutePath, file.name));
+
+  const fileResult = await fetch(`api/${path}`);
   return fileResult.blob();
 };
 
@@ -35,8 +35,8 @@ export async function getZippedFile({
   const zip = new JSZip();
   files.forEach((file) => {
     const fileBlob = getAttachmentFromApi(file);
-
-    zip.file(`res/${file.id}`, fileBlob);
+    const folderPath = file.folderId.replace(/^files\/[\w]+\//, '');
+    zip.file(`res/${folderPath}/${file.name}`, fileBlob);
   });
 
   const history = prepareConversationsForExport({ conversations, folders });
