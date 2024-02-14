@@ -159,12 +159,24 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
     }),
     switchMap(({ conversations, selectedConversationsIds }) => {
       const actions: Observable<AnyAction>[] = [];
+
       if (conversations.length) {
         actions.push(
           of(
             ConversationsActions.addConversations({
               conversations,
               selectAdded: true,
+            }),
+          ),
+        );
+        const paths = selectedConversationsIds.flatMap((id) =>
+          getParentFolderIdsFromEntityId(id),
+        );
+        actions.push(
+          of(
+            UIActions.setOpenedFoldersIds({
+              openedFolderIds: paths,
+              featureType: FeatureType.Chat,
             }),
           ),
         );
@@ -176,11 +188,12 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
           }),
         ),
       );
-      if (!conversations.length || !selectedConversationsIds.length) {
+      if (!conversations.length) {
         actions.push(
           of(
             ConversationsActions.createNewConversations({
               names: [translate(DEFAULT_CONVERSATION_NAME)],
+              shouldUploadConversationsForCompare: true,
             }),
           ),
         );
@@ -195,21 +208,9 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
     filter((action) =>
       ConversationsActions.initFoldersAndConversations.match(action),
     ),
-    switchMap(() => ConversationService.getSelectedConversationsIds()),
-    switchMap((selectedIds) => {
-      const paths = selectedIds.flatMap((id) =>
-        getParentFolderIdsFromEntityId(id),
-      );
-      return concat(
-        of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
-        of(
-          UIActions.setOpenedFoldersIds({
-            openedFolderIds: paths,
-            featureType: FeatureType.Chat,
-          }),
-        ),
-      );
-    }),
+    switchMap(() =>
+      of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
+    ),
   );
 
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
@@ -221,16 +222,26 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         state$.value,
       ),
       conversations: ConversationsSelectors.selectConversations(state$.value),
+      shouldUploadConversationsForCompare:
+        payload.shouldUploadConversationsForCompare,
     })),
-    switchMap(({ names, lastConversation, conversations }) =>
-      forkJoin({
-        names: of(names),
-        lastConversation:
-          lastConversation && lastConversation.status !== UploadStatus.LOADED
-            ? ConversationService.getConversation(lastConversation)
-            : (of(lastConversation) as Observable<Conversation>),
-        conversations: of(conversations),
-      }),
+    switchMap(
+      ({
+        names,
+        lastConversation,
+        conversations,
+        shouldUploadConversationsForCompare,
+      }) =>
+        forkJoin({
+          names: of(names),
+          lastConversation:
+            lastConversation && lastConversation.status !== UploadStatus.LOADED
+              ? ConversationService.getConversation(lastConversation)
+              : (of(lastConversation) as Observable<Conversation>),
+          conversations: shouldUploadConversationsForCompare
+            ? ConversationService.getConversations()
+            : of(conversations),
+        }),
     ),
     switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
