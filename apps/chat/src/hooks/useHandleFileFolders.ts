@@ -77,7 +77,7 @@ export const useHandleFileFolders = (
    * @param folderId - ID of the folder to toggle.
    */
   const handleToggleFolder = useCallback(
-    (folderId: string) => {
+    (folderId: string | undefined) => {
       if (!folderId) {
         setIsAllFilesOpened((value) => !value);
         setOpenedFoldersIds([]);
