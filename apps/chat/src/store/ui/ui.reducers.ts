@@ -104,6 +104,12 @@ export const uiSlice = createSlice({
         response?: Response;
       }>,
     ) => state,
+    setAllOpenedFoldersIds: (
+      state,
+      { payload }: PayloadAction<Record<FeatureType, string[]>>,
+    ) => {
+      state.openedFoldersIds = payload;
+    },
     setOpenedFoldersIds: (
       state,
       {

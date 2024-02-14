@@ -3,8 +3,11 @@ import { Observable, map } from 'rxjs';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
+import { FeatureType } from '@/src/types/common';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
+
+import { openFoldersInitialState } from '@/src/store/ui/ui.reducers';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
@@ -129,6 +132,24 @@ export class DataService {
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
+  }
+
+  public static getOpenedFolderIds(): Observable<
+    Record<FeatureType, string[]>
+  > {
+    return BrowserStorage.getData(
+      UIStorageKeys.OpenedFoldersIds,
+      openFoldersInitialState,
+    );
+  }
+
+  public static setOpenedFolderIds(
+    openedFolderIds: Record<FeatureType, string[]>,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.OpenedFoldersIds,
+      openedFolderIds,
+    );
   }
 
   public static getClosedAnnouncement(): Observable<string | undefined> {

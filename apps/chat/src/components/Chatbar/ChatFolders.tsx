@@ -23,7 +23,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
@@ -202,6 +202,22 @@ export const ChatSection = ({
   const { t } = useTranslation(Translation.SideBar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const openFolderIds = useAppSelector((state) =>
+    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
+  );
+  const dispatch = useAppDispatch();
+  const sectionId = `${FeatureType.Chat}-section-${name}`;
+  const isSectionOpen = openByDefault
+    ? !openFolderIds.includes(sectionId)
+    : openFolderIds.includes(sectionId);
+  const handleSectionOpen = useCallback(() => {
+    dispatch(
+      UIActions.toggleFolder({
+        id: sectionId,
+        featureType: FeatureType.Chat,
+      }),
+    );
+  }, [dispatch, sectionId]);
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -269,9 +285,10 @@ export const ChatSection = ({
   return (
     <CollapsableSection
       name={t(name)}
-      openByDefault={openByDefault}
+      openByDefault={isSectionOpen}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
+      onToggle={handleSectionOpen}
     >
       <div>
         {rootFolders.map((folder, index, arr) => {
@@ -302,7 +319,6 @@ export function ChatFolders() {
   const isFilterEmpty = useAppSelector(
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
-  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const commonItemFilter = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
@@ -324,7 +340,7 @@ export function ChatFolders() {
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
-          openByDefault: !!searchTerm.length,
+          openByDefault: true,
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
@@ -332,7 +348,7 @@ export function ChatFolders() {
           filters: SharedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
-          openByDefault: !!searchTerm.length,
+          openByDefault: true,
         },
         {
           name: t('Pinned chats'),
@@ -342,14 +358,7 @@ export function ChatFolders() {
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [
-      commonItemFilter,
-      isFilterEmpty,
-      isPublishingEnabled,
-      isSharingEnabled,
-      searchTerm.length,
-      t,
-    ],
+    [commonItemFilter, isFilterEmpty, isPublishingEnabled, isSharingEnabled, t],
   );
 
   return (
