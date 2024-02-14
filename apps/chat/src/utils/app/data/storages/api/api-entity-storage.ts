@@ -150,7 +150,7 @@ export abstract class ApiEntityStorage<
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
-    }).pipe(catchError(() => of())); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    }) // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
   }
 
   updateEntity(entity: TEntity): Observable<void> {
