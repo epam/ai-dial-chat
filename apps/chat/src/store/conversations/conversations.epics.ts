@@ -34,11 +34,9 @@ import { combineEpics } from 'redux-observable';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   combineEntities,
-  updateEntitiesFoldersAndIds,
-} from '@/src/utils/app/common';
-import {
   filterMigratedEntities,
   filterOnlyMyEntities,
+  updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
   compareConversationsByDate,
@@ -161,12 +159,24 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
     }),
     switchMap(({ conversations, selectedConversationsIds }) => {
       const actions: Observable<AnyAction>[] = [];
+
       if (conversations.length) {
         actions.push(
           of(
             ConversationsActions.addConversations({
               conversations,
               selectAdded: true,
+            }),
+          ),
+        );
+        const paths = selectedConversationsIds.flatMap((id) =>
+          getParentFolderIdsFromEntityId(id),
+        );
+        actions.push(
+          of(
+            UIActions.setOpenedFoldersIds({
+              openedFolderIds: paths,
+              featureType: FeatureType.Chat,
             }),
           ),
         );
@@ -178,18 +188,16 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
           }),
         ),
       );
-      if (!conversations.length || !selectedConversationsIds.length) {
+      if (!conversations.length) {
         actions.push(
           of(
             ConversationsActions.createNewConversations({
               names: [translate(DEFAULT_CONVERSATION_NAME)],
+              shouldUploadConversationsForCompare: true,
             }),
           ),
         );
       }
-      actions.push(
-        of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
-      );
 
       return concat(...actions);
     }),
@@ -200,41 +208,9 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
     filter((action) =>
       ConversationsActions.initFoldersAndConversations.match(action),
     ),
-    switchMap(() => ConversationService.getSelectedConversationsIds()),
-    switchMap((selectedIds) => {
-      const paths = selectedIds.flatMap((id) =>
-        getParentFolderIdsFromEntityId(id),
-      );
-      const uploadPaths = [undefined, ...paths];
-      return zip(
-        uploadPaths.map((path) =>
-          ConversationService.getConversationsAndFolders(path),
-        ),
-      ).pipe(
-        switchMap((foldersAndEntities) => {
-          const folders = foldersAndEntities.flatMap((f) => f.folders);
-          const conversations = foldersAndEntities.flatMap((f) => f.entities);
-          return concat(
-            of(
-              ConversationsActions.setFolders({
-                folders,
-              }),
-            ),
-            of(
-              ConversationsActions.setConversations({
-                conversations,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: paths,
-                featureType: FeatureType.Chat,
-              }),
-            ),
-          );
-        }),
-      );
-    }),
+    switchMap(() =>
+      of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
+    ),
   );
 
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
@@ -246,16 +222,26 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         state$.value,
       ),
       conversations: ConversationsSelectors.selectConversations(state$.value),
+      shouldUploadConversationsForCompare:
+        payload.shouldUploadConversationsForCompare,
     })),
-    switchMap(({ names, lastConversation, conversations }) =>
-      forkJoin({
-        names: of(names),
-        lastConversation:
-          lastConversation && lastConversation.status !== UploadStatus.LOADED
-            ? ConversationService.getConversation(lastConversation)
-            : (of(lastConversation) as Observable<Conversation>),
-        conversations: of(conversations),
-      }),
+    switchMap(
+      ({
+        names,
+        lastConversation,
+        conversations,
+        shouldUploadConversationsForCompare,
+      }) =>
+        forkJoin({
+          names: of(names),
+          lastConversation:
+            lastConversation && lastConversation.status !== UploadStatus.LOADED
+              ? ConversationService.getConversation(lastConversation)
+              : (of(lastConversation) as Observable<Conversation>),
+          conversations: shouldUploadConversationsForCompare
+            ? ConversationService.getConversations()
+            : of(conversations),
+        }),
     ),
     switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
@@ -777,6 +763,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         const preparedConversations = getPreparedConversations({
           conversations: notMigratedConversations,
           conversationsFolders,
+          addRoot: true,
         });
 
         let migratedConversationsCount = 0;
