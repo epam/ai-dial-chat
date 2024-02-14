@@ -54,6 +54,16 @@ export const isLatestExportFormat = isExportFormatV5;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
+
+export function cleanFolders(folders: FolderInterface[]) {
+  return (folders || []).map((chatFolder) => ({
+    id: chatFolder.id,
+    name: chatFolder.name,
+    type: FolderType.Chat,
+    folderId: getRootId({ apiKey: ApiKeys.Conversations }),
+  }));
+}
+
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
@@ -86,7 +96,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV3(data)) {
     return {
       history: cleanConversationHistory(data.history),
-      folders: [...data.folders],
+      folders: cleanFolders(data.folders),
       version: 5,
       prompts: [],
       isError: false,
@@ -95,9 +105,9 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
 
   if (isExportFormatV4(data)) {
     return {
-      ...data,
       version: 5,
       history: cleanConversationHistory(data.history),
+      folders: cleanFolders(data.folders),
       prompts: data.prompts || [],
       isError: false,
     };

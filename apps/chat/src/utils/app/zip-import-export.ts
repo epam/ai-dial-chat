@@ -27,6 +27,9 @@ const getAttachmentFromApi = async (file: DialFile) => {
   return fileResult.blob();
 };
 
+const getFolderPath = (folderId: string) =>
+  folderId.replace(/^files\/[\w]+\//, '');
+
 export async function getZippedFile({
   files,
   conversations,
@@ -106,7 +109,12 @@ export const getUnZipAttachments = async ({
         getFirstSlashIndex(relativePath) + substringLength,
       );
 
-      return fileId === attachment.id;
+      if (!attachment.folderId) {
+        return false;
+      }
+      const attachmentId = `${getFolderPath(attachment.folderId)}/${attachment.name}`;
+
+      return fileId === attachmentId;
     });
 
     if (!fileToUpload) {

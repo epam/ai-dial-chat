@@ -14,8 +14,9 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 
 import { cleanConversation } from '../../../clean';
 import { getGeneratedConversationId } from '../../../conversation';
-import { notAllowedSymbolsRegex } from '../../../file';
+import { constructPath, notAllowedSymbolsRegex } from '../../../file';
 import { getPathToFolderById } from '../../../folders';
+import { getRootId, isRootId } from '../../../id';
 import { ConversationService } from '../../conversation-service';
 import { ApiEntityStorage } from './api-entity-storage';
 
@@ -86,15 +87,19 @@ export const getPreparedConversations = ({
       true,
     );
     const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+    const rootId = isRootId(path)
+      ? path
+      : getRootId({ apiKey: ApiKeys.Conversations });
+    const folderId = constructPath(rootId, path);
 
     return {
       ...conv,
       id: getGeneratedConversationId({
         ...conv,
         name: newName,
-        folderId: path,
+        folderId: folderId,
       }),
       name: newName,
-      folderId: path,
+      folderId: folderId,
     };
   }); // to send conversation with proper parentPath and lastActivityDate order

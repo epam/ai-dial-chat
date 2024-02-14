@@ -223,6 +223,13 @@ const importConversationsEpic: AppEpic = (action$) =>
       }),
     ),
     switchMap(({ conversationsListing, importedData }) => {
+      if (!conversationsListing.length) {
+        return forkJoin({
+          currentConversations: of([]),
+          currentFolders: of([]),
+          importedData: of(importedData),
+        });
+      }
       const foldersIds = Array.from(
         new Set(conversationsListing.map((info) => info.folderId)),
       );
@@ -260,7 +267,7 @@ const importConversationsEpic: AppEpic = (action$) =>
 
       if (isError) {
         toast.error(errorsMessages.unsupportedDataFormat);
-        return of(ImportExportActions.resetState());
+        return of(ImportExportActions.importFail());
       }
 
       const conversationsInfoToUpload = history.filter((conversation) => {
@@ -280,7 +287,7 @@ const importConversationsEpic: AppEpic = (action$) =>
           (folder) => folder.id === id,
         );
       });
-      // upload to the API
+
       const preparedConversations = getPreparedConversations({
         conversations: importedConversations,
         conversationsFolders: foldersToUpload,
@@ -291,6 +298,7 @@ const importConversationsEpic: AppEpic = (action$) =>
         ...preparedConversations,
       ];
 
+      // upload to the API
       return zip(
         preparedConversations.map((info) =>
           ConversationService.createConversation(info),
