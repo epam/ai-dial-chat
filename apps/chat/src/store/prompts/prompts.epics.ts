@@ -86,19 +86,22 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         content: '',
         folderId: getRootId({ apiKey: ApiKeys.Prompts }),
       });
-
-      return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
+      return PromptService.createPrompt(newPrompt).pipe(
+        switchMap(() =>
+          of(PromptsActions.createNewPromptSuccess({ newPrompt })),
+        ),
+        catchError((err) => {
+          console.error("New prompt wasn't created:", err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
+      );
     }),
-  );
-
-const createNewPromptSuccessEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PromptsActions.createNewPromptSuccess.match),
-    switchMap(({ payload }) =>
-      PromptService.createPrompt(payload.newPrompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
-      ),
-    ),
   );
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
@@ -117,7 +120,16 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ promptsFolders }) => {
-      return PromptService.setPromptFolders(promptsFolders);
+      return PromptService.setPromptFolders(promptsFolders).pipe(
+        catchError((err) => {
+          console.error('An error occurred during the saving folders', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('An error occurred during the saving folders'),
+            ),
+          );
+        }),
+      );
     }),
     ignoreElements(),
   );
@@ -139,7 +151,12 @@ const getOrUploadPrompt = (
     });
 
     return forkJoin({
-      prompt: PromptService.getPrompt(prompt),
+      prompt: PromptService.getPrompt(prompt).pipe(
+        catchError((err) => {
+          console.error('The prompt was not found:', err);
+          return of(null);
+        }),
+      ),
       payload: of(payload),
     });
   } else {
@@ -154,8 +171,16 @@ const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.savePrompt.match),
     switchMap(({ payload: newPrompt }) => {
-      return PromptService.updatePrompt(newPrompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      return PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY));
+    }),
+    catchError((err) => {
+      console.error(err);
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            'An error occurred while saving the prompt. Please refresh the page.',
+          ),
+        ),
       );
     }),
   );
@@ -165,15 +190,25 @@ const recreatePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.recreatePrompt.match),
     mergeMap(({ payload }) => {
       const { parentPath } = splitEntityId(payload.old.id);
-      return concat(
-        PromptService.createPrompt(payload.new).pipe(
-          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
-        ),
+      return zip(
+        PromptService.createPrompt(payload.new),
         PromptService.deletePrompt({
           id: payload.old.id,
           folderId: parentPath || getRootId({ apiKey: ApiKeys.Prompts }),
           name: payload.old.name,
-        }).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        }),
+      ).pipe(
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the prompt. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -189,7 +224,13 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       };
 
       if (!prompt) {
-        return EMPTY; // TODO: handle?
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this prompt has been deleted. Please reload the page',
+            ),
+          ),
+        );
       }
 
       const newPrompt: Prompt = {
@@ -217,7 +258,17 @@ export const deletePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.deletePrompt.match),
     switchMap(({ payload }) => {
       return PromptService.deletePrompt(payload.prompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                `An error occurred while saving the prompt "${payload.prompt.name}"`,
+              ),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -240,14 +291,39 @@ const deletePromptsEpic: AppEpic = (action$) =>
       deletePrompts: payload.promptsToRemove,
     })),
     switchMap(({ deletePrompts }) =>
-      concat(
-        of(
-          PromptsActions.deletePromptsSuccess({
-            deletePrompts,
-          }),
+      zip(
+        deletePrompts.map((info) =>
+          PromptService.deletePrompt(info).pipe(
+            switchMap(() => of(null)),
+            catchError((err) => {
+              console.error(
+                `An error occurred while deleting the prompt "${info.name}"`,
+                err,
+              );
+              return info.name;
+            }),
+          ),
         ),
-        zip(deletePrompts.map((id) => PromptService.deletePrompt(id))).pipe(
-          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      ).pipe(
+        switchMap((failedNames) =>
+          concat(
+            iif(
+              () => failedNames.filter(Boolean).length > 0,
+              of(
+                UIActions.showErrorToast(
+                  translate(
+                    `An error occurred while saving the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                  ),
+                ),
+              ),
+              EMPTY,
+            ),
+            of(
+              PromptsActions.deletePromptsComplete({
+                deletePrompts,
+              }),
+            ),
+          ),
         ),
       ),
     ),
@@ -334,6 +410,14 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
+        catchError((err) => {
+          console.error('An error occurred while updating the folder:', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('An error occurred while updating the folder.'),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -344,7 +428,15 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) =>
       forkJoin({
         folderId: of(payload.folderId),
-        promptsToRemove: PromptService.getPrompts(payload.folderId, true),
+        promptsToRemove: PromptService.getPrompts(payload.folderId, true).pipe(
+          catchError((err) => {
+            console.error(
+              'An error occurred while uploading prompts and folders:',
+              err,
+            );
+            return [];
+          }),
+        ),
         folders: of(PromptsSelectors.selectFolders(state$.value)),
       }),
     ),
@@ -379,8 +471,17 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
 const exportPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.exportPrompts.match),
-    switchMap(
-      () => PromptService.getPrompts(undefined, true), //listing of all entities
+    switchMap(() =>
+      //listing of all entities
+      PromptService.getPrompts(undefined, true).pipe(
+        catchError((err) => {
+          console.error(
+            'An error occurred while uploading prompts and folders:',
+            err,
+          );
+          return [];
+        }),
+      ),
     ),
     switchMap((promptsListing) => {
       const foldersIds = Array.from(
@@ -400,6 +501,11 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
         //get all prompts from api
         prompts: zip(
           promptsListing.map((info) => PromptService.getPrompt(info)),
+        ).pipe(
+          catchError((err) => {
+            console.error('An error occurred while uploading prompts:', err);
+            return [];
+          }),
         ),
         folders: of(folders),
       });
@@ -441,7 +547,15 @@ const importPromptsEpic: AppEpic = (action$) =>
     filter(PromptsActions.importPrompts.match),
     switchMap(({ payload }) =>
       forkJoin({
-        promptsListing: PromptService.getPrompts(undefined, true), //listing of all entities
+        promptsListing: PromptService.getPrompts(undefined, true).pipe(
+          catchError((err) => {
+            console.error(
+              'An error occurred while uploading prompts and folders:',
+              err,
+            );
+            return [];
+          }),
+        ), //listing of all entities
         promptsHistory: of(payload.promptsHistory),
       }),
     ),
@@ -469,6 +583,11 @@ const importPromptsEpic: AppEpic = (action$) =>
       //get all prompts from api
       const currentPrompts = zip(
         promptsListing.map((info) => PromptService.getPrompt(info)),
+      ).pipe(
+        catchError((err) => {
+          console.error('An error occurred while uploading prompts:', err);
+          return [];
+        }),
       );
 
       return forkJoin({
@@ -481,12 +600,11 @@ const importPromptsEpic: AppEpic = (action$) =>
       const filteredPrompts = currentPrompts.filter(Boolean) as Prompt[];
       if (!isPromptsFormat(promptsHistory)) {
         return of(
-          UIActions.showToast({
-            message: translate(errorsMessages.unsupportedDataFormat, {
+          UIActions.showErrorToast(
+            translate(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
             }),
-            type: 'error',
-          }),
+          ),
         );
       }
       const preparedPrompts: Prompt[] = getPreparedPrompts({
@@ -509,12 +627,11 @@ const importPromptsEpic: AppEpic = (action$) =>
 
       if (isError) {
         return of(
-          UIActions.showToast({
-            message: translate(errorsMessages.unsupportedDataFormat, {
+          UIActions.showErrorToast(
+            translate(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
             }),
-            type: 'error',
-          }),
+          ),
         );
       }
       return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
@@ -684,17 +801,19 @@ const initPromptsEpic: AppEpic = (action$) =>
         of(PromptsActions.initPromptsSuccess()),
       );
     }),
+    catchError((err) => {
+      console.error(
+        'An error occurred while uploading prompts and folders:',
+        err,
+      );
+      return [];
+    }),
   );
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => PromptsActions.init.match(action)),
-    switchMap(() =>
-      concat(
-        // of(PromptsActions.initFolders()),
-        of(PromptsActions.initPrompts()),
-      ),
-    ),
+    switchMap(() => concat(of(PromptsActions.initPrompts()))),
   );
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
@@ -715,6 +834,14 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
         prompt: servicePrompt,
         originalPromptId: originalPrompt.id,
       });
+    }),
+    catchError((err) => {
+      console.error('An error occurred while uploading the prompt:', err);
+      return of(
+        UIActions.showErrorToast(
+          translate('An error occurred while uploading the prompt'),
+        ),
+      );
     }),
   );
 
@@ -738,7 +865,6 @@ export const PromptsEpics = combineEpics(
   deletePromptsEpic,
   updateFolderEpic,
   createNewPromptEpic,
-  createNewPromptSuccessEpic,
 
   uploadPromptEpic,
 );
