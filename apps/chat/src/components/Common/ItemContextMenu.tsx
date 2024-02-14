@@ -240,7 +240,6 @@ export default function ItemContextMenu({
         name: t('Delete'),
         dataQa: 'delete',
         Icon: IconTrashX,
-        display: !isExternal,
         onClick: onDelete,
       },
     ],
