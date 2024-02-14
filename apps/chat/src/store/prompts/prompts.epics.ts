@@ -71,9 +71,6 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
 
-const showErrorToast = (message: string) =>
-  UIActions.showToast({ message, type: 'error' });
-
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.createNewPrompt.match),
@@ -96,7 +93,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         catchError((err) => {
           console.error("New prompt wasn't created:", err);
           return of(
-            showErrorToast(
+            UIActions.showErrorToast(
               'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
             ),
           );
@@ -125,7 +122,9 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         catchError((err) => {
           console.error('An error occurred during the saving folders', err);
           return of(
-            showErrorToast('An error occurred during the saving folders'),
+            UIActions.showErrorToast(
+              'An error occurred during the saving folders',
+            ),
           );
         }),
       );
@@ -175,7 +174,7 @@ const savePromptEpic: AppEpic = (action$) =>
     catchError((err) => {
       console.error(err);
       return of(
-        showErrorToast(
+        UIActions.showErrorToast(
           'An error occurred while saving the prompt. Please refresh the page.',
         ),
       );
@@ -199,7 +198,7 @@ const recreatePromptEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            showErrorToast(
+            UIActions.showErrorToast(
               'An error occurred while saving the prompt. Please refresh the page.',
             ),
           );
@@ -220,7 +219,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
 
       if (!prompt) {
         return of(
-          showErrorToast(
+          UIActions.showErrorToast(
             'It looks like this prompt has been deleted. Please reload the page',
           ),
         );
@@ -255,7 +254,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            showErrorToast(
+            UIActions.showErrorToast(
               `The prompt "${payload.prompt.name}" has not been deleted successfully`,
             ),
           );
@@ -298,7 +297,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
             iif(
               () => failedNames.length > 0,
               of(
-                showErrorToast(
+                UIActions.showErrorToast(
                   `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
                 ),
               ),
@@ -543,7 +542,7 @@ const importPromptsEpic: AppEpic = (action$) =>
       const filteredPrompts = currentPrompts.filter(Boolean) as Prompt[];
       if (!isPromptsFormat(promptsHistory)) {
         return of(
-          showErrorToast(
+          UIActions.showErrorToast(
             translate(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
             }),
@@ -570,7 +569,7 @@ const importPromptsEpic: AppEpic = (action$) =>
 
       if (isError) {
         return of(
-          showErrorToast(
+          UIActions.showErrorToast(
             translate(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
             }),

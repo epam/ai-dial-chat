@@ -107,9 +107,6 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
-const showErrorToast = (message: string) =>
-  UIActions.showToast({ message: translate(message), type: 'error' });
-
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.init.match(action)),
@@ -324,7 +321,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             catchError((err) => {
               console.error("New conversation wasn't created:", err);
               return of(
-                showErrorToast(
+                UIActions.showErrorToast(
                   'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
                 ),
               );
@@ -350,7 +347,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       const { conversation } = conversationAndPayload;
       if (!conversation)
         return of(
-          showErrorToast(
+          UIActions.showErrorToast(
             'It looks like this conversation has been deleted. Please reload the page',
           ),
         );
@@ -418,7 +415,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       const { conversation } = conversationAndPayload;
       if (!conversation)
         return of(
-          showErrorToast(
+          UIActions.showErrorToast(
             'It looks like this conversation has been deleted. Please reload the page',
           ),
         );
@@ -479,7 +476,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     switchMap(({ conversationAndPayload: { conversation } }) => {
       if (!conversation) {
         return of(
-          showErrorToast(
+          UIActions.showErrorToast(
             'It looks like this conversation has been deleted. Please reload the page',
           ),
         );
@@ -525,7 +522,7 @@ const saveNewConversationEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            showErrorToast(
+            UIActions.showErrorToast(
               'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
             ),
           );
@@ -757,7 +754,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               iif(
                 () => failedNames.length > 0,
                 of(
-                  showErrorToast(
+                  UIActions.showErrorToast(
                     `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
                   ),
                 ),
@@ -1437,7 +1434,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        of(showErrorToast(message)),
+        of(UIActions.showErrorToast(message)),
       );
     }),
   );
@@ -1722,7 +1719,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
             err,
           );
           return of(
-            showErrorToast(
+            UIActions.showErrorToast(
               'An error occurred during the saving conversation folders',
             ),
           );
@@ -1804,7 +1801,7 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
       if (isInvalid) {
         actions.push(
           of(
-            showErrorToast(
+            UIActions.showErrorToast(
               'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
             ),
           ),
@@ -2112,7 +2109,7 @@ const saveConversationEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            showErrorToast(
+            UIActions.showErrorToast(
               'An error occurred while saving the conversation. Please refresh the page.',
             ),
           );
@@ -2135,7 +2132,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           return of(
-            showErrorToast(
+            UIActions.showErrorToast(
               'An error occurred while saving the conversation. Please refresh the page.',
             ),
           );
@@ -2157,7 +2154,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       };
       if (!conversation) {
         return of(
-          showErrorToast(
+          UIActions.showErrorToast(
             'It looks like this conversation has been deleted. Please reload the page',
           ),
         );
@@ -2248,7 +2245,7 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsFail.match),
     map(() =>
-      showErrorToast(
+      UIActions.showErrorToast(
         'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please refresh the page.',
       ),
     ),
