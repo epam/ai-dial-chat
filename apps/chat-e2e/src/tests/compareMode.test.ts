@@ -122,10 +122,17 @@ dialTest(
     await dialTest.step(
       'Open compare mode from 1st chat dropdown menu and verify chats with valid icons available for comparison',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [
+            defaultModel.iconUrl,
+            gpt4Model.iconUrl,
+            bisonModel.iconUrl,
+          ],
+        });
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
           thirdModelConversation.name,
+          3,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
