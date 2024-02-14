@@ -513,13 +513,13 @@ export const ChatView = memo(() => {
             id: conversation.id,
             values: {
               messages: clearStateForMessages(conversation.messages),
+              ...applySelectedModel(conversation, temporarySettings.modelId),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
+              assistantModelId: temporarySettings.currentAssistentModelId,
               selectedAddons: temporarySettings.addonsIds.filter(
                 (addonId) => addonsMap[addonId],
               ),
-              ...applySelectedModel(conversation, temporarySettings.modelId),
-              assistantModelId: temporarySettings.currentAssistentModelId,
             },
           }),
         );
