@@ -1,5 +1,6 @@
 import { Observable, forkJoin, of } from 'rxjs';
 
+import { getRootId } from '@/src/utils/app/id';
 import {
   ApiKeys,
   getConversationApiKey,
@@ -14,7 +15,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 
 import { cleanConversation } from '../../../clean';
 import { getGeneratedConversationId } from '../../../conversation';
-import { notAllowedSymbolsRegex } from '../../../file';
+import { constructPath, notAllowedSymbolsRegex } from '../../../file';
 import { getPathToFolderById } from '../../../folders';
 import { ConversationService } from '../../conversation-service';
 import { ApiEntityStorage } from './api-entity-storage';
@@ -33,15 +34,19 @@ export class ConversationApiStorage extends ApiEntityStorage<
       model: entity.model,
     };
   }
+
   cleanUpEntity(conversation: Conversation): Conversation {
     return cleanConversation(conversation);
   }
+
   getEntityKey(info: ConversationInfo): string {
     return getConversationApiKey(info);
   }
+
   parseEntityKey(key: string): Omit<ConversationInfo, 'folderId'> {
     return parseConversationApiKey(key);
   }
+
   getStorageKey(): ApiKeys {
     return ApiKeys.Conversations;
   }
@@ -75,9 +80,11 @@ export const getOrUploadConversation = (
 export const getPreparedConversations = ({
   conversations,
   conversationsFolders,
+  addRoot = false,
 }: {
   conversations: Conversation[];
   conversationsFolders: FolderInterface[];
+  addRoot?: boolean;
 }) =>
   conversations.map((conv) => {
     const { path } = getPathToFolderById(
@@ -85,6 +92,7 @@ export const getPreparedConversations = ({
       conv.folderId,
       true,
     );
+
     const newName = conv.name.replace(notAllowedSymbolsRegex, '');
 
     return {
@@ -95,6 +103,8 @@ export const getPreparedConversations = ({
         folderId: path,
       }),
       name: newName,
-      folderId: path,
+      folderId: addRoot
+        ? constructPath(getRootId({ apiKey: ApiKeys.Conversations }), path)
+        : path,
     };
   }); // to send conversation with proper parentPath and lastActivityDate order

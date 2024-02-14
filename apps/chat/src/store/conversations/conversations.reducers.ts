@@ -146,7 +146,10 @@ export const conversationsSlice = createSlice({
     },
     createNewConversations: (
       state,
-      _action: PayloadAction<{ names: string[] }>,
+      _action: PayloadAction<{
+        names: string[];
+        shouldUploadConversationsForCompare?: boolean;
+      }>,
     ) => state,
     publishConversation: (
       state,
@@ -271,6 +274,7 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds = [newConversation.id];
+      state.areSelectedConversationsLoaded = true;
     },
     createNewPlaybackConversation: (
       state,
@@ -627,6 +631,9 @@ export const conversationsSlice = createSlice({
               }
             : f,
       );
+      if (payload.allLoaded) {
+        state.conversationsLoaded = true;
+      }
       state.foldersStatus = payload.allLoaded
         ? UploadStatus.ALL_LOADED
         : UploadStatus.LOADED;

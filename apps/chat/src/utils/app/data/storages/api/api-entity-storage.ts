@@ -28,7 +28,7 @@ export abstract class ApiEntityStorage<
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
-    const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+    const id = decodeApiUrl(folder.url.slice(0, folder.url.length - 1));
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {

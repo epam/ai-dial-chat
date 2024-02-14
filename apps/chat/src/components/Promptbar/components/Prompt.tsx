@@ -8,8 +8,11 @@ import {
   useState,
 } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
@@ -26,6 +29,7 @@ import {
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -33,6 +37,7 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -52,6 +57,8 @@ interface Props {
 
 export const PromptComponent = ({ item: prompt, level }: Props) => {
   const dispatch = useAppDispatch();
+
+  const { t } = useTranslation(Translation.Chat);
 
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
@@ -80,6 +87,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const newFolderName = useAppSelector((state) =>
     PromptsSelectors.selectNewFolderName(state, prompt.folderId),
   );
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -207,7 +215,31 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const folderPath = isNewFolder ? newFolderName : folderId;
+      const folderPath = (isNewFolder ? newFolderName : folderId) as string;
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          prompt.name,
+          { ...prompt, folderId: folderPath },
+          allPrompts,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Prompt with name "{{name}}" already exists in this folder.',
+              {
+                ns: 'prompt',
+                name: prompt.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       if (isNewFolder) {
         dispatch(
           PromptsActions.createFolder({
@@ -231,7 +263,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       );
       setIsContextMenu(false);
     },
-    [dispatch, newFolderName, prompt.id],
+    [allPrompts, dispatch, newFolderName, prompt, t],
   );
 
   const handleClose = useCallback(() => {
