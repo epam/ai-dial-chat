@@ -1429,15 +1429,6 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
       const message = responseJSON?.message || payload.message;
 
       return concat(
-        of(
-          ConversationsActions.updateMessage({
-            conversationId: payload.conversation.id,
-            messageIndex: payload.conversation.messages.length - 1,
-            values: {
-              errorMessage: message,
-            },
-          }),
-        ),
         isReplay
           ? of(
               ConversationsActions.updateConversation({
@@ -1461,6 +1452,15 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
         of(UIActions.showErrorToast(translate(message))),
+        of(
+          ConversationsActions.updateMessage({
+            conversationId: payload.conversation.id,
+            messageIndex: payload.conversation.messages.length - 1,
+            values: {
+              errorMessage: message,
+            },
+          }),
+        ),
       );
     }),
   );
