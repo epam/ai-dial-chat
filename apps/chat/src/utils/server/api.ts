@@ -71,8 +71,11 @@ export const encodeSlugs = (slugs: (string | undefined)[]): string =>
     ...slugs.filter(Boolean).map((part) => encodeURIComponent(part as string)),
   );
 
-export const encodePath = (path: string): string =>
+export const encodeApiUrl = (path: string): string =>
   constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
+
+export const decodeApiUrl = (path: string): string =>
+  constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
 
 const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';

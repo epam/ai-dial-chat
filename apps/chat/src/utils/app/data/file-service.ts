@@ -9,7 +9,7 @@ import {
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { ApiKeys, ApiUtils, encodePath } from '../../server/api';
+import { ApiKeys, ApiUtils, encodeApiUrl } from '../../server/api';
 import { constructPath } from '../file';
 import { getRootId } from '../id';
 import { BucketService } from './bucket-service';
@@ -81,7 +81,7 @@ export class FileService {
     path?: string;
     resultQuery?: string;
   }): string => {
-    const listingUrl = encodePath(
+    const listingUrl = encodeApiUrl(
       constructPath('api/listing', path || getRootId()),
     );
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
