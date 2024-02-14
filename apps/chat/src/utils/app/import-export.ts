@@ -17,7 +17,7 @@ import { Prompt } from '@/src/types/prompt';
 import { ApiKeys, decodeApiUrl, encodeApiUrl } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
-import { triggerDownload } from './file';
+import { constructPath, triggerDownload } from './file';
 import { getRootId } from './id';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,12 +56,22 @@ export interface CleanDataResponse extends LatestExportFormat {
 }
 
 export function cleanFolders(folders: FolderInterface[]) {
-  return (folders || []).map((chatFolder) => ({
-    id: chatFolder.id,
-    name: chatFolder.name,
-    type: FolderType.Chat,
-    folderId: getRootId({ apiKey: ApiKeys.Conversations }),
-  }));
+  return (folders || []).map((chatFolder) => {
+    const parentFolder = folders.find(
+      (folder) => folder.id === chatFolder.folderId,
+    );
+    const newFolderId = constructPath(
+      getRootId({ apiKey: ApiKeys.Conversations }),
+      parentFolder?.name,
+    );
+    const newId = constructPath(newFolderId, chatFolder.name);
+    return {
+      id: newId,
+      name: chatFolder.name,
+      type: FolderType.Chat,
+      folderId: newFolderId,
+    };
+  });
 }
 
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
@@ -96,7 +106,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV3(data)) {
     return {
       history: cleanConversationHistory(data.history),
-      folders: cleanFolders(data.folders),
+      folders: [...data.folders],
       version: 5,
       prompts: [],
       isError: false,
@@ -105,9 +115,9 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
 
   if (isExportFormatV4(data)) {
     return {
+      ...data,
       version: 5,
       history: cleanConversationHistory(data.history),
-      folders: cleanFolders(data.folders),
       prompts: data.prompts || [],
       isError: false,
     };

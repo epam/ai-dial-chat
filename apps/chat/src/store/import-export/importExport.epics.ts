@@ -24,18 +24,20 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import {
+  getImportPreparedConversations,
   getOrUploadConversation,
-  getPreparedConversations,
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
   getConversationAttachmentWithPath,
   getFoldersFromIds,
+  getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import {
   ImportConversationsResponse,
   cleanData,
+  cleanFolders,
   exportConversation,
   exportConversations,
   exportPrompts,
@@ -50,8 +52,8 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
+import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
 
@@ -65,6 +67,7 @@ import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import {
   ImportExportActions,
   ImportExportSelectors,
@@ -270,17 +273,9 @@ const importConversationsEpic: AppEpic = (action$) =>
         return of(ImportExportActions.importFail());
       }
 
-      const conversationsInfoToUpload = history.filter((conversation) => {
+      const conversationsToUpload = history.filter((conversation) => {
         return conversation.status !== UploadStatus.LOADED;
       });
-
-      const importedConversations = conversationsInfoToUpload
-        .map(({ id }) => {
-          return (importedData as LatestExportFormat).history.find(
-            (conversation) => conversation.id === id,
-          );
-        })
-        .filter(Boolean) as Conversation[];
 
       const foldersToUpload = folders.filter(({ id }) => {
         return (importedData as LatestExportFormat).folders.find(
@@ -288,15 +283,19 @@ const importConversationsEpic: AppEpic = (action$) =>
         );
       });
 
-      const preparedConversations = getPreparedConversations({
-        conversations: importedConversations,
+      const preparedConversations = getImportPreparedConversations({
+        conversations: conversationsToUpload,
         conversationsFolders: foldersToUpload,
-      });
+      }) as Conversation[];
+
+      const preparedFolders: FolderInterface[] = cleanFolders(foldersToUpload);
 
       const preparedHistory = [
         ...filteredConversations,
         ...preparedConversations,
       ];
+
+      const updatedFolders = [...currentFolders, ...preparedFolders];
 
       // upload to the API
       return zip(
@@ -310,7 +309,7 @@ const importConversationsEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.importConversationsSuccess({
                 conversations: preparedHistory,
-                folders,
+                folders: updatedFolders,
               }),
             ),
           ),
@@ -651,6 +650,25 @@ const resetStateEpic: AppEpic = (action$) =>
     }),
   );
 
+const importConversationsSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.importConversationsSuccess.match),
+    map(() =>
+      ConversationsSelectors.selectSelectedConversationsIds(state$.value),
+    ),
+    switchMap((selectedConversationsIds) => {
+      const paths = selectedConversationsIds.flatMap((id) =>
+        getParentFolderIdsFromEntityId(id),
+      );
+      return of(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: paths,
+          featureType: FeatureType.Chat,
+        }),
+      );
+    }),
+  );
+
 export const ImportExportEpics = combineEpics(
   exportConversationEpic,
   exportConversationsEpic,
@@ -663,4 +681,5 @@ export const ImportExportEpics = combineEpics(
   exportFailEpic,
   checkImportFailEpic,
   exportLocalStorageEntitiesEpic,
+  importConversationsSuccessEpic,
 );
