@@ -103,7 +103,7 @@ export const promptsSlice = createSlice({
         (p) => !promptToDeleteIds.includes(p.id),
       );
     },
-    deletePromptsSuccess: (
+    deletePromptsComplete: (
       state,
       { payload }: PayloadAction<{ deletePrompts: PromptInfo[] }>,
     ) => {

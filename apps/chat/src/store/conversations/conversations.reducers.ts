@@ -215,7 +215,7 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ conversationIds: string[] }>,
     ) => state,
-    deleteConversationsSuccess: (
+    deleteConversationsComplete: (
       state,
       { payload }: PayloadAction<{ deleteIds: Set<string> }>,
     ) => {
@@ -226,12 +226,6 @@ export const conversationsSlice = createSlice({
         (id) => !payload.deleteIds.has(id),
       );
     },
-    deleteConversationsFail: (
-      state,
-      _action: PayloadAction<{
-        id: string;
-      }>,
-    ) => state,
     uploadConversationsByIds: (
       state,
       {

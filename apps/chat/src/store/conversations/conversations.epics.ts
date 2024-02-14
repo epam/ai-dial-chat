@@ -325,7 +325,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               console.error("New conversation wasn't created:", err);
               return of(
                 showErrorToast(
-                  'An error occurred while creating a new conversation. Most likely the conversation already exists. Please try to refresh the page.',
+                  'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
                 ),
               );
             }),
@@ -743,17 +743,31 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
             ConversationService.deleteConversation(
               getConversationInfoFromId(id),
             ).pipe(
-              catchError(() =>
-                of(ConversationsActions.deleteConversationsFail({ id })),
-              ),
+              switchMap(() => of(null)),
+              catchError((err) => {
+                const { name } = getConversationInfoFromId(id);
+                console.error(`Error during deleting "${name}"`, err);
+                return name;
+              }),
             ),
           ),
         ).pipe(
-          switchMap(() =>
-            of(
-              ConversationsActions.deleteConversationsSuccess({
-                deleteIds,
-              }),
+          switchMap((failedNames) =>
+            concat(
+              iif(
+                () => failedNames.length > 0,
+                of(
+                  showErrorToast(
+                    `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                  ),
+                ),
+                EMPTY,
+              ),
+              of(
+                ConversationsActions.deleteConversationsComplete({
+                  deleteIds,
+                }),
+              ),
             ),
           ),
         ),
@@ -1699,7 +1713,21 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       conversationsFolders: ConversationsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ conversationsFolders }) => {
-      return ConversationService.setConversationFolders(conversationsFolders);
+      return ConversationService.setConversationFolders(
+        conversationsFolders,
+      ).pipe(
+        catchError((err) => {
+          console.error(
+            'An error occurred during the saving conversation folders: ',
+            err,
+          );
+          return of(
+            showErrorToast(
+              'An error occurred during the saving conversation folders',
+            ),
+          );
+        }),
+      );
     }),
     ignoreElements(),
   );
@@ -1714,7 +1742,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.updateConversationSuccess.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
-        ConversationsActions.deleteConversationsSuccess.match(action) ||
+        ConversationsActions.deleteConversationsComplete.match(action) ||
         ConversationsActions.addConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action),
@@ -2085,7 +2113,7 @@ const saveConversationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             showErrorToast(
-              'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
+              'An error occurred while saving the conversation. Please refresh the page.',
             ),
           );
         }),
@@ -2108,7 +2136,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             showErrorToast(
-              'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
+              'An error occurred while saving the conversation. Please refresh the page.',
             ),
           );
         }),
@@ -2221,7 +2249,7 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
     filter(ConversationsActions.uploadConversationsFail.match),
     map(() =>
       showErrorToast(
-        'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please try to refresh the page.',
+        'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please refresh the page.',
       ),
     ),
   );

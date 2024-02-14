@@ -89,19 +89,20 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         content: '',
         folderId: getRootId({ apiKey: ApiKeys.Prompts }),
       });
-
-      return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
+      return PromptService.createPrompt(newPrompt).pipe(
+        switchMap(() =>
+          of(PromptsActions.createNewPromptSuccess({ newPrompt })),
+        ),
+        catchError((err) => {
+          console.error("New prompt wasn't created:", err);
+          return of(
+            showErrorToast(
+              'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+            ),
+          );
+        }),
+      );
     }),
-  );
-
-const createNewPromptSuccessEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PromptsActions.createNewPromptSuccess.match),
-    switchMap(({ payload }) =>
-      PromptService.createPrompt(payload.newPrompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
-      ),
-    ),
   );
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
@@ -120,7 +121,14 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ promptsFolders }) => {
-      return PromptService.setPromptFolders(promptsFolders);
+      return PromptService.setPromptFolders(promptsFolders).pipe(
+        catchError((err) => {
+          console.error('An error occurred during the saving folders', err);
+          return of(
+            showErrorToast('An error occurred during the saving folders'),
+          );
+        }),
+      );
     }),
     ignoreElements(),
   );
@@ -162,8 +170,14 @@ const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.savePrompt.match),
     switchMap(({ payload: newPrompt }) => {
-      return PromptService.updatePrompt(newPrompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      return PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY));
+    }),
+    catchError((err) => {
+      console.error(err);
+      return of(
+        showErrorToast(
+          'An error occurred while saving the prompt. Please refresh the page.',
+        ),
       );
     }),
   );
@@ -173,15 +187,23 @@ const recreatePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.recreatePrompt.match),
     mergeMap(({ payload }) => {
       const { parentPath } = splitEntityId(payload.old.id);
-      return concat(
-        PromptService.createPrompt(payload.new).pipe(
-          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
-        ),
+      return zip(
+        PromptService.createPrompt(payload.new),
         PromptService.deletePrompt({
           id: payload.old.id,
           folderId: parentPath || getRootId({ apiKey: ApiKeys.Prompts }),
           name: payload.old.name,
-        }).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        }),
+      ).pipe(
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            showErrorToast(
+              'An error occurred while saving the prompt. Please refresh the page.',
+            ),
+          );
+        }),
       );
     }),
   );
@@ -199,7 +221,7 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       if (!prompt) {
         return of(
           showErrorToast(
-            'It looks like this conversation was removed. Please reload page',
+            'It looks like this prompt has been deleted. Please reload the page',
           ),
         );
       }
@@ -229,7 +251,15 @@ export const deletePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.deletePrompt.match),
     switchMap(({ payload }) => {
       return PromptService.deletePrompt(payload.prompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            showErrorToast(
+              `The prompt "${payload.prompt.name}" has not been deleted successfully`,
+            ),
+          );
+        }),
       );
     }),
   );
@@ -252,14 +282,34 @@ const deletePromptsEpic: AppEpic = (action$) =>
       deletePrompts: payload.promptsToRemove,
     })),
     switchMap(({ deletePrompts }) =>
-      concat(
-        of(
-          PromptsActions.deletePromptsSuccess({
-            deletePrompts,
-          }),
+      zip(
+        deletePrompts.map((info) =>
+          PromptService.deletePrompt(info).pipe(
+            switchMap(() => of(null)),
+            catchError((err) => {
+              console.error(`Error during deleting "${info.name}"`, err);
+              return info.name;
+            }),
+          ),
         ),
-        zip(deletePrompts.map((id) => PromptService.deletePrompt(id))).pipe(
-          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      ).pipe(
+        switchMap((failedNames) =>
+          concat(
+            iif(
+              () => failedNames.length > 0,
+              of(
+                showErrorToast(
+                  `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                ),
+              ),
+              EMPTY,
+            ),
+            of(
+              PromptsActions.deletePromptsComplete({
+                deletePrompts,
+              }),
+            ),
+          ),
         ),
       ),
     ),
@@ -748,7 +798,6 @@ export const PromptsEpics = combineEpics(
   deletePromptsEpic,
   updateFolderEpic,
   createNewPromptEpic,
-  createNewPromptSuccessEpic,
 
   uploadPromptEpic,
 );
