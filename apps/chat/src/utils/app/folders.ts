@@ -418,8 +418,7 @@ export const getParentFolderIdsFromFolderId = (path?: string): string[] => {
 };
 
 export const getParentFolderIdsFromEntityId = (id: string): string[] => {
-  const { parentPath } = splitEntityId(id);
-  return getParentFolderIdsFromFolderId(parentPath);
+  return getParentFolderIdsFromFolderId(id);
 };
 
 export const getFolderFromId = (
