@@ -144,6 +144,7 @@ export enum ModelIds {
   GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
+  GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',
   GPT_4_32K = 'gpt-4-32k',
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
