@@ -253,7 +253,7 @@ dialTest(
           .toBeFalsy();
 
         await folderConversations.expandCollapseFolder(
-          conversationInFolder.folders.name
+          conversationInFolder.folders.name,
         );
         isFolderCaretExpanded = await folderConversations.isFolderCaretExpanded(
           conversationInFolder.folders.name,

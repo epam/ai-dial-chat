@@ -8,8 +8,8 @@ const usernames = process.env
   .E2E_USERNAME!.split(',')
   .slice(0, +config.workers!);
 
-for (const username of usernames) {
-  test(`Authenticate user: ${username}`, async ({
+for (let i = 0; i < usernames.length; i++) {
+  test(`Authenticate user: ${usernames[i]}`, async ({
     page,
     loginPage,
     auth0Page,
@@ -22,7 +22,7 @@ for (const username of usernames) {
       options = { setEntitiesEnvVars: true };
     }
     const retrievedResponses = await auth0Page.loginToChatBot(
-      username,
+      usernames[i],
       options,
     );
     if (options?.setEntitiesEnvVars) {
@@ -31,9 +31,7 @@ for (const username of usernames) {
       process.env.RECENT_ADDONS = await localStorageManager.getRecentAddons();
       process.env.RECENT_MODELS = await localStorageManager.getRecentModels();
     }
-    process.env['BUCKET' + testInfo.parallelIndex] = retrievedResponses.get(
-      API.bucketHost,
-    );
+    process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
     await page.context().storageState({ path: stateFilePath });
   });
 }
