@@ -730,6 +730,41 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         migratedConversationIds,
         failedMigratedConversationIds,
       }) => {
+        localStorage.setItem(
+          'conversationHistory',
+          JSON.stringify([
+            {
+              id: '45797f7c-a528-46d1-a0c8-714b5cd41f2e',
+              name: 'Test',
+              model: {
+                id: 'gpt-4-1106-preview',
+              },
+              prompt: '',
+              temperature: 1,
+              messages: [],
+              replay: {
+                isReplay: false,
+                replayUserMessagesStack: [],
+                activeReplayIndex: 0,
+              },
+              selectedAddons: [],
+              assistantModelId: 'gpt-4',
+              lastActivityDate: 1706876661920,
+              isMessageStreaming: false,
+            },
+          ]),
+        );
+        localStorage.setItem(
+          'prompts',
+          JSON.stringify([
+            {
+              id: 'fc3a3e85-6f46-4afb-87fc-3af97b048ba3',
+              name: 'Prompt 1',
+              description: '',
+              content: 'sss',
+            },
+          ]),
+        );
         const notMigratedConversations = filterMigratedEntities(
           conversations,
           [...failedMigratedConversationIds, ...migratedConversationIds],
