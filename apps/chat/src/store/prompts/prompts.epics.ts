@@ -94,7 +94,9 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
           console.error("New prompt wasn't created:", err);
           return of(
             UIActions.showErrorToast(
-              'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+              translate(
+                'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+              ),
             ),
           );
         }),
@@ -123,7 +125,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
           console.error('An error occurred during the saving folders', err);
           return of(
             UIActions.showErrorToast(
-              'An error occurred during the saving folders',
+              translate('An error occurred during the saving folders'),
             ),
           );
         }),
@@ -175,7 +177,9 @@ const savePromptEpic: AppEpic = (action$) =>
       console.error(err);
       return of(
         UIActions.showErrorToast(
-          'An error occurred while saving the prompt. Please refresh the page.',
+          translate(
+            'An error occurred while saving the prompt. Please refresh the page.',
+          ),
         ),
       );
     }),
@@ -199,7 +203,9 @@ const recreatePromptEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              'An error occurred while saving the prompt. Please refresh the page.',
+              translate(
+                'An error occurred while saving the prompt. Please refresh the page.',
+              ),
             ),
           );
         }),
@@ -220,7 +226,9 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       if (!prompt) {
         return of(
           UIActions.showErrorToast(
-            'It looks like this prompt has been deleted. Please reload the page',
+            translate(
+              'It looks like this prompt has been deleted. Please reload the page',
+            ),
           ),
         );
       }
@@ -255,7 +263,9 @@ export const deletePromptEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              `The prompt "${payload.prompt.name}" has not been deleted successfully`,
+              translate(
+                `The prompt "${payload.prompt.name}" has not been deleted successfully`,
+              ),
             ),
           );
         }),
@@ -298,7 +308,9 @@ const deletePromptsEpic: AppEpic = (action$) =>
               () => failedNames.length > 0,
               of(
                 UIActions.showErrorToast(
-                  `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                  translate(
+                    `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                  ),
                 ),
               ),
               EMPTY,
@@ -543,9 +555,11 @@ const importPromptsEpic: AppEpic = (action$) =>
       if (!isPromptsFormat(promptsHistory)) {
         return of(
           UIActions.showErrorToast(
-            translate(errorsMessages.unsupportedDataFormat, {
-              ns: 'common',
-            }),
+            translate(
+              translate(errorsMessages.unsupportedDataFormat, {
+                ns: 'common',
+              }),
+            ),
           ),
         );
       }
@@ -570,9 +584,11 @@ const importPromptsEpic: AppEpic = (action$) =>
       if (isError) {
         return of(
           UIActions.showErrorToast(
-            translate(errorsMessages.unsupportedDataFormat, {
-              ns: 'common',
-            }),
+            translate(
+              translate(errorsMessages.unsupportedDataFormat, {
+                ns: 'common',
+              }),
+            ),
           ),
         );
       }

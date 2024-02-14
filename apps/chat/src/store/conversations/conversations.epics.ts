@@ -322,7 +322,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               console.error("New conversation wasn't created:", err);
               return of(
                 UIActions.showErrorToast(
-                  'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                  translate(
+                    'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                  ),
                 ),
               );
             }),
@@ -348,7 +350,9 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation)
         return of(
           UIActions.showErrorToast(
-            'It looks like this conversation has been deleted. Please reload the page',
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
           ),
         );
 
@@ -416,7 +420,9 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation)
         return of(
           UIActions.showErrorToast(
-            'It looks like this conversation has been deleted. Please reload the page',
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
           ),
         );
 
@@ -477,7 +483,9 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            'It looks like this conversation has been deleted. Please reload the page',
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
           ),
         );
       }
@@ -523,7 +531,9 @@ const saveNewConversationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
+              translate(
+                'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
+              ),
             ),
           );
         }),
@@ -755,7 +765,9 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 () => failedNames.length > 0,
                 of(
                   UIActions.showErrorToast(
-                    `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                    translate(
+                      `The conversation "${failedNames.filter(Boolean).join('", "')}" has not been deleted successfully`,
+                    ),
                   ),
                 ),
                 EMPTY,
@@ -1434,7 +1446,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        of(UIActions.showErrorToast(message)),
+        of(UIActions.showErrorToast(translate(message))),
       );
     }),
   );
@@ -1720,7 +1732,9 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
           );
           return of(
             UIActions.showErrorToast(
-              'An error occurred during the saving conversation folders',
+              translate(
+                'An error occurred during the saving conversation folders',
+              ),
             ),
           );
         }),
@@ -1802,7 +1816,9 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             UIActions.showErrorToast(
-              'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
+              translate(
+                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
+              ),
             ),
           ),
         );
@@ -2110,7 +2126,9 @@ const saveConversationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              'An error occurred while saving the conversation. Please refresh the page.',
+              translate(
+                'An error occurred while saving the conversation. Please refresh the page.',
+              ),
             ),
           );
         }),
@@ -2133,7 +2151,9 @@ const recreateConversationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              'An error occurred while saving the conversation. Please refresh the page.',
+              translate(
+                'An error occurred while saving the conversation. Please refresh the page.',
+              ),
             ),
           );
         }),
@@ -2155,7 +2175,9 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            'It looks like this conversation has been deleted. Please reload the page',
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
           ),
         );
       }
@@ -2246,7 +2268,9 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
     filter(ConversationsActions.uploadConversationsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please refresh the page.',
+        translate(
+          'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please refresh the page.',
+        ),
       ),
     ),
   );
