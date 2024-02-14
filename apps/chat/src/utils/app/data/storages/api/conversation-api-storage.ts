@@ -1,4 +1,4 @@
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { getRootId } from '@/src/utils/app/id';
 import {
@@ -66,7 +66,12 @@ export const getOrUploadConversation = (
 
   if (conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
-      conversation: ConversationService.getConversation(conversation),
+      conversation: ConversationService.getConversation(conversation).pipe(
+        catchError((err) => {
+          console.error("Conversation wasn't found:", err);
+          return of(null);
+        }),
+      ),
       payload: of(payload),
     });
   } else {

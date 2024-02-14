@@ -71,6 +71,9 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
 
+const showErrorToast = (message: string) =>
+  UIActions.showToast({ message, type: 'error' });
+
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.createNewPrompt.match),
@@ -139,7 +142,12 @@ const getOrUploadPrompt = (
     });
 
     return forkJoin({
-      prompt: PromptService.getPrompt(prompt),
+      prompt: PromptService.getPrompt(prompt).pipe(
+        catchError((err) => {
+          console.error("Prompt wasn't found:", err);
+          return of(null);
+        }),
+      ),
       payload: of(payload),
     });
   } else {
@@ -189,7 +197,11 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       };
 
       if (!prompt) {
-        return EMPTY; // TODO: handle?
+        return of(
+          showErrorToast(
+            'It looks like this conversation was removed. Please reload page',
+          ),
+        );
       }
 
       const newPrompt: Prompt = {
@@ -481,12 +493,11 @@ const importPromptsEpic: AppEpic = (action$) =>
       const filteredPrompts = currentPrompts.filter(Boolean) as Prompt[];
       if (!isPromptsFormat(promptsHistory)) {
         return of(
-          UIActions.showToast({
-            message: translate(errorsMessages.unsupportedDataFormat, {
+          showErrorToast(
+            translate(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
             }),
-            type: 'error',
-          }),
+          ),
         );
       }
       const preparedPrompts: Prompt[] = getPreparedPrompts({
@@ -509,12 +520,11 @@ const importPromptsEpic: AppEpic = (action$) =>
 
       if (isError) {
         return of(
-          UIActions.showToast({
-            message: translate(errorsMessages.unsupportedDataFormat, {
+          showErrorToast(
+            translate(errorsMessages.unsupportedDataFormat, {
               ns: 'common',
             }),
-            type: 'error',
-          }),
+          ),
         );
       }
       return of(PromptsActions.importPromptsSuccess({ prompts, folders }));

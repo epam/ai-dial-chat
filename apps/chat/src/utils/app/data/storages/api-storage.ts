@@ -4,7 +4,6 @@ import {
   catchError,
   concatMap,
   from,
-  map,
   throwError,
 } from 'rxjs';
 
@@ -45,7 +44,6 @@ export class ApiStorage implements DialStorage {
       apiStorage: ApiEntityStorage<T, T>,
     ): Observable<void> =>
       apiStorage.createEntity(entity).pipe(
-        map((result) => result),
         catchError((err) => {
           if (retries < MAX_RETRIES_COUNT) {
             retries++;
@@ -57,7 +55,9 @@ export class ApiStorage implements DialStorage {
             const newName = generateNextName(
               defaultName,
               entity.name,
-              entities.filter((e) => e.folderId === entity.folderId),
+              entities.filter(
+                (e) => e.folderId === entity.folderId && e.id !== entity.id,
+              ),
             );
             const updatedEntity = {
               ...entity,

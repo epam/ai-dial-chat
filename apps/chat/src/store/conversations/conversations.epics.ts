@@ -106,6 +106,9 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+const showErrorToast = (message: string) =>
+  UIActions.showToast({ message, type: 'error' });
+
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.init.match(action)),
@@ -131,7 +134,14 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
       return forkJoin({
         selectedConversations: zip(
           selectedIds.map((id) =>
-            ConversationService.getConversation(getConversationInfoFromId(id)),
+            ConversationService.getConversation(
+              getConversationInfoFromId(id),
+            ).pipe(
+              catchError((err) => {
+                console.error("Selected conversation wasn't found:", err);
+                return of(null);
+              }),
+            ),
           ),
         ),
         selectedIds: of(selectedIds),
@@ -236,10 +246,23 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           names: of(names),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
-              ? ConversationService.getConversation(lastConversation)
+              ? ConversationService.getConversation(lastConversation).pipe(
+                  catchError((err) => {
+                    console.error("Last used conversation wasn't found:", err);
+                    return of(null);
+                  }),
+                )
               : (of(lastConversation) as Observable<Conversation>),
           conversations: shouldUploadConversationsForCompare
-            ? ConversationService.getConversations()
+            ? ConversationService.getConversations().pipe(
+                catchError((err) => {
+                  console.error(
+                    "Root conversations weren't upload successfully:",
+                    err,
+                  );
+                  return of([]);
+                }),
+              )
             : of(conversations),
         }),
     ),
@@ -297,7 +320,14 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             ),
-            catchError(() => EMPTY),
+            catchError((err) => {
+              console.error("New conversation wasn't created:", err);
+              return of(
+                showErrorToast(
+                  translate('Error happened during creating new conversation'),
+                ),
+              );
+            }),
           );
         }),
       );
@@ -317,7 +347,12 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ conversationAndPayload, conversations }) => {
       const { conversation } = conversationAndPayload;
-      if (!conversation) return EMPTY; // TODO: handle?
+      if (!conversation)
+        return of(
+          showErrorToast(
+            'It looks like this conversation was removed. Please reload page',
+          ),
+        );
 
       const folderId = ConversationsSelectors.hasExternalParent(
         state$.value,
@@ -380,7 +415,12 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ conversationAndPayload, conversations }) => {
       const { conversation } = conversationAndPayload;
-      if (!conversation) return EMPTY; // TODO: handle?
+      if (!conversation)
+        return of(
+          showErrorToast(
+            'It looks like this conversation was removed. Please reload page',
+          ),
+        );
 
       const folderId = ConversationsSelectors.hasExternalParent(
         state$.value,
@@ -432,11 +472,17 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.duplicateConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversation: ConversationService.getConversation(payload),
+        conversationAndPayload: getOrUploadConversation(payload, state$.value),
       }),
     ),
-    switchMap(({ conversation }) => {
-      if (!conversation) return EMPTY;
+    switchMap(({ conversationAndPayload: { conversation } }) => {
+      if (!conversation) {
+        return of(
+          showErrorToast(
+            'It looks like this conversation was removed. Please reload page',
+          ),
+        );
+      }
 
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
@@ -688,7 +734,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
             ConversationService.deleteConversation(
               getConversationInfoFromId(id),
             ).pipe(
-              map(() => id),
               catchError(() =>
                 of(ConversationsActions.deleteConversationsFail({ id })),
               ),
@@ -1369,12 +1414,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        of(
-          UIActions.showToast({
-            message: message,
-            type: 'error',
-          }),
-        ),
+        of(showErrorToast(message)),
       );
     }),
   );
@@ -1727,12 +1767,11 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
       if (isInvalid) {
         actions.push(
           of(
-            UIActions.showToast({
-              message: translate(
+            showErrorToast(
+              translate(
                 'Incorrect conversation was chosen for comparison. Please choose another one.\r\nOnly conversations containing the same number of messages can be compared.',
               ),
-              type: 'error',
-            }),
+            ),
           ),
         );
       } else {
@@ -2061,7 +2100,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         values: Partial<Conversation>;
       };
       if (!conversation) {
-        return EMPTY; // TODO: handle?
+        return of(
+          showErrorToast(
+            'It looks like this conversation was removed. Please reload page',
+          ),
+        );
       }
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
@@ -2157,7 +2200,11 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.uploadFoldersSuccess({
                 paths: new Set(),
-                folders: getFoldersFromIds(paths, FolderType.Chat),
+                folders: getFoldersFromIds(
+                  paths,
+                  FolderType.Chat,
+                  UploadStatus.LOADED,
+                ),
                 allLoaded: true,
               }),
             ),
