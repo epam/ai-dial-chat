@@ -354,7 +354,7 @@ export const MigrationFailedWindow = ({
               )}
             </div>
             <p className="text-secondary">
-              {t("I don't want to backup conversations/prompts and I’m ready.")}{' '}
+              {t("I don't want to backup conversations/prompts and I’m ready ")}
               <span className="font-semibold">TO LOSE DATA</span>
             </p>
           </div>
