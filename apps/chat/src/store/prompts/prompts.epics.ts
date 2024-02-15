@@ -286,7 +286,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
           return of(
             UIActions.showErrorToast(
               translate(
-                `An error occurred while saving the prompt "${payload.prompt.name}"`,
+                `An error occurred while removing the prompt "${payload.prompt.name}"`,
               ),
             ),
           );
@@ -334,7 +334,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
               of(
                 UIActions.showErrorToast(
                   translate(
-                    `An error occurred while saving the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                    `An error occurred while removing the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
                   ),
                 ),
               ),
