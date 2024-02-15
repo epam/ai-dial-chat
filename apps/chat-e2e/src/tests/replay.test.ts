@@ -34,7 +34,6 @@ dialTest(
     conversationData,
     chat,
     dataInjector,
-    conversationDropdownMenu,
     conversations,
     setTestIds,
     recentEntities,
@@ -91,7 +90,7 @@ dialTest(
         await conversations.openConversationDropdownMenu(
           replayConversation!.name,
         );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+        await conversations.selectReplayMenuOption();
       },
     );
 

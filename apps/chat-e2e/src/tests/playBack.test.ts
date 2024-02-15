@@ -20,8 +20,7 @@ dialTest.beforeAll(async () => {
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
 });
 
-// TODO: redo after new changes in playback
-dialTest.skip(
+dialTest(
   'Playback: first screen.\n' +
     'Playback: move to the next using next button.\n' +
     'Playback: move to the previous using back button',
@@ -37,9 +36,11 @@ dialTest.skip(
     chatMessages,
     chatHeader,
     setTestIds,
+    setIssueIds,
     iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
+    setIssueIds('738');
     let conversation: TestConversation;
     const conversationModels = [defaultModel, gpt4Model];
     let playbackConversationName: string;
@@ -209,14 +210,9 @@ dialTest.skip(
     await dialTest.step(
       'Click on Next button again twice and verify chat header icon updated, history contains all messages and Next button disabled on bottom controls',
       async () => {
-        await chat.playNextChatMessage();
-        const playBackMessage =
-          await playbackControl.playbackMessage.getElementContent();
-        expect
-          .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(conversation.messages[2].content);
-
-        await chat.playNextChatMessage();
+        for (let i = 1; i <= 2; i++) {
+          await chat.playNextChatMessage();
+        }
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
@@ -288,7 +284,7 @@ dialTest.skip(
             isPlaybackNextBtnEnabled,
             ExpectedMessages.playbackNextButtonEnabled,
           )
-          .toBeFalsy();
+          .toBeTruthy();
 
         const isPlaybackPreviousBtnEnabled =
           await playbackControl.playbackPreviousButton.isElementEnabled();
@@ -299,17 +295,6 @@ dialTest.skip(
           )
           .toBeTruthy();
 
-        const playbackMessage =
-          await playbackControl.playbackMessage.getElementContent();
-        expect
-          .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(ExpectedConstants.emptyPlaybackMessage);
-      },
-    );
-    await dialTest.step(
-      'Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls',
-      async () => {
-        await chat.playPreviousChatMessage();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
@@ -321,30 +306,13 @@ dialTest.skip(
           .soft(lastMessage, ExpectedMessages.messageContentIsValid)
           .toBe(conversation.messages[1].content);
 
-        await chatHeader.leavePlaybackMode.waitForState();
-        const isPlaybackNextBtnEnabled =
-          await playbackControl.playbackNextButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackNextBtnEnabled,
-            ExpectedMessages.playbackNextButtonEnabled,
-          )
-          .toBeTruthy();
-
-        const isPlaybackPreviousBtnEnabled =
-          await playbackControl.playbackPreviousButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackPreviousBtnEnabled,
-            ExpectedMessages.playbackPreviousButtonEnabled,
-          )
-          .toBeTruthy();
-
         const playbackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
           .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(ExpectedConstants.emptyPlaybackMessage);
+          .toBe(conversation.messages[2].content);
+
+        await chatHeader.leavePlaybackMode.waitForState();
 
         const headerTitle = await chatHeader.chatTitle.getElementInnerContent();
         expect
@@ -370,15 +338,8 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Click on Back button again twice and verify chat header icon updated, history is empty and Back button is disabled on bottom controls',
+      'Click on Back button again and verify chat header icon updated, history is empty and Back button is disabled on bottom controls',
       async () => {
-        await chat.playPreviousChatMessage();
-        let playBackMessage =
-          await playbackControl.playbackMessage.getElementContent();
-        expect
-          .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(conversation.messages[2].content);
-
         await chat.playPreviousChatMessage();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -404,11 +365,11 @@ dialTest.skip(
           )
           .toBeFalsy();
 
-        playBackMessage =
+        const playBackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
           .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(ExpectedConstants.emptyPlaybackMessage);
+          .toBe(conversation.messages[0].content);
 
         await chatHeader.waitForState({ state: 'hidden' });
 

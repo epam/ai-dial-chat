@@ -1,7 +1,7 @@
 import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { Chronology } from '@/src/testData';
+import { Chronology, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { Input } from '@/src/ui/webElements/input';
@@ -139,6 +139,17 @@ export class Conversations extends SideBarEntities {
 
   public async openEditConversationNameMode(name: string, newName: string) {
     return this.openEditEntityNameMode(this.entitySelector, name, newName);
+  }
+
+  public async selectReplayMenuOption() {
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.getDropdownMenu().selectMenuOption(MenuOptions.replay);
+      return respPromise;
+    }
+    await this.getDropdownMenu().selectMenuOption(MenuOptions.replay);
   }
 
   public async getConversationIcon(name: string, index?: number) {
