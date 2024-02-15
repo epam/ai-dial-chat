@@ -1,5 +1,5 @@
 import { OpenAIEntityModel } from '@/chat/types/openai';
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -11,16 +11,14 @@ const temp = 0.8;
 let models: OpenAIEntityModel[];
 let defaultModel: OpenAIEntityModel;
 
-test.beforeAll(async () => {
+dialTest.beforeAll(async () => {
   models = ModelsUtil.getModels();
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-test.describe('Chat model settings tests', () => {
-  test.use({
-    storageState: stateFilePath,
-  });
-  test('Selected settings are saved if to switch from Model1 to Model2', async ({
+dialTest(
+  'Selected settings are saved if to switch from Model1 to Model2',
+  async ({
     dialHomePage,
     recentEntities,
     entitySettings,
@@ -65,13 +63,12 @@ test.describe('Chat model settings tests', () => {
     expect
       .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
       .toEqual([]);
-  });
+  },
+);
 
-  test('System prompt contains combinations with :', async ({
-    dialHomePage,
-    entitySettings,
-    setTestIds,
-  }) => {
+dialTest(
+  'System prompt contains combinations with :',
+  async ({ dialHomePage, entitySettings, setTestIds }) => {
     setTestIds('EPMRTC-1084');
     const prompts = [
       'test:',
@@ -90,5 +87,5 @@ test.describe('Chat model settings tests', () => {
         .toBe(prompt);
       await entitySettings.clearSystemPrompt();
     }
-  });
-});
+  },
+);

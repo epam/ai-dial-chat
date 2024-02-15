@@ -1,25 +1,19 @@
-import { FolderInterface } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
   MenuOptions,
+  TestFolder,
+  TestPrompt,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-test.describe('Prompt bar folder tests', () => {
-  test.use({
-    storageState: stateFilePath,
-  });
-  test('Create new prompt folder', async ({
-    dialHomePage,
-    promptBar,
-    folderPrompts,
-    setTestIds,
-  }) => {
+dialTest(
+  'Create new prompt folder',
+  async ({ dialHomePage, promptBar, folderPrompts, setTestIds }) => {
     setTestIds('EPMRTC-944');
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
@@ -27,24 +21,29 @@ test.describe('Prompt bar folder tests', () => {
     expect
       .soft(
         await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderTitle)
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
           .isVisible(),
         ExpectedMessages.newFolderCreated,
       )
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Prompt folder can expand and collapse', async ({
+dialTest(
+  'Prompt folder can expand and collapse',
+  async ({
     dialHomePage,
     promptData,
     folderPrompts,
-    localStorageManager,
+    dataInjector,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-946');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
-    await localStorageManager.setFolders(promptInFolder.folders);
-    await localStorageManager.setPrompts(promptInFolder.prompts[0]);
+    await dataInjector.createPrompts(
+      promptInFolder.prompts,
+      promptInFolder.folders,
+    );
     const folderName = promptInFolder.folders.name;
 
     await dialHomePage.openHomePage();
@@ -62,98 +61,122 @@ test.describe('Prompt bar folder tests', () => {
       promptInFolder.prompts[0].name,
     );
     expect.soft(isPromptVisible, ExpectedMessages.folderCollapsed).toBeFalsy();
-  });
+  },
+);
 
-  test(
-    'Rename prompt folder on Enter.\n' +
-      'Rename prompt folders on nested levels',
-    async ({
-      dialHomePage,
-      promptData,
-      folderPrompts,
-      localStorageManager,
-      folderDropdownMenu,
-      setTestIds,
-    }) => {
-      setTestIds('EPMRTC-948', 'EPMRTC-1382');
-      const newName = 'updated folder name';
-      const nestedFolders = promptData.prepareNestedFolder(3);
-      const randomFolder = GeneratorUtil.randomArrayElement(nestedFolders);
-      const randomFolderIndex = nestedFolders.indexOf(randomFolder);
-      await localStorageManager.setFolders(...nestedFolders);
-
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      for (const nestedFolder of nestedFolders) {
-        await folderPrompts.expandCollapseFolder(nestedFolder.name);
-      }
-      await folderPrompts.openFolderDropdownMenu(randomFolder.name);
-      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await folderPrompts.editFolderNameWithEnter(randomFolder.name, newName);
-      expect
-        .soft(
-          await folderPrompts.getFolderByName(newName).isVisible(),
-          ExpectedMessages.folderNameUpdated,
-        )
-        .toBeTruthy();
-
-      for (let i = 0; i < nestedFolders.length; i++) {
-        if (i !== randomFolderIndex) {
-          expect
-            .soft(
-              await folderPrompts
-                .getFolderByName(nestedFolders[i].name)
-                .isVisible(),
-              ExpectedMessages.folderNameNotUpdated,
-            )
-            .toBeTruthy();
-        }
-      }
-    },
-  );
-
-  test('Cancel folder renaming on "x"', async ({
+dialTest(
+  'Rename prompt folder on Enter.\n' + 'Rename prompt folders on nested levels',
+  async ({
     dialHomePage,
-    promptData,
+    promptBar,
     folderPrompts,
-    localStorageManager,
+    folderDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-948', 'EPMRTC-1382');
+    const newName = 'updated folder name';
+    const randomFolderIndex = GeneratorUtil.randomNumberInRange(2) + 1;
+
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+
+    for (let i = 1; i <= 3; i++) {
+      await promptBar.createNewFolder();
+    }
+    for (let i = 3; i >= 2; i--) {
+      await promptBar.dragAndDropEntityToFolder(
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(i),
+        ),
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(i - 1),
+        ),
+      );
+    }
+    await folderPrompts.expandCollapseFolder(
+      ExpectedConstants.newFolderWithIndexTitle(2),
+    );
+
+    await folderPrompts.openFolderDropdownMenu(
+      ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
+    );
+    await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+    await folderPrompts.editFolderNameWithEnter(
+      ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
+      newName,
+    );
+    expect
+      .soft(
+        await folderPrompts.getFolderByName(newName).isVisible(),
+        ExpectedMessages.folderNameUpdated,
+      )
+      .toBeTruthy();
+
+    for (let i = 1; i <= 3; i++) {
+      if (i !== randomFolderIndex) {
+        expect
+          .soft(
+            await folderPrompts
+              .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
+              .isVisible(),
+            ExpectedMessages.folderNameNotUpdated,
+          )
+          .toBeTruthy();
+      }
+    }
+  },
+);
+
+dialTest(
+  'Cancel folder renaming on "x"',
+  async ({
+    dialHomePage,
+    promptBar,
+    folderPrompts,
     folderDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-949');
     const newName = 'updated folder name';
-    const folder = promptData.prepareFolder();
-    await localStorageManager.setFolders(folder);
-
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await folderPrompts.openFolderDropdownMenu(folder.name);
+    await promptBar.createNewFolder();
+    await folderPrompts.openFolderDropdownMenu(
+      ExpectedConstants.newFolderWithIndexTitle(1),
+    );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
     const folderInput = await folderPrompts.editFolderName(
-      folder.name,
+      ExpectedConstants.newFolderWithIndexTitle(1),
       newName,
     );
     await folderInput.clickCancelButton();
     expect
       .soft(
-        await folderPrompts.getFolderByName(folder.name).isVisible(),
+        await folderPrompts
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+          .isVisible(),
         ExpectedMessages.folderNameNotUpdated,
       )
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Rename prompt folder when prompts are inside using check button', async ({
+dialTest(
+  'Rename prompt folder when prompts are inside using check button',
+  async ({
     dialHomePage,
     promptData,
+    dataInjector,
     folderPrompts,
-    localStorageManager,
     folderDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-950');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
-    await localStorageManager.setFolders(promptInFolder.folders);
-    await localStorageManager.setPrompts(promptInFolder.prompts[0]);
+    await dataInjector.createPrompts(
+      promptInFolder.prompts,
+      promptInFolder.folders,
+    );
 
     const newName = 'updated folder name';
     await dialHomePage.openHomePage();
@@ -170,20 +193,23 @@ test.describe('Prompt bar folder tests', () => {
         ExpectedMessages.folderNameUpdated,
       )
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Prompt is moved to folder created from Move to', async ({
+dialTest(
+  'Prompt is moved to folder created from Move to',
+  async ({
     dialHomePage,
     prompts,
     promptDropdownMenu,
     promptData,
-    localStorageManager,
+    dataInjector,
     folderPrompts,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-962');
     const prompt = promptData.prepareDefaultPrompt();
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -199,45 +225,54 @@ test.describe('Prompt bar folder tests', () => {
     expect
       .soft(isFolderPromptVisible, ExpectedMessages.promptMovedToFolder)
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Prompt is moved to folder from Move to list', async ({
+dialTest(
+  'Prompt is moved to folder from Move to list',
+  async ({
     dialHomePage,
     prompts,
     promptDropdownMenu,
     promptData,
-    localStorageManager,
+    dataInjector,
     folderPrompts,
+    promptBar,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-963');
-    const folderToMoveIn = promptData.prepareFolder();
     const prompt = promptData.prepareDefaultPrompt();
-    await localStorageManager.setPrompts(prompt);
-    await localStorageManager.setFolders(folderToMoveIn);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await folderPrompts.expandCollapseFolder(folderToMoveIn.name);
+    await promptBar.createNewFolder();
+    await folderPrompts.expandCollapseFolder(
+      ExpectedConstants.newFolderWithIndexTitle(1),
+    );
 
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
-    await promptDropdownMenu.selectMenuOption(folderToMoveIn.name);
-
+    await prompts.selectMoveToMenuOption(
+      ExpectedConstants.newFolderWithIndexTitle(1),
+    );
     const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-      folderToMoveIn.name,
+      ExpectedConstants.newFolderWithIndexTitle(1),
       prompt.name,
     );
     expect
       .soft(isFolderPromptVisible, ExpectedMessages.promptMovedToFolder)
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Delete folder when there are some prompts inside', async ({
+dialTest(
+  'Delete folder when there are some prompts inside',
+  async ({
     dialHomePage,
     promptData,
     folderPrompts,
-    localStorageManager,
+    dataInjector,
     promptDropdownMenu,
     prompts,
     confirmationDialog,
@@ -245,8 +280,10 @@ test.describe('Prompt bar folder tests', () => {
   }) => {
     setTestIds('EPMRTC-966');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
-    await localStorageManager.setFolders(promptInFolder.folders);
-    await localStorageManager.setPrompts(promptInFolder.prompts[0]);
+    await dataInjector.createPrompts(
+      promptInFolder.prompts,
+      promptInFolder.folders,
+    );
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -266,73 +303,93 @@ test.describe('Prompt bar folder tests', () => {
       .getPromptByName(promptInFolder.prompts[0].name)
       .isVisible();
     expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeFalsy();
-  });
+  },
+);
 
-  test(
-    'Delete folder. Cancel.\n' +
-      'Delete root prompt folder with nested folders',
-    async ({
-      dialHomePage,
-      promptData,
-      folderPrompts,
-      localStorageManager,
-      promptDropdownMenu,
-      confirmationDialog,
-      setTestIds,
-    }) => {
-      setTestIds('EPMRTC-967', 'EPMRTC-1383');
-      const nestedFolders = promptData.prepareNestedFolder(3);
-      await localStorageManager.setFolders(...nestedFolders);
+dialTest(
+  'Delete folder. Cancel.\n' + 'Delete root prompt folder with nested folders',
+  async ({
+    dialHomePage,
+    folderPrompts,
+    promptBar,
+    promptDropdownMenu,
+    confirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-967', 'EPMRTC-1383');
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    for (let i = 1; i <= 3; i++) {
+      await promptBar.createNewFolder();
+    }
+    for (let i = 3; i >= 2; i--) {
+      await promptBar.dragAndDropEntityToFolder(
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(i),
+        ),
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(i - 1),
+        ),
+      );
+    }
+    await folderPrompts.expandCollapseFolder(
+      ExpectedConstants.newFolderWithIndexTitle(2),
+    );
 
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      for (const nestedFolder of nestedFolders) {
-        await folderPrompts.expandCollapseFolder(nestedFolder.name);
-      }
-      await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-      expect
-        .soft(
-          await confirmationDialog.getConfirmationMessage(),
-          ExpectedMessages.confirmationMessageIsValid,
-        )
-        .toBe(ExpectedConstants.deleteFolderMessage);
-      await confirmationDialog.cancelDialog();
+    await folderPrompts.openFolderDropdownMenu(
+      ExpectedConstants.newFolderWithIndexTitle(1),
+    );
+    await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
+    expect
+      .soft(
+        await confirmationDialog.getConfirmationMessage(),
+        ExpectedMessages.confirmationMessageIsValid,
+      )
+      .toBe(ExpectedConstants.deleteFolderMessage);
+    await confirmationDialog.cancelDialog();
+    expect
+      .soft(
+        await folderPrompts
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+          .isVisible(),
+        ExpectedMessages.folderNotDeleted,
+      )
+      .toBeTruthy();
+
+    await folderPrompts.openFolderDropdownMenu(
+      ExpectedConstants.newFolderWithIndexTitle(1),
+    );
+    await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
+    await confirmationDialog.confirm();
+    for (let i = 1; i <= 3; i++) {
       expect
         .soft(
           await folderPrompts
-            .getFolderByName(nestedFolders[0].name)
+            .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
             .isVisible(),
-          ExpectedMessages.folderNotDeleted,
+          ExpectedMessages.folderDeleted,
         )
-        .toBeTruthy();
+        .toBeFalsy();
+    }
+  },
+);
 
-      await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-      await confirmationDialog.confirm();
-      for (const nestedFolder of nestedFolders) {
-        expect
-          .soft(
-            await folderPrompts.getFolderByName(nestedFolder.name).isVisible(),
-            ExpectedMessages.folderDeleted,
-          )
-          .toBeFalsy();
-      }
-    },
-  );
-
-  test('Delete prompt in the folder', async ({
+dialTest(
+  'Delete prompt in the folder',
+  async ({
     dialHomePage,
     promptData,
     folderPrompts,
-    localStorageManager,
+    dataInjector,
     promptDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-968');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
-    await localStorageManager.setFolders(promptInFolder.folders);
-    await localStorageManager.setPrompts(promptInFolder.prompts[0]);
+    await dataInjector.createPrompts(
+      promptInFolder.prompts,
+      promptInFolder.folders,
+    );
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -356,12 +413,15 @@ test.describe('Prompt bar folder tests', () => {
         ExpectedMessages.promptDeleted,
       )
       .toBeFalsy();
-  });
+  },
+);
 
-  test('Delete nested prompt folder with prompt', async ({
+dialTest(
+  'Delete nested prompt folder with prompt',
+  async ({
     dialHomePage,
     folderPrompts,
-    localStorageManager,
+    dataInjector,
     conversationDropdownMenu,
     prompts,
     confirmationDialog,
@@ -371,74 +431,82 @@ test.describe('Prompt bar folder tests', () => {
     setTestIds('EPMRTC-1384');
     const levelsCount = 3;
     const levelToDelete = 2;
-    let nestedFolders: FolderInterface[];
-    const nestedPrompts: Prompt[] = [];
+    let nestedFolders: TestFolder[];
+    const nestedPrompts: TestPrompt[] = [];
 
-    await test.step('Prepare nested folders with prompts inside each one', async () => {
-      nestedFolders = promptData.prepareNestedFolder(levelsCount);
-      for (let i = 0; i <= levelsCount; i++) {
-        const nestedPrompt = promptData.prepareDefaultPrompt();
-        nestedPrompts.push(nestedPrompt);
-        nestedPrompt.folderId = nestedFolders[i].id;
-        promptData.resetData();
-      }
-      await localStorageManager.setFolders(...nestedFolders);
-      await localStorageManager.setPrompts(...nestedPrompts);
-    });
+    await dialTest.step(
+      'Prepare nested folders with prompts inside each one',
+      async () => {
+        nestedFolders = promptData.prepareNestedFolder(levelsCount);
+        for (let i = 0; i <= levelsCount; i++) {
+          const nestedPrompt = promptData.prepareDefaultPrompt();
+          nestedPrompts.push(nestedPrompt);
+          nestedPrompt.folderId = nestedFolders[i].id;
+          promptData.resetData();
+        }
+        await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
+      },
+    );
 
-    await test.step('Delete 2nd level folder and verify all nested content is deleted as well', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      for (const nestedFolder of nestedFolders) {
-        await folderPrompts.expandCollapseFolder(nestedFolder.name);
-      }
-      await folderPrompts.openFolderDropdownMenu(
-        nestedFolders[levelToDelete].name,
-      );
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-      await confirmationDialog.confirm();
+    await dialTest.step(
+      'Delete 2nd level folder and verify all nested content is deleted as well',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        for (const nestedFolder of nestedFolders) {
+          await folderPrompts.expandCollapseFolder(nestedFolder.name);
+        }
+        await folderPrompts.openFolderDropdownMenu(
+          nestedFolders[levelToDelete].name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-      for (let i = levelToDelete; i <= levelsCount; i++) {
-        expect
-          .soft(
-            await folderPrompts
-              .getFolderByName(nestedFolders[i].name)
-              .isVisible(),
-            ExpectedMessages.folderDeleted,
-          )
-          .toBeFalsy();
-        expect
-          .soft(
-            await prompts.getPromptByName(nestedPrompts[i].name).isVisible(),
-            ExpectedMessages.promptDeleted,
-          )
-          .toBeFalsy();
-      }
+        for (let i = levelToDelete; i <= levelsCount; i++) {
+          expect
+            .soft(
+              await folderPrompts
+                .getFolderByName(nestedFolders[i].name)
+                .isVisible(),
+              ExpectedMessages.folderDeleted,
+            )
+            .toBeFalsy();
+          expect
+            .soft(
+              await prompts.getPromptByName(nestedPrompts[i].name).isVisible(),
+              ExpectedMessages.promptDeleted,
+            )
+            .toBeFalsy();
+        }
 
-      for (let i = 0; i <= levelsCount - levelToDelete; i++) {
-        expect
-          .soft(
-            await folderPrompts
-              .getFolderByName(nestedFolders[i].name)
-              .isVisible(),
-            ExpectedMessages.folderNotDeleted,
-          )
-          .toBeTruthy();
-        expect
-          .soft(
-            await folderPrompts
-              .getFolderEntity(nestedFolders[i].name, nestedPrompts[i].name)
-              .isVisible(),
-            ExpectedMessages.promptNotDeleted,
-          )
-          .toBeTruthy();
-      }
-    });
-  });
+        for (let i = 0; i <= levelsCount - levelToDelete; i++) {
+          expect
+            .soft(
+              await folderPrompts
+                .getFolderByName(nestedFolders[i].name)
+                .isVisible(),
+              ExpectedMessages.folderNotDeleted,
+            )
+            .toBeTruthy();
+          expect
+            .soft(
+              await folderPrompts
+                .getFolderEntity(nestedFolders[i].name, nestedPrompts[i].name)
+                .isVisible(),
+              ExpectedMessages.promptNotDeleted,
+            )
+            .toBeTruthy();
+        }
+      },
+    );
+  },
+);
 
-  test('Search prompt located in folders', async ({
+dialTest(
+  'Search prompt located in folders',
+  async ({
     dialHomePage,
-    localStorageManager,
+    dataInjector,
     promptData,
     folderPrompts,
     promptBarSearch,
@@ -451,59 +519,77 @@ test.describe('Prompt bar folder tests', () => {
     const promptContent = 'Prompt search test';
     const searchTerm = 'test';
 
-    await test.step('Prepare prompts in folders with different content', async () => {
-      firstFolderPrompt = promptData.prepareDefaultPromptInFolder();
-      firstFolderPrompt.prompts[0].name = promptContent;
-      promptData.resetData();
+    await dialTest.step(
+      'Prepare prompts in folders with different content',
+      async () => {
+        firstFolderPrompt = promptData.prepareDefaultPromptInFolder();
+        firstFolderPrompt.prompts[0].name = promptContent;
+        promptData.resetData();
 
-      secondFolderPrompts = promptData.preparePromptsInFolder(3);
-      secondFolderPrompts.prompts[0].description = promptContent;
-      secondFolderPrompts.prompts[1].content = promptContent;
+        secondFolderPrompts = promptData.preparePromptsInFolder(3);
+        secondFolderPrompts.prompts[0].description = promptContent;
+        secondFolderPrompts.prompts[1].content = promptContent;
 
-      await localStorageManager.setFolders(
-        firstFolderPrompt.folders,
-        secondFolderPrompts.folders,
-      );
-      await localStorageManager.setPrompts(
-        ...firstFolderPrompt.prompts,
-        ...secondFolderPrompts.prompts,
-      );
-    });
+        await dataInjector.createPrompts(
+          [...firstFolderPrompt.prompts, ...secondFolderPrompts.prompts],
+          firstFolderPrompt.folders,
+          secondFolderPrompts.folders,
+        );
+      },
+    );
 
-    await test.step('Type search term in the field and verify all prompts displayed', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await promptBarSearch.setSearchValue(searchTerm);
-      const firstFolderResultCount = await folderPrompts.getFolderEntitiesCount(
-        firstFolderPrompt.folders.name,
-      );
-      const secondFolderResultCount =
-        await folderPrompts.getFolderEntitiesCount(
+    await dialTest.step(
+      'Type search term in the field and verify all prompts displayed',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await promptBarSearch.setSearchValue(searchTerm);
+        const firstFolderResultCount =
+          await folderPrompts.getFolderEntitiesCount(
+            firstFolderPrompt.folders.name,
+          );
+        const secondFolderResultCount =
+          await folderPrompts.getFolderEntitiesCount(
+            secondFolderPrompts.folders.name,
+          );
+        expect
+          .soft(
+            firstFolderResultCount + secondFolderResultCount,
+            ExpectedMessages.searchResultCountIsValid,
+          )
+          .toBe(isApiStorageType ? 1 : 3);
+      },
+    );
+
+    await dialTest.step(
+      'Clear search field and verify all prompts displayed',
+      async () => {
+        await promptBarSearch.setSearchValue('');
+        const isFolderExpanded = await folderPrompts.isFolderCaretExpanded(
           secondFolderPrompts.folders.name,
         );
-      expect
-        .soft(
-          firstFolderResultCount + secondFolderResultCount,
-          ExpectedMessages.searchResultCountIsValid,
-        )
-        .toBe(3);
-    });
-
-    await test.step('Clear search field and verify all prompts displayed', async () => {
-      await promptBarSearch.setSearchValue('');
-      const firstFolderResultCount = await folderPrompts.getFolderEntitiesCount(
-        secondFolderPrompts.folders.name,
-      );
-      const secondFolderResultCount =
-        await folderPrompts.getFolderEntitiesCount(
-          firstFolderPrompt.folders.name,
-        );
-      expect
-        .soft(
-          firstFolderResultCount + secondFolderResultCount,
-          ExpectedMessages.searchResultCountIsValid,
-        )
-        .toBe(4);
-    });
-  });
-});
+        if (!isFolderExpanded) {
+          await folderPrompts.expandCollapseFolder(
+            secondFolderPrompts.folders.name,
+          );
+        }
+        const firstFolderResultCount =
+          await folderPrompts.getFolderEntitiesCount(
+            secondFolderPrompts.folders.name,
+          );
+        const secondFolderResultCount =
+          await folderPrompts.getFolderEntitiesCount(
+            firstFolderPrompt.folders.name,
+          );
+        expect
+          .soft(
+            firstFolderResultCount + secondFolderResultCount,
+            ExpectedMessages.searchResultCountIsValid,
+          )
+          .toBe(4);
+      },
+    );
+  },
+);

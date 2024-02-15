@@ -1,6 +1,7 @@
 import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 
-import { Chronology } from '@/src/testData';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { Chronology, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { Input } from '@/src/ui/webElements/input';
@@ -109,17 +110,46 @@ export class Conversations extends SideBarEntities {
   }
 
   public async editConversationNameWithTick(name: string, newName: string) {
-    await this.editEntityNameWithTick(this.entitySelector, name, newName);
+    const input = await this.openEditConversationNameMode(name, newName);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'DELETE',
+      );
+      await input.clickTickButton();
+      return respPromise;
+    }
+    await input.clickTickButton();
   }
 
   public async editConversationNameWithEnter(name: string, newName: string) {
     await this.openEditConversationNameMode(name, newName);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'DELETE',
+      );
+      await this.page.keyboard.press(keys.enter);
+      return respPromise;
+    }
     await this.page.keyboard.press(keys.enter);
-    await this.getConversationByName(name).waitFor({ state: 'hidden' });
+  }
+
+  public async deleteConversationWithTick(name: string) {
+    await this.deleteEntityWithTick(this.entitySelector, name);
   }
 
   public async openEditConversationNameMode(name: string, newName: string) {
     return this.openEditEntityNameMode(this.entitySelector, name, newName);
+  }
+
+  public async selectReplayMenuOption() {
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.getDropdownMenu().selectMenuOption(MenuOptions.replay);
+      return respPromise;
+    }
+    await this.getDropdownMenu().selectMenuOption(MenuOptions.replay);
   }
 
   public async getConversationIcon(name: string, index?: number) {
@@ -127,7 +157,7 @@ export class Conversations extends SideBarEntities {
   }
 
   public async isConversationHasPlaybackIcon(name: string, index?: number) {
-    const playBackIcon = await this.getConversationByName(name, index).locator(
+    const playBackIcon = this.getConversationByName(name, index).locator(
       IconSelectors.playbackIcon,
     );
     return playBackIcon.isVisible();

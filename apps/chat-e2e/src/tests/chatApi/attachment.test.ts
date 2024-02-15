@@ -1,4 +1,5 @@
-import test, { stateFilePath } from '@/src/core/fixtures';
+import test, { skipReason } from '@/src/core/baseFixtures';
+import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedConstants,
@@ -16,17 +17,15 @@ const modelsForRequestWithAttachment: {
 );
 
 let imageUrl: string;
-test.beforeEach(async ({ fileApiHelper }) => {
+dialTest.beforeEach(async ({ fileApiHelper }) => {
   imageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
 });
 
-test.describe('Chat API request with attachments tests', () => {
-  test.use({ storageState: stateFilePath });
-  for (const modelToUse of modelsForRequestWithAttachment) {
-    test(`Generate response on request with attachment for model: ${modelToUse.modelId}`, async ({
-      conversationData,
-      chatApiHelper,
-    }) => {
+for (const modelToUse of modelsForRequestWithAttachment) {
+  dialTest(
+    `Generate response on request with attachment for model: ${modelToUse.modelId}`,
+    async ({ conversationData, chatApiHelper }) => {
+      test.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation = conversationData.prepareConversationWithAttachment(
         imageUrl,
         modelToUse.modelId,
@@ -50,10 +49,10 @@ test.describe('Chat API request with attachments tests', () => {
           `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
         )
         .toMatch(new RegExp('.*sun.*', 'i'));
-    });
-  }
-});
+    },
+  );
+}
 
-test.afterEach(async ({ fileApiHelper }) => {
+dialTest.afterEach(async ({ fileApiHelper }) => {
   await fileApiHelper.deleteUploadedFile(Attachment.sunImageName);
 });

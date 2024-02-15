@@ -1,4 +1,5 @@
-import test, { stateFilePath } from '@/src/core/fixtures';
+import test, { skipReason } from '@/src/core/baseFixtures';
+import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
 import { expect } from '@playwright/test';
 
@@ -14,6 +15,7 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GPT_4_0613, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_1106_PREVIEW, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_0125_PREVIEW, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0314, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0613, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K, isSysPromptAllowed: true },
@@ -34,13 +36,11 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
 );
 
-test.describe('Chat API arithmetic request tests', () => {
-  test.use({ storageState: stateFilePath });
-  for (const modelToUse of modelsForArithmeticRequest) {
-    test(`Generate arithmetic response for model: ${modelToUse.modelId}`, async ({
-      conversationData,
-      chatApiHelper,
-    }) => {
+for (const modelToUse of modelsForArithmeticRequest) {
+  dialTest(
+    `Generate arithmetic response for model: ${modelToUse.modelId}`,
+    async ({ conversationData, chatApiHelper }) => {
+      test.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation = conversationData.prepareModelConversation(
         0,
         modelToUse.isSysPromptAllowed
@@ -69,6 +69,6 @@ test.describe('Chat API arithmetic request tests', () => {
           `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
         )
         .toMatch(/\s?3\.?/);
-    });
-  }
-});
+    },
+  );
+}

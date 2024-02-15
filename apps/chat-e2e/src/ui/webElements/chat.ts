@@ -170,8 +170,10 @@ export class Chat extends BaseElement {
 
   public waitForRequestSent(userRequest: string | undefined) {
     return userRequest
-      ? this.page.waitForRequest((request) =>
-          request.postData()!.includes(userRequest),
+      ? this.page.waitForRequest(
+          (request) =>
+            request.url().includes(API.chatHost) &&
+            request.postData()!.includes(userRequest),
         )
       : this.page.waitForRequest(API.chatHost);
   }

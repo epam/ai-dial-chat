@@ -18,8 +18,12 @@ export class DialHomePage extends BasePage {
   }) {
     const appContainer = this.getAppContainer();
     const chatBar = appContainer.getChatBar();
+    const promptBar = appContainer.getPromptBar();
     await chatBar.waitForState({ state: 'attached' });
-    await appContainer.getPromptBar().waitForState({ state: 'attached' });
+    await promptBar.waitForState({ state: 'attached' });
+    await chatBar.getChatLoader().waitForState({ state: 'hidden' });
+    await promptBar.getChatLoader().waitForState({ state: 'hidden' });
+    await appContainer.getChatLoader().waitForState({ state: 'hidden' });
     const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
@@ -38,5 +42,18 @@ export class DialHomePage extends BasePage {
         .getEntitySettings()
         .waitForState({ state: 'attached' });
     }
+  }
+
+  async reloadPage() {
+    await super.reloadPage();
+    const appContainer = this.getAppContainer();
+    await appContainer
+      .getChatBar()
+      .getChatLoader()
+      .waitForState({ state: 'hidden' });
+    await appContainer
+      .getPromptBar()
+      .getChatLoader()
+      .waitForState({ state: 'hidden' });
   }
 }
