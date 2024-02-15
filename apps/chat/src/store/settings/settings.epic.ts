@@ -4,7 +4,6 @@ import {
   concat,
   filter,
   first,
-  map,
   of,
   switchMap,
   tap,
@@ -46,32 +45,31 @@ const initEpic: AppEpic = (action$, state$) =>
         first(),
         switchMap(() =>
           BucketService.requestBucket().pipe(
-            map(({ bucket }) => BucketService.setBucket(bucket)),
+            switchMap(({ bucket }) => {
+              BucketService.setBucket(bucket);
+              return concat(
+                of(UIActions.init()),
+                of(ConversationsActions.migrateConversationsIfRequired()),
+                of(PromptsActions.migratePromptsIfRequired()),
+                of(ModelsActions.init()),
+                of(AddonsActions.init()),
+                of(ConversationsActions.init()),
+                of(PromptsActions.init()),
+                of(ShareActions.init()),
+              );
+            }),
             catchError((error) => {
               if (error.status === 401) {
                 window.location.assign('api/auth/signin');
                 return EMPTY;
               } else {
                 return of(
-                  UIActions.showToast({
-                    message: errorsMessages.errorGettingUserFileBucket,
-                    type: 'error',
-                  }),
+                  UIActions.showErrorToast(
+                    errorsMessages.errorGettingUserBucket,
+                  ),
                 );
               }
             }),
-          ),
-        ),
-        switchMap(() =>
-          concat(
-            of(ConversationsActions.migrateConversationsIfRequired()),
-            of(PromptsActions.migratePromptsIfRequired()),
-            of(UIActions.init()),
-            of(ModelsActions.init()),
-            of(AddonsActions.init()),
-            of(ConversationsActions.init()),
-            of(PromptsActions.init()),
-            of(ShareActions.init()),
           ),
         ),
       );
