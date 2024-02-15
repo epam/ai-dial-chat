@@ -780,7 +780,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `An error occurred while saving the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      `An error occurred while removing the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
