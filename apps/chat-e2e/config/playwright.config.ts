@@ -66,6 +66,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
+      testIgnore: /\/chatApi|listingApi\/.*\.test\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1536, height: 864 },
