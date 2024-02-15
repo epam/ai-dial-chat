@@ -780,7 +780,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `An error occurred while saving the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      `An error occurred while removing the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
@@ -1426,41 +1426,40 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           state$.value,
         );
 
-      const message = responseJSON?.message || payload.message;
+      const errorMessage = responseJSON?.message || payload.message;
+
+      const messages = payload.conversation.messages;
+      messages[errorMessage.length - 1].errorMessage = errorMessage;
+
+      const values: Partial<Conversation> = {
+        isMessageStreaming: false,
+        messages: [...messages],
+      };
+      if (isReplay) {
+        values.replay = {
+          ...payload.conversation.replay,
+          isError: true,
+        };
+      }
 
       return concat(
+        of(
+          ConversationsActions.updateConversation({
+            id: payload.conversation.id,
+            values,
+          }),
+        ),
+        isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
+        of(UIActions.showErrorToast(translate(errorMessage))),
         of(
           ConversationsActions.updateMessage({
             conversationId: payload.conversation.id,
             messageIndex: payload.conversation.messages.length - 1,
             values: {
-              errorMessage: message,
+              errorMessage,
             },
           }),
         ),
-        isReplay
-          ? of(
-              ConversationsActions.updateConversation({
-                id: payload.conversation.id,
-                values: {
-                  replay: {
-                    ...payload.conversation.replay,
-                    isError: true,
-                  },
-                },
-              }),
-            )
-          : EMPTY,
-        of(
-          ConversationsActions.updateConversation({
-            id: payload.conversation.id,
-            values: {
-              isMessageStreaming: false,
-            },
-          }),
-        ),
-        isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        of(UIActions.showErrorToast(translate(message))),
       );
     }),
   );
