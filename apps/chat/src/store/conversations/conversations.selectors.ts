@@ -11,6 +11,7 @@ import {
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
@@ -22,6 +23,7 @@ import {
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
+import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -384,8 +386,12 @@ export const selectMaximumAttachmentsAmount = createSelector(
 );
 
 export const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId?: string) => folderId],
-  (folders, folderId?) => {
+  [selectFolders, (_state: RootState, folderId: string) => folderId],
+  (folders, folderId) => {
+    const rootID = getRootId({ apiKey: ApiKeys.Conversations });
+    if (!folderId.startsWith(rootID)) {
+      return true;
+    }
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
     return parentFolders.some((folder) => isEntityExternal(folder));
   },
