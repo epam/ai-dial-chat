@@ -97,18 +97,13 @@ dialTest(
     await dialTest.step(
       'Verify new Replay conversation is created and Replay button appears',
       async () => {
-        expect
-          .soft(
-            await conversations
-              .getConversationByName(
-                `${ExpectedConstants.replayConversation}${
-                  replayConversation!.name
-                }`,
-              )
-              .isVisible(),
-            ExpectedMessages.replayConversationCreated,
+        await conversations
+          .getConversationByName(
+            `${ExpectedConstants.replayConversation}${
+              replayConversation!.name
+            }`,
           )
-          .toBeTruthy();
+          .waitFor();
         expect
           .soft(
             await chat.replay.getElementContent(),
