@@ -243,7 +243,6 @@ export const promptsSlice = createSlice({
     ) => {
       state.prompts = payload.prompts;
       state.folders = payload.folders;
-      state.selectedPromptId = payload.prompts[payload.prompts.length - 1].id;
     },
     createFolder: (
       state,

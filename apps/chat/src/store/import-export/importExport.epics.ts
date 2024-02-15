@@ -649,8 +649,9 @@ const resetStateEpic: AppEpic = (action$) =>
         ImportExportActions.importConversationsSuccess.match(action) ||
         ImportExportActions.importFail.match(action) ||
         ImportExportActions.importStop.match(action) ||
+        ImportExportActions.importPromptsFail.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
-        ImportExportActions.importPromptsFail.match(action),
+        PromptsActions.initPromptsSuccess.match(action),
     ),
     switchMap(() => {
       return of(ImportExportActions.resetState());
