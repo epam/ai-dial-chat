@@ -493,6 +493,9 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
@@ -500,8 +503,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          ConversationsSelectors.selectConversations(state$.value),
-          0,
+          conversations.filter((conv) => isRootId(conv.folderId)),
         ),
         lastActivityDate: Date.now(),
       });
