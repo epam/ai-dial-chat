@@ -107,7 +107,12 @@ export const shareSlice = createSlice({
       }>,
     ) => state,
     acceptShareInvitationSuccess: (state) => state,
-    acceptShareInvitationFail: (state) => state,
+    acceptShareInvitationFail: (
+      state,
+      _action: PayloadAction<{
+        message?: string;
+      }>,
+    ) => state,
     getSharedListing: (
       state,
       _action: PayloadAction<{

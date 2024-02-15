@@ -236,9 +236,7 @@ const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
     map(() => {
-      return UIActions.showToast({
-        message: translate(errorsMessages.shareFailed),
-      });
+      return UIActions.showErrorToast(translate(errorsMessages.shareFailed));
     }),
   );
 
@@ -254,7 +252,11 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.acceptShareInvitationFail());
+          let message = errorsMessages.acceptShareFailed;
+          if (err.message === 'Not Found') {
+            message = errorsMessages.acceptShareNotExists;
+          }
+          return of(ShareActions.acceptShareInvitationFail({ message }));
         }),
       );
     }),
@@ -273,12 +275,12 @@ const acceptInvitationSuccessEpic: AppEpic = (action$) =>
 const acceptInvitationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationFail.match),
-    map(() => {
+    map(({ payload }) => {
       history.replaceState({}, '', `${window.location.origin}`);
 
-      return UIActions.showToast({
-        message: translate(errorsMessages.acceptShareFailed),
-      });
+      return UIActions.showErrorToast(
+        translate(payload.message || errorsMessages.acceptShareFailed),
+      );
     }),
   );
 
@@ -372,9 +374,9 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
     filter(ShareActions.getSharedListingFail.match),
     switchMap(() => {
       return of(
-        UIActions.showToast({
-          message: translate(errorsMessages.shareByMeListingFailed),
-        }),
+        UIActions.showErrorToast(
+          translate(errorsMessages.shareByMeListingFailed),
+        ),
       );
     }),
   );
