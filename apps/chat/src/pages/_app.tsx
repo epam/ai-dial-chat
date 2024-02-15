@@ -7,6 +7,8 @@ import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
 
+import classNames from 'classnames';
+
 import { HomeProps } from '.';
 
 import { createStore } from '@/src/store';
@@ -34,7 +36,10 @@ function App({
             {(t) => (
               <ToastBar
                 style={{
-                  backgroundColor: 'var(--bg-error)',
+                  backgroundColor:
+                    t.type === 'error'
+                      ? 'var(--bg-error)'
+                      : 'var(--bg-layer-3)',
                   borderRadius: '3px',
                   maxWidth: '730px',
                   padding: '16px 10px',
@@ -54,7 +59,12 @@ function App({
                         icon
                       )}
                     </span>
-                    <div className="mx-0.5 text-sm leading-[21px] text-error">
+                    <div
+                      className={classNames(
+                        'mx-0.5 text-sm leading-[21px]',
+                        t.type === 'error' ? 'text-error' : 'text-primary',
+                      )}
+                    >
                       {message}
                     </div>
                     {t.type !== 'loading' && (
