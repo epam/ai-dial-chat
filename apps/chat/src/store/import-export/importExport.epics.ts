@@ -306,6 +306,7 @@ const importConversationsEpic: AppEpic = (action$) =>
       ).pipe(
         switchMap(() =>
           concat(
+            of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
             of(ImportExportActions.importConversationsSuccess()),
             of(
               ConversationsActions.importConversationsSuccess({
