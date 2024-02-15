@@ -77,9 +77,7 @@ export class ApiStorage implements DialStorage {
         }),
       );
 
-    // it's done to test failed migration window on mobile on review env, don't worry)
-    return throwError(() => new Error());
-    // return retry(entity, apiStorage);
+    return retry(entity, apiStorage);
   }
 
   getConversationsFolders(path?: string): Observable<FolderInterface[]> {
