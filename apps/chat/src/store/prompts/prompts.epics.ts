@@ -35,6 +35,7 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  generateNextName,
   getFolderFromId,
   getFoldersFromIds,
   getNextDefaultName,
@@ -62,6 +63,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -170,15 +172,15 @@ const getOrUploadPrompt = (
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.savePrompt.match),
-    switchMap(({ payload: newPrompt }) => {
-      return PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY));
-    }),
+    switchMap(({ payload: newPrompt }) =>
+      PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
+    ),
     catchError((err) => {
       console.error(err);
       return of(
         UIActions.showErrorToast(
           translate(
-            'An error occurred while saving the prompt. Please refresh the page.',
+            'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
           ),
         ),
       );
@@ -465,6 +467,33 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
       }
 
       return concat(...actions);
+    }),
+  );
+
+const duplicatePromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.duplicatePrompt.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        prompt: PromptService.getPrompt(payload),
+      }),
+    ),
+    switchMap(({ prompt }) => {
+      if (!prompt) return EMPTY;
+
+      const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const newPrompt = addGeneratedPromptId({
+        ...prompt,
+        ...resetShareEntity,
+        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
+        name: generateNextName(
+          DEFAULT_PROMPT_NAME,
+          prompt.name,
+          prompts.filter((prompt) => isRootId(prompt.folderId)),
+        ),
+      });
+
+      return of(PromptsActions.savePrompt(newPrompt));
     }),
   );
 
@@ -865,6 +894,7 @@ export const PromptsEpics = combineEpics(
   deletePromptsEpic,
   updateFolderEpic,
   createNewPromptEpic,
+  duplicatePromptEpic,
 
   uploadPromptEpic,
 );
