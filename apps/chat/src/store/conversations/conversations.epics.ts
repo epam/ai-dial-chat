@@ -2369,7 +2369,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
           ConversationsActions.uploadConversationsWithFolders({
             paths: [payload.id],
             inheritedMetadata: {
-              sharedWithMe: true,
+              sharedWithMe: folder?.sharedWithMe,
             },
           }),
         ),

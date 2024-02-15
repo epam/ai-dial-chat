@@ -31,7 +31,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
-import Loader from '../../Common/Loader';
 import Modal from '../../Common/Modal';
 
 interface Props {
@@ -166,101 +165,100 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       portalId="theme-main"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={
+        isOpen
+          ? isLoading
+            ? ModalState.LOADING
+            : ModalState.OPENED
+          : ModalState.CLOSED
+      }
+      heading={t('Edit prompt')}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt) handleEnter(e, selectedPrompt);
       }}
       initialFocus={nameInputRef}
     >
-      <div className="flex justify-between pb-4 text-base font-bold">
-        {t('Edit prompt')}
-      </div>
+      {selectedPrompt ? (
+        <>
+          <div className="mb-4">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="promptName"
+            >
+              {t('Name')}
+              <span className="ml-1 inline text-accent-primary">*</span>
+            </label>
+            <input
+              ref={nameInputRef}
+              name="promptName"
+              className={inputClassName}
+              placeholder={t('A name for your prompt.') || ''}
+              value={name}
+              required
+              type="text"
+              onBlur={onBlur}
+              onChange={nameOnChangeHandler}
+              data-qa="prompt-name"
+            />
+            <EmptyRequiredInputMessage />
+          </div>
 
-      {!isLoading ? (
-        selectedPrompt ? (
-          <>
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="promptName"
-              >
-                {t('Name')}
-                <span className="ml-1 inline text-accent-primary">*</span>
-              </label>
-              <input
-                ref={nameInputRef}
-                name="promptName"
-                className={inputClassName}
-                placeholder={t('A name for your prompt.') || ''}
-                value={name}
-                required
-                type="text"
-                onBlur={onBlur}
-                onChange={nameOnChangeHandler}
-                data-qa="prompt-name"
-              />
-              <EmptyRequiredInputMessage />
-            </div>
-
-            <div className="mb-4">
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="description"
-              >
-                {t('Description')}
-              </label>
-              <textarea
-                ref={descriptionInputRef}
-                name="description"
-                className={inputClassName}
-                style={{ resize: 'none' }}
-                placeholder={t('A description for your prompt.') || ''}
-                value={description}
-                onChange={descriptionOnChangeHandler}
-                rows={3}
-                data-qa="prompt-descr"
-              />
-            </div>
-            <div className="mb-5">
-              <label
-                className="mb-1 flex text-xs text-secondary"
-                htmlFor="content"
-              >
-                {t('Prompt')}
-              </label>
-              <textarea
-                ref={contentInputRef}
-                name="content"
-                className={inputClassName}
-                style={{ resize: 'none' }}
-                placeholder={
-                  t(
-                    'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
-                  ) || ''
-                }
-                value={content}
-                onChange={contentOnChangeHandler}
-                rows={10}
-                data-qa="prompt-value"
-              />
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="button button-primary"
-                data-qa="save-prompt"
-                onClick={(e) => handleSubmit(e, selectedPrompt)}
-              >
-                {t('Save')}
-              </button>
-            </div>
-          </>
-        ) : (
-          <NotFoundEntity entity={t('Prompt')} />
-        )
+          <div className="mb-4">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="description"
+            >
+              {t('Description')}
+            </label>
+            <textarea
+              ref={descriptionInputRef}
+              name="description"
+              className={inputClassName}
+              style={{ resize: 'none' }}
+              placeholder={t('A description for your prompt.') || ''}
+              value={description}
+              onChange={descriptionOnChangeHandler}
+              rows={3}
+              data-qa="prompt-descr"
+            />
+          </div>
+          <div className="mb-5">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="content"
+            >
+              {t('Prompt')}
+            </label>
+            <textarea
+              ref={contentInputRef}
+              name="content"
+              className={inputClassName}
+              style={{ resize: 'none' }}
+              placeholder={
+                t(
+                  'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
+                ) || ''
+              }
+              value={content}
+              onChange={contentOnChangeHandler}
+              rows={10}
+              data-qa="prompt-value"
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="button button-primary"
+              data-qa="save-prompt"
+              onClick={(e) => handleSubmit(e, selectedPrompt)}
+            >
+              {t('Save')}
+            </button>
+          </div>
+        </>
       ) : (
-        <Loader containerClassName="h-[540px] max-h-full" />
+        <NotFoundEntity entity={t('Prompt')} />
       )}
     </Modal>
   );
