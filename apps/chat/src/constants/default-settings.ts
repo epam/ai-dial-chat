@@ -6,7 +6,7 @@ export const DEFAULT_SYSTEM_PROMPT =
 export const DIAL_API_HOST = process.env.DIAL_API_HOST;
 
 export const DEFAULT_TEMPERATURE = parseFloat(
-  process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE || '1',
+  process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE ?? '1',
 );
 export const MAX_ENTITY_LENGTH = 160;
 
