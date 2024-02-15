@@ -11,7 +11,7 @@ import {
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
