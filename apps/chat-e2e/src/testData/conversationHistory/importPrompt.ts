@@ -1,12 +1,11 @@
-import { Prompt } from '@/chat/types/prompt';
 import { ImportPromtsResponse } from '@/chat/utils/app/import-export';
-import { FolderPrompt } from '@/src/testData';
+import { FolderPrompt, TestPrompt } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { FileUtil } from '@/src/utils/fileUtil';
 
 export class ImportPrompt {
   public static preparePromptFile(
-    importedPrompt: Prompt,
+    importedPrompt: TestPrompt,
     importedFolder?: FolderPrompt,
   ): UploadDownloadData {
     importedPrompt.folderId = importedFolder

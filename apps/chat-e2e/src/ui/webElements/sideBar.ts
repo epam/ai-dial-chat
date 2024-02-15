@@ -1,8 +1,10 @@
 import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
+import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
 
@@ -12,12 +14,20 @@ export class SideBar extends BaseElement {
   }
 
   private search!: Search;
+  private chatLoader!: ChatLoader;
 
   getSearch(): Search {
     if (!this.search) {
       this.search = new Search(this.page, this.rootLocator);
     }
     return this.search;
+  }
+
+  getChatLoader(): ChatLoader {
+    if (!this.chatLoader) {
+      this.chatLoader = new ChatLoader(this.page, this.rootLocator);
+    }
+    return this.chatLoader;
   }
 
   public newEntityButton = this.getChildElementBySelector(
@@ -120,6 +130,16 @@ export class SideBar extends BaseElement {
 
   public async dragAndDropEntityFromFolder(entityLocator: Locator) {
     await this.dragEntityFromFolder(entityLocator);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse((resp) => {
+        return (
+          resp.request().method() === 'PUT' ||
+          resp.request().method() === 'POST'
+        );
+      });
+      await this.page.mouse.up();
+      return respPromise;
+    }
     await this.page.mouse.up();
   }
 

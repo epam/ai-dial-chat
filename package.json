@@ -105,6 +105,7 @@
     "@types/react": "18.2.33",
     "@types/react-dom": "18.2.14",
     "@types/react-syntax-highlighter": "^15.5.6",
+    "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "@vitejs/plugin-react": "^4.2.1",
@@ -134,7 +135,8 @@
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
-    "vitest": "^1.2.1"
+    "vitest": "^1.2.1",
+    "uuid": "^9.0.0"
   },
   "overrides": {
     "js-yaml": "4.1.0",

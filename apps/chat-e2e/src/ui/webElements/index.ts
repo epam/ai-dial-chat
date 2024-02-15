@@ -39,3 +39,4 @@ export * from './menu';
 export * from './search';
 export * from './accountSettings';
 export * from './banner';
+export * from './chatLoader';

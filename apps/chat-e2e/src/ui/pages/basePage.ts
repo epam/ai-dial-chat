@@ -28,13 +28,13 @@ export class BasePage {
     iconsToBeLoaded?: (string | undefined)[];
     setEntitiesEnvVars?: boolean;
   }) {
-    await this.waitFoApiResponsesReceived(
+    await this.waitForApiResponsesReceived(
       () => this.navigateToBaseUrl(),
       options,
     );
   }
 
-  async waitFoApiResponsesReceived(
+  async waitForApiResponsesReceived(
     method: () => Promise<void>,
     options?: {
       iconsToBeLoaded?: (string | undefined)[];
@@ -92,9 +92,7 @@ export class BasePage {
   }
 
   async reloadPage() {
-    await this.page.reload();
-    await this.page.waitForLoadState();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.reload({ waitUntil: 'domcontentloaded' });
   }
 
   async bringPageToFront() {
