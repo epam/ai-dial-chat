@@ -1,3 +1,4 @@
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { PromptModal } from '@/src/ui/selectors/dialogSelectors';
@@ -33,17 +34,14 @@ export class PromptModalDialog extends BaseElement {
     await this.prompt.typeInInput(value);
   }
 
-  public async updatePromptDetails(
+  public async updatePromptDetailsWithButton(
     name: string,
     description: string,
     value: string,
   ) {
-    await this.fillPromptDetails(name, description, value);
-    const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'POST',
+    await this.updatePromptDetails(name, description, value, () =>
+      this.saveButton.click(),
     );
-    await this.saveButton.click();
-    await respPromise;
   }
 
   public async updatePromptDetailsWithEnter(
@@ -51,12 +49,26 @@ export class PromptModalDialog extends BaseElement {
     description: string,
     value: string,
   ) {
-    await this.fillPromptDetails(name, description, value);
-    const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'PUT',
+    await this.updatePromptDetails(name, description, value, () =>
+      this.page.keyboard.press(keys.enter),
     );
-    await this.page.keyboard.press(keys.enter);
-    await respPromise;
+  }
+
+  public async updatePromptDetails(
+    name: string,
+    description: string,
+    value: string,
+    method: () => Promise<void>,
+  ) {
+    await this.fillPromptDetails(name, description, value);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await method();
+      return respPromise;
+    }
+    await method();
   }
 
   public async getName() {

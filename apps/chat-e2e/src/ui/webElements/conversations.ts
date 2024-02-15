@@ -110,7 +110,15 @@ export class Conversations extends SideBarEntities {
   }
 
   public async editConversationNameWithTick(name: string, newName: string) {
-    await this.editEntityNameWithTick(this.entitySelector, name, newName);
+    const input = await this.openEditConversationNameMode(name, newName);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'DELETE',
+      );
+      await input.clickTickButton();
+      return respPromise;
+    }
+    await input.clickTickButton();
   }
 
   public async editConversationNameWithEnter(name: string, newName: string) {
@@ -120,11 +128,13 @@ export class Conversations extends SideBarEntities {
         (resp) => resp.request().method() === 'DELETE',
       );
       await this.page.keyboard.press(keys.enter);
-      await respPromise;
-    } else {
-      await this.page.keyboard.press(keys.enter);
+      return respPromise;
     }
-    await this.getConversationByName(name).waitFor({ state: 'hidden' });
+    await this.page.keyboard.press(keys.enter);
+  }
+
+  public async deleteConversationWithTick(name: string) {
+    await this.deleteEntityWithTick(this.entitySelector, name);
   }
 
   public async openEditConversationNameMode(name: string, newName: string) {

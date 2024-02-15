@@ -263,7 +263,7 @@ dialTest.skip(
       async () => {
         await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.updatePromptDetails(
+        await promptModalDialog.updatePromptDetailsWithButton(
           newName,
           newDescr,
           newValue,
@@ -522,7 +522,11 @@ dialTest.skip(
         Import.v14AppFolderPromptName,
       );
       await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-      await promptModalDialog.updatePromptDetails(newName, newDescr, newValue);
+      await promptModalDialog.updatePromptDetailsWithButton(
+        newName,
+        newDescr,
+        newValue,
+      );
       await folderPrompts
         .getFolderEntity(Import.oldVersionAppFolderName, newName)
         .waitFor();

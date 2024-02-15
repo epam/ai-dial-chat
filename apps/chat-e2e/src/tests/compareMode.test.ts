@@ -1538,9 +1538,7 @@ dialTest(
       async () => {
         await conversations.openConversationDropdownMenu(updatedRequestContent);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await conversations
-          .getConversationInput(updatedRequestContent)
-          .clickTickButton();
+        await conversations.deleteConversationWithTick(updatedRequestContent);
         expect
           .soft(
             await conversations

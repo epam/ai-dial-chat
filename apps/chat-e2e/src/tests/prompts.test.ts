@@ -137,7 +137,11 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    await promptModalDialog.updatePromptDetails(newName, newDescr, newValue);
+    await promptModalDialog.updatePromptDetailsWithButton(
+      newName,
+      newDescr,
+      newValue,
+    );
 
     const isPromptModalVisible = await promptModalDialog.isVisible();
     await expect

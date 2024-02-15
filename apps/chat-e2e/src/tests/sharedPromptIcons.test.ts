@@ -167,7 +167,7 @@ dialTest.skip(
         const newName = GeneratorUtil.randomString(10);
         await prompts.openPromptDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.updatePromptDetails(
+        await promptModalDialog.updatePromptDetailsWithButton(
           newName,
           GeneratorUtil.randomString(20),
           GeneratorUtil.randomString(20),

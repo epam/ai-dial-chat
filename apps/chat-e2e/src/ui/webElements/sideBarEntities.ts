@@ -91,22 +91,6 @@ export class SideBarEntities extends BaseElement {
     await this.getDropdownMenu().waitForState();
   }
 
-  protected async editEntityNameWithTick(
-    selector: string,
-    name: string,
-    newName: string,
-  ) {
-    const input = await this.openEditEntityNameMode(selector, name, newName);
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
-      );
-      await input.clickTickButton();
-      return respPromise;
-    }
-    await input.clickTickButton();
-  }
-
   protected async openEditEntityNameMode(
     selector: string,
     name: string,
@@ -150,5 +134,19 @@ export class SideBarEntities extends BaseElement {
       return respPromise;
     }
     await this.getDropdownMenu().selectMenuOption(name);
+  }
+
+  public async deleteEntityWithTick(selector: string, name: string) {
+    const input = await this.getEntityInput(selector, name);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'DELETE',
+      );
+      await input.clickTickButton();
+      await respPromise;
+    } else {
+      await input.clickTickButton();
+    }
+    await this.getEntityByName(selector, name).waitFor({ state: 'hidden' });
   }
 }
