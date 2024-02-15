@@ -655,6 +655,9 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         failedMigratedPromptIds: BrowserStorage.getFailedMigratedEntityIds(
           MigrationStorageKeys.FailedMigratedPromptIds,
         ),
+        isPromptsBackedUp: BrowserStorage.getEntityBackedUp(
+          MigrationStorageKeys.PromptsBackedUp,
+        ),
       }),
     ),
     switchMap(
@@ -663,6 +666,7 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         promptsFolders,
         migratedPromptIds,
         failedMigratedPromptIds,
+        isPromptsBackedUp,
       }) => {
         const notMigratedPrompts = filterMigratedEntities(
           prompts,
@@ -676,15 +680,19 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
           !notMigratedPrompts.length
         ) {
           if (failedMigratedPromptIds.length) {
-            return of(
-              PromptsActions.setFailedMigratedPrompts({
-                failedMigratedPrompts: filterMigratedEntities(
-                  prompts,
-                  failedMigratedPromptIds,
-                ),
-              }),
+            return concat(
+              of(PromptsActions.setIsPromptsBackedUp({ isPromptsBackedUp })),
+              of(
+                PromptsActions.setFailedMigratedPrompts({
+                  failedMigratedPrompts: filterMigratedEntities(
+                    prompts,
+                    failedMigratedPromptIds,
+                  ),
+                }),
+              ),
             );
           }
+
           return EMPTY;
         }
 

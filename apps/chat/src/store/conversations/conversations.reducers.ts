@@ -26,6 +26,7 @@ export { ConversationsSelectors };
 const initialState: ConversationsState = {
   conversationsToMigrateCount: 0,
   migratedConversationsCount: 0,
+  isChatsBackedUp: false,
   failedMigratedConversations: [],
   conversations: [],
   selectedConversationsIds: [],
@@ -79,6 +80,16 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.failedMigratedConversations = payload.failedMigratedConversations;
+    },
+    setIsChatsBackedUp: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        isChatsBackedUp: boolean;
+      }>,
+    ) => {
+      state.isChatsBackedUp = payload.isChatsBackedUp;
     },
     skipFailedMigratedConversations: (
       state,
