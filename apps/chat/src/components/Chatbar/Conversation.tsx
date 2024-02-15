@@ -20,11 +20,13 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/id';
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -47,6 +49,8 @@ import { ImportExportActions } from '@/src/store/import-export/importExport.redu
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
+
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -116,7 +120,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
@@ -134,9 +137,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       true,
     ),
   );
-
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+  );
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -150,16 +158,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const isSelected = selectedConversationIds.includes(conversation.id);
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-  );
-
-  const newFolderName = useAppSelector((state) =>
-    ConversationsSelectors.selectNewFolderName(state, conversation.folderId),
-  );
-  const allConversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -374,7 +372,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const folderPath = (isNewFolder ? newFolderName : folderId) as string;
+      const folderPath = (
+        isNewFolder
+          ? getNextDefaultName(
+              translate(DEFAULT_FOLDER_NAME),
+              folders.filter((f) => isRootId(f.folderId)),
+            )
+          : folderId
+      ) as string;
 
       if (
         !isEntityNameOnSameLevelUnique(
@@ -402,8 +407,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       if (isNewFolder) {
         dispatch(
           ConversationsActions.createFolder({
+            name: folderPath,
             parentId: getRootId({ apiKey: ApiKeys.Conversations }),
-            name: newFolderName,
           }),
         );
       }
@@ -421,7 +426,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         }),
       );
     },
-    [allConversations, conversation, dispatch, newFolderName, t],
+    [allConversations, conversation, dispatch, folders, t],
   );
   const handleOpenExportModal = useCallback(() => {
     setIsShowExportModal(true);
