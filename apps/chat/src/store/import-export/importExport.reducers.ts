@@ -116,6 +116,11 @@ export const importExportSlice = createSlice({
     ) => {
       state.attachmentsErrors = state.attachmentsErrors.concat(payload.id);
     },
+    importPrompts: (state) => {
+      state.status = 'LOADING';
+      state.operation = Operation.Importing;
+    },
+    importPromptsFail: (state) => state,
   },
 });
 

@@ -65,6 +65,7 @@ import {
 } from '../conversations/conversations.reducers';
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
+import { PromptsActions } from '../prompts/prompts.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -643,7 +644,10 @@ const resetStateEpic: AppEpic = (action$) =>
         ImportExportActions.exportFail.match(action) ||
         ImportExportActions.importStop.match(action) ||
         ImportExportActions.importConversationsSuccess.match(action) ||
-        ImportExportActions.importFail.match(action),
+        ImportExportActions.importFail.match(action) ||
+        ImportExportActions.importStop.match(action) ||
+        PromptsActions.importPromptsSuccess.match(action) ||
+        ImportExportActions.importPromptsFail.match(action),
     ),
     switchMap(() => {
       return of(ImportExportActions.resetState());

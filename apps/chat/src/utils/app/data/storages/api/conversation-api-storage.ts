@@ -111,6 +111,7 @@ export const getPreparedConversations = ({
 
 const isRootConversationsId = (id?: string) =>
   isRootId(id) && id?.startsWith(`${ApiKeys.Conversations}/`);
+
 export const getImportPreparedConversations = ({
   conversations,
   conversationsFolders,

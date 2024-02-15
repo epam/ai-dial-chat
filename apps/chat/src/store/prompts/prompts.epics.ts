@@ -29,6 +29,7 @@ import {
 } from '@/src/utils/app/common';
 import {
   PromptService,
+  getImportPreparedPrompts,
   getPreparedPrompts,
 } from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -38,6 +39,7 @@ import {
   getFolderFromId,
   getFoldersFromIds,
   getNextDefaultName,
+  getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
   splitEntityId,
   updateMovedFolderId,
@@ -489,7 +491,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           }),
         );
       }
-      const preparedPrompts: Prompt[] = getPreparedPrompts({
+      const preparedPrompts: Prompt[] = getImportPreparedPrompts({
         prompts: promptsHistory.prompts,
         folders: promptsHistory.folders,
       });
@@ -517,7 +519,13 @@ const importPromptsEpic: AppEpic = (action$) =>
           }),
         );
       }
-      return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
+
+      return from(PromptService.setPrompts(preparedPrompts)).pipe(
+        switchMap(() =>
+          of(PromptsActions.importPromptsSuccess({ prompts, folders })),
+        ),
+        catchError(() => of(ImportExportActions.importFail())),
+      );
     }),
   );
 
@@ -718,13 +726,29 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const importPromptsSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.importPrompts.match),
+    map(() => PromptsSelectors.selectSelectedPromptId(state$.value)),
+    switchMap((selectedPromptId) => {
+      if (!selectedPromptId) {
+        return EMPTY;
+      }
+      const paths = getParentFolderIdsFromEntityId(selectedPromptId);
+      return of(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: paths,
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    }),
+  );
+
 export const PromptsEpics = combineEpics(
   migratePromptsIfRequiredEpic,
   skipFailedMigratedPromptsEpic,
-
   initEpic,
   initPromptsEpic,
-
   saveFoldersEpic,
   deleteFolderEpic,
   exportPromptsEpic,
@@ -739,6 +763,6 @@ export const PromptsEpics = combineEpics(
   updateFolderEpic,
   createNewPromptEpic,
   createNewPromptSuccessEpic,
-
   uploadPromptEpic,
+  importPromptsSuccessEpic,
 );

@@ -309,6 +309,26 @@ export interface ImportPromtsResponse {
   folders: FolderInterface[];
   isError: boolean;
 }
+
+export function cleanPromptsFolders(folders: FolderInterface[]) {
+  return (folders || []).map((promptFolder) => {
+    const parentFolder = folders.find(
+      (folder) => folder.id === promptFolder.folderId,
+    );
+    const newFolderId = constructPath(
+      getRootId({ apiKey: ApiKeys.Prompts }),
+      parentFolder?.name,
+    );
+    const newId = constructPath(newFolderId, promptFolder.name);
+    return {
+      id: newId,
+      name: promptFolder.name,
+      type: FolderType.Prompt,
+      folderId: newFolderId,
+    };
+  });
+}
+
 export const importPrompts = (
   importedData: PromptsHistory,
   {
@@ -334,7 +354,7 @@ export const importPrompts = (
 
   const newFolders: FolderInterface[] = combineEntities(
     currentFolders,
-    importedData.folders,
+    cleanPromptsFolders(importedData.folders),
   ).filter((folder) => folder.type === FolderType.Prompt);
 
   return { prompts: newPrompts, folders: newFolders, isError: false };
