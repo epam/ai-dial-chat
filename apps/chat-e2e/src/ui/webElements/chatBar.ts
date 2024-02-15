@@ -1,6 +1,7 @@
 import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 import { Conversations } from './conversations';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { SideBar } from '@/src/ui/webElements/sideBar';
@@ -40,9 +41,18 @@ export class ChatBar extends SideBar {
   public async createNewConversation() {
     const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
     const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
+    let putResponsePromise;
+    if (isApiStorageType) {
+      putResponsePromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+    }
     await this.newEntityButton.click();
     await modelsResponsePromise;
     await addonsResponsePromise;
+    if (isApiStorageType) {
+      await putResponsePromise;
+    }
   }
 
   public async openCompareMode() {

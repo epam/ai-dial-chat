@@ -34,5 +34,6 @@ export class PromptList extends BaseElement {
       optionIndex++;
     }
     await this.getPromptByName(name).click();
+    await this.waitForState({ state: 'hidden' });
   }
 }

@@ -10,6 +10,9 @@ export class ConversationToCompare extends BaseElement {
   }
 
   private conversationSelector!: ModelSelector;
+  public showAllConversationsCheckbox = this.getChildElementBySelector(
+    ChatSelectors.showAllCheckbox,
+  );
 
   getConversationSelector(): ModelSelector {
     if (!this.conversationSelector) {
@@ -19,5 +22,11 @@ export class ConversationToCompare extends BaseElement {
       );
     }
     return this.conversationSelector;
+  }
+
+  public async checkShowAllConversations() {
+    if (await this.showAllConversationsCheckbox.isVisible()) {
+      await this.showAllConversationsCheckbox.click();
+    }
   }
 }

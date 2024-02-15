@@ -1,7 +1,6 @@
-import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
-import test, { stateFilePath } from '@/src/core/fixtures';
-import { ExpectedMessages } from '@/src/testData';
+import dialTest from '@/src/core/dialFixtures';
+import { ExpectedMessages, TestConversation } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -9,48 +8,50 @@ let allAddons: OpenAIEntityModel[];
 let addonIds: string[];
 let defaultModel: OpenAIEntityModel;
 
-test.beforeAll(async () => {
+dialTest.beforeAll(async () => {
   allAddons = ModelsUtil.getAddons();
   addonIds = allAddons.map((a) => a.id);
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-test.describe('Chat header tests', () => {
-  test.use({
-    storageState: stateFilePath,
-  });
-  test(
-    'Check chat header for Model with three addons, temp = 0.\n' +
-      'Message is send on Enter',
-    async ({
-      dialHomePage,
-      chat,
-      setTestIds,
-      conversationData,
-      localStorageManager,
-      chatHeader,
-      chatInfoTooltip,
-      errorPopup,
-      iconApiHelper,
-    }) => {
-      setTestIds('EPMRTC-1115', 'EPMRTC-473');
-      let conversation: Conversation;
-      const temp = 0;
-      const request = 'This is a test request';
-      const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
+dialTest(
+  'Check chat header for Model with three addons, temp = 0.\n' +
+    'Message is send on Enter',
+  async ({
+    dialHomePage,
+    chat,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    chatHeader,
+    chatInfoTooltip,
+    errorPopup,
+    iconApiHelper,
+  }) => {
+    setTestIds('EPMRTC-1115', 'EPMRTC-473');
+    let conversation: TestConversation;
+    const temp = 0;
+    const request = 'This is a test request';
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
 
-      await test.step('Prepare model conversation with all available addons and temperature', async () => {
+    await dialTest.step(
+      'Prepare model conversation with all available addons and temperature',
+      async () => {
         conversation = conversationData.prepareModelConversation(
           temp,
           '',
           addonIds,
           defaultModel,
         );
-        await localStorageManager.setConversationHistory(conversation);
+        await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
-      });
+      },
+    );
 
-      await test.step('Send new request in chat and verify request is sent with valid data', async () => {
+    await dialTest.step(
+      'Send new request in chat and verify request is sent with valid data',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         const requestsData = await chat.sendRequestWithKeyboard(request, false);
@@ -70,9 +71,12 @@ test.describe('Chat header tests', () => {
             ExpectedMessages.requestSelectedAddonsAreValid,
           )
           .toEqual(conversation.selectedAddons);
-      });
+      },
+    );
 
-      await test.step('Verify chat icons are updated with model, temperature and addons in the header', async () => {
+    await dialTest.step(
+      'Verify chat icons are updated with model, temperature and addons in the header',
+      async () => {
         const headerModelIcon = await chatHeader.getHeaderModelIcon();
         expect
           .soft(
@@ -105,9 +109,12 @@ test.describe('Chat header tests', () => {
               .toBe(expectedAddonIcon);
           }
         }
-      });
+      },
+    );
 
-      await test.step('Hover over chat header and verify chat settings are correct on tooltip', async () => {
+    await dialTest.step(
+      'Hover over chat header and verify chat settings are correct on tooltip',
+      async () => {
         await errorPopup.cancelPopup();
         await chatHeader.chatModel.hoverOver();
         const modelInfo = await chatInfoTooltip.getModelInfo();
@@ -150,36 +157,40 @@ test.describe('Chat header tests', () => {
             )
             .toBe(expectedAddonIcon);
         }
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test(
-    'Clear conversations using button in chat. Cancel.\n' +
-      'Clear conversation using button in chat. Ok',
-    async ({
-      dialHomePage,
-      setTestIds,
-      chatMessages,
-      conversationData,
-      localStorageManager,
-      chatHeader,
-      conversationSettings,
-      confirmationDialog,
-    }) => {
-      setTestIds('EPMRTC-490', 'EPMRTC-491');
-      let conversation: Conversation;
-      await test.step('Prepare conversation with history', async () => {
-        conversation =
-          await conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            ['first request', 'second request', 'third request'],
-          );
-        await localStorageManager.setConversationHistory(conversation);
-        await localStorageManager.setSelectedConversation(conversation);
-      });
+dialTest(
+  'Clear conversations using button in chat. Cancel.\n' +
+    'Clear conversation using button in chat. Ok',
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatMessages,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    chatHeader,
+    conversationSettings,
+    confirmationDialog,
+  }) => {
+    setTestIds('EPMRTC-490', 'EPMRTC-491');
+    let conversation: TestConversation;
+    await dialTest.step('Prepare conversation with history', async () => {
+      conversation =
+        await conversationData.prepareModelConversationBasedOnRequests(
+          defaultModel,
+          ['first request', 'second request', 'third request'],
+        );
+      await dataInjector.createConversations([conversation]);
+      await localStorageManager.setSelectedConversation(conversation);
+    });
 
-      await test.step('Try to clear conversation messages using header button but cancel clearing and verify no messages deleted', async () => {
+    await dialTest.step(
+      'Try to clear conversation messages using header button but cancel clearing and verify no messages deleted',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatHeader.clearConversation.click();
@@ -190,11 +201,14 @@ test.describe('Chat header tests', () => {
         expect
           .soft(messagesCount, ExpectedMessages.messageContentIsValid)
           .toBe(conversation.messages.length);
-      });
+      },
+    );
 
-      await test.step('Clear conversation messages using header button and verify messages deleted, setting are shown', async () => {
+    await dialTest.step(
+      'Clear conversation messages using header button and verify messages deleted, setting are shown',
+      async () => {
         await chatHeader.clearConversation.click();
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
         const isConversationSettingsVisible =
           await conversationSettings.isVisible();
@@ -204,7 +218,7 @@ test.describe('Chat header tests', () => {
             ExpectedMessages.conversationSettingsVisible,
           )
           .toBeTruthy();
-      });
-    },
-  );
-});
+      },
+    );
+  },
+);
