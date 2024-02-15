@@ -286,11 +286,13 @@ export const MigrationFailedWindow = ({
               }
               failedMigratedEntities={failedMigratedConversations}
               getModelIcon={(conversation) => (
-                <ModelIcon
-                  entity={modelsMap[conversation.model.id]}
-                  entityId={conversation.model.id}
-                  size={18}
-                />
+                <div className="flex items-center">
+                  <ModelIcon
+                    entity={modelsMap[conversation.model.id]}
+                    entityId={conversation.model.id}
+                    size={18}
+                  />
+                </div>
               )}
             />
             <ItemsList
@@ -300,7 +302,9 @@ export const MigrationFailedWindow = ({
               }
               failedMigratedEntities={failedMigratedPrompts}
               getModelIcon={() => (
-                <IconBulb size={18} className="text-secondary" />
+                <div className="flex items-center">
+                  <IconBulb size={18} className="text-secondary" />
+                </div>
               )}
               withPt
             />
