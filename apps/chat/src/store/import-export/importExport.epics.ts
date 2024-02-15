@@ -143,8 +143,10 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       () => ConversationService.getConversations(undefined, true), //listing of all entities
     ),
     switchMap((conversationsListing) => {
+      const onlyMyConversationsListing =
+        filterOnlyMyEntities(conversationsListing);
       const foldersIds = Array.from(
-        new Set(conversationsListing.map((info) => info.folderId)),
+        new Set(onlyMyConversationsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
       const foldersWithConversation = getFoldersFromIds(
@@ -163,7 +165,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       return forkJoin({
         //get all conversations from api
         conversations: zip(
-          conversationsListing.map((info) =>
+          onlyMyConversationsListing.map((info) =>
             ConversationService.getConversation(info),
           ),
         ),
