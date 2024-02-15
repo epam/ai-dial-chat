@@ -161,7 +161,7 @@ export const PreUploadDialog = ({
 
   const handleUpload = useCallback(() => {
     const errors = [];
-    if (attachments.length + selectedFiles.length > 10) {
+    if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
         t(
           `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploadings amount will be {{selectedAttachmentsAmount}}`,
