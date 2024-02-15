@@ -335,7 +335,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   of(
                     UIActions.showErrorToast(
                       translate(
-                        'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                        "An error occurred while creating a new conversation. Most likely the conversation already exists. We'll try to upload your conversation. If this doesn't work, please refresh the page.",
                       ),
                     ),
                   ),

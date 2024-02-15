@@ -106,7 +106,7 @@ const createNewPromptSuccessEpic: AppEpic = (action$) =>
             of(
               UIActions.showErrorToast(
                 translate(
-                  'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+                  "An error occurred while creating a new prompt. Most likely the prompt already exists. We'll try to upload your prompt. If this doesn't work, please refresh the page.",
                 ),
               ),
             ),
