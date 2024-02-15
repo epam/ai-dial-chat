@@ -9,6 +9,7 @@ import { getRootId } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
+import { Conversation } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -88,6 +89,8 @@ export const promptsSlice = createSlice({
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
     },
+    saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
+      state,
     deletePrompts: (
       state,
       { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,

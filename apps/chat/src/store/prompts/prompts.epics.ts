@@ -27,6 +27,7 @@ import {
   filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
+import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import {
   PromptService,
   getPreparedPrompts,
@@ -61,6 +62,7 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -104,6 +106,26 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         }),
       );
     }),
+  );
+
+const saveNewPromptEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.saveNewPrompt.match),
+    switchMap(({ payload }) =>
+      PromptService.createPrompt(payload.newPrompt).pipe(
+        switchMap(() => of(PromptsActions.createNewPromptSuccess(payload))),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
+      ),
+    ),
   );
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
@@ -493,7 +515,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ),
       });
 
-      return of(PromptsActions.savePrompt(newPrompt));
+      return of(PromptsActions.saveNewPrompt({ newPrompt }));
     }),
   );
 
@@ -882,6 +904,7 @@ export const PromptsEpics = combineEpics(
   initPromptsEpic,
 
   saveFoldersEpic,
+  saveNewPromptEpic,
   deleteFolderEpic,
   exportPromptsEpic,
   exportPromptEpic,
