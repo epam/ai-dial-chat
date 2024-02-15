@@ -236,9 +236,7 @@ const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
     map(() => {
-      return UIActions.showToast({
-        message: translate(errorsMessages.shareFailed),
-      });
+      return UIActions.showErrorToast(translate(errorsMessages.shareFailed));
     }),
   );
 
@@ -280,9 +278,9 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
     map(({ payload }) => {
       history.replaceState({}, '', `${window.location.origin}`);
 
-      return UIActions.showToast({
-        message: translate(payload.message || errorsMessages.acceptShareFailed),
-      });
+      return UIActions.showErrorToast(
+        translate(payload.message || errorsMessages.acceptShareFailed),
+      );
     }),
   );
 
@@ -376,9 +374,9 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
     filter(ShareActions.getSharedListingFail.match),
     switchMap(() => {
       return of(
-        UIActions.showToast({
-          message: translate(errorsMessages.shareByMeListingFailed),
-        }),
+        UIActions.showErrorToast(
+          translate(errorsMessages.shareByMeListingFailed),
+        ),
       );
     }),
   );
