@@ -322,19 +322,28 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               newConversations.map((info) =>
                 ConversationService.createConversation(info),
               ),
-            ).pipe(ignoreElements()),
+            ).pipe(
+              switchMap(() => EMPTY),
+              catchError((err) => {
+                console.error("New conversation wasn't created: ", err);
+                return concat(
+                  of(
+                    ConversationsActions.uploadConversationsByIds({
+                      conversationIds: newConversations.map((conv) => conv.id),
+                    }),
+                  ),
+                  of(
+                    UIActions.showErrorToast(
+                      translate(
+                        'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
         ),
-        catchError((err) => {
-          console.error("New conversation wasn't created: ", err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
-              ),
-            ),
-          );
-        }),
       );
     }),
   );

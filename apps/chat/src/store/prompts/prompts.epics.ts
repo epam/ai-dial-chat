@@ -96,18 +96,24 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
 const createNewPromptSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.createNewPromptSuccess.match),
-    switchMap(({ payload }) => PromptService.createPrompt(payload.newPrompt)),
-    catchError((err) => {
-      console.error("New prompt wasn't created: ", err);
-      return of(
-        UIActions.showErrorToast(
-          translate(
-            'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
-          ),
-        ),
-      );
-    }),
-    ignoreElements(),
+    switchMap(({ payload }) =>
+      PromptService.createPrompt(payload.newPrompt).pipe(
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error("New prompt wasn't created: ", err);
+          return concat(
+            of(PromptsActions.uploadPrompt({ promptId: payload.newPrompt.id })),
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    ),
   );
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>

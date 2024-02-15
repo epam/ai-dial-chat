@@ -28,8 +28,8 @@ export class ConversationApiStorage extends ApiEntityStorage<
 > {
   mergeGetResult(info: ConversationInfo, entity: Conversation): Conversation {
     return {
-      ...entity,
       ...info,
+      ...entity,
       lastActivityDate: info.lastActivityDate ?? entity.lastActivityDate,
       model: entity.model,
     };

@@ -12,8 +12,8 @@ import { ApiEntityStorage } from './api-entity-storage';
 export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
   mergeGetResult(info: Entity, entity: Prompt): Prompt {
     return {
-      ...entity,
       ...info,
+      ...entity,
     };
   }
   cleanUpEntity(entity: Prompt): Prompt {
