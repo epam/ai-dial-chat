@@ -191,10 +191,15 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 
         if (enabledFeatures) {
           let features: string[] = [];
+
           if (typeof enabledFeatures === 'string') {
             features = enabledFeatures
               .split(',')
               .map((feature) => feature.trim());
+          }
+
+          if (Array.isArray(enabledFeatures)) {
+            features = enabledFeatures;
           }
 
           if (features.every(validateFeature)) {
