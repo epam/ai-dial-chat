@@ -14,7 +14,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isOnlySmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
@@ -361,7 +361,7 @@ export const MigrationFailedWindow = ({
           <div className="mt-3 flex w-full justify-end">
             {!!failedMigratedPrompts.length && (
               <button
-                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center"
+                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
                 data-qa="skip-migration"
                 onClick={onBackupPrompts}
               >
@@ -373,12 +373,12 @@ export const MigrationFailedWindow = ({
                 ) : (
                   <IconDownload size={18} className="mr-3 text-secondary" />
                 )}
-                {!isSmallScreen() && t('Backup')} {t('prompts')}
+                {!isOnlySmallScreen() && t('Backup')} {t('prompts')}
               </button>
             )}
             {!!failedMigratedConversations.length && (
               <button
-                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center"
+                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
                 data-qa="skip-migration"
                 onClick={onBackupChats}
               >
@@ -390,7 +390,7 @@ export const MigrationFailedWindow = ({
                 ) : (
                   <IconDownload size={18} className="mr-3 text-secondary" />
                 )}
-                {!isSmallScreen() && t('Backup')} {t('chats')}
+                {!isOnlySmallScreen() && t('Backup')} {t('chats')}
               </button>
             )}
             <button
