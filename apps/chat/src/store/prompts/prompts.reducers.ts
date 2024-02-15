@@ -6,6 +6,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
+import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
@@ -19,7 +20,6 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
-import { isEntityExternal } from '@/src/utils/app/share';
 
 export { PromptsSelectors };
 
