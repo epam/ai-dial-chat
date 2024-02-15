@@ -254,6 +254,10 @@ export const MigrationFailedWindow = ({
     !!conversationsToRetryIds.length || !!promptsToRetryIds.length;
   const isNothingSelected =
     !conversationsToRetryIds.length && !promptsToRetryIds.length;
+  const isNextButtonDisabled =
+    !dontWantBackup ||
+    ((isChatsBackedUp || !failedMigratedConversations.length) &&
+      (isPromptsBackedUp || !failedMigratedPrompts.length));
 
   return (
     <div className="flex size-full flex-col items-center justify-center">
@@ -393,7 +397,7 @@ export const MigrationFailedWindow = ({
               className="button button-primary mr-3 flex h-[38px] items-center"
               data-qa="skip-migration"
               onClick={retryMigration}
-              disabled={!dontWantBackup}
+              disabled={isNextButtonDisabled}
             >
               {t('Next')}
             </button>
