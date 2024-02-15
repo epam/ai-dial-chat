@@ -81,6 +81,19 @@ export class FileService {
     );
   }
 
+  private static getListingUrl = ({
+    path,
+    resultQuery,
+  }: {
+    path?: string;
+    resultQuery?: string;
+  }): string => {
+    const listingUrl = encodeApiUrl(
+      constructPath('api/listing', path || getRootId()),
+    );
+    return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
+  };
+
   public static getFileFolders(
     parentPath?: string,
   ): Observable<FileFolderInterface[]> {
@@ -88,14 +101,12 @@ export class FileService {
 
     const query = new URLSearchParams({
       filter,
-      bucket: BucketService.getBucket(),
-      ...(parentPath && {
-        path: parentPath,
-      }),
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
+    return ApiUtils.request(
+      this.getListingUrl({ path: parentPath, resultQuery }),
+    ).pipe(
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
           const relativePath = folder.parentPath
@@ -146,14 +157,12 @@ export class FileService {
 
     const query = new URLSearchParams({
       filter,
-      bucket: BucketService.getBucket(),
-      ...(parentPath && {
-        path: parentPath,
-      }),
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(`api/${ApiKeys.Files}/listing?${resultQuery}`).pipe(
+    return ApiUtils.request(
+      this.getListingUrl({ path: parentPath, resultQuery }),
+    ).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {
           const relativePath = file.parentPath
