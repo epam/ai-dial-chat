@@ -1,7 +1,8 @@
 import { SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { ExpectedConstants } from '@/src/testData';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
@@ -53,10 +54,11 @@ export class Folders extends BaseElement {
     );
   }
 
-  public getFolderCaret(name: string, index?: number) {
+  public async isFolderCaretExpanded(name: string, index?: number) {
     return this.getFolderByName(name, index)
-      .locator(Tags.span)
-      .getAttribute(Attributes.class);
+      .locator(`${Tags.span}[class='${Attributes.visible}']`)
+      .locator(`.${Attributes.rotated}`)
+      .isVisible();
   }
 
   public foldersGroup = (parentFolderName: string) => {
@@ -95,6 +97,16 @@ export class Folders extends BaseElement {
 
   public async editFolderNameWithTick(name: string, newName: string) {
     const folderInput = await this.editFolderName(name, newName);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse((resp) => {
+        return (
+          resp.url().includes(API.conversationsHost) ||
+          resp.url().includes(API.promptsHost)
+        );
+      });
+      await folderInput.clickTickButton();
+      return respPromise;
+    }
     await folderInput.clickTickButton();
   }
 
@@ -104,8 +116,20 @@ export class Folders extends BaseElement {
     return folderInput;
   }
 
-  public async expandCollapseFolder(name: string, index?: number) {
-    await this.getFolderByName(name, index).click();
+  public async expandCollapseFolder(
+    name: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    const folder = this.getFolderByName(name);
+    await folder.waitFor();
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse((resp) =>
+        resp.url().includes(API.conversationsHost),
+      );
+      await folder.click();
+      return respPromise;
+    }
+    await folder.click();
   }
 
   public async getFolderNameColor(name: string, index?: number) {

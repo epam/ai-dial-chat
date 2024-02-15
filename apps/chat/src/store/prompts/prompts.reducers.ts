@@ -3,11 +3,10 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  generateNextName,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
-import { addGeneratedPromptId } from '@/src/utils/app/prompts';
+import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
@@ -17,7 +16,6 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
-import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as PromptsSelectors from './prompts.selectors';
@@ -102,6 +100,8 @@ export const promptsSlice = createSlice({
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
     },
+    saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
+      state,
     deletePrompts: (
       state,
       { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,
@@ -225,23 +225,7 @@ export const promptsSlice = createSlice({
         return folder;
       });
     },
-    duplicatePrompt: (
-      state,
-      { payload }: PayloadAction<{ prompt: Prompt }>,
-    ) => {
-      const newPrompt: Prompt = addGeneratedPromptId({
-        ...payload.prompt,
-        ...resetShareEntity,
-        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
-        name: generateNextName(
-          translate('Prompt'),
-          payload.prompt.name,
-          state.prompts,
-        ),
-      });
-      state.prompts = state.prompts.concat(newPrompt);
-      state.selectedPromptId = newPrompt.id;
-    },
+    duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     updatePrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
@@ -254,8 +238,12 @@ export const promptsSlice = createSlice({
     },
     clearPrompts: (state) => state,
     clearPromptsSuccess: (state) => {
-      state.prompts = [];
-      state.folders = [];
+      state.prompts = state.prompts.filter((prompt) =>
+        isEntityExternal(prompt),
+      );
+      state.folders = state.folders.filter((folder) =>
+        isEntityExternal(folder),
+      );
     },
     exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
     exportPrompts: (state) => state,

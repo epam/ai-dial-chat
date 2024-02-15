@@ -1,12 +1,15 @@
-import { FolderInterface, FolderType } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
+import { FolderType } from '@/chat/types/folder';
+import { TestFolder } from '@/src/testData';
 import { FolderData } from '@/src/testData/folders/folderData';
-import { PromptBuilder } from '@/src/testData/prompts/promptBuilder';
+import {
+  PromptBuilder,
+  TestPrompt,
+} from '@/src/testData/prompts/promptBuilder';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 
 export interface FolderPrompt {
-  prompts: Prompt[];
-  folders: FolderInterface;
+  prompts: TestPrompt[];
+  folders: TestFolder;
 }
 
 export class PromptData extends FolderData {
@@ -57,7 +60,7 @@ export class PromptData extends FolderData {
 
   public preparePromptsInFolder(promptsCount: number): FolderPrompt {
     const folder = this.prepareFolder();
-    const prompts: Prompt[] = [];
+    const prompts: TestPrompt[] = [];
     for (let i = 1; i <= promptsCount; i++) {
       const prompt = this.prepareDefaultPrompt();
       prompt.folderId = folder.id;
@@ -75,8 +78,8 @@ export class PromptData extends FolderData {
       .build();
   }
 
-  public preparePromptsForNestedFolders(nestedFolders: FolderInterface[]) {
-    const nestedPrompts: Prompt[] = [];
+  public preparePromptsForNestedFolders(nestedFolders: TestFolder[]) {
+    const nestedPrompts: TestPrompt[] = [];
     for (const item of nestedFolders) {
       const nestedPrompt = this.prepareDefaultPrompt();
       nestedPrompts.push(nestedPrompt);

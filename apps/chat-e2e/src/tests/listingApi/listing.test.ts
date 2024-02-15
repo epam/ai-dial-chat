@@ -1,9 +1,7 @@
-import test from '@/src/core/fixtures';
+import test, { skipReason } from '@/src/core/baseFixtures';
 import { AddonIds, ExpectedMessages, ModelIds } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-
-const skipReason = 'Execute test on CI env only';
 
 test('Models API listing', async () => {
   test.skip(process.env.E2E_HOST === undefined, skipReason);

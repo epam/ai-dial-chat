@@ -493,6 +493,9 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
@@ -500,8 +503,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          ConversationsSelectors.selectConversations(state$.value),
-          0,
+          conversations.filter((conv) => isRootId(conv.folderId)),
         ),
         lastActivityDate: Date.now(),
       });
@@ -778,7 +780,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `An error occurred while saving the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      `An error occurred while saving the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
@@ -2374,7 +2376,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
           ConversationsActions.uploadConversationsWithFolders({
             paths: [payload.id],
             inheritedMetadata: {
-              sharedWithMe: true,
+              sharedWithMe: folder?.sharedWithMe,
             },
           }),
         ),
