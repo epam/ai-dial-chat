@@ -922,7 +922,7 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
               ...item,
               ...(payload.inheritedMetadata as Partial<FolderInterface>),
               status: UploadStatus.LOADED,
-            }))
+            }));
           const prompts = foldersAndEntities
             .flatMap((f) => f.entities)
             .map((item) => ({
