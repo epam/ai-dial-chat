@@ -88,42 +88,26 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         content: '',
         folderId: getRootId({ apiKey: ApiKeys.Prompts }),
       });
-      return PromptService.createPrompt(newPrompt).pipe(
-        switchMap(() =>
-          of(PromptsActions.createNewPromptSuccess({ newPrompt })),
-        ),
-        catchError((err) => {
-          console.error("New prompt wasn't created:", err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
-              ),
-            ),
-          );
-        }),
-      );
+
+      return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
     }),
   );
 
-const saveNewPromptEpic: AppEpic = (action$) =>
+const createNewPromptSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.saveNewPrompt.match),
-    switchMap(({ payload }) =>
-      PromptService.createPrompt(payload.newPrompt).pipe(
-        switchMap(() => of(PromptsActions.createNewPromptSuccess(payload))),
-        catchError((err) => {
-          console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
-              ),
-            ),
-          );
-        }),
-      ),
-    ),
+    filter(PromptsActions.createNewPromptSuccess.match),
+    switchMap(({ payload }) => PromptService.createPrompt(payload.newPrompt)),
+    catchError((err) => {
+      console.error("New prompt wasn't created: ", err);
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+          ),
+        ),
+      );
+    }),
+    ignoreElements(),
   );
 
 const saveFoldersEpic: AppEpic = (action$, state$) =>
@@ -513,7 +497,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ),
       });
 
-      return of(PromptsActions.saveNewPrompt({ newPrompt }));
+      return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
     }),
   );
 
@@ -902,7 +886,6 @@ export const PromptsEpics = combineEpics(
   initPromptsEpic,
 
   saveFoldersEpic,
-  saveNewPromptEpic,
   deleteFolderEpic,
   exportPromptsEpic,
   exportPromptEpic,
@@ -915,6 +898,7 @@ export const PromptsEpics = combineEpics(
   deletePromptsEpic,
   updateFolderEpic,
   createNewPromptEpic,
+  createNewPromptSuccessEpic,
   duplicatePromptEpic,
 
   uploadPromptEpic,

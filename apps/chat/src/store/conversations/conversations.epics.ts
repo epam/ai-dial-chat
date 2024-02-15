@@ -308,29 +308,31 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             },
           );
 
-          return zip(
-            newConversations.map((info) =>
-              ConversationService.createConversation(info),
+          return of(newConversations);
+        }),
+        switchMap((newConversations) =>
+          concat(
+            of(
+              ConversationsActions.addConversations({
+                conversations: newConversations,
+                selectAdded: true,
+              }),
             ),
-          ).pipe(
-            switchMap(() =>
-              of(
-                ConversationsActions.addConversations({
-                  conversations: newConversations,
-                  selectAdded: true,
-                }),
+            zip(
+              newConversations.map((info) =>
+                ConversationService.createConversation(info),
+              ),
+            ).pipe(ignoreElements()),
+          ),
+        ),
+        catchError((err) => {
+          console.error("New conversation wasn't created: ", err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
               ),
             ),
-            catchError((err) => {
-              console.error("New conversation wasn't created:", err);
-              return of(
-                UIActions.showErrorToast(
-                  translate(
-                    'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
-                  ),
-                ),
-              );
-            }),
           );
         }),
       );
@@ -757,41 +759,39 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return concat(
-        ...actions,
-        zip(
-          Array.from(deleteIds).map((id) =>
-            ConversationService.deleteConversation(
-              getConversationInfoFromId(id),
-            ).pipe(
-              switchMap(() => of(null)),
-              catchError((err) => {
-                const { name } = getConversationInfoFromId(id);
-                console.error(`Error during deleting "${name}"`, err);
-                return name;
-              }),
-            ),
+      return zip(
+        Array.from(deleteIds).map((id) =>
+          ConversationService.deleteConversation(
+            getConversationInfoFromId(id),
+          ).pipe(
+            switchMap(() => of(null)),
+            catchError((err) => {
+              const { name } = getConversationInfoFromId(id);
+              console.error(`Error during deleting "${name}"`, err);
+              return name;
+            }),
           ),
-        ).pipe(
-          switchMap((failedNames) =>
-            concat(
-              iif(
-                () => failedNames.filter(Boolean).length > 0,
-                of(
-                  UIActions.showErrorToast(
-                    translate(
-                      `An error occurred while saving the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
-                    ),
+        ),
+      ).pipe(
+        switchMap((failedNames) =>
+          concat(
+            iif(
+              () => failedNames.filter(Boolean).length > 0,
+              of(
+                UIActions.showErrorToast(
+                  translate(
+                    `An error occurred while saving the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
                   ),
                 ),
-                EMPTY,
               ),
-              of(
-                ConversationsActions.deleteConversationsComplete({
-                  deleteIds,
-                }),
-              ),
+              EMPTY,
             ),
+            of(
+              ConversationsActions.deleteConversationsComplete({
+                deleteIds,
+              }),
+            ),
+            ...actions,
           ),
         ),
       );
