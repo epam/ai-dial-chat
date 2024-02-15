@@ -1,9 +1,10 @@
-import { Prompt } from '@/chat/types/prompt';
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  TestPrompt,
 } from '@/src/testData';
 import { Colors, Cursors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
@@ -12,15 +13,14 @@ const newName = 'test prompt';
 const newDescr = 'test description';
 const newValue = 'what is {{}}';
 
-test.describe('Side bar prompt tests', () => {
-  test.use({
-    storageState: stateFilePath,
-  });
-  test('Create new prompt', async ({
+dialTest(
+  'Create new prompt',
+  async ({
     dialHomePage,
     promptBar,
     prompts,
     conversationSettings,
+    promptModalDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-945');
@@ -39,6 +39,7 @@ test.describe('Side bar prompt tests', () => {
       .toBe(Colors.backgroundAccentTertiary);
 
     await promptBar.createNewPrompt();
+    await promptModalDialog.saveButton.click();
     expect
       .soft(
         await prompts
@@ -47,19 +48,22 @@ test.describe('Side bar prompt tests', () => {
         ExpectedMessages.newPromptCreated,
       )
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Prompt menu', async ({
+dialTest(
+  'Prompt menu',
+  async ({
     dialHomePage,
     promptData,
     prompts,
-    localStorageManager,
+    dataInjector,
     promptDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-952');
     const prompt = promptData.prepareDefaultPrompt();
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -76,13 +80,16 @@ test.describe('Side bar prompt tests', () => {
         MenuOptions.publish,
         MenuOptions.delete,
       ]);
-  });
+  },
+);
 
-  test('Edit prompt. Cancel', async ({
+dialTest(
+  'Edit prompt. Cancel',
+  async ({
     dialHomePage,
     promptData,
     prompts,
-    localStorageManager,
+    dataInjector,
     promptDropdownMenu,
     promptModalDialog,
     promptBar,
@@ -90,7 +97,7 @@ test.describe('Side bar prompt tests', () => {
   }) => {
     setTestIds('EPMRTC-953');
     const prompt = promptData.prepareDefaultPrompt();
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
@@ -110,26 +117,33 @@ test.describe('Side bar prompt tests', () => {
     expect
       .soft(isPromptVisible, ExpectedMessages.promptNotUpdated)
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Edit prompt. Save', async ({
+dialTest(
+  'Edit prompt. Save',
+  async ({
     dialHomePage,
     promptData,
     prompts,
-    localStorageManager,
+    dataInjector,
     promptDropdownMenu,
     promptModalDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-954');
     const prompt = promptData.prepareDefaultPrompt();
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-    await promptModalDialog.updatePromptDetails(newName, newDescr, newValue);
+    await promptModalDialog.updatePromptDetailsWithButton(
+      newName,
+      newDescr,
+      newValue,
+    );
 
     const isPromptModalVisible = await promptModalDialog.isVisible();
     await expect
@@ -161,80 +175,83 @@ test.describe('Side bar prompt tests', () => {
         ExpectedMessages.promptValueUpdated,
       )
       .toBe(newValue);
-  });
+  },
+);
 
-  test(
-    'Edit prompt on Enter.\n' + 'Special characters are allowed in prompt name',
-    async ({
-      dialHomePage,
-      promptData,
-      prompts,
-      localStorageManager,
-      promptDropdownMenu,
-      promptModalDialog,
-      setTestIds,
-    }) => {
-      setTestIds('EPMRTC-955', 'EPMRTC-1278');
-      const nameWithSpecialSymbols = '!@#$%^&*()_+{}[]:;"\',./<>?/*-+`~';
-      const prompt = promptData.prepareDefaultPrompt();
-      await localStorageManager.setPrompts(prompt);
-
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await prompts.openPromptDropdownMenu(prompt.name);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-      await promptModalDialog.updatePromptDetailsWithEnter(
-        nameWithSpecialSymbols,
-        newDescr,
-        newValue,
-      );
-
-      const isPromptModalVisible = await promptModalDialog.isVisible();
-      await expect
-        .soft(isPromptModalVisible, ExpectedMessages.promptModalClosed)
-        .toBeFalsy();
-
-      const isPromptVisible = await prompts
-        .getPromptByName(nameWithSpecialSymbols)
-        .isVisible();
-      expect
-        .soft(isPromptVisible, ExpectedMessages.promptNotUpdated)
-        .toBeTruthy();
-
-      await prompts.openPromptDropdownMenu(nameWithSpecialSymbols);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-      expect
-        .soft(
-          await promptModalDialog.getName(),
-          ExpectedMessages.promptNameUpdated,
-        )
-        .toBe(nameWithSpecialSymbols);
-      expect
-        .soft(
-          await promptModalDialog.getDescription(),
-          ExpectedMessages.promptDescriptionUpdated,
-        )
-        .toBe(newDescr);
-      expect
-        .soft(
-          await promptModalDialog.getPrompt(),
-          ExpectedMessages.promptValueUpdated,
-        )
-        .toBe(newValue);
-    },
-  );
-
-  test('Delete prompt located in the root', async ({
+dialTest(
+  'Edit prompt on Enter.\n' + 'Special characters are allowed in prompt name',
+  async ({
     dialHomePage,
     promptData,
     prompts,
-    localStorageManager,
+    dataInjector,
+    promptDropdownMenu,
+    promptModalDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-955', 'EPMRTC-1278');
+    const nameWithSpecialSymbols = '!@$^()_{}[]"\'.<>-`~';
+    const prompt = promptData.prepareDefaultPrompt();
+    await dataInjector.createPrompts([prompt]);
+
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded();
+    await prompts.openPromptDropdownMenu(prompt.name);
+    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+    await promptModalDialog.updatePromptDetailsWithEnter(
+      nameWithSpecialSymbols,
+      newDescr,
+      newValue,
+    );
+
+    const isPromptModalVisible = await promptModalDialog.isVisible();
+    await expect
+      .soft(isPromptModalVisible, ExpectedMessages.promptModalClosed)
+      .toBeFalsy();
+
+    const isPromptVisible = await prompts
+      .getPromptByName(nameWithSpecialSymbols)
+      .isVisible();
+    expect
+      .soft(isPromptVisible, ExpectedMessages.promptNotUpdated)
+      .toBeTruthy();
+
+    await prompts.openPromptDropdownMenu(nameWithSpecialSymbols);
+    await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+    expect
+      .soft(
+        await promptModalDialog.getName(),
+        ExpectedMessages.promptNameUpdated,
+      )
+      .toBe(nameWithSpecialSymbols);
+    expect
+      .soft(
+        await promptModalDialog.getDescription(),
+        ExpectedMessages.promptDescriptionUpdated,
+      )
+      .toBe(newDescr);
+    expect
+      .soft(
+        await promptModalDialog.getPrompt(),
+        ExpectedMessages.promptValueUpdated,
+      )
+      .toBe(newValue);
+  },
+);
+
+dialTest(
+  'Delete prompt located in the root',
+  async ({
+    dialHomePage,
+    promptData,
+    prompts,
+    dataInjector,
     promptDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-969');
     const prompt = promptData.prepareDefaultPrompt();
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -247,19 +264,22 @@ test.describe('Side bar prompt tests', () => {
         ExpectedMessages.promptDeleted,
       )
       .toBeFalsy();
-  });
+  },
+);
 
-  test('Delete prompt. Cancel', async ({
+dialTest(
+  'Delete prompt. Cancel',
+  async ({
     dialHomePage,
     promptData,
     prompts,
-    localStorageManager,
+    dataInjector,
     promptDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-970');
     const prompt = promptData.prepareDefaultPrompt();
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -272,14 +292,17 @@ test.describe('Side bar prompt tests', () => {
         ExpectedMessages.promptNotDeleted,
       )
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Clear prompts. Cancel', async ({
+dialTest(
+  'Clear prompts. Cancel',
+  async ({
     dialHomePage,
     conversations,
     conversationData,
     promptData,
-    localStorageManager,
+    dataInjector,
     folderConversations,
     folderPrompts,
     promptBar,
@@ -288,8 +311,6 @@ test.describe('Side bar prompt tests', () => {
     setTestIds,
   }) => {
     setTestIds('EPMRTC-971');
-    const emptyPromptFolder = promptData.prepareFolder();
-    promptData.resetData();
     const singlePrompt = promptData.prepareDefaultPrompt();
     promptData.resetData();
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -299,22 +320,18 @@ test.describe('Side bar prompt tests', () => {
     const conversationInFolder =
       conversationData.prepareDefaultConversationInFolder();
 
-    await localStorageManager.setPrompts(
-      singlePrompt,
-      promptInFolder.prompts[0],
-    );
-    await localStorageManager.setConversationHistory(
-      singleConversation,
-      conversationInFolder.conversations[0],
-    );
-    await localStorageManager.setFolders(
-      emptyPromptFolder,
+    await dataInjector.createPrompts(
+      [singlePrompt, ...promptInFolder.prompts],
       promptInFolder.folders,
+    );
+    await dataInjector.createConversations(
+      [singleConversation, ...conversationInFolder.conversations],
       conversationInFolder.folders,
     );
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await promptBar.createNewFolder();
     await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
     await folderConversations.expandCollapseFolder(
       conversationInFolder.folders.name,
@@ -345,7 +362,7 @@ test.describe('Side bar prompt tests', () => {
       .toBeTruthy();
 
     const isPromptFolderVisible = await folderPrompts
-      .getFolderByName(emptyPromptFolder.name)
+      .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
       .isVisible();
     expect
       .soft(isPromptFolderVisible, ExpectedMessages.folderNotDeleted)
@@ -365,33 +382,32 @@ test.describe('Side bar prompt tests', () => {
     expect
       .soft(isSinglePromptVisible, ExpectedMessages.promptNotDeleted)
       .toBeTruthy();
-  });
+  },
+);
 
-  test('Clear prompts. Clear', async ({
+dialTest(
+  'Clear prompts. Clear',
+  async ({
     dialHomePage,
     conversations,
     conversationData,
     promptData,
+    dataInjector,
     localStorageManager,
     folderConversations,
     folderPrompts,
     promptBar,
     confirmationDialog,
     prompts,
+    chatBar,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-972');
     let i = 2;
-    const emptyPromptFolder = promptData.prepareFolder();
-    promptData.resetData();
     const singlePrompt = promptData.prepareDefaultPrompt();
     promptData.resetData();
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
     promptData.resetData();
-    const nestedFolders = promptData.prepareNestedFolder(3);
-
-    const emptyConversationFolder = conversationData.prepareFolder();
-    conversationData.resetData();
     const singleConversation = conversationData.prepareDefaultConversation();
     conversationData.resetData();
     const conversationInFolder =
@@ -399,28 +415,35 @@ test.describe('Side bar prompt tests', () => {
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await localStorageManager.updatePrompts(
-      singlePrompt,
-      promptInFolder.prompts[0],
-    );
-    await localStorageManager.updateConversationHistory(
-      singleConversation,
-      conversationInFolder.conversations[0],
-    );
-    await localStorageManager.updateFolders(
-      emptyPromptFolder,
-      emptyConversationFolder,
+    await dataInjector.updatePrompts(
+      [singlePrompt, ...promptInFolder.prompts],
       promptInFolder.folders,
+    );
+    await dataInjector.updateConversations(
+      [singleConversation, ...conversationInFolder.conversations],
       conversationInFolder.folders,
-      ...nestedFolders,
     );
     await localStorageManager.updateSelectedConversation(singleConversation);
 
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
-    for (const nestedFolder of nestedFolders) {
-      await folderPrompts.expandCollapseFolder(nestedFolder.name);
+    await chatBar.createNewFolder();
+    for (let i = 1; i <= 4; i++) {
+      await promptBar.createNewFolder();
     }
+    for (let i = 3; i >= 2; i--) {
+      await promptBar.dragAndDropEntityToFolder(
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(i),
+        ),
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(i - 1),
+        ),
+      );
+    }
+    await folderPrompts.expandCollapseFolder(
+      ExpectedConstants.newFolderWithIndexTitle(2),
+    );
     await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
     await folderConversations.expandCollapseFolder(
       conversationInFolder.folders.name,
@@ -430,29 +453,33 @@ test.describe('Side bar prompt tests', () => {
       .waitFor();
 
     await promptBar.deleteAllEntities();
-    await confirmationDialog.confirm();
+    await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
     while (i > 0) {
-      await folderConversations
-        .getFolderByName(emptyConversationFolder.name)
-        .waitFor();
       if (i === 1) {
+        await folderConversations
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+          .waitFor({ state: 'hidden' });
         await folderConversations.expandCollapseFolder(
           conversationInFolder.folders.name,
         );
+      } else {
         await folderConversations
-          .getFolderEntity(
-            conversationInFolder.folders.name,
-            conversationInFolder.conversations[0].name,
-          )
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
           .waitFor();
       }
+      await folderConversations
+        .getFolderEntity(
+          conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name,
+        )
+        .waitFor();
       await conversations
         .getConversationByName(singleConversation.name)
         .waitFor();
 
       const isPromptFolderVisible = await folderPrompts
-        .getFolderByName(emptyPromptFolder.name)
+        .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(4))
         .isVisible();
       expect
         .soft(isPromptFolderVisible, ExpectedMessages.folderDeleted)
@@ -473,9 +500,9 @@ test.describe('Side bar prompt tests', () => {
         .soft(isSinglePromptVisible, ExpectedMessages.promptDeleted)
         .toBeFalsy();
 
-      for (const nestedFolder of nestedFolders) {
+      for (let i = 1; i <= 3; i++) {
         const isNestedPromptFolderVisible = await folderPrompts
-          .getFolderByName(nestedFolder.name)
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
           .isVisible();
         expect
           .soft(isNestedPromptFolderVisible, ExpectedMessages.folderDeleted)
@@ -488,13 +515,12 @@ test.describe('Side bar prompt tests', () => {
       }
       i--;
     }
-  });
+  },
+);
 
-  test(`[UI] Delete all prompts button doesn't exist if not prompts are created`, async ({
-    dialHomePage,
-    promptBar,
-    setTestIds,
-  }) => {
+dialTest(
+  `[UI] Delete all prompts button doesn't exist if not prompts are created`,
+  async ({ dialHomePage, promptBar, setTestIds }) => {
     setTestIds('EPMRTC-973');
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
@@ -507,19 +533,22 @@ test.describe('Side bar prompt tests', () => {
         ExpectedMessages.deleteAllPromptsButtonNotVisible,
       )
       .toBeFalsy();
-  });
+  },
+);
 
-  test('Use simple prompt in system prompt', async ({
+dialTest(
+  'Use simple prompt in system prompt',
+  async ({
     dialHomePage,
     promptData,
-    localStorageManager,
+    dataInjector,
     entitySettings,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1010');
     const promptContent = 'prompt content';
     const prompt = promptData.preparePrompt(promptContent);
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -529,12 +558,15 @@ test.describe('Side bar prompt tests', () => {
     expect
       .soft(actualPrompt, ExpectedMessages.systemPromptValid)
       .toBe(prompt.content);
-  });
+  },
+);
 
-  test('Use prompt with parameters', async ({
+dialTest(
+  'Use prompt with parameters',
+  async ({
     dialHomePage,
     promptData,
-    localStorageManager,
+    dataInjector,
     sendMessage,
     variableModalDialog,
     setTestIds,
@@ -547,7 +579,7 @@ test.describe('Side bar prompt tests', () => {
       promptContent(`{{${aVariable}}}`),
       promptDescription,
     );
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -578,12 +610,15 @@ test.describe('Side bar prompt tests', () => {
     expect
       .soft(actualMessage, ExpectedMessages.promptApplied)
       .toBe(promptContent(variable));
-  });
+  },
+);
 
-  test('Check that all parameters in prompt are required', async ({
+dialTest(
+  'Check that all parameters in prompt are required',
+  async ({
     dialHomePage,
     promptData,
-    localStorageManager,
+    dataInjector,
     sendMessage,
     variableModalDialog,
     setTestIds,
@@ -596,7 +631,7 @@ test.describe('Side bar prompt tests', () => {
     const prompt = promptData.preparePrompt(
       promptContent(`{{${aVariable}}}`, `{{${bVariable}}}`),
     );
-    await localStorageManager.setPrompts(prompt);
+    await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
@@ -616,11 +651,14 @@ test.describe('Side bar prompt tests', () => {
     expect
       .soft(actualMessage, ExpectedMessages.promptApplied)
       .toBe(promptContent(firstVariableValue, secondVariableValue));
-  });
+  },
+);
 
-  test('Search prompt when no folders', async ({
+dialTest(
+  'Search prompt when no folders',
+  async ({
     dialHomePage,
-    localStorageManager,
+    dataInjector,
     prompts,
     promptData,
     promptBar,
@@ -628,17 +666,17 @@ test.describe('Side bar prompt tests', () => {
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1173');
-    let firstPrompt: Prompt;
-    let secondPrompt: Prompt;
-    let thirdPrompt: Prompt;
-    let fourthPrompt: Prompt;
-    let fifthPrompt: Prompt;
+    let firstPrompt: TestPrompt;
+    let secondPrompt: TestPrompt;
+    let thirdPrompt: TestPrompt;
+    let fourthPrompt: TestPrompt;
+    let fifthPrompt: TestPrompt;
     const promptContent = 'Prompt search test';
     const notMatchingSearchTerm = 'abc';
     const searchTerm = 'test';
     const specialSymbolSearchTerm = '@';
 
-    await test.step('Prepare prompts with different content', async () => {
+    await dialTest.step('Prepare prompts with different content', async () => {
       firstPrompt = promptData.prepareDefaultPrompt(promptContent);
       promptData.resetData();
       secondPrompt = promptData.preparePrompt('', promptContent);
@@ -648,53 +686,67 @@ test.describe('Side bar prompt tests', () => {
       fourthPrompt = promptData.prepareDefaultPrompt();
       promptData.resetData();
       fifthPrompt = promptData.prepareDefaultPrompt(
-        'Prompt_!@#$%^&*()+=\':",.<>',
+        'Prompt_!@$^&()_{}[]"\'.<>-`~',
       );
 
-      await localStorageManager.setPrompts(
+      await dataInjector.createPrompts([
         firstPrompt,
         secondPrompt,
         thirdPrompt,
         fourthPrompt,
         fifthPrompt,
-      );
+      ]);
     });
 
-    await test.step('Type not matching search term and in "Search prompt.." field and verify no results found', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await promptBarSearch.setSearchValue(notMatchingSearchTerm);
-      const noResult =
-        await promptBar.noResultFoundIcon.getElementInnerContent();
-      expect
-        .soft(noResult, ExpectedMessages.noResultsFound)
-        .toBe(ExpectedConstants.noResults);
-    });
+    await dialTest.step(
+      'Type not matching search term and in "Search prompt.." field and verify no results found',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await promptBarSearch.setSearchValue(notMatchingSearchTerm);
+        const noResult =
+          await promptBar.noResultFoundIcon.getElementInnerContent();
+        expect
+          .soft(noResult, ExpectedMessages.noResultsFound)
+          .toBe(ExpectedConstants.noResults);
+      },
+    );
 
-    await test.step('Clear search field and verify all prompts displayed', async () => {
-      await promptBarSearch.setSearchValue('');
-      const resultCount = await prompts.getPromptsCount();
-      expect
-        .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
-        .toBe(5);
-    });
-
-    await test.step('Type search term in the field and verify all prompts displayed', async () => {
-      for (const term of [searchTerm, searchTerm.toUpperCase()]) {
-        await promptBarSearch.setSearchValue(term);
+    await dialTest.step(
+      'Clear search field and verify all prompts displayed',
+      async () => {
+        await promptBarSearch.setSearchValue('');
         const resultCount = await prompts.getPromptsCount();
         expect
           .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(3);
-      }
-    });
+          .toBe(5);
+      },
+    );
 
-    await test.step('Type search term in the field and verify all prompts displayed', async () => {
-      await promptBarSearch.setSearchValue(specialSymbolSearchTerm);
-      const resultCount = await prompts.getPromptsCount();
-      expect
-        .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
-        .toBe(1);
-    });
-  });
-});
+    await dialTest.step(
+      'Type search term in the field and verify all prompts displayed',
+      async () => {
+        for (const term of [searchTerm, searchTerm.toUpperCase()]) {
+          await promptBarSearch.setSearchValue(term);
+          const resultCount = await prompts.getPromptsCount();
+          expect
+            .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
+            .toBe(isApiStorageType ? 1 : 3);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Type search term in the field and verify all prompts displayed',
+      async () => {
+        await promptBarSearch.setSearchValue(specialSymbolSearchTerm);
+        const resultCount = await prompts.getPromptsCount();
+        expect
+          .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
+          .toBe(1);
+      },
+    );
+  },
+);

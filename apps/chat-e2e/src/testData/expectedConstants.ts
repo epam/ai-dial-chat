@@ -5,6 +5,8 @@ export const ExpectedConstants = {
   newPromptTitle: (index: number) => `Prompt ${index}`,
   promptPlaceholder: (variable: string) => `Enter a value for ${variable}...`,
   newFolderTitle: 'New folder',
+  newFolderWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newFolderTitle} ${index}`,
   emptyString: '',
   defaultTemperature: '1',
   signInButtonTitle: 'Sign in with Credentials',
@@ -102,9 +104,10 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
-  bucketHost: '/api/files/bucket',
-  fileHost: '/api/files/file',
-  uploadedFileHost: () => `${API.fileHost}/files`,
+  bucketHost: '/api/bucket',
+  conversationsHost: '/api/listing/conversations',
+  promptsHost: '/api/listing/prompts',
+  fileHost: '/api/files',
 };
 
 export const Import = {
@@ -139,6 +142,7 @@ export enum ModelIds {
   GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
+  GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',
   GPT_4_32K = 'gpt-4-32k',
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',

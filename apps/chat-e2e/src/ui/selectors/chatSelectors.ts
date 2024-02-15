@@ -36,6 +36,7 @@ export const ChatSelectors = {
   listbox: '[role="listbox"]',
   listOptions: '[role="option"]',
   combobox: '[role="combobox"]',
+  showAllCheckbox: '[name="showAllCheckbox"]',
   promptList: '[data-qa="prompt-list"]',
   promptOption: '[data-qa="prompt-option"]',
   moreInfo: '[data-qa="more-info"]',
@@ -76,4 +77,5 @@ export const ChatSelectors = {
   replayOldVersion: '[data-qa="replay-old-version"]',
   sendMessage: '[data-qa="send"]',
   rate: (rate: Rate) => `[data-qa="${rate}"]`,
+  chatLoader: '[data-qa="chat-loader"]',
 };
