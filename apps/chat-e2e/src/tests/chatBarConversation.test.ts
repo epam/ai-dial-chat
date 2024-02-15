@@ -534,10 +534,8 @@ dialTest(
     localStorageManager,
     folderConversations,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-864');
-    setIssueIds('726');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);
@@ -588,10 +586,8 @@ dialTest(
     folderDropdownMenu,
     chatBar,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-863', 'EPMRTC-942');
-    setIssueIds('726');
     const folderName = GeneratorUtil.randomString(70);
     let conversation: TestConversation;
 

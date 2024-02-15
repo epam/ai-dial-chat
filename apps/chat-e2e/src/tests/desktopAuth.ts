@@ -32,6 +32,6 @@ for (let i = 0; i < usernames.length; i++) {
       process.env.RECENT_MODELS = await localStorageManager.getRecentModels();
     }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
-    await page.context().storageState({ path: stateFilePath });
+    await page.context().storageState({ path: stateFilePath(i) });
   });
 }

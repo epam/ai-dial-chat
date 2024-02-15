@@ -58,11 +58,10 @@ import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { allure } from 'allure-playwright';
 import path from 'path';
+import * as process from 'process';
 
-export const stateFilePath = path.join(
-  __dirname,
-  `../../auth/desktopUser${process.env.TEST_PARALLEL_INDEX}.json`,
-);
+export const stateFilePath = (index: number) =>
+  path.join(__dirname, `../../auth/desktopUser${index}.json`);
 
 interface ReportAttributes {
   setTestIds: (...testId: string[]) => void;
@@ -164,7 +163,7 @@ const dialTest = test.extend<
   ],
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
-    await use(stateFilePath);
+    await use(stateFilePath(+process.env.TEST_PARALLEL_INDEX!));
   },
   dialHomePage: async ({ page }, use) => {
     const dialHomePage = new DialHomePage(page);
