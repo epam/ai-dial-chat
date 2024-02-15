@@ -6,6 +6,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
+import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
@@ -226,8 +227,12 @@ export const promptsSlice = createSlice({
     },
     clearPrompts: (state) => state,
     clearPromptsSuccess: (state) => {
-      state.prompts = [];
-      state.folders = [];
+      state.prompts = state.prompts.filter((prompt) =>
+        isEntityExternal(prompt),
+      );
+      state.folders = state.folders.filter((folder) =>
+        isEntityExternal(folder),
+      );
     },
     exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
     exportPrompts: (state) => state,
