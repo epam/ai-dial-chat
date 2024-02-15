@@ -31,17 +31,13 @@ import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
   getConversationAttachmentWithPath,
   getFoldersFromIds,
-  getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import {
-  ImportConversationsResponse,
   cleanData,
-  cleanFolders,
   exportConversation,
   exportConversations,
   exportPrompts,
-  importConversations,
   updateAttachment,
 } from '@/src/utils/app/import-export';
 import {
@@ -52,8 +48,7 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
 
@@ -68,7 +63,6 @@ import { FilesActions } from '../files/files.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions } from '../ui/ui.reducers';
 import {
   ImportExportActions,
   ImportExportSelectors,
@@ -219,108 +213,63 @@ const exportLocalStorageEntitiesEpic: AppEpic = (action$, state$) => {
 const importConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importConversations.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        conversationsListing: ConversationService.getConversations(
-          undefined,
-          true,
-        ), //listing of all entities
-        importedData: of(payload.data),
-      }),
-    ),
-    switchMap(({ conversationsListing, importedData }) => {
-      if (!conversationsListing.length) {
-        return forkJoin({
-          currentConversations: of([]),
-          currentFolders: of([]),
-          importedData: of(importedData),
-        });
-      }
-      const foldersIds = Array.from(
-        new Set(conversationsListing.map((info) => info.folderId)),
-      );
-      //calculate all folders;
-      const folders = getFoldersFromIds(
-        Array.from(
-          new Set(
-            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-          ),
-        ),
-        FolderType.Chat,
-      );
-
-      return forkJoin({
-        //get all conversations from api
-        currentConversations: zip(
-          conversationsListing.map((info) =>
-            ConversationService.getConversation(info),
-          ),
-        ),
-        currentFolders: of(folders),
-        importedData: of(importedData),
-      });
-    }),
-    switchMap(({ currentConversations, currentFolders, importedData }) => {
-      const filteredConversations = currentConversations.filter(
-        Boolean,
-      ) as Conversation[];
-
-      const { history, folders, isError }: ImportConversationsResponse =
-        importConversations(importedData, {
-          currentConversations: filteredConversations,
-          currentFolders,
-        });
-
+    switchMap(({ payload }) => {
+      const { history, folders, isError } = cleanData(payload.data);
       if (isError) {
         toast.error(errorsMessages.unsupportedDataFormat);
         return of(ImportExportActions.importFail());
       }
 
-      const conversationsToUpload = history.filter((conversation) => {
-        return conversation.status !== UploadStatus.LOADED;
-      });
-
-      const foldersToUpload = folders.filter(({ id }) => {
-        return (importedData as LatestExportFormat).folders.find(
-          (folder) => folder.id === id,
-        );
-      });
-
       const preparedConversations = getImportPreparedConversations({
-        conversations: conversationsToUpload,
-        conversationsFolders: foldersToUpload,
+        conversations: history,
+        conversationsFolders: folders,
       }) as Conversation[];
 
-      const preparedFolders: FolderInterface[] = cleanFolders(foldersToUpload);
-
-      const preparedHistory = [
-        ...filteredConversations,
-        ...preparedConversations,
-      ];
-
-      const updatedFolders = [...currentFolders, ...preparedFolders];
-
-      // upload to the API
-      return zip(
-        preparedConversations.map((info) =>
-          ConversationService.createConversation(info),
-        ),
+      return from(
+        ConversationService.setConversations(preparedConversations),
       ).pipe(
-        switchMap(() =>
-          concat(
-            of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
-            of(ImportExportActions.importConversationsSuccess()),
+        switchMap(() => {
+          return ConversationService.getConversations(undefined, true).pipe(
+            catchError((err) => {
+              console.error(
+                'An error occurred while uploading conversations and folders:',
+                err,
+              );
+              return [];
+            }),
+          ); //listing of all entities
+        }),
+        switchMap((conversationsListing) => {
+          if (!conversationsListing) {
+            return of(ImportExportActions.importPromptsFail());
+          }
+
+          const foldersIds = Array.from(
+            new Set(conversationsListing.map((info) => info.folderId)),
+          );
+          //calculate all folders;
+          const folders = getFoldersFromIds(
+            Array.from(
+              new Set(
+                foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+              ),
+            ),
+            FolderType.Chat,
+          );
+
+          return concat(
             of(
               ConversationsActions.importConversationsSuccess({
-                conversations: preparedHistory,
-                folders: updatedFolders,
+                conversations: conversationsListing,
+                folders: folders,
               }),
             ),
-          ),
-        ),
-        catchError(() => of(ImportExportActions.importFail())),
+            of(ImportExportActions.importConversationsSuccess()),
+          );
+        }),
       );
     }),
+    catchError(() => of(ImportExportActions.importPromptsFail())),
   );
 
 const importZipEpic: AppEpic = (action$, state$) =>
@@ -658,25 +607,6 @@ const resetStateEpic: AppEpic = (action$) =>
     }),
   );
 
-const importConversationsSuccessEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.importConversationsSuccess.match),
-    map(() =>
-      ConversationsSelectors.selectSelectedConversationsIds(state$.value),
-    ),
-    switchMap((selectedConversationsIds) => {
-      const paths = selectedConversationsIds.flatMap((id) =>
-        getParentFolderIdsFromEntityId(id),
-      );
-      return of(
-        UIActions.setOpenedFoldersIds({
-          openedFolderIds: paths,
-          featureType: FeatureType.Chat,
-        }),
-      );
-    }),
-  );
-
 export const ImportExportEpics = combineEpics(
   exportConversationEpic,
   exportConversationsEpic,
@@ -689,5 +619,4 @@ export const ImportExportEpics = combineEpics(
   exportFailEpic,
   checkImportFailEpic,
   exportLocalStorageEntitiesEpic,
-  importConversationsSuccessEpic,
 );
