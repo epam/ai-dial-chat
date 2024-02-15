@@ -1,4 +1,4 @@
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import {
   ApiKeys,
@@ -66,7 +66,12 @@ export const getOrUploadConversation = (
 
   if (conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
-      conversation: ConversationService.getConversation(conversation),
+      conversation: ConversationService.getConversation(conversation).pipe(
+        catchError((err) => {
+          console.error('The conversation was not found:', err);
+          return of(null);
+        }),
+      ),
       payload: of(payload),
     });
   } else {

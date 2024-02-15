@@ -14,11 +14,13 @@ import classNames from 'classnames';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/id';
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import {
@@ -40,6 +42,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
@@ -73,21 +76,17 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
   const isSelected = selectedPromptId === prompt.id;
   const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
+  );
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
-  );
-  const newFolderName = useAppSelector((state) =>
-    PromptsSelectors.selectNewFolderName(state, prompt.folderId),
-  );
-  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -215,7 +214,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const folderPath = (isNewFolder ? newFolderName : folderId) as string;
+      const folderPath = (
+        isNewFolder
+          ? getNextDefaultName(
+              translate(DEFAULT_FOLDER_NAME),
+              folders.filter((f) => isRootId(f.folderId)),
+            )
+          : folderId
+      ) as string;
 
       if (
         !isEntityNameOnSameLevelUnique(
@@ -263,7 +269,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       );
       setIsContextMenu(false);
     },
-    [allPrompts, dispatch, newFolderName, prompt, t],
+    [allPrompts, dispatch, folders, prompt, t],
   );
 
   const handleClose = useCallback(() => {
@@ -287,11 +293,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        PromptsActions.duplicatePrompt({
-          prompt,
-        }),
-      );
+      dispatch(PromptsActions.duplicatePrompt(prompt));
     },
     [dispatch, prompt],
   );
