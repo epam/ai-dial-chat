@@ -152,7 +152,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
   const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, currentFolder, FeatureType.Chat),
+    isEntityOrParentsExternal(state, currentFolder, featureType),
   );
 
   useEffect(() => {
