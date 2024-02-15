@@ -19,6 +19,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 export { PromptsSelectors };
 
@@ -226,8 +227,12 @@ export const promptsSlice = createSlice({
     },
     clearPrompts: (state) => state,
     clearPromptsSuccess: (state) => {
-      state.prompts = [];
-      state.folders = [];
+      state.prompts = state.prompts.filter((prompt) =>
+        isEntityExternal(prompt),
+      );
+      state.folders = state.folders.filter((folder) =>
+        isEntityExternal(folder),
+      );
     },
     exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
     exportPrompts: (state) => state,
