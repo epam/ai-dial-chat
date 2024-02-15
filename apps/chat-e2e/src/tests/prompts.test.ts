@@ -20,6 +20,7 @@ dialTest(
     promptBar,
     prompts,
     conversationSettings,
+    promptModalDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-945');
@@ -38,6 +39,7 @@ dialTest(
       .toBe(Colors.backgroundAccentTertiary);
 
     await promptBar.createNewPrompt();
+    await promptModalDialog.saveButton.click();
     expect
       .soft(
         await prompts
