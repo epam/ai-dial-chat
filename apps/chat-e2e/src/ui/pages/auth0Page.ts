@@ -20,7 +20,7 @@ export class Auth0Page extends BasePage {
     await this.page.waitForLoadState('domcontentloaded');
     const auth0Form = this.getAuth0();
     await auth0Form.setCredentials(username, process.env.E2E_PASSWORD!);
-    return this.waitFoApiResponsesReceived(
+    return this.waitForApiResponsesReceived(
       () => auth0Form.loginButton.click(),
       options,
     );
