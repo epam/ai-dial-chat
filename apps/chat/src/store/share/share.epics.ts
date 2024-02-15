@@ -10,6 +10,8 @@ import {
   zip,
 } from 'rxjs';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { combineEpics } from 'redux-observable';
 
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
@@ -396,45 +398,22 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           actions.push(
             ...(folders
-              .flatMap((item) => {
+              .map((item) => {
                 const isShared = payload.resources.folders.find(
                   (res) => res.id === item.id,
                 );
 
                 if (isShared) {
-                  const childConversations =
-                    ConversationsSelectors.selectFullTreeChildConversationsByFolderId(
-                      state$.value,
-                      item.id,
-                    );
-                  const childFolders =
-                    ConversationsSelectors.selectFullTreeChildFoldersByFolderId(
-                      state$.value,
-                      item.id,
-                    );
-
-                  return [
-                    ...childFolders.map((folder) =>
-                      ConversationsActions.updateFolder({
-                        folderId: folder.id,
-                        values: {
-                          isShared: true,
-                        },
-                      }),
-                    ),
-                    ...childConversations.map((conv) =>
-                      ConversationsActions.updateConversation({
-                        id: conv.id,
-                        values: {
-                          isShared: true,
-                        },
-                      }),
-                    ),
-                  ];
+                  return ConversationsActions.updateFolder({
+                    folderId: item.id,
+                    values: {
+                      isShared: true,
+                    },
+                  });
                 }
                 return undefined;
               })
-              .filter(Boolean) as any),
+              .filter(Boolean) as AnyAction[]),
           );
           actions.push(
             ...(conversations
@@ -453,7 +432,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as any),
+              .filter(Boolean) as AnyAction[]),
           );
         } else {
           actions.push(
@@ -494,50 +473,27 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 }
                 return undefined;
               })
-              .filter(Boolean) as any),
+              .filter(Boolean) as AnyAction[]),
           );
           const folders = PromptsSelectors.selectFolders(state$.value);
           actions.push(
             ...(folders
-              .flatMap((item) => {
+              .map((item) => {
                 const isShared = payload.resources.folders.find(
                   (res) => res.id === item.id,
                 );
 
                 if (isShared) {
-                  const childPrompts =
-                    PromptsSelectors.selectFullTreeChildPromptsByFolderId(
-                      state$.value,
-                      item.id,
-                    );
-                  const childFolders =
-                    PromptsSelectors.selectFullTreeChildFoldersByFolderId(
-                      state$.value,
-                      item.id,
-                    );
-
-                  return [
-                    ...childFolders.map((folder) =>
-                      PromptsActions.updateFolder({
-                        folderId: folder.id,
-                        values: {
-                          isShared: true,
-                        },
-                      }),
-                    ),
-                    ...childPrompts.map((prompt) =>
-                      PromptsActions.updatePrompt({
-                        id: prompt.id,
-                        values: {
-                          isShared: true,
-                        },
-                      }),
-                    ),
-                  ];
+                  return PromptsActions.updateFolder({
+                    folderId: item.id,
+                    values: {
+                      isShared: true,
+                    },
+                  });
                 }
                 return undefined;
               })
-              .filter(Boolean) as any),
+              .filter(Boolean) as AnyAction[]),
           );
         } else {
           actions.push(
