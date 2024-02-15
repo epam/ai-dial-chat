@@ -254,8 +254,8 @@ export const MigrationFailedWindow = ({
     !!conversationsToRetryIds.length || !!promptsToRetryIds.length;
   const isNothingSelected =
     !conversationsToRetryIds.length && !promptsToRetryIds.length;
-  const isNextButtonDisabled =
-    !dontWantBackup ||
+  const isNextButtonEnabled =
+    dontWantBackup ||
     ((isChatsBackedUp || !failedMigratedConversations.length) &&
       (isPromptsBackedUp || !failedMigratedPrompts.length));
 
@@ -397,7 +397,7 @@ export const MigrationFailedWindow = ({
               className="button button-primary mr-3 flex h-[38px] items-center"
               data-qa="skip-migration"
               onClick={retryMigration}
-              disabled={isNextButtonDisabled}
+              disabled={!isNextButtonEnabled}
             >
               {t('Next')}
             </button>
