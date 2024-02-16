@@ -29,6 +29,7 @@ import {
 } from '@/src/utils/app/common';
 import {
   PromptService,
+  getImportPreparedPrompts,
   getPreparedPrompts,
 } from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -47,7 +48,6 @@ import { getRootId, isRootId } from '@/src/utils/app/id';
 import {
   exportPrompt,
   exportPrompts,
-  importPrompts,
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
@@ -56,7 +56,6 @@ import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
@@ -579,8 +578,9 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       ),
     ),
     switchMap((promptsListing) => {
+      const onlyMyPromptsListing = filterOnlyMyEntities(promptsListing);
       const foldersIds = Array.from(
-        new Set(promptsListing.map((info) => info.folderId)),
+        new Set(onlyMyPromptsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
       const folders = getFoldersFromIds(
@@ -595,7 +595,7 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       return forkJoin({
         //get all prompts from api
         prompts: zip(
-          promptsListing.map((info) => PromptService.getPrompt(info)),
+          onlyMyPromptsListing.map((info) => PromptService.getPrompt(info)),
         ).pipe(
           catchError((err) => {
             console.error('An error occurred while uploading prompts:', err);
@@ -640,97 +640,67 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
 const importPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.importPrompts.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        promptsListing: PromptService.getPrompts(undefined, true).pipe(
-          catchError((err) => {
-            console.error(
-              'An error occurred while uploading prompts and folders:',
-              err,
-            );
-            return [];
-          }),
-        ), //listing of all entities
-        promptsHistory: of(payload.promptsHistory),
-      }),
-    ),
-    switchMap(({ promptsListing, promptsHistory }) => {
-      if (!promptsListing.length) {
-        return forkJoin({
-          currentPrompts: of([]),
-          currentFolders: of([]),
-          promptsHistory: of(promptsHistory),
-        });
-      }
+    switchMap(({ payload }) => {
+      const { promptsHistory } = payload;
 
-      const foldersIds = Array.from(
-        new Set(promptsListing.map((info) => info.folderId)),
-      );
-      //calculate all folders;
-      const folders = getFoldersFromIds(
-        Array.from(
-          new Set(
-            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-          ),
-        ),
-        FolderType.Prompt,
-      );
-      //get all prompts from api
-      const currentPrompts = zip(
-        promptsListing.map((info) => PromptService.getPrompt(info)),
-      ).pipe(
-        catchError((err) => {
-          console.error('An error occurred while uploading prompts:', err);
-          return [];
-        }),
-      );
-
-      return forkJoin({
-        currentPrompts,
-        currentFolders: of(folders),
-        promptsHistory: of(promptsHistory),
-      });
-    }),
-    switchMap(({ currentPrompts, currentFolders, promptsHistory }) => {
-      const filteredPrompts = currentPrompts.filter(Boolean) as Prompt[];
       if (!isPromptsFormat(promptsHistory)) {
-        return of(
-          UIActions.showErrorToast(
-            translate(errorsMessages.unsupportedDataFormat, {
-              ns: 'common',
-            }),
+        return concat(
+          of(ImportExportActions.importPromptsFail()),
+          of(
+            UIActions.showErrorToast(
+              translate(errorsMessages.unsupportedDataFormat, {
+                ns: 'common',
+              }),
+            ),
           ),
         );
       }
-      const preparedPrompts: Prompt[] = getPreparedPrompts({
+
+      const preparedPrompts: Prompt[] = getImportPreparedPrompts({
         prompts: promptsHistory.prompts,
         folders: promptsHistory.folders,
       });
 
-      const preparedPromptsHistory: PromptsHistory = {
-        ...promptsHistory,
-        prompts: preparedPrompts,
-      };
-
-      const { prompts, folders, isError } = importPrompts(
-        preparedPromptsHistory,
-        {
-          currentFolders,
-          currentPrompts: filteredPrompts,
-        },
-      );
-
-      if (isError) {
-        return of(
-          UIActions.showErrorToast(
-            translate(errorsMessages.unsupportedDataFormat, {
-              ns: 'common',
+      return PromptService.setPrompts(preparedPrompts).pipe(
+        switchMap(() => {
+          return PromptService.getPrompts(undefined, true).pipe(
+            catchError((err) => {
+              console.error(
+                'An error occurred while uploading prompts and folders:',
+                err,
+              );
+              return [];
             }),
-          ),
-        );
-      }
-      return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
+          ); //listing of all entities
+        }),
+        switchMap((promptsListing) => {
+          if (!promptsListing.length) {
+            return of(ImportExportActions.importPromptsFail());
+          }
+
+          const foldersIds = Array.from(
+            new Set(promptsListing.map((info) => info.folderId)),
+          );
+          //calculate all folders;
+          const folders = getFoldersFromIds(
+            Array.from(
+              new Set(
+                foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+              ),
+            ),
+            FolderType.Prompt,
+          );
+
+          return of(
+            PromptsActions.importPromptsSuccess({
+              prompts: promptsListing,
+              folders,
+            }),
+          );
+        }),
+      );
     }),
+    catchError(() => of(ImportExportActions.importPromptsFail())),
   );
 
 const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
@@ -989,7 +959,6 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
 export const PromptsEpics = combineEpics(
   migratePromptsIfRequiredEpic,
   skipFailedMigratedPromptsEpic,
-
   initEpic,
   uploadPromptsWithFoldersRecursiveEpic,
   uploadPromptsWithFoldersEpic,
@@ -1010,6 +979,6 @@ export const PromptsEpics = combineEpics(
   updateFolderEpic,
   createNewPromptEpic,
   duplicatePromptEpic,
-
   uploadPromptEpic,
+  // importPromptsSuccessEpic,
 );
