@@ -138,14 +138,14 @@ export default function ItemContextMenu({
       {
         name: t('Export'),
         dataQa: 'export-chat-mobile',
-        display: featureType === FeatureType.Chat,
+        display: !isEmptyConversation && featureType === FeatureType.Chat,
         Icon: IconFileArrowRight,
         onClick: onOpenExportModal,
         className: 'md:hidden',
       },
       {
         name: t('Export'),
-        display: featureType === FeatureType.Chat,
+        display: !isEmptyConversation && featureType === FeatureType.Chat,
         dataQa: 'export-chat',
         Icon: IconFileArrowRight,
         className: 'max-md:hidden',
@@ -206,7 +206,8 @@ export default function ItemContextMenu({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: isSharingEnabled && !!onShare && !isExternal,
+        display:
+          !isEmptyConversation && isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
         onClick: onShare,
       },
@@ -214,6 +215,7 @@ export default function ItemContextMenu({
         name: t('Publish'),
         dataQa: 'publish',
         display:
+          !isEmptyConversation &&
           isPublishingEnabled &&
           !entity.isPublished &&
           !!onPublish &&
@@ -225,14 +227,21 @@ export default function ItemContextMenu({
         name: t('Update'),
         dataQa: 'update-publishing',
         display:
-          isPublishingEnabled && !!entity.isPublished && !!onPublishUpdate,
+          !isEmptyConversation &&
+          isPublishingEnabled &&
+          !!entity.isPublished &&
+          !!onPublishUpdate,
         Icon: IconClockShare,
         onClick: onPublishUpdate,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishingEnabled && !!entity.isPublished && !!onUnpublish,
+        display:
+          !isEmptyConversation &&
+          isPublishingEnabled &&
+          !!entity.isPublished &&
+          !!onUnpublish,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
       },
