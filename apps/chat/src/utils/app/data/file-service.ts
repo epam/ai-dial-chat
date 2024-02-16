@@ -140,15 +140,10 @@ export class FileService {
   }
 
   public static removeFile(filePath: string): Observable<void> {
-    const resultPath = encodeApiUrl(
-      constructPath(BucketService.getBucket(), filePath),
-    );
+    const resultPath = encodeApiUrl(filePath);
 
-    return ApiUtils.request(`api/${ApiKeys.Files}/${resultPath}`, {
+    return ApiUtils.request(`api/${resultPath}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
   }
 
