@@ -1780,8 +1780,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
         ConversationsActions.addConversations.match(action) ||
-        ConversationsActions.duplicateConversation.match(action) ||
-        ConversationsActions.importConversationsSuccess.match(action),
+        ConversationsActions.duplicateConversation.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -2375,12 +2374,14 @@ const openFolderEpic: AppEpic = (action$, state$) =>
       if (folder?.status === UploadStatus.LOADED) {
         return EMPTY;
       }
+
       return concat(
         of(
           ConversationsActions.uploadConversationsWithFolders({
             paths: [payload.id],
             inheritedMetadata: {
               sharedWithMe: folder?.sharedWithMe,
+              sharedWithMeChild: true,
             },
           }),
         ),
