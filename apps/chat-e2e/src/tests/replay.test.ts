@@ -409,8 +409,10 @@ dialTest(
     setTestIds,
     chatMessages,
     context,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
+    setIssueIds('758');
     let conversation: TestConversation;
     let replayConversation: TestConversation;
     await dialTest.step('Prepare conversation to replay', async () => {
@@ -657,8 +659,10 @@ dialTest(
     tooltip,
     context,
     chatMessages,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1535');
+    setIssueIds('758');
     const message = GeneratorUtil.randomString(10);
     let replayConversation: TestConversation;
 
