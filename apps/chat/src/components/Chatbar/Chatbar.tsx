@@ -21,6 +21,8 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
+import { Spinner } from '@/src/components/Common/Spinner';
+
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
@@ -33,12 +35,16 @@ const ChatActionsBlock = () => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const isConversationRequestSent = useAppSelector(
+    ConversationsSelectors.selectIsConversationRequestSent,
+  );
 
   return (
     <div className="flex px-2 py-1">
       <button
         className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
         onClick={() => {
+          dispatch(ConversationsActions.setIsConversationRequestSent(true));
           dispatch(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
@@ -46,10 +52,14 @@ const ChatActionsBlock = () => {
           );
           dispatch(ConversationsActions.resetSearch());
         }}
-        disabled={!!messageIsStreaming}
+        disabled={messageIsStreaming || isConversationRequestSent}
         data-qa="new-entity"
       >
-        <PlusIcon className="text-secondary" width={18} height={18} />
+        {isConversationRequestSent ? (
+          <Spinner size={18} className="text-secondary" />
+        ) : (
+          <PlusIcon className="text-secondary" width={18} height={18} />
+        )}
         {t('New conversation')}
       </button>
     </div>

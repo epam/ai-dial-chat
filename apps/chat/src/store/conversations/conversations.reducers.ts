@@ -43,6 +43,7 @@ const initialState: ConversationsState = {
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
+  isConversationRequestSent: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -257,6 +258,12 @@ export const conversationsSlice = createSlice({
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
       }
+    },
+    setIsConversationRequestSent: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isConversationRequestSent = payload;
     },
     createNewReplayConversation: (
       state,

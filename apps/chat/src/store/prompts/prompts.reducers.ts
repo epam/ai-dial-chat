@@ -37,6 +37,7 @@ const initialState: PromptsState = {
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
+  isPromptRequestSent: false,
 };
 
 export const promptsSlice = createSlice({
@@ -88,6 +89,9 @@ export const promptsSlice = createSlice({
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
+    },
+    setIsPromptRequestSent: (state, { payload }: PayloadAction<boolean>) => {
+      state.isPromptRequestSent = payload;
     },
     saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
       state,

@@ -327,3 +327,8 @@ export const selectFailedMigratedPrompts = createSelector(
   [rootSelector],
   (state) => state.failedMigratedPrompts,
 );
+
+export const selectIsPromptRequestSent = createSelector(
+  [rootSelector],
+  (state) => state.isPromptRequestSent,
+);

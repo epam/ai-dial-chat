@@ -588,3 +588,10 @@ export const selectIsCompareLoading = createSelector(
     return state.compareLoading;
   },
 );
+
+export const selectIsConversationRequestSent = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isConversationRequestSent;
+  },
+);

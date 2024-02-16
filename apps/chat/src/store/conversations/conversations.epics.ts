@@ -314,21 +314,27 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             ),
           ).pipe(
             switchMap(() =>
-              of(
-                ConversationsActions.addConversations({
-                  conversations: newConversations,
-                  selectAdded: true,
-                }),
+              concat(
+                of(
+                  ConversationsActions.addConversations({
+                    conversations: newConversations,
+                    selectAdded: true,
+                  }),
+                ),
+                of(ConversationsActions.setIsConversationRequestSent(false)),
               ),
             ),
             catchError((err) => {
               console.error("New conversation wasn't created:", err);
-              return of(
-                UIActions.showErrorToast(
-                  translate(
-                    'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                    ),
                   ),
                 ),
+                of(ConversationsActions.setIsConversationRequestSent(false)),
               );
             }),
           );
@@ -586,6 +592,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         );
+      } else {
+        actions.push(
+          of(ConversationsActions.setIsConversationRequestSent(false)),
+        );
       }
 
       return concat(...actions);
@@ -701,6 +711,7 @@ const clearConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
       return concat(
+        of(ConversationsActions.setIsConversationRequestSent(true)),
         of(ConversationsActions.clearConversationsSuccess()),
         of(ConversationsActions.deleteFolder({})),
       );
@@ -791,6 +802,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                   deleteIds,
                 }),
               ),
+              of(ConversationsActions.setIsConversationRequestSent(false)),
             ),
           ),
         ),
