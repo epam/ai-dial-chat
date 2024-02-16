@@ -322,7 +322,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
                 `An error occurred while deleting the prompt "${info.name}"`,
                 err,
               );
-              return info.name;
+              return of(info.name);
             }),
           ),
         ),
