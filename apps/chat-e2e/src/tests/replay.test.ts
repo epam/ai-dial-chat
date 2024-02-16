@@ -357,7 +357,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -365,7 +365,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
         expect
           .soft(
             await chat.proceedGenerating.getElementInnerContent(),
@@ -410,7 +409,6 @@ dialTest(
     setTestIds,
     chatMessages,
     context,
-    conversations,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
     let conversation: TestConversation;
@@ -423,7 +421,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -431,7 +429,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
         await context.setOffline(true);
         await chat.startReplay();
       },
@@ -485,7 +482,6 @@ dialTest(
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
-    conversations,
   }) => {
     setTestIds('EPMRTC-1323', 'EPMRTC-1324');
     const replayTemp = 0.8;
@@ -507,7 +503,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     let replayRequest: ChatBody;
@@ -516,7 +512,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
         replayRequest = await chat.startReplay(
           conversation.messages[0].content,
         );
@@ -610,7 +605,7 @@ dialTest(
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -619,7 +614,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
         await chat.startReplayForDifferentModels();
 
         const expectedFirstModelIcon =
@@ -663,7 +657,6 @@ dialTest(
     tooltip,
     context,
     chatMessages,
-    conversations,
   }) => {
     setTestIds('EPMRTC-1535');
     const message = GeneratorUtil.randomString(10);
@@ -685,7 +678,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -693,7 +686,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
@@ -771,7 +763,6 @@ dialTest(
     dataInjector,
     chatMessages,
     setTestIds,
-    conversations,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
     let conversation: TestConversation;
@@ -791,7 +782,7 @@ dialTest(
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -800,7 +791,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
 
         const isStartReplayEnabled = await chat.replay.isElementEnabled();
         expect
@@ -862,7 +852,6 @@ dialTest(
     localStorageManager,
     dataInjector,
     setTestIds,
-    conversations,
   }) => {
     setTestIds('EPMRTC-1312');
     let errorConversation: TestConversation;
@@ -879,7 +868,7 @@ dialTest(
           errorConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(errorConversation);
+        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -888,7 +877,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
 
         const isStartReplayEnabled = await chat.replay.isElementEnabled();
         expect
@@ -909,7 +897,6 @@ dialTest(
     dataInjector,
     talkToSelector,
     setTestIds,
-    conversations,
   }) => {
     setTestIds('EPMRTC-1328');
     let notAllowedModelConversation: TestConversation;
@@ -927,9 +914,7 @@ dialTest(
           notAllowedModelConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(
-          notAllowedModelConversation,
-        );
+        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -938,7 +923,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
 
         await talkToSelector.waitForState({ state: 'attached' });
 
@@ -1138,7 +1122,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(conversation);
+      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -1146,7 +1130,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(replayConversation.name);
 
         await chatHeader.clearConversation.click();
         await confirmationDialog.confirm();
