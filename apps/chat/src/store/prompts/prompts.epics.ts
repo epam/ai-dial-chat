@@ -222,10 +222,18 @@ const recreatePromptEpic: AppEpic = (action$) =>
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the prompt. Please refresh the page.',
+          return concat(
+            of(
+              PromptsActions.recreatePromptFail({
+                newId: payload.new.id,
+                oldPrompt: payload.old,
+              }),
+            ),
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the prompt. Please refresh the page.',
+                ),
               ),
             ),
           );
