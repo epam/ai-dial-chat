@@ -1428,8 +1428,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
 
       const errorMessage = responseJSON?.message || payload.message;
 
-      const messages = payload.conversation.messages;
-      messages[errorMessage.length - 1].errorMessage = errorMessage;
+      const messages = [...payload.conversation.messages];
+      messages[messages.length - 1] = {
+        ...messages[messages.length - 1],
+        errorMessage,
+      };
 
       const values: Partial<Conversation> = {
         isMessageStreaming: false,
@@ -2378,6 +2381,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
             paths: [payload.id],
             inheritedMetadata: {
               sharedWithMe: folder?.sharedWithMe,
+              sharedWithMeChild: true,
             },
           }),
         ),

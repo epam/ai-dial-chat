@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { combineEntities } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -10,6 +11,7 @@ import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
 
+import { UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -37,6 +39,8 @@ const initialState: PromptsState = {
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
+
+  loadingFolderIds: [],
 };
 
 export const promptsSlice = createSlice({
@@ -44,7 +48,7 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    initPrompts: (state) => state,
+    uploadPromptsWithFoldersRecursive: (state) => state,
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
     skipFailedMigratedPrompts: (
@@ -148,21 +152,6 @@ export const promptsSlice = createSlice({
       _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
     ) => state,
     updatePromptSuccess: (
-      state,
-      { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
-    ) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.id) {
-          return {
-            ...prompt,
-            ...payload.prompt,
-          };
-        }
-
-        return prompt;
-      });
-    },
-    sharePrompt: (
       state,
       { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
     ) => {
@@ -439,6 +428,44 @@ export const promptsSlice = createSlice({
           (prompt) => prompt.id !== payload.originalPromptId,
         );
       }
+    },
+
+    toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
+    uploadChildPromptsWithFolders: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        paths: string[];
+        // Needed for open shared with me folder and keep shared with me flag
+        inheritedMetadata?: unknown;
+      }>,
+    ) => {
+      state.loadingFolderIds = state.loadingFolderIds.concat(
+        payload.paths as string[],
+      );
+    },
+    uploadChildPromptsWithFoldersSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        parentIds: string[];
+        folders: FolderInterface[];
+        prompts: PromptInfo[];
+      }>,
+    ) => {
+      state.loadingFolderIds = state.loadingFolderIds.filter(
+        (id) => !payload.parentIds.includes(id),
+      );
+      state.folders = combineEntities(
+        state.folders,
+        payload.folders.map((folder) => ({
+          ...folder,
+          status: UploadStatus.LOADED,
+        })),
+      );
+      state.prompts = combineEntities(state.prompts, payload.prompts);
     },
   },
 });

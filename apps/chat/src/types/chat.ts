@@ -1,4 +1,4 @@
-import { Entity, ShareEntity } from './common';
+import { ShareEntity } from './common';
 import { MIMEType } from './files';
 
 export interface Attachment {
@@ -111,7 +111,7 @@ export interface ConversationEntityModel {
   id: string;
 }
 
-export interface ConversationInfo extends Entity {
+export interface ConversationInfo extends ShareEntity {
   model: ConversationEntityModel;
   lastActivityDate?: number;
   isPlayback?: boolean;

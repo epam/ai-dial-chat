@@ -27,6 +27,7 @@ export interface FolderSectionProps {
   filters: EntityFilters;
   showEmptyFolders?: boolean;
   openByDefault?: boolean;
+  ignoreRootFilter?: boolean;
 }
 
 export interface MoveToFolderProps {

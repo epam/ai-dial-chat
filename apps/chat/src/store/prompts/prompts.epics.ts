@@ -55,7 +55,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
@@ -497,6 +497,53 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const toggleFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.toggleFolder.match),
+    switchMap(({ payload }) => {
+      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
+        state$.value,
+        FeatureType.Prompt,
+      );
+      const isOpened = openedFoldersIds.includes(payload.id);
+      const action = isOpened ? UIActions.closeFolder : UIActions.openFolder;
+      return of(
+        action({
+          id: payload.id,
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    }),
+  );
+
+const openFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        UIActions.openFolder.match(action) &&
+        action.payload.featureType === FeatureType.Prompt,
+    ),
+    switchMap(({ payload }) => {
+      const folder = PromptsSelectors.selectFolders(state$.value).find(
+        (f) => f.id === payload.id,
+      );
+      if (folder?.status === UploadStatus.LOADED) {
+        return EMPTY;
+      }
+      return concat(
+        of(
+          PromptsActions.uploadChildPromptsWithFolders({
+            paths: [payload.id],
+            inheritedMetadata: {
+              sharedWithMe: folder?.sharedWithMe,
+              sharedWithMeChild: true,
+            },
+          }),
+        ),
+      );
+    }),
+  );
+
 const duplicatePromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.duplicatePrompt.match),
@@ -803,9 +850,9 @@ export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
     ),
   );
 
-const initPromptsEpic: AppEpic = (action$) =>
+const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.initPrompts.match),
+    filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
     switchMap(() => PromptService.getPrompts(undefined, true)),
     switchMap((prompts) => {
       return concat(
@@ -822,7 +869,10 @@ const initPromptsEpic: AppEpic = (action$) =>
                   getParentFolderIdsFromFolderId(p.folderId),
                 ),
               ),
-            ).map((path) => getFolderFromId(path, FolderType.Prompt)),
+            ).map((path) => ({
+              ...getFolderFromId(path, FolderType.Prompt),
+              status: UploadStatus.LOADED,
+            })),
           }),
         ),
         of(PromptsActions.initPromptsSuccess()),
@@ -837,10 +887,53 @@ const initPromptsEpic: AppEpic = (action$) =>
     }),
   );
 
+const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadChildPromptsWithFolders.match),
+    switchMap(({ payload }) =>
+      zip(
+        payload.paths.map((path) => PromptService.getPromptsAndFolders(path)),
+      ).pipe(
+        switchMap((foldersAndEntities) => {
+          const folders = foldersAndEntities
+            .flatMap((f) => f.folders)
+            .map((item) => ({
+              ...item,
+              ...(payload.inheritedMetadata as Partial<FolderInterface>),
+              status: UploadStatus.LOADED,
+            }));
+          const prompts = foldersAndEntities
+            .flatMap((f) => f.entities)
+            .map((item) => ({
+              ...item,
+              ...(payload.inheritedMetadata as Partial<PromptInfo>),
+            }));
+          return of(
+            PromptsActions.uploadChildPromptsWithFoldersSuccess({
+              parentIds: payload.paths,
+              folders,
+              prompts,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error('Error during upload prompts and folders', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('Error during upload prompts and folders'),
+            ),
+          );
+        }),
+      ),
+    ),
+  );
+
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => PromptsActions.init.match(action)),
-    switchMap(() => concat(of(PromptsActions.initPrompts()))),
+    switchMap(() =>
+      concat(of(PromptsActions.uploadPromptsWithFoldersRecursive())),
+    ),
   );
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
@@ -876,7 +969,10 @@ export const PromptsEpics = combineEpics(
   migratePromptsIfRequiredEpic,
   skipFailedMigratedPromptsEpic,
   initEpic,
-  initPromptsEpic,
+  uploadPromptsWithFoldersRecursiveEpic,
+  uploadPromptsWithFoldersEpic,
+  openFolderEpic,
+  toggleFolderEpic,
   saveFoldersEpic,
   saveNewPromptEpic,
   deleteFolderEpic,
