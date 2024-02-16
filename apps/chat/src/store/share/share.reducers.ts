@@ -1,6 +1,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { getFileName } from '@/src/utils/app/file';
+import { splitEntityId } from '@/src/utils/app/folders';
+import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import {
@@ -22,6 +23,8 @@ export interface ShareState {
   invitationId: string | undefined;
   shareResourceName: string | undefined;
   shareModalState: ModalState;
+  shareResourceType: BackendResourceType | undefined;
+  shareNodeType: BackendDataNodeType | undefined;
 }
 
 const initialState: ShareState = {
@@ -30,6 +33,8 @@ const initialState: ShareState = {
   invitationId: undefined,
   shareResourceName: undefined,
   shareModalState: ModalState.CLOSED,
+  shareResourceType: undefined,
+  shareNodeType: undefined,
 };
 
 export const shareSlice = createSlice({
@@ -49,7 +54,14 @@ export const shareSlice = createSlice({
     ) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.LOADING;
-      state.shareResourceName = getFileName(payload.resourceId);
+      state.shareResourceType = payload.resourceType;
+      state.shareNodeType = payload.nodeType;
+
+      const name = splitEntityId(payload.resourceId).name;
+      state.shareResourceName =
+        payload.resourceType === BackendResourceType.CONVERSATION
+          ? parseConversationApiKey(splitEntityId(payload.resourceId).name).name
+          : name;
     },
     sharePrompt: (
       state,
@@ -149,12 +161,20 @@ const selectShareModalClosed = createSelector([rootSelector], (state) => {
 const selectShareResourceName = createSelector([rootSelector], (state) => {
   return state.shareResourceName;
 });
+const selectShareResourceType = createSelector([rootSelector], (state) => {
+  return state.shareResourceType;
+});
+const selectShareNodeType = createSelector([rootSelector], (state) => {
+  return state.shareNodeType;
+});
 
 export const ShareSelectors = {
   selectInvitationId,
   selectShareModalState,
   selectShareModalClosed,
   selectShareResourceName,
+  selectShareResourceType,
+  selectShareNodeType,
 };
 
 export const ShareActions = shareSlice.actions;
