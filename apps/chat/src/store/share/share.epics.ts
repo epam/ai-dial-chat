@@ -17,7 +17,11 @@ import { combineEpics } from 'redux-observable';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
+import {
+  getFoldersFromIds,
+  getParentFolderIdsFromFolderId,
+  splitEntityId,
+} from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 import { encodeApiUrl, parseConversationApiKey } from '@/src/utils/server/api';
 
@@ -27,7 +31,7 @@ import {
   BackendResourceType,
   FeatureType,
 } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import {
   ShareByLinkResponseModel,
@@ -435,6 +439,25 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
+          const convPaths = Array.from(
+            new Set(
+              payload.resources.entities.flatMap(({ folderId }) =>
+                getParentFolderIdsFromFolderId(folderId),
+              ),
+            ),
+          );
+          const folderPaths = Array.from(
+            new Set([
+              ...payload.resources.folders.flatMap(({ folderId }) =>
+                getParentFolderIdsFromFolderId(folderId),
+              ),
+              ...payload.resources.folders.map(({ id }) => id),
+            ]),
+          );
+          const allFolders = getFoldersFromIds(
+            Array.from(new Set([...convPaths, ...folderPaths])),
+            FolderType.Prompt,
+          );
           actions.push(
             ConversationsActions.addConversations({
               conversations: payload.resources.entities.map((res) => ({
@@ -445,7 +468,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
           actions.push(
             ConversationsActions.addFolders({
-              folders: payload.resources.folders.map((res) => ({
+              folders: allFolders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
               })) as FolderInterface[],
@@ -496,6 +519,25 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
+          const entitiesPaths = Array.from(
+            new Set(
+              payload.resources.entities.flatMap(({ folderId }) =>
+                getParentFolderIdsFromFolderId(folderId),
+              ),
+            ),
+          );
+          const folderPaths = Array.from(
+            new Set([
+              ...payload.resources.folders.flatMap(({ folderId }) =>
+                getParentFolderIdsFromFolderId(folderId),
+              ),
+              ...payload.resources.folders.map(({ id }) => id),
+            ]),
+          );
+          const allFolders = getFoldersFromIds(
+            Array.from(new Set([...entitiesPaths, ...folderPaths])),
+            FolderType.Prompt,
+          );
           actions.push(
             PromptsActions.addPrompts({
               prompts: payload.resources.entities.map((res) => ({
@@ -506,7 +548,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
           actions.push(
             PromptsActions.addFolders({
-              folders: payload.resources.folders.map((res) => ({
+              folders: allFolders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
               })) as FolderInterface[],
