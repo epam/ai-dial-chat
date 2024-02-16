@@ -4,7 +4,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getRootId, isRootId } from '@/src/utils/app/id';
 import { ApiKeys } from '@/src/utils/server/api';
 
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
 import { prepareEntityName } from '../common';
@@ -25,6 +25,11 @@ export class PromptService {
     recursive?: boolean,
   ): Observable<PromptInfo[]> {
     return DataService.getDataStorage().getPrompts(path, recursive);
+  }
+  public static getPromptsAndFolders(
+    path?: string,
+  ): Observable<FoldersAndEntities<PromptInfo>> {
+    return DataService.getDataStorage().getPromptsAndFolders(path);
   }
 
   public static getPrompt(info: PromptInfo): Observable<Prompt | null> {

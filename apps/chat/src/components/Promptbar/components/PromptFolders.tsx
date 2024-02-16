@@ -75,6 +75,9 @@ const PromptFolderTemplate = ({
   const openedFoldersIds = useAppSelector((state) =>
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
   );
+  const loadingFolderIds = useAppSelector((state) =>
+    PromptsSelectors.selectLoadingFolderIds(state),
+  );
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
@@ -155,9 +158,8 @@ const PromptFolderTemplate = ({
   const handleFolderClick = useCallback(
     (folderId: string) => {
       dispatch(
-        UIActions.toggleFolder({
+        PromptsActions.toggleFolder({
           id: folderId,
-          featureType: FeatureType.Prompt,
         }),
       );
     },
@@ -181,6 +183,7 @@ const PromptFolderTemplate = ({
         allItemsWithoutFilters={allPrompts}
         allFolders={promptFolders}
         allFoldersWithoutFilters={allFolders}
+        loadingFolderIds={loadingFolderIds}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -340,6 +343,7 @@ export function PromptFolders() {
           hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
           filters: SharedWithMeFilter,
+          ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
           openByDefault: true,
