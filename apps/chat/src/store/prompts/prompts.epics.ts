@@ -938,8 +938,12 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
           );
         }),
         catchError((err) => {
-          console.error('Error during upload conversations and folders', err);
-          return EMPTY; // TODO: fix error handling here
+          console.error('Error during upload prompts and folders', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('Error during upload prompts and folders'),
+            ),
+          );
         }),
       ),
     ),
