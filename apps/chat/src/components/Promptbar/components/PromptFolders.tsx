@@ -343,6 +343,7 @@ export function PromptFolders() {
           hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
           filters: SharedWithMeFilter,
+          ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
           openByDefault: true,

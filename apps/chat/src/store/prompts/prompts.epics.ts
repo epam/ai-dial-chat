@@ -528,6 +528,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
             paths: [payload.id],
             inheritedMetadata: {
               sharedWithMe: folder?.sharedWithMe,
+              sharedWithMeChild: true,
             },
           }),
         ),
