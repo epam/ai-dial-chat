@@ -730,6 +730,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
+                    isEmpty={!hasChildElements}
                   />
                 </div>
               )}
