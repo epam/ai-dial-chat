@@ -19,13 +19,20 @@ export class ItemUtil {
     const bucketPath = ItemUtil.getConversationBucketPath();
     const conversationId = `${ItemUtil.conversationIdSeparator}${conversation.name}`;
     if (conversation.replay.isReplay) {
+      const replayConversationId = `replay${conversationId}`;
       return path.length === 0
-        ? `${bucketPath}/replay${conversationId}`
-        : `${bucketPath}/${path}/replay${conversationId}`;
+        ? `${bucketPath}/${replayConversationId}`
+        : `${bucketPath}/${path}/${replayConversationId}`;
+    } else if (conversation.playback?.isPlayback) {
+      const playbackConversationId = `playback${ItemUtil.conversationIdSeparator}${conversation.name}`;
+      return path.length === 0
+        ? `${bucketPath}/${playbackConversationId}`
+        : `${bucketPath}/${path}/${playbackConversationId}`;
     }
+    const simpleConversationId = `${conversation.model.id}${conversationId}`;
     return path.length === 0
-      ? `${bucketPath}/${conversation.model.id}${conversationId}`
-      : `${bucketPath}/${path}/${conversation.model.id}${conversationId}`;
+      ? `${bucketPath}/${simpleConversationId}`
+      : `${bucketPath}/${path}/${simpleConversationId}`;
   }
 
   public static getApiPromptId(prompt: TestPrompt, path: string) {
