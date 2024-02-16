@@ -20,7 +20,10 @@ interface ImportExportState {
   attachmentsErrors: string[];
   status?: Status;
   operation?: Operation;
+  isPromptsBackedUp: boolean;
+  isChatsBackedUp: boolean;
 }
+
 const defaultImportedHistory: LatestExportFormat = {
   version: 5,
   history: [],
@@ -32,6 +35,8 @@ const initialState: ImportExportState = {
   uploadedAttachments: [],
   importedHistory: defaultImportedHistory,
   attachmentsErrors: [],
+  isPromptsBackedUp: false,
+  isChatsBackedUp: false,
 };
 
 export const importExportSlice = createSlice({
@@ -58,7 +63,8 @@ export const importExportSlice = createSlice({
     },
     exportConversationSuccess: (state) => state,
     exportConversations: (state) => state,
-    exportLocalStorageEntities: (state) => state,
+    exportLocalStorageChats: (state) => state,
+    exportLocalStoragePrompts: (state) => state,
     exportCancel: (state) => state,
     exportFail: (state) => {
       state.status = undefined;

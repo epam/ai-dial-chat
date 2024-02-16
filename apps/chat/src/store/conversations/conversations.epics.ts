@@ -818,6 +818,9 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           BrowserStorage.getFailedMigratedEntityIds(
             MigrationStorageKeys.FailedMigratedConversationIds,
           ),
+        isChatsBackedUp: BrowserStorage.getEntityBackedUp(
+          MigrationStorageKeys.ChatsBackedUp,
+        ),
       }),
     ),
     switchMap(
@@ -826,6 +829,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         conversationsFolders,
         migratedConversationIds,
         failedMigratedConversationIds,
+        isChatsBackedUp,
       }) => {
         const notMigratedConversations = filterMigratedEntities(
           conversations,
@@ -839,13 +843,16 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           !notMigratedConversations.length
         ) {
           if (failedMigratedConversationIds.length) {
-            return of(
-              ConversationsActions.setFailedMigratedConversations({
-                failedMigratedConversations: filterMigratedEntities(
-                  conversations,
-                  failedMigratedConversationIds,
-                ),
-              }),
+            return concat(
+              of(ConversationsActions.setIsChatsBackedUp({ isChatsBackedUp })),
+              of(
+                ConversationsActions.setFailedMigratedConversations({
+                  failedMigratedConversations: filterMigratedEntities(
+                    conversations,
+                    failedMigratedConversationIds,
+                  ),
+                }),
+              ),
             );
           }
 
