@@ -28,6 +28,7 @@ export { PromptsSelectors };
 const initialState: PromptsState = {
   promptsToMigrateCount: 0,
   migratedPromptsCount: 0,
+  isPromptsBackedUp: false,
   failedMigratedPrompts: [],
   prompts: [],
   folders: [],
@@ -85,6 +86,16 @@ export const promptsSlice = createSlice({
     ) => {
       state.failedMigratedPrompts = payload.failedMigratedPrompts;
     },
+    setIsPromptsBackedUp: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        isPromptsBackedUp: boolean;
+      }>,
+    ) => {
+      state.isPromptsBackedUp = payload.isPromptsBackedUp;
+    },
     createNewPrompt: (state) => state,
     createNewPromptSuccess: (
       state,
@@ -138,6 +149,21 @@ export const promptsSlice = createSlice({
       state,
       _action: PayloadAction<{ new: Prompt; old: PromptInfo }>,
     ) => state,
+    recreatePromptFail: (
+      state,
+      { payload }: PayloadAction<{ oldPrompt: Prompt; newId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.newId) {
+          return {
+            ...prompt,
+            ...payload.oldPrompt,
+          };
+        }
+
+        return prompt;
+      });
+    },
     updatePrompt: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,

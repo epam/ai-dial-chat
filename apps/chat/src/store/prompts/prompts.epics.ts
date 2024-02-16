@@ -228,10 +228,18 @@ const recreatePromptEpic: AppEpic = (action$) =>
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the prompt. Please refresh the page.',
+          return concat(
+            of(
+              PromptsActions.recreatePromptFail({
+                newId: payload.new.id,
+                oldPrompt: payload.old,
+              }),
+            ),
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the prompt. Please refresh the page.',
+                ),
               ),
             ),
           );
@@ -730,6 +738,9 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         failedMigratedPromptIds: BrowserStorage.getFailedMigratedEntityIds(
           MigrationStorageKeys.FailedMigratedPromptIds,
         ),
+        isPromptsBackedUp: BrowserStorage.getEntityBackedUp(
+          MigrationStorageKeys.PromptsBackedUp,
+        ),
       }),
     ),
     switchMap(
@@ -738,6 +749,7 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         promptsFolders,
         migratedPromptIds,
         failedMigratedPromptIds,
+        isPromptsBackedUp,
       }) => {
         const notMigratedPrompts = filterMigratedEntities(
           prompts,
@@ -751,15 +763,19 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
           !notMigratedPrompts.length
         ) {
           if (failedMigratedPromptIds.length) {
-            return of(
-              PromptsActions.setFailedMigratedPrompts({
-                failedMigratedPrompts: filterMigratedEntities(
-                  prompts,
-                  failedMigratedPromptIds,
-                ),
-              }),
+            return concat(
+              of(PromptsActions.setIsPromptsBackedUp({ isPromptsBackedUp })),
+              of(
+                PromptsActions.setFailedMigratedPrompts({
+                  failedMigratedPrompts: filterMigratedEntities(
+                    prompts,
+                    failedMigratedPromptIds,
+                  ),
+                }),
+              ),
             );
           }
+
           return EMPTY;
         }
 

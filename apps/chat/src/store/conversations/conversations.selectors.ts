@@ -594,4 +594,8 @@ export const selectIsActiveNewConversationRequest = createSelector(
   (state) => {
     return state.isActiveNewConversationRequest;
   },
+
+export const selectIsChatsBackedUp = createSelector(
+  [rootSelector],
+  (state) => state.isChatsBackedUp,
 );

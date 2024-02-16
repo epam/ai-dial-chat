@@ -6,6 +6,7 @@ import { SearchFilters } from '@/src/types/search';
 export interface ConversationsState {
   conversationsToMigrateCount: number;
   migratedConversationsCount: number;
+  isChatsBackedUp: boolean;
   failedMigratedConversations: Conversation[];
   conversations: (ConversationInfo | Conversation)[];
   selectedConversationsIds: string[];
