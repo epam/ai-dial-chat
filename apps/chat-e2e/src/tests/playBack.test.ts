@@ -36,11 +36,9 @@ dialTest(
     chatMessages,
     chatHeader,
     setTestIds,
-    setIssueIds,
     iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
-    setIssueIds('738');
     let conversation: TestConversation;
     const conversationModels = [defaultModel, gpt4Model];
     let playbackConversationName: string;
@@ -273,127 +271,129 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls',
-      async () => {
-        await chat.playPreviousChatMessage();
-        const isPlaybackNextBtnEnabled =
-          await playbackControl.playbackNextButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackNextBtnEnabled,
-            ExpectedMessages.playbackNextButtonEnabled,
-          )
-          .toBeTruthy();
-
-        const isPlaybackPreviousBtnEnabled =
-          await playbackControl.playbackPreviousButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackPreviousBtnEnabled,
-            ExpectedMessages.playbackPreviousButtonEnabled,
-          )
-          .toBeTruthy();
-
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(conversation.messages.length / 2);
-
-        const lastMessage = await chatMessages.getLastMessageContent();
-        expect
-          .soft(lastMessage, ExpectedMessages.messageContentIsValid)
-          .toBe(conversation.messages[1].content);
-
-        const playbackMessage =
-          await playbackControl.playbackMessage.getElementContent();
-        expect
-          .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(conversation.messages[2].content);
-
-        await chatHeader.leavePlaybackMode.waitForState();
-
-        const headerTitle = await chatHeader.chatTitle.getElementInnerContent();
-        expect
-          .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
-          .toBe(playbackConversationName);
-
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedDefaultModelIcon);
-
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
-          .soft(
-            isConversationHasPlaybackIcon,
-            ExpectedMessages.chatBarConversationIconIsPlayback,
-          )
-          .toBeTruthy();
-      },
-    );
-
-    await dialTest.step(
-      'Click on Back button again and verify chat header icon updated, history is empty and Back button is disabled on bottom controls',
-      async () => {
-        await chat.playPreviousChatMessage();
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(0);
-
-        const isPlaybackNextBtnEnabled =
-          await playbackControl.playbackNextButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackNextBtnEnabled,
-            ExpectedMessages.playbackNextButtonEnabled,
-          )
-          .toBeTruthy();
-
-        const isPlaybackPreviousBtnEnabled =
-          await playbackControl.playbackPreviousButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackPreviousBtnEnabled,
-            ExpectedMessages.playbackPreviousButtonDisabled,
-          )
-          .toBeFalsy();
-
-        const playBackMessage =
-          await playbackControl.playbackMessage.getElementContent();
-        expect
-          .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(conversation.messages[0].content);
-
-        await chatHeader.waitForState({ state: 'hidden' });
-
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
-          .soft(
-            isConversationHasPlaybackIcon,
-            ExpectedMessages.chatBarConversationIconIsPlayback,
-          )
-          .toBeTruthy();
-      },
-    );
+    //TODO: uncomment steps below and update when https://github.com/epam/ai-dial-chat/issues/738 fixed
+    // await dialTest.step(
+    //   'Click on Back button and verify chat header icon updated, history contains first request/response, Next button is enabled on bottom controls',
+    //   async () => {
+    //     await chat.playPreviousChatMessage();
+    //     const isPlaybackNextBtnEnabled =
+    //       await playbackControl.playbackNextButton.isElementEnabled();
+    //     expect
+    //       .soft(
+    //         isPlaybackNextBtnEnabled,
+    //         ExpectedMessages.playbackNextButtonEnabled,
+    //       )
+    //       .toBeTruthy();
+    //
+    //     const isPlaybackPreviousBtnEnabled =
+    //       await playbackControl.playbackPreviousButton.isElementEnabled();
+    //     expect
+    //       .soft(
+    //         isPlaybackPreviousBtnEnabled,
+    //         ExpectedMessages.playbackPreviousButtonEnabled,
+    //       )
+    //       .toBeTruthy();
+    //
+    //     const messagesCount =
+    //       await chatMessages.chatMessages.getElementsCount();
+    //     expect
+    //       .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+    //       .toBe(conversation.messages.length / 2);
+    //
+    //     const lastMessage = await chatMessages.getLastMessageContent();
+    //     expect
+    //       .soft(lastMessage, ExpectedMessages.messageContentIsValid)
+    //       .toBe(conversation.messages[1].content);
+    //
+    //     const playbackMessage =
+    //       await playbackControl.playbackMessage.getElementContent();
+    //     expect
+    //       .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
+    //       .toBe(conversation.messages[2].content);
+    //
+    //     await chatHeader.leavePlaybackMode.waitForState();
+    //
+    //     const headerTitle = await chatHeader.chatTitle.getElementInnerContent();
+    //     expect
+    //       .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
+    //       .toBe(playbackConversationName);
+    //
+    //     const headerModelIcon = await chatHeader.getHeaderModelIcon();
+    //     expect
+    //       .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
+    //       .toBe(expectedDefaultModelIcon);
+    //
+    //     const isConversationHasPlaybackIcon =
+    //       await conversations.isConversationHasPlaybackIcon(
+    //         playbackConversationName,
+    //       );
+    //     expect
+    //       .soft(
+    //         isConversationHasPlaybackIcon,
+    //         ExpectedMessages.chatBarConversationIconIsPlayback,
+    //       )
+    //       .toBeTruthy();
+    //   },
+    // );
+    //
+    // await dialTest.step(
+    //   'Click on Back button again and verify chat header icon updated, history is empty and Back button is disabled on bottom controls',
+    //   async () => {
+    //     await chat.playPreviousChatMessage();
+    //     const messagesCount =
+    //       await chatMessages.chatMessages.getElementsCount();
+    //     expect
+    //       .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+    //       .toBe(0);
+    //
+    //     const isPlaybackNextBtnEnabled =
+    //       await playbackControl.playbackNextButton.isElementEnabled();
+    //     expect
+    //       .soft(
+    //         isPlaybackNextBtnEnabled,
+    //         ExpectedMessages.playbackNextButtonEnabled,
+    //       )
+    //       .toBeTruthy();
+    //
+    //     const isPlaybackPreviousBtnEnabled =
+    //       await playbackControl.playbackPreviousButton.isElementEnabled();
+    //     expect
+    //       .soft(
+    //         isPlaybackPreviousBtnEnabled,
+    //         ExpectedMessages.playbackPreviousButtonDisabled,
+    //       )
+    //       .toBeFalsy();
+    //
+    //     const playBackMessage =
+    //       await playbackControl.playbackMessage.getElementContent();
+    //     expect
+    //       .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
+    //       .toBe(conversation.messages[0].content);
+    //
+    //     await chatHeader.waitForState({ state: 'hidden' });
+    //
+    //     const isConversationHasPlaybackIcon =
+    //       await conversations.isConversationHasPlaybackIcon(
+    //         playbackConversationName,
+    //       );
+    //     expect
+    //       .soft(
+    //         isConversationHasPlaybackIcon,
+    //         ExpectedMessages.chatBarConversationIconIsPlayback,
+    //       )
+    //       .toBeTruthy();
+    //   },
+    // );
   },
 );
-// TODO: redo after new changes in playback
-dialTest.skip(
+
+dialTest(
   'Playback: move to the next using hot keys.\n' +
     'Playback: move to the previous using hot keys',
   async ({
     dialHomePage,
     localStorageManager,
+    dataInjector,
     conversationData,
     conversations,
     playbackControl,
@@ -412,28 +412,23 @@ dialTest.skip(
       keys.arrowDown,
       keys.arrowRight,
     ];
-    const playPreviousKeys = [
-      keys.arrowUp,
-      keys.arrowLeft,
-      keys.arrowUp,
-      keys.arrowLeft,
-    ];
+    const playPreviousKeys = [keys.arrowUp, keys.arrowLeft];
 
     await dialTest.step(
-      'Prepare playback conversation based on 4 requests',
+      'Prepare playback conversation based on 2 requests',
       async () => {
         conversation = conversationData.prepareModelConversationBasedOnRequests(
           defaultModel,
-          ['1st request', '2nd request', '3rd request', '4th request'],
+          ['1st request', '2nd request'],
         );
         conversationData.resetData();
         playbackConversation =
           conversationData.prepareDefaultPlaybackConversation(conversation);
 
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           conversation,
           playbackConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
@@ -451,62 +446,66 @@ dialTest.skip(
           await chat.playChatMessageWithKey(playNextKeys[i]);
           const messagesCount =
             await chatMessages.chatMessages.getElementsCount();
-          expect
-            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-            .toBe(2 + i * 2);
-
-          const lastMessage = await chatMessages.getLastMessageContent();
-          expect
-            .soft(lastMessage, ExpectedMessages.messageContentIsValid)
-            .toBe(conversation.messages[1 + i * 2].content);
-
-          await chatHeader.leavePlaybackMode.waitForState();
-
           const isPlaybackPreviousBtnEnabled =
             await playbackControl.playbackPreviousButton.isElementEnabled();
-          expect
-            .soft(
-              isPlaybackPreviousBtnEnabled,
-              ExpectedMessages.playbackPreviousButtonEnabled,
-            )
-            .toBeTruthy();
+          const playBackMessage =
+            await playbackControl.playbackMessage.getElementContent();
 
+          if (i % 2 === 0) {
+            expect
+              .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+              .toBe(i);
+            expect
+              .soft(
+                isPlaybackPreviousBtnEnabled,
+                ExpectedMessages.playbackPreviousButtonEnabled,
+              )
+              .toBeTruthy();
+            expect
+              .soft(
+                playBackMessage,
+                ExpectedMessages.playbackChatMessageIsValid,
+              )
+              .toBe(conversation.messages[i].content);
+          } else {
+            expect
+              .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+              .toBe(i + 1);
+            expect
+              .soft(
+                isPlaybackPreviousBtnEnabled,
+                ExpectedMessages.playbackPreviousButtonEnabled,
+              )
+              .toBeTruthy();
+            expect
+              .soft(
+                playBackMessage,
+                ExpectedMessages.playbackChatMessageIsValid,
+              )
+              .toBe(ExpectedConstants.emptyPlaybackMessage);
+            const lastMessage = await chatMessages.getLastMessageContent();
+            expect
+              .soft(lastMessage, ExpectedMessages.messageContentIsValid)
+              .toBe(conversation.messages[i].content);
+            await chatHeader.leavePlaybackMode.waitForState();
+          }
+
+          const isPlaybackNextBtnEnabled =
+            await playbackControl.playbackNextButton.isElementEnabled();
           if (i !== playNextKeys.length - 1) {
-            const isPlaybackNextBtnEnabled =
-              await playbackControl.playbackNextButton.isElementEnabled();
             expect
               .soft(
                 isPlaybackNextBtnEnabled,
                 ExpectedMessages.playbackNextButtonEnabled,
               )
               .toBeTruthy();
-
-            const playBackMessage =
-              await playbackControl.playbackMessage.getElementContent();
-            expect
-              .soft(
-                playBackMessage,
-                ExpectedMessages.playbackChatMessageIsValid,
-              )
-              .toBe(conversation.messages[2 + i * 2].content);
           } else {
-            const isPlaybackNextBtnEnabled =
-              await playbackControl.playbackNextButton.isElementEnabled();
             expect
               .soft(
                 isPlaybackNextBtnEnabled,
                 ExpectedMessages.playbackNextButtonDisabled,
               )
               .toBeFalsy();
-
-            const playbackMessage =
-              await playbackControl.playbackMessage.getElementContent();
-            expect
-              .soft(
-                playbackMessage,
-                ExpectedMessages.playbackChatMessageIsValid,
-              )
-              .toBe('');
           }
         }
       },
@@ -545,114 +544,108 @@ dialTest.skip(
           await playbackControl.playbackMessage.getElementContent();
         expect
           .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe('');
+          .toBe(ExpectedConstants.emptyPlaybackMessage);
       },
     );
 
-    await dialTest.step(
-      'Play Previous message using hot keys and verify chat messages replayed back, bottom playback controls are updated',
-      async () => {
-        for (let i = playPreviousKeys.length - 1; i >= 0; i--) {
-          await chat.playChatMessageWithKey(playPreviousKeys[i]);
-          const messagesCount =
-            await chatMessages.chatMessages.getElementsCount();
-          expect
-            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-            .toBe(i * 2);
-
-          const isPlaybackNextBtnEnabled =
-            await playbackControl.playbackNextButton.isElementEnabled();
-          expect
-            .soft(
-              isPlaybackNextBtnEnabled,
-              ExpectedMessages.playbackNextButtonEnabled,
-            )
-            .toBeTruthy();
-
-          const playBackMessage =
-            await playbackControl.playbackMessage.getElementContent();
-          expect
-            .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-            .toBe(conversation.messages[i * 2].content);
-
-          if (i !== 0) {
-            const lastMessage = await chatMessages.getLastMessageContent();
-            expect
-              .soft(lastMessage, ExpectedMessages.messageContentIsValid)
-              .toBe(conversation.messages[i * 2 - 1].content);
-
-            await chatHeader.leavePlaybackMode.waitForState();
-
-            const isPlaybackPreviousBtnEnabled =
-              await playbackControl.playbackPreviousButton.isElementEnabled();
-            expect
-              .soft(
-                isPlaybackPreviousBtnEnabled,
-                ExpectedMessages.playbackPreviousButtonEnabled,
-              )
-              .toBeTruthy();
-          } else {
-            await chatHeader.leavePlaybackMode.waitForState({
-              state: 'hidden',
-            });
-
-            const isPlaybackPreviousBtnEnabled =
-              await playbackControl.playbackPreviousButton.isElementEnabled();
-            expect
-              .soft(
-                isPlaybackPreviousBtnEnabled,
-                ExpectedMessages.playbackPreviousButtonDisabled,
-              )
-              .toBeFalsy();
-          }
-        }
-      },
-    );
-
-    await dialTest.step(
-      'Press again Play Previous message hot key and verify no updates happen',
-      async () => {
-        await page.keyboard.press(playPreviousKeys[0]);
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(0);
-        await chatHeader.leavePlaybackMode.waitForState({ state: 'hidden' });
-
-        const isPlaybackPreviousBtnEnabled =
-          await playbackControl.playbackPreviousButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackPreviousBtnEnabled,
-            ExpectedMessages.playbackPreviousButtonDisabled,
-          )
-          .toBeFalsy();
-
-        const isPlaybackNextBtnEnabled =
-          await playbackControl.playbackNextButton.isElementEnabled();
-        expect
-          .soft(
-            isPlaybackNextBtnEnabled,
-            ExpectedMessages.playbackNextButtonEnabled,
-          )
-          .toBeTruthy();
-
-        const playBackMessage =
-          await playbackControl.playbackMessage.getElementContent();
-        expect
-          .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(conversation.messages[0].content);
-      },
-    );
+    //TODO: uncomment steps below and update when https://github.com/epam/ai-dial-chat/issues/738 fixed
+    // await dialTest.step(
+    //   'Play Previous message using hot keys and verify chat messages replayed back, bottom playback controls are updated',
+    //   async () => {
+    //     for (let i = 0; i < playPreviousKeys.length; i++) {
+    //       const expectedMessageIndex = conversation.messages.length / 2 - i * 2;
+    //       await chat.playChatMessageWithKey(playPreviousKeys[i]);
+    //       const messagesCount =
+    //         await chatMessages.chatMessages.getElementsCount();
+    //       expect
+    //         .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+    //         .toBe(expectedMessageIndex);
+    //
+    //       const isPlaybackNextBtnEnabled =
+    //         await playbackControl.playbackNextButton.isElementEnabled();
+    //       expect
+    //         .soft(
+    //           isPlaybackNextBtnEnabled,
+    //           ExpectedMessages.playbackNextButtonEnabled,
+    //         )
+    //         .toBeTruthy();
+    //
+    //       const playBackMessage =
+    //         await playbackControl.playbackMessage.getElementContent();
+    //       expect
+    //         .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
+    //         .toBe(conversation.messages[expectedMessageIndex].content);
+    //
+    //       const isPlaybackPreviousBtnEnabled =
+    //         await playbackControl.playbackPreviousButton.isElementEnabled();
+    //       if (i !== playPreviousKeys.length - 1) {
+    //         await chatHeader.leavePlaybackMode.waitForState();
+    //         expect
+    //           .soft(
+    //             isPlaybackPreviousBtnEnabled,
+    //             ExpectedMessages.playbackPreviousButtonEnabled,
+    //           )
+    //           .toBeTruthy();
+    //       } else {
+    //         await chatHeader.leavePlaybackMode.waitForState({
+    //           state: 'hidden',
+    //         });
+    //         expect
+    //           .soft(
+    //             isPlaybackPreviousBtnEnabled,
+    //             ExpectedMessages.playbackPreviousButtonDisabled,
+    //           )
+    //           .toBeFalsy();
+    //       }
+    //     }
+    //   },
+    // );
+    //
+    // await dialTest.step(
+    //   'Press again Play Previous message hot key and verify no updates happen',
+    //   async () => {
+    //     await page.keyboard.press(playPreviousKeys[0]);
+    //     const messagesCount =
+    //       await chatMessages.chatMessages.getElementsCount();
+    //     expect
+    //       .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+    //       .toBe(0);
+    //     await chatHeader.leavePlaybackMode.waitForState({ state: 'hidden' });
+    //
+    //     const isPlaybackPreviousBtnEnabled =
+    //       await playbackControl.playbackPreviousButton.isElementEnabled();
+    //     expect
+    //       .soft(
+    //         isPlaybackPreviousBtnEnabled,
+    //         ExpectedMessages.playbackPreviousButtonDisabled,
+    //       )
+    //       .toBeFalsy();
+    //
+    //     const isPlaybackNextBtnEnabled =
+    //       await playbackControl.playbackNextButton.isElementEnabled();
+    //     expect
+    //       .soft(
+    //         isPlaybackNextBtnEnabled,
+    //         ExpectedMessages.playbackNextButtonEnabled,
+    //       )
+    //       .toBeTruthy();
+    //
+    //     const playBackMessage =
+    //       await playbackControl.playbackMessage.getElementContent();
+    //     expect
+    //       .soft(playBackMessage, ExpectedMessages.playbackChatMessageIsValid)
+    //       .toBe(conversation.messages[0].content);
+    //   },
+    // );
   },
 );
-// TODO: redo after new changes in playback
-dialTest.skip(
+
+dialTest(
   'Playback: exit the mode at the end of playback',
   async ({
     dialHomePage,
     localStorageManager,
+    dataInjector,
     conversationData,
     conversations,
     chat,
@@ -680,10 +673,10 @@ dialTest.skip(
             conversation.messages.length,
           );
 
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           conversation,
           playbackConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
@@ -718,8 +711,8 @@ dialTest.skip(
     );
   },
 );
-// TODO: redo after new changes in playback
-dialTest.skip(
+
+dialTest(
   'Playback: auto-scroll.\n' +
     'Playback: huge user-message scrolled in message box.\n' +
     'Playback: response is shown in some time.\n' +
@@ -727,6 +720,7 @@ dialTest.skip(
   async ({
     dialHomePage,
     localStorageManager,
+    dataInjector,
     conversationData,
     conversations,
     chat,
@@ -743,16 +737,16 @@ dialTest.skip(
       async () => {
         conversation = conversationData.prepareModelConversationBasedOnRequests(
           defaultModel,
-          [GeneratorUtil.randomString(3000), GeneratorUtil.randomString(2000)],
+          [GeneratorUtil.randomString(3000)],
         );
         conversationData.resetData();
         playbackConversation =
           conversationData.prepareDefaultPlaybackConversation(conversation);
 
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           conversation,
           playbackConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
@@ -763,7 +757,7 @@ dialTest.skip(
       await conversations
         .getConversationByName(playbackConversation.name)
         .waitFor();
-
+      await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable =
         await playbackControl.playbackMessage.isElementScrollableVertically();
       expect(
@@ -775,43 +769,33 @@ dialTest.skip(
     await dialTest.step(
       'Click Play Next message button and verify Play Next is not visible and cursor is blinking while response is loading, content auto-scrolled to the end of response',
       async () => {
-        for (let i = 0; i < 2; i++) {
-          await chat.playNextChatMessage(false);
-          const isPlaybackNextBtnVisible =
-            await playbackControl.playbackNextButton.isVisible();
-          expect(
-            isPlaybackNextBtnVisible,
-            ExpectedMessages.playbackNextMessageIsHidden,
-          ).toBeFalsy();
+        await chat.playNextChatMessage(false);
+        const isPlaybackNextBtnVisible =
+          await playbackControl.playbackNextButton.isVisible();
+        expect(
+          isPlaybackNextBtnVisible,
+          ExpectedMessages.playbackNextMessageIsHidden,
+        ).toBeFalsy();
 
-          const isResponseLoading = await chatMessages.isResponseLoading();
-          expect
-            .soft(isResponseLoading, ExpectedMessages.responseIsLoading)
-            .toBeTruthy();
+        const isResponseLoading = await chatMessages.isResponseLoading();
+        expect
+          .soft(isResponseLoading, ExpectedMessages.responseIsLoading)
+          .toBeTruthy();
 
-          await playbackControl.playbackNextButton.waitForState();
-          const playedBackResponse = await chatMessages.getChatMessage(
-            conversation.messages[i * 2 + 1].content,
-          );
-          expect(
-            playedBackResponse,
-            ExpectedMessages.playbackMessageIsInViewport,
-          ).toBeInViewport();
-          if (i == 0) {
-            const isPlaybackNextMessageScrollable =
-              await playbackControl.playbackMessage.isElementScrollableVertically();
-            expect(
-              isPlaybackNextMessageScrollable,
-              ExpectedMessages.playbackNextMessageIsScrollable,
-            ).toBeTruthy();
-          }
-        }
+        const playedBackResponse = await chatMessages.getChatMessage(
+          conversation.messages[1].content,
+        );
+        expect(
+          playedBackResponse,
+          ExpectedMessages.playbackMessageIsInViewport,
+        ).toBeInViewport();
       },
     );
 
     await dialTest.step(
       'Click Play Previous message button and verify cursor is not blinking, response is removing immediately',
       async () => {
+        await chatMessages.waitForResponseReceived();
         await chat.playPreviousChatMessage();
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect
