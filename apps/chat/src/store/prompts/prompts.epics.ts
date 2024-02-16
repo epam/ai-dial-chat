@@ -358,7 +358,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
                 deletePrompts,
               }),
             ),
-            of(PromptsActions.updatePrompts({ prompts: [] })),
+            of(PromptsActions.setPrompts({ prompts: [] })),
           ),
         ),
       ),
@@ -499,7 +499,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
           ),
         );
       } else {
-        actions.push(of(PromptsActions.updatePrompts({ prompts: [] })));
+        actions.push(of(PromptsActions.setPrompts({ prompts: [] })));
       }
 
       return concat(...actions);

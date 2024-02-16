@@ -486,6 +486,13 @@ export const promptsSlice = createSlice({
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
     },
+    setPrompts: (
+      state,
+      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
+    ) => {
+      state.prompts = combineEntities(state.prompts, payload.prompts);
+      state.promptsLoaded = true;
+    },
   },
 });
 
