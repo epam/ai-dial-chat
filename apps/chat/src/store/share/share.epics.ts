@@ -17,11 +17,7 @@ import { combineEpics } from 'redux-observable';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
-import {
-  getFoldersFromIds,
-  getParentFolderIdsFromFolderId,
-  splitEntityId,
-} from '@/src/utils/app/folders';
+import { splitEntityId } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 import { encodeApiUrl, parseConversationApiKey } from '@/src/utils/server/api';
 
@@ -31,7 +27,7 @@ import {
   BackendResourceType,
   FeatureType,
 } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import {
   ShareByLinkResponseModel,
