@@ -295,10 +295,7 @@ dialTest(
       .toEqual([
         MenuOptions.rename,
         MenuOptions.compare,
-        MenuOptions.export,
         MenuOptions.moveTo,
-        MenuOptions.share,
-        MenuOptions.publish,
         MenuOptions.delete,
       ]);
   },

@@ -292,6 +292,12 @@ export const selectNewAddedFolderId = createSelector(
     return state.newAddedFolderId;
   },
 );
+export const selectLoadingFolderIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.loadingFolderIds;
+  },
+);
 
 export const arePromptsUploaded = createSelector([rootSelector], (state) => {
   return state.promptsLoaded;

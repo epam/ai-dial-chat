@@ -222,6 +222,7 @@ export const ChatSection = ({
   filters,
   hideIfEmpty = true,
   displayRootFiles,
+  ignoreRootFilter = false,
   showEmptyFolders = false,
   openByDefault = false,
   dataQa,
@@ -246,18 +247,21 @@ export const ChatSection = ({
   );
 
   const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => isRootId(folderId)),
-    [folders],
+    () =>
+      ignoreRootFilter
+        ? folders
+        : folders.filter(({ folderId }) => isRootId(folderId)),
+    [folders, ignoreRootFilter],
   );
 
   const rootConversations = useMemo(
     () =>
-      conversations
-        .filter(({ folderId }) => isRootId(folderId))
-        .sort(compareEntitiesByName),
-    [conversations],
+      (ignoreRootFilter
+        ? conversations
+        : conversations.filter(({ folderId }) => isRootId(folderId))
+      ).sort(compareEntitiesByName),
+    [conversations, ignoreRootFilter],
   );
-
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
@@ -357,6 +361,7 @@ export function ChatFolders() {
           name: t('Shared with me'),
           filters: SharedWithMeFilter,
           displayRootFiles: true,
+          ignoreRootFilter: true,
           dataQa: 'shared-with-me',
           openByDefault: true,
         },

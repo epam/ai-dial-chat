@@ -24,8 +24,8 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import {
+  getImportPreparedConversations,
   getOrUploadConversation,
-  getPreparedConversations,
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import {
@@ -34,12 +34,10 @@ import {
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import {
-  ImportConversationsResponse,
   cleanData,
   exportConversation,
   exportConversations,
   exportPrompts,
-  importConversations,
   updateAttachment,
 } from '@/src/utils/app/import-export';
 import {
@@ -50,7 +48,6 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
@@ -65,6 +62,7 @@ import {
 } from '../conversations/conversations.reducers';
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
+import { PromptsActions } from '../prompts/prompts.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import {
@@ -141,8 +139,10 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       () => ConversationService.getConversations(undefined, true), //listing of all entities
     ),
     switchMap((conversationsListing) => {
+      const onlyMyConversationsListing =
+        filterOnlyMyEntities(conversationsListing);
       const foldersIds = Array.from(
-        new Set(conversationsListing.map((info) => info.folderId)),
+        new Set(onlyMyConversationsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
       const foldersWithConversation = getFoldersFromIds(
@@ -161,7 +161,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       return forkJoin({
         //get all conversations from api
         conversations: zip(
-          conversationsListing.map((info) =>
+          onlyMyConversationsListing.map((info) =>
             ConversationService.getConversation(info),
           ),
         ),
@@ -227,103 +227,63 @@ const exportLocalStoragePromptsEpic: AppEpic = (action$, state$) => {
 const importConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importConversations.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        conversationsListing: ConversationService.getConversations(
-          undefined,
-          true,
-        ), //listing of all entities
-        importedData: of(payload.data),
-      }),
-    ),
-    switchMap(({ conversationsListing, importedData }) => {
-      const foldersIds = Array.from(
-        new Set(conversationsListing.map((info) => info.folderId)),
-      );
-      //calculate all folders;
-      const folders = getFoldersFromIds(
-        Array.from(
-          new Set(
-            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-          ),
-        ),
-        FolderType.Chat,
-      );
-
-      return forkJoin({
-        //get all conversations from api
-        currentConversations: zip(
-          conversationsListing.map((info) =>
-            ConversationService.getConversation(info),
-          ),
-        ),
-        currentFolders: of(folders),
-        importedData: of(importedData),
-      });
-    }),
-    switchMap(({ currentConversations, currentFolders, importedData }) => {
-      const filteredConversations = currentConversations.filter(
-        Boolean,
-      ) as Conversation[];
-
-      const { history, folders, isError }: ImportConversationsResponse =
-        importConversations(importedData, {
-          currentConversations: filteredConversations,
-          currentFolders,
-        });
-
+    switchMap(({ payload }) => {
+      const { history, folders, isError } = cleanData(payload.data);
       if (isError) {
         toast.error(errorsMessages.unsupportedDataFormat);
-        return of(ImportExportActions.resetState());
+        return of(ImportExportActions.importFail());
       }
 
-      const conversationsInfoToUpload = history.filter((conversation) => {
-        return conversation.status !== UploadStatus.LOADED;
-      });
+      const preparedConversations = getImportPreparedConversations({
+        conversations: history,
+        conversationsFolders: folders,
+      }) as Conversation[];
 
-      const importedConversations = conversationsInfoToUpload
-        .map(({ id }) => {
-          return (importedData as LatestExportFormat).history.find(
-            (conversation) => conversation.id === id,
-          );
-        })
-        .filter(Boolean) as Conversation[];
-
-      const foldersToUpload = folders.filter(({ id }) => {
-        return (importedData as LatestExportFormat).folders.find(
-          (folder) => folder.id === id,
-        );
-      });
-      // upload to the API
-      const preparedConversations = getPreparedConversations({
-        conversations: importedConversations,
-        conversationsFolders: foldersToUpload,
-      });
-
-      const preparedHistory = [
-        ...filteredConversations,
-        ...preparedConversations,
-      ];
-
-      return zip(
-        preparedConversations.map((info) =>
-          ConversationService.createConversation(info),
-        ),
+      return from(
+        ConversationService.setConversations(preparedConversations),
       ).pipe(
-        switchMap(() =>
-          concat(
-            of(ImportExportActions.importConversationsSuccess()),
+        switchMap(() => {
+          return ConversationService.getConversations(undefined, true).pipe(
+            catchError((err) => {
+              console.error(
+                'An error occurred while uploading conversations and folders:',
+                err,
+              );
+              return [];
+            }),
+          ); //listing of all entities
+        }),
+        switchMap((conversationsListing) => {
+          if (!conversationsListing) {
+            return of(ImportExportActions.importPromptsFail());
+          }
+
+          const foldersIds = Array.from(
+            new Set(conversationsListing.map((info) => info.folderId)),
+          );
+          //calculate all folders;
+          const folders = getFoldersFromIds(
+            Array.from(
+              new Set(
+                foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+              ),
+            ),
+            FolderType.Chat,
+          );
+
+          return concat(
             of(
               ConversationsActions.importConversationsSuccess({
-                conversations: preparedHistory,
-                folders,
+                conversations: conversationsListing,
+                folders: folders,
               }),
             ),
-          ),
-        ),
-        catchError(() => of(ImportExportActions.importFail())),
+            of(ImportExportActions.importConversationsSuccess()),
+          );
+        }),
       );
     }),
+    catchError(() => of(ImportExportActions.importPromptsFail())),
   );
 
 const importZipEpic: AppEpic = (action$, state$) =>
@@ -650,7 +610,11 @@ const resetStateEpic: AppEpic = (action$) =>
         ImportExportActions.exportFail.match(action) ||
         ImportExportActions.importStop.match(action) ||
         ImportExportActions.importConversationsSuccess.match(action) ||
-        ImportExportActions.importFail.match(action),
+        ImportExportActions.importFail.match(action) ||
+        ImportExportActions.importStop.match(action) ||
+        ImportExportActions.importPromptsFail.match(action) ||
+        PromptsActions.importPromptsSuccess.match(action) ||
+        PromptsActions.initPromptsSuccess.match(action),
     ),
     switchMap(() => {
       return of(ImportExportActions.resetState());

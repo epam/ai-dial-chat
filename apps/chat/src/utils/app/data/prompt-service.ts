@@ -1,12 +1,13 @@
 import { Observable } from 'rxjs';
 
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/id';
+import { constructPath } from '@/src/utils/app/file';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 import { ApiKeys } from '@/src/utils/server/api';
 
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
+import { prepareEntityName } from '../common';
 import { getPathToFolderById } from '../folders';
 import { DataService } from './data-service';
 
@@ -24,6 +25,11 @@ export class PromptService {
     recursive?: boolean,
   ): Observable<PromptInfo[]> {
     return DataService.getDataStorage().getPrompts(path, recursive);
+  }
+  public static getPromptsAndFolders(
+    path?: string,
+  ): Observable<FoldersAndEntities<PromptInfo>> {
+    return DataService.getDataStorage().getPromptsAndFolders(path);
   }
 
   public static getPrompt(info: PromptInfo): Observable<Prompt | null> {
@@ -58,7 +64,7 @@ export const getPreparedPrompts = ({
 }) =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, true);
-    const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
+    const newName = prepareEntityName(prompt.name);
 
     return {
       ...prompt,
@@ -69,5 +75,32 @@ export const getPreparedPrompts = ({
       folderId: addRoot
         ? constructPath(getRootId({ apiKey: ApiKeys.Prompts }), path)
         : path,
+    };
+  }); // to send prompts with proper parentPath
+
+const isRootPromptId = (id?: string) =>
+  isRootId(id) && id?.startsWith(`${ApiKeys.Prompts}/`);
+
+export const getImportPreparedPrompts = ({
+  prompts,
+  folders,
+}: {
+  prompts: Prompt[];
+  folders: FolderInterface[];
+}) =>
+  prompts.map((prompt) => {
+    const { path } = getPathToFolderById(folders, prompt.folderId, true);
+    const newName = prepareEntityName(prompt.name);
+
+    const folderId = isRootPromptId(path)
+      ? path
+      : constructPath(getRootId({ apiKey: ApiKeys.Prompts }), path);
+    const promptId = constructPath(folderId, newName);
+
+    return {
+      ...prompt,
+      id: promptId,
+      name: newName,
+      folderId: folderId,
     };
   }); // to send prompts with proper parentPath

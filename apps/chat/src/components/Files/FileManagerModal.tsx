@@ -425,6 +425,7 @@ export const FileManagerModal = ({
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
+          maximumAttachmentsAmount={maximumAttachmentsAmount}
         />
       )}
     </Modal>

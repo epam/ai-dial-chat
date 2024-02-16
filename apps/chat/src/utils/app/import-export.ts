@@ -17,7 +17,7 @@ import { Prompt } from '@/src/types/prompt';
 import { ApiKeys, decodeApiUrl, encodeApiUrl } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
-import { triggerDownload } from './file';
+import { constructPath, triggerDownload } from './file';
 import { getRootId } from './id';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +54,26 @@ export const isLatestExportFormat = isExportFormatV5;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
+
+export function cleanFolders(folders: FolderInterface[]) {
+  return (folders || []).map((chatFolder) => {
+    const parentFolder = folders.find(
+      (folder) => folder.id === chatFolder.folderId,
+    );
+    const newFolderId = constructPath(
+      getRootId({ apiKey: ApiKeys.Conversations }),
+      parentFolder?.name,
+    );
+    const newId = constructPath(newFolderId, chatFolder.name);
+    return {
+      id: newId,
+      name: chatFolder.name,
+      type: FolderType.Chat,
+      folderId: newFolderId,
+    };
+  });
+}
+
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
@@ -289,6 +309,26 @@ export interface ImportPromtsResponse {
   folders: FolderInterface[];
   isError: boolean;
 }
+
+export function cleanPromptsFolders(folders: FolderInterface[]) {
+  return (folders || []).map((promptFolder) => {
+    const parentFolder = folders.find(
+      (folder) => folder.id === promptFolder.folderId,
+    );
+    const newFolderId = constructPath(
+      getRootId({ apiKey: ApiKeys.Prompts }),
+      parentFolder?.name,
+    );
+    const newId = constructPath(newFolderId, promptFolder.name);
+    return {
+      id: newId,
+      name: promptFolder.name,
+      type: FolderType.Prompt,
+      folderId: newFolderId,
+    };
+  });
+}
+
 export const importPrompts = (
   importedData: PromptsHistory,
   {
@@ -314,7 +354,7 @@ export const importPrompts = (
 
   const newFolders: FolderInterface[] = combineEntities(
     currentFolders,
-    importedData.folders,
+    cleanPromptsFolders(importedData.folders),
   ).filter((folder) => folder.type === FolderType.Prompt);
 
   return { prompts: newPrompts, folders: newFolders, isError: false };

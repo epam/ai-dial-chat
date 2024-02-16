@@ -768,7 +768,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               catchError((err) => {
                 const { name } = getConversationInfoFromId(id);
                 console.error(`Error during deleting "${name}"`, err);
-                return name;
+                return of(name);
               }),
             ),
           ),
@@ -780,7 +780,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `An error occurred while saving the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      `An error occurred while removing the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
@@ -1433,41 +1433,43 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           state$.value,
         );
 
-      const message = responseJSON?.message || payload.message;
+      const errorMessage = responseJSON?.message || payload.message;
+
+      const messages = [...payload.conversation.messages];
+      messages[messages.length - 1] = {
+        ...messages[messages.length - 1],
+        errorMessage,
+      };
+
+      const values: Partial<Conversation> = {
+        isMessageStreaming: false,
+        messages: [...messages],
+      };
+      if (isReplay) {
+        values.replay = {
+          ...payload.conversation.replay,
+          isError: true,
+        };
+      }
 
       return concat(
+        of(
+          ConversationsActions.updateConversation({
+            id: payload.conversation.id,
+            values,
+          }),
+        ),
+        isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
+        of(UIActions.showErrorToast(translate(errorMessage))),
         of(
           ConversationsActions.updateMessage({
             conversationId: payload.conversation.id,
             messageIndex: payload.conversation.messages.length - 1,
             values: {
-              errorMessage: message,
+              errorMessage,
             },
           }),
         ),
-        isReplay
-          ? of(
-              ConversationsActions.updateConversation({
-                id: payload.conversation.id,
-                values: {
-                  replay: {
-                    ...payload.conversation.replay,
-                    isError: true,
-                  },
-                },
-              }),
-            )
-          : EMPTY,
-        of(
-          ConversationsActions.updateConversation({
-            id: payload.conversation.id,
-            values: {
-              isMessageStreaming: false,
-            },
-          }),
-        ),
-        isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        of(UIActions.showErrorToast(translate(message))),
       );
     }),
   );
@@ -1776,8 +1778,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
         ConversationsActions.addConversations.match(action) ||
-        ConversationsActions.duplicateConversation.match(action) ||
-        ConversationsActions.importConversationsSuccess.match(action),
+        ConversationsActions.duplicateConversation.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -2371,12 +2372,14 @@ const openFolderEpic: AppEpic = (action$, state$) =>
       if (folder?.status === UploadStatus.LOADED) {
         return EMPTY;
       }
+
       return concat(
         of(
           ConversationsActions.uploadConversationsWithFolders({
             paths: [payload.id],
             inheritedMetadata: {
               sharedWithMe: folder?.sharedWithMe,
+              sharedWithMeChild: true,
             },
           }),
         ),
