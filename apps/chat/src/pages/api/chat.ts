@@ -143,8 +143,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let temperatureToUse = temperature;
-    if (temperatureToUse && model.type !== EntityType.Application) {
-      temperatureToUse = DEFAULT_TEMPERATURE;
+    if (temperatureToUse && model.type === EntityType.Application) {
+      temperatureToUse = 0;
     }
 
     const promptToEncode: string = promptToSend ?? '';
