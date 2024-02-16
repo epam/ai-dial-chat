@@ -1,12 +1,13 @@
 import { Observable } from 'rxjs';
 
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import { getRootId, isRootId } from '@/src/utils/app/id';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
+import { prepareEntityName } from '../common';
 import { getPathToFolderById } from '../folders';
 import { DataService } from './data-service';
 
@@ -58,7 +59,7 @@ export const getPreparedPrompts = ({
 }) =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, true);
-    const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
+    const newName = prepareEntityName(prompt.name);
 
     return {
       ...prompt,
@@ -84,7 +85,7 @@ export const getImportPreparedPrompts = ({
 }) =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, true);
-    const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
+    const newName = prepareEntityName(prompt.name);
 
     const folderId = isRootPromptId(path)
       ? path

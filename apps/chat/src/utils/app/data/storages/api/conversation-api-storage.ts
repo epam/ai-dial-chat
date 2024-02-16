@@ -13,8 +13,9 @@ import { FolderInterface } from '@/src/types/folder';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { cleanConversation } from '../../../clean';
+import { prepareEntityName } from '../../../common';
 import { getGeneratedConversationId } from '../../../conversation';
-import { constructPath, notAllowedSymbolsRegex } from '../../../file';
+import { constructPath } from '../../../file';
 import { getPathToFolderById } from '../../../folders';
 import { getRootId, isRootId } from '../../../id';
 import { ConversationService } from '../../conversation-service';
@@ -98,7 +99,7 @@ export const getPreparedConversations = ({
       true,
     );
 
-    const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+    const newName = prepareEntityName(conv.name);
 
     return {
       ...conv,
@@ -131,7 +132,7 @@ export const getImportPreparedConversations = ({
       true,
     );
 
-    const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+    const newName = prepareEntityName(conv.name);
     const rootId = isRootConversationsId(path)
       ? path
       : getRootId({ apiKey: ApiKeys.Conversations });
