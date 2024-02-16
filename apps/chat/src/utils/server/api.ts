@@ -164,7 +164,7 @@ export class ApiUtils {
     }).pipe(
       switchMap((response) => {
         if (!response.ok) {
-          return throwError(() => new Error(response.statusText));
+          return throwError(() => new Error(response.status + ''));
         }
 
         return from(response.json());
