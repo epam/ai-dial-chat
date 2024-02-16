@@ -1428,7 +1428,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
 
       const errorMessage = responseJSON?.message || payload.message;
 
-      const messages = payload.conversation.messages;
+      const messages = [...payload.conversation.messages];
       messages[messages.length - 1] = {
         ...messages[messages.length - 1],
         errorMessage,
