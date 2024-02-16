@@ -102,8 +102,34 @@ export const conversationsSlice = createSlice({
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (
       state,
-      _action: PayloadAction<{ new: Conversation; old: ConversationInfo }>,
+      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
     ) => state,
+    recreateConversationFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        newId: string;
+        oldConversation: Conversation;
+      }>,
+    ) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.newId) {
+          return {
+            ...conv,
+            ...payload.oldConversation,
+            lastActivityDate: Date.now(),
+          };
+        }
+
+        return conv;
+      });
+      if (payload.newId !== payload.oldConversation.id) {
+        state.selectedConversationsIds = state.selectedConversationsIds.map(
+          (cid) => (cid === payload.newId ? payload.oldConversation.id! : cid),
+        );
+      }
+    },
     updateConversation: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,

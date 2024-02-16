@@ -143,6 +143,21 @@ export const promptsSlice = createSlice({
       state,
       _action: PayloadAction<{ new: Prompt; old: PromptInfo }>,
     ) => state,
+    recreatePromptFail: (
+      state,
+      { payload }: PayloadAction<{ oldPrompt: Prompt; newId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.newId) {
+          return {
+            ...prompt,
+            ...payload.oldPrompt,
+          };
+        }
+
+        return prompt;
+      });
+    },
     updatePrompt: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
