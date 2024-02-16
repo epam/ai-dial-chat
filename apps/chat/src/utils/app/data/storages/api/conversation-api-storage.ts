@@ -1,6 +1,5 @@
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 
-import { getRootId } from '@/src/utils/app/id';
 import {
   ApiKeys,
   getConversationApiKey,
@@ -14,9 +13,11 @@ import { FolderInterface } from '@/src/types/folder';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { cleanConversation } from '../../../clean';
+import { prepareEntityName } from '../../../common';
 import { getGeneratedConversationId } from '../../../conversation';
-import { constructPath, notAllowedSymbolsRegex } from '../../../file';
+import { constructPath } from '../../../file';
 import { getPathToFolderById } from '../../../folders';
+import { getRootId, isRootId } from '../../../id';
 import { ConversationService } from '../../conversation-service';
 import { ApiEntityStorage } from './api-entity-storage';
 
@@ -98,7 +99,7 @@ export const getPreparedConversations = ({
       true,
     );
 
-    const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+    const newName = prepareEntityName(conv.name);
 
     return {
       ...conv,
@@ -111,5 +112,40 @@ export const getPreparedConversations = ({
       folderId: addRoot
         ? constructPath(getRootId({ apiKey: ApiKeys.Conversations }), path)
         : path,
+    };
+  }); // to send conversation with proper parentPath and lastActivityDate order
+
+const isRootConversationsId = (id?: string) =>
+  isRootId(id) && id?.startsWith(`${ApiKeys.Conversations}/`);
+
+export const getImportPreparedConversations = ({
+  conversations,
+  conversationsFolders,
+}: {
+  conversations: Conversation[] | ConversationInfo[];
+  conversationsFolders: FolderInterface[];
+}) =>
+  conversations.map((conv) => {
+    const { path } = getPathToFolderById(
+      conversationsFolders,
+      conv.folderId,
+      true,
+    );
+
+    const newName = prepareEntityName(conv.name);
+    const rootId = isRootConversationsId(path)
+      ? path
+      : getRootId({ apiKey: ApiKeys.Conversations });
+    const folderId = constructPath(rootId, path);
+
+    return {
+      ...conv,
+      id: getGeneratedConversationId({
+        ...conv,
+        name: newName,
+        folderId: folderId,
+      }),
+      name: newName,
+      folderId: folderId,
     };
   }); // to send conversation with proper parentPath and lastActivityDate order
