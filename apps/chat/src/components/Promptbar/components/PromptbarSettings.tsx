@@ -16,6 +16,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -54,6 +55,7 @@ export function PromptbarSettings() {
         name: t('Import prompts'),
         onClick: (promptsJSON: unknown) => {
           const typedJson = promptsJSON as { content: unknown };
+          dispatch(ImportExportActions.importPrompts());
           dispatch(
             PromptsActions.importPrompts({
               promptsHistory: typedJson.content as PromptsHistory,
