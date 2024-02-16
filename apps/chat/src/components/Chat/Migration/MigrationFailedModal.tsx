@@ -225,24 +225,24 @@ export const MigrationFailedWindow = ({
     promptsToRetryIds,
   ]);
 
-  const onBackupPrompts = useCallback(() => {
+  const handleBackupPrompts = useCallback(() => {
     dispatch(ImportExportActions.exportLocalStoragePrompts());
     BrowserStorage.setEntityBackedUp(MigrationStorageKeys.PromptsBackedUp);
   }, [dispatch]);
 
-  const onBackupChats = useCallback(() => {
+  const handleBackupChats = useCallback(() => {
     dispatch(ImportExportActions.exportLocalStorageChats());
     BrowserStorage.setEntityBackedUp(MigrationStorageKeys.ChatsBackedUp);
   }, [dispatch]);
 
-  const onSelectAll = useCallback(() => {
+  const handleSelectAll = useCallback(() => {
     setConversationsToRetryIds(
       failedMigratedConversations.map((conv) => conv.id),
     );
     setPromptsToRetryIds(failedMigratedPrompts.map((prompt) => prompt.id));
   }, [failedMigratedConversations, failedMigratedPrompts]);
 
-  const onUnselectAll = () => {
+  const handleUnselectAll = () => {
     setConversationsToRetryIds([]);
     setPromptsToRetryIds([]);
   };
@@ -292,13 +292,13 @@ export const MigrationFailedWindow = ({
                   isChecked={isAllItemsSelected || isSomeItemsSelected}
                   isCheckIcon={isAllItemsSelected}
                   isMinusIcon={isSomeItemsSelected}
-                  onSelectHandler={onSelectAll}
+                  onSelectHandler={handleSelectAll}
                 />
                 <AllItemsCheckboxes
                   isChecked={!isAllItemsSelected || isNothingSelected}
                   isCheckIcon={isNothingSelected}
                   isMinusIcon={!isAllItemsSelected}
-                  onSelectHandler={onUnselectAll}
+                  onSelectHandler={handleUnselectAll}
                 />
               </div>
             </div>
@@ -355,7 +355,7 @@ export const MigrationFailedWindow = ({
             </div>
             <p className="text-secondary">
               {t("I don't want to backup conversations/prompts and I’m ready ")}
-              <span className="font-semibold">TO LOSE DATA</span>
+              <span className="font-semibold">{t('TO LOSE DATA')}</span>
             </p>
           </div>
           <div className="mt-3 flex w-full justify-end">
@@ -363,7 +363,7 @@ export const MigrationFailedWindow = ({
               <button
                 className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
                 data-qa="skip-migration"
-                onClick={onBackupPrompts}
+                onClick={handleBackupPrompts}
               >
                 {isPromptsBackedUp ? (
                   <IconCircleCheck
@@ -380,7 +380,7 @@ export const MigrationFailedWindow = ({
               <button
                 className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
                 data-qa="skip-migration"
-                onClick={onBackupChats}
+                onClick={handleBackupChats}
               >
                 {isChatsBackedUp ? (
                   <IconCircleCheck
