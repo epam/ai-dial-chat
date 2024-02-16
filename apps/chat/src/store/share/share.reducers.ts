@@ -1,6 +1,8 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { getFileName } from '@/src/utils/app/file';
+import { splitEntityId } from '@/src/utils/app/folders';
+import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import {
@@ -49,7 +51,12 @@ export const shareSlice = createSlice({
     ) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.LOADING;
-      state.shareResourceName = getFileName(payload.resourceId);
+
+      const name = splitEntityId(payload.resourceId).name;
+      state.shareResourceName =
+        payload.resourceType === BackendResourceType.CONVERSATION
+          ? parseConversationApiKey(splitEntityId(payload.resourceId).name).name
+          : name;
     },
     sharePrompt: (
       state,
