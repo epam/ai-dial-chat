@@ -16,6 +16,6 @@ export interface PromptsState {
   newAddedFolderId?: string;
   promptsLoaded: boolean;
   isPromptLoading: boolean;
-  isPromptRequestSent: boolean;
   loadingFolderIds: string[];
+  isActiveNewPromptRequest: boolean;
 }

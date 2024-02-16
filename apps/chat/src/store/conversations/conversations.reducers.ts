@@ -43,7 +43,7 @@ const initialState: ConversationsState = {
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
-  isConversationRequestSent: false,
+  isActiveNewConversationRequest: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -259,11 +259,11 @@ export const conversationsSlice = createSlice({
         state.areSelectedConversationsLoaded = true;
       }
     },
-    setIsConversationRequestSent: (
+    setIsActiveConversationRequest: (
       state,
       { payload }: PayloadAction<boolean>,
     ) => {
-      state.isConversationRequestSent = payload;
+      state.isActiveNewConversationRequest = payload;
     },
     createNewReplayConversation: (
       state,
@@ -334,7 +334,9 @@ export const conversationsSlice = createSlice({
         state.areSelectedConversationsLoaded = true;
       }
     },
-    clearConversations: (state) => state,
+    clearConversations: (state) => {
+      state.conversationsLoaded = false;
+    },
     clearConversationsSuccess: (state) => {
       state.conversations = state.conversations.filter((conv) =>
         isEntityExternal(conv),

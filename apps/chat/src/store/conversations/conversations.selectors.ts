@@ -589,9 +589,9 @@ export const selectIsCompareLoading = createSelector(
   },
 );
 
-export const selectIsConversationRequestSent = createSelector(
+export const selectIsActiveNewConversationRequest = createSelector(
   [rootSelector],
   (state) => {
-    return state.isConversationRequestSent;
+    return state.isActiveNewConversationRequest;
   },
 );

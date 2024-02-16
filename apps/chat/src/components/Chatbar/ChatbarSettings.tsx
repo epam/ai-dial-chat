@@ -52,14 +52,19 @@ export const ChatbarSettings = () => {
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
+  const isActiveNewConversationRequest = useAppSelector(
+    ConversationsSelectors.selectIsActiveNewConversationRequest,
+  );
 
   const handleToggleCompare = useCallback(() => {
+    if (isActiveNewConversationRequest) return;
+    dispatch(ConversationsActions.setIsActiveConversationRequest(true));
     dispatch(
       ConversationsActions.createNewConversations({
         names: [DEFAULT_CONVERSATION_NAME, DEFAULT_CONVERSATION_NAME],
       }),
     );
-  }, [dispatch]);
+  }, [dispatch, isActiveNewConversationRequest]);
 
   const jsonImportHandler = useCallback(
     (jsonContent: SupportedExportFormats) => {

@@ -334,7 +334,7 @@ export const selectFailedMigratedPrompts = createSelector(
   (state) => state.failedMigratedPrompts,
 );
 
-export const selectIsPromptRequestSent = createSelector(
+export const selectIsActiveNewPromptRequest = createSelector(
   [rootSelector],
-  (state) => state.isPromptRequestSent,
+  (state) => state.isActiveNewPromptRequest,
 );

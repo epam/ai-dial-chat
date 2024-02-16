@@ -321,7 +321,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     selectAdded: true,
                   }),
                 ),
-                of(ConversationsActions.setIsConversationRequestSent(false)),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               ),
             ),
             catchError((err) => {
@@ -334,7 +334,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     ),
                   ),
                 ),
-                of(ConversationsActions.setIsConversationRequestSent(false)),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               );
             }),
           );
@@ -594,7 +594,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         );
       } else {
         actions.push(
-          of(ConversationsActions.setIsConversationRequestSent(false)),
+          of(ConversationsActions.setConversations({ conversations: [] })),
         );
       }
 
@@ -711,7 +711,6 @@ const clearConversationsEpic: AppEpic = (action$) =>
     filter(ConversationsActions.clearConversations.match),
     switchMap(() => {
       return concat(
-        of(ConversationsActions.setIsConversationRequestSent(true)),
         of(ConversationsActions.clearConversationsSuccess()),
         of(ConversationsActions.deleteFolder({})),
       );
@@ -802,7 +801,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                   deleteIds,
                 }),
               ),
-              of(ConversationsActions.setIsConversationRequestSent(false)),
+              of(ConversationsActions.setConversations({ conversations: [] })),
             ),
           ),
         ),

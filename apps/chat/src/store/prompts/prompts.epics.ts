@@ -91,7 +91,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         switchMap(() =>
           concat(
             of(PromptsActions.createNewPromptSuccess({ newPrompt })),
-            of(PromptsActions.setIsPromptRequestSent(false)),
+            of(PromptsActions.setIsActiveNewPromptRequest(false)),
           ),
         ),
         catchError((err) => {
@@ -104,7 +104,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
                 ),
               ),
             ),
-            of(PromptsActions.setIsPromptRequestSent(false)),
+            of(PromptsActions.setIsActiveNewPromptRequest(false)),
           );
         }),
       );
@@ -305,7 +305,6 @@ export const clearPromptsEpic: AppEpic = (action$) =>
     filter(PromptsActions.clearPrompts.match),
     switchMap(() =>
       concat(
-        of(PromptsActions.setIsPromptRequestSent(true)),
         of(PromptsActions.clearPromptsSuccess()),
         of(PromptsActions.deleteFolder({})),
       ),
@@ -351,7 +350,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
                 deletePrompts,
               }),
             ),
-            of(PromptsActions.setIsPromptRequestSent(false)),
+            of(PromptsActions.updatePrompts({ prompts: [] })),
           ),
         ),
       ),
@@ -492,7 +491,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
           ),
         );
       } else {
-        actions.push(of(PromptsActions.setIsPromptRequestSent(false)));
+        actions.push(of(PromptsActions.updatePrompts({ prompts: [] })));
       }
 
       return concat(...actions);

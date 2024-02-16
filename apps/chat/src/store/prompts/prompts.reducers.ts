@@ -39,8 +39,8 @@ const initialState: PromptsState = {
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
-  isPromptRequestSent: false,
   loadingFolderIds: [],
+  isActiveNewPromptRequest: false,
 };
 
 export const promptsSlice = createSlice({
@@ -93,8 +93,11 @@ export const promptsSlice = createSlice({
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
     },
-    setIsPromptRequestSent: (state, { payload }: PayloadAction<boolean>) => {
-      state.isPromptRequestSent = payload;
+    setIsActiveNewPromptRequest: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isActiveNewPromptRequest = payload;
     },
     saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
       state,
@@ -217,7 +220,9 @@ export const promptsSlice = createSlice({
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = state.prompts.concat(payload.prompts);
     },
-    clearPrompts: (state) => state,
+    clearPrompts: (state) => {
+      state.promptsLoaded = false;
+    },
     clearPromptsSuccess: (state) => {
       state.prompts = state.prompts.filter((prompt) =>
         isEntityExternal(prompt),
