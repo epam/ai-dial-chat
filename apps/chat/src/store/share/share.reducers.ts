@@ -6,7 +6,6 @@ import { ConversationInfo } from '@/src/types/chat';
 import {
   BackendDataNodeType,
   BackendResourceType,
-  FeatureType,
   UploadStatus,
 } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
