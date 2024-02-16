@@ -439,25 +439,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          const convPaths = Array.from(
-            new Set(
-              payload.resources.entities.flatMap(({ folderId }) =>
-                getParentFolderIdsFromFolderId(folderId),
-              ),
-            ),
-          );
-          const folderPaths = Array.from(
-            new Set([
-              ...payload.resources.folders.flatMap(({ folderId }) =>
-                getParentFolderIdsFromFolderId(folderId),
-              ),
-              ...payload.resources.folders.map(({ id }) => id),
-            ]),
-          );
-          const allFolders = getFoldersFromIds(
-            Array.from(new Set([...convPaths, ...folderPaths])),
-            FolderType.Prompt,
-          );
           actions.push(
             ConversationsActions.addConversations({
               conversations: payload.resources.entities.map((res) => ({
@@ -468,7 +449,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
           actions.push(
             ConversationsActions.addFolders({
-              folders: allFolders.map((res) => ({
+              folders: payload.resources.folders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
               })) as FolderInterface[],
@@ -519,25 +500,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          const entitiesPaths = Array.from(
-            new Set(
-              payload.resources.entities.flatMap(({ folderId }) =>
-                getParentFolderIdsFromFolderId(folderId),
-              ),
-            ),
-          );
-          const folderPaths = Array.from(
-            new Set([
-              ...payload.resources.folders.flatMap(({ folderId }) =>
-                getParentFolderIdsFromFolderId(folderId),
-              ),
-              ...payload.resources.folders.map(({ id }) => id),
-            ]),
-          );
-          const allFolders = getFoldersFromIds(
-            Array.from(new Set([...entitiesPaths, ...folderPaths])),
-            FolderType.Prompt,
-          );
           actions.push(
             PromptsActions.addPrompts({
               prompts: payload.resources.entities.map((res) => ({
@@ -548,7 +510,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
           actions.push(
             PromptsActions.addFolders({
-              folders: allFolders.map((res) => ({
+              folders: payload.resources.folders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
               })) as FolderInterface[],
