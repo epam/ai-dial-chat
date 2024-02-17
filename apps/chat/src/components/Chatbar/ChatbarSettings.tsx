@@ -57,14 +57,13 @@ export const ChatbarSettings = () => {
   );
 
   const handleToggleCompare = useCallback(() => {
-    if (isActiveNewConversationRequest) return;
     dispatch(ConversationsActions.setIsActiveConversationRequest(true));
     dispatch(
       ConversationsActions.createNewConversations({
         names: [DEFAULT_CONVERSATION_NAME, DEFAULT_CONVERSATION_NAME],
       }),
     );
-  }, [dispatch, isActiveNewConversationRequest]);
+  }, [dispatch]);
 
   const jsonImportHandler = useCallback(
     (jsonContent: SupportedExportFormats) => {
@@ -135,7 +134,7 @@ export const ChatbarSettings = () => {
         name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
-        disabled: isStreaming,
+        disabled: isStreaming || isActiveNewConversationRequest,
         onClick: () => {
           handleToggleCompare();
         },
@@ -152,13 +151,14 @@ export const ChatbarSettings = () => {
       },
     ],
     [
-      dispatch,
-      enabledFeatures,
-      handleToggleCompare,
-      isStreaming,
       t,
+      isStreaming,
+      isActiveNewConversationRequest,
+      enabledFeatures,
+      dispatch,
       jsonImportHandler,
       zipImportHandler,
+      handleToggleCompare,
     ],
   );
 
