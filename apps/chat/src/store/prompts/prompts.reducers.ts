@@ -204,10 +204,7 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
-    updatePrompts: (
-      state,
-      { payload }: PayloadAction<{ prompts: Prompt[] }>,
-    ) => {
+    setPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = payload.prompts;
       state.promptsLoaded = true;
     },

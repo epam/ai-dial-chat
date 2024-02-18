@@ -15,7 +15,11 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -26,6 +30,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
@@ -199,9 +204,19 @@ const ChatFolderTemplate = ({
             }),
           );
         }}
-        onDeleteFolder={(folderId: string) =>
-          dispatch(ConversationsActions.deleteFolder({ folderId }))
-        }
+        onDeleteFolder={(folderId: string) => {
+          if (folder.sharedWithMe) {
+            dispatch(
+              ShareActions.discardSharedWithMe({
+                resourceId: folder.id,
+                nodeType: BackendDataNodeType.FOLDER,
+                resourceType: BackendResourceType.CONVERSATION,
+              }),
+            );
+          } else {
+            dispatch(ConversationsActions.deleteFolder({ folderId }));
+          }
+        }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Chat}
         loadingFolderIds={loadingFolderIds}

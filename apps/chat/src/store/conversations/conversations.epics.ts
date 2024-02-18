@@ -76,7 +76,6 @@ import { ApiKeys } from '@/src/utils/server/api';
 import {
   ChatBody,
   Conversation,
-  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -84,7 +83,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 

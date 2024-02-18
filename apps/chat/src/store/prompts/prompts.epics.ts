@@ -55,7 +55,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
@@ -845,7 +845,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
     switchMap((prompts) => {
       return concat(
         of(
-          PromptsActions.updatePrompts({
+          PromptsActions.setPrompts({
             prompts,
           }),
         ),

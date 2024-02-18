@@ -13,7 +13,11 @@ import {
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { ApiKeys } from '@/src/utils/server/api';
 
-import { FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -25,6 +29,7 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
@@ -195,9 +200,19 @@ const PromptFolderTemplate = ({
             }),
           );
         }}
-        onDeleteFolder={(folderId: string) =>
-          dispatch(PromptsActions.deleteFolder({ folderId }))
-        }
+        onDeleteFolder={(folderId: string) => {
+          if (folder.sharedWithMe) {
+            dispatch(
+              ShareActions.discardSharedWithMe({
+                resourceId: folder.id,
+                nodeType: BackendDataNodeType.FOLDER,
+                resourceType: BackendResourceType.PROMPT,
+              }),
+            );
+          } else {
+            dispatch(PromptsActions.deleteFolder({ folderId }));
+          }
+        }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
       />

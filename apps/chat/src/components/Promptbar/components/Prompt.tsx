@@ -155,7 +155,17 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       e.preventDefault();
 
       if (isDeleting) {
-        dispatch(PromptsActions.deletePrompt({ prompt }));
+        if (prompt.sharedWithMe) {
+          dispatch(
+            ShareActions.discardSharedWithMe({
+              resourceId: prompt.id,
+              nodeType: BackendDataNodeType.ITEM,
+              resourceType: BackendResourceType.PROMPT,
+            }),
+          );
+        } else {
+          dispatch(PromptsActions.deletePrompt({ prompt }));
+        }
         dispatch(PromptsActions.resetSearch());
       }
 

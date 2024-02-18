@@ -216,7 +216,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Unshare'),
-        dataQa: 'share',
+        dataQa: 'unshare',
         display:
           !isEmptyConversation &&
           isSharingEnabled &&
@@ -294,8 +294,10 @@ export default function ItemContextMenu({
       folders,
       isSharingEnabled,
       onShare,
-      isPublishingEnabled,
+      onUnshare,
+      entity.isShared,
       entity.isPublished,
+      isPublishingEnabled,
       onPublish,
       onPublishUpdate,
       onUnpublish,

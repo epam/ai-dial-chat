@@ -255,11 +255,21 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e) => {
       e.stopPropagation();
       if (isDeleting) {
-        dispatch(
-          ConversationsActions.deleteConversations({
-            conversationIds: [conversation.id],
-          }),
-        );
+        if (conversation.sharedWithMe) {
+          dispatch(
+            ShareActions.discardSharedWithMe({
+              resourceId: conversation.id,
+              nodeType: BackendDataNodeType.ITEM,
+              resourceType: BackendResourceType.CONVERSATION,
+            }),
+          );
+        } else {
+          dispatch(
+            ConversationsActions.deleteConversations({
+              conversationIds: [conversation.id],
+            }),
+          );
+        }
         setIsDeleting(false);
       } else if (isRenaming) {
         handleRename(conversation);
@@ -356,7 +366,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     useCallback(() => {
       setIsUnshareConfirmOpened(true);
       setIsContextMenu(false);
-    }, [conversation.id, dispatch]);
+    }, []);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {

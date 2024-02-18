@@ -603,12 +603,109 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
       return EMPTY;
     }),
   );
+
 const revokeAccessFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.revokeAccessFail.match),
     switchMap(() => {
       return of(
         UIActions.showErrorToast(translate(errorsMessages.revokeAccessFailed)),
+      );
+    }),
+  );
+
+const discardSharedWithMeEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.discardSharedWithMe.match),
+    switchMap(({ payload }) => {
+      const resourceUrl =
+        payload.nodeType === BackendDataNodeType.FOLDER
+          ? encodeApiUrl(payload.resourceId) + '/'
+          : encodeApiUrl(payload.resourceId);
+
+      return ShareService.shareDiscard([resourceUrl]).pipe(
+        switchMap(() => {
+          return of(ShareActions.discardSharedWithMeSuccess(payload));
+        }),
+        catchError(() => {
+          return of(
+            UIActions.showErrorToast(
+              translate(errorsMessages.discardSharedWithMeFailed),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ShareActions.discardSharedWithMeSuccess.match),
+    switchMap(({ payload }) => {
+      if (
+        payload.nodeType === 'ITEM' &&
+        payload.resourceType === BackendResourceType.CONVERSATION
+      ) {
+        const conversations = ConversationsSelectors.selectConversations(
+          state$.value,
+        );
+        return of(
+          ConversationsActions.setConversations({
+            conversations: conversations.filter(
+              (conv) => conv.id !== payload.resourceId,
+            ),
+          }),
+        );
+      }
+      if (
+        payload.nodeType === 'FOLDER' &&
+        payload.resourceType === BackendResourceType.CONVERSATION
+      ) {
+        const folders = ConversationsSelectors.selectFolders(state$.value);
+        return of(
+          ConversationsActions.setFolders({
+            folders: folders.filter((item) => item.id !== payload.resourceId),
+          }),
+        );
+      }
+      if (
+        payload.nodeType === 'ITEM' &&
+        payload.resourceType === BackendResourceType.PROMPT
+      ) {
+        const prompts = ConversationsSelectors.selectConversations(
+          state$.value,
+        );
+        return of(
+          PromptsActions.setPrompts({
+            prompts: prompts.filter((item) => item.id !== payload.resourceId),
+          }),
+        );
+      }
+      if (
+        payload.nodeType === 'FOLDER' &&
+        payload.resourceType === BackendResourceType.PROMPT
+      ) {
+        const folders = ConversationsSelectors.selectFolders(state$.value);
+        return of(
+          PromptsActions.setFolders({
+            folders: folders.filter((item) => item.id !== payload.resourceId),
+          }),
+        );
+      }
+
+      console.error(`Entity not updated: ${payload.resourceId}`);
+      return EMPTY;
+    }),
+  );
+
+const discardSharedWithMeFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.discardSharedWithMeFail.match),
+    switchMap(() => {
+      return of(
+        UIActions.showErrorToast(
+          translate(errorsMessages.discardSharedWithMeFailed),
+        ),
       );
     }),
   );
@@ -629,6 +726,10 @@ export const ShareEpics = combineEpics(
   revokeAccessEpic,
   revokeAccessSuccessEpic,
   revokeAccessFailEpic,
+
+  discardSharedWithMeEpic,
+  discardSharedWithMeSuccessEpic,
+  discardSharedWithMeFailEpic,
 
   getSharedListingEpic,
   getSharedListingFailEpic,

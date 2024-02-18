@@ -54,6 +54,14 @@ export class ShareService {
       } as ShareRevokeRequestModel),
     });
   }
+  public static shareDiscard(resourceUrls: string[]): Observable<void> {
+    return ApiUtils.request(`api/share/discard`, {
+      method: 'POST',
+      body: JSON.stringify({
+        resources: resourceUrls.map((url) => ({ url })),
+      } as ShareRevokeRequestModel),
+    });
+  }
   public static getSharedListing(
     sharedListingData: ShareListingRequestModel,
   ): Observable<{
