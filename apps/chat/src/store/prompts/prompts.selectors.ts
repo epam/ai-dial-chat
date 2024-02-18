@@ -36,14 +36,16 @@ export const selectFilteredPrompts = createSelector(
     selectPrompts,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
+      ignoreSectionFilter,
   ],
-  (prompts, filters, searchTerm?) => {
+  (prompts, filters, searchTerm?, ignoreSectionFilter?) => {
     return prompts.filter(
       (prompt) =>
         (!searchTerm ||
           doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
         (filters.searchFilter?.(prompt) ?? true) &&
-        (filters.sectionFilter?.(prompt) ?? true),
+        (ignoreSectionFilter || (filters.sectionFilter?.(prompt) ?? true)),
     );
   },
 );
@@ -94,7 +96,7 @@ export const selectFilteredFolders = createSelector(
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredPrompts(state, filters, searchTerm),
+      entities: selectFilteredPrompts(state, filters, searchTerm, true),
       searchTerm,
       includeEmptyFolders,
     }),

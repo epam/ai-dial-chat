@@ -48,8 +48,10 @@ export const selectFilteredConversations = createSelector(
     selectConversations,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
+      ignoreSectionFilter,
   ],
-  (conversations, filters, searchTerm?) => {
+  (conversations, filters, searchTerm?, ignoreSectionFilter?) => {
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
@@ -58,7 +60,8 @@ export const selectFilteredConversations = createSelector(
             searchTerm,
           )) &&
         (filters.searchFilter?.(conversation) ?? true) &&
-        (filters.sectionFilter?.(conversation) ?? true),
+        (ignoreSectionFilter ||
+          (filters.sectionFilter?.(conversation) ?? true)),
     );
   },
 );
@@ -105,7 +108,7 @@ export const selectFilteredFolders = createSelector(
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredConversations(state, filters, searchTerm),
+      entities: selectFilteredConversations(state, filters, searchTerm, true),
       searchTerm,
       includeEmptyFolders,
     }),

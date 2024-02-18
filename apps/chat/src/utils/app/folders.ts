@@ -254,25 +254,29 @@ export const getFilteredFolders = ({
     childAndCurrentSectionFilteredIds.has(folder.id),
   );
 
-  // Get entities folders ids which are child of sections filtered child tree
+  // Apply search filters to section folders
+  const searchedFolderIds = childAndCurrentSectionFilteredFolders
+    .filter((folder) => filters.searchFilter?.(folder) ?? true)
+    .map((f) => f.id);
+
+  // Section filtered entities folder ids
   const entitiesFolderIds = entities
     .map((c) => c.folderId)
-    .filter((fid) => fid && childAndCurrentSectionFilteredIds.has(fid));
+    .filter((fid) => childAndCurrentSectionFilteredIds.has(fid));
 
-  // If no search term exists
-  if (!searchTerm?.trim().length) {
-    const markedFolderIds = childAndCurrentSectionFilteredFolders
-      .filter((folder) => filters.searchFilter?.(folder) ?? true)
-      .map((f) => f.id);
-    entitiesFolderIds.push(...markedFolderIds);
+  // Merged final searched and filtered folders ids
+  const searchedFoldersByEntitiesAndFolders = [
+    ...(searchTerm?.trim().length ? [] : searchedFolderIds), // Ignore filtered folders from section if search term
+    ...entitiesFolderIds,
+  ];
 
-    if (includeEmptyFolders && !searchTerm?.length) {
-      entitiesFolderIds.push(...emptyFolderIds);
-    }
+  if (includeEmptyFolders && !searchTerm?.length) {
+    searchedFoldersByEntitiesAndFolders.push(...emptyFolderIds);
   }
 
+  // Get roots again for merged array
   const filteredFolderIds = new Set(
-    entitiesFolderIds
+    searchedFoldersByEntitiesAndFolders
       .flatMap((fid) =>
         getParentAndCurrentFolderIdsById(
           childAndCurrentSectionFilteredFolders,
