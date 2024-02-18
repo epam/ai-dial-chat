@@ -585,3 +585,8 @@ export const selectIsCompareLoading = createSelector(
     return state.compareLoading;
   },
 );
+
+export const selectIsChatsBackedUp = createSelector(
+  [rootSelector],
+  (state) => state.isChatsBackedUp,
+);
