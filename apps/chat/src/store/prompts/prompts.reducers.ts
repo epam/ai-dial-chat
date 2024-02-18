@@ -422,8 +422,6 @@ export const promptsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: string[];
-        // Needed for open shared with me folder and keep shared with me flag
-        inheritedMetadata?: unknown;
       }>,
     ) => {
       state.loadingFolderIds = state.loadingFolderIds.concat(

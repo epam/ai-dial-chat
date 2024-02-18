@@ -16,7 +16,6 @@ import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
-  searchSectionFolders,
 } from '@/src/utils/app/search';
 import {
   isEntityExternal,
@@ -58,8 +57,8 @@ export const selectFilteredConversations = createSelector(
             conversation,
             searchTerm,
           )) &&
-        filters.searchFilter(conversation) &&
-        filters.sectionFilter(conversation),
+        (filters.searchFilter?.(conversation) ?? true) &&
+        (filters.sectionFilter?.(conversation) ?? true),
     );
   },
 );
@@ -110,11 +109,6 @@ export const selectFilteredFolders = createSelector(
       searchTerm,
       includeEmptyFolders,
     }),
-);
-
-export const selectSectionFolders = createSelector(
-  [selectFolders, (_state, filters: EntityFilters) => filters],
-  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectLastConversation = createSelector(
@@ -448,8 +442,8 @@ export const selectTemporaryFolders = createSelector(
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
-    return folders.filter((folder) =>
-      PublishedWithMeFilter.sectionFilter(folder),
+    return folders.filter(
+      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? folder,
     );
   },
 );

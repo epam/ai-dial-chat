@@ -3,7 +3,6 @@ import { BackendResourceType } from './common';
 export interface ShareInterface {
   isShared?: boolean;
   sharedWithMe?: boolean;
-  sharedWithMeChild?: boolean;
 
   isPublished?: boolean;
   publishedWithMe?: boolean;

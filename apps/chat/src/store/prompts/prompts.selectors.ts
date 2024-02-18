@@ -12,7 +12,6 @@ import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
-  searchSectionFolders,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
@@ -43,8 +42,8 @@ export const selectFilteredPrompts = createSelector(
       (prompt) =>
         (!searchTerm ||
           doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
-        filters.searchFilter(prompt) &&
-        filters.sectionFilter(prompt),
+        (filters.searchFilter?.(prompt) ?? true) &&
+        (filters.sectionFilter?.(prompt) ?? true),
     );
   },
 );
@@ -99,11 +98,6 @@ export const selectFilteredFolders = createSelector(
       searchTerm,
       includeEmptyFolders,
     }),
-);
-
-export const selectSectionFolders = createSelector(
-  [selectFolders, (_state, filters: EntityFilters) => filters],
-  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectParentFolders = createSelector(
@@ -264,8 +258,8 @@ export const selectTemporaryFolders = createSelector(
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
-    return folders.filter((folder) =>
-      PublishedWithMeFilter.sectionFilter(folder),
+    return folders.filter(
+      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? true,
     );
   },
 );

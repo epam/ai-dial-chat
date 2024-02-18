@@ -239,40 +239,57 @@ export const getFilteredFolders = ({
   searchTerm,
   includeEmptyFolders,
 }: GetFilteredFoldersProps) => {
-  const rootFolders = allFolders.filter(
-    (folder) => isRootId(folder.folderId) && filters.sectionFilter(folder),
+  // Get roots of section filtered items
+  const sectionFilteredFolders = allFolders.filter(
+    (folder) => filters.sectionFilter?.(folder) ?? true,
   );
-  const filteredIds = new Set(
-    rootFolders.flatMap((folder) =>
+  // Get full child tree
+  const childAndCurrentSectionFilteredIds = new Set(
+    sectionFilteredFolders.flatMap((folder) =>
       getChildAndCurrentFoldersIdsById(folder.id, allFolders),
     ),
   );
-  const folders = allFolders.filter((folder) => filteredIds.has(folder.id));
-  const folderIds = entities
-    .map((c) => c.folderId)
-    .filter((fid) => fid && filteredIds.has(fid));
+  // Map back to folders objects
+  const childAndCurrentSectionFilteredFolders = allFolders.filter((folder) =>
+    childAndCurrentSectionFilteredIds.has(folder.id),
+  );
 
+  // Get entities folders ids which are child of sections filtered child tree
+  const entitiesFolderIds = entities
+    .map((c) => c.folderId)
+    .filter((fid) => fid && childAndCurrentSectionFilteredIds.has(fid));
+
+  // If no search term exists
   if (!searchTerm?.trim().length) {
-    const markedFolderIds = folders
-      .filter((folder) => filters?.searchFilter(folder))
+    const markedFolderIds = childAndCurrentSectionFilteredFolders
+      .filter((folder) => filters.searchFilter?.(folder) ?? true)
       .map((f) => f.id);
-    folderIds.push(...markedFolderIds);
+    entitiesFolderIds.push(...markedFolderIds);
 
     if (includeEmptyFolders && !searchTerm?.length) {
-      folderIds.push(...emptyFolderIds);
+      entitiesFolderIds.push(...emptyFolderIds);
     }
   }
 
   const filteredFolderIds = new Set(
-    folderIds
-      .filter((fid) => fid && filteredIds.has(fid))
-      .flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
+    entitiesFolderIds
+      .flatMap((fid) =>
+        getParentAndCurrentFolderIdsById(
+          childAndCurrentSectionFilteredFolders,
+          fid,
+        ),
+      )
+      .filter(
+        (fid) =>
+          fid && sectionFilteredFolders.map(({ id }) => id).includes(fid),
+      ),
   );
 
-  return folders
+  return childAndCurrentSectionFilteredFolders
     .filter(
       (folder) =>
-        filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
+        childAndCurrentSectionFilteredIds.has(folder.id) &&
+        filteredFolderIds.has(folder.id),
     )
     .sort(compareEntitiesByName);
 };

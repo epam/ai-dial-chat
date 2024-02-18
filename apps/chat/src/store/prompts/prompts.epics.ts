@@ -526,10 +526,6 @@ const openFolderEpic: AppEpic = (action$, state$) =>
         of(
           PromptsActions.uploadChildPromptsWithFolders({
             paths: [payload.id],
-            inheritedMetadata: {
-              sharedWithMe: folder?.sharedWithMe,
-              sharedWithMeChild: true,
-            },
           }),
         ),
       );
@@ -891,15 +887,9 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
             .flatMap((f) => f.folders)
             .map((item) => ({
               ...item,
-              ...(payload.inheritedMetadata as Partial<FolderInterface>),
               status: UploadStatus.LOADED,
             }));
-          const prompts = foldersAndEntities
-            .flatMap((f) => f.entities)
-            .map((item) => ({
-              ...item,
-              ...(payload.inheritedMetadata as Partial<PromptInfo>),
-            }));
+          const prompts = foldersAndEntities.flatMap((f) => f.entities);
           return of(
             PromptsActions.uploadChildPromptsWithFoldersSuccess({
               parentIds: payload.paths,

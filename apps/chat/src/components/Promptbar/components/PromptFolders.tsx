@@ -4,11 +4,11 @@ import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
-  SharedWithMeFilter,
+  SharedWithMeFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { ApiKeys } from '@/src/utils/server/api';
@@ -225,7 +225,7 @@ export const PromptSection = ({
   const { t } = useTranslation(Translation.PromptBar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
-  const folders = useAppSelector((state) =>
+  const rootFolders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
       state,
       filters,
@@ -237,16 +237,8 @@ export const PromptSection = ({
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
 
-  const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => isRootId(folderId)),
-    [folders],
-  );
-
   const rootPrompts = useMemo(
-    () =>
-      prompts
-        .filter(({ folderId }) => isRootId(folderId))
-        .sort(compareEntitiesByName),
+    () => prompts.sort(compareEntitiesByName),
     [prompts],
   );
 
@@ -296,7 +288,7 @@ export const PromptSection = ({
             key={folder.id}
             folder={folder}
             isLast={index === arr.length - 1}
-            filters={filters}
+            filters={{ searchFilter: filters.searchFilter }}
             includeEmpty={showEmptyFolders}
           />
         ))}
@@ -342,7 +334,7 @@ export function PromptFolders() {
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
-          filters: SharedWithMeFilter,
+          filters: SharedWithMeFilters,
           ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',

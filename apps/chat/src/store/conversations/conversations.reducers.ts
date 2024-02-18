@@ -605,8 +605,6 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: (string | undefined)[];
-        // Needed for open shared with me folder and keep shared with me flag
-        inheritedMetadata?: unknown;
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;
