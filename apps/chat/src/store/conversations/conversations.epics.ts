@@ -817,6 +817,9 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           BrowserStorage.getFailedMigratedEntityIds(
             MigrationStorageKeys.FailedMigratedConversationIds,
           ),
+        isChatsBackedUp: BrowserStorage.getEntityBackedUp(
+          MigrationStorageKeys.ChatsBackedUp,
+        ),
       }),
     ),
     switchMap(
@@ -825,6 +828,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         conversationsFolders,
         migratedConversationIds,
         failedMigratedConversationIds,
+        isChatsBackedUp,
       }) => {
         const notMigratedConversations = filterMigratedEntities(
           conversations,
@@ -838,13 +842,16 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           !notMigratedConversations.length
         ) {
           if (failedMigratedConversationIds.length) {
-            return of(
-              ConversationsActions.setFailedMigratedConversations({
-                failedMigratedConversations: filterMigratedEntities(
-                  conversations,
-                  failedMigratedConversationIds,
-                ),
-              }),
+            return concat(
+              of(ConversationsActions.setIsChatsBackedUp({ isChatsBackedUp })),
+              of(
+                ConversationsActions.setFailedMigratedConversations({
+                  failedMigratedConversations: filterMigratedEntities(
+                    conversations,
+                    failedMigratedConversationIds,
+                  ),
+                }),
+              ),
             );
           }
 
@@ -2163,10 +2170,18 @@ const recreateConversationEpic: AppEpic = (action$) =>
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the conversation. Please refresh the page.',
+          return concat(
+            of(
+              ConversationsActions.recreateConversationFail({
+                newId: payload.new.id,
+                oldConversation: payload.old,
+              }),
+            ),
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the conversation. Please refresh the page.',
+                ),
               ),
             ),
           );
@@ -2186,6 +2201,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         id: string;
         values: Partial<Conversation>;
       };
+
       if (!conversation) {
         return of(
           UIActions.showErrorToast(

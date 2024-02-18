@@ -329,3 +329,8 @@ export const selectFailedMigratedPrompts = createSelector(
   [rootSelector],
   (state) => state.failedMigratedPrompts,
 );
+
+export const selectIsPromptsBackedUp = createSelector(
+  [rootSelector],
+  (state) => state.isPromptsBackedUp,
+);
