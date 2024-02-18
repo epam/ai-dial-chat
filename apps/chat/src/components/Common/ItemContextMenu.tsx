@@ -238,18 +238,6 @@ export default function ItemContextMenu({
         onClick: onPublish,
       },
       {
-        name: t('Publish'),
-        dataQa: 'publish',
-        display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !entity.isPublished &&
-          !!onPublish &&
-          !isExternal,
-        Icon: IconWorldShare,
-        onClick: onPublish,
-      },
-      {
         name: t('Update'),
         dataQa: 'update-publishing',
         display:
