@@ -60,7 +60,6 @@ const getInternalResourcesUrls = (
     .flat() || []) as string[];
 };
 
-// TODO: refactor it to something better
 const shareEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.share.match),
@@ -519,6 +518,101 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const revokeAccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.revokeAccess.match),
+    switchMap(({ payload }) => {
+      const resourceUrl =
+        payload.nodeType === BackendDataNodeType.FOLDER
+          ? encodeApiUrl(payload.resourceId) + '/'
+          : encodeApiUrl(payload.resourceId);
+
+      return ShareService.shareRevoke([resourceUrl]).pipe(
+        switchMap(() => {
+          return of(ShareActions.revokeAccessSuccess(payload));
+        }),
+        catchError(() => {
+          return of(
+            UIActions.showErrorToast(
+              translate(errorsMessages.revokeAccessFailed),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+const revokeAccessSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.revokeAccessSuccess.match),
+    switchMap(({ payload }) => {
+      if (
+        payload.nodeType === 'ITEM' &&
+        payload.resourceType === BackendResourceType.CONVERSATION
+      ) {
+        return of(
+          ConversationsActions.updateConversationSuccess({
+            id: payload.resourceId,
+            conversation: {
+              isShared: false,
+            },
+          }),
+        );
+      }
+      if (
+        payload.nodeType === 'FOLDER' &&
+        payload.resourceType === BackendResourceType.CONVERSATION
+      ) {
+        return of(
+          ConversationsActions.updateFolder({
+            folderId: payload.resourceId,
+            values: {
+              isShared: false,
+            },
+          }),
+        );
+      }
+      if (
+        payload.nodeType === 'ITEM' &&
+        payload.resourceType === BackendResourceType.PROMPT
+      ) {
+        return of(
+          PromptsActions.updatePromptSuccess({
+            id: payload.resourceId,
+            prompt: {
+              isShared: false,
+            },
+          }),
+        );
+      }
+      if (
+        payload.nodeType === 'FOLDER' &&
+        payload.resourceType === BackendResourceType.PROMPT
+      ) {
+        return of(
+          PromptsActions.updateFolder({
+            folderId: payload.resourceId,
+            values: {
+              isShared: false,
+            },
+          }),
+        );
+      }
+
+      console.error(`Entity not updated: ${payload.resourceId}`);
+      return EMPTY;
+    }),
+  );
+const revokeAccessFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.revokeAccessFail.match),
+    switchMap(() => {
+      return of(
+        UIActions.showErrorToast(translate(errorsMessages.revokeAccessFailed)),
+      );
+    }),
+  );
+
 export const ShareEpics = combineEpics(
   shareEpic,
   shareFailEpic,
@@ -531,6 +625,10 @@ export const ShareEpics = combineEpics(
   acceptInvitationEpic,
   acceptInvitationSuccessEpic,
   acceptInvitationFailEpic,
+
+  revokeAccessEpic,
+  revokeAccessSuccessEpic,
+  revokeAccessFailEpic,
 
   getSharedListingEpic,
   getSharedListingFailEpic,

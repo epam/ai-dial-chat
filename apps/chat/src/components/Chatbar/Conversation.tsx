@@ -61,6 +61,7 @@ import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import PublishModal from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
@@ -157,6 +158,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const isSelected = selectedConversationIds.includes(conversation.id);
 
   const { refs, context } = useFloating({
@@ -347,6 +349,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           nodeType: BackendDataNodeType.ITEM,
         }),
       );
+      setIsContextMenu(false);
+    }, [conversation.id, dispatch]);
+
+  const handleUnshare: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnshareConfirmOpened(true);
       setIsContextMenu(false);
     }, [conversation.id, dispatch]);
 
@@ -581,6 +589,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
             onShare={handleOpenSharing}
+            onUnshare={handleUnshare}
             onPublish={handleOpenPublishing}
             onPublishUpdate={handleOpenPublishing}
             onUnpublish={handleOpenUnpublishing}
@@ -638,6 +647,33 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           type={SharingType.Conversation}
           isOpen
           onClose={handleCloseUnpublishModal}
+        />
+      )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen={isUnshareConfirmOpened}
+          heading={t('Confirm revoking access to {{conversationName}}', {
+            conversationName: conversation.name,
+          })}
+          description={
+            t(
+              'Are you sure that you want to revoke access to this conversation?',
+            ) || ''
+          }
+          confirmLabel={t('Revoke access')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            if (result) {
+              dispatch(
+                ShareActions.revokeAccess({
+                  resourceId: conversation.id,
+                  nodeType: BackendDataNodeType.ITEM,
+                  resourceType: BackendResourceType.CONVERSATION,
+                }),
+              );
+            }
+          }}
         />
       )}
     </div>

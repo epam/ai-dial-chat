@@ -78,6 +78,11 @@ export interface ShareByLinkResponseModel {
 export interface ShareAcceptRequestModel {
   invitationId: string;
 }
+export interface ShareRevokeRequestModel {
+  resources: {
+    url: string;
+  }[];
+}
 
 export enum ShareRelations {
   me = 'me',

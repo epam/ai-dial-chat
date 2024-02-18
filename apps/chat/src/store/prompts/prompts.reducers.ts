@@ -138,7 +138,7 @@ export const promptsSlice = createSlice({
     ) => state,
     updatePromptSuccess: (
       state,
-      { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
+      { payload }: PayloadAction<{ prompt: Partial<Prompt>; id: string }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
