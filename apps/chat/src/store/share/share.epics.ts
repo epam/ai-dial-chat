@@ -396,11 +396,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const folders = ConversationsSelectors.selectFolders(state$.value);
 
           actions.push(
-            ...(folders
+            ...(payload.resources.folders
               .map((item) => {
-                const isShared = payload.resources.folders.find(
-                  (res) => res.id === item.id,
-                );
+                const isShared = folders.find((res) => res.id === item.id);
 
                 if (isShared) {
                   return ConversationsActions.updateFolder({
@@ -415,16 +413,16 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
           actions.push(
-            ...(conversations
+            ...(payload.resources.entities
               .map((conv) => {
-                const isSharedConv = payload.resources.entities.find(
+                const isSharedConv = conversations.find(
                   (res) => res.id === conv.id,
                 );
 
                 if (isSharedConv) {
-                  return ConversationsActions.updateConversation({
+                  return ConversationsActions.updateConversationSuccess({
                     id: conv.id,
-                    values: {
+                    conversation: {
                       isShared: true,
                     },
                   });
@@ -434,38 +432,38 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          actions.push(
-            ConversationsActions.addConversations({
-              conversations: payload.resources.entities.map((res) => ({
-                ...res,
-                sharedWithMe: true,
-              })) as Conversation[],
-            }),
-          );
-          actions.push(
-            ConversationsActions.addFolders({
-              folders: payload.resources.folders.map((res) => ({
-                ...res,
-                sharedWithMe: true,
-              })) as FolderInterface[],
-            }),
-          );
+          payload.resources.entities.length &&
+            actions.push(
+              ConversationsActions.addConversations({
+                conversations: payload.resources.entities.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as Conversation[],
+              }),
+            );
+          payload.resources.folders.length &&
+            actions.push(
+              ConversationsActions.addFolders({
+                folders: payload.resources.folders.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as FolderInterface[],
+              }),
+            );
         }
       }
       if (payload.resourceType === BackendResourceType.PROMPT) {
         if (payload.sharedWith === ShareRelations.others) {
           const prompts = PromptsSelectors.selectPrompts(state$.value);
           actions.push(
-            ...(prompts
+            ...(payload.resources.entities
               .map((item) => {
-                const isShared = payload.resources.entities.find(
-                  (res) => res.id === item.id,
-                );
+                const isShared = prompts.find((res) => res.id === item.id);
 
                 if (isShared) {
-                  return PromptsActions.updatePrompt({
+                  return PromptsActions.updatePromptSuccess({
                     id: item.id,
-                    values: {
+                    prompt: {
                       isShared: true,
                     },
                   });
@@ -475,42 +473,43 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
           const folders = PromptsSelectors.selectFolders(state$.value);
-          actions.push(
-            ...(folders
-              .map((item) => {
-                const isShared = payload.resources.folders.find(
-                  (res) => res.id === item.id,
-                );
+          payload.resources.folders.length &&
+            actions.push(
+              ...(payload.resources.folders
+                .map((item) => {
+                  const isShared = folders.find((res) => res.id === item.id);
 
-                if (isShared) {
-                  return PromptsActions.updateFolder({
-                    folderId: item.id,
-                    values: {
-                      isShared: true,
-                    },
-                  });
-                }
-                return undefined;
-              })
-              .filter(Boolean) as AnyAction[]),
-          );
+                  if (isShared) {
+                    return PromptsActions.updateFolder({
+                      folderId: item.id,
+                      values: {
+                        isShared: true,
+                      },
+                    });
+                  }
+                  return undefined;
+                })
+                .filter(Boolean) as AnyAction[]),
+            );
         } else {
-          actions.push(
-            PromptsActions.addPrompts({
-              prompts: payload.resources.entities.map((res) => ({
-                ...res,
-                sharedWithMe: true,
-              })) as Prompt[],
-            }),
-          );
-          actions.push(
-            PromptsActions.addFolders({
-              folders: payload.resources.folders.map((res) => ({
-                ...res,
-                sharedWithMe: true,
-              })) as FolderInterface[],
-            }),
-          );
+          payload.resources.entities.length &&
+            actions.push(
+              PromptsActions.addPrompts({
+                prompts: payload.resources.entities.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as Prompt[],
+              }),
+            );
+          payload.resources.folders.length &&
+            actions.push(
+              PromptsActions.addFolders({
+                folders: payload.resources.folders.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as FolderInterface[],
+              }),
+            );
         }
       }
 

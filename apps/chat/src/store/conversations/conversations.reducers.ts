@@ -151,7 +151,11 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
-      if (payload.id !== payload.conversation.id) {
+      if (
+        payload.id &&
+        payload.conversation.id &&
+        payload.id !== payload.conversation.id
+      ) {
         state.selectedConversationsIds = state.selectedConversationsIds.map(
           (cid) => (cid === payload.id ? payload.conversation.id! : cid),
         );
