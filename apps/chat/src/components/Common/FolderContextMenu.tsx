@@ -72,6 +72,7 @@ export const FolderContextMenu = ({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, featureType),
   );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -98,7 +99,7 @@ export const FolderContextMenu = ({
       {
         name: t('Unshare'),
         display:
-          isSharingEnabled && !!onUnshare && !isExternal && folder.isShared,
+          isSharingEnabled && !!onUnshare && !isExternal && !!folder.isShared,
         dataQa: 'unshare',
         Icon: IconUserX,
         onClick: onUnshare,
@@ -150,7 +151,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Delete'),
-        display: !!onDelete && folder.sharedWithMe,
+        display: !!onDelete && !!folder.sharedWithMe,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -172,10 +173,7 @@ export const FolderContextMenu = ({
       isSharingEnabled,
       onShare,
       onUnshare,
-      folder.isShared,
-      folder.isPublished,
-      folder.id,
-      folder.sharedWithMe,
+      folder,
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,
