@@ -607,6 +607,13 @@ export const selectIsCompareLoading = createSelector(
   },
 );
 
+export const selectIsActiveNewConversationRequest = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isActiveNewConversationRequest;
+  },
+);
+
 export const selectIsChatsBackedUp = createSelector(
   [rootSelector],
   (state) => state.isChatsBackedUp,

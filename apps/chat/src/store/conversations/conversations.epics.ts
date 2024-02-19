@@ -313,21 +313,27 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             ),
           ).pipe(
             switchMap(() =>
-              of(
-                ConversationsActions.addConversations({
-                  conversations: newConversations,
-                  selectAdded: true,
-                }),
+              concat(
+                of(
+                  ConversationsActions.addConversations({
+                    conversations: newConversations,
+                    selectAdded: true,
+                  }),
+                ),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               ),
             ),
             catchError((err) => {
               console.error("New conversation wasn't created:", err);
-              return of(
-                UIActions.showErrorToast(
-                  translate(
-                    'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                    ),
                   ),
                 ),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               );
             }),
           );
@@ -585,6 +591,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         );
+      } else {
+        actions.push(
+          of(ConversationsActions.setConversations({ conversations: [] })),
+        );
       }
 
       return concat(...actions);
@@ -790,6 +800,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                   deleteIds,
                 }),
               ),
+              of(ConversationsActions.setConversations({ conversations: [] })),
             ),
           ),
         ),

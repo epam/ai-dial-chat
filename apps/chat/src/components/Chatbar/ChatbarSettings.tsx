@@ -52,6 +52,9 @@ export const ChatbarSettings = () => {
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
+  const isActiveNewConversationRequest = useAppSelector(
+    ConversationsSelectors.selectIsActiveNewConversationRequest,
+  );
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -130,7 +133,7 @@ export const ChatbarSettings = () => {
         name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
-        disabled: isStreaming,
+        disabled: isStreaming || isActiveNewConversationRequest,
         onClick: () => {
           handleToggleCompare();
         },
@@ -147,13 +150,14 @@ export const ChatbarSettings = () => {
       },
     ],
     [
-      dispatch,
-      enabledFeatures,
-      handleToggleCompare,
-      isStreaming,
       t,
+      isStreaming,
+      isActiveNewConversationRequest,
+      enabledFeatures,
+      dispatch,
       jsonImportHandler,
       zipImportHandler,
+      handleToggleCompare,
     ],
   );
 
