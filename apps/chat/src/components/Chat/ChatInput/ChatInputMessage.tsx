@@ -361,22 +361,25 @@ export const ChatInputMessage = ({
           tooltip={tooltipContent()}
           isLoading={isLoading}
         />
-
-        <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
-          <AttachButton
-            selectedFilesIds={attachedFilesIds}
-            onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-            onUploadFromDevice={handleUploadFromDevice}
-          />
-        </div>
-        {selectedFiles.length > 0 && (
-          <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
-            <ChatInputAttachments
-              files={selectedFiles}
-              onUnselectFile={handleUnselectFile}
-              onRetryFile={handleRetry}
-            />
-          </div>
+        {canAttach && (
+          <>
+            <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
+              <AttachButton
+                selectedFilesIds={attachedFilesIds}
+                onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                onUploadFromDevice={handleUploadFromDevice}
+              />
+            </div>
+            {selectedFiles.length > 0 && (
+              <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
+                <ChatInputAttachments
+                  files={selectedFiles}
+                  onUnselectFile={handleUnselectFile}
+                  onRetryFile={handleRetry}
+                />
+              </div>
+            )}
+          </>
         )}
 
         {showScrollDownButton && (
