@@ -76,6 +76,7 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
   createConversation(conversation: Conversation): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
       map((conversations: Conversation[]) => {
@@ -111,6 +112,7 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
   setConversations(conversations: Conversation[]): Observable<void> {
     return BrowserStorage.setData(
       UIStorageKeys.ConversationHistory,
@@ -138,6 +140,7 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
   createPrompt(prompt: Prompt): Observable<void> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
       map((prompts: Prompt[]) => {
@@ -168,6 +171,7 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
   setPrompts(prompts: Prompt[]): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.Prompts, prompts);
   }

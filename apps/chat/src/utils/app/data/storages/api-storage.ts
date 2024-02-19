@@ -4,9 +4,11 @@ import {
   catchError,
   concatMap,
   from,
+  switchMap,
   throwError,
 } from 'rxjs';
 
+import { isNameAlreadyTaken } from '@/src/utils/app/common';
 import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
@@ -37,13 +39,13 @@ export class ApiStorage implements DialStorage {
     entities: T[],
     apiStorage: ApiEntityStorage<T, T>,
     entityType: BackendResourceType,
-  ): Observable<void> {
+  ): Observable<T> {
     let retries = 0;
 
     const retry = (
       entity: T,
       apiStorage: ApiEntityStorage<T, T>,
-    ): Observable<void> =>
+    ): Observable<T> =>
       apiStorage.createEntity(entity).pipe(
         catchError((err) => {
           if (retries < MAX_RETRIES_COUNT) {
@@ -111,8 +113,30 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.getEntity(info);
   }
 
-  createConversation(conversation: Conversation): Observable<void> {
-    return this._conversationApiStorage.createEntity(conversation);
+  createConversation(
+    conversation: Conversation,
+  ): Observable<Conversation | null> {
+    return this.getConversations(conversation.folderId).pipe(
+      switchMap((conversations) => {
+        if (!isNameAlreadyTaken(conversations, conversation)) {
+          return this._conversationApiStorage.createEntity(conversation);
+        }
+
+        const updatedConv = {
+          ...conversation,
+          name: generateNextName(
+            DEFAULT_CONVERSATION_NAME,
+            conversation.name,
+            conversations,
+          ),
+        };
+
+        return this._conversationApiStorage.createEntity(
+          regenerateConversationId(updatedConv),
+        );
+      }),
+      switchMap((conversation) => this.getConversation(conversation)),
+    );
   }
 
   updateConversation(conversation: Conversation): Observable<void> {
@@ -123,7 +147,9 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.deleteEntity(info);
   }
 
-  setConversations(conversations: Conversation[]): Observable<void> {
+  setConversations(
+    conversations: Conversation[],
+  ): Observable<ConversationInfo> {
     return from(conversations).pipe(
       concatMap((conv) =>
         this.getConversations(conv.folderId).pipe(
@@ -154,8 +180,24 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getEntity(info);
   }
 
-  createPrompt(prompt: Prompt): Observable<void> {
-    return this._promptApiStorage.createEntity(prompt);
+  createPrompt(prompt: Prompt): Observable<Prompt | null> {
+    return this.getPrompts(prompt.folderId).pipe(
+      switchMap((prompts) => {
+        if (!isNameAlreadyTaken(prompts, prompt)) {
+          return this._promptApiStorage.createEntity(prompt);
+        }
+
+        const updatedPrompt = {
+          ...prompt,
+          name: generateNextName(DEFAULT_PROMPT_NAME, prompt.name, prompts),
+        };
+
+        return this._promptApiStorage.createEntity(
+          addGeneratedPromptId(updatedPrompt),
+        );
+      }),
+      switchMap((prompt) => this.getPrompt(prompt)),
+    );
   }
 
   updatePrompt(prompt: Prompt): Observable<void> {
@@ -166,7 +208,7 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.deleteEntity(info);
   }
 
-  setPrompts(prompts: Prompt[]): Observable<void> {
+  setPrompts(prompts: Prompt[]): Observable<PromptInfo> {
     return from(prompts).pipe(
       concatMap((prompt) =>
         this.getPrompts(prompt.folderId).pipe(

@@ -312,16 +312,18 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               ConversationService.createConversation(info),
             ),
           ).pipe(
-            switchMap(() =>
-              of(
+            switchMap((conversations) => {
+              return of(
                 ConversationsActions.addConversations({
-                  conversations: newConversations,
+                  conversations: conversations.filter(
+                    Boolean,
+                  ) as Conversation[],
                   selectAdded: true,
                 }),
-              ),
-            ),
+              );
+            }),
             catchError((err) => {
-              console.error("New conversation wasn't created:", err);
+              console.error("New conversation wasn't created: ", err);
               return of(
                 UIActions.showErrorToast(
                   translate(

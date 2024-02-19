@@ -42,6 +42,9 @@ export const isEntityNameOnSameLevelUnique = <
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
+export const isNameAlreadyTaken = (entities: Entity[], entity: Entity) =>
+  entities.some((e) => e.name === entity.name);
+
 export const filterOnlyMyEntities = <
   T extends Conversation | Prompt | FolderInterface,
 >(
