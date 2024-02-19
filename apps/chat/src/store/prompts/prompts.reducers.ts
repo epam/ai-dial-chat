@@ -170,7 +170,7 @@ export const promptsSlice = createSlice({
     ) => state,
     updatePromptSuccess: (
       state,
-      { payload }: PayloadAction<{ prompt: Prompt; id: string }>,
+      { payload }: PayloadAction<{ prompt: Partial<Prompt>; id: string }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
         if (prompt.id === payload.id) {
@@ -236,10 +236,7 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
-    updatePrompts: (
-      state,
-      { payload }: PayloadAction<{ prompts: Prompt[] }>,
-    ) => {
+    setPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = payload.prompts;
       state.promptsLoaded = true;
     },
@@ -456,8 +453,6 @@ export const promptsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: string[];
-        // Needed for open shared with me folder and keep shared with me flag
-        inheritedMetadata?: unknown;
       }>,
     ) => {
       state.loadingFolderIds = state.loadingFolderIds.concat(

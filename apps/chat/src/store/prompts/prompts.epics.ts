@@ -55,7 +55,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
@@ -543,10 +543,6 @@ const openFolderEpic: AppEpic = (action$, state$) =>
         of(
           PromptsActions.uploadChildPromptsWithFolders({
             paths: [payload.id],
-            inheritedMetadata: {
-              sharedWithMe: folder?.sharedWithMe,
-              sharedWithMeChild: true,
-            },
           }),
         ),
       );
@@ -874,7 +870,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
     switchMap((prompts) => {
       return concat(
         of(
-          PromptsActions.updatePrompts({
+          PromptsActions.setPrompts({
             prompts,
           }),
         ),
@@ -916,15 +912,9 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
             .flatMap((f) => f.folders)
             .map((item) => ({
               ...item,
-              ...(payload.inheritedMetadata as Partial<FolderInterface>),
               status: UploadStatus.LOADED,
             }));
-          const prompts = foldersAndEntities
-            .flatMap((f) => f.entities)
-            .map((item) => ({
-              ...item,
-              ...(payload.inheritedMetadata as Partial<PromptInfo>),
-            }));
+          const prompts = foldersAndEntities.flatMap((f) => f.entities);
           return of(
             PromptsActions.uploadChildPromptsWithFoldersSuccess({
               parentIds: payload.paths,

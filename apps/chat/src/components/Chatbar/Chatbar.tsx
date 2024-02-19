@@ -93,6 +93,13 @@ export const Chatbar = () => {
       searchTerm,
     ),
   );
+  const filteredFolders = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredFolders(
+      state,
+      myItemsFilters,
+      searchTerm,
+    ),
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent) => {
@@ -147,6 +154,7 @@ export const Chatbar = () => {
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}
       filteredItems={filteredConversations}
+      filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
       handleSearchTerm={(searchTerm: string) =>

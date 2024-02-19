@@ -51,7 +51,6 @@ export const getUnpublishActionByType = (type: SharingType) => {
 export const isEntityExternal = (entity: ShareEntity) =>
   !!(entity.sharedWithMe || entity.publishedWithMe);
 
-// TODO: get rid of this utility and use from selectors
 export const hasExternalParent = (
   state: RootState,
   folderId: string,
@@ -64,7 +63,6 @@ export const hasExternalParent = (
     : PromptsSelectors.hasExternalParent(state, folderId);
 };
 
-// TODO: get rid of this utility and use from selectors
 export const isEntityOrParentsExternal = (
   state: RootState,
   entity: Entity,

@@ -16,7 +16,6 @@ import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
-  searchSectionFolders,
 } from '@/src/utils/app/search';
 import {
   isEntityExternal,
@@ -49,8 +48,10 @@ export const selectFilteredConversations = createSelector(
     selectConversations,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
+      ignoreSectionFilter,
   ],
-  (conversations, filters, searchTerm?) => {
+  (conversations, filters, searchTerm?, ignoreSectionFilter?) => {
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
@@ -58,8 +59,9 @@ export const selectFilteredConversations = createSelector(
             conversation,
             searchTerm,
           )) &&
-        filters.searchFilter(conversation) &&
-        filters.sectionFilter(conversation),
+        (filters.searchFilter?.(conversation) ?? true) &&
+        (ignoreSectionFilter ||
+          (filters.sectionFilter?.(conversation) ?? true)),
     );
   },
 );
@@ -106,15 +108,10 @@ export const selectFilteredFolders = createSelector(
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredConversations(state, filters, searchTerm),
+      entities: selectFilteredConversations(state, filters, searchTerm, true),
       searchTerm,
       includeEmptyFolders,
     }),
-);
-
-export const selectSectionFolders = createSelector(
-  [selectFolders, (_state, filters: EntityFilters) => filters],
-  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectLastConversation = createSelector(
@@ -448,8 +445,8 @@ export const selectTemporaryFolders = createSelector(
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
-    return folders.filter((folder) =>
-      PublishedWithMeFilter.sectionFilter(folder),
+    return folders.filter(
+      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? folder,
     );
   },
 );

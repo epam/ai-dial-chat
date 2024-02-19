@@ -152,7 +152,11 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
-      if (payload.id !== payload.conversation.id) {
+      if (
+        payload.id &&
+        payload.conversation.id &&
+        payload.id !== payload.conversation.id
+      ) {
         state.selectedConversationsIds = state.selectedConversationsIds.map(
           (cid) => (cid === payload.id ? payload.conversation.id! : cid),
         );
@@ -651,8 +655,6 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: (string | undefined)[];
-        // Needed for open shared with me folder and keep shared with me flag
-        inheritedMetadata?: unknown;
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;
