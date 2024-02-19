@@ -33,6 +33,7 @@ interface FolderContextMenuProps {
   folder: FolderInterface;
   featureType: FeatureType;
   isOpen?: boolean;
+  isEmpty?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
@@ -59,6 +60,7 @@ export const FolderContextMenu = ({
   onPublishUpdate,
   onUpload,
   isOpen,
+  isEmpty,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -88,7 +90,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Share'),
-        display: isSharingEnabled && !!onShare && !isExternal,
+        display: !isEmpty && isSharingEnabled && !!onShare && !isExternal,
         dataQa: 'share',
         Icon: IconUserShare,
         onClick: onShare,
@@ -105,6 +107,7 @@ export const FolderContextMenu = ({
         name: t('Publish'),
         dataQa: 'publish',
         display:
+          !isEmpty &&
           isPublishingEnabled &&
           !folder.isPublished &&
           !!onPublish &&
@@ -116,14 +119,21 @@ export const FolderContextMenu = ({
         name: t('Update'),
         dataQa: 'update-publishing',
         display:
-          isPublishingEnabled && !!folder.isPublished && !!onPublishUpdate,
+          !isEmpty &&
+          isPublishingEnabled &&
+          !!folder.isPublished &&
+          !!onPublishUpdate,
         Icon: IconClockShare,
         onClick: onPublishUpdate,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishingEnabled && !!folder.isPublished && !!onUnpublish,
+        display:
+          !isEmpty &&
+          isPublishingEnabled &&
+          !!folder.isPublished &&
+          !!onUnpublish,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
       },
@@ -158,6 +168,7 @@ export const FolderContextMenu = ({
       onUpload,
       isExternal,
       onRename,
+      isEmpty,
       isSharingEnabled,
       onShare,
       onUnshare,

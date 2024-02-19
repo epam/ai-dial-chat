@@ -233,6 +233,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
 
+  const hasChildItemOnAnyLevel = useMemo(() => {
+    const prefix = `${currentFolder.id}/`;
+    return allItemsWithoutFilters.some(
+      (entity) =>
+        entity.folderId === currentFolder.id ||
+        entity.folderId.startsWith(prefix),
+    );
+  }, [allItemsWithoutFilters, currentFolder.id]);
+
   const { refs, context } = useFloating({
     open: isContextMenu,
     onOpenChange: setIsContextMenu,
@@ -736,6 +745,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
+                    isEmpty={!hasChildItemOnAnyLevel}
                   />
                 </div>
               )}
