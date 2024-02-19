@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  getAvailableNameOnSameFolderLevel,
+  getNextDefaultName,
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
@@ -213,11 +213,7 @@ export const filesSlice = createSlice({
         relativePath?: string;
       }>,
     ) => {
-      const folderName = getAvailableNameOnSameFolderLevel(
-        state.folders,
-        DEFAULT_FOLDER_NAME,
-        payload.relativePath,
-      );
+      const folderName = getNextDefaultName(DEFAULT_FOLDER_NAME, state.folders);
 
       const newAddedFolderId = constructPath(
         getRootId(),
