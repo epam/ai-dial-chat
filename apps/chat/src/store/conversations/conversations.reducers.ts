@@ -338,14 +338,19 @@ export const conversationsSlice = createSlice({
         payload.conversations[payload.conversations.length - 1].id,
       ];
     },
+    // TODO: refactor this method - use only for direct write without any combination
     setConversations: (
       state,
-      { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        conversations: ConversationInfo[];
+        ignoreCombining?: boolean;
+      }>,
     ) => {
-      state.conversations = combineEntities(
-        state.conversations,
-        payload.conversations,
-      );
+      state.conversations = payload.ignoreCombining
+        ? payload.conversations
+        : combineEntities(state.conversations, payload.conversations);
       state.conversationsLoaded = true;
     },
     addConversations: (
