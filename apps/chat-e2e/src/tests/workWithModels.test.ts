@@ -91,8 +91,10 @@ dialTest(
     tooltip,
     localStorageManager,
     page,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
+    setIssueIds('790');
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
       await localStorageManager.setSettings(theme);

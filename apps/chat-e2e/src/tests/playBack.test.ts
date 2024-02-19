@@ -725,6 +725,7 @@ dialTest(
     conversations,
     chat,
     chatMessages,
+    sendMessage,
     playbackControl,
     setTestIds,
   }) => {
@@ -781,6 +782,9 @@ dialTest(
         expect
           .soft(isResponseLoading, ExpectedMessages.responseIsLoading)
           .toBeTruthy();
+
+        await sendMessage.waitForMessageInputLoaded();
+        await chatMessages.waitForResponseReceived();
 
         const playedBackResponse = await chatMessages.getChatMessage(
           conversation.messages[1].content,
