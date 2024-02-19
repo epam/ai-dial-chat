@@ -24,4 +24,5 @@ export interface ConversationsState {
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
   compareLoading?: boolean;
+  isActiveNewConversationRequest: boolean;
 }

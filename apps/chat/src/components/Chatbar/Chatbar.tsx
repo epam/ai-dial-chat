@@ -21,6 +21,8 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
 
+import { Spinner } from '@/src/components/Common/Spinner';
+
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
@@ -32,6 +34,9 @@ const ChatActionsBlock = () => {
   const dispatch = useAppDispatch();
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const isActiveNewConversationRequest = useAppSelector(
+    ConversationsSelectors.selectIsActiveNewConversationRequest,
   );
 
   return (
@@ -46,10 +51,14 @@ const ChatActionsBlock = () => {
           );
           dispatch(ConversationsActions.resetSearch());
         }}
-        disabled={!!messageIsStreaming}
+        disabled={messageIsStreaming || isActiveNewConversationRequest}
         data-qa="new-entity"
       >
-        <PlusIcon className="text-secondary" width={18} height={18} />
+        {isActiveNewConversationRequest ? (
+          <Spinner size={18} className="text-secondary" />
+        ) : (
+          <PlusIcon className="text-secondary" width={18} height={18} />
+        )}
         {t('New conversation')}
       </button>
     </div>
