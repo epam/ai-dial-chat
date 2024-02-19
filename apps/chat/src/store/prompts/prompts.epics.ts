@@ -89,10 +89,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
       });
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap(() =>
-          concat(
-            of(PromptsActions.createNewPromptSuccess({ newPrompt })),
-            of(PromptsActions.setIsActiveNewPromptRequest(false)),
-          ),
+          of(PromptsActions.createNewPromptSuccess({ newPrompt })),
         ),
         catchError((err) => {
           console.error("New prompt wasn't created:", err);

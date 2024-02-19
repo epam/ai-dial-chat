@@ -96,13 +96,16 @@ export const promptsSlice = createSlice({
     ) => {
       state.isPromptsBackedUp = payload.isPromptsBackedUp;
     },
-    createNewPrompt: (state) => state,
+    createNewPrompt: (state) => {
+      state.isActiveNewPromptRequest = true;
+    },
     createNewPromptSuccess: (
       state,
       { payload }: PayloadAction<{ newPrompt: Prompt }>,
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
+      state.isActiveNewPromptRequest = false;
     },
     setIsActiveNewPromptRequest: (
       state,
@@ -238,9 +241,13 @@ export const promptsSlice = createSlice({
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setPrompts: (
       state,
-      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
+      {
+        payload,
+      }: PayloadAction<{ prompts: PromptInfo[]; ignoreCombining?: boolean }>,
     ) => {
-      state.prompts = combineEntities(state.prompts, payload.prompts);
+      state.prompts = payload.ignoreCombining
+        ? payload.prompts
+        : combineEntities(state.prompts, payload.prompts);
       state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {

@@ -194,7 +194,9 @@ export const conversationsSlice = createSlice({
         names: string[];
         shouldUploadConversationsForCompare?: boolean;
       }>,
-    ) => state,
+    ) => {
+      state.isActiveNewConversationRequest = true;
+    },
     publishConversation: (
       state,
       { payload }: PayloadAction<PublishRequest>,
@@ -347,12 +349,16 @@ export const conversationsSlice = createSlice({
     },
     setConversations: (
       state,
-      { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        conversations: ConversationInfo[];
+        ignoreCombining?: boolean;
+      }>,
     ) => {
-      state.conversations = combineEntities(
-        state.conversations,
-        payload.conversations,
-      );
+      state.conversations = payload.ignoreCombining
+        ? payload.conversations
+        : combineEntities(state.conversations, payload.conversations);
       state.conversationsLoaded = true;
     },
     addConversations: (

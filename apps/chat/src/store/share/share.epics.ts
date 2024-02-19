@@ -677,6 +677,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         return of(
           PromptsActions.setPrompts({
             prompts: prompts.filter((item) => item.id !== payload.resourceId),
+            ignoreCombining: true,
           }),
         );
       }

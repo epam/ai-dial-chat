@@ -57,7 +57,6 @@ export const ChatbarSettings = () => {
   );
 
   const handleToggleCompare = useCallback(() => {
-    dispatch(ConversationsActions.setIsActiveConversationRequest(true));
     dispatch(
       ConversationsActions.createNewConversations({
         names: [DEFAULT_CONVERSATION_NAME, DEFAULT_CONVERSATION_NAME],

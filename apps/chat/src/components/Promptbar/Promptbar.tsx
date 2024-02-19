@@ -40,7 +40,6 @@ const PromptActionsBlock = () => {
       <button
         className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
         onClick={() => {
-          dispatch(PromptsActions.setIsActiveNewPromptRequest(true));
           dispatch(PromptsActions.createNewPrompt());
           dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));

@@ -36,7 +36,6 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
         className="flex h-full items-center justify-center border-r border-tertiary px-3 md:hidden"
         onClick={() => {
           if (!isConversationsLoaded || isActiveNewConversationRequest) return;
-          dispatch(ConversationsActions.setIsActiveConversationRequest(true));
           dispatch(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
