@@ -546,7 +546,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
     filter(ShareActions.revokeAccessSuccess.match),
     switchMap(({ payload }) => {
       if (
-        payload.nodeType === 'ITEM' &&
+        payload.nodeType === BackendDataNodeType.ITEM &&
         payload.resourceType === BackendResourceType.CONVERSATION
       ) {
         return of(
@@ -559,7 +559,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
         );
       }
       if (
-        payload.nodeType === 'FOLDER' &&
+        payload.nodeType === BackendDataNodeType.FOLDER &&
         payload.resourceType === BackendResourceType.CONVERSATION
       ) {
         return of(
@@ -572,7 +572,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
         );
       }
       if (
-        payload.nodeType === 'ITEM' &&
+        payload.nodeType === BackendDataNodeType.ITEM &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
         return of(
@@ -585,7 +585,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
         );
       }
       if (
-        payload.nodeType === 'FOLDER' &&
+        payload.nodeType === BackendDataNodeType.FOLDER &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
         return of(
