@@ -4,6 +4,7 @@ import {
   KeyboardEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
 } from 'react';
 
@@ -24,11 +25,14 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { PromptDialog } from './ChatInput/PromptDialog';
 import { PromptList } from './ChatInput/PromptList';
 
+import debounce from 'lodash-es/debounce';
+
 interface Props {
   maxLength: number;
   prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
+  debounceChanges?: boolean;
 }
 
 const MAX_HEIGHT = 300;
@@ -38,6 +42,7 @@ export const SystemPrompt: FC<Props> = ({
   maxLength,
   prompt,
   onChangePrompt,
+  debounceChanges = false,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -61,7 +66,17 @@ export const SystemPrompt: FC<Props> = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
-  } = usePromptSelection(maxLength);
+  } = usePromptSelection(maxLength, prompt ?? DEFAULT_SYSTEM_PROMPT);
+
+  const debounceOnChange = useMemo(
+    () =>
+      debounceChanges
+        ? debounce(onChangePrompt, 500, {
+            maxWait: 5000,
+          })
+        : onChangePrompt,
+    [debounceChanges, onChangePrompt],
+  );
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -75,12 +90,12 @@ export const SystemPrompt: FC<Props> = ({
       setContent(value);
       updatePromptListVisibility(value);
 
-      onChangePrompt(value);
+      debounceOnChange(value);
     },
     [
       content.length,
+      debounceOnChange,
       maxLength,
-      onChangePrompt,
       setContent,
       setIsPromptLimitModalOpen,
       updatePromptListVisibility,
@@ -119,14 +134,6 @@ export const SystemPrompt: FC<Props> = ({
       textareaRef.current.style.height = `${textareaRef.current?.scrollHeight}px`;
     }
   }, [content]);
-
-  useEffect(() => {
-    if (prompt) {
-      setContent(prompt);
-    } else {
-      setContent(DEFAULT_SYSTEM_PROMPT);
-    }
-  }, [prompt, setContent]);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {

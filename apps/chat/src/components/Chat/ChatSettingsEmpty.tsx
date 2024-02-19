@@ -75,6 +75,7 @@ export const ChatSettingsEmpty = ({
                 onSelectModel={onSelectModel}
                 onChangeAddon={onChangeAddon}
                 onApplyAddons={handleOnApplyAddons}
+                debounceSystemPromptChanges
               />
             </>
           )}
