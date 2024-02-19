@@ -236,8 +236,11 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
-    setPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
-      state.prompts = payload.prompts;
+    setPrompts: (
+      state,
+      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
+    ) => {
+      state.prompts = combineEntities(state.prompts, payload.prompts);
       state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
@@ -480,13 +483,6 @@ export const promptsSlice = createSlice({
         })),
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
-    },
-    setPrompts: (
-      state,
-      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
-    ) => {
-      state.prompts = combineEntities(state.prompts, payload.prompts);
-      state.promptsLoaded = true;
     },
   },
 });
