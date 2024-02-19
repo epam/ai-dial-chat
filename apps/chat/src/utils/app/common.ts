@@ -1,12 +1,8 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds } from '@/src/utils/app/folders';
 
-import { Conversation } from '@/src/types/chat';
-import { ConversationInfo } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
+import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
-import { PromptInfo } from '@/src/types/prompt';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-settings';
 
@@ -28,12 +24,10 @@ export const combineEntities = <T extends Entity>(
     );
 };
 
-export const isEntityNameOnSameLevelUnique = <
-  T extends Conversation | Prompt | FolderInterface,
->(
+export const isEntityNameOnSameLevelUnique = (
   nameToBeUnique: string,
-  entity: T,
-  entities: T[],
+  entity: Entity,
+  entities: Entity[],
 ): boolean => {
   const sameLevelEntities = entities.filter(
     (e) => entity.id !== e.id && e.folderId === entity.folderId,
@@ -45,14 +39,12 @@ export const isEntityNameOnSameLevelUnique = <
 export const isNameAlreadyTaken = (entities: Entity[], entity: Entity) =>
   entities.some((e) => e.name === entity.name);
 
-export const filterOnlyMyEntities = <
-  T extends Conversation | Prompt | FolderInterface,
->(
+export const filterOnlyMyEntities = <T extends ShareEntity>(
   entities: T[],
 ): T[] =>
   entities.filter((entity) => !entity.sharedWithMe && !entity.publishedWithMe);
 
-export const filterMigratedEntities = <T extends Conversation | Prompt>(
+export const filterMigratedEntities = <T extends Entity>(
   entities: T[],
   migratedEntityIds: string[],
   notMigrated = false,
@@ -64,7 +56,7 @@ export const filterMigratedEntities = <T extends Conversation | Prompt>(
   );
 
 export const updateEntitiesFoldersAndIds = (
-  entities: PromptInfo[] | ConversationInfo[],
+  entities: Entity[],
   folders: FolderInterface[],
   updateFolderId: (folderId: string) => string,
   openedFoldersIds: string[],
