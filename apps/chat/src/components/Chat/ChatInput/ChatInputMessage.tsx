@@ -38,8 +38,6 @@ import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
 import { SendMessageButton } from './SendMessageButton';
 
-import { Feature } from '@epam/ai-dial-shared';
-
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
@@ -72,19 +70,12 @@ export const ChatInputMessage = ({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
+  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttach);
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
   );
 
-  const maximumAttachmentsAmount = useAppSelector(
-    ConversationsSelectors.selectMaximumAttachmentsAmount,
-  );
-  const displayAttachFunctionality =
-    enabledFeatures.has(Feature.InputFiles) && maximumAttachmentsAmount > 0;
   const attachedFilesIds = useAppSelector(
     FilesSelectors.selectSelectedFilesIds,
   );
@@ -320,7 +311,7 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
-  const paddingLeftClass = displayAttachFunctionality
+  const paddingLeftClass = canAttach
     ? isOverlay
       ? 'pl-11'
       : 'pl-12'
@@ -371,25 +362,21 @@ export const ChatInputMessage = ({
           isLoading={isLoading}
         />
 
-        {displayAttachFunctionality && (
-          <>
-            <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
-              <AttachButton
-                selectedFilesIds={attachedFilesIds}
-                onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                onUploadFromDevice={handleUploadFromDevice}
-              />
-            </div>
-            {selectedFiles.length > 0 && (
-              <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
-                <ChatInputAttachments
-                  files={selectedFiles}
-                  onUnselectFile={handleUnselectFile}
-                  onRetryFile={handleRetry}
-                />
-              </div>
-            )}
-          </>
+        <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
+          <AttachButton
+            selectedFilesIds={attachedFilesIds}
+            onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+            onUploadFromDevice={handleUploadFromDevice}
+          />
+        </div>
+        {selectedFiles.length > 0 && (
+          <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
+            <ChatInputAttachments
+              files={selectedFiles}
+              onUnselectFile={handleUnselectFile}
+              onRetryFile={handleRetry}
+            />
+          </div>
         )}
 
         {showScrollDownButton && (

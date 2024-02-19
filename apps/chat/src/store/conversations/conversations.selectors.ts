@@ -33,7 +33,10 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
@@ -375,9 +378,27 @@ export const selectMaximumAttachmentsAmount = createSelector(
     }
 
     return Math.min(
-      ...models.map((model) =>
-        model?.inputAttachmentTypes ? Number.MAX_SAFE_INTEGER : 0,
+      ...models.map(
+        (model) => model?.maxInputAttachments ?? Number.MAX_SAFE_INTEGER,
       ),
+    );
+  },
+);
+
+export const selectCanAttach = createSelector(
+  [
+    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
+    selectSelectedConversationsModels,
+  ],
+  (displayAttachFunctionality, models) => {
+    if (!displayAttachFunctionality || models.length === 0) {
+      return false;
+    }
+
+    return (
+      Math.min(
+        ...models.map((model) => model?.inputAttachmentTypes?.length ?? 0),
+      ) > 0
     );
   },
 );
