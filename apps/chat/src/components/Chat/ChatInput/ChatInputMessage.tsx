@@ -132,7 +132,7 @@ export const ChatInputMessage = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
-  } = usePromptSelection(maxLength);
+  } = usePromptSelection(maxLength, '');
 
   const isInputEmpty = useMemo(() => {
     return content.trim().length === 0 && selectedFiles.length === 0;
