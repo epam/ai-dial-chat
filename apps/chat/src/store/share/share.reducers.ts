@@ -102,6 +102,42 @@ export const shareSlice = createSlice({
       state.invitationId = undefined;
       state.shareModalState = ModalState.CLOSED;
     },
+
+    revokeAccess: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+        resourceType: BackendResourceType;
+        nodeType: BackendDataNodeType;
+      }>,
+    ) => state,
+    revokeAccessSuccess: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+        resourceType: BackendResourceType;
+        nodeType: BackendDataNodeType;
+      }>,
+    ) => state,
+    revokeAccessFail: (state) => state,
+
+    discardSharedWithMe: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+        resourceType: BackendResourceType;
+        nodeType: BackendDataNodeType;
+      }>,
+    ) => state,
+    discardSharedWithMeSuccess: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+        resourceType: BackendResourceType;
+        nodeType: BackendDataNodeType;
+      }>,
+    ) => state,
+    discardSharedWithMeFail: (state) => state,
     setModalState: (
       state,
       {

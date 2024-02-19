@@ -14,6 +14,7 @@ import classNames from 'classnames';
 import { hasDragEventEntityData } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -35,6 +36,7 @@ interface Props<T> {
   isOpen: boolean;
   side: 'left' | 'right';
   filteredItems: T[];
+  filteredFolders: FolderInterface[];
   itemComponent: ReactNode;
   folderComponent: ReactNode;
   actionButtons: ReactNode;
@@ -54,6 +56,7 @@ const Sidebar = <T,>({
   actionButtons,
   side,
   filteredItems,
+  filteredFolders,
   itemComponent,
   folderComponent,
   footerComponent,
@@ -224,7 +227,7 @@ const Sidebar = <T,>({
             <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
               {folderComponent}
 
-              {filteredItems?.length > 0 ? (
+              {filteredItems.length > 0 || filteredFolders.length > 0 ? (
                 <div
                   ref={dragDropElement}
                   className={classNames(
