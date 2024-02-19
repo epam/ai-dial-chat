@@ -6,13 +6,16 @@ import {
   IconTrashX,
   IconUpload,
   IconUserShare,
+  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getRootId } from '@/src/utils/app/id';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getApiKeyByFeatureType } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -36,6 +39,7 @@ interface FolderContextMenuProps {
   onAddFolder?: MouseEventHandler;
   onOpenChange?: (isOpen: boolean) => void;
   onShare?: MouseEventHandler<unknown>;
+  onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
@@ -50,6 +54,7 @@ export const FolderContextMenu = ({
   onAddFolder,
   onOpenChange,
   onShare,
+  onUnshare,
   onPublish,
   onUnpublish,
   onPublishUpdate,
@@ -91,6 +96,14 @@ export const FolderContextMenu = ({
         onClick: onShare,
       },
       {
+        name: t('Unshare'),
+        display:
+          isSharingEnabled && !!onUnshare && !isExternal && folder.isShared,
+        dataQa: 'unshare',
+        Icon: IconUserX,
+        onClick: onUnshare,
+      },
+      {
         name: t('Publish'),
         dataQa: 'publish',
         display:
@@ -126,7 +139,18 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Delete'),
-        display: !!onDelete,
+        display:
+          !!onDelete &&
+          folder.id.startsWith(
+            getRootId({ apiKey: getApiKeyByFeatureType(featureType) }),
+          ),
+        dataQa: 'delete',
+        Icon: IconTrashX,
+        onClick: onDelete,
+      },
+      {
+        name: t('Delete'),
+        display: !!onDelete && folder.sharedWithMe,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -147,12 +171,17 @@ export const FolderContextMenu = ({
       isEmpty,
       isSharingEnabled,
       onShare,
-      isPublishingEnabled,
+      onUnshare,
+      folder.isShared,
       folder.isPublished,
+      folder.id,
+      folder.sharedWithMe,
+      isPublishingEnabled,
       onPublish,
       onPublishUpdate,
       onUnpublish,
       onDelete,
+      featureType,
       onAddFolder,
     ],
   );

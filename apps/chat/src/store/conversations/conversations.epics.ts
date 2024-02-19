@@ -76,7 +76,6 @@ import { ApiKeys } from '@/src/utils/server/api';
 import {
   ChatBody,
   Conversation,
-  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -84,7 +83,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
@@ -2252,18 +2251,8 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const folders = foldersAndEntities
-            .flatMap((f) => f.folders)
-            .map((item) => ({
-              ...item,
-              ...(payload.inheritedMetadata as Partial<FolderInterface>),
-            }));
-          const conversations = foldersAndEntities
-            .flatMap((f) => f.entities)
-            .map((item) => ({
-              ...item,
-              ...(payload.inheritedMetadata as Partial<ConversationInfo>),
-            }));
+          const folders = foldersAndEntities.flatMap((f) => f.folders);
+          const conversations = foldersAndEntities.flatMap((f) => f.entities);
           return concat(
             of(
               ConversationsActions.uploadFoldersSuccess({
@@ -2386,10 +2375,6 @@ const openFolderEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.uploadConversationsWithFolders({
             paths: [payload.id],
-            inheritedMetadata: {
-              sharedWithMe: folder?.sharedWithMe,
-              sharedWithMeChild: true,
-            },
           }),
         ),
       );
