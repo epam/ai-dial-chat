@@ -55,6 +55,10 @@ export class SideBar extends BaseElement {
     SideBarSelectors.bottomPanel,
   );
 
+  public foldersSeparator = this.getChildElementBySelector(
+    SideBarSelectors.folderSeparator,
+  );
+
   public async hoverOverNewEntity() {
     await this.newEntityButton.waitForState();
     await this.newEntityButton.hoverOver();
@@ -113,6 +117,19 @@ export class SideBar extends BaseElement {
       draggableBounding!.x + draggableBounding!.width / 2,
       draggableBounding!.y + draggableBounding!.height / 2,
     );
+  }
+
+  public async dragFolderToRoot(folderLocator: Locator) {
+    await folderLocator.hover();
+    await this.page.mouse.down();
+    const draggableBounding = await this.foldersSeparator
+      .getNthElement(1)
+      .boundingBox();
+    await this.page.mouse.move(
+      draggableBounding!.x + draggableBounding!.width / 2,
+      draggableBounding!.y + draggableBounding!.height / 2,
+    );
+    await this.page.mouse.up();
   }
 
   public async dragEntityToFolder(

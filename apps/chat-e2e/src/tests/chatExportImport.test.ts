@@ -1,5 +1,6 @@
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import dialTest from '@/src/core/dialFixtures';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   ExpectedConstants,
   ExpectedMessages,
@@ -33,7 +34,7 @@ dialTest.beforeAll(async () => {
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
 });
 
-dialTest.skip(
+dialTest(
   'Export and import one chat in a folder.\n' +
     `Export and import one chat in a folder when folder doesn't exist`,
   async ({
@@ -77,16 +78,9 @@ dialTest.skip(
           iconsToBeLoaded: [gpt35Model!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-
-        const isFolderExpanded =
-          await folderConversations.isFolderCaretExpanded(
-            conversationInFolder.folders.name,
-          );
-        if (!isFolderExpanded) {
-          await folderConversations.expandCollapseFolder(
-            conversationInFolder.folders.name,
-          );
-        }
+        await folderConversations.expandFolder(
+          conversationInFolder.folders.name,
+        );
 
         await folderConversations.openFolderEntityDropdownMenu(
           conversationInFolder.folders.name,
@@ -113,7 +107,7 @@ dialTest.skip(
           conversationInFolder.conversations[0].name,
         );
 
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
 
@@ -135,7 +129,7 @@ dialTest.skip(
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
 
@@ -150,7 +144,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Export and import chat structure with all conversations',
   async ({
     dialHomePage,
@@ -161,8 +155,10 @@ dialTest.skip(
     conversations,
     chatBar,
     confirmationDialog,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-907');
+    setIssueIds('767', '768');
     let nestedFolders: TestFolder[];
     let conversationOutsideFolder: TestConversation;
     let nestedConversations: TestConversation[] = [];
@@ -194,7 +190,7 @@ dialTest.skip(
         await chatBar.createNewFolder();
         await chatBar.createNewConversation();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
+          await folderConversations.expandFolder(nestedFolder.name);
         }
         exportedData = await dialHomePage.downloadData(() =>
           chatBar.exportButton.click(),
@@ -207,7 +203,7 @@ dialTest.skip(
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
 
@@ -228,7 +224,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Existed chats stay after import',
   async ({
     dialHomePage,
@@ -299,19 +295,17 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await dialHomePage.uploadData(folderConversationData, () =>
+        await dialHomePage.importFile(folderConversationData, () =>
           chatBar.importButton.click(),
         );
 
-        const isFolderExpanded =
-          await folderConversations.isFolderCaretExpanded(
-            conversationsInFolder.folders.name,
-          );
-        if (!isFolderExpanded) {
-          await folderConversations.expandCollapseFolder(
-            conversationsInFolder.folders.name,
-          );
-        }
+        await folderConversations.expandFolder(
+          conversationsInFolder.folders.name,
+        );
+        await folderConversations.selectFolderEntity(
+          conversationsInFolder.folders.name,
+          importedFolderConversation.name,
+        );
         expect
           .soft(
             await chatHeader.chatTitle.getElementInnerContent(),
@@ -342,7 +336,7 @@ dialTest.skip(
     await dialTest.step(
       'Import root conversation and verify it is imported and existing root conversations remain',
       async () => {
-        await dialHomePage.uploadData(rootConversationData, () =>
+        await dialHomePage.importFile(rootConversationData, () =>
           chatBar.importButton.click(),
         );
         await conversations
@@ -362,12 +356,17 @@ dialTest.skip(
     await dialTest.step(
       'Import conversation inside new folder and verify it is imported',
       async () => {
-        await dialHomePage.uploadData(newFolderConversationData, () =>
+        await dialHomePage.importFile(newFolderConversationData, () =>
           chatBar.importButton.click(),
         );
-        await folderConversations
-          .getFolderByName(importedNewFolderConversation.folders.name)
-          .waitFor();
+
+        await folderConversations.expandFolder(
+          importedNewFolderConversation.folders.name,
+        );
+        await folderConversations.selectFolderEntity(
+          importedNewFolderConversation.folders.name,
+          importedNewFolderConversation.conversations[0].name,
+        );
         expect
           .soft(
             await chatHeader.chatTitle.getElementInnerContent(),
@@ -379,7 +378,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Continue working with imported file. Regenerate response.\n' +
     'Continue working with imported file. Send a message.\n' +
     'Continue working with imported file. Edit a message',
@@ -389,6 +388,7 @@ dialTest.skip(
     conversationData,
     chatMessages,
     chat,
+    conversations,
     chatBar,
   }) => {
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925');
@@ -416,9 +416,10 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await dialHomePage.uploadData(threeConversationsData, () =>
+        await dialHomePage.importFile(threeConversationsData, () =>
           chatBar.importButton.click(),
         );
+        await conversations.selectConversation(importedRootConversation.name);
         await chat.regenerateResponse();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -457,7 +458,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Import file from 1.4 DIAL milestone to conversations and continue working with it.\n' +
     'Chat sorting. Other chat is moved to Today section after sending a message',
   async ({
@@ -471,6 +472,7 @@ dialTest.skip(
     chat,
     iconApiHelper,
     conversationSettings,
+    chatLoader,
   }) => {
     setTestIds('EPMRTC-906', 'EPMRTC-779');
     await dialTest.step(
@@ -480,14 +482,14 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await dialHomePage.uploadData(
+        await dialHomePage.importFile(
           { path: Import.v14AppImportedFilename },
           () => chatBar.importButton.click(),
         );
 
-        await folderConversations.expandCollapseFolder(
-          Import.oldVersionAppFolderName,
-        );
+        await folderConversations.expandFolder(Import.oldVersionAppFolderName, {
+          isHttpMethodTriggered: true,
+        });
         expect
           .soft(
             await folderConversations.isFolderEntityVisible(
@@ -498,10 +500,17 @@ dialTest.skip(
           )
           .toBeTruthy();
 
+        await conversations
+          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+          .waitFor();
+
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,
+          { isHttpMethodTriggered: true },
         );
+        await chatLoader.waitForState({ state: 'hidden' });
+        await chatMessages.getChatMessage(1).waitFor();
         const folderChatMessagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
@@ -519,7 +528,7 @@ dialTest.skip(
         const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
         const newGpt4ConversationIcon = await conversations.getConversationIcon(
           ExpectedConstants.newConversationTitle,
-          2,
+          isApiStorageType ? 1 : 2,
         );
         expect
           .soft(newGpt4ConversationIcon, ExpectedMessages.entityIconIsValid)
@@ -572,20 +581,20 @@ dialTest.skip(
       async () => {
         await conversations.selectConversation(
           ExpectedConstants.newConversationTitle,
-          2,
+          isApiStorageType ? 1 : 2,
         );
         await conversationSettings.waitForState();
         await chat.sendRequestWithButton('1+1=', false);
         const todayConversations = await conversations.getTodayConversations();
         expect
           .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-          .toBe(2);
+          .toBe(isApiStorageType ? 3 : 2);
       },
     );
   },
 );
 
-dialTest.skip(
+dialTest(
   `Export and import single chat in nested folders when folders structure doesn't exist.\n` +
     `Export and import single chat in nested folders when it's folder doesn't exist.\n` +
     `Export and import single chat in nested folders when parent folder doesn't exist`,
@@ -628,7 +637,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
+          await folderConversations.expandFolder(nestedFolder.name);
         }
 
         await folderConversations.openFolderEntityDropdownMenu(
@@ -648,8 +657,8 @@ dialTest.skip(
       'Delete all conversations and folders, re-import exported file and verify only last nested conversation with folders structure imported',
       async () => {
         await chatBar.deleteAllEntities();
-        await confirmationDialog.confirm();
-        await dialHomePage.uploadData(exportedData, () =>
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
 
@@ -687,9 +696,9 @@ dialTest.skip(
           nestedFolders[levelsCount].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
 
@@ -711,7 +720,7 @@ dialTest.skip(
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
 
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
 
@@ -730,7 +739,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Import a chat in nested folder',
   async ({
     dialHomePage,
@@ -771,7 +780,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
+          await folderConversations.expandFolder(nestedFolder.name);
         }
 
         for (let i = 0; i <= 2; i = i + 2) {
@@ -805,7 +814,7 @@ dialTest.skip(
             isDownloadedData: false,
           };
           updatedExportedConversations.push(updatedExportedConversation);
-          await dialHomePage.uploadData(updatedExportedConversation, () =>
+          await dialHomePage.importFile(updatedExportedConversation, () =>
             chatBar.importButton.click(),
           );
           updatedConversationNames.push(conversation.name);
@@ -859,7 +868,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Import a chat from nested folder which was moved to another place',
   async ({
     dialHomePage,
@@ -898,7 +907,7 @@ dialTest.skip(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
-        await folderConversations.expandCollapseFolder(nestedFolder.name);
+        await folderConversations.expandFolder(nestedFolder.name);
       }
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
@@ -915,11 +924,10 @@ dialTest.skip(
     await dialTest.step(
       'Move 3rd level folder on the root folder level and import exported conversation',
       async () => {
-        nestedFolders[levelsCount].folderId = undefined;
-        await localStorageManager.setFolders(...nestedFolders);
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await dialHomePage.uploadData(exportedData, () =>
+        await chatBar.dragAndDropFolderToRootLevel(
+          nestedFolders[levelsCount].name,
+        );
+        await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
       },
@@ -928,9 +936,11 @@ dialTest.skip(
     await dialTest.step(
       'Verify imported conversations is in 3rd level folder on the root level',
       async () => {
-        for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
-        }
+        await folderConversations.expandFolder(
+          nestedFolders[levelsCount].name,
+          { isHttpMethodTriggered: false },
+          1,
+        );
         await folderConversations
           .getFolderEntity(
             nestedFolders[levelsCount].name,
@@ -941,15 +951,7 @@ dialTest.skip(
         const foldersCount = await folderConversations.getFoldersCount();
         expect
           .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 1);
-
-        const conversationsCount =
-          await folderConversations.getFolderEntitiesCount(
-            nestedFolders[0].name,
-          );
-        expect
-          .soft(conversationsCount, ExpectedMessages.conversationsCountIsValid)
-          .toBe(0);
+          .toBe(levelsCount + 2);
       },
     );
   },

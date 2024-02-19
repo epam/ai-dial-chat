@@ -194,7 +194,7 @@ dialTest(
           isNewConversationVisible: true,
         });
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
+          await folderConversations.expandFolder(nestedFolder.name);
         }
         for (let i = 0; i < nestedLevels; i = i + 2) {
           await folderConversations.openFolderEntityDropdownMenu(
@@ -409,10 +409,8 @@ dialTest(
     setTestIds,
     chatMessages,
     context,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
-    setIssueIds('758');
     let conversation: TestConversation;
     let replayConversation: TestConversation;
     await dialTest.step('Prepare conversation to replay', async () => {
@@ -659,10 +657,8 @@ dialTest(
     tooltip,
     context,
     chatMessages,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1535');
-    setIssueIds('758');
     const message = GeneratorUtil.randomString(10);
     let replayConversation: TestConversation;
 
@@ -959,7 +955,7 @@ dialTest(
   },
 );
 
-dialTest.skip(
+dialTest(
   `"Replay as is" in chat from 1.4 milestone.\n` +
     `"Replay as is" in chat from 1.9 milestone`,
   async ({
@@ -971,6 +967,7 @@ dialTest.skip(
     chat,
     chatHeader,
     talkToSelector,
+    conversations,
     replayAsIs,
   }) => {
     setTestIds('EPMRTC-1330', 'EPMRTC-1332');
@@ -986,12 +983,13 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await dialHomePage.uploadData({ path: filename }, () =>
+        await dialHomePage.importFile({ path: filename }, () =>
           chatBar.importButton.click(),
         );
-        await folderConversations.expandCollapseFolder(
-          Import.oldVersionAppFolderName,
-        );
+        await folderConversations.expandFolder(Import.oldVersionAppFolderName);
+        await conversations
+          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+          .waitFor();
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,

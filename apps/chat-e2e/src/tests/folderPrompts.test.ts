@@ -48,14 +48,14 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await folderPrompts.expandCollapseFolder(folderName);
+    await folderPrompts.expandFolder(folderName);
     let isPromptVisible = await folderPrompts.isFolderEntityVisible(
       folderName,
       promptInFolder.prompts[0].name,
     );
     expect.soft(isPromptVisible, ExpectedMessages.folderExpanded).toBeTruthy();
 
-    await folderPrompts.expandCollapseFolder(folderName);
+    await folderPrompts.expandFolder(folderName);
     isPromptVisible = await folderPrompts.isFolderEntityVisible(
       folderName,
       promptInFolder.prompts[0].name,
@@ -93,7 +93,7 @@ dialTest(
         ),
       );
     }
-    await folderPrompts.expandCollapseFolder(
+    await folderPrompts.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
     );
 
@@ -217,7 +217,7 @@ dialTest(
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
 
-    await folderPrompts.expandCollapseFolder(ExpectedConstants.newFolderTitle);
+    await folderPrompts.expandFolder(ExpectedConstants.newFolderTitle);
     const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
       ExpectedConstants.newFolderTitle,
       prompt.name,
@@ -247,7 +247,7 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await promptBar.createNewFolder();
-    await folderPrompts.expandCollapseFolder(
+    await folderPrompts.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
 
@@ -332,7 +332,7 @@ dialTest(
         ),
       );
     }
-    await folderPrompts.expandCollapseFolder(
+    await folderPrompts.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
     );
 
@@ -393,7 +393,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    await folderPrompts.expandFolder(promptInFolder.folders.name);
     await folderPrompts.openFolderEntityDropdownMenu(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
@@ -454,7 +454,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await folderPrompts.expandCollapseFolder(nestedFolder.name);
+          await folderPrompts.expandFolder(nestedFolder.name);
         }
         await folderPrompts.openFolderDropdownMenu(
           nestedFolders[levelToDelete].name,
@@ -567,14 +567,7 @@ dialTest(
       'Clear search field and verify all prompts displayed',
       async () => {
         await promptBarSearch.setSearchValue('');
-        const isFolderExpanded = await folderPrompts.isFolderCaretExpanded(
-          secondFolderPrompts.folders.name,
-        );
-        if (!isFolderExpanded) {
-          await folderPrompts.expandCollapseFolder(
-            secondFolderPrompts.folders.name,
-          );
-        }
+        await folderPrompts.expandFolder(secondFolderPrompts.folders.name);
         const firstFolderResultCount =
           await folderPrompts.getFolderEntitiesCount(
             secondFolderPrompts.folders.name,
