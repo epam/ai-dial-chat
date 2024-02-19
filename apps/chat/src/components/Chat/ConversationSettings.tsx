@@ -48,7 +48,7 @@ interface Props {
   onApplyAddons: (addonsIds: string[]) => void;
   onChangeAddon: (addonsId: string) => void;
   onClose?: () => void;
-  debounceSystenPromptChanges?: boolean;
+  debounceSystemPromptChanges?: boolean;
 }
 
 export const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
@@ -81,7 +81,7 @@ export const ConversationSettings = ({
   onChangeTemperature,
   onChangeAddon,
   onApplyAddons,
-  debounceSystenPromptChanges = false,
+  debounceSystemPromptChanges = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -144,7 +144,7 @@ export const ConversationSettings = ({
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}
-                    debounceChanges={debounceSystenPromptChanges}
+                    debounceChanges={debounceSystemPromptChanges}
                   />
                 </SettingContainer>
               )}
