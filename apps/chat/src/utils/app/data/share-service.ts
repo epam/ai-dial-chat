@@ -15,6 +15,7 @@ import {
   ShareByLinkResponseModel,
   ShareListingRequestModel,
   ShareRequestModel,
+  ShareRevokeRequestModel,
 } from '@/src/types/share';
 
 import {
@@ -43,6 +44,22 @@ export class ShareService {
     return ApiUtils.request(`api/share/accept`, {
       method: 'POST',
       body: JSON.stringify(shareAcceptData),
+    });
+  }
+  public static shareRevoke(resourceUrls: string[]): Observable<void> {
+    return ApiUtils.request(`api/share/revoke`, {
+      method: 'POST',
+      body: JSON.stringify({
+        resources: resourceUrls.map((url) => ({ url })),
+      } as ShareRevokeRequestModel),
+    });
+  }
+  public static shareDiscard(resourceUrls: string[]): Observable<void> {
+    return ApiUtils.request(`api/share/discard`, {
+      method: 'POST',
+      body: JSON.stringify({
+        resources: resourceUrls.map((url) => ({ url })),
+      } as ShareRevokeRequestModel),
     });
   }
   public static getSharedListing(
