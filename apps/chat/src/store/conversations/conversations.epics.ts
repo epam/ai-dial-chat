@@ -324,10 +324,12 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             }),
             catchError((err) => {
               console.error("New conversation wasn't created: ", err);
-              return of(
-                UIActions.showErrorToast(
-                  translate(
-                    'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                    ),
                   ),
                 ),
                 of(ConversationsActions.setIsActiveConversationRequest(false)),
