@@ -54,12 +54,14 @@ import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
+import { Conversation } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -88,15 +90,22 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         folderId: getRootId({ apiKey: ApiKeys.Prompts }),
       });
       return PromptService.createPrompt(newPrompt).pipe(
-        switchMap((prompt) => {
-          return iif(
-            () => !!prompt,
-            of(
-              PromptsActions.createNewPromptSuccess({
-                newPrompt: prompt as Prompt,
-              }),
+        switchMap((apiPrompt) => {
+          return concat(
+            iif(
+              () => apiPrompt?.name !== newPrompt.name,
+              of(
+                PromptsActions.uploadChildPromptsWithFolders({
+                  paths: [newPrompt.folderId],
+                }),
+              ),
+              of(
+                PromptsActions.createNewPromptSuccess({
+                  newPrompt,
+                }),
+              ),
             ),
-            EMPTY,
+            of(PromptsActions.setIsActiveNewPromptRequest(false)),
           );
         }),
         catchError((err) => {

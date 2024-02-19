@@ -41,7 +41,7 @@ export class PromptService {
     return DataService.getDataStorage().setPrompts(prompts);
   }
 
-  public static createPrompt(prompt: Prompt): Observable<Prompt | null> {
+  public static createPrompt(prompt: Prompt): Observable<PromptInfo | null> {
     return DataService.getDataStorage().createPrompt(prompt);
   }
 

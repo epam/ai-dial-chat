@@ -313,13 +313,27 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             ),
           ).pipe(
             switchMap((conversations) => {
-              return of(
-                ConversationsActions.addConversations({
-                  conversations: conversations.filter(
-                    Boolean,
-                  ) as Conversation[],
-                  selectAdded: true,
-                }),
+              const newNames = newConversations.map((c) => c.name);
+              const apiNames = conversations
+                .filter(Boolean)
+                .map((c) => (c as Conversation).name);
+
+              return concat(
+                iif(
+                  () => apiNames.some((name) => !newNames.includes(name)),
+                  of(
+                    ConversationsActions.uploadConversationsWithFolders({
+                      paths: newConversations.map((c) => c.folderId),
+                    }),
+                  ),
+                  of(
+                    ConversationsActions.addConversations({
+                      conversations: newConversations,
+                      selectAdded: true,
+                    }),
+                  ),
+                ),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               );
             }),
             catchError((err) => {
@@ -2172,10 +2186,10 @@ const recreateConversationEpic: AppEpic = (action$) =>
     filter(ConversationsActions.recreateConversation.match),
     mergeMap(({ payload }) => {
       return zip(
-        ConversationService.createConversation(payload.new),
         ConversationService.deleteConversation(
           getConversationInfoFromId(payload.old.id),
         ),
+        ConversationService.createConversation(payload.new),
       ).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {

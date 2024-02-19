@@ -8,7 +8,6 @@ import {
   throwError,
 } from 'rxjs';
 
-import { isNameAlreadyTaken } from '@/src/utils/app/common';
 import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
@@ -115,27 +114,27 @@ export class ApiStorage implements DialStorage {
 
   createConversation(
     conversation: Conversation,
-  ): Observable<Conversation | null> {
-    return this.getConversations(conversation.folderId).pipe(
-      switchMap((conversations) => {
-        if (!isNameAlreadyTaken(conversations, conversation)) {
-          return this._conversationApiStorage.createEntity(conversation);
-        }
+  ): Observable<ConversationInfo | null> {
+    return this._conversationApiStorage.createEntity(conversation).pipe(
+      catchError(() => {
+        return this.getConversations(conversation.folderId).pipe(
+          switchMap((conversations) => {
+            const updatedConv = {
+              ...conversation,
+              name: generateNextName(
+                DEFAULT_CONVERSATION_NAME,
+                conversation.name,
+                conversations,
+              ),
+            };
 
-        const updatedConv = {
-          ...conversation,
-          name: generateNextName(
-            DEFAULT_CONVERSATION_NAME,
-            conversation.name,
-            conversations,
-          ),
-        };
-
-        return this._conversationApiStorage.createEntity(
-          regenerateConversationId(updatedConv),
+            return this._conversationApiStorage.createEntity(
+              regenerateConversationId(updatedConv),
+            );
+          }),
+          switchMap((conversation) => this.getConversation(conversation)),
         );
       }),
-      switchMap((conversation) => this.getConversation(conversation)),
     );
   }
 
@@ -180,23 +179,23 @@ export class ApiStorage implements DialStorage {
     return this._promptApiStorage.getEntity(info);
   }
 
-  createPrompt(prompt: Prompt): Observable<Prompt | null> {
-    return this.getPrompts(prompt.folderId).pipe(
-      switchMap((prompts) => {
-        if (!isNameAlreadyTaken(prompts, prompt)) {
-          return this._promptApiStorage.createEntity(prompt);
-        }
+  createPrompt(prompt: Prompt): Observable<PromptInfo | null> {
+    return this._promptApiStorage.createEntity(prompt).pipe(
+      catchError(() => {
+        return this.getPrompts(prompt.folderId).pipe(
+          switchMap((prompts) => {
+            const updatedPrompt = {
+              ...prompt,
+              name: generateNextName(DEFAULT_PROMPT_NAME, prompt.name, prompts),
+            };
 
-        const updatedPrompt = {
-          ...prompt,
-          name: generateNextName(DEFAULT_PROMPT_NAME, prompt.name, prompts),
-        };
-
-        return this._promptApiStorage.createEntity(
-          addGeneratedPromptId(updatedPrompt),
+            return this._promptApiStorage.createEntity(
+              addGeneratedPromptId(updatedPrompt),
+            );
+          }),
+          switchMap((prompt) => this.getPrompt(prompt)),
         );
       }),
-      switchMap((prompt) => this.getPrompt(prompt)),
     );
   }
 
