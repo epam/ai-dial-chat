@@ -4,17 +4,22 @@ import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
-  SharedWithMeFilter,
+  SharedWithMeFilters,
+  SharedWithMeRootFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -25,6 +30,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
@@ -198,9 +204,19 @@ const ChatFolderTemplate = ({
             }),
           );
         }}
-        onDeleteFolder={(folderId: string) =>
-          dispatch(ConversationsActions.deleteFolder({ folderId }))
-        }
+        onDeleteFolder={(folderId: string) => {
+          if (folder.sharedWithMe) {
+            dispatch(
+              ShareActions.discardSharedWithMe({
+                resourceId: folder.id,
+                nodeType: BackendDataNodeType.FOLDER,
+                resourceType: BackendResourceType.CONVERSATION,
+              }),
+            );
+          } else {
+            dispatch(ConversationsActions.deleteFolder({ folderId }));
+          }
+        }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Chat}
         loadingFolderIds={loadingFolderIds}
@@ -222,7 +238,6 @@ export const ChatSection = ({
   filters,
   hideIfEmpty = true,
   displayRootFiles,
-  ignoreRootFilter = false,
   showEmptyFolders = false,
   openByDefault = false,
   dataQa,
@@ -230,7 +245,7 @@ export const ChatSection = ({
   const { t } = useTranslation(Translation.SideBar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
-  const folders = useAppSelector((state) =>
+  const rootFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
       filters,
@@ -238,7 +253,7 @@ export const ChatSection = ({
       showEmptyFolders,
     ),
   );
-  const conversations = useAppSelector((state) =>
+  const rootConversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
       state,
       filters,
@@ -246,21 +261,9 @@ export const ChatSection = ({
     ),
   );
 
-  const rootFolders = useMemo(
-    () =>
-      ignoreRootFilter
-        ? folders
-        : folders.filter(({ folderId }) => isRootId(folderId)),
-    [folders, ignoreRootFilter],
-  );
-
-  const rootConversations = useMemo(
-    () =>
-      (ignoreRootFilter
-        ? conversations
-        : conversations.filter(({ folderId }) => isRootId(folderId))
-      ).sort(compareEntitiesByName),
-    [conversations, ignoreRootFilter],
+  const sortedRootConversations = useMemo(
+    () => rootConversations.sort(compareEntitiesByName),
+    [rootConversations],
   );
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
@@ -274,7 +277,7 @@ export const ChatSection = ({
     const shouldBeHighlighted =
       rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
       (!!displayRootFiles &&
-        rootConversations.some((chat) =>
+        sortedRootConversations.some((chat) =>
           selectedConversationsIds.includes(chat.id),
         ));
     if (isSectionHighlighted !== shouldBeHighlighted) {
@@ -287,6 +290,7 @@ export const ChatSection = ({
     selectedConversationsIds,
     selectedFoldersIds,
     rootConversations,
+    sortedRootConversations,
   ]);
 
   if (
@@ -311,7 +315,7 @@ export const ChatSection = ({
               key={folder.id}
               folder={folder}
               isLast={index === arr.length - 1}
-              filters={filters}
+              filters={{ searchFilter: filters.searchFilter }}
               includeEmpty={showEmptyFolders}
             />
           );
@@ -319,7 +323,7 @@ export const ChatSection = ({
       </div>
       {displayRootFiles && (
         <div className="flex flex-col gap-1">
-          {rootConversations.map((item) => (
+          {sortedRootConversations.map((item) => (
             <ConversationComponent key={item.id} item={item} />
           ))}
         </div>
@@ -359,11 +363,11 @@ export function ChatFolders() {
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
-          filters: SharedWithMeFilter,
+          filters: SharedWithMeFilters,
           displayRootFiles: true,
-          ignoreRootFilter: true,
           dataQa: 'shared-with-me',
           openByDefault: true,
+          rootFilters: SharedWithMeRootFilters,
         },
         {
           name: t('Pinned chats'),

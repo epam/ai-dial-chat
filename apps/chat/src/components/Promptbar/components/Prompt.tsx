@@ -50,6 +50,7 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 
 import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
+import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import { PromptModal } from './PromptModal';
 
@@ -87,6 +88,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -106,6 +108,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         }),
       );
     }, [dispatch, prompt.id]);
+  const handleOpenUnsharing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnshareConfirmOpened(true);
+    }, []);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -149,7 +155,17 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       e.preventDefault();
 
       if (isDeleting) {
-        dispatch(PromptsActions.deletePrompt({ prompt }));
+        if (prompt.sharedWithMe) {
+          dispatch(
+            ShareActions.discardSharedWithMe({
+              resourceId: prompt.id,
+              nodeType: BackendDataNodeType.ITEM,
+              resourceType: BackendResourceType.PROMPT,
+            }),
+          );
+        } else {
+          dispatch(PromptsActions.deletePrompt({ prompt }));
+        }
         dispatch(PromptsActions.resetSearch());
       }
 
@@ -378,6 +394,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 setIsShowMoveToModal(true);
               }}
               onShare={handleOpenSharing}
+              onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
               onPublishUpdate={handleOpenPublishing}
               onUnpublish={handleOpenUnpublishing}
@@ -422,6 +439,32 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           type={SharingType.Prompt}
           isOpen
           onClose={handleCloseUnpublishModal}
+        />
+      )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen={isUnshareConfirmOpened}
+          heading={t('Confirm revoking access to {{promptName}}', {
+            promptName: prompt.name,
+          })}
+          description={
+            t('Are you sure that you want to revoke access to this prompt?') ||
+            ''
+          }
+          confirmLabel={t('Revoke access')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            if (result) {
+              dispatch(
+                ShareActions.revokeAccess({
+                  resourceId: prompt.id,
+                  nodeType: BackendDataNodeType.ITEM,
+                  resourceType: BackendResourceType.PROMPT,
+                }),
+              );
+            }
+          }}
         />
       )}
     </>

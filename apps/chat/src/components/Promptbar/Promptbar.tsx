@@ -63,6 +63,9 @@ const Promptbar = () => {
   const filteredPrompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
   );
+  const filteredFolders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(state, myItemsFilters, searchTerm),
+  );
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
@@ -119,6 +122,7 @@ const Promptbar = () => {
       actionButtons={<PromptActionsBlock />}
       folderComponent={<PromptFolders />}
       filteredItems={filteredPrompts}
+      filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
       handleSearchTerm={(searchTerm: string) =>

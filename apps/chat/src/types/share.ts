@@ -3,7 +3,6 @@ import { BackendResourceType } from './common';
 export interface ShareInterface {
   isShared?: boolean;
   sharedWithMe?: boolean;
-  sharedWithMeChild?: boolean;
 
   isPublished?: boolean;
   publishedWithMe?: boolean;
@@ -78,6 +77,11 @@ export interface ShareByLinkResponseModel {
 
 export interface ShareAcceptRequestModel {
   invitationId: string;
+}
+export interface ShareRevokeRequestModel {
+  resources: {
+    url: string;
+  }[];
 }
 
 export enum ShareRelations {

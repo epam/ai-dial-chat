@@ -72,6 +72,7 @@ export enum MenuOptions {
   withoutAttachments = 'Without attachments',
   moveTo = 'Move to',
   share = 'Share',
+  unshare = 'Unshare',
   publish = 'Publish',
   update = 'Update',
   unpublish = 'Unpublish',
