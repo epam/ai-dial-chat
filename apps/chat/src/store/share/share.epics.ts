@@ -656,9 +656,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         payload.nodeType === BackendDataNodeType.ITEM &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
-        const prompts = ConversationsSelectors.selectConversations(
-          state$.value,
-        );
+        const prompts = PromptsSelectors.selectPrompts(state$.value);
         return of(
           PromptsActions.setPrompts({
             prompts: prompts.filter((item) => item.id !== payload.resourceId),
@@ -669,7 +667,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         payload.nodeType === BackendDataNodeType.FOLDER &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
-        const folders = ConversationsSelectors.selectFolders(state$.value);
+        const folders = PromptsSelectors.selectFolders(state$.value);
         return of(
           PromptsActions.setFolders({
             folders: folders.filter((item) => item.id !== payload.resourceId),
