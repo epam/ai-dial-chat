@@ -337,6 +337,7 @@ dialTest(
     const temp = 0;
     await entitySettings.setSystemPrompt(sysPrompt);
     await temperatureSlider.setTemperature(temp);
+    await new Promise((f) => setTimeout(f, 500));
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
 

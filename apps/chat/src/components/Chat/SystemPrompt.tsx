@@ -32,6 +32,7 @@ interface Props {
   prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
+  debounceChanges?: boolean;
 }
 
 const MAX_HEIGHT = 300;
@@ -41,6 +42,7 @@ export const SystemPrompt: FC<Props> = ({
   maxLength,
   prompt,
   onChangePrompt,
+  debounceChanges = false,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -68,11 +70,12 @@ export const SystemPrompt: FC<Props> = ({
 
   const debounceOnChange = useMemo(
     () =>
-      debounce(onChangePrompt, 1000, {
-        leading: false,
-        maxWait: 5000,
-      }),
-    [onChangePrompt],
+      debounceChanges
+        ? debounce(onChangePrompt, 500, {
+            maxWait: 5000,
+          })
+        : onChangePrompt,
+    [debounceChanges, onChangePrompt],
   );
 
   const handleChange = useCallback(
