@@ -642,7 +642,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.discardSharedWithMeSuccess.match),
     switchMap(({ payload }) => {
       if (
-        payload.nodeType === 'ITEM' &&
+        payload.nodeType === BackendDataNodeType.ITEM &&
         payload.resourceType === BackendResourceType.CONVERSATION
       ) {
         const conversations = ConversationsSelectors.selectConversations(
@@ -657,7 +657,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
       if (
-        payload.nodeType === 'FOLDER' &&
+        payload.nodeType === BackendDataNodeType.FOLDER &&
         payload.resourceType === BackendResourceType.CONVERSATION
       ) {
         const folders = ConversationsSelectors.selectFolders(state$.value);
@@ -668,7 +668,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
       if (
-        payload.nodeType === 'ITEM' &&
+        payload.nodeType === BackendDataNodeType.ITEM &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
         const prompts = ConversationsSelectors.selectConversations(
@@ -681,7 +681,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
       if (
-        payload.nodeType === 'FOLDER' &&
+        payload.nodeType === BackendDataNodeType.FOLDER &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
         const folders = ConversationsSelectors.selectFolders(state$.value);
