@@ -91,30 +91,14 @@ export const getChildAndCurrentFoldersIdsById = (
     (folder) => folder.id,
   );
 
-export const getAvailableNameOnSameFolderLevel = (
-  items: { name: string; folderId?: string }[],
-  itemPrefix: string,
-  parentFolderId?: string,
-) => {
-  const names = items
-    .filter((item) => item.folderId === parentFolderId)
-    .map((item) => item.name);
-  let itemNumber = 0;
-  let itemName;
-  do {
-    itemNumber++;
-    itemName = [itemPrefix, itemNumber].join(' ');
-  } while (names.includes(itemName));
-
-  return itemName;
-};
-
+// TODO: refactor this and use parametrized object as single arg
 export const getNextDefaultName = (
   defaultName: string,
   entities: ShareEntity[],
   index = 0,
   startWithEmptyPostfix = false,
   includingPublishedWithMe = false,
+  parentFolderId?: string,
 ): string => {
   const prefix = `${defaultName} `;
   const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
@@ -130,7 +114,9 @@ export const getNextDefaultName = (
           (entity) =>
             !entity.sharedWithMe &&
             (!entity.publishedWithMe || includingPublishedWithMe) &&
-            (entity.name === defaultName || entity.name.match(regex)),
+            (entity.name === defaultName ||
+              (entity.name.match(regex) &&
+                (parentFolderId ? entity.folderId === parentFolderId : true))),
         )
         .map(
           (entity) =>

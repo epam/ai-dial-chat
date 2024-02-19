@@ -92,7 +92,7 @@ const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFiles.match),
     switchMap(({ payload }) =>
-      FileService.getFiles(payload.path).pipe(
+      FileService.getFiles(payload.id).pipe(
         map((files) =>
           FilesActions.getFilesSuccess({
             files,
@@ -106,8 +106,8 @@ const getFilesEpic: AppEpic = (action$) =>
 const getFileFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFolders.match),
-    switchMap(({ payload }) =>
-      FileService.getFileFolders(payload?.path).pipe(
+    mergeMap(({ payload }) =>
+      FileService.getFileFolders(payload?.id).pipe(
         map((folders) =>
           FilesActions.getFoldersSuccess({
             folders,
@@ -135,7 +135,9 @@ const getFoldersListEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return concat(
         ...(payload.paths
-          ? payload.paths.map((path) => of(FilesActions.getFolders({ path })))
+          ? payload.paths.map((path) =>
+              of(FilesActions.getFolders({ id: path })),
+            )
           : [of(FilesActions.getFolders({}))]),
       );
     }),

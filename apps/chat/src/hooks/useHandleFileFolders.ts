@@ -60,12 +60,12 @@ export const useHandleFileFolders = (
    * @param relativePath - The relative path where the new folder will be added.
    */
   const handleAddFolder = useCallback(
-    (relativePath: string) => {
-      dispatch(FilesActions.addNewFolder({ relativePath }));
+    (parentId: string) => {
+      dispatch(FilesActions.addNewFolder({ parentId }));
 
-      if (!openedFoldersIds.includes(relativePath)) {
-        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
-        dispatch(FilesActions.getFolders({ path: relativePath }));
+      if (!openedFoldersIds.includes(parentId)) {
+        setOpenedFoldersIds(openedFoldersIds.concat(parentId));
+        dispatch(FilesActions.getFolders({ id: parentId }));
       }
     },
     [dispatch, openedFoldersIds, setOpenedFoldersIds],
@@ -94,7 +94,7 @@ export const useHandleFileFolders = (
         );
       } else {
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-        dispatch(FilesActions.getFilesWithFolders({ path: folderId }));
+        dispatch(FilesActions.getFilesWithFolders({ id: folderId }));
       }
     },
     [
