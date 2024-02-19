@@ -44,6 +44,7 @@ const initialState: ConversationsState = {
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
+  isActiveNewConversationRequest: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -193,7 +194,9 @@ export const conversationsSlice = createSlice({
         names: string[];
         shouldUploadConversationsForCompare?: boolean;
       }>,
-    ) => state,
+    ) => {
+      state.isActiveNewConversationRequest = true;
+    },
     publishConversation: (
       state,
       { payload }: PayloadAction<PublishRequest>,
@@ -299,6 +302,12 @@ export const conversationsSlice = createSlice({
         state.areSelectedConversationsLoaded = true;
       }
     },
+    setIsActiveConversationRequest: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isActiveNewConversationRequest = payload;
+    },
     createNewReplayConversation: (
       state,
       _action: PayloadAction<ConversationInfo>,
@@ -340,12 +349,16 @@ export const conversationsSlice = createSlice({
     },
     setConversations: (
       state,
-      { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        conversations: ConversationInfo[];
+        ignoreCombining?: boolean;
+      }>,
     ) => {
-      state.conversations = combineEntities(
-        state.conversations,
-        payload.conversations,
-      );
+      state.conversations = payload.ignoreCombining
+        ? payload.conversations
+        : combineEntities(state.conversations, payload.conversations);
       state.conversationsLoaded = true;
     },
     addConversations: (
@@ -368,7 +381,9 @@ export const conversationsSlice = createSlice({
         state.areSelectedConversationsLoaded = true;
       }
     },
-    clearConversations: (state) => state,
+    clearConversations: (state) => {
+      state.conversationsLoaded = false;
+    },
     clearConversationsSuccess: (state) => {
       state.conversations = state.conversations.filter((conv) =>
         isEntityExternal(conv),

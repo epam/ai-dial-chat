@@ -40,8 +40,8 @@ const initialState: PromptsState = {
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
-
   loadingFolderIds: [],
+  isActiveNewPromptRequest: false,
 };
 
 export const promptsSlice = createSlice({
@@ -96,13 +96,22 @@ export const promptsSlice = createSlice({
     ) => {
       state.isPromptsBackedUp = payload.isPromptsBackedUp;
     },
-    createNewPrompt: (state) => state,
+    createNewPrompt: (state) => {
+      state.isActiveNewPromptRequest = true;
+    },
     createNewPromptSuccess: (
       state,
       { payload }: PayloadAction<{ newPrompt: Prompt }>,
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
+      state.isActiveNewPromptRequest = false;
+    },
+    setIsActiveNewPromptRequest: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isActiveNewPromptRequest = payload;
     },
     saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
       state,
@@ -230,14 +239,23 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
-    setPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
-      state.prompts = payload.prompts;
+    setPrompts: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ prompts: PromptInfo[]; ignoreCombining?: boolean }>,
+    ) => {
+      state.prompts = payload.ignoreCombining
+        ? payload.prompts
+        : combineEntities(state.prompts, payload.prompts);
       state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = state.prompts.concat(payload.prompts);
     },
-    clearPrompts: (state) => state,
+    clearPrompts: (state) => {
+      state.promptsLoaded = false;
+    },
     clearPromptsSuccess: (state) => {
       state.prompts = state.prompts.filter((prompt) =>
         isEntityExternal(prompt),
