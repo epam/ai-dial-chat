@@ -129,7 +129,7 @@ export const FileManagerModal = ({
 
       if (!openedFoldersIds.includes(relativePath)) {
         setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
-        dispatch(FilesActions.getFolders({ path: relativePath }));
+        dispatch(FilesActions.getFolders({ id: relativePath }));
       }
     },
     [dispatch, openedFoldersIds],

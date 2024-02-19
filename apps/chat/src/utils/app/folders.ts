@@ -91,12 +91,14 @@ export const getChildAndCurrentFoldersIdsById = (
     (folder) => folder.id,
   );
 
+// TODO: refactor this and use parametrized object as single arg
 export const getNextDefaultName = (
   defaultName: string,
   entities: ShareEntity[],
   index = 0,
   startWithEmptyPostfix = false,
   includingPublishedWithMe = false,
+  parentFolderId?: string,
 ): string => {
   const prefix = `${defaultName} `;
   const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
@@ -112,7 +114,9 @@ export const getNextDefaultName = (
           (entity) =>
             !entity.sharedWithMe &&
             (!entity.publishedWithMe || includingPublishedWithMe) &&
-            (entity.name === defaultName || entity.name.match(regex)),
+            (entity.name === defaultName ||
+              (entity.name.match(regex) &&
+                (parentFolderId ? entity.folderId === parentFolderId : true))),
         )
         .map(
           (entity) =>
