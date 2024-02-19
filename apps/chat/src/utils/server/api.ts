@@ -41,6 +41,16 @@ export const getApiKeyByResourceType = (entityType: BackendResourceType) => {
       return ApiKeys.Files;
   }
 };
+export const getApiKeyByFeatureType = (featureType: FeatureType) => {
+  switch (featureType) {
+    case FeatureType.Prompt:
+      return ApiKeys.Prompts;
+    case FeatureType.Chat:
+      return ApiKeys.Conversations;
+    default:
+      return ApiKeys.Files;
+  }
+};
 
 export const getBackendResourceTypeByFeatureType = (
   entityType: FeatureType,
