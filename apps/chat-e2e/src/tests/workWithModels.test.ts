@@ -394,7 +394,6 @@ dialTest(
         });
         await talkToSelector.selectModel(gpt4Model.name);
         await entitySettings.setSystemPrompt(sysPrompt);
-        await new Promise((f) => setTimeout(f, 500));
         await chat.sendRequestWithButton(requestTerm);
       },
     );
