@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  getAvailableNameOnSameFolderLevel,
+  getNextDefaultName,
   getParentAndChildFolders,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
@@ -23,7 +23,7 @@ export interface FilesState {
 
   folders: FileFolderInterface[];
   foldersStatus: UploadStatus;
-  loadingFolder?: string;
+  loadingFolderId?: string;
   newAddedFolderId?: string;
 }
 
@@ -135,7 +135,7 @@ export const filesSlice = createSlice({
     getFiles: (
       state,
       _action: PayloadAction<{
-        path?: string;
+        id?: string;
       }>,
     ) => {
       state.filesStatus = UploadStatus.LOADING;
@@ -164,11 +164,11 @@ export const filesSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        path?: string;
+        id?: string;
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;
-      state.loadingFolder = payload.path;
+      state.loadingFolderId = payload.id;
     },
     getFoldersList: (
       state,
@@ -184,7 +184,7 @@ export const filesSlice = createSlice({
         folders: FileFolderInterface[];
       }>,
     ) => {
-      state.loadingFolder = undefined;
+      state.loadingFolderId = undefined;
       state.foldersStatus = UploadStatus.LOADED;
       state.folders = payload.folders.concat(
         state.folders.filter(
@@ -196,13 +196,13 @@ export const filesSlice = createSlice({
       );
     },
     getFoldersFail: (state) => {
-      state.loadingFolder = undefined;
+      state.loadingFolderId = undefined;
       state.foldersStatus = UploadStatus.FAILED;
     },
     getFilesWithFolders: (
       state,
       _action: PayloadAction<{
-        path?: string;
+        id?: string;
       }>,
     ) => state,
     addNewFolder: (
@@ -210,25 +210,24 @@ export const filesSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        relativePath?: string;
+        parentId?: string;
       }>,
     ) => {
-      const folderName = getAvailableNameOnSameFolderLevel(
-        state.folders,
+      const folderName = getNextDefaultName(
         DEFAULT_FOLDER_NAME,
-        payload.relativePath,
+        state.folders,
+        0,
+        false,
+        false,
+        payload.parentId,
       );
 
-      const newAddedFolderId = constructPath(
-        getRootId(),
-        payload.relativePath,
-        folderName,
-      );
+      const newAddedFolderId = constructPath(payload.parentId, folderName);
       state.folders.push(
         addGeneratedFolderId({
           name: folderName,
           type: FolderType.File,
-          folderId: constructPath(getRootId(), payload.relativePath),
+          folderId: payload.parentId || getRootId(),
         }),
       );
       state.newAddedFolderId = newAddedFolderId;
@@ -341,7 +340,7 @@ const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
   return state.foldersStatus === UploadStatus.LOADING;
 });
 const selectLoadingFolderIds = createSelector([rootSelector], (state) => {
-  return state.loadingFolder ? [state.loadingFolder] : [];
+  return state.loadingFolderId ? [state.loadingFolderId] : [];
 });
 const selectNewAddedFolderId = createSelector([rootSelector], (state) => {
   return state.newAddedFolderId;

@@ -527,16 +527,8 @@ const revokeAccessEpic: AppEpic = (action$) =>
           : encodeApiUrl(payload.resourceId);
 
       return ShareService.shareRevoke([resourceUrl]).pipe(
-        switchMap(() => {
-          return of(ShareActions.revokeAccessSuccess(payload));
-        }),
-        catchError(() => {
-          return of(
-            UIActions.showErrorToast(
-              translate(errorsMessages.revokeAccessFailed),
-            ),
-          );
-        }),
+        map(() => ShareActions.revokeAccessSuccess(payload)),
+        catchError(() => of(ShareActions.revokeAccessFail())),
       );
     }),
   );
@@ -623,16 +615,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
           : encodeApiUrl(payload.resourceId);
 
       return ShareService.shareDiscard([resourceUrl]).pipe(
-        switchMap(() => {
-          return of(ShareActions.discardSharedWithMeSuccess(payload));
-        }),
-        catchError(() => {
-          return of(
-            UIActions.showErrorToast(
-              translate(errorsMessages.discardSharedWithMeFailed),
-            ),
-          );
-        }),
+        map(() => ShareActions.discardSharedWithMeSuccess(payload)),
+        catchError(() => of(ShareActions.discardSharedWithMeFail())),
       );
     }),
   );
@@ -653,6 +637,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             conversations: conversations.filter(
               (conv) => conv.id !== payload.resourceId,
             ),
+            ignoreCombining: true,
           }),
         );
       }
@@ -671,9 +656,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         payload.nodeType === BackendDataNodeType.ITEM &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
-        const prompts = ConversationsSelectors.selectConversations(
-          state$.value,
-        );
+        const prompts = PromptsSelectors.selectPrompts(state$.value);
         return of(
           PromptsActions.setPrompts({
             prompts: prompts.filter((item) => item.id !== payload.resourceId),
@@ -685,7 +668,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         payload.nodeType === BackendDataNodeType.FOLDER &&
         payload.resourceType === BackendResourceType.PROMPT
       ) {
-        const folders = ConversationsSelectors.selectFolders(state$.value);
+        const folders = PromptsSelectors.selectFolders(state$.value);
         return of(
           PromptsActions.setFolders({
             folders: folders.filter((item) => item.id !== payload.resourceId),

@@ -80,7 +80,7 @@ export default function ContextMenu({
   onOpenChange,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
-    () => menuItems.filter(({ display = true }) => display),
+    () => menuItems.filter(({ display = true }) => !!display),
     [menuItems],
   );
 
