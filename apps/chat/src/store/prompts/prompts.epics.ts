@@ -101,12 +101,15 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error("New prompt wasn't created:", err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+          return concat(
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+                ),
               ),
             ),
+            of(PromptsActions.setIsActiveNewPromptRequest(false)),
           );
         }),
       );
@@ -360,6 +363,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
                 deletePrompts,
               }),
             ),
+            of(PromptsActions.setPrompts({ prompts: [] })),
           ),
         ),
       ),
@@ -499,6 +503,8 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         );
+      } else {
+        actions.push(of(PromptsActions.setPrompts({ prompts: [] })));
       }
 
       return concat(...actions);

@@ -330,6 +330,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
                   ),
                 ),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               );
             }),
           );
@@ -587,6 +588,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         );
+      } else {
+        actions.push(
+          of(ConversationsActions.setConversations({ conversations: [] })),
+        );
       }
 
       return concat(...actions);
@@ -792,6 +797,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                   deleteIds,
                 }),
               ),
+              of(ConversationsActions.setConversations({ conversations: [] })),
             ),
           ),
         ),
