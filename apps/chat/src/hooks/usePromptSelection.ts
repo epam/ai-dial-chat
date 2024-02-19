@@ -21,7 +21,7 @@ import {
  * @param maxLength The maximum length of the prompt.
  * @returns An object containing control functions and states.
  */
-export const usePromptSelection = (maxLength: number) => {
+export const usePromptSelection = (maxLength: number, prompt: string) => {
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const dispatch = useDispatch();
@@ -30,7 +30,7 @@ export const usePromptSelection = (maxLength: number) => {
 
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [promptInputValue, setPromptInputValue] = useState('');
-  const [content, setContent] = useState<string>('');
+  const [content, setContent] = useState<string>(prompt);
   const [isPromptLimitModalOpen, setIsPromptLimitModalOpen] = useState(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [variables, setVariables] = useState<string[]>([]);
