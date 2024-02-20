@@ -24,6 +24,7 @@ export const SideBarSelectors = {
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   search: '[data-qa="search"]',
   filterMenuTrigger: '[data-qa="menu-trigger"]',
+  folderSeparator: '.h-1',
 };
 
 export const ChatBarSelectors = {

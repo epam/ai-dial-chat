@@ -77,14 +77,12 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
+          await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.expandCollapseFolder(
+        await folderConversations.expandFolder(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
-        await folderConversations.expandCollapseFolder(
-          folderConversation.folders.name,
-        );
+        await folderConversations.expandFolder(folderConversation.folders.name);
         await chatFilter.openFilterDropdownMenu();
         await chatFilterDropdownMenu.selectMenuOption(
           FilterMenuOptions.sharedByMe,
@@ -271,12 +269,12 @@ dialTest.skip(
         });
         await promptBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
-          await folderPrompts.expandCollapseFolder(nestedFolder.name);
+          await folderPrompts.expandFolder(nestedFolder.name);
         }
-        await folderPrompts.expandCollapseFolder(
+        await folderPrompts.expandFolder(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
-        await folderPrompts.expandCollapseFolder(folderPrompt.folders.name);
+        await folderPrompts.expandFolder(folderPrompt.folders.name);
         await promptFilter.openFilterDropdownMenu();
         await promptFilterDropdownMenu.selectMenuOption(
           FilterMenuOptions.sharedByMe,

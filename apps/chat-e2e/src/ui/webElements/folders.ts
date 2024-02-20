@@ -116,11 +116,23 @@ export class Folders extends BaseElement {
     return folderInput;
   }
 
+  public async expandFolder(
+    name: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    index?: number,
+  ) {
+    const isFolderExpanded = await this.isFolderCaretExpanded(name, index);
+    if (!isFolderExpanded) {
+      await this.expandCollapseFolder(name, { isHttpMethodTriggered }, index);
+    }
+  }
+
   public async expandCollapseFolder(
     name: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    index?: number,
   ) {
-    const folder = this.getFolderByName(name);
+    const folder = this.getFolderByName(name, index);
     await folder.waitFor();
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
@@ -145,8 +157,12 @@ export class Folders extends BaseElement {
     );
   }
 
-  public getFolderEntity(folderName: string, entityName: string) {
-    return this.getFolderEntities(folderName).filter({
+  public getFolderEntity(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+  ) {
+    return this.getFolderEntities(folderName, folderIndex).filter({
       hasText: entityName,
     });
   }
@@ -168,8 +184,17 @@ export class Folders extends BaseElement {
   public async selectFolderEntity(
     folderName: string,
     conversationName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    await this.getFolderEntity(folderName, conversationName).click();
+    const folderEntity = this.getFolderEntity(folderName, conversationName);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET',
+      );
+      await folderEntity.click();
+      return respPromise;
+    }
+    await folderEntity.click();
   }
 
   public async openFolderEntityDropdownMenu(
