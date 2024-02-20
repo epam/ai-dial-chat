@@ -510,7 +510,9 @@ dialTest(
     await dialTest.step(
       'Replay conversation with "Replay as is" option selected and verify valid request is sent',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [gpt35Model.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
         replayRequest = await chat.startReplay(
           conversation.messages[0].content,
