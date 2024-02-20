@@ -289,6 +289,7 @@ export default function ItemContextMenu({
       onRename,
       onCompare,
       onDuplicate,
+      onView,
       isEmptyConversation,
       onReplay,
       onPlayback,

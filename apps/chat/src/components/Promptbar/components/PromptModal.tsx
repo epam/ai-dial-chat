@@ -172,7 +172,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             : ModalState.OPENED
           : ModalState.CLOSED
       }
-      heading={`${t('Edit prompt')}: ${name}`}
+      heading={t('Edit prompt')}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt) handleEnter(e, selectedPrompt);
@@ -214,7 +214,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             <textarea
               ref={descriptionInputRef}
               name="description"
-              className={classNames(inputClassName)}
+              className={inputClassName}
               style={{ resize: 'none' }}
               placeholder={t('A description for your prompt.') || ''}
               value={description}
@@ -246,7 +246,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               data-qa="prompt-value"
             />
           </div>
-          <div className={'flex justify-end'}>
+          <div className="flex justify-end">
             <button
               type="submit"
               className="button button-primary"
