@@ -12,7 +12,7 @@ import {
   getDialFilesWithInvalidFileType,
   getExtensionsListForMimeTypes,
 } from '@/src/utils/app/file';
-import { isRootId } from '@/src/utils/app/id';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -69,7 +69,7 @@ export const FileManagerModal = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
-    undefined,
+    getRootId(),
   );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
@@ -86,6 +86,7 @@ export const FileManagerModal = ({
   } = useHandleFileFolders(
     folders,
     openedFoldersIds,
+    getRootId(),
     setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
@@ -301,7 +302,7 @@ export const FileManagerModal = ({
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
                 className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
-                onClick={() => handleToggleFolder(undefined)}
+                onClick={() => handleToggleFolder(getRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
                 {t('All files')}
