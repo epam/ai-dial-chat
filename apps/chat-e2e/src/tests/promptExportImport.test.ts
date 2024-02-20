@@ -23,13 +23,14 @@ const newDescr = 'test description';
 const newValue = 'what is {{A}}';
 const levelsCount = 3;
 
-dialTest.skip(
+//TODO: uncomment when issue 767 is fixed
+dialTest(
   'Export and import prompt structure with all prompts.\n' +
     'Continue working with imported file. Add imported prompt to a message',
   async ({
     dialHomePage,
     setTestIds,
-    localStorageManager,
+    dataInjector,
     prompts,
     folderPrompts,
     promptBar,
@@ -39,7 +40,6 @@ dialTest.skip(
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895');
     let promptsInsideFolder: FolderPrompt;
-    let emptyFolder: TestFolder;
     let promptOutsideFolder: TestPrompt;
     let nestedFolders: TestFolder[];
     let nestedPrompts: TestPrompt[];
@@ -49,9 +49,6 @@ dialTest.skip(
     await dialTest.step(
       'Prepare empty folder, folder with 2 prompts, another prompt in the root and nested folders with prompts inside',
       async () => {
-        emptyFolder = promptData.prepareFolder();
-        promptData.resetData();
-
         promptsInsideFolder = promptData.preparePromptsInFolder(2);
         promptData.resetData();
 
@@ -62,15 +59,14 @@ dialTest.skip(
         nestedPrompts =
           promptData.preparePromptsForNestedFolders(nestedFolders);
 
-        await localStorageManager.setFolders(
-          emptyFolder,
+        await dataInjector.createPrompts(
+          [
+            ...promptsInsideFolder.prompts,
+            promptOutsideFolder,
+            ...nestedPrompts,
+          ],
           promptsInsideFolder.folders,
           ...nestedFolders,
-        );
-        await localStorageManager.setPrompts(
-          ...promptsInsideFolder.prompts,
-          promptOutsideFolder,
-          ...nestedPrompts,
         );
       },
     );
@@ -82,12 +78,11 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await promptBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
-          await folderPrompts.expandCollapseFolder(nestedFolder.name);
+          await folderPrompts.expandFolder(nestedFolder.name);
         }
-        await folderPrompts.expandCollapseFolder(
-          promptsInsideFolder.folders.name,
-        );
+        await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
         exportedData = await dialHomePage.downloadData(() =>
           promptBar.exportButton.click(),
         );
@@ -98,39 +93,34 @@ dialTest.skip(
       'Delete all prompts and folders, re-import again and verify they are displayed',
       async () => {
         await promptBar.deleteAllEntities();
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await promptBar.deleteEntitiesButton.waitForState({ state: 'hidden' });
 
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
 
         await folderPrompts
           .getFolderByName(promptsInsideFolder.folders.name)
           .waitFor();
-        await folderPrompts.getFolderByName(emptyFolder.name).waitFor();
+        // await folderPrompts
+        //   .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+        //   .waitFor();
+
+        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
 
         for (let i = 0; i < nestedFolders.length; i++) {
           const nestedFolder = nestedFolders[i];
           await folderPrompts.getFolderByName(nestedFolder.name).waitFor();
-          await folderPrompts.getFolderEntity(
-            nestedFolder.name,
-            nestedPrompts[i].name,
-          );
+          await folderPrompts
+            .getFolderEntity(nestedFolder.name, nestedPrompts[i].name)
+            .waitFor();
         }
 
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
-
         for (const prompt of promptsInsideFolder.prompts) {
-          expect
-            .soft(
-              await folderPrompts.isFolderEntityVisible(
-                promptsInsideFolder.folders.name,
-                prompt.name,
-              ),
-              ExpectedMessages.promptIsVisible,
-            )
-            .toBeTruthy();
+          await folderPrompts
+            .getFolderEntity(promptsInsideFolder.folders.name, prompt.name)
+            .waitFor();
         }
       },
     );
@@ -153,7 +143,7 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Export and import one prompt in a folder.\n' +
     `Export and import one prompt in a folder when folder doesn't exist.\n` +
     'Continue working with imported file. Edit imported prompt',
@@ -197,9 +187,7 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await folderPrompts.expandCollapseFolder(
-          promptInsideFolder.folders.name,
-        );
+        await folderPrompts.expandFolder(promptInsideFolder.folders.name);
         await folderPrompts.openFolderEntityDropdownMenu(
           promptInsideFolder.folders.name,
           promptInsideFolder.prompts[0].name,
@@ -221,7 +209,7 @@ dialTest.skip(
         await prompts
           .getPromptInput(promptInsideFolder.prompts[0].name)
           .clickTickButton();
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
 
@@ -243,7 +231,7 @@ dialTest.skip(
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
         await folderPrompts
@@ -288,12 +276,12 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Export and import one prompt in hierarchy tree',
   async ({
     dialHomePage,
     setTestIds,
-    localStorageManager,
+    dataInjector,
     prompts,
     promptBar,
     promptData,
@@ -313,10 +301,9 @@ dialTest.skip(
 
         promptOutsideFolder = promptData.preparePrompt(promptContent);
 
-        await localStorageManager.setFolders(promptInsideFolder.folders);
-        await localStorageManager.setPrompts(
-          ...promptInsideFolder.prompts,
-          promptOutsideFolder,
+        await dataInjector.createPrompts(
+          [...promptInsideFolder.prompts, promptOutsideFolder],
+          promptInsideFolder.folders,
         );
       },
     );
@@ -346,7 +333,7 @@ dialTest.skip(
         await prompts
           .getPromptByName(promptOutsideFolder.name)
           .waitFor({ state: 'hidden' });
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
         await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
@@ -355,12 +342,12 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Existed prompts stay after import',
   async ({
     dialHomePage,
     setTestIds,
-    localStorageManager,
+    dataInjector,
     prompts,
     folderPrompts,
     promptBar,
@@ -382,10 +369,9 @@ dialTest.skip(
         promptOutsideFolder = promptData.prepareDefaultPrompt();
         promptData.resetData();
 
-        await localStorageManager.setFolders(promptsInsideFolder.folders);
-        await localStorageManager.setPrompts(
-          ...promptsInsideFolder.prompts,
-          promptOutsideFolder,
+        await dataInjector.createPrompts(
+          [...promptsInsideFolder.prompts, promptOutsideFolder],
+          promptsInsideFolder.folders,
         );
       },
     );
@@ -420,12 +406,10 @@ dialTest.skip(
           isNewConversationVisible: true,
         });
 
-        await dialHomePage.uploadData(folderPromptData, () =>
+        await dialHomePage.importFile(folderPromptData, () =>
           promptBar.importButton.click(),
         );
-        await folderPrompts.expandCollapseFolder(
-          promptsInsideFolder.folders.name,
-        );
+        await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
         await folderPrompts
           .getFolderEntity(
             promptsInsideFolder.folders.name,
@@ -446,7 +430,7 @@ dialTest.skip(
     await dialTest.step(
       'Import root prompt and verify it is imported and existing root prompt remain',
       async () => {
-        await dialHomePage.uploadData(rootPromptData, () =>
+        await dialHomePage.importFile(rootPromptData, () =>
           promptBar.importButton.click(),
         );
         await prompts.getPromptByName(importedRootPrompt.name).waitFor();
@@ -457,7 +441,7 @@ dialTest.skip(
     await dialTest.step(
       'Import conversation inside new folder and verify it is imported',
       async () => {
-        await dialHomePage.uploadData(newFolderPromptData, () =>
+        await dialHomePage.importFile(newFolderPromptData, () =>
           promptBar.importButton.click(),
         );
         await folderPrompts
@@ -467,18 +451,14 @@ dialTest.skip(
           importedNewFolderPrompt.folders.name,
           importedNewFolderPrompt.prompts[0].name,
         );
-        if (await newFolderPrompt.isHidden()) {
-          await folderPrompts.expandCollapseFolder(
-            importedNewFolderPrompt.folders.name,
-          );
+        await folderPrompts.expandFolder(importedNewFolderPrompt.folders.name),
           await newFolderPrompt.waitFor();
-        }
       },
     );
   },
 );
 
-dialTest.skip(
+dialTest(
   'Import file from 1.4 version to prompts and continue working with it',
   async ({
     dialHomePage,
@@ -499,14 +479,12 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await dialHomePage.uploadData(
+        await dialHomePage.importFile(
           { path: Import.v14AppImportedFilename },
           () => promptBar.importButton.click(),
         );
 
-        await folderPrompts.expandCollapseFolder(
-          Import.oldVersionAppFolderName,
-        );
+        await folderPrompts.expandFolder(Import.oldVersionAppFolderName);
         await folderPrompts
           .getFolderEntity(
             Import.oldVersionAppFolderName,
@@ -558,14 +536,14 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   `Export and import single prompt in nested folders when folders structure doesn't exist.\n` +
     `Export and import single prompt in nested folders when it's folder doesn't exist.\n` +
     `Export and import single prompt in nested folders when parent folder doesn't exist`,
   async ({
     dialHomePage,
     setTestIds,
-    localStorageManager,
+    dataInjector,
     folderPrompts,
     promptBar,
     confirmationDialog,
@@ -585,8 +563,7 @@ dialTest.skip(
         nestedPrompts =
           promptData.preparePromptsForNestedFolders(nestedFolders);
 
-        await localStorageManager.setFolders(...nestedFolders);
-        await localStorageManager.setPrompts(...nestedPrompts);
+        await dataInjector.createPrompts([...nestedPrompts], ...nestedFolders);
       },
     );
 
@@ -596,7 +573,7 @@ dialTest.skip(
         isNewConversationVisible: true,
       });
       for (const nestedFolder of nestedFolders) {
-        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+        await folderPrompts.expandFolder(nestedFolder.name);
       }
       await folderPrompts.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
@@ -612,7 +589,7 @@ dialTest.skip(
       async () => {
         await promptBar.deleteAllEntities();
         await confirmationDialog.confirm();
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
 
@@ -647,7 +624,7 @@ dialTest.skip(
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
 
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
 
@@ -669,7 +646,7 @@ dialTest.skip(
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
 
-        await dialHomePage.uploadData(exportedData, () =>
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
 
@@ -697,12 +674,12 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Import a prompt in nested folder',
   async ({
     dialHomePage,
     setTestIds,
-    localStorageManager,
+    dataInjector,
     folderPrompts,
     promptBar,
     promptData,
@@ -720,8 +697,7 @@ dialTest.skip(
         nestedPrompts =
           promptData.preparePromptsForNestedFolders(nestedFolders);
 
-        await localStorageManager.setFolders(...nestedFolders);
-        await localStorageManager.setPrompts(...nestedPrompts);
+        await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
       },
     );
 
@@ -729,7 +705,7 @@ dialTest.skip(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
       for (const nestedFolder of nestedFolders) {
-        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+        await folderPrompts.expandFolder(nestedFolder.name);
       }
       for (let i = 1; i <= 3; i = i + 2) {
         await folderPrompts.openFolderEntityDropdownMenu(
@@ -757,7 +733,7 @@ dialTest.skip(
             isDownloadedData: false,
           };
           updatedExportedPrompts.push(updatedExportedPrompt);
-          await dialHomePage.uploadData(updatedExportedPrompt, () =>
+          await dialHomePage.importFile(updatedExportedPrompt, () =>
             promptBar.importButton.click(),
           );
           updatedPromptNames.push(prompt.name);
@@ -812,12 +788,12 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
   'Import a prompt from nested folder which was moved to another place',
   async ({
     dialHomePage,
     setTestIds,
-    localStorageManager,
+    dataInjector,
     folderPrompts,
     promptBar,
     promptData,
@@ -835,8 +811,10 @@ dialTest.skip(
         thirdLevelFolderPrompt = promptData.prepareDefaultPrompt();
         thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].id;
 
-        await localStorageManager.setFolders(...nestedFolders);
-        await localStorageManager.setPrompts(thirdLevelFolderPrompt);
+        await dataInjector.createPrompts(
+          [thirdLevelFolderPrompt],
+          ...nestedFolders,
+        );
       },
     );
 
@@ -844,7 +822,7 @@ dialTest.skip(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
       for (const nestedFolder of nestedFolders) {
-        await folderPrompts.expandCollapseFolder(nestedFolder.name);
+        await folderPrompts.expandFolder(nestedFolder.name);
       }
       await folderPrompts.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
@@ -858,11 +836,11 @@ dialTest.skip(
     await dialTest.step(
       'Move 3rd level folder on the 1st level folder and import exported prompt',
       async () => {
-        nestedFolders[levelsCount].folderId = nestedFolders[1].folderId;
-        await localStorageManager.setFolders(...nestedFolders);
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await dialHomePage.uploadData(exportedData, () =>
+        await promptBar.drugAndDropFolderToFolder(
+          nestedFolders[levelsCount].name,
+          nestedFolders[0].name,
+        );
+        await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
       },
@@ -871,35 +849,23 @@ dialTest.skip(
     await dialTest.step(
       'Verify imported prompt is in 3rd level folder on the 1st level',
       async () => {
-        for (const nestedFolder of nestedFolders) {
-          await folderPrompts.expandCollapseFolder(nestedFolder.name);
-        }
+        await folderPrompts.expandFolder(
+          nestedFolders[levelsCount].name,
+          { isHttpMethodTriggered: false },
+          2,
+        );
         await folderPrompts
           .getFolderEntity(
             nestedFolders[levelsCount].name,
             thirdLevelFolderPrompt.name,
+            2,
           )
           .waitFor();
-
-        const thirdLevelFolderPromptsCount = await folderPrompts
-          .getFolderEntity(nestedFolders[2].name, thirdLevelFolderPrompt.name)
-          .count();
-        expect
-          .soft(
-            thirdLevelFolderPromptsCount,
-            ExpectedMessages.promptsCountIsValid,
-          )
-          .toBe(0);
 
         const foldersCount = await folderPrompts.getFoldersCount();
         expect
           .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 1);
-
-        const promptsCount = await folderPrompts.getFolderEntitiesCount(
-          nestedFolders[3].name,
-        );
-        expect.soft(promptsCount, ExpectedMessages.promptsCountIsValid).toBe(1);
+          .toBe(levelsCount + 2);
       },
     );
   },

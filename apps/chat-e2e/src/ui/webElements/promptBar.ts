@@ -61,4 +61,14 @@ export class PromptBar extends SideBar {
     const prompt = this.getPrompts().getPromptByName(promptName);
     await this.dragAndDropEntityToFolder(prompt, folderPrompt);
   }
+
+  public async drugAndDropFolderToFolder(
+    folderNameToMove: string,
+    folderNameToMoveTo: string,
+  ) {
+    const folderPrompts = this.getFolderPrompts();
+    const folderToMove = folderPrompts.getFolderByName(folderNameToMove);
+    const folderToMoveTo = folderPrompts.getFolderByName(folderNameToMoveTo);
+    await this.dragAndDropEntityToFolder(folderToMove, folderToMoveTo);
+  }
 }

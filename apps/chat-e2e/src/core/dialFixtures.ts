@@ -45,6 +45,7 @@ import { Filter } from '@/src/ui/webElements/filter';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
 import { Header } from '@/src/ui/webElements/header';
+import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
@@ -75,6 +76,7 @@ const dialTest = test.extend<
     appContainer: AppContainer;
     chatBar: ChatBar;
     chatLoader: ChatLoader;
+    importExportLoader: ImportExportLoader;
     header: Header;
     accountSettings: AccountSettings;
     accountDropdownMenu: DropdownMenu;
@@ -180,6 +182,10 @@ const dialTest = test.extend<
   chatLoader: async ({ appContainer }, use) => {
     const chatLoader = appContainer.getChatLoader();
     await use(chatLoader);
+  },
+  importExportLoader: async ({ appContainer }, use) => {
+    const importExportLoader = appContainer.getImportExportLoader();
+    await use(importExportLoader);
   },
   header: async ({ appContainer }, use) => {
     const header = appContainer.getHeader();
