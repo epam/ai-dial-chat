@@ -2,6 +2,8 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
+import { getRootId } from '@/src/utils/app/id';
+
 import { FeatureType } from '@/src/types/common';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -14,13 +16,13 @@ import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFol
 
 interface Props {
   isOpen: boolean;
-  selectedFolderName: string | undefined;
+  initialSelectedFolderId: string | undefined;
   onClose: (path: string | undefined) => void;
 }
 
 export const SelectFolderModal = ({
   isOpen,
-  selectedFolderName,
+  initialSelectedFolderId,
   onClose,
 }: Props) => {
   const dispatch = useAppDispatch();
@@ -30,7 +32,7 @@ export const SelectFolderModal = ({
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    selectedFolderName,
+    initialSelectedFolderId,
   );
 
   const folders = useAppSelector((state) =>
@@ -121,6 +123,7 @@ export const SelectFolderModal = ({
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
           rootFolderName="All files"
+          rootFolderId={getRootId()}
         />
       </SelectFolderHeader>
       <SelectFolderFooter

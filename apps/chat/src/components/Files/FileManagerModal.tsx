@@ -12,7 +12,7 @@ import {
   getDialFilesWithInvalidFileType,
   getExtensionsListForMimeTypes,
 } from '@/src/utils/app/file';
-import { isRootId } from '@/src/utils/app/id';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -69,7 +69,7 @@ export const FileManagerModal = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
-    undefined,
+    getRootId(),
   );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
