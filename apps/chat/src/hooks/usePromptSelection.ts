@@ -19,9 +19,16 @@ import {
 /**
  * Custom hook for managing prompt selection in a chat interface.
  * @param maxLength The maximum length of the prompt.
+ * @param prompt Default prompt value.
+ * @param onChangePrompt A function to call if prompt selected.
  * @returns An object containing control functions and states.
  */
-export const usePromptSelection = (maxLength: number, prompt: string) => {
+
+export const usePromptSelection = (
+  maxLength: number,
+  prompt: string,
+  onChangePrompt?: (prompt: string) => void,
+) => {
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const dispatch = useDispatch();
@@ -128,8 +135,11 @@ export const usePromptSelection = (maxLength: number, prompt: string) => {
       prevVal?.replace(/\/\w*$/, selectedPrompt.content!),
     );
     handlePromptSelect(selectedPrompt);
+    if (onChangePrompt) {
+      onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content!));
+    }
     setShowPromptList(false);
-  }, [handlePromptSelect, maxLength]);
+  }, [content, handlePromptSelect, maxLength, onChangePrompt]);
 
   /**
    * Resets the request sending state and update the currently selected prompt,
