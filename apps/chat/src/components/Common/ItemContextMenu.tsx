@@ -11,6 +11,7 @@ import {
   IconScale,
   IconTrashX,
   IconUserShare,
+  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
@@ -19,7 +20,9 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getRootId } from '@/src/utils/app/id';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getApiKeyByFeatureType } from '@/src/utils/server/api';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -50,6 +53,7 @@ interface ItemContextMenuProps {
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
   onShare?: MouseEventHandler<unknown>;
+  onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
@@ -74,6 +78,7 @@ export default function ItemContextMenu({
   onMoveToFolder,
   onOpenMoveToModal,
   onShare,
+  onUnshare,
   onPublish,
   onUnpublish,
   onPublishUpdate,
@@ -138,14 +143,14 @@ export default function ItemContextMenu({
       {
         name: t('Export'),
         dataQa: 'export-chat-mobile',
-        display: featureType === FeatureType.Chat,
+        display: !isEmptyConversation && featureType === FeatureType.Chat,
         Icon: IconFileArrowRight,
         onClick: onOpenExportModal,
         className: 'md:hidden',
       },
       {
         name: t('Export'),
-        display: featureType === FeatureType.Chat,
+        display: !isEmptyConversation && featureType === FeatureType.Chat,
         dataQa: 'export-chat',
         Icon: IconFileArrowRight,
         className: 'max-md:hidden',
@@ -206,14 +211,27 @@ export default function ItemContextMenu({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: isSharingEnabled && !!onShare && !isExternal,
+        display:
+          !isEmptyConversation && isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
         onClick: onShare,
+      },
+      {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display:
+          !isEmptyConversation &&
+          isSharingEnabled &&
+          !!onUnshare &&
+          entity.isShared,
+        Icon: IconUserX,
+        onClick: onUnshare,
       },
       {
         name: t('Publish'),
         dataQa: 'publish',
         display:
+          !isEmptyConversation &&
           isPublishingEnabled &&
           !entity.isPublished &&
           !!onPublish &&
@@ -225,20 +243,31 @@ export default function ItemContextMenu({
         name: t('Update'),
         dataQa: 'update-publishing',
         display:
-          isPublishingEnabled && !!entity.isPublished && !!onPublishUpdate,
+          !isEmptyConversation &&
+          isPublishingEnabled &&
+          !!entity.isPublished &&
+          !!onPublishUpdate,
         Icon: IconClockShare,
         onClick: onPublishUpdate,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishingEnabled && !!entity.isPublished && !!onUnpublish,
+        display:
+          !isEmptyConversation &&
+          isPublishingEnabled &&
+          !!entity.isPublished &&
+          !!onUnpublish,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
       },
       {
         name: t('Delete'),
         dataQa: 'delete',
+        display:
+          entity.id.startsWith(
+            getRootId({ apiKey: getApiKeyByFeatureType(featureType) }),
+          ) || entity.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -259,8 +288,12 @@ export default function ItemContextMenu({
       folders,
       isSharingEnabled,
       onShare,
-      isPublishingEnabled,
+      onUnshare,
+      entity.isShared,
       entity.isPublished,
+      entity.id,
+      entity.sharedWithMe,
+      isPublishingEnabled,
       onPublish,
       onPublishUpdate,
       onUnpublish,

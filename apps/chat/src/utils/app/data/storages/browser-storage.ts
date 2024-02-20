@@ -260,6 +260,22 @@ export class BrowserStorage implements DialStorage {
     return BrowserStorage.setData(key, migratedEntityIds);
   }
 
+  public static setEntityBackedUp(
+    key:
+      | MigrationStorageKeys.ChatsBackedUp
+      | MigrationStorageKeys.PromptsBackedUp,
+  ): Observable<void> {
+    return BrowserStorage.setData(key, true);
+  }
+
+  public static getEntityBackedUp(
+    key:
+      | MigrationStorageKeys.ChatsBackedUp
+      | MigrationStorageKeys.PromptsBackedUp,
+  ): Observable<boolean> {
+    return BrowserStorage.getData(key, false);
+  }
+
   public static getData<K = undefined>(
     key: UIStorageKeys | MigrationStorageKeys,
     defaultValue: K,

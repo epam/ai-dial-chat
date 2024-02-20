@@ -27,6 +27,7 @@ export { ConversationsSelectors };
 const initialState: ConversationsState = {
   conversationsToMigrateCount: 0,
   migratedConversationsCount: 0,
+  isChatsBackedUp: false,
   failedMigratedConversations: [],
   conversations: [],
   selectedConversationsIds: [],
@@ -43,6 +44,7 @@ const initialState: ConversationsState = {
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
+  isActiveNewConversationRequest: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -81,6 +83,16 @@ export const conversationsSlice = createSlice({
     ) => {
       state.failedMigratedConversations = payload.failedMigratedConversations;
     },
+    setIsChatsBackedUp: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        isChatsBackedUp: boolean;
+      }>,
+    ) => {
+      state.isChatsBackedUp = payload.isChatsBackedUp;
+    },
     skipFailedMigratedConversations: (
       state,
       { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
@@ -91,8 +103,34 @@ export const conversationsSlice = createSlice({
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (
       state,
-      _action: PayloadAction<{ new: Conversation; old: ConversationInfo }>,
+      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
     ) => state,
+    recreateConversationFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        newId: string;
+        oldConversation: Conversation;
+      }>,
+    ) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.newId) {
+          return {
+            ...conv,
+            ...payload.oldConversation,
+            lastActivityDate: Date.now(),
+          };
+        }
+
+        return conv;
+      });
+      if (payload.newId !== payload.oldConversation.id) {
+        state.selectedConversationsIds = state.selectedConversationsIds.map(
+          (cid) => (cid === payload.newId ? payload.oldConversation.id! : cid),
+        );
+      }
+    },
     updateConversation: (
       state,
       _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,
@@ -114,7 +152,11 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
-      if (payload.id !== payload.conversation.id) {
+      if (
+        payload.id &&
+        payload.conversation.id &&
+        payload.id !== payload.conversation.id
+      ) {
         state.selectedConversationsIds = state.selectedConversationsIds.map(
           (cid) => (cid === payload.id ? payload.conversation.id! : cid),
         );
@@ -152,7 +194,9 @@ export const conversationsSlice = createSlice({
         names: string[];
         shouldUploadConversationsForCompare?: boolean;
       }>,
-    ) => state,
+    ) => {
+      state.isActiveNewConversationRequest = true;
+    },
     publishConversation: (
       state,
       { payload }: PayloadAction<PublishRequest>,
@@ -258,6 +302,12 @@ export const conversationsSlice = createSlice({
         state.areSelectedConversationsLoaded = true;
       }
     },
+    setIsActiveConversationRequest: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isActiveNewConversationRequest = payload;
+    },
     createNewReplayConversation: (
       state,
       _action: PayloadAction<ConversationInfo>,
@@ -297,14 +347,19 @@ export const conversationsSlice = createSlice({
         payload.conversations[payload.conversations.length - 1].id,
       ];
     },
+    // TODO: refactor this method - use only for direct write without any combination
     setConversations: (
       state,
-      { payload }: PayloadAction<{ conversations: ConversationInfo[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        conversations: ConversationInfo[];
+        ignoreCombining?: boolean;
+      }>,
     ) => {
-      state.conversations = combineEntities(
-        state.conversations,
-        payload.conversations,
-      );
+      state.conversations = payload.ignoreCombining
+        ? payload.conversations
+        : combineEntities(state.conversations, payload.conversations);
       state.conversationsLoaded = true;
     },
     addConversations: (
@@ -327,7 +382,9 @@ export const conversationsSlice = createSlice({
         state.areSelectedConversationsLoaded = true;
       }
     },
-    clearConversations: (state) => state,
+    clearConversations: (state) => {
+      state.conversationsLoaded = false;
+    },
     clearConversationsSuccess: (state) => {
       state.conversations = state.conversations.filter((conv) =>
         isEntityExternal(conv),
@@ -605,8 +662,6 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: (string | undefined)[];
-        // Needed for open shared with me folder and keep shared with me flag
-        inheritedMetadata?: unknown;
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;

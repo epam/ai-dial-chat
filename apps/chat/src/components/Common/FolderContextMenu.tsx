@@ -6,13 +6,16 @@ import {
   IconTrashX,
   IconUpload,
   IconUserShare,
+  IconUserX,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getRootId } from '@/src/utils/app/id';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getApiKeyByFeatureType } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -30,11 +33,13 @@ interface FolderContextMenuProps {
   folder: FolderInterface;
   featureType: FeatureType;
   isOpen?: boolean;
+  isEmpty?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
   onOpenChange?: (isOpen: boolean) => void;
   onShare?: MouseEventHandler<unknown>;
+  onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
@@ -49,11 +54,13 @@ export const FolderContextMenu = ({
   onAddFolder,
   onOpenChange,
   onShare,
+  onUnshare,
   onPublish,
   onUnpublish,
   onPublishUpdate,
   onUpload,
   isOpen,
+  isEmpty,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -65,6 +72,7 @@ export const FolderContextMenu = ({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, featureType),
   );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -83,15 +91,24 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Share'),
-        display: isSharingEnabled && !!onShare && !isExternal,
+        display: !isEmpty && isSharingEnabled && !!onShare && !isExternal,
         dataQa: 'share',
         Icon: IconUserShare,
         onClick: onShare,
       },
       {
+        name: t('Unshare'),
+        display:
+          isSharingEnabled && !!onUnshare && !isExternal && !!folder.isShared,
+        dataQa: 'unshare',
+        Icon: IconUserX,
+        onClick: onUnshare,
+      },
+      {
         name: t('Publish'),
         dataQa: 'publish',
         display:
+          !isEmpty &&
           isPublishingEnabled &&
           !folder.isPublished &&
           !!onPublish &&
@@ -103,20 +120,38 @@ export const FolderContextMenu = ({
         name: t('Update'),
         dataQa: 'update-publishing',
         display:
-          isPublishingEnabled && !!folder.isPublished && !!onPublishUpdate,
+          !isEmpty &&
+          isPublishingEnabled &&
+          !!folder.isPublished &&
+          !!onPublishUpdate,
         Icon: IconClockShare,
         onClick: onPublishUpdate,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishingEnabled && !!folder.isPublished && !!onUnpublish,
+        display:
+          !isEmpty &&
+          isPublishingEnabled &&
+          !!folder.isPublished &&
+          !!onUnpublish,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
       },
       {
         name: t('Delete'),
-        display: !!onDelete,
+        display:
+          !!onDelete &&
+          folder.id.startsWith(
+            getRootId({ apiKey: getApiKeyByFeatureType(featureType) }),
+          ),
+        dataQa: 'delete',
+        Icon: IconTrashX,
+        onClick: onDelete,
+      },
+      {
+        name: t('Delete'),
+        display: !!onDelete && !!folder.sharedWithMe,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -134,14 +169,17 @@ export const FolderContextMenu = ({
       onUpload,
       isExternal,
       onRename,
+      isEmpty,
       isSharingEnabled,
       onShare,
+      onUnshare,
+      folder,
       isPublishingEnabled,
-      folder.isPublished,
       onPublish,
       onPublishUpdate,
       onUnpublish,
       onDelete,
+      featureType,
       onAddFolder,
     ],
   );

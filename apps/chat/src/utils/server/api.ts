@@ -41,6 +41,16 @@ export const getApiKeyByResourceType = (entityType: BackendResourceType) => {
       return ApiKeys.Files;
   }
 };
+export const getApiKeyByFeatureType = (featureType: FeatureType) => {
+  switch (featureType) {
+    case FeatureType.Prompt:
+      return ApiKeys.Prompts;
+    case FeatureType.Chat:
+      return ApiKeys.Conversations;
+    default:
+      return ApiKeys.Files;
+  }
+};
 
 export const getBackendResourceTypeByFeatureType = (
   entityType: FeatureType,
@@ -164,7 +174,7 @@ export class ApiUtils {
     }).pipe(
       switchMap((response) => {
         if (!response.ok) {
-          return throwError(() => new Error(response.statusText));
+          return throwError(() => new Error(response.status + ''));
         }
 
         return from(response.json());

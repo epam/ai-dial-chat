@@ -8,6 +8,8 @@ import { PromptList } from '@/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Locator, Page } from '@playwright/test';
 
+const PROMPT_APPLY_DELAY = 500;
+
 export class EntitySettings extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, ChatSelectors.entitySettings, parentLocator);
@@ -62,6 +64,7 @@ export class EntitySettings extends BaseElement {
 
   public async setSystemPrompt(prompt: string) {
     await this.systemPrompt.fillInInput(prompt);
+    await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 
   public async getSystemPrompt() {

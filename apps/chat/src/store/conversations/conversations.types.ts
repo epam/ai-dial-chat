@@ -6,6 +6,7 @@ import { SearchFilters } from '@/src/types/search';
 export interface ConversationsState {
   conversationsToMigrateCount: number;
   migratedConversationsCount: number;
+  isChatsBackedUp: boolean;
   failedMigratedConversations: Conversation[];
   conversations: (ConversationInfo | Conversation)[];
   selectedConversationsIds: string[];
@@ -23,4 +24,5 @@ export interface ConversationsState {
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
   compareLoading?: boolean;
+  isActiveNewConversationRequest: boolean;
 }

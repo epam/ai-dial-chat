@@ -12,7 +12,6 @@ import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
-  searchSectionFolders,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
@@ -37,14 +36,16 @@ export const selectFilteredPrompts = createSelector(
     selectPrompts,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
+      ignoreSectionFilter,
   ],
-  (prompts, filters, searchTerm?) => {
+  (prompts, filters, searchTerm?, ignoreSectionFilter?) => {
     return prompts.filter(
       (prompt) =>
         (!searchTerm ||
           doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
-        filters.searchFilter(prompt) &&
-        filters.sectionFilter(prompt),
+        (filters.searchFilter?.(prompt) ?? true) &&
+        (ignoreSectionFilter || (filters.sectionFilter?.(prompt) ?? true)),
     );
   },
 );
@@ -95,15 +96,10 @@ export const selectFilteredFolders = createSelector(
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredPrompts(state, filters, searchTerm),
+      entities: selectFilteredPrompts(state, filters, searchTerm, true),
       searchTerm,
       includeEmptyFolders,
     }),
-);
-
-export const selectSectionFolders = createSelector(
-  [selectFolders, (_state, filters: EntityFilters) => filters],
-  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectParentFolders = createSelector(
@@ -264,8 +260,8 @@ export const selectTemporaryFolders = createSelector(
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
-    return folders.filter((folder) =>
-      PublishedWithMeFilter.sectionFilter(folder),
+    return folders.filter(
+      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? true,
     );
   },
 );
@@ -290,6 +286,12 @@ export const selectNewAddedFolderId = createSelector(
   [rootSelector],
   (state) => {
     return state.newAddedFolderId;
+  },
+);
+export const selectLoadingFolderIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.loadingFolderIds;
   },
 );
 
@@ -326,4 +328,14 @@ export const selectNewFolderName = createSelector(
 export const selectFailedMigratedPrompts = createSelector(
   [rootSelector],
   (state) => state.failedMigratedPrompts,
+);
+
+export const selectIsActiveNewPromptRequest = createSelector(
+  [rootSelector],
+  (state) => state.isActiveNewPromptRequest,
+);
+
+export const selectIsPromptsBackedUp = createSelector(
+  [rootSelector],
+  (state) => state.isPromptsBackedUp,
 );

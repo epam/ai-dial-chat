@@ -41,9 +41,7 @@ dialTest(
       iconsToBeLoaded: [gpt35Model.iconUrl],
     });
     await dialHomePage.waitForPageLoaded();
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder.folders.name,
-    );
+    await folderConversations.expandFolder(conversationInFolder.folders.name);
     await chatBar.drugConversationFromFolder(
       conversationInFolder.folders.name,
       conversationInFolder.conversations[0].name,
@@ -141,7 +139,7 @@ dialTest(
             ),
           );
         }
-        await folderConversations.expandCollapseFolder(
+        await folderConversations.expandFolder(
           ExpectedConstants.newFolderWithIndexTitle(2),
         );
 
@@ -218,9 +216,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await folderConversations.expandCollapseFolder(
-          folderConversation.folders.name,
-        );
+        await folderConversations.expandFolder(folderConversation.folders.name);
         await chatBar.drugAndDropConversationToFolderConversation(
           folderConversation.folders.name,
           folderConversation.conversations[1].name,
@@ -266,7 +262,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    await folderPrompts.expandFolder(promptInFolder.folders.name);
     await promptBar.dragAndDropPromptFromFolder(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
@@ -393,7 +389,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+        await folderPrompts.expandFolder(promptInFolder.folders.name);
         await promptBar.drugAndDropPromptToFolderPrompt(
           promptInFolder.folders.name,
           promptInFolder.prompts[0].name,

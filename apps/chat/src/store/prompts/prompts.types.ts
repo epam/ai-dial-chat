@@ -5,6 +5,7 @@ import { SearchFilters } from '@/src/types/search';
 export interface PromptsState {
   migratedPromptsCount: number;
   promptsToMigrateCount: number;
+  isPromptsBackedUp: boolean;
   failedMigratedPrompts: Prompt[];
   prompts: PromptInfo[];
   folders: FolderInterface[];
@@ -16,4 +17,6 @@ export interface PromptsState {
   newAddedFolderId?: string;
   promptsLoaded: boolean;
   isPromptLoading: boolean;
+  loadingFolderIds: string[];
+  isActiveNewPromptRequest: boolean;
 }

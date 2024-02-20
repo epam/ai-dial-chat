@@ -17,7 +17,6 @@ import {
 } from '../../server/api';
 import { constructPath } from '../file';
 import { getRootId } from '../id';
-import { BucketService } from './bucket-service';
 
 export class FileService {
   public static sendFile(
@@ -26,11 +25,11 @@ export class FileService {
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = encodeApiUrl(
-      constructPath(BucketService.getBucket(), relativePath, fileName),
+      constructPath(getRootId(), relativePath, fileName),
     );
 
     return ApiUtils.requestOld({
-      url: `api/${ApiKeys.Files}/${resultPath}`,
+      url: `api/${resultPath}`,
       method: 'PUT',
       async: true,
       body: formData,
@@ -140,19 +139,12 @@ export class FileService {
   }
 
   public static removeFile(filePath: string): Observable<void> {
-    const resultPath = encodeApiUrl(
-      constructPath(BucketService.getBucket(), filePath),
-    );
-
-    return ApiUtils.request(`api/${ApiKeys.Files}/${resultPath}`, {
+    return ApiUtils.request(`api/${encodeApiUrl(filePath)}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
   }
 
-  public static getFiles(parentPath?: string): Observable<DialFile[]> {
+  public static getFiles(folderId?: string): Observable<DialFile[]> {
     const filter = BackendDataNodeType.ITEM;
 
     const query = new URLSearchParams({
@@ -161,7 +153,7 @@ export class FileService {
     const resultQuery = query.toString();
 
     return ApiUtils.request(
-      this.getListingUrl({ path: parentPath, resultQuery }),
+      this.getListingUrl({ path: folderId, resultQuery }),
     ).pipe(
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {

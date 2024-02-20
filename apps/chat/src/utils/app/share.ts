@@ -1,4 +1,10 @@
-import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  Entity,
+  FeatureType,
+  ShareEntity,
+} from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -45,7 +51,6 @@ export const getUnpublishActionByType = (type: SharingType) => {
 export const isEntityExternal = (entity: ShareEntity) =>
   !!(entity.sharedWithMe || entity.publishedWithMe);
 
-// TODO: get rid of this utility and use from selectors
 export const hasExternalParent = (
   state: RootState,
   folderId: string,
@@ -58,7 +63,6 @@ export const hasExternalParent = (
     : PromptsSelectors.hasExternalParent(state, folderId);
 };
 
-// TODO: get rid of this utility and use from selectors
 export const isEntityOrParentsExternal = (
   state: RootState,
   entity: Entity,
@@ -95,5 +99,34 @@ export const getAttachments = (type: SharingType) => {
       return () => [];
     default:
       throw new Error('unknown type');
+  }
+};
+
+export const getShareType = (
+  resourceType: BackendResourceType | undefined,
+  nodeType: BackendDataNodeType | undefined,
+): SharingType | undefined => {
+  if (!resourceType || !nodeType) {
+    return undefined;
+  }
+
+  if (nodeType === BackendDataNodeType.FOLDER) {
+    switch (resourceType) {
+      case BackendResourceType.CONVERSATION:
+        return SharingType.ConversationFolder;
+      case BackendResourceType.PROMPT:
+        return SharingType.PromptFolder;
+      default:
+        return undefined;
+    }
+  } else {
+    switch (resourceType) {
+      case BackendResourceType.CONVERSATION:
+        return SharingType.Conversation;
+      case BackendResourceType.PROMPT:
+        return SharingType.Prompt;
+      default:
+        return undefined;
+    }
   }
 };

@@ -16,7 +16,6 @@ import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
-  searchSectionFolders,
 } from '@/src/utils/app/search';
 import {
   isEntityExternal,
@@ -34,7 +33,10 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
@@ -49,8 +51,10 @@ export const selectFilteredConversations = createSelector(
     selectConversations,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
+      ignoreSectionFilter,
   ],
-  (conversations, filters, searchTerm?) => {
+  (conversations, filters, searchTerm?, ignoreSectionFilter?) => {
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
@@ -58,8 +62,9 @@ export const selectFilteredConversations = createSelector(
             conversation,
             searchTerm,
           )) &&
-        filters.searchFilter(conversation) &&
-        filters.sectionFilter(conversation),
+        (filters.searchFilter?.(conversation) ?? true) &&
+        (ignoreSectionFilter ||
+          (filters.sectionFilter?.(conversation) ?? true)),
     );
   },
 );
@@ -106,15 +111,10 @@ export const selectFilteredFolders = createSelector(
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredConversations(state, filters, searchTerm),
+      entities: selectFilteredConversations(state, filters, searchTerm, true),
       searchTerm,
       includeEmptyFolders,
     }),
-);
-
-export const selectSectionFolders = createSelector(
-  [selectFolders, (_state, filters: EntityFilters) => filters],
-  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectLastConversation = createSelector(
@@ -378,9 +378,27 @@ export const selectMaximumAttachmentsAmount = createSelector(
     }
 
     return Math.min(
-      ...models.map((model) =>
-        model?.inputAttachmentTypes ? Number.MAX_SAFE_INTEGER : 0,
+      ...models.map(
+        (model) => model?.maxInputAttachments ?? Number.MAX_SAFE_INTEGER,
       ),
+    );
+  },
+);
+
+export const selectCanAttach = createSelector(
+  [
+    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
+    selectSelectedConversationsModels,
+  ],
+  (displayAttachFunctionality, models) => {
+    if (!displayAttachFunctionality || models.length === 0) {
+      return false;
+    }
+
+    return (
+      Math.min(
+        ...models.map((model) => model?.inputAttachmentTypes?.length ?? 0),
+      ) > 0
     );
   },
 );
@@ -448,8 +466,8 @@ export const selectTemporaryFolders = createSelector(
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
-    return folders.filter((folder) =>
-      PublishedWithMeFilter.sectionFilter(folder),
+    return folders.filter(
+      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? folder,
     );
   },
 );
@@ -587,4 +605,16 @@ export const selectIsCompareLoading = createSelector(
   (state) => {
     return state.compareLoading;
   },
+);
+
+export const selectIsActiveNewConversationRequest = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isActiveNewConversationRequest;
+  },
+);
+
+export const selectIsChatsBackedUp = createSelector(
+  [rootSelector],
+  (state) => state.isChatsBackedUp,
 );

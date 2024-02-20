@@ -97,4 +97,10 @@ export class ChatBar extends SideBar {
       this.getConversations().getConversationByName(conversationName);
     await this.dragAndDropEntityToFolder(conversation, folderConversation);
   }
+
+  public async dragAndDropFolderToRootLevel(folderName: string) {
+    const folder =
+      await this.getFolderConversations().getFolderByName(folderName);
+    await this.dragFolderToRoot(folder);
+  }
 }

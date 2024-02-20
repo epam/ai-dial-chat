@@ -91,30 +91,14 @@ export const getChildAndCurrentFoldersIdsById = (
     (folder) => folder.id,
   );
 
-export const getAvailableNameOnSameFolderLevel = (
-  items: { name: string; folderId?: string }[],
-  itemPrefix: string,
-  parentFolderId?: string,
-) => {
-  const names = items
-    .filter((item) => item.folderId === parentFolderId)
-    .map((item) => item.name);
-  let itemNumber = 0;
-  let itemName;
-  do {
-    itemNumber++;
-    itemName = [itemPrefix, itemNumber].join(' ');
-  } while (names.includes(itemName));
-
-  return itemName;
-};
-
+// TODO: refactor this and use parametrized object as single arg
 export const getNextDefaultName = (
   defaultName: string,
   entities: ShareEntity[],
   index = 0,
   startWithEmptyPostfix = false,
   includingPublishedWithMe = false,
+  parentFolderId?: string,
 ): string => {
   const prefix = `${defaultName} `;
   const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
@@ -130,7 +114,9 @@ export const getNextDefaultName = (
           (entity) =>
             !entity.sharedWithMe &&
             (!entity.publishedWithMe || includingPublishedWithMe) &&
-            (entity.name === defaultName || entity.name.match(regex)),
+            (entity.name === defaultName ||
+              (entity.name.match(regex) &&
+                (parentFolderId ? entity.folderId === parentFolderId : true))),
         )
         .map(
           (entity) =>
@@ -239,40 +225,61 @@ export const getFilteredFolders = ({
   searchTerm,
   includeEmptyFolders,
 }: GetFilteredFoldersProps) => {
-  const rootFolders = allFolders.filter(
-    (folder) => isRootId(folder.folderId) && filters.sectionFilter(folder),
+  // Get roots of section filtered items
+  const sectionFilteredFolders = allFolders.filter(
+    (folder) => filters.sectionFilter?.(folder) ?? true,
   );
-  const filteredIds = new Set(
-    rootFolders.flatMap((folder) =>
+  // Get full child tree
+  const childAndCurrentSectionFilteredIds = new Set(
+    sectionFilteredFolders.flatMap((folder) =>
       getChildAndCurrentFoldersIdsById(folder.id, allFolders),
     ),
   );
-  const folders = allFolders.filter((folder) => filteredIds.has(folder.id));
-  const folderIds = entities
-    .map((c) => c.folderId)
-    .filter((fid) => fid && filteredIds.has(fid));
-
-  if (!searchTerm?.trim().length) {
-    const markedFolderIds = folders
-      .filter((folder) => filters?.searchFilter(folder))
-      .map((f) => f.id);
-    folderIds.push(...markedFolderIds);
-
-    if (includeEmptyFolders && !searchTerm?.length) {
-      folderIds.push(...emptyFolderIds);
-    }
-  }
-
-  const filteredFolderIds = new Set(
-    folderIds
-      .filter((fid) => fid && filteredIds.has(fid))
-      .flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
+  // Map back to folders objects
+  const childAndCurrentSectionFilteredFolders = allFolders.filter((folder) =>
+    childAndCurrentSectionFilteredIds.has(folder.id),
   );
 
-  return folders
+  // Apply search filters to section folders
+  const searchedFolderIds = childAndCurrentSectionFilteredFolders
+    .filter((folder) => filters.searchFilter?.(folder) ?? true)
+    .map((f) => f.id);
+
+  // Section filtered entities folder ids
+  const entitiesFolderIds = entities
+    .map((c) => c.folderId)
+    .filter((fid) => childAndCurrentSectionFilteredIds.has(fid));
+
+  // Merged final searched and filtered folders ids
+  const searchedFoldersByEntitiesAndFolders = [
+    ...(searchTerm?.trim().length ? [] : searchedFolderIds), // Ignore filtered folders from section if search term
+    ...entitiesFolderIds,
+  ];
+
+  if (includeEmptyFolders && !searchTerm?.length) {
+    searchedFoldersByEntitiesAndFolders.push(...emptyFolderIds);
+  }
+
+  // Get roots again for merged array
+  const filteredFolderIds = new Set(
+    searchedFoldersByEntitiesAndFolders
+      .flatMap((fid) =>
+        getParentAndCurrentFolderIdsById(
+          childAndCurrentSectionFilteredFolders,
+          fid,
+        ),
+      )
+      .filter(
+        (fid) =>
+          fid && sectionFilteredFolders.map(({ id }) => id).includes(fid),
+      ),
+  );
+
+  return childAndCurrentSectionFilteredFolders
     .filter(
       (folder) =>
-        filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
+        childAndCurrentSectionFilteredIds.has(folder.id) &&
+        filteredFolderIds.has(folder.id),
     )
     .sort(compareEntitiesByName);
 };

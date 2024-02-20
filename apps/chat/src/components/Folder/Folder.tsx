@@ -148,6 +148,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
@@ -185,6 +186,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [currentFolder.id, dispatch, featureType],
   );
+  const handleUnshare: MouseEventHandler = useCallback((e) => {
+    e.stopPropagation();
+    setIsUnshareConfirmOpened(true);
+  }, []);
 
   const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -227,6 +232,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
+
+  const hasChildItemOnAnyLevel = useMemo(() => {
+    const prefix = `${currentFolder.id}/`;
+    return allItemsWithoutFilters.some(
+      (entity) =>
+        entity.folderId === currentFolder.id ||
+        entity.folderId.startsWith(prefix),
+    );
+  }, [allItemsWithoutFilters, currentFolder.id]);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -724,12 +738,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onDelete={onDeleteFolder && onDelete}
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
+                    onUnshare={handleUnshare}
                     onPublish={handleOpenPublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onUnpublish={handleOpenUnpublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
+                    isEmpty={!hasChildItemOnAnyLevel}
                   />
                 </div>
               )}
@@ -867,6 +883,33 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }
           isOpen
           onClose={handleCloseUnpublishModal}
+        />
+      )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen={isUnshareConfirmOpened}
+          heading={t('Confirm revoking access to {{folderName}}', {
+            folderName: currentFolder.name,
+          })}
+          description={
+            t('Are you sure that you want to revoke access to this folder?') ||
+            ''
+          }
+          confirmLabel={t('Revoke access')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            if (result) {
+              dispatch(
+                ShareActions.revokeAccess({
+                  resourceId: currentFolder.id,
+                  nodeType: BackendDataNodeType.FOLDER,
+                  resourceType:
+                    getBackendResourceTypeByFeatureType(featureType),
+                }),
+              );
+            }
+          }}
         />
       )}
     </div>

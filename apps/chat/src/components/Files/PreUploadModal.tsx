@@ -275,7 +275,9 @@ export const PreUploadDialog = ({
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(FilesActions.getFiles({ path: folderPath }));
+      dispatch(
+        FilesActions.getFiles({ id: constructPath(getRootId(), folderPath) }),
+      );
     }
   }, [dispatch, folderPath, isOpen]);
 

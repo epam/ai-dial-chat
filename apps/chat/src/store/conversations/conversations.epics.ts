@@ -76,7 +76,6 @@ import { ApiKeys } from '@/src/utils/server/api';
 import {
   ChatBody,
   Conversation,
-  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -84,7 +83,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
-import { FolderInterface, FolderType } from '@/src/types/folder';
+import { FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
@@ -314,21 +313,27 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             ),
           ).pipe(
             switchMap(() =>
-              of(
-                ConversationsActions.addConversations({
-                  conversations: newConversations,
-                  selectAdded: true,
-                }),
+              concat(
+                of(
+                  ConversationsActions.addConversations({
+                    conversations: newConversations,
+                    selectAdded: true,
+                  }),
+                ),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               ),
             ),
             catchError((err) => {
               console.error("New conversation wasn't created:", err);
-              return of(
-                UIActions.showErrorToast(
-                  translate(
-                    'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                    ),
                   ),
                 ),
+                of(ConversationsActions.setIsActiveConversationRequest(false)),
               );
             }),
           );
@@ -586,6 +591,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         );
+      } else {
+        actions.push(
+          of(ConversationsActions.setConversations({ conversations: [] })),
+        );
       }
 
       return concat(...actions);
@@ -791,6 +800,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                   deleteIds,
                 }),
               ),
+              of(ConversationsActions.setConversations({ conversations: [] })),
             ),
           ),
         ),
@@ -818,6 +828,9 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           BrowserStorage.getFailedMigratedEntityIds(
             MigrationStorageKeys.FailedMigratedConversationIds,
           ),
+        isChatsBackedUp: BrowserStorage.getEntityBackedUp(
+          MigrationStorageKeys.ChatsBackedUp,
+        ),
       }),
     ),
     switchMap(
@@ -826,6 +839,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         conversationsFolders,
         migratedConversationIds,
         failedMigratedConversationIds,
+        isChatsBackedUp,
       }) => {
         const notMigratedConversations = filterMigratedEntities(
           conversations,
@@ -839,13 +853,16 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           !notMigratedConversations.length
         ) {
           if (failedMigratedConversationIds.length) {
-            return of(
-              ConversationsActions.setFailedMigratedConversations({
-                failedMigratedConversations: filterMigratedEntities(
-                  conversations,
-                  failedMigratedConversationIds,
-                ),
-              }),
+            return concat(
+              of(ConversationsActions.setIsChatsBackedUp({ isChatsBackedUp })),
+              of(
+                ConversationsActions.setFailedMigratedConversations({
+                  failedMigratedConversations: filterMigratedEntities(
+                    conversations,
+                    failedMigratedConversationIds,
+                  ),
+                }),
+              ),
             );
           }
 
@@ -1428,8 +1445,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
 
       const errorMessage = responseJSON?.message || payload.message;
 
-      const messages = payload.conversation.messages;
-      messages[errorMessage.length - 1].errorMessage = errorMessage;
+      const messages = [...payload.conversation.messages];
+      messages[messages.length - 1] = {
+        ...messages[messages.length - 1],
+        errorMessage,
+      };
 
       const values: Partial<Conversation> = {
         isMessageStreaming: false,
@@ -2161,10 +2181,18 @@ const recreateConversationEpic: AppEpic = (action$) =>
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the conversation. Please refresh the page.',
+          return concat(
+            of(
+              ConversationsActions.recreateConversationFail({
+                newId: payload.new.id,
+                oldConversation: payload.old,
+              }),
+            ),
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the conversation. Please refresh the page.',
+                ),
               ),
             ),
           );
@@ -2184,6 +2212,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         id: string;
         values: Partial<Conversation>;
       };
+
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
@@ -2233,18 +2262,8 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const folders = foldersAndEntities
-            .flatMap((f) => f.folders)
-            .map((item) => ({
-              ...item,
-              ...(payload.inheritedMetadata as Partial<FolderInterface>),
-            }));
-          const conversations = foldersAndEntities
-            .flatMap((f) => f.entities)
-            .map((item) => ({
-              ...item,
-              ...(payload.inheritedMetadata as Partial<ConversationInfo>),
-            }));
+          const folders = foldersAndEntities.flatMap((f) => f.folders);
+          const conversations = foldersAndEntities.flatMap((f) => f.entities);
           return concat(
             of(
               ConversationsActions.uploadFoldersSuccess({
@@ -2367,9 +2386,6 @@ const openFolderEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.uploadConversationsWithFolders({
             paths: [payload.id],
-            inheritedMetadata: {
-              sharedWithMe: folder?.sharedWithMe,
-            },
           }),
         ),
       );

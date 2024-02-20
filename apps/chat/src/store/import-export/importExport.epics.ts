@@ -59,6 +59,8 @@ import { FolderType } from '@/src/types/folder';
 import { ImportRoot, LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
 
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+
 import { errorsMessages } from '@/src/constants/errors';
 
 import {
@@ -67,7 +69,6 @@ import {
 } from '../conversations/conversations.reducers';
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
-import { PromptsActions } from '../prompts/prompts.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import {
@@ -185,35 +186,47 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const exportLocalStorageEntitiesEpic: AppEpic = (action$, state$) => {
+const exportLocalStorageChatsEpic: AppEpic = (action$, state$) => {
   const browserStorage = new BrowserStorage();
 
   return action$.pipe(
-    filter(ImportExportActions.exportLocalStorageEntities.match),
+    filter(ImportExportActions.exportLocalStorageChats.match),
     switchMap(() =>
       forkJoin({
         conversations: browserStorage
           .getConversations()
           .pipe(map(filterOnlyMyEntities)),
         conversationFolders: browserStorage.getConversationsFolders(),
+        appName: SettingsSelectors.selectAppName(state$.value),
+      }),
+    ),
+    tap(({ conversations, conversationFolders, appName }) => {
+      exportConversations(conversations, conversationFolders, appName, 4);
+    }),
+    switchMap(() =>
+      of(ConversationsActions.setIsChatsBackedUp({ isChatsBackedUp: true })),
+    ),
+  );
+};
+
+const exportLocalStoragePromptsEpic: AppEpic = (action$, state$) => {
+  const browserStorage = new BrowserStorage();
+
+  return action$.pipe(
+    filter(ImportExportActions.exportLocalStoragePrompts.match),
+    switchMap(() =>
+      forkJoin({
         prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
         promptFolders: browserStorage.getPromptsFolders(),
         appName: SettingsSelectors.selectAppName(state$.value),
       }),
     ),
-    tap(
-      ({
-        conversations,
-        conversationFolders,
-        prompts,
-        promptFolders,
-        appName,
-      }) => {
-        exportConversations(conversations, conversationFolders, appName, 4);
-        exportPrompts(prompts, promptFolders);
-      },
+    tap(({ prompts, promptFolders, appName }) => {
+      exportPrompts(prompts, promptFolders, appName);
+    }),
+    switchMap(() =>
+      of(PromptsActions.setIsPromptsBackedUp({ isPromptsBackedUp: true })),
     ),
-    ignoreElements(),
   );
 };
 
@@ -665,5 +678,6 @@ export const ImportExportEpics = combineEpics(
   importFailEpic,
   exportFailEpic,
   checkImportFailEpic,
-  exportLocalStorageEntitiesEpic,
+  exportLocalStorageChatsEpic,
+  exportLocalStoragePromptsEpic,
 );
