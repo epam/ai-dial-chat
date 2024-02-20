@@ -110,6 +110,9 @@ enum PseudoModel {
   Playback = 'playback',
 }
 
+export const IsPseudoModel = (modelId: string | undefined) =>
+  modelId ? Object.values(PseudoModel).includes(modelId as PseudoModel) : false;
+
 const getModelApiIdFromConversation = (conversation: Conversation): string => {
   if (conversation.replay?.isReplay ?? conversation.isReplay)
     return PseudoModel.Replay;
