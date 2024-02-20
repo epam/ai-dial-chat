@@ -408,6 +408,7 @@ export const PreUploadDialog = ({
       <SelectFolderModal
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
+        rootFolderId={getRootId()}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);

@@ -2,8 +2,6 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
-import { getRootId } from '@/src/utils/app/id';
-
 import { FeatureType } from '@/src/types/common';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
@@ -16,13 +14,15 @@ import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFol
 
 interface Props {
   isOpen: boolean;
-  initialSelectedFolderId: string | undefined;
+  initialSelectedFolderId: string;
+  rootFolderId: string;
   onClose: (path: string | undefined) => void;
 }
 
 export const SelectFolderModal = ({
   isOpen,
   initialSelectedFolderId,
+  rootFolderId,
   onClose,
 }: Props) => {
   const dispatch = useAppDispatch();
@@ -31,8 +31,8 @@ export const SelectFolderModal = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    initialSelectedFolderId,
+  const [selectedFolderId, setSelectedFolderId] = useState<string>(
+    initialSelectedFolderId || rootFolderId,
   );
 
   const folders = useAppSelector((state) =>
@@ -54,6 +54,7 @@ export const SelectFolderModal = ({
   } = useHandleFileFolders(
     folders,
     openedFoldersIds,
+    rootFolderId,
     setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
@@ -86,7 +87,7 @@ export const SelectFolderModal = ({
   );
 
   const handleFolderSelect = useCallback(
-    (folderId?: string) => {
+    (folderId: string) => {
       setSelectedFolderId(folderId);
       handleToggleFolder(folderId);
     },
@@ -123,7 +124,7 @@ export const SelectFolderModal = ({
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
           rootFolderName="All files"
-          rootFolderId={getRootId()}
+          rootFolderId={rootFolderId}
         />
       </SelectFolderHeader>
       <SelectFolderFooter

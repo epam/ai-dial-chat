@@ -7,7 +7,6 @@ import {
   getPathToFolderById,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
@@ -39,6 +38,7 @@ interface Props {
   isOpen: boolean;
   onClose: (path: string | undefined) => void;
   initiallySelectedFolderId: string;
+  rootFolderId: string;
   depth?: number;
 }
 
@@ -47,6 +47,7 @@ export const ChangePathDialog = ({
   onClose,
   type,
   initiallySelectedFolderId,
+  rootFolderId,
   depth,
 }: Props) => {
   const dispatch = useAppDispatch();
@@ -57,7 +58,7 @@ export const ChangePathDialog = ({
   const [isAllFoldersOpened, setIsAllFoldersOpened] = useState(true);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    getRootId(),
+    rootFolderId,
   );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
@@ -204,11 +205,11 @@ export const ChangePathDialog = ({
           selectedFolderId={selectedFolderId}
           highlightTemporaryFolders
           rootFolderName={PUBLISHING_FOLDER_NAME}
-          rootFolderId={getRootId()}
+          rootFolderId={rootFolderId}
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={() => handleAddFolder(getRootId())}
+        handleNewFolder={() => handleAddFolder(rootFolderId)}
         onSelectFolderClick={getPath}
       />
     </SelectFolder>
