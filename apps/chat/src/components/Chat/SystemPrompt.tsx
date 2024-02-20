@@ -49,6 +49,16 @@ export const SystemPrompt: FC<Props> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptListRef = useRef<HTMLUListElement | null>(null);
 
+  const debounceOnChange = useMemo(
+    () =>
+      debounceChanges
+        ? debounce(onChangePrompt, 500, {
+            maxWait: 5000,
+          })
+        : onChangePrompt,
+    [debounceChanges, onChangePrompt],
+  );
+
   const {
     content,
     setContent,
@@ -66,16 +76,10 @@ export const SystemPrompt: FC<Props> = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
-  } = usePromptSelection(maxLength, prompt ?? DEFAULT_SYSTEM_PROMPT);
-
-  const debounceOnChange = useMemo(
-    () =>
-      debounceChanges
-        ? debounce(onChangePrompt, 500, {
-            maxWait: 5000,
-          })
-        : onChangePrompt,
-    [debounceChanges, onChangePrompt],
+  } = usePromptSelection(
+    maxLength,
+    prompt ?? DEFAULT_SYSTEM_PROMPT,
+    debounceOnChange,
   );
 
   const handleChange = useCallback(
@@ -93,8 +97,8 @@ export const SystemPrompt: FC<Props> = ({
       debounceOnChange(value);
     },
     [
-      content.length,
       debounceOnChange,
+      content,
       maxLength,
       setContent,
       setIsPromptLimitModalOpen,
