@@ -1,4 +1,4 @@
-import { BasePage } from './basePage';
+import { BasePage, UploadDownloadData } from './basePage';
 
 import { ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
@@ -55,5 +55,16 @@ export class DialHomePage extends BasePage {
       .getPromptBar()
       .getChatLoader()
       .waitForState({ state: 'hidden' });
+  }
+
+  async importFile<T>(
+    uploadData: UploadDownloadData,
+    method: () => Promise<T>,
+  ) {
+    await this.uploadData(uploadData, method);
+    await this.getAppContainer()
+      .getImportExportLoader()
+      .waitForState({ state: 'hidden' });
+    await this.page.waitForLoadState('domcontentloaded');
   }
 }
