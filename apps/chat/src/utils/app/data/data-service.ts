@@ -30,7 +30,6 @@ export class DataService {
   private static setDataStorage(dataStorageType?: string): void {
     switch (dataStorageType) {
       case StorageType.BrowserStorage:
-        // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
         this.dataStorage = new BrowserStorage();
         break;
       case StorageType.API:

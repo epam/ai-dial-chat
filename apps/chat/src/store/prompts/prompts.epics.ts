@@ -91,6 +91,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         switchMap((apiPrompt) => {
           return concat(
             iif(
+              // check if something renamed
               () => apiPrompt?.name !== newPrompt.name,
               of(PromptsActions.uploadPromptsWithFoldersRecursive()),
               of(
