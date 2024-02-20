@@ -152,7 +152,7 @@ export const getDialFilesFromAttachments = (
       const { absolutePath, name } = parseAttachmentUrl(attachment.url);
 
       return {
-        id: constructPath(absolutePath, name),
+        id: attachment.url,
         name,
         contentType: attachment.type,
         folderId: absolutePath,
