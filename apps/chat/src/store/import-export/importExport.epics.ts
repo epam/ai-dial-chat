@@ -1,5 +1,3 @@
-import toast from 'react-hot-toast';
-
 import {
   EMPTY,
   catchError,
@@ -7,7 +5,6 @@ import {
   filter,
   forkJoin,
   from,
-  ignoreElements,
   map,
   mergeAll,
   of,
@@ -71,6 +68,7 @@ import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import {
   ImportExportActions,
   ImportExportSelectors,
@@ -133,6 +131,16 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
 
           return of(ImportExportActions.exportConversationSuccess());
         }),
+        catchError(() =>
+          concat(
+            of(
+              UIActions.showErrorToast(
+                translate('An error occurred while uploading conversation'),
+              ),
+            ),
+            of(ImportExportActions.exportFail()),
+          ),
+        ),
         takeUntil(action$.pipe(filter(ImportExportActions.exportCancel.match))),
       );
     }),
@@ -174,7 +182,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
         folders: of(folders),
       });
     }),
-    tap(({ conversations, folders }) => {
+    switchMap(({ conversations, folders }) => {
       const filteredConversations = conversations.filter(
         Boolean,
       ) as Conversation[];
@@ -182,8 +190,18 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       const appName = SettingsSelectors.selectAppName(state$.value);
 
       exportConversations(filteredConversations, folders, appName);
+      return EMPTY;
     }),
-    ignoreElements(),
+    catchError(() =>
+      concat(
+        of(
+          UIActions.showErrorToast(
+            translate('An error occurred while uploading conversations'),
+          ),
+        ),
+        of(ImportExportActions.exportFail()),
+      ),
+    ),
   );
 
 const exportLocalStorageChatsEpic: AppEpic = (action$, state$) => {
@@ -236,8 +254,10 @@ const importConversationsEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       const { history, folders, isError } = cleanData(payload.data);
       if (isError) {
-        toast.error(errorsMessages.unsupportedDataFormat);
-        return of(ImportExportActions.importFail());
+        return concat(
+          of(UIActions.showErrorToast(errorsMessages.unsupportedDataFormat)),
+          of(ImportExportActions.importFail()),
+        );
       }
 
       const preparedConversations = getImportPreparedConversations({
@@ -251,54 +271,64 @@ const importConversationsEpic: AppEpic = (action$) =>
         toArray(),
         switchMap(() => {
           return ConversationService.getConversations(undefined, true).pipe(
-            catchError(() => {
-              toast.error(
-                translate(
-                  'An error occurred while uploading conversations and folders',
-                ),
+            switchMap((conversationsListing) => {
+              if (
+                preparedConversations.length &&
+                !conversationsListing.length
+              ) {
+                return of(ImportExportActions.importFail());
+              }
+
+              const foldersIds = Array.from(
+                new Set(conversationsListing.map((info) => info.folderId)),
               );
-              return [];
+              //calculate all folders;
+              const conversationsFolders = getFoldersFromIds(
+                Array.from(
+                  new Set(
+                    foldersIds.flatMap((id) =>
+                      getParentFolderIdsFromFolderId(id),
+                    ),
+                  ),
+                ),
+                FolderType.Chat,
+              );
+
+              const cleanFolders = cleanConversationsFolders(folders);
+
+              const newFolders = combineEntities(
+                conversationsFolders,
+                cleanFolders,
+              );
+
+              return concat(
+                of(
+                  ConversationsActions.importConversationsSuccess({
+                    conversations: conversationsListing,
+                    folders: newFolders,
+                  }),
+                ),
+                of(ImportExportActions.importConversationsSuccess()),
+              );
+            }),
+            catchError(() => {
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while uploading conversations and folders',
+                    ),
+                  ),
+                ),
+                of(ImportExportActions.importFail()),
+              );
             }),
           ); //listing of all entities
         }),
-        switchMap((conversationsListing) => {
-          if (preparedConversations.length && !conversationsListing.length) {
-            return of(ImportExportActions.importPromptsFail());
-          }
-
-          const foldersIds = Array.from(
-            new Set(conversationsListing.map((info) => info.folderId)),
-          );
-          //calculate all folders;
-          const conversationsFolders = getFoldersFromIds(
-            Array.from(
-              new Set(
-                foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-              ),
-            ),
-            FolderType.Chat,
-          );
-
-          const cleanFolders = cleanConversationsFolders(folders);
-
-          const newFolders = combineEntities(
-            conversationsFolders,
-            cleanFolders,
-          );
-
-          return concat(
-            of(
-              ConversationsActions.importConversationsSuccess({
-                conversations: conversationsListing,
-                folders: newFolders,
-              }),
-            ),
-            of(ImportExportActions.importConversationsSuccess()),
-          );
-        }),
+        catchError(() => of(ImportExportActions.importFail())),
       );
     }),
-    catchError(() => of(ImportExportActions.importPromptsFail())),
+    catchError(() => of(ImportExportActions.importFail())),
   );
 
 const importZipEpic: AppEpic = (action$, state$) =>
@@ -309,22 +339,36 @@ const importZipEpic: AppEpic = (action$, state$) =>
         switchMap((preUnzipedHistory) => {
           const { zip } = preUnzipedHistory;
           if (!preUnzipedHistory.history || !preUnzipedHistory.history.name) {
-            toast.error(errorsMessages.unsupportedDataFormat);
-            return of(ImportExportActions.importFail());
+            return concat(
+              of(
+                UIActions.showErrorToast(errorsMessages.unsupportedDataFormat),
+              ),
+              of(ImportExportActions.importFail()),
+            );
           }
           const file = zip.file(preUnzipedHistory.history.name);
 
           if (!file) {
-            toast.error(errorsMessages.unsupportedDataFormat);
-            return of(ImportExportActions.importFail());
+            return concat(
+              of(
+                UIActions.showErrorToast(errorsMessages.unsupportedDataFormat),
+              ),
+              of(ImportExportActions.importFail()),
+            );
           }
 
           return from(file.async('string')).pipe(
             switchMap((completeHistoryJson) => {
               const completeHistoryParsed = JSON.parse(completeHistoryJson);
               if (!completeHistoryParsed) {
-                toast.error(errorsMessages.unsupportedDataFormat);
-                return of(ImportExportActions.importFail());
+                return concat(
+                  of(
+                    UIActions.showErrorToast(
+                      errorsMessages.unsupportedDataFormat,
+                    ),
+                  ),
+                  of(ImportExportActions.importFail()),
+                );
               }
 
               const {
@@ -343,8 +387,14 @@ const importZipEpic: AppEpic = (action$, state$) =>
               };
 
               if (isError) {
-                toast.error(errorsMessages.unsupportedDataFormat);
-                return of(ImportExportActions.importFail());
+                return concat(
+                  of(
+                    UIActions.showErrorToast(
+                      errorsMessages.unsupportedDataFormat,
+                    ),
+                  ),
+                  of(ImportExportActions.importFail()),
+                );
               }
 
               const conversationId =
@@ -464,24 +514,9 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
               ),
               map(({ percent, result }) => {
                 if (result) {
-                  const {
-                    id,
-                    name,
-                    absolutePath,
-                    relativePath,
-                    status,
-                    percent,
-                    contentType,
-                  } = result;
                   return ImportExportActions.uploadSingleAttachmentSuccess({
                     apiResult: {
-                      id,
-                      name,
-                      absolutePath,
-                      relativePath,
-                      status,
-                      percent,
-                      contentType,
+                      ...result,
                       oldId: attachment.id,
                     },
                   });
@@ -632,19 +667,17 @@ const checkImportFailEpic: AppEpic = (action$, state$) =>
 const importFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importFail.match),
-    tap(() => {
-      toast.error(errorsMessages.importFailed);
+    switchMap(() => {
+      return of(UIActions.showErrorToast(errorsMessages.importFailed));
     }),
-    ignoreElements(),
   );
 
 const exportFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.exportFail.match),
-    tap(() => {
-      toast.error(errorsMessages.exportFailed);
+    switchMap(() => {
+      return of(UIActions.showErrorToast(errorsMessages.exportFailed));
     }),
-    ignoreElements(),
   );
 
 const resetStateEpic: AppEpic = (action$) =>
