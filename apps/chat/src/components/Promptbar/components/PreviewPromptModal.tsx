@@ -54,7 +54,7 @@ export const PreviewPromptModal = ({
     >
       {selectedPrompt ? (
         <>
-          <ul className="mb-4 max-h-[500px] overflow-auto px-3 md:p-6">
+          <ul className="mb-4 max-h-[435px] overflow-auto px-3 md:p-6">
             <li className="mb-4 flex gap-2.5">
               <p className="mb-1 flex min-w-28 text-secondary">{t('Name: ')}</p>
               <p>{selectedPrompt.name}</p>
