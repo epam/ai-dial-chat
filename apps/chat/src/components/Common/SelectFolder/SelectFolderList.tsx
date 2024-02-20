@@ -19,7 +19,7 @@ import Folder, { FolderProps } from '@/src/components/Folder/Folder';
 
 interface Props<T, P = unknown> {
   folderProps: Omit<FolderProps<T, P>, 'currentFolder'>;
-  handleToggleFolder: (folderId?: string) => void;
+  handleFolderSelect: (folderId?: string) => void;
   isAllEntitiesOpened: boolean;
   rootFolderName: string;
   selectedFolderId?: string;
@@ -29,7 +29,7 @@ interface Props<T, P = unknown> {
 
 export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   folderProps,
-  handleToggleFolder,
+  handleFolderSelect,
   isAllEntitiesOpened,
   selectedFolderId,
   initiallySelectedFolderId,
@@ -51,7 +51,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
         )}
-        onClick={() => handleToggleFolder()}
+        onClick={() => handleFolderSelect()}
       >
         <CaretIconComponent isOpen={isAllEntitiesOpened} />
         {t(rootFolderName)}

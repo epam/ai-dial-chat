@@ -84,7 +84,7 @@ export const SelectFolderModal = ({
   );
 
   const handleFolderSelect = useCallback(
-    (folderId: string) => {
+    (folderId?: string) => {
       setSelectedFolderId(folderId);
       handleToggleFolder(folderId);
     },
@@ -117,7 +117,7 @@ export const SelectFolderModal = ({
             loadingFolderIds: loadingFolderIds,
             featureType: FeatureType.File,
           }}
-          handleToggleFolder={handleToggleFolder}
+          handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
           rootFolderName="All files"
