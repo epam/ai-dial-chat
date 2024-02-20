@@ -57,7 +57,7 @@ export const ChangePathDialog = ({
   const [isAllFoldersOpened, setIsAllFoldersOpened] = useState(true);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    '',
+    getRootId(),
   );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
@@ -204,6 +204,7 @@ export const ChangePathDialog = ({
           selectedFolderId={selectedFolderId}
           highlightTemporaryFolders
           rootFolderName={PUBLISHING_FOLDER_NAME}
+          rootFolderId={getRootId()}
         />
       </SelectFolderHeader>
       <SelectFolderFooter
