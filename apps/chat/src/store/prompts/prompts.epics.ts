@@ -92,11 +92,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
           return concat(
             iif(
               () => apiPrompt?.name !== newPrompt.name,
-              of(
-                PromptsActions.uploadChildPromptsWithFolders({
-                  paths: [newPrompt.folderId],
-                }),
-              ),
+              of(PromptsActions.uploadPromptsWithFoldersRecursive()),
               of(
                 PromptsActions.createNewPromptSuccess({
                   newPrompt,

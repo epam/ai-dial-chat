@@ -320,11 +320,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
               return concat(
                 iif(
+                  // check if something renamed
                   () => apiNames.some((name) => !newNames.includes(name)),
                   of(
-                    ConversationsActions.uploadConversationsWithFolders({
-                      paths: newConversations.map((c) => c.folderId),
-                    }),
+                    ConversationsActions.uploadConversationsWithFoldersRecursive(),
                   ),
                   of(
                     ConversationsActions.addConversations({
