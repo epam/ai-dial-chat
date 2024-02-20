@@ -59,7 +59,7 @@ dialTest(
         ),
       );
     }
-    await folderConversations.expandCollapseFolder(
+    await folderConversations.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
     );
 
@@ -293,7 +293,7 @@ dialTest(
         ),
       );
     }
-    await folderConversations.expandCollapseFolder(
+    await folderConversations.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
     );
 
@@ -414,7 +414,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandCollapseFolder(nestedFolder.name);
+          await folderConversations.expandFolder(nestedFolder.name);
         }
         await folderConversations.openFolderDropdownMenu(
           nestedFolders[levelToDelete].name,

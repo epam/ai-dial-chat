@@ -1331,7 +1331,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await folderConversations.expandCollapseFolder(
+        await folderConversations.expandFolder(
           firstFolderConversation.folders.name,
         );
         await folderConversations.openFolderEntityDropdownMenu(
