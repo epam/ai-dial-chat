@@ -906,9 +906,6 @@ dialTest(
     await dialTest.step('Export 3rd level folder conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      for (const nestedFolder of nestedFolders) {
-        await folderConversations.expandFolder(nestedFolder.name);
-      }
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount].name,
         thirdLevelFolderConversation.name,
@@ -934,11 +931,11 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify imported conversations is in 3rd level folder on the root level',
+      'Verify imported conversations is in 3rd level folder, under ther 2nd level folder',
       async () => {
         await folderConversations.expandFolder(
           nestedFolders[levelsCount].name,
-          { isHttpMethodTriggered: false },
+          { isHttpMethodTriggered: true },
           1,
         );
         await folderConversations

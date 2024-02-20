@@ -48,9 +48,10 @@ export class PromptList extends BaseElement {
       while (optionIndex < optionsCount) {
         await this.page.keyboard.press(keys.arrowDown);
         isPromptSelected = await this.selectOptionFromList(name);
-        if (!isPromptSelected) {
-          optionIndex++;
+        if (isPromptSelected) {
+          break;
         }
+        optionIndex++;
       }
     }
   }

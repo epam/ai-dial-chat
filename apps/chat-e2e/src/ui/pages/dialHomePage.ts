@@ -65,5 +65,6 @@ export class DialHomePage extends BasePage {
     await this.getAppContainer()
       .getImportExportLoader()
       .waitForState({ state: 'hidden' });
+    await this.page.waitForLoadState('domcontentloaded');
   }
 }

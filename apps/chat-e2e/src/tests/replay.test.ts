@@ -986,13 +986,16 @@ dialTest(
         await dialHomePage.importFile({ path: filename }, () =>
           chatBar.importButton.click(),
         );
-        await folderConversations.expandFolder(Import.oldVersionAppFolderName);
+        await folderConversations.expandFolder(Import.oldVersionAppFolderName, {
+          isHttpMethodTriggered: true,
+        });
         await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+          .getConversationByName(ExpectedConstants.newConversationTitle)
           .waitFor();
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,
+          { isHttpMethodTriggered: true },
         );
 
         const newModels = [ModelIds.BISON_001, ModelIds.GPT_4];

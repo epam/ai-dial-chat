@@ -129,6 +129,13 @@ export class SideBar extends BaseElement {
       draggableBounding!.x + draggableBounding!.width / 2,
       draggableBounding!.y + draggableBounding!.height / 2,
     );
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
     await this.page.mouse.up();
   }
 
