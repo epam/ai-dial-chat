@@ -13,7 +13,7 @@ import {
   mergeMap,
   of,
   switchMap,
-  tap,
+  toArray,
   zip,
 } from 'rxjs';
 
@@ -46,6 +46,7 @@ import {
 } from '@/src/utils/app/folders';
 import { getRootId, isRootId } from '@/src/utils/app/id';
 import {
+  cleanPromptsFolders,
   exportPrompt,
   exportPrompts,
   isPromptsFormat,
@@ -590,15 +591,7 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.exportPrompts.match),
     switchMap(() =>
       //listing of all entities
-      PromptService.getPrompts(undefined, true).pipe(
-        catchError((err) => {
-          console.error(
-            'An error occurred while uploading prompts and folders:',
-            err,
-          );
-          return [];
-        }),
-      ),
+      PromptService.getPrompts(undefined, true),
     ),
     switchMap((promptsListing) => {
       const onlyMyPromptsListing = filterOnlyMyEntities(promptsListing);
@@ -606,7 +599,7 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
         new Set(onlyMyPromptsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromIds(
+      const foldersWithPrompts = getFoldersFromIds(
         Array.from(
           new Set(
             foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
@@ -615,27 +608,36 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
         FolderType.Prompt,
       );
 
+      const allFolders = PromptsSelectors.selectFolders(state$.value);
+
+      const folders = combineEntities(foldersWithPrompts, allFolders);
+
       return forkJoin({
         //get all prompts from api
         prompts: zip(
           onlyMyPromptsListing.map((info) => PromptService.getPrompt(info)),
-        ).pipe(
-          catchError((err) => {
-            console.error('An error occurred while uploading prompts:', err);
-            return [];
-          }),
         ),
         folders: of(folders),
       });
     }),
-    tap(({ prompts, folders }) => {
+    switchMap(({ prompts, folders }) => {
       const filteredPrompts = prompts.filter(Boolean) as Prompt[];
 
       const appName = SettingsSelectors.selectAppName(state$.value);
 
       exportPrompts(filteredPrompts, folders, appName);
+      return EMPTY;
     }),
-    ignoreElements(),
+    catchError(() =>
+      concat(
+        of(
+          UIActions.showErrorToast(
+            translate('An error occurred while uploading prompts'),
+          ),
+        ),
+        of(ImportExportActions.exportFail()),
+      ),
+    ),
   );
 
 const exportPromptEpic: AppEpic = (action$, state$) =>
@@ -646,7 +648,14 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
     switchMap((promptAndPayload) => {
       const { prompt } = promptAndPayload;
       if (!prompt) {
-        return of(ImportExportActions.exportFail());
+        return concat(
+          of(
+            UIActions.showErrorToast(
+              translate('An error occurred while uploading prompt'),
+            ),
+          ),
+          of(ImportExportActions.exportFail()),
+        );
       }
 
       const appName = SettingsSelectors.selectAppName(state$.value);
@@ -685,41 +694,53 @@ const importPromptsEpic: AppEpic = (action$) =>
       });
 
       return PromptService.setPrompts(preparedPrompts).pipe(
+        toArray(),
         switchMap(() => {
           return PromptService.getPrompts(undefined, true).pipe(
-            catchError((err) => {
-              console.error(
-                'An error occurred while uploading prompts and folders:',
-                err,
+            switchMap((promptsListing) => {
+              if (preparedPrompts.length && !promptsListing.length) {
+                return of(ImportExportActions.importPromptsFail());
+              }
+
+              const foldersIds = Array.from(
+                new Set(promptsListing.map((info) => info.folderId)),
               );
-              return [];
+              //calculate all folders;
+              const promptsFolders = getFoldersFromIds(
+                Array.from(
+                  new Set(
+                    foldersIds.flatMap((id) =>
+                      getParentFolderIdsFromFolderId(id),
+                    ),
+                  ),
+                ),
+                FolderType.Prompt,
+              );
+
+              const cleanFolders = cleanPromptsFolders(promptsHistory.folders);
+
+              const folders = combineEntities(promptsFolders, cleanFolders);
+
+              return of(
+                PromptsActions.importPromptsSuccess({
+                  prompts: promptsListing,
+                  folders,
+                }),
+              );
+            }),
+            catchError(() => {
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while uploading prompts and folders',
+                    ),
+                  ),
+                ),
+                of(ImportExportActions.importPromptsFail()),
+              );
             }),
           ); //listing of all entities
-        }),
-        switchMap((promptsListing) => {
-          if (!promptsListing.length) {
-            return of(ImportExportActions.importPromptsFail());
-          }
-
-          const foldersIds = Array.from(
-            new Set(promptsListing.map((info) => info.folderId)),
-          );
-          //calculate all folders;
-          const folders = getFoldersFromIds(
-            Array.from(
-              new Set(
-                foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-              ),
-            ),
-            FolderType.Prompt,
-          );
-
-          return of(
-            PromptsActions.importPromptsSuccess({
-              prompts: promptsListing,
-              folders,
-            }),
-          );
         }),
       );
     }),
