@@ -113,7 +113,6 @@ export const ChatView = memo(() => {
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
-  const isSentRef = useRef(false);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const showReplayControls = useMemo(() => {
@@ -463,7 +462,6 @@ export const ChatView = memo(() => {
           activeReplayIndex: 0,
         }),
       );
-      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
@@ -481,7 +479,6 @@ export const ChatView = memo(() => {
         activeReplayIndex: 0,
       }),
     );
-    isSentRef.current = true;
   }, [dispatch, selectedConversations]);
 
   const onEditMessage = useCallback(
@@ -495,7 +492,6 @@ export const ChatView = memo(() => {
           activeReplayIndex: 0,
         }),
       );
-      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
