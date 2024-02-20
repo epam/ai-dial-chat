@@ -14,13 +14,15 @@ import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFol
 
 interface Props {
   isOpen: boolean;
-  selectedFolderName: string | undefined;
+  initialSelectedFolderId: string;
+  rootFolderId: string;
   onClose: (path: string | undefined) => void;
 }
 
 export const SelectFolderModal = ({
   isOpen,
-  selectedFolderName,
+  initialSelectedFolderId,
+  rootFolderId,
   onClose,
 }: Props) => {
   const dispatch = useAppDispatch();
@@ -29,8 +31,8 @@ export const SelectFolderModal = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    selectedFolderName,
+  const [selectedFolderId, setSelectedFolderId] = useState<string>(
+    initialSelectedFolderId || rootFolderId,
   );
 
   const folders = useAppSelector((state) =>
@@ -52,6 +54,7 @@ export const SelectFolderModal = ({
   } = useHandleFileFolders(
     folders,
     openedFoldersIds,
+    rootFolderId,
     setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
@@ -117,10 +120,11 @@ export const SelectFolderModal = ({
             loadingFolderIds: loadingFolderIds,
             featureType: FeatureType.File,
           }}
-          handleToggleFolder={handleToggleFolder}
+          handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
           rootFolderName="All files"
+          rootFolderId={rootFolderId}
         />
       </SelectFolderHeader>
       <SelectFolderFooter

@@ -260,7 +260,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     return {
       redirect: {
         permanent: false,
-        destination: `/api/auth/signin`,
+        destination: `api/auth/signin`,
       },
     };
   }
