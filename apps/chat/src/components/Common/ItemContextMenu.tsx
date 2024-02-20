@@ -2,6 +2,7 @@ import {
   IconClockShare,
   IconCopy,
   IconDots,
+  IconEye,
   IconFileArrowRight,
   IconFolderPlus,
   IconFolderShare,
@@ -59,6 +60,7 @@ interface ItemContextMenuProps {
   onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
+  onPreview?: MouseEventHandler<unknown>;
 }
 
 export default function ItemContextMenu({
@@ -84,6 +86,7 @@ export default function ItemContextMenu({
   onPublishUpdate,
   onOpenChange,
   onDuplicate,
+  onPreview,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -118,6 +121,13 @@ export default function ItemContextMenu({
         dataQa: 'duplicate',
         Icon: IconCopy,
         onClick: onDuplicate,
+      },
+      {
+        name: t('Preview'),
+        display: !!onPreview && isExternal,
+        dataQa: 'preview',
+        Icon: IconEye,
+        onClick: onPreview,
       },
       {
         name: t('Replay'),

@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 import { useTranslation } from 'next-i18next';
 
@@ -37,9 +38,15 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onUpdatePrompt: (prompt: Prompt) => void;
+  isModalPreviewMode?: boolean;
 }
 
-export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
+export const PromptModal: FC<Props> = ({
+  isOpen,
+  onClose,
+  onUpdatePrompt,
+  isModalPreviewMode,
+}) => {
   const dispatch = useAppDispatch();
 
   const selectedPrompt = useAppSelector(PromptsSelectors.selectSelectedPrompt);
@@ -154,6 +161,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
     submitted: submitted,
+    'text-secondary hover:border-primary': isModalPreviewMode,
   });
 
   useEffect(() => {
@@ -172,7 +180,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             : ModalState.OPENED
           : ModalState.CLOSED
       }
-      heading={t('Edit prompt')}
+      heading={`${isModalPreviewMode ? t('Preview') : t('Edit prompt')}: ${name}`}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt) handleEnter(e, selectedPrompt);
@@ -200,6 +208,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               onBlur={onBlur}
               onChange={nameOnChangeHandler}
               data-qa="prompt-name"
+              disabled={isModalPreviewMode}
             />
             <EmptyRequiredInputMessage />
           </div>
@@ -214,13 +223,14 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             <textarea
               ref={descriptionInputRef}
               name="description"
-              className={inputClassName}
+              className={classNames(inputClassName)}
               style={{ resize: 'none' }}
               placeholder={t('A description for your prompt.') || ''}
               value={description}
               onChange={descriptionOnChangeHandler}
               rows={3}
               data-qa="prompt-descr"
+              disabled={isModalPreviewMode}
             />
           </div>
           <div className="mb-5">
@@ -244,17 +254,29 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               onChange={contentOnChangeHandler}
               rows={10}
               data-qa="prompt-value"
+              disabled={isModalPreviewMode}
             />
           </div>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="button button-primary"
-              data-qa="save-prompt"
-              onClick={(e) => handleSubmit(e, selectedPrompt)}
-            >
-              {t('Save')}
-            </button>
+          <div
+            className={classNames(
+              'flex',
+              isModalPreviewMode ? 'justify-center' : 'justify-end',
+            )}
+          >
+            {!isModalPreviewMode ? (
+              <button
+                type="submit"
+                className="button button-primary"
+                data-qa="save-prompt"
+                onClick={(e) => handleSubmit(e, selectedPrompt)}
+              >
+                {t('Save')}
+              </button>
+            ) : (
+              <p className="font-semibold text-secondary">
+                {t('Duplicate the prompt to be able to edit it')}
+              </p>
+            )}
           </div>
         </>
       ) : (
