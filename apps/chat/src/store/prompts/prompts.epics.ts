@@ -88,9 +88,21 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         folderId: getRootId({ apiKey: ApiKeys.Prompts }),
       });
       return PromptService.createPrompt(newPrompt).pipe(
-        switchMap(() =>
-          of(PromptsActions.createNewPromptSuccess({ newPrompt })),
-        ),
+        switchMap((apiPrompt) => {
+          return concat(
+            iif(
+              // check if something renamed
+              () => apiPrompt?.name !== newPrompt.name,
+              of(PromptsActions.uploadPromptsWithFoldersRecursive()),
+              of(
+                PromptsActions.createNewPromptSuccess({
+                  newPrompt,
+                }),
+              ),
+            ),
+            of(PromptsActions.setIsActiveNewPromptRequest(false)),
+          );
+        }),
         catchError((err) => {
           console.error("New prompt wasn't created:", err);
           return concat(

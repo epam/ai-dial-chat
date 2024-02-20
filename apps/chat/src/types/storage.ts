@@ -54,7 +54,7 @@ export interface EntityStorage<
 
   getEntity(info: TEntityInfo): Observable<TEntity | null>;
 
-  createEntity(entity: TEntity): Observable<void>;
+  createEntity(entity: TEntity): Observable<TEntityInfo>;
 
   updateEntity(entity: TEntity): Observable<void>;
 
@@ -87,13 +87,15 @@ export interface DialStorage {
 
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
 
-  createConversation(conversation: Conversation): Observable<void>;
+  createConversation(
+    conversation: Conversation,
+  ): Observable<ConversationInfo | null>;
 
   updateConversation(conversation: Conversation): Observable<void>;
 
   deleteConversation(info: ConversationInfo): Observable<void>;
 
-  setConversations(conversations: Conversation[]): Observable<void>;
+  setConversations(conversations: Conversation[]): Observable<ConversationInfo>;
 
   getPromptsAndFolders(
     path?: string,
@@ -103,11 +105,11 @@ export interface DialStorage {
 
   getPrompt(info: PromptInfo): Observable<Prompt | null>;
 
-  createPrompt(prompt: Prompt): Observable<void>;
+  createPrompt(prompt: Prompt): Observable<PromptInfo | null>;
 
   updatePrompt(prompt: Prompt): Observable<void>;
 
   deletePrompt(info: PromptInfo): Observable<void>;
 
-  setPrompts(prompts: Prompt[]): Observable<void>;
+  setPrompts(prompts: Prompt[]): Observable<PromptInfo>;
 }
