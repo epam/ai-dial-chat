@@ -988,12 +988,15 @@ dialTest(
         await dialHomePage.importFile({ path: filename }, () =>
           chatBar.importButton.click(),
         );
+        await conversations
+          .getConversationByName(
+            ExpectedConstants.newConversationTitle,
+            filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
+          )
+          .waitFor();
         await folderConversations.expandFolder(Import.oldVersionAppFolderName, {
           isHttpMethodTriggered: true,
         });
-        await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle)
-          .waitFor();
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,

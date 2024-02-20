@@ -152,7 +152,7 @@ export class ApiStorage implements DialStorage {
     return from(conversations).pipe(
       concatMap((conv) =>
         this.getConversations(conv.folderId).pipe(
-          concatMap((apiConversations) =>
+          switchMap((apiConversations) =>
             this.tryCreateEntity(
               conv,
               [...conversations, ...apiConversations],
