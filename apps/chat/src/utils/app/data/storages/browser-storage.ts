@@ -1,7 +1,15 @@
 /* eslint-disable no-restricted-globals */
 import toast from 'react-hot-toast';
 
-import { Observable, forkJoin, map, of, switchMap, throwError } from 'rxjs';
+import {
+  Observable,
+  forkJoin,
+  from,
+  map,
+  of,
+  switchMap,
+  throwError,
+} from 'rxjs';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
@@ -76,14 +84,15 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
-  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
-  createConversation(conversation: Conversation): Observable<void> {
+  createConversation(conversation: Conversation): Observable<ConversationInfo> {
     return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
-      map((conversations: Conversation[]) => {
+      switchMap((conversations: Conversation[]) => {
         BrowserStorage.setData(UIStorageKeys.ConversationHistory, [
           ...conversations,
           conversation,
         ]);
+
+        return of(conversation);
       }),
     );
   }
@@ -112,11 +121,11 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
-  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
-  setConversations(conversations: Conversation[]): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.ConversationHistory,
-      conversations,
+  setConversations(
+    conversations: Conversation[],
+  ): Observable<ConversationInfo> {
+    return from(conversations).pipe(
+      switchMap((conv) => this.createConversation(conv)),
     );
   }
 
@@ -140,11 +149,12 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
-  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
-  createPrompt(prompt: Prompt): Observable<void> {
+  createPrompt(prompt: Prompt): Observable<PromptInfo> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []).pipe(
-      map((prompts: Prompt[]) => {
+      switchMap((prompts: Prompt[]) => {
         BrowserStorage.setData(UIStorageKeys.Prompts, [...prompts, prompt]);
+
+        return of(prompt);
       }),
     );
   }
@@ -171,9 +181,8 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
-  // @ts-expect-error TODO: https://github.com/epam/ai-dial-chat/issues/664
-  setPrompts(prompts: Prompt[]): Observable<void> {
-    return BrowserStorage.setData(UIStorageKeys.Prompts, prompts);
+  setPrompts(prompts: Prompt[]): Observable<PromptInfo> {
+    return from(prompts).pipe(switchMap((prompt) => this.createPrompt(prompt)));
   }
 
   getConversationsFolders(path?: string, recursive?: boolean) {
