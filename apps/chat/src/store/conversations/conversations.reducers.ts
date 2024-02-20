@@ -714,6 +714,7 @@ export const conversationsSlice = createSlice({
     },
     uploadConversationsWithFoldersRecursive: (state) => {
       state.conversationsStatus = UploadStatus.LOADING;
+      state.conversationsLoaded = false;
     },
     uploadConversationsSuccess: (
       state,

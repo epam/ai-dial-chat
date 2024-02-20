@@ -18,6 +18,7 @@ import { useAppDispatch } from '@/src/store/hooks';
  *
  * @param folders - Array of folders.
  * @param setErrorMessage - Function to set error message.
+ * @param rootFolderId - root id to check for all items opened.
  * @param openedFoldersIds - Array of opened folders ids.
  * @param setOpenedFoldersIds - Function to set opened folders ids.
  * @param setIsAllFilesOpened - Function to set if all files are opened.
@@ -26,6 +27,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 export const useHandleFileFolders = (
   folders: FolderInterface[],
   openedFoldersIds: string[],
+  rootFolderId: string,
   setErrorMessage: Dispatch<SetStateAction<string | undefined>>,
   setOpenedFoldersIds: Dispatch<SetStateAction<string[]>>,
   setIsAllFilesOpened: Dispatch<SetStateAction<boolean>>,
@@ -77,8 +79,8 @@ export const useHandleFileFolders = (
    * @param folderId - ID of the folder to toggle.
    */
   const handleToggleFolder = useCallback(
-    (folderId: string | undefined) => {
-      if (!folderId) {
+    (folderId: string) => {
+      if (folderId === rootFolderId) {
         setIsAllFilesOpened((value) => !value);
         setOpenedFoldersIds([]);
         return;
@@ -101,6 +103,7 @@ export const useHandleFileFolders = (
       dispatch,
       folders,
       openedFoldersIds,
+      rootFolderId,
       setIsAllFilesOpened,
       setOpenedFoldersIds,
     ],
