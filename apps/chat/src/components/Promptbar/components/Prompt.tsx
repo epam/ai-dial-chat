@@ -203,7 +203,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const handleOpenEditModal: MouseEventHandler = useCallback(
-    (e, isPreview?: boolean) => {
+    (e, isPreview = false) => {
       e.stopPropagation();
       e.preventDefault();
       setIsDeleting(false);
