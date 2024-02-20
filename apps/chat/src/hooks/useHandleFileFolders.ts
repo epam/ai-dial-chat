@@ -18,6 +18,7 @@ import { useAppDispatch } from '@/src/store/hooks';
  *
  * @param folders - Array of folders.
  * @param setErrorMessage - Function to set error message.
+ * @param rootFolderId - root id to check for all items opened.
  * @param openedFoldersIds - Array of opened folders ids.
  * @param setOpenedFoldersIds - Function to set opened folders ids.
  * @param setIsAllFilesOpened - Function to set if all files are opened.

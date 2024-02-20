@@ -86,6 +86,7 @@ export const FileManagerModal = ({
   } = useHandleFileFolders(
     folders,
     openedFoldersIds,
+    getRootId(),
     setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
@@ -301,7 +302,7 @@ export const FileManagerModal = ({
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
                 className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
-                onClick={() => handleToggleFolder(undefined)}
+                onClick={() => handleToggleFolder(getRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
                 {t('All files')}
