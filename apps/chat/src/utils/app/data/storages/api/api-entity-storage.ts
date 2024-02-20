@@ -140,14 +140,14 @@ export abstract class ApiEntityStorage<
     );
   }
 
-  createEntity(entity: TEntity): Observable<void> {
+  createEntity(entity: TEntity): Observable<TEntityInfo> {
     return ApiUtils.request(this.getEntityUrl(entity), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
-    });
+    }).pipe(map((entity) => this.mapEntity(entity)));
   }
 
   updateEntity(entity: TEntity): Observable<void> {

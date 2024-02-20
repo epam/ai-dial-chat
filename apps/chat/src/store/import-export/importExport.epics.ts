@@ -1,5 +1,3 @@
-import toast from 'react-hot-toast';
-
 import {
   EMPTY,
   catchError,
@@ -7,13 +5,13 @@ import {
   filter,
   forkJoin,
   from,
-  ignoreElements,
   map,
   mergeAll,
   of,
   switchMap,
   takeUntil,
   tap,
+  toArray,
   zip,
 } from 'rxjs';
 
@@ -28,18 +26,24 @@ import {
   getOrUploadConversation,
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { constructPath } from '@/src/utils/app/file';
 import {
+  generateNextName,
   getConversationAttachmentWithPath,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
+  splitEntityId,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import {
+  cleanConversationsFolders,
   cleanData,
   exportConversation,
   exportConversations,
   exportPrompts,
   updateAttachment,
 } from '@/src/utils/app/import-export';
+import { translate } from '@/src/utils/app/translation';
 import {
   compressConversationInZip,
   downloadExportZip,
@@ -49,7 +53,7 @@ import {
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
 import { FolderType } from '@/src/types/folder';
-import { LatestExportFormat } from '@/src/types/import-export';
+import { ImportRoot, LatestExportFormat } from '@/src/types/import-export';
 import { AppEpic } from '@/src/types/store';
 
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
@@ -64,6 +68,7 @@ import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import {
   ImportExportActions,
   ImportExportSelectors,
@@ -126,6 +131,16 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
 
           return of(ImportExportActions.exportConversationSuccess());
         }),
+        catchError(() =>
+          concat(
+            of(
+              UIActions.showErrorToast(
+                translate('An error occurred while uploading conversation'),
+              ),
+            ),
+            of(ImportExportActions.exportFail()),
+          ),
+        ),
         takeUntil(action$.pipe(filter(ImportExportActions.exportCancel.match))),
       );
     }),
@@ -167,7 +182,7 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
         folders: of(folders),
       });
     }),
-    tap(({ conversations, folders }) => {
+    switchMap(({ conversations, folders }) => {
       const filteredConversations = conversations.filter(
         Boolean,
       ) as Conversation[];
@@ -175,8 +190,18 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       const appName = SettingsSelectors.selectAppName(state$.value);
 
       exportConversations(filteredConversations, folders, appName);
+      return EMPTY;
     }),
-    ignoreElements(),
+    catchError(() =>
+      concat(
+        of(
+          UIActions.showErrorToast(
+            translate('An error occurred while uploading conversations'),
+          ),
+        ),
+        of(ImportExportActions.exportFail()),
+      ),
+    ),
   );
 
 const exportLocalStorageChatsEpic: AppEpic = (action$, state$) => {
@@ -229,8 +254,10 @@ const importConversationsEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       const { history, folders, isError } = cleanData(payload.data);
       if (isError) {
-        toast.error(errorsMessages.unsupportedDataFormat);
-        return of(ImportExportActions.importFail());
+        return concat(
+          of(UIActions.showErrorToast(errorsMessages.unsupportedDataFormat)),
+          of(ImportExportActions.importFail()),
+        );
       }
 
       const preparedConversations = getImportPreparedConversations({
@@ -241,48 +268,67 @@ const importConversationsEpic: AppEpic = (action$) =>
       return from(
         ConversationService.setConversations(preparedConversations),
       ).pipe(
+        toArray(),
         switchMap(() => {
           return ConversationService.getConversations(undefined, true).pipe(
-            catchError((err) => {
-              console.error(
-                'An error occurred while uploading conversations and folders:',
-                err,
+            switchMap((conversationsListing) => {
+              if (
+                preparedConversations.length &&
+                !conversationsListing.length
+              ) {
+                return of(ImportExportActions.importFail());
+              }
+
+              const foldersIds = Array.from(
+                new Set(conversationsListing.map((info) => info.folderId)),
               );
-              return [];
+              //calculate all folders;
+              const conversationsFolders = getFoldersFromIds(
+                Array.from(
+                  new Set(
+                    foldersIds.flatMap((id) =>
+                      getParentFolderIdsFromFolderId(id),
+                    ),
+                  ),
+                ),
+                FolderType.Chat,
+              );
+
+              const cleanFolders = cleanConversationsFolders(folders);
+
+              const newFolders = combineEntities(
+                conversationsFolders,
+                cleanFolders,
+              );
+
+              return concat(
+                of(
+                  ConversationsActions.importConversationsSuccess({
+                    conversations: conversationsListing,
+                    folders: newFolders,
+                  }),
+                ),
+                of(ImportExportActions.importConversationsSuccess()),
+              );
+            }),
+            catchError(() => {
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while uploading conversations and folders',
+                    ),
+                  ),
+                ),
+                of(ImportExportActions.importFail()),
+              );
             }),
           ); //listing of all entities
         }),
-        switchMap((conversationsListing) => {
-          if (!conversationsListing) {
-            return of(ImportExportActions.importPromptsFail());
-          }
-
-          const foldersIds = Array.from(
-            new Set(conversationsListing.map((info) => info.folderId)),
-          );
-          //calculate all folders;
-          const folders = getFoldersFromIds(
-            Array.from(
-              new Set(
-                foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-              ),
-            ),
-            FolderType.Chat,
-          );
-
-          return concat(
-            of(
-              ConversationsActions.importConversationsSuccess({
-                conversations: conversationsListing,
-                folders: folders,
-              }),
-            ),
-            of(ImportExportActions.importConversationsSuccess()),
-          );
-        }),
+        catchError(() => of(ImportExportActions.importFail())),
       );
     }),
-    catchError(() => of(ImportExportActions.importPromptsFail())),
+    catchError(() => of(ImportExportActions.importFail())),
   );
 
 const importZipEpic: AppEpic = (action$, state$) =>
@@ -293,22 +339,36 @@ const importZipEpic: AppEpic = (action$, state$) =>
         switchMap((preUnzipedHistory) => {
           const { zip } = preUnzipedHistory;
           if (!preUnzipedHistory.history || !preUnzipedHistory.history.name) {
-            toast.error(errorsMessages.unsupportedDataFormat);
-            return of(ImportExportActions.importFail());
+            return concat(
+              of(
+                UIActions.showErrorToast(errorsMessages.unsupportedDataFormat),
+              ),
+              of(ImportExportActions.importFail()),
+            );
           }
           const file = zip.file(preUnzipedHistory.history.name);
 
           if (!file) {
-            toast.error(errorsMessages.unsupportedDataFormat);
-            return of(ImportExportActions.importFail());
+            return concat(
+              of(
+                UIActions.showErrorToast(errorsMessages.unsupportedDataFormat),
+              ),
+              of(ImportExportActions.importFail()),
+            );
           }
 
           return from(file.async('string')).pipe(
             switchMap((completeHistoryJson) => {
               const completeHistoryParsed = JSON.parse(completeHistoryJson);
               if (!completeHistoryParsed) {
-                toast.error(errorsMessages.unsupportedDataFormat);
-                return of(ImportExportActions.importFail());
+                return concat(
+                  of(
+                    UIActions.showErrorToast(
+                      errorsMessages.unsupportedDataFormat,
+                    ),
+                  ),
+                  of(ImportExportActions.importFail()),
+                );
               }
 
               const {
@@ -327,9 +387,16 @@ const importZipEpic: AppEpic = (action$, state$) =>
               };
 
               if (isError) {
-                toast.error(errorsMessages.unsupportedDataFormat);
-                return of(ImportExportActions.importFail());
+                return concat(
+                  of(
+                    UIActions.showErrorToast(
+                      errorsMessages.unsupportedDataFormat,
+                    ),
+                  ),
+                  of(ImportExportActions.importFail()),
+                );
               }
+
               const conversationId =
                 cleanConversations[firstConversationIndex].id;
               const conversationFromState =
@@ -392,75 +459,90 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
       if (!bucket.length) {
         return of(ImportExportActions.importFail());
       }
-      const conversation = completeHistory.history[firstConversationIndex];
 
-      const actions = attachmentsToUpload.map((attachment) => {
-        const formData = new FormData();
+      const importFolderPath = constructPath(getRootId(), ImportRoot.Imports);
 
-        if (!attachment.fileContent) {
-          return of(
-            ImportExportActions.uploadSingleFileFail({
-              id: attachment.id,
-            }),
+      return forkJoin({
+        folders: FileService.getFileFolders(importFolderPath),
+        attachmentsToUpload: of(attachmentsToUpload),
+      }).pipe(
+        switchMap(({ folders, attachmentsToUpload }) => {
+          const conversation = completeHistory.history[firstConversationIndex];
+          const conversationName = conversation.name;
+          const isFolderNameExist = folders.some(
+            (folder) => folder.name === conversationName,
           );
-        }
+          const rootFolderName = isFolderNameExist
+            ? generateNextName(conversationName, conversationName, folders)
+            : conversationName;
 
-        formData.append('attachment', attachment.fileContent, attachment.name);
-        const isImports = attachment.relativePath?.startsWith('imports/');
-        const relativePath = isImports
-          ? attachment.relativePath
-          : `imports/${conversation.id}/${attachment.relativePath}`;
+          const actions = attachmentsToUpload.map((attachment) => {
+            const formData = new FormData();
 
-        return FileService.sendFile(
-          formData,
-          relativePath,
-          attachment.name,
-        ).pipe(
-          filter(
-            ({ percent, result }) =>
-              typeof percent !== 'undefined' || typeof result !== 'undefined',
-          ),
-          map(({ percent, result }) => {
-            if (result) {
-              const {
-                id,
-                name,
-                absolutePath,
-                relativePath,
-                status,
-                percent,
-                contentType,
-              } = result;
-              return ImportExportActions.uploadSingleAttachmentSuccess({
-                apiResult: {
-                  id,
-                  name,
-                  absolutePath,
-                  relativePath,
-                  status,
-                  percent,
-                  contentType,
-                },
-              });
+            if (!attachment.fileContent) {
+              return of(
+                ImportExportActions.uploadSingleFileFail({
+                  id: attachment.id,
+                }),
+              );
             }
 
-            return FilesActions.uploadFileTick({
-              id: attachment.id,
-              percent: percent!,
-            });
-          }),
-          catchError(() => {
-            return of(
-              ImportExportActions.uploadSingleFileFail({
-                id: attachment.id,
+            formData.append(
+              'attachment',
+              attachment.fileContent,
+              attachment.name,
+            );
+            const { parentPath } = splitEntityId(attachment.id);
+            const newParentPath =
+              parentPath && parentPath.replace(`${ImportRoot.Imports}/`, '');
+
+            const relativePath = constructPath(
+              ImportRoot.Imports,
+              rootFolderName,
+              newParentPath,
+            );
+
+            return FileService.sendFile(
+              formData,
+              relativePath,
+              attachment.name,
+            ).pipe(
+              filter(
+                ({ percent, result }) =>
+                  typeof percent !== 'undefined' ||
+                  typeof result !== 'undefined',
+              ),
+              map(({ percent, result }) => {
+                if (result) {
+                  return ImportExportActions.uploadSingleAttachmentSuccess({
+                    apiResult: {
+                      ...result,
+                      oldId: attachment.id,
+                    },
+                  });
+                }
+
+                return FilesActions.uploadFileTick({
+                  id: attachment.id,
+                  percent: percent!,
+                });
+              }),
+              catchError(() => {
+                return of(
+                  ImportExportActions.uploadSingleFileFail({
+                    id: attachment.id,
+                  }),
+                );
               }),
             );
-          }),
-        );
-      });
-      mergeAll(5);
-      return concat(...actions).pipe(
-        takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
+          });
+          mergeAll(5);
+          return concat(...actions).pipe(
+            takeUntil(
+              action$.pipe(filter(ImportExportActions.importStop.match)),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -585,19 +667,17 @@ const checkImportFailEpic: AppEpic = (action$, state$) =>
 const importFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importFail.match),
-    tap(() => {
-      toast.error(errorsMessages.importFailed);
+    switchMap(() => {
+      return of(UIActions.showErrorToast(errorsMessages.importFailed));
     }),
-    ignoreElements(),
   );
 
 const exportFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.exportFail.match),
-    tap(() => {
-      toast.error(errorsMessages.exportFailed);
+    switchMap(() => {
+      return of(UIActions.showErrorToast(errorsMessages.exportFailed));
     }),
-    ignoreElements(),
   );
 
 const resetStateEpic: AppEpic = (action$) =>

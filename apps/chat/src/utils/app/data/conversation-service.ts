@@ -22,7 +22,7 @@ export class ConversationService {
 
   public static createConversation(
     conversation: Conversation,
-  ): Observable<void> {
+  ): Observable<ConversationInfo | null> {
     return DataService.getDataStorage().createConversation(conversation);
   }
 
@@ -58,7 +58,7 @@ export class ConversationService {
 
   public static setConversations(
     conversations: Conversation[],
-  ): Observable<void> {
+  ): Observable<ConversationInfo> {
     return DataService.getDataStorage().setConversations(conversations);
   }
 

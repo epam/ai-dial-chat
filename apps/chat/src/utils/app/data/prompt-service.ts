@@ -26,6 +26,7 @@ export class PromptService {
   ): Observable<PromptInfo[]> {
     return DataService.getDataStorage().getPrompts(path, recursive);
   }
+
   public static getPromptsAndFolders(
     path?: string,
   ): Observable<FoldersAndEntities<PromptInfo>> {
@@ -36,11 +37,11 @@ export class PromptService {
     return DataService.getDataStorage().getPrompt(info);
   }
 
-  public static setPrompts(prompts: Prompt[]): Observable<void> {
+  public static setPrompts(prompts: Prompt[]): Observable<PromptInfo> {
     return DataService.getDataStorage().setPrompts(prompts);
   }
 
-  public static createPrompt(prompt: Prompt): Observable<void> {
+  public static createPrompt(prompt: Prompt): Observable<PromptInfo | null> {
     return DataService.getDataStorage().createPrompt(prompt);
   }
 
