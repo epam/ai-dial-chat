@@ -111,7 +111,7 @@ export const ChangePathDialog = ({
   );
 
   const handleFolderSelect = useCallback(
-    (folderId: string) => {
+    (folderId?: string | undefined) => {
       setSelectedFolderId(folderId);
       handleToggleFolder(folderId);
     },
@@ -198,7 +198,7 @@ export const ChangePathDialog = ({
             newAddedFolderId: newFolderId,
             featureType: FeatureType.File,
           }}
-          handleToggleFolder={handleToggleFolder}
+          handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}
           initiallySelectedFolderId={initiallySelectedFolderId}
           selectedFolderId={selectedFolderId}

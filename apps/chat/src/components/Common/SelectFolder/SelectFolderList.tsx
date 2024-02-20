@@ -19,7 +19,7 @@ import Folder, { FolderProps } from '@/src/components/Folder/Folder';
 
 interface Props<T, P = unknown> {
   folderProps: Omit<FolderProps<T, P>, 'currentFolder'>;
-  handleFolderSelect: (folderId?: string) => void;
+  handleFolderSelect: (folderId?: string | undefined) => void;
   isAllEntitiesOpened: boolean;
   rootFolderName: string;
   selectedFolderId?: string;
