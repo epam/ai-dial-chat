@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import ReactMarkdown from 'react-markdown';
 
 import { useTranslation } from 'next-i18next';
 
