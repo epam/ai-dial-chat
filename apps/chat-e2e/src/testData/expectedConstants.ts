@@ -152,7 +152,7 @@ export enum ModelIds {
   BISON_32k_002 = 'chat-bison-32k@002',
   CODE_BISON_001 = 'codechat-bison@001',
   CODE_BISON_32K_002 = 'codechat-bison-32k@002',
-  DALLE = 'dalle3',
+  DALLE = 'dall-e-3',
   AWS_TITAN = 'amazon.titan-tg1-large',
   AI21_GRANDE = 'ai21.j2-grande-instruct',
   AI21_JUMBO = 'ai21.j2-jumbo-instruct',
