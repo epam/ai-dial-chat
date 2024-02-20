@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast';
+
 import {
   EMPTY,
   Observable,
@@ -14,6 +16,7 @@ import {
   of,
   switchMap,
   tap,
+  toArray,
   zip,
 } from 'rxjs';
 
@@ -46,6 +49,7 @@ import {
 } from '@/src/utils/app/folders';
 import { getRootId, isRootId } from '@/src/utils/app/id';
 import {
+  cleanPromptsFolders,
   exportPrompt,
   exportPrompts,
   isPromptsFormat,
@@ -537,7 +541,7 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
         new Set(onlyMyPromptsListing.map((info) => info.folderId)),
       );
       //calculate all folders;
-      const folders = getFoldersFromIds(
+      const foldersWithPrompts = getFoldersFromIds(
         Array.from(
           new Set(
             foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
@@ -546,13 +550,17 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
         FolderType.Prompt,
       );
 
+      const allFolders = PromptsSelectors.selectFolders(state$.value);
+
+      const folders = combineEntities(foldersWithPrompts, allFolders);
+
       return forkJoin({
         //get all prompts from api
         prompts: zip(
           onlyMyPromptsListing.map((info) => PromptService.getPrompt(info)),
         ).pipe(
-          catchError((err) => {
-            console.error('An error occurred while uploading prompts:', err);
+          catchError(() => {
+            toast.error(translate('An error occurred while uploading prompts'));
             return [];
           }),
         ),
@@ -616,19 +624,21 @@ const importPromptsEpic: AppEpic = (action$) =>
       });
 
       return PromptService.setPrompts(preparedPrompts).pipe(
+        toArray(),
         switchMap(() => {
           return PromptService.getPrompts(undefined, true).pipe(
-            catchError((err) => {
-              console.error(
-                'An error occurred while uploading prompts and folders:',
-                err,
+            catchError(() => {
+              toast.error(
+                translate(
+                  'An error occurred while uploading prompts and folders',
+                ),
               );
               return [];
             }),
           ); //listing of all entities
         }),
         switchMap((promptsListing) => {
-          if (!promptsListing.length) {
+          if (preparedPrompts.length && !promptsListing.length) {
             return of(ImportExportActions.importPromptsFail());
           }
 
@@ -636,7 +646,7 @@ const importPromptsEpic: AppEpic = (action$) =>
             new Set(promptsListing.map((info) => info.folderId)),
           );
           //calculate all folders;
-          const folders = getFoldersFromIds(
+          const promptsFolders = getFoldersFromIds(
             Array.from(
               new Set(
                 foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
@@ -644,6 +654,10 @@ const importPromptsEpic: AppEpic = (action$) =>
             ),
             FolderType.Prompt,
           );
+
+          const cleanFolders = cleanPromptsFolders(promptsHistory.folders);
+
+          const folders = combineEntities(promptsFolders, cleanFolders);
 
           return of(
             PromptsActions.importPromptsSuccess({

@@ -9,7 +9,7 @@ import {
 
 import { RootState } from '..';
 
-type UploadedAttachment = Partial<DialFile>;
+export type UploadedAttachment = Partial<DialFile> & { oldId: string };
 
 export type AttachmentToUpload = DialFile;
 
