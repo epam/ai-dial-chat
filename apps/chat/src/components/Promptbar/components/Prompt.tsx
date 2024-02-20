@@ -1,5 +1,5 @@
-import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb, IconCheck, IconX } from '@tabler/icons-react';
+import {useDismiss, useFloating, useInteractions} from '@floating-ui/react';
+import {IconBulb, IconCheck, IconX} from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEvent,
@@ -8,61 +8,62 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import {useTranslation} from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
-import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
-import { MoveType, getDragImage } from '@/src/utils/app/move';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
+import {isEntityNameOnSameLevelUnique} from '@/src/utils/app/common';
+import {constructPath} from '@/src/utils/app/file';
+import {getNextDefaultName} from '@/src/utils/app/folders';
+import {getRootId, isRootId} from '@/src/utils/app/id';
+import {hasParentWithFloatingOverlay} from '@/src/utils/app/modals';
+import {MoveType, getDragImage} from '@/src/utils/app/move';
+import {defaultMyItemsFilters} from '@/src/utils/app/search';
+import {isEntityOrParentsExternal} from '@/src/utils/app/share';
+import {translate} from '@/src/utils/app/translation';
+import {ApiKeys} from '@/src/utils/server/api';
 
 import {
   BackendDataNodeType,
   BackendResourceType,
   FeatureType,
 } from '@/src/types/common';
-import { MoveToFolderProps } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { SharingType } from '@/src/types/share';
-import { Translation } from '@/src/types/translation';
+import {MoveToFolderProps} from '@/src/types/folder';
+import {Prompt, PromptInfo} from '@/src/types/prompt';
+import {SharingType} from '@/src/types/share';
+import {Translation} from '@/src/types/translation';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {useAppDispatch, useAppSelector} from '@/src/store/hooks';
 import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import {ShareActions} from '@/src/store/share/share.reducers';
+import {UIActions} from '@/src/store/ui/ui.reducers';
 
-import { stopBubbling } from '@/src/constants/chat';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+import {stopBubbling} from '@/src/constants/chat';
+import {DEFAULT_FOLDER_NAME} from '@/src/constants/default-settings';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import {MoveToFolderMobileModal} from '@/src/components/Common/MoveToFolderMobileModal';
+import {PreviewPromptModal} from '@/src/components/Promptbar/components/PreviewPromptModal';
 
 import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
+import {ConfirmDialog} from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
-import { PromptModal } from './PromptModal';
+import {PromptModal} from './PromptModal';
 
 interface Props {
   item: PromptInfo;
   level?: number;
 }
 
-export const PromptComponent = ({ item: prompt, level }: Props) => {
+export const PromptComponent = ({item: prompt, level}: Props) => {
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.Chat);
+  const {t} = useTranslation(Translation.Chat);
 
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
@@ -76,7 +77,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     PromptsSelectors.selectSelectedPromptId,
   );
   const isSelected = selectedPromptId === prompt.id;
-  const { showModal, isModalPreviewMode } = useAppSelector(
+  const {showModal, isModalPreviewMode} = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
   );
   const isExternal = useAppSelector((state) =>
@@ -92,13 +93,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
-  const { refs, context } = useFloating({
+  const {refs, context} = useFloating({
     open: isContextMenu,
     onOpenChange: setIsContextMenu,
   });
 
   const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
+  const {getFloatingProps} = useInteractions([dismiss]);
 
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -166,13 +167,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             }),
           );
         } else {
-          dispatch(PromptsActions.deletePrompt({ prompt }));
+          dispatch(PromptsActions.deletePrompt({prompt}));
         }
         dispatch(PromptsActions.resetSearch());
       }
 
       setIsDeleting(false);
-      dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+      dispatch(PromptsActions.setSelectedPrompt({promptId: undefined}));
     },
     [dispatch, isDeleting, prompt],
   );
@@ -202,15 +203,15 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     [isExternal],
   );
 
-  const handleOpenEditModal: MouseEventHandler = useCallback(
-    (e, isPreview = false) => {
+  const handleOpenEditModal = useCallback(
+    (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
       e.stopPropagation();
       e.preventDefault();
       setIsDeleting(false);
       setIsRenaming(true);
-      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
-      dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
-      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
+      dispatch(PromptsActions.setSelectedPrompt({promptId: prompt.id}));
+      dispatch(PromptsActions.uploadPrompt({promptId: prompt.id}));
+      dispatch(PromptsActions.setIsEditModalOpen({isOpen: true, isPreview}));
     },
     [dispatch, prompt.id],
   );
@@ -231,20 +232,20 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: MoveToFolderProps) => {
+    ({folderId, isNewFolder}: MoveToFolderProps) => {
       const folderPath = (
         isNewFolder
           ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => isRootId(f.folderId)),
-            )
+            translate(DEFAULT_FOLDER_NAME),
+            folders.filter((f) => isRootId(f.folderId)),
+          )
           : folderId
       ) as string;
 
       if (
         !isEntityNameOnSameLevelUnique(
           prompt.name,
-          { ...prompt, folderId: folderPath },
+          {...prompt, folderId: folderPath},
           allPrompts,
         )
       ) {
@@ -268,7 +269,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           PromptsActions.createFolder({
             name: folderPath,
-            parentId: getRootId({ apiKey: ApiKeys.Prompts }),
+            parentId: getRootId({apiKey: ApiKeys.Prompts}),
           }),
         );
       }
@@ -278,9 +279,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           values: {
             folderId: isNewFolder
               ? constructPath(
-                  getRootId({ apiKey: ApiKeys.Prompts }),
-                  folderPath,
-                )
+                getRootId({apiKey: ApiKeys.Prompts}),
+                folderPath,
+              )
               : folderPath,
           },
         }),
@@ -291,8 +292,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const handleClose = useCallback(() => {
-    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+    dispatch(PromptsActions.setIsEditModalOpen({isOpen: false}));
+    dispatch(PromptsActions.setSelectedPrompt({promptId: undefined}));
     setIsRenaming(false);
   }, [dispatch]);
 
@@ -347,7 +348,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
           >
-            <IconBulb size={18} className="text-secondary" />
+            <IconBulb size={18} className="text-secondary"/>
           </ShareIcon>
 
           <div
@@ -362,7 +363,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         {isDeleting && (
           <div className="absolute right-1 z-10 flex">
             <SidebarActionButton handleClick={handleDelete}>
-              <IconCheck size={18} className="hover:text-accent-primary" />
+              <IconCheck size={18} className="hover:text-accent-primary"/>
             </SidebarActionButton>
 
             <SidebarActionButton handleClick={handleCancelDelete}>
@@ -402,7 +403,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onUnpublish={handleOpenUnpublishing}
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
-              onPreview={(e) => handleOpenEditModal(e, true)}
+              onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
             />
           </div>
@@ -419,14 +420,24 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           )}
         </div>
 
-        {showModal && isSelected && (
-          <PromptModal
-            isModalPreviewMode={isModalPreviewMode}
-            isOpen
-            onClose={handleClose}
-            onUpdatePrompt={handleUpdate}
-          />
-        )}
+        {showModal &&
+          isSelected &&
+          (isModalPreviewMode ? (
+            <PreviewPromptModal
+              isOpen
+              onDuplicate={(e) => {
+                handleDuplicate(e);
+                handleClose();
+              }}
+              onClose={handleClose}
+              onUnshare={handleOpenUnsharing}/>
+          ) : (
+            <PromptModal
+              isOpen
+              onClose={handleClose}
+              onUpdatePrompt={handleUpdate}
+            />
+          ))}
       </div>
 
       {isPublishing && (

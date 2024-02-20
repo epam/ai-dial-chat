@@ -60,7 +60,7 @@ interface ItemContextMenuProps {
   onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
-  onPreview?: MouseEventHandler<unknown>;
+  onView?: MouseEventHandler<unknown>;
 }
 
 export default function ItemContextMenu({
@@ -86,7 +86,7 @@ export default function ItemContextMenu({
   onPublishUpdate,
   onOpenChange,
   onDuplicate,
-  onPreview,
+  onView,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -123,11 +123,11 @@ export default function ItemContextMenu({
         onClick: onDuplicate,
       },
       {
-        name: t('Preview'),
-        display: !!onPreview && isExternal,
-        dataQa: 'preview',
+        name: t('View'),
+        display: !!onView && isExternal,
+        dataQa: 'view',
         Icon: IconEye,
-        onClick: onPreview,
+        onClick: onView,
       },
       {
         name: t('Replay'),
