@@ -362,9 +362,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder.folders.name,
-    );
+    await folderConversations.expandFolder(conversationInFolder.folders.name);
     await folderConversations.openFolderEntityDropdownMenu(
       conversationInFolder.folders.name,
       conversationInFolder.conversations[0].name,
@@ -405,9 +403,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await conversations
-      .getConversationInput(conversation.name)
-      .clickTickButton();
+    await conversations.deleteConversationWithTick(conversation.name);
     expect
       .soft(
         await conversations
@@ -545,7 +541,7 @@ dialTest(
       ExpectedConstants.newFolderTitle,
     );
 
-    await folderConversations.expandCollapseFolder(
+    await folderConversations.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
     const isFolderConversationVisible =
@@ -631,7 +627,7 @@ dialTest(
       'Select folder name from menu and conversation is moved into folder',
       async () => {
         await conversations.selectMoveToMenuOption(folderName);
-        await folderConversations.expandCollapseFolder(folderName);
+        await folderConversations.expandFolder(folderName);
         const isFolderConversationVisible =
           await folderConversations.isFolderEntityVisible(
             folderName,
@@ -674,9 +670,7 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await chatBar.createNewFolder();
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder.folders.name,
-    );
+    await folderConversations.expandFolder(conversationInFolder.folders.name);
     await chatBar.deleteAllEntities();
     await confirmationDialog.cancelDialog();
 
@@ -764,14 +758,12 @@ dialTest(
         ),
       );
     }
-    await folderConversations.expandCollapseFolder(
+    await folderConversations.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
     );
 
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder.folders.name,
-    );
-    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+    await folderConversations.expandFolder(conversationInFolder.folders.name);
+    await folderPrompts.expandFolder(promptInFolder.folders.name);
     await chatBar.deleteAllEntities();
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
@@ -812,7 +804,7 @@ dialTest(
         .waitFor();
 
       if (i === 1) {
-        await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
+        await folderPrompts.expandFolder(promptInFolder.folders.name);
       }
       const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
         promptInFolder.folders.name,

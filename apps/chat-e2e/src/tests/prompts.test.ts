@@ -332,10 +332,8 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await promptBar.createNewFolder();
-    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder.folders.name,
-    );
+    await folderPrompts.expandFolder(promptInFolder.folders.name);
+    await folderConversations.expandFolder(conversationInFolder.folders.name);
     await promptBar.deleteAllEntities();
     await confirmationDialog.cancelDialog();
 
@@ -441,13 +439,11 @@ dialTest(
         ),
       );
     }
-    await folderPrompts.expandCollapseFolder(
+    await folderPrompts.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(2),
     );
-    await folderPrompts.expandCollapseFolder(promptInFolder.folders.name);
-    await folderConversations.expandCollapseFolder(
-      conversationInFolder.folders.name,
-    );
+    await folderPrompts.expandFolder(promptInFolder.folders.name);
+    await folderConversations.expandFolder(conversationInFolder.folders.name);
     await conversations
       .getConversationByName(singleConversation.name)
       .waitFor();
@@ -460,7 +456,7 @@ dialTest(
         await folderConversations
           .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
           .waitFor({ state: 'hidden' });
-        await folderConversations.expandCollapseFolder(
+        await folderConversations.expandFolder(
           conversationInFolder.folders.name,
         );
       } else {
