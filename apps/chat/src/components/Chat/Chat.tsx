@@ -55,7 +55,6 @@ import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 import { Feature } from '@epam/ai-dial-shared';
 
 const scrollThrottlingTimeout = 250;
-const bottomTolerance = 30;
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
@@ -212,6 +211,7 @@ export const ChatView = memo(() => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         chatContainerRef.current;
+      const bottomTolerance = 30;
 
       if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
         clearTimeout(disableAutoScrollTimeoutRef.current);
@@ -266,16 +266,7 @@ export const ChatView = memo(() => {
         );
       }
 
-      if (chatContainerRef.current && isSentRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } =
-          chatContainerRef.current;
-
-        if (scrollTop + clientHeight >= scrollHeight - bottomTolerance) {
-          setAutoScroll();
-          isSentRef.current = false;
-        }
-      }
-
+      handleScroll();
       setMergedMessages([...mergedMessages]);
     }
 
