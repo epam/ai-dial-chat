@@ -1,4 +1,4 @@
-import { prepareEntityName, skipEmptyAndJoin } from '@/src/utils/app/common';
+import { prepareEntityName } from '@/src/utils/app/common';
 
 import {
   Conversation,
@@ -218,7 +218,7 @@ export const isChosenConversationValidForCompare = (
 };
 
 export const getOpenAIEntityFullName = (model: OpenAIEntity) =>
-  skipEmptyAndJoin([model.name, model.version], '-') || model.id;
+  [model.name, model.version].filter(Boolean).join('-') || model.id;
 
 interface ModelGroup {
   groupName: string;

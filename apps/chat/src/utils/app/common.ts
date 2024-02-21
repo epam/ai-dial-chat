@@ -91,10 +91,3 @@ export const prepareEntityName = (name: string) => {
 
   return clearName;
 };
-
-export const skipEmptyAndJoin = (
-  values: (string | undefined | null)[],
-  separator = ' ',
-): string => {
-  return values.filter(Boolean).join(separator);
-};
