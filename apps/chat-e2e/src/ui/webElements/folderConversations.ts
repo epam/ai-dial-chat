@@ -1,6 +1,7 @@
 import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
+import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { Folders } from '@/src/ui/webElements/folders';
 import { Input } from '@/src/ui/webElements/input';
 import { Page } from '@playwright/test';
@@ -10,29 +11,24 @@ export class FolderConversations extends Folders {
     super(page, ChatBarSelectors.chatFolders, ChatBarSelectors.conversation);
   }
 
-  private folderConversationInput!: Input;
+  private confirmationDialog!: ConfirmationDialog;
 
-  getFolderConversationInput(name: string): Input {
-    if (!this.folderConversationInput) {
-      this.folderConversationInput = new Input(
-        this.page,
-        `${SideBarSelectors.folder} >> ${
-          ChatBarSelectors.conversation
-        } >> ${SideBarSelectors.renameInput(name)}`,
-      );
+  getConfirmationDialog(): ConfirmationDialog {
+    if (!this.confirmationDialog) {
+      this.confirmationDialog = new ConfirmationDialog(this.page);
     }
-    return this.folderConversationInput;
+    return this.confirmationDialog;
   }
 
-  public async deleteConversation(name: string) {
-    const folderConversation = this.getFolderConversationInput(name);
+  public async deleteConversation() {
+    const confirmationDialog = this.getConfirmationDialog();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );
-      await folderConversation.clickTickButton();
+      await confirmationDialog.confirm();
       return respPromise;
     }
-    await folderConversation.clickTickButton();
+    await confirmationDialog.confirm();
   }
 }

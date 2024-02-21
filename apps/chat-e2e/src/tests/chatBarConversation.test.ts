@@ -351,6 +351,7 @@ dialTest(
     dataInjector,
     conversationDropdownMenu,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-607');
     const conversationInFolder =
@@ -368,9 +369,7 @@ dialTest(
       conversationInFolder.conversations[0].name,
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await folderConversations.deleteConversation(
-      conversationInFolder.conversations[0].name,
-    );
+    await folderConversations.deleteConversation();
     expect
       .soft(
         await folderConversations.isFolderEntityVisible(
