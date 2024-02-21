@@ -920,9 +920,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         heading={t('Confirm renaming')}
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
-        descriptionClasses="text-secondary"
-        textClasses="text-start"
-        buttonsClasses="w-full justify-end"
         description={
           t(
             'Renaming will stop sharing and other users will no longer see this conversation.',

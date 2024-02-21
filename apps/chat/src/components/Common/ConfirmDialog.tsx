@@ -1,7 +1,5 @@
 import { useId, useRef } from 'react';
 
-import classNames from 'classnames';
-
 import { ModalState } from '@/src/types/modal';
 
 import Modal from '@/src/components/Common/Modal';
@@ -12,9 +10,6 @@ interface Props {
   description?: string;
   confirmLabel: string;
   cancelLabel?: string | null;
-  textClasses?: string;
-  buttonsClasses?: string;
-  descriptionClasses?: string;
   onClose: (result: boolean) => void;
 }
 
@@ -24,9 +19,6 @@ export const ConfirmDialog = ({
   confirmLabel,
   cancelLabel,
   isOpen,
-  textClasses,
-  buttonsClasses,
-  descriptionClasses,
   onClose,
 }: Props) => {
   const confirmLabelRef = useRef<HTMLButtonElement>(null);
@@ -44,7 +36,7 @@ export const ConfirmDialog = ({
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
     >
-      <div className={classNames('flex flex-col gap-2', textClasses)}>
+      <div className="flex flex-col gap-2 text-start">
         <h2 id={headingId} className="text-base font-semibold">
           {heading}
         </h2>
@@ -52,13 +44,13 @@ export const ConfirmDialog = ({
           <p
             id={descriptionId}
             data-qa="confirm-message"
-            className={descriptionClasses}
+            className="text-secondary"
           >
             {description}
           </p>
         )}
       </div>
-      <div className={classNames('flex items-center gap-3', buttonsClasses)}>
+      <div className="flex w-full items-center justify-end gap-3">
         {cancelLabel && (
           <button
             className="button button-secondary"
