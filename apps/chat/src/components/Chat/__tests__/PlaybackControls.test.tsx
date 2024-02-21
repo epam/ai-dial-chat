@@ -84,6 +84,7 @@ describe('PlaybackControls', () => {
       {
         id: '1',
         name: '1',
+        folderId: 'conversations/Test',
         playback: {
           isPlayback: true,
           messagesStack: [
@@ -223,6 +224,9 @@ describe('PlaybackControls', () => {
     const playbackPrevMessage = vi.fn();
     vi.mocked(ConversationsActions.playbackPrevMessage).mockImplementation(
       playbackPrevMessage,
+    );
+    vi.mocked(ConversationsSelectors.selectPlaybackActiveIndex).mockReturnValue(
+      2,
     );
     render(
       <PlaybackControls
