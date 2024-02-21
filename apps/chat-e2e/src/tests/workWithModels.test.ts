@@ -392,7 +392,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(gpt4Model.name);
+        await talkToSelector.selectModel(gpt4Model.name, gpt4Model.iconUrl);
         await entitySettings.setSystemPrompt(sysPrompt);
         await chat.sendRequestWithButton(requestTerm);
       },
