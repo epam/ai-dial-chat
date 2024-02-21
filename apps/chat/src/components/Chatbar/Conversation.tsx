@@ -205,7 +205,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       setIsRenaming(false);
     },
-    [conversation.id, dispatch],
+    [conversation.id, conversation.isShared, dispatch],
   );
 
   const handleRename = useCallback(
