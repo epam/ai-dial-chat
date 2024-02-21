@@ -76,9 +76,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const selectedPromptId = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
-  const newlyCreatedPrompt = useAppSelector(
-    PromptsSelectors.selectNewlyCreatedPrompt,
-  );
   const isSelected = selectedPromptId === prompt.id;
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -438,7 +435,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           ) : (
             <PromptModal
               isOpen
-              newlyCreatedPrompt={newlyCreatedPrompt}
               onClose={handleClose}
               onUpdatePrompt={handleUpdate}
             />

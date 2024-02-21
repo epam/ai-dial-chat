@@ -111,32 +111,26 @@ export class Conversations extends SideBarEntities {
 
   public async editConversationNameWithTick(name: string, newName: string) {
     const input = await this.openEditConversationNameMode(name, newName);
-    const confirmationDialog = this.getConfirmationDialog();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );
       await input.clickTickButton();
-      await confirmationDialog.confirm();
       return respPromise;
     }
     await input.clickTickButton();
-    await confirmationDialog.confirm();
   }
 
   public async editConversationNameWithEnter(name: string, newName: string) {
     await this.openEditConversationNameMode(name, newName);
-    const confirmationDialog = this.getConfirmationDialog();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );
       await this.page.keyboard.press(keys.enter);
-      await confirmationDialog.confirm();
       return respPromise;
     }
     await this.page.keyboard.press(keys.enter);
-    await confirmationDialog.confirm();
   }
 
   public async deleteConversationWithTick(name: string) {

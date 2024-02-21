@@ -108,7 +108,6 @@ export const promptsSlice = createSlice({
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
-      state.newlyCreatedPrompt = payload.newPrompt.id;
       state.isActiveNewPromptRequest = false;
     },
     setIsActiveNewPromptRequest: (
@@ -430,10 +429,6 @@ export const promptsSlice = createSlice({
         payload: { isOpen, isPreview = false },
       }: PayloadAction<{ isOpen: boolean; isPreview?: boolean }>,
     ) => {
-      if (!isOpen) {
-        state.newlyCreatedPrompt = undefined;
-      }
-
       state.isEditModalOpen = isOpen;
       state.isModalPreviewMode = isPreview;
     },

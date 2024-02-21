@@ -38,15 +38,9 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onUpdatePrompt: (prompt: Prompt) => void;
-  newlyCreatedPrompt: string | undefined;
 }
 
-export const PromptModal: FC<Props> = ({
-  isOpen,
-  onClose,
-  onUpdatePrompt,
-  newlyCreatedPrompt,
-}) => {
+export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   const dispatch = useAppDispatch();
 
   const selectedPrompt = useAppSelector(PromptsSelectors.selectSelectedPrompt);
@@ -128,46 +122,30 @@ export const PromptModal: FC<Props> = ({
     ],
   );
 
-  const handleUpdate = useCallback(
-    (
-      e: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLDivElement>,
-      selectedPrompt: Prompt,
-    ) => {
+  const handleSubmit = useCallback(
+    (e: MouseEvent<HTMLButtonElement>, selectedPrompt: Prompt) => {
       e.preventDefault();
       e.stopPropagation();
 
       setSubmitted(true);
 
-      if (newlyCreatedPrompt) {
-        updatePrompt(selectedPrompt);
-        return;
-      }
-
-      if (selectedPrompt.name !== name) {
+      if (selectedPrompt.isShared && selectedPrompt.name !== name) {
         setIsConfirmDialog(true);
         return;
       }
 
-      if (
-        selectedPrompt.description !== description ||
-        selectedPrompt.content !== content
-      ) {
-        updatePrompt(selectedPrompt);
-      } else {
-        setSubmitted(false);
-        onClose();
-      }
+      updatePrompt(selectedPrompt);
     },
-    [content, description, name, newlyCreatedPrompt, onClose, updatePrompt],
+    [name, updatePrompt],
   );
 
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLDivElement>, selectedPrompt: Prompt) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        handleUpdate(e, selectedPrompt);
+        updatePrompt(selectedPrompt);
       }
     },
-    [handleUpdate],
+    [updatePrompt],
   );
 
   useEffect(() => {
@@ -279,7 +257,7 @@ export const PromptModal: FC<Props> = ({
               type="submit"
               className="button button-primary"
               data-qa="save-prompt"
-              onClick={(e) => handleUpdate(e, selectedPrompt)}
+              onClick={(e) => handleSubmit(e, selectedPrompt)}
             >
               {t('Save')}
             </button>
@@ -290,11 +268,9 @@ export const PromptModal: FC<Props> = ({
             confirmLabel={t('Rename')}
             cancelLabel={t('Cancel')}
             description={
-              (selectedPrompt.isShared &&
-                t(
-                  'Renaming will stop sharing and other users will no longer see this conversation.',
-                )) ||
-              ''
+              t(
+                'Renaming will stop sharing and other users will no longer see this conversation.',
+              ) || ''
             }
             onClose={(result) => {
               setIsConfirmDialog(false);
@@ -303,6 +279,8 @@ export const PromptModal: FC<Props> = ({
                   ...selectedPrompt,
                   isShared: false,
                 });
+                setSubmitted(false);
+                onClose();
               }
             }}
           />

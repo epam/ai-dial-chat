@@ -77,7 +77,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
     <>
       <ShareIcon
         {...conversation}
-        isHighlighted={isHighlited}
+        isHighlighted={!!isHighlited}
         featureType={FeatureType.Chat}
       >
         {conversation.isReplay && (
@@ -186,7 +186,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string) => {
+    (name: string, removeShareIcon?: boolean) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -194,7 +194,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
-              isShared: false,
+              isShared: removeShareIcon ? false : conversation.isShared,
             },
           }),
         );
@@ -205,7 +205,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       setIsRenaming(false);
     },
-    [conversation.id, dispatch],
+    [conversation.id, conversation.isShared, dispatch],
   );
 
   const handleRename = useCallback(
@@ -232,15 +232,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         return;
       }
 
-      if (newName !== conversation.name) {
+      if (conversation.isShared && newName !== conversation.name) {
         setIsConfirmRenaming(true);
-      } else {
-        setRenameValue('');
-        setIsContextMenu(false);
-        setIsRenaming(false);
+        return;
       }
+
+      performRename(newName);
     },
-    [allConversations, dispatch, renameValue, t],
+    [allConversations, dispatch, performRename, renameValue, t],
   );
 
   const handleEnterDown = useCallback(
@@ -708,16 +707,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
         description={
-          (conversation.isShared &&
-            t(
-              'Renaming will stop sharing and other users will no longer see this conversation.',
-            )) ||
-          ''
+          t(
+            'Renaming will stop sharing and other users will no longer see this conversation.',
+          ) || ''
         }
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {
-            performRename(prepareEntityName(renameValue, true));
+            performRename(prepareEntityName(renameValue, true), true);
           }
         }}
       />

@@ -3,7 +3,6 @@ import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { PromptModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { Page } from '@playwright/test';
 
 export class PromptModalDialog extends BaseElement {
@@ -35,15 +34,6 @@ export class PromptModalDialog extends BaseElement {
     await this.prompt.typeInInput(value);
   }
 
-  private confirmationDialog!: ConfirmationDialog;
-
-  getConfirmationDialog(): ConfirmationDialog {
-    if (!this.confirmationDialog) {
-      this.confirmationDialog = new ConfirmationDialog(this.page);
-    }
-    return this.confirmationDialog;
-  }
-
   public async updatePromptDetailsWithButton(
     name: string,
     description: string,
@@ -71,17 +61,14 @@ export class PromptModalDialog extends BaseElement {
     method: () => Promise<void>,
   ) {
     await this.fillPromptDetails(name, description, value);
-    const confirmationDialog = this.getConfirmationDialog();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'POST',
       );
       await method();
-      await confirmationDialog.confirm();
       return respPromise;
     }
     await method();
-    await confirmationDialog.confirm();
   }
 
   public async getName() {
