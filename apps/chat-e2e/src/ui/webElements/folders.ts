@@ -5,6 +5,7 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { Input } from '@/src/ui/webElements/input';
 import { Page } from '@playwright/test';
@@ -15,6 +16,15 @@ export class Folders extends BaseElement {
   constructor(page: Page, folderSelector: string, entitySelector: string) {
     super(page, folderSelector);
     this.entitySelector = entitySelector;
+  }
+
+  private confirmationDialog!: ConfirmationDialog;
+
+  getConfirmationDialog(): ConfirmationDialog {
+    if (!this.confirmationDialog) {
+      this.confirmationDialog = new ConfirmationDialog(this.page);
+    }
+    return this.confirmationDialog;
   }
 
   private folderInput!: Input;
@@ -92,11 +102,15 @@ export class Folders extends BaseElement {
 
   public async editFolderNameWithEnter(name: string, newName: string) {
     await this.editFolderName(name, newName);
+    const confirmationDialog = this.getConfirmationDialog();
     await this.page.keyboard.press(keys.enter);
+    await confirmationDialog.confirm();
   }
 
   public async editFolderNameWithTick(name: string, newName: string) {
     const folderInput = await this.editFolderName(name, newName);
+    const confirmationDialog = this.getConfirmationDialog();
+
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse((resp) => {
         return (
@@ -105,9 +119,11 @@ export class Folders extends BaseElement {
         );
       });
       await folderInput.clickTickButton();
+      await confirmationDialog.confirm();
       return respPromise;
     }
     await folderInput.clickTickButton();
+    await confirmationDialog.confirm();
   }
 
   public async editFolderName(name: string, newName: string) {
