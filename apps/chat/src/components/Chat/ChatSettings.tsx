@@ -116,8 +116,7 @@ export const ChatSettings = ({
       <div className="max-h-full w-full overflow-auto rounded xl:max-w-[720px] 2xl:max-w-[1000px]">
         <div className="flex flex-col divide-y divide-tertiary bg-layer-2">
           <ConversationSettings
-            conversationId={conversation.id}
-            replay={conversation.replay}
+            conversation={conversation}
             isCloseEnabled
             modelId={currentModelId}
             prompts={prompts}

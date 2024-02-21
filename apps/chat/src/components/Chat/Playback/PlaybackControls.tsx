@@ -73,6 +73,18 @@ export const PlaybackControls = ({
     );
   }, [activeIndex, isActiveIndex, selectedConversations]);
 
+  const isPrevMessageInStack = useMemo(() => {
+    const prevIndex = isMessageStreaming ? 1 : 2;
+    return (
+      selectedConversations.length &&
+      !!selectedConversations[0].playback &&
+      isActiveIndex &&
+      activeIndex >= 0 &&
+      selectedConversations[0].playback.messagesStack.length &&
+      selectedConversations[0].playback.messagesStack[activeIndex - prevIndex]
+    );
+  }, [activeIndex, isActiveIndex, selectedConversations, isMessageStreaming]);
+
   const activeMessage = useMemo(() => {
     if (!isActiveIndex) {
       return;
@@ -116,15 +128,18 @@ export const PlaybackControls = ({
   const handlePrevMessage = useCallback(() => {
     if (phase === 'EMPTY') {
       setPhase('MESSAGE');
-
-      if (isNextMessageInStack) {
+    } else {
+      setPhase('EMPTY');
+      if (isPrevMessageInStack) {
         return;
       }
     }
-    setPhase('EMPTY');
+    if (!isPrevMessageInStack) {
+      return;
+    }
 
     dispatch(ConversationsActions.playbackPrevMessage());
-  }, [dispatch, isNextMessageInStack, phase]);
+  }, [dispatch, isPrevMessageInStack, phase]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

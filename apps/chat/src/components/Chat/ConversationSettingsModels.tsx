@@ -6,7 +6,7 @@ import classNames from 'classnames';
 
 import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
 
-import { Replay } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
@@ -17,12 +17,12 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelsDialog } from './ModelsDialog';
+import { PlaybackModelButton } from './Playback/PlaybackModelButton';
 import { ReplayAsIsButton } from './ReplayAsIsButton';
 
 interface Props {
   modelId: string | undefined;
-  conversationId: string;
-  replay: Replay;
+  conversation: Conversation;
   onModelSelect: (modelId: string) => void;
   unavailableModelId?: string;
 }
@@ -31,8 +31,7 @@ const RECENT_MODELS_COUNT = 5;
 
 export const ConversationSettingsModel = ({
   modelId,
-  replay,
-  conversationId,
+  conversation,
   onModelSelect,
   unavailableModelId,
 }: Props) => {
@@ -53,14 +52,29 @@ export const ConversationSettingsModel = ({
     setMappedEntities(mappedEntities);
   }, [recentModelsIds, modelsMap, unavailableModelId]);
 
+  const playbackModelID =
+    conversation.playback?.messagesStack[
+      conversation.playback.activePlaybackIndex
+    ]?.model?.id ?? conversation.model.id;
+
+  const playbackModelName = modelsMap[playbackModelID]?.name;
+
+  const isPlayback = conversation.playback?.isPlayback;
+
   return (
     <div className="w-full" data-qa="entity-selector">
       <div className="mb-4">{t('Talk to')}</div>
 
       <div className="flex flex-col gap-3" data-qa="recent">
         <div className="grid grid-cols-1 gap-3">
-          {replay.isReplay && (
-            <ReplayAsIsButton replay={replay} conversationId={conversationId} />
+          {conversation.playback?.isPlayback && (
+            <PlaybackModelButton modelName={playbackModelName} />
+          )}
+          {conversation.replay.isReplay && (
+            <ReplayAsIsButton
+              replay={conversation.replay}
+              conversationId={conversation.id}
+            />
           )}
           {unavailableModelId && (
             <button className="flex items-center gap-3 rounded border border-accent-primary p-3 text-left text-xs">
@@ -82,13 +96,16 @@ export const ConversationSettingsModel = ({
           {mappedEntities.map((entity) => (
             <button
               className={classNames(
-                'flex items-center gap-3 rounded border p-3 text-left text-xs',
-                modelId === entity.id && !replay.replayAsIs
+                'flex items-center gap-3 rounded border p-3 text-left text-xs disabled:cursor-not-allowed',
+                modelId === entity.id &&
+                  !conversation.replay.replayAsIs &&
+                  !isPlayback
                   ? 'border-accent-primary'
                   : 'border-primary hover:border-hover',
               )}
               key={entity.id}
               onClick={() => onModelSelect(entity.id)}
+              disabled={isPlayback}
             >
               <ModelIcon entityId={entity.id} entity={entity} size={24} />
               <div className="flex flex-col gap-1">
@@ -106,7 +123,8 @@ export const ConversationSettingsModel = ({
         </div>
       </div>
       <button
-        className="mt-3 inline text-left text-accent-primary"
+        disabled={isPlayback}
+        className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >

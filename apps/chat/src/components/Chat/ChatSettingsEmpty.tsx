@@ -61,8 +61,7 @@ export const ChatSettingsEmpty = ({
           {isShowSettings && isModels && (
             <>
               <ConversationSettings
-                conversationId={conversation.id}
-                replay={conversation.replay}
+                conversation={conversation}
                 modelId={conversation.model.id || defaultModelId}
                 assistantModelId={conversation.assistantModelId}
                 prompt={conversation.prompt}
