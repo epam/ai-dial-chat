@@ -77,7 +77,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
     <>
       <ShareIcon
         {...conversation}
-        isHighlighted={!!isHighlited}
+        isHighlighted={isHighlited}
         featureType={FeatureType.Chat}
       >
         {conversation.isReplay && (
@@ -208,49 +208,46 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [conversation.id, conversation.isShared, dispatch],
   );
 
-  const handleRename = useCallback(
-    (conversation: ConversationInfo) => {
-      const newName = prepareEntityName(renameValue, true);
-      setRenameValue(newName);
+  const handleRename = useCallback(() => {
+    const newName = prepareEntityName(renameValue, true);
+    setRenameValue(newName);
 
-      if (
-        !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
-      ) {
-        dispatch(
-          UIActions.showToast({
-            message: t(
-              'Conversation with name "{{newName}}" already exists in this folder.',
-              {
-                ns: 'chat',
-                newName,
-              },
-            ),
-            type: 'error',
-          }),
-        );
+    if (
+      !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
+    ) {
+      dispatch(
+        UIActions.showToast({
+          message: t(
+            'Conversation with name "{{newName}}" already exists in this folder.',
+            {
+              ns: 'chat',
+              newName,
+            },
+          ),
+          type: 'error',
+        }),
+      );
 
-        return;
-      }
+      return;
+    }
 
-      if (conversation.isShared && newName !== conversation.name) {
-        setIsConfirmRenaming(true);
-        return;
-      }
+    if (conversation.isShared && newName !== conversation.name) {
+      setIsConfirmRenaming(true);
+      return;
+    }
 
-      performRename(newName);
-    },
-    [allConversations, dispatch, performRename, renameValue, t],
-  );
+    performRename(newName);
+  }, [allConversations, conversation, dispatch, performRename, renameValue, t]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
-        handleRename(conversation);
+        handleRename();
       }
     },
-    [conversation, handleRename],
+    [handleRename],
   );
 
   const handleDragStart = useCallback(
@@ -266,37 +263,28 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [isExternal],
   );
 
-  const handleConfirm: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (isDeleting) {
-        if (conversation.sharedWithMe) {
-          dispatch(
-            ShareActions.discardSharedWithMe({
-              resourceId: conversation.id,
-              nodeType: BackendDataNodeType.ITEM,
-              resourceType: BackendResourceType.CONVERSATION,
-            }),
-          );
-        } else {
-          dispatch(
-            ConversationsActions.deleteConversations({
-              conversationIds: [conversation.id],
-            }),
-          );
-        }
-        setIsDeleting(false);
-      } else if (isRenaming) {
-        handleRename(conversation);
-      }
-    },
-    [conversation, dispatch, handleRename, isDeleting, isRenaming],
-  );
+  const handleDelete = useCallback(() => {
+    if (conversation.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceId: conversation.id,
+          nodeType: BackendDataNodeType.ITEM,
+          resourceType: BackendResourceType.CONVERSATION,
+        }),
+      );
+    } else {
+      dispatch(
+        ConversationsActions.deleteConversations({
+          conversationIds: [conversation.id],
+        }),
+      );
+    }
+    setIsDeleting(false);
+  }, [conversation.id, conversation.sharedWithMe, dispatch]);
 
-  const handleCancel: MouseEventHandler<HTMLButtonElement> = useCallback(
+  const handleCancelRename: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
-      setIsDeleting(false);
       setIsRenaming(false);
     },
     [],
@@ -644,12 +632,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         )}
       </div>
 
-      {(isDeleting || isRenaming) && (
+      {isRenaming && (
         <div className="absolute right-1 z-10 flex">
-          <SidebarActionButton handleClick={handleConfirm}>
+          <SidebarActionButton handleClick={() => handleRename()}>
             <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
-          <SidebarActionButton handleClick={handleCancel}>
+          <SidebarActionButton handleClick={handleCancelRename}>
             <IconX
               size={18}
               strokeWidth="2"
@@ -701,6 +689,16 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           }}
         />
       )}
+      <ConfirmDialog
+        isOpen={isDeleting}
+        heading={t('Confirm deletion')}
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsDeleting(false);
+          if (result) handleDelete();
+        }}
+      />
       <ConfirmDialog
         isOpen={isConfirmRenaming}
         heading={t('Confirm renaming')}
