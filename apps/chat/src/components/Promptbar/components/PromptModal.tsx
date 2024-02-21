@@ -88,9 +88,6 @@ export const PromptModal: FC<Props> = ({
       const newName = prepareEntityName(name, true);
       setName(newName);
 
-      setSubmitted(false);
-      onClose();
-
       if (!newName) return;
 
       if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
@@ -141,10 +138,27 @@ export const PromptModal: FC<Props> = ({
 
       setSubmitted(true);
 
-      if (newlyCreatedPrompt) updatePrompt(selectedPrompt);
-      if (selectedPrompt.name !== name) setIsConfirmDialog(true);
+      if (newlyCreatedPrompt) {
+        updatePrompt(selectedPrompt);
+        return;
+      }
+
+      if (selectedPrompt.name !== name) {
+        setIsConfirmDialog(true);
+        return;
+      }
+
+      if (
+        selectedPrompt.description !== description ||
+        selectedPrompt.content !== content
+      ) {
+        updatePrompt(selectedPrompt);
+      } else {
+        setSubmitted(false);
+        onClose();
+      }
     },
-    [name, newlyCreatedPrompt, updatePrompt],
+    [content, description, name, newlyCreatedPrompt, onClose, updatePrompt],
   );
 
   const handleEnter = useCallback(
@@ -276,10 +290,11 @@ export const PromptModal: FC<Props> = ({
             confirmLabel={t('Rename')}
             cancelLabel={t('Cancel')}
             description={
-              selectedPrompt.isShared &&
-              t(
-                'Renaming will stop sharing and other users will no longer see this conversation.',
-              )
+              (selectedPrompt.isShared &&
+                t(
+                  'Renaming will stop sharing and other users will no longer see this conversation.',
+                )) ||
+              ''
             }
             onClose={(result) => {
               setIsConfirmDialog(false);

@@ -919,10 +919,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
         description={
-          currentFolder.isShared &&
-          t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
-          )
+          (currentFolder.isShared &&
+            t(
+              'Renaming will stop sharing and other users will no longer see this conversation.',
+            )) ||
+          ''
         }
         onClose={(result) => {
           setIsConfirmRenaming(false);
