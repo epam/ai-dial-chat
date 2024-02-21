@@ -1,5 +1,6 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
+  ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
   Import,
@@ -23,7 +24,6 @@ const newDescr = 'test description';
 const newValue = 'what is {{A}}';
 const levelsCount = 3;
 
-//TODO: uncomment when issue 767 is fixed
 dialTest(
   'Export and import prompt structure with all prompts.\n' +
     'Continue working with imported file. Add imported prompt to a message',
@@ -103,9 +103,9 @@ dialTest(
         await folderPrompts
           .getFolderByName(promptsInsideFolder.folders.name)
           .waitFor();
-        // await folderPrompts
-        //   .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-        //   .waitFor();
+        await folderPrompts
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+          .waitFor();
 
         await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
 

@@ -214,7 +214,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(bison.name);
+        await talkToSelector.selectModel(bison.name, bison.iconUrl);
 
         const isSendMessageBtnEnabled =
           await sendMessage.sendMessageButton.isElementEnabled();
@@ -332,7 +332,7 @@ dialTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels(),
     );
-    await talkToSelector.selectModel(randomModel.name);
+    await talkToSelector.selectModel(randomModel.name, randomModel.iconUrl);
     const sysPrompt = 'test prompt';
     const temp = 0;
     await entitySettings.setSystemPrompt(sysPrompt);
@@ -382,7 +382,7 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(bison.name);
+    await talkToSelector.selectModel(bison.name, bison.iconUrl);
     await chat.sendRequestWithButton('test message');
     await chatBar.createNewConversation();
     const modelBorderColors = await recentEntities

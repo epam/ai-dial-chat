@@ -255,7 +255,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const newName = prepareEntityName(renameValue);
+    const newName = prepareEntityName(renameValue, true);
     setRenameValue(newName);
 
     if (

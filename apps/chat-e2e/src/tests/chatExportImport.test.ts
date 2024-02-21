@@ -155,10 +155,8 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-907');
-    setIssueIds('767', '768');
     let nestedFolders: TestFolder[];
     let conversationOutsideFolder: TestConversation;
     let nestedConversations: TestConversation[] = [];
