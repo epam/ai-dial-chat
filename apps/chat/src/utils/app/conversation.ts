@@ -24,7 +24,7 @@ import { compareEntitiesByName, splitEntityId } from './folders';
 import { getRootId } from './id';
 
 import groupBy from 'lodash-es/groupBy';
-import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -228,7 +228,7 @@ interface ModelGroup {
 export const groupModelsAndSaveOrder = (
   models: OpenAIEntity[],
 ): ModelGroup[] => {
-  const uniqModels = uniq(models);
+  const uniqModels = uniqBy(models, 'id');
   const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);
   const insertedSet = new Set();
   const result: ModelGroup[] = [];
