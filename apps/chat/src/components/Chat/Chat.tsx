@@ -114,7 +114,6 @@ export const ChatView = memo(() => {
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
-  const scrollBlockRef = useRef(false);
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
@@ -205,12 +204,6 @@ export const ChatView = memo(() => {
   }, [scrollDown]);
 
   const handleScroll = useCallback(() => {
-    if (scrollBlockRef.current) {
-      setAutoScrollEnabled(false);
-      setShowScrollDownButton(true);
-      return;
-    }
-
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         chatContainerRef.current;
