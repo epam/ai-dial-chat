@@ -144,8 +144,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
-
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
@@ -278,6 +278,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         }),
       );
 
+      return;
+    }
+
+    if (currentFolder.isShared && newName !== currentFolder.name) {
+      setIsConfirmRenaming(true);
       return;
     }
 
@@ -759,8 +764,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 if (isRenaming) {
                   handleRename();
                 }
-
-                setIsRenaming(false);
               }}
             >
               <CheckIcon
@@ -912,6 +915,34 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }}
         />
       )}
+      <ConfirmDialog
+        isOpen={isConfirmRenaming}
+        heading={t('Confirm renaming')}
+        confirmLabel={t('Rename')}
+        cancelLabel={t('Cancel')}
+        descriptionClasses="text-secondary"
+        textClasses="text-start"
+        buttonsClasses="w-full justify-end"
+        description={
+          t(
+            'Renaming will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          setIsConfirmRenaming(false);
+          if (result) {
+            const newName = prepareEntityName(renameValue, true);
+
+            if (newName) {
+              onRenameFolder!(newName, currentFolder.id);
+            }
+
+            setRenameValue('');
+            setIsRenaming(false);
+            setIsContextMenu(false);
+          }
+        }}
+      />
     </div>
   );
 };

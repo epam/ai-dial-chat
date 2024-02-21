@@ -158,7 +158,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+
   const isSelected = selectedConversationIds.includes(conversation.id);
 
   const { refs, context } = useFloating({
@@ -181,6 +183,28 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const isEmptyConversation = !(
     (conversation as Conversation).messages?.length > 0
+  );
+
+  const performRename = useCallback(
+    (name: string) => {
+      if (name.length > 0) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
+              name,
+              isNameChanged: true,
+            },
+          }),
+        );
+
+        setRenameValue('');
+        setIsContextMenu(false);
+      }
+
+      setIsRenaming(false);
+    },
+    [conversation.id, dispatch],
   );
 
   const handleRename = useCallback(
@@ -207,24 +231,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         return;
       }
 
-      if (newName.length > 0) {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: {
-              name: newName,
-              isNameChanged: true,
-            },
-          }),
-        );
-
-        setRenameValue('');
-        setIsContextMenu(false);
+      if (conversation.isShared && newName !== conversation.name) {
+        setIsConfirmRenaming(true);
+        return;
       }
 
-      setIsRenaming(false);
+      performRename(newName);
     },
-    [allConversations, dispatch, renameValue, t],
+    [allConversations, dispatch, performRename, renameValue, t],
   );
 
   const handleEnterDown = useCallback(
@@ -686,6 +700,26 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           }}
         />
       )}
+      <ConfirmDialog
+        isOpen={isConfirmRenaming}
+        heading={t('Confirm renaming')}
+        confirmLabel={t('Rename')}
+        cancelLabel={t('Cancel')}
+        descriptionClasses="text-secondary"
+        textClasses="text-start"
+        buttonsClasses="w-full justify-end"
+        description={
+          t(
+            'Renaming will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          setIsConfirmRenaming(false);
+          if (result) {
+            performRename(prepareEntityName(renameValue, true));
+          }
+        }}
+      />
     </div>
   );
 };
