@@ -3,6 +3,8 @@ import SVG from 'react-inlinesvg';
 
 import classNames from 'classnames';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntity } from '@/src/types/openai';
 
@@ -22,7 +24,7 @@ const ModelIconTemplate = memo(
       entity?.type === EntityType.Addon
         ? `api/themes/image?name=default-addon`
         : `api/themes/image?name=default-model`;
-
+    const description = entity ? getOpenAIEntityFullName(entity) : entityId;
     return (
       <span
         className={classNames(
@@ -37,14 +39,14 @@ const ModelIconTemplate = memo(
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height={size}
-          description={entity?.name || entityId}
+          description={description}
           cacheRequests={false}
           loader={
             <SVG
               src={fallbackUrl}
               width={size}
               height={size}
-              description={entity?.name || entityId}
+              description={description}
             />
           }
         >
@@ -52,7 +54,7 @@ const ModelIconTemplate = memo(
             src={fallbackUrl}
             width={size}
             height={size}
-            description={entity?.name || entityId}
+            description={description}
           />
         </SVG>
       </span>

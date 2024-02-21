@@ -1,4 +1,4 @@
-import { prepareEntityName } from '@/src/utils/app/common';
+import { prepareEntityName, skipEmptyAndJoin } from '@/src/utils/app/common';
 
 import {
   Conversation,
@@ -8,7 +8,11 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import {
+  OpenAIEntity,
+  OpenAIEntityAddon,
+  OpenAIEntityModel,
+} from '@/src/types/openai';
 
 import {
   ApiKeys,
@@ -209,3 +213,6 @@ export const isChosenConversationValidForCompare = (
 
   return true;
 };
+
+export const getOpenAIEntityFullName = (model: OpenAIEntity) =>
+  skipEmptyAndJoin([model.name, model.version], '-') || model.id;

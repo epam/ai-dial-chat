@@ -4,7 +4,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
+import {
+  getOpenAIEntityFullName,
+  getValidEntitiesFromIds,
+} from '@/src/utils/app/conversation';
 
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -92,7 +95,9 @@ export const ConversationSettingsModel = ({
             >
               <ModelIcon entityId={entity.id} entity={entity} size={24} />
               <div className="flex flex-col gap-1">
-                <span data-qa="entity-name">{entity.name}</span>
+                <span data-qa="entity-name">
+                  {getOpenAIEntityFullName(entity)}
+                </span>
                 {entity.description && (
                   <span className="text-secondary" data-qa="entity-descr">
                     <EntityMarkdownDescription isShortDescription>

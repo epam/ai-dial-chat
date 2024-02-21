@@ -1,5 +1,7 @@
 import { useTranslation } from 'next-i18next';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
@@ -18,7 +20,7 @@ export const ModelDescription = ({ model }: Props) => {
       <span>{t('More info')}</span>
       <div className="flex items-center gap-2" data-qa="info-app">
         <ModelIcon entity={model} entityId={model.id} size={24} />
-        <span>{model.name}</span>
+        <span>{getOpenAIEntityFullName(model)}</span>
       </div>
       {model.description && (
         <span className="text-xs text-secondary" data-qa="app-descr">

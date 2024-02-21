@@ -5,13 +5,14 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { IconChevronDown, IconX } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { doesModelContainSearchTerm } from '@/src/utils/app/search';
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
@@ -26,35 +27,65 @@ import {
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
+import { ModelVersionSelect } from './ModelVersionSelect';
 
-const Entity = ({
-  entity,
-  selectedModelId,
-  onSelect,
-}: {
-  entity: OpenAIEntity;
+import groupBy from 'lodash-es/groupBy';
+
+interface EntityProps {
+  entities: OpenAIEntity[];
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
-}) => {
+}
+
+const Entity = ({ entities, selectedModelId, onSelect }: EntityProps) => {
   const [isOpened, setIsOpened] = useState(false);
+
+  const currentEntity = useMemo(
+    () =>
+      (entities.length > 1
+        ? entities.find((e) => e.id === selectedModelId)
+        : entities[0]) ?? entities[0],
+    [entities, selectedModelId],
+  );
+
+  const description = currentEntity.description;
 
   return (
     <div
-      key={entity.id}
-      className={`flex cursor-pointer items-center gap-3 rounded border px-3 py-2 hover:border-hover ${
-        selectedModelId === entity.id
+      className={classNames(
+        'flex cursor-pointer items-center gap-3 rounded border px-3 py-2 hover:border-hover',
+        selectedModelId === currentEntity.id
           ? 'border-accent-primary'
-          : 'border-primary'
-      } ${isOpened ? 'md:col-span-2' : 'md:col-span-1'}`}
-      onClick={() => {
-        onSelect(entity.id);
+          : 'border-primary',
+        isOpened ? 'md:col-span-2' : 'md:col-span-1',
+      )}
+      onClick={(e) => {
+        if (
+          !hasParentWithAttribute(
+            e.target as HTMLAnchorElement,
+            'data-model-versions',
+          ) &&
+          !hasParentWithAttribute(
+            e.target as HTMLAnchorElement,
+            'data-floating-ui-portal',
+          )
+        ) {
+          onSelect(currentEntity.id);
+        }
       }}
       data-qa="group-entity"
     >
-      <ModelIcon entityId={entity.id} entity={entity} size={24} />
-      <div className="flex flex-col gap-1 text-left">
-        <span data-qa="group-entity-name">{entity.name}</span>
-        {entity.description && (
+      <ModelIcon entityId={currentEntity.id} entity={currentEntity} size={24} />
+      <div className="flex w-full flex-col gap-1 text-left">
+        <div className="flex items-center justify-between">
+          <span data-qa="group-entity-name">{currentEntity.name}</span>
+          <ModelVersionSelect
+            entities={entities}
+            onSelect={onSelect}
+            currentEntity={currentEntity}
+          />
+        </div>
+        {description && (
           <span
             className="text-secondary"
             onClick={(e) => {
@@ -65,12 +96,12 @@ const Entity = ({
             data-qa="group-entity-descr"
           >
             <EntityMarkdownDescription isShortDescription={!isOpened}>
-              {entity.description}
+              {description}
             </EntityMarkdownDescription>
           </span>
         )}
       </div>
-      {entity.description && entity.description.indexOf('\n\n') !== -1 && (
+      {description && description.indexOf('\n\n') !== -1 && (
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -102,18 +133,17 @@ const EntityListing = ({
   selectedModelId,
   onSelect,
 }: EntityListingProps) => {
+  const groupedModels = groupBy(entities, (e) => e.name);
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
       <span className="text-secondary">{heading}</span>
       <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
-        {entities.map((entity) => (
+        {Object.keys(groupedModels).map((modelGroupName) => (
           <Entity
-            key={entity.id}
-            entity={entity}
+            key={modelGroupName}
+            entities={groupedModels[modelGroupName]}
             selectedModelId={selectedModelId}
-            onSelect={(id) => {
-              onSelect(id);
-            }}
+            onSelect={onSelect}
           />
         ))}
       </div>
@@ -136,7 +166,7 @@ const getFilteredEntities = (
   return models.filter(
     (model) =>
       entityTypes.includes(model.type) &&
-      doesModelContainSearchTerm(model, searchTerm),
+      doesOpenAIEntityContainSearchTerm(model, searchTerm),
   );
 };
 

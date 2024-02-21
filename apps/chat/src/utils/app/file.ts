@@ -4,6 +4,7 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { decodeApiUrl, encodeApiUrl } from '../server/api';
+import { skipEmptyAndJoin } from './common';
 import { getPathToFolderById } from './folders';
 
 import escapeStringRegexp from 'escape-string-regexp';
@@ -23,7 +24,7 @@ export function triggerDownload(url: string, name: string): void {
 export const constructPath = (
   ...values: (string | undefined | null)[]
 ): string => {
-  return values.filter(Boolean).join('/');
+  return skipEmptyAndJoin(values, '/');
 };
 
 export const getRelativePath = (
@@ -152,7 +153,7 @@ export const getDialFilesFromAttachments = (
       const { absolutePath, name } = parseAttachmentUrl(attachment.url);
 
       return {
-        id: absolutePath,
+        id: attachment.url,
         name,
         contentType: attachment.type,
         folderId: absolutePath,
