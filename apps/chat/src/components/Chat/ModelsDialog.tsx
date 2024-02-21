@@ -26,7 +26,7 @@ import { ModelList } from './ModelList';
 interface ModelsDialogProps {
   selectedModelId: string | undefined;
   isOpen: boolean;
-  onModelSelect: (selectedModelId: string) => void;
+  onModelSelect: (selectedModelId: string, rearrange?: boolean) => void;
   onClose: () => void;
 }
 
@@ -124,7 +124,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
 
   const handleSelectModel = useCallback(
     (entityId: string) => {
-      onModelSelect(entityId);
+      onModelSelect(entityId, true);
       onClose();
     },
     [onClose, onModelSelect],

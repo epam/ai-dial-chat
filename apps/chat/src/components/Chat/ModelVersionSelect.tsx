@@ -40,9 +40,11 @@ export const ModelVersionSelect = ({
       type="contextMenu"
       placement="bottom-end"
       onOpenChange={setIsOpen}
+      data-qa="model-version-select"
       trigger={
         <div
           className="flex items-center justify-between gap-2"
+          data-qa="model-version-select-trigger"
           data-model-versions
         >
           <span className="truncate">
@@ -70,6 +72,7 @@ export const ModelVersionSelect = ({
           value={entity.id}
           onClick={onChangeHandler}
           data-model-versions
+          data-qa="model-version-option"
         />
       ))}
     </Menu>

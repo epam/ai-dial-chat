@@ -14,6 +14,8 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
+import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
+
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelList } from './ModelList';
@@ -27,8 +29,6 @@ interface Props {
   onModelSelect: (modelId: string) => void;
   unavailableModelId?: string;
 }
-
-const RECENT_MODELS_COUNT = 5;
 
 export const ConversationSettingsModel = ({
   modelId,
@@ -50,9 +50,14 @@ export const ConversationSettingsModel = ({
   );
 
   const handleModelSelect = useCallback(
-    (entityId: string) => {
+    (entityId: string, rearrange?: boolean) => {
       onModelSelect(entityId);
-      dispatch(ModelsActions.updateRecentModels({ modelId: entityId }));
+      dispatch(
+        ModelsActions.updateRecentModels({
+          modelId: entityId,
+          rearrange,
+        }),
+      );
     },
     [dispatch, onModelSelect],
   );
