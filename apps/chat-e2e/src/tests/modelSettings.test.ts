@@ -37,7 +37,7 @@ dialTest(
     await entitySettings.setSystemPrompt(sysPrompt);
     await temperatureSlider.setTemperature(temp);
 
-    await talkToSelector.selectModel(randomModel.name);
+    await talkToSelector.selectModel(randomModel.name, randomModel.iconUrl);
     const modelBorderColors = await recentEntities
       .getRecentEntity(randomModel.name)
       .getAllBorderColors();
