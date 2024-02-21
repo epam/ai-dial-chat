@@ -20,6 +20,7 @@ dialTest(
     banner,
     header,
     appContainer,
+    chatMessages,
     accountSettings,
     accountDropdownMenu,
     confirmationDialog,
@@ -136,7 +137,7 @@ dialTest(
       'Refresh page and verify banner is not shown',
       async () => {
         await dialHomePage.reloadPage();
-        await accountSettings.waitForState({ state: 'visible' });
+        await chatMessages.waitForState({ state: 'attached' });
         expect
           .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
           .toBeFalsy();
@@ -150,6 +151,7 @@ dialTest(
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
         await loginPage.ssoSignInButton.click();
+        await chatMessages.waitForState({ state: 'attached' });
         expect
           .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
           .toBeFalsy();

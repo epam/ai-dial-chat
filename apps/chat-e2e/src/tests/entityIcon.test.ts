@@ -139,7 +139,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(model.name);
+        await talkToSelector.selectModel(model.name, model.iconUrl);
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },
     );
