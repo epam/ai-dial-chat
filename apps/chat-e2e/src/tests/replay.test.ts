@@ -260,7 +260,9 @@ dialTest(
     await dialTest.step(
       'Change model and settings for replay conversation and press Start replay',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [gpt35Model.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectModel(bison.name);
         await entitySettings.setSystemPrompt(replayPrompt);
