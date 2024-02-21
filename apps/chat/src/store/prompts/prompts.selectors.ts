@@ -342,3 +342,8 @@ export const selectIsPromptsBackedUp = createSelector(
   [rootSelector],
   (state) => state.isPromptsBackedUp,
 );
+
+export const selectNewlyCreatedPrompt = createSelector(
+  [rootSelector],
+  (state) => state.newlyCreatedPrompt,
+);

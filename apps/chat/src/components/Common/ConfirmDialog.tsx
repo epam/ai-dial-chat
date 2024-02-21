@@ -1,5 +1,7 @@
 import { useId, useRef } from 'react';
 
+import classNames from 'classnames';
+
 import { ModalState } from '@/src/types/modal';
 
 import Modal from '@/src/components/Common/Modal';
@@ -37,7 +39,7 @@ export const ConfirmDialog = ({
       hideClose
     >
       <div className="flex flex-col gap-2 text-start">
-        <h2 id={headingId} className="text-base font-semibold">
+        <h2 id={headingId} className="flex text-base font-semibold">
           {heading}
         </h2>
         {description && (
@@ -50,7 +52,12 @@ export const ConfirmDialog = ({
           </p>
         )}
       </div>
-      <div className="flex w-full items-center justify-end gap-3">
+      <div
+        className={classNames(
+          'flex w-full items-center gap-3',
+          description ? 'justify-end' : 'justify-center',
+        )}
+      >
         {cancelLabel && (
           <button
             className="button button-secondary"

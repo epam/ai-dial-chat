@@ -281,21 +281,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    if (currentFolder.isShared && newName !== currentFolder.name) {
+    if (newName !== currentFolder.name) {
       setIsConfirmRenaming(true);
-      return;
+    } else {
+      setRenameValue('');
+      setIsRenaming(false);
+      setIsContextMenu(false);
     }
-
-    newName && onRenameFolder(newName, currentFolder.id);
-    setRenameValue('');
-    setIsRenaming(false);
-    setIsContextMenu(false);
   }, [
+    allFoldersWithoutFilters,
+    currentFolder,
+    dispatch,
     onRenameFolder,
     renameValue,
-    currentFolder,
-    allFoldersWithoutFilters,
-    dispatch,
     t,
   ]);
 
@@ -921,9 +919,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
         description={
+          currentFolder.isShared &&
           t(
             'Renaming will stop sharing and other users will no longer see this conversation.',
-          ) || ''
+          )
         }
         onClose={(result) => {
           setIsConfirmRenaming(false);

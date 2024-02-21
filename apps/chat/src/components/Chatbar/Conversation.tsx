@@ -77,7 +77,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
     <>
       <ShareIcon
         {...conversation}
-        isHighlighted={!!isHighlited}
+        isHighlighted={isHighlited}
         featureType={FeatureType.Chat}
       >
         {conversation.isReplay && (
@@ -232,14 +232,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         return;
       }
 
-      if (conversation.isShared && newName !== conversation.name) {
+      if (newName !== conversation.name) {
         setIsConfirmRenaming(true);
-        return;
+      } else {
+        setRenameValue('');
+        setIsContextMenu(false);
+        setIsRenaming(false);
       }
-
-      performRename(newName);
     },
-    [allConversations, dispatch, performRename, renameValue, t],
+    [allConversations, dispatch, renameValue, t],
   );
 
   const handleEnterDown = useCallback(
@@ -707,9 +708,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
         description={
+          conversation.isShared &&
           t(
             'Renaming will stop sharing and other users will no longer see this conversation.',
-          ) || ''
+          )
         }
         onClose={(result) => {
           setIsConfirmRenaming(false);
