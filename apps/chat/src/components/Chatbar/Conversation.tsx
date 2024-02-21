@@ -186,7 +186,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string) => {
+    (name: string, removeShareIcon?: boolean) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -194,6 +194,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
+              isShared: removeShareIcon ? false : conversation.isShared,
             },
           }),
         );
@@ -716,7 +717,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {
-            performRename(prepareEntityName(renameValue, true));
+            performRename(prepareEntityName(renameValue, true), true);
           }
         }}
       />
