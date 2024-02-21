@@ -23,6 +23,9 @@ import { constructPath } from './file';
 import { compareEntitiesByName, splitEntityId } from './folders';
 import { getRootId } from './id';
 
+import groupBy from 'lodash-es/groupBy';
+import uniq from 'lodash-es/uniq';
+
 export const getAssitantModelId = (
   modelType: EntityType,
   defaultAssistantModelId: string,
@@ -216,3 +219,27 @@ export const isChosenConversationValidForCompare = (
 
 export const getOpenAIEntityFullName = (model: OpenAIEntity) =>
   skipEmptyAndJoin([model.name, model.version], '-') || model.id;
+
+interface ModelGroup {
+  groupName: string;
+  entities: OpenAIEntity[];
+}
+
+export const groupModelsAndSaveOrder = (
+  models: OpenAIEntity[],
+): ModelGroup[] => {
+  const uniqModels = uniq(models);
+  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);
+  const insertedSet = new Set();
+  const result: ModelGroup[] = [];
+
+  uniqModels.forEach((m) => {
+    const key = m.name ?? m.id;
+    if (!insertedSet.has(key)) {
+      result.push({ groupName: key, entities: groupedModels[key] });
+      insertedSet.add(key);
+    }
+  });
+
+  return result;
+};

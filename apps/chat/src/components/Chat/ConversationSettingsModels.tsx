@@ -1,24 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
-import {
-  getOpenAIEntityFullName,
-  getValidEntitiesFromIds,
-} from '@/src/utils/app/conversation';
+import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
 
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
+import { ModelList } from './ModelList';
 import { ModelsDialog } from './ModelsDialog';
 import { ReplayAsIsButton } from './ReplayAsIsButton';
 
@@ -40,21 +38,24 @@ export const ConversationSettingsModel = ({
   unavailableModelId,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
+  const models = useAppSelector(ModelsSelectors.selectModels);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const mappedEntities = getValidEntitiesFromIds(
-      recentModelsIds,
-      modelsMap,
-    ).slice(
-      0,
-      unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT,
-    );
-    setMappedEntities(mappedEntities);
-  }, [recentModelsIds, modelsMap, unavailableModelId]);
+  const enitities = useMemo(
+    () => getValidEntitiesFromIds(recentModelsIds, modelsMap).concat(models), // recent models + all models
+    [models, modelsMap, recentModelsIds],
+  );
+
+  const handleModelSelect = useCallback(
+    (entityId: string) => {
+      onModelSelect(entityId);
+      dispatch(ModelsActions.updateRecentModels({ modelId: entityId }));
+    },
+    [dispatch, onModelSelect],
+  );
 
   return (
     <div className="w-full" data-qa="entity-selector">
@@ -82,32 +83,16 @@ export const ConversationSettingsModel = ({
               </div>
             </button>
           )}
-          {mappedEntities.map((entity) => (
-            <button
-              className={classNames(
-                'flex items-center gap-3 rounded border p-3 text-left text-xs',
-                modelId === entity.id && !replay.replayAsIs
-                  ? 'border-accent-primary'
-                  : 'border-primary hover:border-hover',
-              )}
-              key={entity.id}
-              onClick={() => onModelSelect(entity.id)}
-            >
-              <ModelIcon entityId={entity.id} entity={entity} size={24} />
-              <div className="flex flex-col gap-1">
-                <span data-qa="entity-name">
-                  {getOpenAIEntityFullName(entity)}
-                </span>
-                {entity.description && (
-                  <span className="text-secondary" data-qa="entity-descr">
-                    <EntityMarkdownDescription isShortDescription>
-                      {entity.description}
-                    </EntityMarkdownDescription>
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
+          <ModelList
+            entities={enitities}
+            heading={''}
+            onSelect={handleModelSelect}
+            selectedModelId={modelId}
+            showInOneColumn
+            displayCountLimit={
+              unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT
+            }
+          />
         </div>
       </div>
       <button
@@ -120,7 +105,7 @@ export const ConversationSettingsModel = ({
       <ModelsDialog
         selectedModelId={modelId}
         isOpen={isModelsDialogOpen}
-        onModelSelect={onModelSelect}
+        onModelSelect={handleModelSelect}
         onClose={() => setIsModelsDialogOpen(false)}
       />
     </div>

@@ -4,154 +4,26 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { IconChevronDown, IconX } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { IconX } from '@tabler/icons-react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
-import { ModelVersionSelect } from './ModelVersionSelect';
+import { ModelList } from './ModelList';
 
-import groupBy from 'lodash-es/groupBy';
-
-interface EntityProps {
-  entities: OpenAIEntity[];
-  selectedModelId: string | undefined;
-  onSelect: (id: string) => void;
-}
-
-const Entity = ({ entities, selectedModelId, onSelect }: EntityProps) => {
-  const [isOpened, setIsOpened] = useState(false);
-
-  const currentEntity = useMemo(
-    () =>
-      (entities.length > 1
-        ? entities.find((e) => e.id === selectedModelId)
-        : entities[0]) ?? entities[0],
-    [entities, selectedModelId],
-  );
-
-  const description = currentEntity.description;
-
-  return (
-    <div
-      className={classNames(
-        'flex cursor-pointer items-center gap-3 rounded border px-3 py-2 hover:border-hover',
-        selectedModelId === currentEntity.id
-          ? 'border-accent-primary'
-          : 'border-primary',
-        isOpened ? 'md:col-span-2' : 'md:col-span-1',
-      )}
-      onClick={(e) => {
-        if (
-          !hasParentWithAttribute(
-            e.target as HTMLAnchorElement,
-            'data-model-versions',
-          ) &&
-          !hasParentWithAttribute(
-            e.target as HTMLAnchorElement,
-            'data-floating-ui-portal',
-          )
-        ) {
-          onSelect(currentEntity.id);
-        }
-      }}
-      data-qa="group-entity"
-    >
-      <ModelIcon entityId={currentEntity.id} entity={currentEntity} size={24} />
-      <div className="flex w-full flex-col gap-1 text-left">
-        <div className="flex items-center justify-between">
-          <span data-qa="group-entity-name">{currentEntity.name}</span>
-          <ModelVersionSelect
-            entities={entities}
-            onSelect={onSelect}
-            currentEntity={currentEntity}
-          />
-        </div>
-        {description && (
-          <span
-            className="text-secondary"
-            onClick={(e) => {
-              if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
-                e.stopPropagation();
-              }
-            }}
-            data-qa="group-entity-descr"
-          >
-            <EntityMarkdownDescription isShortDescription={!isOpened}>
-              {description}
-            </EntityMarkdownDescription>
-          </span>
-        )}
-      </div>
-      {description && description.indexOf('\n\n') !== -1 && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsOpened((isOpened) => !isOpened);
-          }}
-          data-qa="expand-group-entity"
-        >
-          <IconChevronDown
-            size={18}
-            className={`transition-all ${isOpened ? 'rotate-180' : ''}`}
-          />
-        </button>
-      )}
-    </div>
-  );
-};
-
-interface EntityListingProps {
-  entities: OpenAIEntity[];
-  heading: string;
-  selectedModelId: string | undefined;
-  onSelect: (entityId: string) => void;
-}
-
-const EntityListing = ({
-  entities,
-  heading,
-  selectedModelId,
-  onSelect,
-}: EntityListingProps) => {
-  const groupedModels = groupBy(entities, (e) => e.name);
-  return (
-    <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
-      <span className="text-secondary">{heading}</span>
-      <div className="grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto md:grid-cols-2">
-        {Object.keys(groupedModels).map((modelGroupName) => (
-          <Entity
-            key={modelGroupName}
-            entities={groupedModels[modelGroupName]}
-            selectedModelId={selectedModelId}
-            onSelect={onSelect}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-interface Props {
+interface ModelsDialogProps {
   selectedModelId: string | undefined;
   isOpen: boolean;
   onModelSelect: (selectedModelId: string) => void;
@@ -170,14 +42,13 @@ const getFilteredEntities = (
   );
 };
 
-export const ModelsDialog: FC<Props> = ({
+export const ModelsDialog: FC<ModelsDialogProps> = ({
   selectedModelId,
   isOpen,
   onModelSelect,
   onClose,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const dispatch = useAppDispatch();
   const models = useAppSelector(ModelsSelectors.selectModels);
 
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
@@ -254,10 +125,9 @@ export const ModelsDialog: FC<Props> = ({
   const handleSelectModel = useCallback(
     (entityId: string) => {
       onModelSelect(entityId);
-      dispatch(ModelsActions.updateRecentModels({ modelId: entityId }));
       onClose();
     },
-    [dispatch, onClose, onModelSelect],
+    [onClose, onModelSelect],
   );
 
   // Render nothing if the dialog is not open.
@@ -350,7 +220,7 @@ export const ModelsDialog: FC<Props> = ({
             filteredApplicationsEntities?.length > 0 ? (
               <>
                 {filteredModelsEntities.length > 0 && (
-                  <EntityListing
+                  <ModelList
                     entities={filteredModelsEntities}
                     heading={t('Models')}
                     onSelect={handleSelectModel}
@@ -358,7 +228,7 @@ export const ModelsDialog: FC<Props> = ({
                   />
                 )}
                 {filteredAssistantsEntities.length > 0 && (
-                  <EntityListing
+                  <ModelList
                     entities={filteredAssistantsEntities}
                     heading={t('Assistants')}
                     onSelect={handleSelectModel}
@@ -366,7 +236,7 @@ export const ModelsDialog: FC<Props> = ({
                   />
                 )}
                 {filteredApplicationsEntities.length > 0 && (
-                  <EntityListing
+                  <ModelList
                     entities={filteredApplicationsEntities}
                     heading={t('Applications')}
                     onSelect={handleSelectModel}

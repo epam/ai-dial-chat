@@ -69,6 +69,7 @@ export const ModelVersionSelect = ({
           item={t(entity.version || entity.id)}
           value={entity.id}
           onClick={onChangeHandler}
+          data-model-versions
         />
       ))}
     </Menu>
