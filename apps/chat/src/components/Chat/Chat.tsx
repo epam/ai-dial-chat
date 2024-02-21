@@ -3,7 +3,6 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { throttle } from '@/src/utils/data/throttle';
 
 import { OpenAIEntityModelID } from '../../types/openai';
 import {
@@ -53,11 +52,13 @@ import { PlaybackControls } from './Playback/PlaybackControls';
 import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 
 import { Feature } from '@epam/ai-dial-shared';
+import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
+
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -83,7 +84,6 @@ export const ChatView = memo(() => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
@@ -93,7 +93,6 @@ export const ChatView = memo(() => {
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
-
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
@@ -114,6 +113,8 @@ export const ChatView = memo(() => {
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const lastScrollTop = useRef(0);
+  const scrollBlockRef = useRef(false);
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
@@ -193,10 +194,7 @@ export const ChatView = memo(() => {
     textareaRef.current?.focus();
   }, [scrollDown]);
 
-  const throttledScrollDown = throttle<boolean, typeof scrollDown>(
-    scrollDown,
-    scrollThrottlingTimeout,
-  );
+  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
 
   useEffect(() => {
     throttledScrollDown();
@@ -207,13 +205,23 @@ export const ChatView = memo(() => {
   }, [scrollDown]);
 
   const handleScroll = useCallback(() => {
+    if (scrollBlockRef.current) {
+      setAutoScrollEnabled(false);
+      setShowScrollDownButton(true);
+      return;
+    }
+
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         chatContainerRef.current;
       const bottomTolerance = 30;
 
-      if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
+      if (lastScrollTop.current > scrollTop) {
+        setAutoScrollEnabled(false);
+        setShowScrollDownButton(true);
+      } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
         clearTimeout(disableAutoScrollTimeoutRef.current);
+
         disableAutoScrollTimeoutRef.current = setTimeout(() => {
           setAutoScrollEnabled(false);
           setShowScrollDownButton(true);
@@ -221,6 +229,8 @@ export const ChatView = memo(() => {
       } else {
         setAutoScroll();
       }
+
+      lastScrollTop.current = scrollTop;
     }
   }, []);
 
@@ -265,7 +275,6 @@ export const ChatView = memo(() => {
         );
       }
 
-      handleScroll();
       setMergedMessages([...mergedMessages]);
     }
 
@@ -479,6 +488,13 @@ export const ChatView = memo(() => {
         activeReplayIndex: 0,
       }),
     );
+
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   }, [dispatch, selectedConversations]);
 
   const onEditMessage = useCallback(
