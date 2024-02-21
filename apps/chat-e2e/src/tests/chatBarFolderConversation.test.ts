@@ -38,6 +38,7 @@ dialTest(
     folderDropdownMenu,
     chatBar,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-571', 'EPMRTC-1371');
     const newName = 'updated folder name';
@@ -71,6 +72,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
       newName,
     );
+    await confirmationDialog.confirm();
     expect
       .soft(
         await folderConversations.getFolderByName(newName).isVisible(),
@@ -137,6 +139,7 @@ dialTest(
     dataInjector,
     folderDropdownMenu,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-573', 'EPMRTC-574');
     const folderName = GeneratorUtil.randomString(70);
@@ -205,6 +208,7 @@ dialTest(
           folderName,
           newConversationName,
         );
+        await confirmationDialog.confirm();
         expect
           .soft(
             await folderConversations

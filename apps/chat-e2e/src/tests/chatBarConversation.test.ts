@@ -164,6 +164,7 @@ dialTest(
     conversationDropdownMenu,
     chat,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-584', 'EPMRTC-819');
     const newName = GeneratorUtil.randomString(70);
@@ -177,6 +178,7 @@ dialTest(
       ExpectedConstants.newConversationTitle,
       newName,
     );
+    await confirmationDialog.confirm();
     expect
       .soft(
         await conversations.getConversationByName(newName).isVisible(),

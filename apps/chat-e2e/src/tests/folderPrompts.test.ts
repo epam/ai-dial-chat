@@ -72,6 +72,7 @@ dialTest(
     folderPrompts,
     folderDropdownMenu,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-948', 'EPMRTC-1382');
     const newName = 'updated folder name';
@@ -105,6 +106,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
       newName,
     );
+    await confirmationDialog.confirm();
     expect
       .soft(
         await folderPrompts.getFolderByName(newName).isVisible(),
@@ -170,6 +172,7 @@ dialTest(
     folderPrompts,
     folderDropdownMenu,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-950');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -187,6 +190,7 @@ dialTest(
       promptInFolder.folders.name,
       newName,
     );
+    await confirmationDialog.confirm();
     expect
       .soft(
         await folderPrompts.getFolderByName(newName).isVisible(),
