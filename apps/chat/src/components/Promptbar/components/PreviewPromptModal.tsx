@@ -13,6 +13,7 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import Modal from '../../Common/Modal';
 
@@ -74,22 +75,34 @@ export const PreviewPromptModal = ({
           </ul>
           <div className="flex items-center justify-between px-3 md:p-6">
             <div className="flex h-[34px] gap-2">
-              <button
-                onClick={() => {
-                  dispatch(
-                    PromptsActions.exportPrompt({ id: selectedPrompt?.id }),
-                  );
-                }}
-                className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+              <Tooltip
+                placement="top"
+                isTriggerClickable
+                tooltip={t('Export prompt')}
               >
-                <IconFileArrowRight size={24} strokeWidth="1.5" />
-              </button>
-              <button
-                onClick={onUnshare}
-                className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                <button
+                  onClick={() => {
+                    dispatch(
+                      PromptsActions.exportPrompt({ id: selectedPrompt?.id }),
+                    );
+                  }}
+                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                >
+                  <IconFileArrowRight size={24} strokeWidth="1.5" />
+                </button>
+              </Tooltip>
+              <Tooltip
+                placement="top"
+                isTriggerClickable
+                tooltip={t('Unshare prompt')}
               >
-                <IconTrashX size={24} strokeWidth="1.5" />
-              </button>
+                <button
+                  onClick={onUnshare}
+                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                >
+                  <IconTrashX size={24} strokeWidth="1.5" />
+                </button>
+              </Tooltip>
             </div>
             <button
               className="button button-primary"
