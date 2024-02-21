@@ -38,10 +38,6 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import {
-  newlyCreatedPrompt,
-  selectNewlyCreatedPrompt,
-} from '@/src/store/prompts/prompts.selectors';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -454,7 +450,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           entity={prompt}
           type={SharingType.Prompt}
           isOpen
-          newlyCreatedPrompt={newlyCreatedPrompt}
           onClose={handleClosePublishModal}
         />
       )}
