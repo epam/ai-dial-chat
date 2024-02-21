@@ -59,11 +59,9 @@ export class PromptModalDialog extends BaseElement {
     description: string,
     value: string,
   ) {
-    const confirmationDialog = this.getConfirmationDialog();
     await this.updatePromptDetails(name, description, value, () =>
       this.page.keyboard.press(keys.enter),
     );
-    await confirmationDialog.confirm();
   }
 
   public async updatePromptDetails(
