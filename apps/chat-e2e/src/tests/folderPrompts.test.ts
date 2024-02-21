@@ -383,6 +383,7 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-968');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
@@ -399,9 +400,7 @@ dialTest(
       promptInFolder.prompts[0].name,
     );
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await folderPrompts
-      .getFolderInput(promptInFolder.prompts[0].name)
-      .clickTickButton();
+    await confirmationDialog.confirm();
     expect
       .soft(
         await folderPrompts
