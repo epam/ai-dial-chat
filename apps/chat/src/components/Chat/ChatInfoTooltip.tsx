@@ -4,6 +4,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+
 import { ConversationEntityModel } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
@@ -42,7 +44,7 @@ const getModelTemplate = (
         entity={model as OpenAIEntityModel}
         size={18}
       />
-      {(model as OpenAIEntityModel).name ?? model.id}
+      {getOpenAIEntityFullName(model as OpenAIEntityModel)}
     </div>
   </>
 );

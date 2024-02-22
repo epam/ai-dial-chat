@@ -3,6 +3,7 @@ import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { IsPseudoModel } from '@/src/utils/server/api';
 
 import { Replay } from '@/src/types/chat';
@@ -57,7 +58,7 @@ export const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
   return (
     <div className="flex items-center gap-2">
       <ModelIcon entity={item} entityId={item.id} size={18} />
-      <span>{item.name || item.id}</span>
+      <span>{getOpenAIEntityFullName(item)}</span>
     </div>
   );
 };

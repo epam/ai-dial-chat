@@ -2185,10 +2185,10 @@ const recreateConversationEpic: AppEpic = (action$) =>
     filter(ConversationsActions.recreateConversation.match),
     mergeMap(({ payload }) => {
       return zip(
+        ConversationService.createConversation(payload.new),
         ConversationService.deleteConversation(
           getConversationInfoFromId(payload.old.id),
         ),
-        ConversationService.createConversation(payload.new),
       ).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
