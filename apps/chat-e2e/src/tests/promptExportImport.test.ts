@@ -206,9 +206,7 @@ dialTest(
           promptInsideFolder.prompts[0].name,
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await prompts
-          .getPromptInput(promptInsideFolder.prompts[0].name)
-          .clickTickButton();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
@@ -286,6 +284,7 @@ dialTest(
     promptBar,
     promptData,
     promptDropdownMenu,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-886');
     let promptInsideFolder: FolderPrompt;
@@ -327,9 +326,7 @@ dialTest(
       async () => {
         await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await prompts
-          .getPromptInput(promptOutsideFolder.name)
-          .clickTickButton();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await prompts
           .getPromptByName(promptOutsideFolder.name)
           .waitFor({ state: 'hidden' });

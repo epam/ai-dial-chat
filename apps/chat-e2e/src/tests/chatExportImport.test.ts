@@ -103,9 +103,7 @@ dialTest(
           conversationInFolder.conversations[0].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await folderConversations.deleteConversation(
-          conversationInFolder.conversations[0].name,
-        );
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
