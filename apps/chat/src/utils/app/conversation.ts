@@ -218,7 +218,7 @@ export const isChosenConversationValidForCompare = (
 };
 
 export const getOpenAIEntityFullName = (model: OpenAIEntity) =>
-  [model.name, model.version].filter(Boolean).join('-') || model.id;
+  [model.name, model.version].filter(Boolean).join(' ') || model.id;
 
 interface ModelGroup {
   groupName: string;

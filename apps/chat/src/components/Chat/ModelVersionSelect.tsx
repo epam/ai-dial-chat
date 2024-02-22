@@ -6,6 +6,8 @@ import { OpenAIEntity } from '@/src/types/openai';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
+import { ModelIcon } from '../Chatbar/ModelIcon';
+
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 
 interface ModelVersionSelectProps {
@@ -63,7 +65,12 @@ export const ModelVersionSelect = ({
             'max-w-[350px] text-nowrap hover:bg-accent-primary-alpha',
             currentEntity.id === entity.id && 'bg-accent-primary-alpha',
           )}
-          item={entity.version || entity.id}
+          item={
+            <div className="flex items-center gap-2">
+              <ModelIcon entityId={entity.id} entity={entity} size={16} />
+              {entity.version || entity.id}
+            </div>
+          }
           value={entity.id}
           onClick={onChangeHandler}
           data-model-versions
