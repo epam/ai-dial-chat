@@ -3,7 +3,10 @@ import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
+import {
+  getOpenAIEntityFullName,
+  groupModelsAndSaveOrder,
+} from '@/src/utils/app/conversation';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 
 import { OpenAIEntity } from '@/src/types/openai';
@@ -75,7 +78,11 @@ const ModelGroup = ({
       <ModelIcon entityId={currentEntity.id} entity={currentEntity} size={24} />
       <div className="flex w-full flex-col gap-1 text-left">
         <div className="flex items-center justify-between">
-          <span data-qa="group-entity-name">{currentEntity.name}</span>
+          <span data-qa="group-entity-name">
+            {entities.length === 1
+              ? getOpenAIEntityFullName(currentEntity)
+              : currentEntity.name}
+          </span>
           <ModelVersionSelect
             entities={entities}
             onSelect={onSelect}
