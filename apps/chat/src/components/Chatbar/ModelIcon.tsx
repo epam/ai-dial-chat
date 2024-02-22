@@ -25,6 +25,7 @@ const ModelIconTemplate = memo(
         ? `api/themes/image?name=default-addon`
         : `api/themes/image?name=default-model`;
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
+
     return (
       <span
         className={classNames(

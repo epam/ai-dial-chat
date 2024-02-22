@@ -43,7 +43,7 @@ const ModelGroup = ({
     const minIndex = Math.min(
       ...recentModelsIds
         .map((rid) => entities.findIndex((e) => e.id === rid))
-        .filter((ind) => ind >= 0),
+        .filter((ind) => ind !== -1),
       0,
     );
     return entities[minIndex];
@@ -111,7 +111,7 @@ const ModelGroup = ({
           >
             <IconChevronDown
               size={18}
-              className={`transition-all ${isOpened ? 'rotate-180' : ''}`}
+              className={classNames('transition-all', isOpened && 'rotate-180')}
             />
           </button>
         )}
@@ -139,8 +139,12 @@ export const ModelList = ({
   showInOneColumn,
 }: ModelListProps) => {
   const groupedModels = useMemo(
-    () => groupModelsAndSaveOrder(entities),
-    [entities],
+    () =>
+      groupModelsAndSaveOrder(entities).slice(
+        0,
+        displayCountLimit ?? Number.MAX_SAFE_INTEGER,
+      ),
+    [displayCountLimit, entities],
   );
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
@@ -151,17 +155,15 @@ export const ModelList = ({
           !showInOneColumn && 'md:grid-cols-2',
         )}
       >
-        {groupedModels
-          .slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER)
-          .map((modelGroup) => (
-            <ModelGroup
-              key={modelGroup.groupName}
-              entities={modelGroup.entities}
-              selectedModelId={selectedModelId}
-              onSelect={onSelect}
-              notAllowExpandDescription={notAllowExpandDescription}
-            />
-          ))}
+        {groupedModels.map((modelGroup) => (
+          <ModelGroup
+            key={modelGroup.groupName}
+            entities={modelGroup.entities}
+            selectedModelId={selectedModelId}
+            onSelect={onSelect}
+            notAllowExpandDescription={notAllowExpandDescription}
+          />
+        ))}
       </div>
     </div>
   );

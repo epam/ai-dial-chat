@@ -68,7 +68,7 @@ export const ModelVersionSelect = ({
             'max-w-[350px] text-nowrap hover:bg-accent-primary-alpha',
             currentEntity.id === entity.id && 'bg-accent-primary-alpha',
           )}
-          item={t(entity.version || entity.id)}
+          item={entity.version || entity.id}
           value={entity.id}
           onClick={onChangeHandler}
           data-model-versions
