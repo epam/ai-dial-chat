@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: 🐞 Bug report
 description: Problems and issues with code in EPAM AI DIAL chat
 labels: ["bug"]
 body:
