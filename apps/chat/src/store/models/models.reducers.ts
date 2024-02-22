@@ -7,6 +7,7 @@ import { ErrorMessage } from '@/src/types/error';
 import { ModelsMap } from '@/src/types/models';
 import { OpenAIEntityModel } from '@/src/types/openai';
 
+import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { RootState } from '../index';
@@ -90,17 +91,41 @@ export const modelsSlice = createSlice({
       } else {
         state.recentModelsIds = [state.models[0].id];
       }
+      state.recentModelsIds = state.recentModelsIds.slice(
+        0,
+        RECENT_MODELS_COUNT,
+      );
     },
     updateRecentModels: (
       state,
-      { payload }: PayloadAction<{ modelId: string }>,
+      { payload }: PayloadAction<{ modelId: string; rearrange?: boolean }>,
     ) => {
+      const newModel = state.modelsMap[payload.modelId];
+      if (!newModel) return;
+
+      const recentModels = state.recentModelsIds.map(
+        (id) => state.modelsMap[id],
+      );
+      const oldIndex = recentModels.findIndex((m) => m?.name === newModel.name);
+      if (oldIndex >= 0 && !payload.rearrange) {
+        if (recentModels[oldIndex]?.id !== payload.modelId) {
+          //replace
+          const newIds = [...state.recentModelsIds];
+          newIds[oldIndex] = payload.modelId;
+          state.recentModelsIds = newIds;
+        }
+        return;
+      }
+
       const recentFilteredModels = state.recentModelsIds.filter(
         (recentModelId) => recentModelId !== payload.modelId,
       );
       recentFilteredModels.unshift(payload.modelId);
 
-      state.recentModelsIds = recentFilteredModels;
+      state.recentModelsIds = recentFilteredModels.slice(
+        0,
+        RECENT_MODELS_COUNT,
+      );
     },
   },
 });

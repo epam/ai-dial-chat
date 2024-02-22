@@ -17,7 +17,9 @@ export class ModelsDialog extends BaseElement {
       ModelDialog.talkToGroup,
     ).getElementLocatorByText(group);
 
-  public groupEntity = this.getChildElementBySelector(ModelDialog.groupEntity);
+  public groupEntity = this.getChildElementBySelector(
+    ChatSelectors.groupEntity,
+  );
   public closeButton = this.getChildElementBySelector(ModelDialog.closeDialog);
   public noResultFoundIcon = this.getChildElementBySelector(
     ChatSelectors.noResultFound,
@@ -32,7 +34,7 @@ export class ModelsDialog extends BaseElement {
 
   public entityOptionByGroup = (group: Groups, option: string) =>
     this.group(group).locator(
-      `${ModelDialog.groupEntity}:has(${ModelDialog.groupEntityName}:text-is('${option}'))`,
+      `${ChatSelectors.groupEntity}:has(${ModelDialog.groupEntityName}:text-is('${option}'))`,
     );
 
   public entityOptionDescription = (group: Groups, option: string) => {

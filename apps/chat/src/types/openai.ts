@@ -4,6 +4,7 @@ export interface ProxyOpenAIEntity<T = EntityType.Model> {
   id: string;
   object: T;
   display_name?: string;
+  display_version?: string;
   icon_url?: string;
   description?: string;
   capabilities?: {
@@ -24,6 +25,7 @@ export interface OpenAIEntity {
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
+  version?: string;
 }
 
 export interface OpenAIEntityModel extends Omit<OpenAIEntity, 'type'> {

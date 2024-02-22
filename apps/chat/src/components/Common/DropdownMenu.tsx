@@ -4,6 +4,7 @@ import {
   FloatingNode,
   FloatingPortal,
   FloatingTree,
+  Placement,
   autoUpdate,
   flip,
   offset,
@@ -66,6 +67,7 @@ interface MenuProps {
   nested?: boolean;
   children?: ReactNode;
   type?: 'dropdown' | 'contextMenu';
+  placement?: Placement;
   isMenuOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 }
@@ -82,6 +84,7 @@ export const MenuComponent = forwardRef<
     label,
     trigger,
     type = 'dropdown',
+    placement,
     isMenuOpen,
     onOpenChange,
     ...props
@@ -115,7 +118,7 @@ export const MenuComponent = forwardRef<
       setIsOpen(isOpened);
       onOpenChange?.(isOpened);
     },
-    placement: isNested ? 'right-start' : 'bottom-start',
+    placement: placement ?? (isNested ? 'right-start' : 'bottom-start'),
     middleware: [
       offset(0),
       flip(),

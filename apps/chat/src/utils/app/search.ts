@@ -1,12 +1,13 @@
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import { OpenAIEntity } from '@/src/types/openai';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
 import { ApiKeys } from '../server/api';
+import { getOpenAIEntityFullName } from './conversation';
 import { getRootId, isRootId } from './id';
 
 export const doesPromptOrConversationContainSearchTerm = (
@@ -23,17 +24,10 @@ export const doesFileContainSearchTerm = (
   return file.name.toLowerCase().includes(searchTerm.toLowerCase());
 };
 
-export const doesAddonContainSearchTerm = (
-  addon: OpenAIEntityAddon,
+export const doesOpenAIEntityContainSearchTerm = (
+  model: OpenAIEntity,
   searchTerm: string,
-) => {
-  return (addon.name || addon.id).toLowerCase().trim().includes(searchTerm);
-};
-
-export const doesModelContainSearchTerm = (
-  model: OpenAIEntityModel,
-  searchTerm: string,
-) => model.name.toLowerCase().trim().includes(searchTerm);
+) => getOpenAIEntityFullName(model).toLowerCase().trim().includes(searchTerm);
 
 export const doesEntityContainSearchItem = <
   T extends Conversation | Prompt | DialFile,
