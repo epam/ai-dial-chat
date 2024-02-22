@@ -694,18 +694,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       <ConfirmDialog
         isOpen={isDeleting}
         heading={t('Confirm deleting conversation')}
-        description={
-          t('Are you sure that you want to remove a conversation?') || ''
-        }
-        subDescriptions={
+        description={`${t('Are you sure that you want to remove a conversation?')}${t(
           conversation.isShared
-            ? [
-                t(
-                  'Removing will stop sharing and other users will no longer see this conversation.',
-                ) || '',
-              ]
-            : undefined
-        }
+            ? '\nRemoving will stop sharing and other users will no longer see this conversation.'
+            : '',
+        )}`}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
