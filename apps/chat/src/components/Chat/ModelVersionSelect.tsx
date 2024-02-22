@@ -1,11 +1,8 @@
 import { MouseEvent, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { OpenAIEntity } from '@/src/types/openai';
-import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
