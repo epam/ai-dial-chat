@@ -8,6 +8,7 @@ import {
   TestConversation,
   Theme,
 } from '@/src/testData';
+import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -30,7 +31,7 @@ dialTest(
     conversationData,
     conversations,
     conversationDropdownMenu,
-    playback,
+    recentEntities,
     playbackControl,
     chat,
     chatMessages,
@@ -76,15 +77,16 @@ dialTest(
           .getConversationByName(playbackConversationName)
           .waitFor();
 
-        const appTitle = await playback.appTitle.getElementContent();
-        expect
-          .soft(appTitle!.length, ExpectedMessages.appNameIsValid)
-          .toBeGreaterThan(0);
-
-        const chatTitle = await playback.chatTitle.getElementContent();
-        expect
-          .soft(chatTitle, ExpectedMessages.playbackChatMessageIsValid)
-          .toBe(playbackConversationName);
+        const modelBorderColors = await recentEntities
+          .getRecentEntity(`[${MenuOptions.playback}] ${defaultModel.name}`)
+          .getAllBorderColors();
+        Object.values(modelBorderColors).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.playbackIconIsSelected)
+              .toBe(Colors.controlsBackgroundAccent);
+          });
+        });
 
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();
