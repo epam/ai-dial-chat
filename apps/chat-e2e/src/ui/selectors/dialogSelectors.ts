@@ -27,7 +27,6 @@ export const VariableModal = {
 export const ModelDialog = {
   modelDialog: '[data-qa="models-dialog"]',
   talkToGroup: '[data-qa="talk-to-group"]',
-  groupEntity: '[data-qa="group-entity"]',
   groupEntityName: '[data-qa="group-entity-name"]',
   groupEntityDescr: '[data-qa="group-entity-descr"]',
   expandGroupEntity: '[data-qa="expand-group-entity"]',
