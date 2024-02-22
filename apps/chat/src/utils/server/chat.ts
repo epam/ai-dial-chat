@@ -87,7 +87,7 @@ export const chatErrorHandler = ({
     if (error.code === 'content_filter') {
       return res
         .status(500)
-        .se.send(
+        .send(
           JSON.stringify({ [fieldName]: errorsMessages.contentFiltering }) +
             postfix,
         );
