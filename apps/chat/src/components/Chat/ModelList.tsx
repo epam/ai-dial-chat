@@ -121,7 +121,7 @@ const ModelGroup = ({
 
 interface ModelListProps {
   entities: OpenAIEntity[];
-  heading: string;
+  heading?: string;
   selectedModelId: string | undefined;
   onSelect: (entityId: string) => void;
   notAllowExpandDescription?: boolean;

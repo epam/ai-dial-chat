@@ -92,7 +92,6 @@ export const ConversationSettingsModel = ({
           )}
           <ModelList
             entities={enitities}
-            heading={''}
             onSelect={handleModelSelect}
             selectedModelId={modelId}
             showInOneColumn
