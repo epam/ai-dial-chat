@@ -468,11 +468,11 @@ export const promptsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        paths: string[];
+        ids: string[];
       }>,
     ) => {
       state.loadingFolderIds = state.loadingFolderIds.concat(
-        payload.paths as string[],
+        payload.ids as string[],
       );
     },
     uploadChildPromptsWithFoldersSuccess: (
@@ -492,7 +492,9 @@ export const promptsSlice = createSlice({
         state.folders,
         payload.folders.map((folder) => ({
           ...folder,
-          status: UploadStatus.LOADED,
+          status: payload.parentIds.includes(folder.id)
+            ? UploadStatus.LOADED
+            : undefined,
         })),
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);

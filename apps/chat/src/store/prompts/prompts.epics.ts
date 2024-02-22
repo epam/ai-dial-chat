@@ -552,7 +552,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
       return concat(
         of(
           PromptsActions.uploadChildPromptsWithFolders({
-            paths: [payload.id],
+            ids: [payload.id],
           }),
         ),
       );
@@ -935,19 +935,14 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
     filter(PromptsActions.uploadChildPromptsWithFolders.match),
     switchMap(({ payload }) =>
       zip(
-        payload.paths.map((path) => PromptService.getPromptsAndFolders(path)),
+        payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
       ).pipe(
         switchMap((foldersAndEntities) => {
-          const folders = foldersAndEntities
-            .flatMap((f) => f.folders)
-            .map((item) => ({
-              ...item,
-              status: UploadStatus.LOADED,
-            }));
+          const folders = foldersAndEntities.flatMap((f) => f.folders);
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
           return of(
             PromptsActions.uploadChildPromptsWithFoldersSuccess({
-              parentIds: payload.paths,
+              parentIds: payload.ids,
               folders,
               prompts,
             }),
