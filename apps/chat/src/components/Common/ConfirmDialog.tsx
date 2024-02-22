@@ -1,7 +1,5 @@
 import { useId, useRef } from 'react';
 
-import classNames from 'classnames';
-
 import { ModalState } from '@/src/types/modal';
 
 import Modal from '@/src/components/Common/Modal';
@@ -38,7 +36,7 @@ export const ConfirmDialog = ({
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
     >
-      <div className="flex flex-col gap-2 w-full text-start">
+      <div className="flex w-full flex-col gap-2 text-start">
         <h2 id={headingId} className="text-base font-semibold">
           {heading}
         </h2>
