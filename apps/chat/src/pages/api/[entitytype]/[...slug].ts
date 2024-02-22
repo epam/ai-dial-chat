@@ -134,7 +134,12 @@ async function handleGetRequest(
   });
 
   if (!proxyRes.ok) {
-    throw new OpenAIError(proxyRes.statusText, '', '', proxyRes.status + '');
+    throw new OpenAIError(
+      `Requesting entity failed - '${url}'` + proxyRes.statusText,
+      '',
+      '',
+      proxyRes.status + '',
+    );
   }
 
   res.status(proxyRes.status);
