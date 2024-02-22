@@ -142,6 +142,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             name: prompt.name,
             description: prompt.description,
             content: prompt.content,
+            isShared: prompt.isShared,
           },
         }),
       );
@@ -430,6 +431,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       <ConfirmDialog
         isOpen={isDeleting}
         heading={t('Confirm deletion')}
+        description={`
+          ${t('Are you sure that you want to remove a prompt?')}
+          ${prompt.isShared ? 'Removing will stop sharing and other users will no longer see this prompt.' : ''}
+        `}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

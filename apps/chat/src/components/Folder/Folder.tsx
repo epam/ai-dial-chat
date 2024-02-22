@@ -283,6 +283,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
     if (currentFolder.isShared && newName !== currentFolder.name) {
       setIsConfirmRenaming(true);
+      setIsRenaming(false);
+      setIsContextMenu(false);
       return;
     }
 
@@ -848,11 +850,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
           heading={t('Confirm deleting folder')}
-          description={
-            t(
+          description={`
+            ${t(
               'Are you sure that you want to remove a folder with all nested elements?',
-            ) || ''
-          }
+            )}
+            ${currentFolder.isShared ? 'Removing will stop sharing and other users will no longer see this folder.' : ''}
+          `}
           confirmLabel={t('Remove')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
@@ -935,8 +938,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             }
 
             setRenameValue('');
-            setIsRenaming(false);
-            setIsContextMenu(false);
           }
         }}
       />

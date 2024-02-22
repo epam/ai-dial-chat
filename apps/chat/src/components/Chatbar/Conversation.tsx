@@ -233,6 +233,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
     if (conversation.isShared && newName !== conversation.name) {
       setIsConfirmRenaming(true);
+      setIsContextMenu(false);
+      setIsRenaming(false);
       return;
     }
 
@@ -692,6 +694,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       <ConfirmDialog
         isOpen={isDeleting}
         heading={t('Confirm deletion')}
+        description={`
+          ${t('Are you sure that you want to remove a conversation?')}
+          ${conversation.isShared ? 'Removing will stop sharing and other users will no longer see this conversation' : ''}
+        `}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
@@ -711,9 +717,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         }
         onClose={(result) => {
           setIsConfirmRenaming(false);
+
           if (result) {
             performRename(prepareEntityName(renameValue, true), true);
           }
+
+          setIsContextMenu(false);
+          setIsRenaming(false);
         }}
       />
     </div>

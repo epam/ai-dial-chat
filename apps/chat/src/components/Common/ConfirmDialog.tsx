@@ -38,7 +38,7 @@ export const ConfirmDialog = ({
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
     >
-      <div className="flex flex-col gap-2 text-start">
+      <div className="flex flex-col gap-2 w-full text-start">
         <h2 id={headingId} className="text-base font-semibold">
           {heading}
         </h2>
@@ -52,12 +52,7 @@ export const ConfirmDialog = ({
           </p>
         )}
       </div>
-      <div
-        className={classNames(
-          'flex w-full items-center gap-3',
-          description ? 'justify-end' : 'justify-center',
-        )}
-      >
+      <div className="flex w-full items-center justify-end gap-3">
         {cancelLabel && (
           <button
             className="button button-secondary"
