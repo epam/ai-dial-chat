@@ -1,0 +1,33 @@
+---
+name: Report an issue
+description: Problems and issues in EPAM AI DIAL chat
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      # yamllint disable rule:line-length
+      value: "
+        <img src='https://avatars.githubusercontent.com/u/1589802?s=48&v=4' align='left' width='48' height='48'>
+        Thank you for finding the time to report the problem!
+        <br clear='left'/>"
+      # yamllint enable rule:line-length
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: EPAM AI DIAL version
+      # yamllint disable rule:line-length
+      description: >
+        On what version of EPAM AI DIAL are you currently experiencing the issue? You can find the version in the footer of page (e.g. "Version 0.4.2").
+      # yamllint enable rule:line-length
+      placeholder: 0.4.2
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Describe what happened.
+      placeholder: >
+        Please provide the context in which the problem occurred and explain what happened
+    validations:
+      required: true
+
+
