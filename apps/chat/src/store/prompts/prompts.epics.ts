@@ -63,7 +63,7 @@ import { AppEpic } from '@/src/types/store';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
-import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { ImportExportActions } from '../import-export/importExport.reducers';

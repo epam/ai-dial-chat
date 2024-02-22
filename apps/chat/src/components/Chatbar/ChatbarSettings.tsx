@@ -25,7 +25,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import SidebarMenu from '@/src/components/Common/SidebarMenu';

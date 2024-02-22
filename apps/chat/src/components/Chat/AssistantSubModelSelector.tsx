@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -34,8 +34,8 @@ export const AssistantSubModelSelector = ({
       <Combobox
         items={onlyModels}
         initialSelectedItem={assistantSubModel}
-        getItemLabel={(model: OpenAIEntityModel) => model.name || model.id}
-        getItemValue={(model: OpenAIEntityModel) => model.id}
+        getItemLabel={(model: DialAIEntityModel) => model.name || model.id}
+        getItemValue={(model: DialAIEntityModel) => model.id}
         itemRow={ModelSelectRow}
         onSelectItem={(itemID: string) => {
           onSelectAssistantSubModel(itemID);

@@ -8,7 +8,7 @@ import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
 
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -39,7 +39,7 @@ export const ConversationSettingsModel = ({
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
+  const [mappedEntities, setMappedEntities] = useState<DialAIEntityModel[]>([]);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   useEffect(() => {

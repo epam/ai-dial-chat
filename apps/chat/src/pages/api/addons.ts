@@ -7,13 +7,7 @@ import { getEntities } from '@/src/utils/server/get-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { EntityType } from '@/src/types/common';
-import {
-  OpenAIEntity,
-  OpenAIEntityAddon,
-  OpenAIEntityAddonID,
-  OpenAIEntityAddons,
-  ProxyOpenAIEntity,
-} from '@/src/types/openai';
+import { CoreAIEntity, DialAIEntity } from '@/src/types/openai';
 
 import { authOptions } from './auth/[...nextauth]';
 
@@ -31,9 +25,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    const entities: OpenAIEntity[] = [];
+    const entities: DialAIEntity[] = [];
 
-    const addons = await getEntities<ProxyOpenAIEntity[]>(
+    const addons = await getEntities<CoreAIEntity[]>(
       EntityType.Addon,
       token?.access_token as string,
       token?.jobTitle as string,
@@ -43,11 +37,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     for (const addon of addons) {
-      const mappedAddon: OpenAIEntityAddon | undefined =
-        OpenAIEntityAddons[addon.id as OpenAIEntityAddonID];
       entities.push({
         id: addon.id,
-        name: addon.display_name ?? mappedAddon?.name ?? addon.id,
+        name: addon.display_name ?? addon.id,
         description: addon.description,
         iconUrl: addon.icon_url,
         type: addon.object,

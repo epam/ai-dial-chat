@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 
@@ -15,19 +15,15 @@ export const EntityMarkdownDescription = ({
   children,
   isShortDescription,
 }: Props) => {
-  const [transformedChildren, setTransformedChildren] = useState('');
-
-  useEffect(() => {
+  const transformedChildren = useMemo(() => {
     if (isShortDescription) {
       const indexOfDelimiter = children.indexOf('\n\n');
-      setTransformedChildren(
-        children.slice(
-          0,
-          indexOfDelimiter === -1 ? children.length : indexOfDelimiter,
-        ),
+      return children.slice(
+        0,
+        indexOfDelimiter === -1 ? children.length : indexOfDelimiter,
       );
     } else {
-      setTransformedChildren(children);
+      return children;
     }
   }, [children, isShortDescription]);
 

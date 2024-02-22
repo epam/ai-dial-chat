@@ -4,7 +4,7 @@ import { getFoldersFromIds } from '@/src/utils/app/folders';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-settings';
+import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array

@@ -1,7 +1,7 @@
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/openai';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
@@ -24,14 +24,14 @@ export const doesFileContainSearchTerm = (
 };
 
 export const doesAddonContainSearchTerm = (
-  addon: OpenAIEntityAddon,
+  addon: DialAIEntityAddon,
   searchTerm: string,
 ) => {
   return (addon.name || addon.id).toLowerCase().trim().includes(searchTerm);
 };
 
 export const doesModelContainSearchTerm = (
-  model: OpenAIEntityModel,
+  model: DialAIEntityModel,
   searchTerm: string,
 ) => model.name.toLowerCase().trim().includes(searchTerm);
 

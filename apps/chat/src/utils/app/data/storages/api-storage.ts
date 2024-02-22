@@ -21,7 +21,7 @@ import { DialStorage } from '@/src/types/storage';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_PROMPT_NAME,
-} from '@/src/constants/default-settings';
+} from '@/src/constants/default-ui-settings';
 
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';

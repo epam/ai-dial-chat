@@ -19,7 +19,6 @@ import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
-import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -28,6 +27,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { DEFAULT_USER_MESSAGE_MAX_LENGTH } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -63,10 +64,6 @@ export const ChatInputMessage = ({
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
-  );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
@@ -95,16 +92,7 @@ export const ChatInputMessage = ({
   const isError =
     isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
 
-  const maxLength = useMemo(() => {
-    const maxLengthArray = selectedConversations.map(
-      ({ model }) =>
-        modelsMap[model.id]?.maxLength ??
-        OpenAIEntityModels[model.id]?.maxLength ??
-        defaultModelLimits.maxLength,
-    );
-
-    return Math.min(...maxLengthArray);
-  }, [modelsMap, selectedConversations]);
+  const maxLength = DEFAULT_USER_MESSAGE_MAX_LENGTH;
 
   const {
     content,

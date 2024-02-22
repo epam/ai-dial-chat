@@ -4,6 +4,8 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { FeatureType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
+import { FALLBACK_MODEL_ID } from '@/src/constants/default-ui-settings';
+
 import { RootState } from '..';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -16,7 +18,7 @@ export interface SettingsState {
   enabledFeatures: Feature[];
   codeWarning: string;
   announcement: string;
-  defaultModelId: string | undefined;
+  defaultModelId: string;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
   storageType: StorageType;
@@ -31,7 +33,7 @@ const initialState: SettingsState = {
   enabledFeatures: [],
   codeWarning: '',
   announcement: '',
-  defaultModelId: undefined,
+  defaultModelId: FALLBACK_MODEL_ID,
   defaultRecentModelsIds: [],
   defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,

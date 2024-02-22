@@ -15,7 +15,6 @@ import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { StorageType } from '../types/storage';
 import { Translation } from '../types/translation';
-import { fallbackModelID } from '@/src/types/openai';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
@@ -36,6 +35,7 @@ import {
 } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
 import { SHARE_QUERY_PARAM } from '../constants/share';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
@@ -55,6 +55,7 @@ import Promptbar from '@/src/components/Promptbar';
 import packageJSON from '../../../../package.json';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { URL } from 'url';
 
 export interface HomeProps {
   initialState: {
@@ -111,7 +112,7 @@ export default function Home({ initialState }: HomeProps) {
   // EFFECTS  --------------------------------------------
   useEffect(() => {
     if (!isOverlay && shouldLogin) {
-      signIn();
+      signIn(undefined, { callbackUrl: '/?share=123' });
     }
   }, [isOverlay, shouldLogin]);
 
@@ -257,10 +258,14 @@ export const getServerSideProps: GetServerSideProps = async ({
 
   const session = await getServerSession(req, res, authOptions);
   if (!isServerSessionValid(session)) {
+    let params;
+    if (req.url) {
+      params = new URL(req.url, `http://${req.headers.host}`).searchParams;
+    }
     return {
       redirect: {
         permanent: false,
-        destination: `api/auth/signin`,
+        destination: `api/auth/signin${params?.size && `?callbackUrl=/?${params.toString()}`}`,
       },
     };
   }
@@ -268,7 +273,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
-    defaultModelId: process.env.DEFAULT_MODEL || fallbackModelID,
+    defaultModelId: process.env.DEFAULT_MODEL || FALLBACK_MODEL_ID,
     defaultRecentModelsIds:
       (process.env.RECENT_MODELS_IDS &&
         process.env.RECENT_MODELS_IDS.split(',')) ||

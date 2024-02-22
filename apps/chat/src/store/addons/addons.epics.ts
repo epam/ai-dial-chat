@@ -17,7 +17,7 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 
-import { OpenAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
@@ -57,7 +57,7 @@ const getAddonsEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        map((response: OpenAIEntityAddon[]) =>
+        map((response: DialAIEntityAddon[]) =>
           AddonsActions.getAddonsSuccess({ addons: response }),
         ),
         catchError((err) => {

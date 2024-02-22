@@ -10,7 +10,7 @@ interface Props {
   isModels: boolean;
   conversation: Conversation;
   prompts: Prompt[];
-  defaultModelId: string;
+  defaultModelId: string | undefined;
   isShowSettings: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;

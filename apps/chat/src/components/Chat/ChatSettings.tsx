@@ -3,11 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
-import { OpenAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConversationSettings } from './ConversationSettings';
 
@@ -16,7 +16,7 @@ interface Props {
   modelId: string | undefined;
   prompts: Prompt[];
   defaultModelId: string;
-  addons: OpenAIEntityAddon[];
+  addons: DialAIEntityAddon[];
   onClose: () => void;
   onChangeSettings: (args: {
     modelId: string | undefined;
@@ -47,7 +47,7 @@ export const ChatSettings = ({
     conversation.temperature,
   );
   const [currentAssistentModelId, setCurrentAssistentModelId] = useState(
-    conversation.assistantModelId || DEFAULT_ASSISTANT_SUBMODEL?.id,
+    conversation.assistantModelId || DEFAULT_ASSISTANT_SUBMODEL_ID,
   );
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],

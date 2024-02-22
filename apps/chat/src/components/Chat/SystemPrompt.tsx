@@ -17,7 +17,7 @@ import { getPromptLimitDescription } from '@/src/utils/app/modals';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-settings';
+import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';

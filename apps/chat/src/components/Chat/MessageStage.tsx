@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
 import { Stage } from '@/src/types/chat';
-import { OpenAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/openai';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -23,7 +23,7 @@ interface StageTitleProps {
 }
 
 const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
-  const [addon, setAddon] = useState<OpenAIEntityAddon | undefined>();
+  const [addon, setAddon] = useState<DialAIEntityAddon | undefined>();
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 
   const match = stage.name?.match(/^[^(]*/);

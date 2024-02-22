@@ -8,7 +8,7 @@ import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 
-import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
+import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { constructPath } from '../app/file';
 

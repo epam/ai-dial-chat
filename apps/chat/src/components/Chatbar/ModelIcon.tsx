@@ -4,13 +4,13 @@ import SVG from 'react-inlinesvg';
 import classNames from 'classnames';
 
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/openai';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 
 interface Props {
   entityId: string;
-  entity: OpenAIEntity | undefined;
+  entity: DialAIEntity | undefined;
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
@@ -33,20 +33,12 @@ const ModelIconTemplate = memo(
       >
         <SVG
           key={entityId}
-          src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
+          src={entity?.iconUrl ? `${entity.iconUrl}?vp` : ''}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height={size}
           description={entity?.name || entityId}
-          cacheRequests={false}
-          loader={
-            <SVG
-              src={fallbackUrl}
-              width={size}
-              height={size}
-              description={entity?.name || entityId}
-            />
-          }
+          cacheRequests
         >
           <SVG
             src={fallbackUrl}

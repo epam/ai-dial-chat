@@ -12,7 +12,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
-import { DEFAULT_TEMPERATURE } from '@/src/constants/default-settings';
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import Tooltip from '@/src/components/Common/Tooltip';

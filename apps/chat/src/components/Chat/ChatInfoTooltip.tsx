@@ -6,17 +6,17 @@ import classNames from 'classnames';
 
 import { ConversationEntityModel } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 
 interface Props {
-  model: OpenAIEntityModel | ConversationEntityModel;
-  selectedAddons: OpenAIEntityAddon[] | null;
+  model: DialAIEntityModel | ConversationEntityModel;
+  selectedAddons: DialAIEntityAddon[] | null;
   prompt: string | null;
   temperature: number | null;
-  subModel?: OpenAIEntityModel | null;
+  subModel?: DialAIEntityModel | null;
 }
 
 const SM_HEIGHT_THRESHOLDS = [
@@ -28,7 +28,7 @@ const SM_HEIGHT_THRESHOLDS = [
 const DEFAULT_SM_LINE_CLAMP = 'line-clamp-[28]';
 
 const getModelTemplate = (
-  model: OpenAIEntityModel | ConversationEntityModel,
+  model: DialAIEntityModel | ConversationEntityModel,
   label: string,
 ) => (
   <>
@@ -39,10 +39,10 @@ const getModelTemplate = (
     >
       <ModelIcon
         entityId={model.id}
-        entity={model as OpenAIEntityModel}
+        entity={model as DialAIEntityModel}
         size={18}
       />
-      {(model as OpenAIEntityModel).name ?? model.id}
+      {(model as DialAIEntityModel).name ?? model.id}
     </div>
   </>
 );
@@ -82,7 +82,7 @@ export const ChatInfoTooltip = ({
       {model &&
         getModelTemplate(
           model,
-          getModelLabel((model as OpenAIEntityModel).type),
+          getModelLabel((model as DialAIEntityModel).type),
         )}
       {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
       {prompt && (

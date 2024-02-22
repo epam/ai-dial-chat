@@ -1,16 +1,11 @@
-import { Message, Role } from '@/src/types/chat';
+import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import {
-  OpenAIEntityAddonID,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-} from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/openai';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL,
   DIAL_API_HOST,
   DIAL_API_VERSION,
-} from '../../constants/default-settings';
+} from '../../constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { OpenAIError } from './error';
@@ -32,8 +27,9 @@ interface OpenAIErrorResponse extends Response {
 function getUrl(
   modelId: string,
   modelType: EntityType,
-  isAddonsAdded: boolean,
+  selectedAddonsIds: string[] | undefined,
 ): string {
+  const isAddonsAdded: boolean = Array.isArray(selectedAddonsIds);
   if (modelType === EntityType.Model && isAddonsAdded) {
     return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
   }
@@ -56,57 +52,48 @@ const appendChunk = <T extends object>(
 
 export const OpenAIStream = async ({
   model,
-  systemPrompt,
   temperature,
   messages,
-  selectedAddons,
+  selectedAddonsIds,
   assistantModelId,
   chatId,
   userJWT,
   jobTitle,
+  maxPromptTokens,
 }: {
-  model: OpenAIEntityModel;
-  systemPrompt: string | undefined;
+  model: DialAIEntityModel;
   temperature: number | undefined;
   messages: Message[];
-  selectedAddons: OpenAIEntityAddonID[] | undefined;
-  assistantModelId: OpenAIEntityModelID | undefined;
+  selectedAddonsIds: string[] | undefined;
+  assistantModelId: string | undefined;
   userJWT: string;
   chatId: string;
   jobTitle: string | undefined;
+  maxPromptTokens: number | undefined;
 }) => {
-  const isAddonsAdded: boolean =
-    Array.isArray(selectedAddons) && selectedAddons?.length > 0;
+  const url = getUrl(model.id, model.type, selectedAddonsIds);
 
-  const url = getUrl(model.id, model.type, isAddonsAdded);
+  console.log(url);
   const requestHeaders = getApiHeaders({
     chatId,
     jwt: userJWT,
     jobTitle,
   });
 
-  const body = JSON.stringify({
-    messages:
-      !systemPrompt || systemPrompt.trim().length === 0
-        ? messages
-        : [
-            {
-              role: Role.System,
-              content: systemPrompt,
-            },
-            ...messages,
-          ],
-    temperature,
-    stream: true,
-    model:
-      model.type !== EntityType.Assistant
-        ? model.id
-        : assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id,
-    ...(selectedAddons?.length && {
-      addons: selectedAddons?.map((addon) => ({ name: addon })),
-    }),
-  });
+  const body = JSON.stringify(
+    {
+      messages,
+      temperature,
+      stream: true,
+      model: assistantModelId ?? model.id,
+      addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
+      max_prompt_tokens: maxPromptTokens,
+    },
+    undefined,
+    2,
+  );
 
+  console.log(body);
   const res = await fetch(url, {
     headers: requestHeaders,
     method: 'POST',

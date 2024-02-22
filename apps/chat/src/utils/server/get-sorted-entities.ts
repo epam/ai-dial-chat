@@ -1,32 +1,37 @@
 import { JWT } from 'next-auth/jwt';
 
 import { EntityType } from '@/src/types/common';
-import {
-  OpenAIEntityModel,
-  OpenAIEntityModels,
-  ProxyOpenAIEntity,
-  defaultModelLimits,
-  fallbackModelID,
-} from '@/src/types/openai';
+import { CoreAIEntity, DialAIEntityModel } from '@/src/types/openai';
 
 import { getEntities } from './get-entities';
 import { logger } from './logger';
 
-function setDefaultModel(models: OpenAIEntityModel[]) {
-  const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
-  const defaultModel =
-    models.filter((model) => model.id === defaultModelId).pop() || models[0];
-  models = models.map((model) =>
-    model.id === defaultModel.id ? { ...model, isDefault: true } : model,
-  );
-  return models;
-}
+const getPromptTokens = (
+  currentTokensValue: number | undefined,
+  tokens2: number | undefined,
+  totalTokens: number | undefined,
+  partOfTotalTokens: number,
+): number | undefined => {
+  if (currentTokensValue) {
+    return currentTokensValue;
+  }
+
+  if (tokens2 && totalTokens) {
+    return totalTokens - tokens2;
+  }
+
+  if (totalTokens) {
+    return Math.floor(totalTokens * partOfTotalTokens);
+  }
+
+  return undefined;
+};
 
 export const getSortedEntities = async (token: JWT | null) => {
-  let entities: OpenAIEntityModel[] = [];
+  const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const models = await getEntities<ProxyOpenAIEntity<EntityType.Model>[]>(
+  const models = await getEntities<CoreAIEntity<EntityType.Model>[]>(
     EntityType.Model,
     accessToken,
     jobTitle,
@@ -36,14 +41,16 @@ export const getSortedEntities = async (token: JWT | null) => {
   });
 
   const applications = await getEntities<
-    ProxyOpenAIEntity<EntityType.Application>[]
+    CoreAIEntity<EntityType.Application>[]
   >(EntityType.Application, accessToken, jobTitle).catch((error) => {
     logger.error(error.message);
     return [];
   });
-  const assistants = await getEntities<
-    ProxyOpenAIEntity<EntityType.Assistant>[]
-  >(EntityType.Assistant, accessToken, jobTitle).catch((error) => {
+  const assistants = await getEntities<CoreAIEntity<EntityType.Assistant>[]>(
+    EntityType.Assistant,
+    accessToken,
+    jobTitle,
+  ).catch((error) => {
     logger.error(error.message);
     return [];
   });
@@ -57,37 +64,49 @@ export const getSortedEntities = async (token: JWT | null) => {
       continue;
     }
 
-    const existingModelMapping: OpenAIEntityModel | undefined =
-      OpenAIEntityModels[entity.id];
+    let maxRequestTokens;
+    let maxResponseTokens;
+    let maxTotalTokens;
 
-    const maxLength = existingModelMapping
-      ? existingModelMapping.maxLength
-      : defaultModelLimits.maxLength;
-
-    // applications must handle the limit themselves, because they can have complex logic to handle it
-    const fallbackRequestLimit =
-      entity.object === EntityType.Application
-        ? Infinity
-        : defaultModelLimits.requestLimit;
-
-    const requestLimit = existingModelMapping
-      ? existingModelMapping.requestLimit
-      : fallbackRequestLimit;
+    if (entity.object === EntityType.Model) {
+      maxRequestTokens = getPromptTokens(
+        entity.limits?.max_prompt_tokens,
+        entity.limits?.max_completion_tokens,
+        entity.limits?.max_total_tokens,
+        3 / 4,
+      );
+      maxResponseTokens = getPromptTokens(
+        entity.limits?.max_completion_tokens,
+        entity.limits?.max_prompt_tokens,
+        entity.limits?.max_total_tokens,
+        1 / 4,
+      );
+      maxTotalTokens =
+        entity.limits?.max_total_tokens ??
+        (maxResponseTokens && maxRequestTokens
+          ? maxResponseTokens + maxRequestTokens
+          : undefined);
+    }
 
     entities.push({
       id: entity.id,
-      name: entity.display_name ?? existingModelMapping?.name ?? entity.id,
+      name: entity.display_name ?? entity.id,
       description: entity.description,
       iconUrl: entity.icon_url,
       type: entity.object,
       selectedAddons: entity.addons,
-      maxLength,
-      requestLimit,
+      limits:
+        maxRequestTokens && maxResponseTokens && maxTotalTokens
+          ? {
+              maxRequestTokens,
+              maxResponseTokens,
+              maxTotalTokens,
+            }
+          : undefined,
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
     });
   }
 
-  entities = setDefaultModel(entities);
   return entities;
 };

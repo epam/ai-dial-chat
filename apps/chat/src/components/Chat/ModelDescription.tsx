@@ -1,13 +1,13 @@
 import { useTranslation } from 'next-i18next';
 
-import { OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 
 interface Props {
-  model: OpenAIEntityModel;
+  model: DialAIEntityModel;
 }
 
 export const ModelDescription = ({ model }: Props) => {
