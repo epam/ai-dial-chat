@@ -8,6 +8,7 @@ interface Props {
   isOpen: boolean;
   heading: string;
   description?: string;
+  subDescriptions?: string[];
   confirmLabel: string;
   cancelLabel?: string | null;
   onClose: (result: boolean) => void;
@@ -16,6 +17,7 @@ interface Props {
 export const ConfirmDialog = ({
   heading,
   description,
+  subDescriptions,
   confirmLabel,
   cancelLabel,
   isOpen,
@@ -40,15 +42,23 @@ export const ConfirmDialog = ({
         <h2 id={headingId} className="text-base font-semibold">
           {heading}
         </h2>
-        {description && (
-          <p
-            id={descriptionId}
-            data-qa="confirm-message"
-            className="text-secondary"
-          >
-            {description}
-          </p>
-        )}
+        <div>
+          {description && (
+            <p
+              id={descriptionId}
+              data-qa="confirm-message"
+              className="text-secondary"
+            >
+              {description}
+            </p>
+          )}
+          {!!subDescriptions &&
+            subDescriptions.map((subDescription) => (
+              <p key={subDescription} className="text-secondary">
+                {subDescription}
+              </p>
+            ))}
+        </div>
       </div>
       <div className="flex w-full items-center justify-end gap-3">
         {cancelLabel && (
