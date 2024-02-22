@@ -75,10 +75,10 @@ export const ConversationSettingsModel = ({
             <button className="flex items-center gap-3 rounded border border-accent-primary p-3 text-left text-xs">
               <ModelIcon entityId="" entity={undefined} size={24} />
               <div className="flex flex-col gap-1">
-                <span className="text-secondary" data-qa="entity-name">
+                <span className="text-secondary" data-qa="group-entity-name">
                   {unavailableModelId}
                 </span>
-                <span className="text-error" data-qa="entity-descr">
+                <span className="text-error" data-qa="group-entity-descr">
                   <EntityMarkdownDescription isShortDescription>
                     {t('chat.error.incorrect-selected', {
                       context: EntityType.Model,
