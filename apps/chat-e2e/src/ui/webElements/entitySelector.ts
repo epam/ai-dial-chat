@@ -2,6 +2,7 @@ import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 import { RecentEntities } from './recentEntities';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Groups } from '@/src/testData';
 import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { Locator, Page } from '@playwright/test';
@@ -43,7 +44,15 @@ export class EntitySelector extends BaseElement {
     await this.selectEntity(application, Groups.applications);
   }
 
-  public async selectModel(model: string) {
+  public async selectModel(model: string, iconHost?: string) {
+    if (isApiStorageType && iconHost) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.url().includes(iconHost!) && response.status() === 200,
+      );
+      await this.selectEntity(model, Groups.models);
+      return resp;
+    }
     await this.selectEntity(model, Groups.models);
   }
 

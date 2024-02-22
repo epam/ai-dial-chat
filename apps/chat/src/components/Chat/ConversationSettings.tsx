@@ -3,6 +3,8 @@ import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { IsPseudoModel } from '@/src/utils/server/api';
+
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/openai';
@@ -118,7 +120,9 @@ export const ConversationSettings = ({
             conversationId={conversationId}
             replay={replay}
             modelId={model?.id}
-            unavailableModelId={!model?.id ? modelId : undefined}
+            unavailableModelId={
+              !model?.id && !IsPseudoModel(modelId) ? modelId : undefined
+            }
             onModelSelect={onSelectModel}
           />
         </div>

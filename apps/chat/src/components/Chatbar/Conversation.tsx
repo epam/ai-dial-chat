@@ -185,7 +185,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleRename = useCallback(
     (conversation: ConversationInfo) => {
-      const newName = prepareEntityName(renameValue);
+      const newName = prepareEntityName(renameValue, true);
       setRenameValue(newName);
 
       if (

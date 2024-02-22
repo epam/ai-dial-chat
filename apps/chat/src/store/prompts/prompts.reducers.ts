@@ -37,6 +37,7 @@ const initialState: PromptsState = {
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
   isEditModalOpen: false,
+  isModalPreviewMode: false,
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
@@ -49,7 +50,9 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    uploadPromptsWithFoldersRecursive: (state) => state,
+    uploadPromptsWithFoldersRecursive: (state) => {
+      state.promptsLoaded = false;
+    },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
     skipFailedMigratedPrompts: (
@@ -422,9 +425,12 @@ export const promptsSlice = createSlice({
     },
     setIsEditModalOpen: (
       state,
-      { payload }: PayloadAction<{ isOpen: boolean }>,
+      {
+        payload: { isOpen, isPreview = false },
+      }: PayloadAction<{ isOpen: boolean; isPreview?: boolean }>,
     ) => {
-      state.isEditModalOpen = payload.isOpen;
+      state.isEditModalOpen = isOpen;
+      state.isModalPreviewMode = isPreview;
     },
     setSelectedPrompt: (
       state,

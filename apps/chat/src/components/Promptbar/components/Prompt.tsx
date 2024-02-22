@@ -47,6 +47,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
+import { PreviewPromptModal } from '@/src/components/Promptbar/components/PreviewPromptModal';
 
 import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
@@ -76,7 +77,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     PromptsSelectors.selectSelectedPromptId,
   );
   const isSelected = selectedPromptId === prompt.id;
-  const showModal = useAppSelector(PromptsSelectors.selectIsEditModalOpen);
+  const { showModal, isModalPreviewMode } = useAppSelector(
+    PromptsSelectors.selectIsEditModalOpen,
+  );
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
@@ -200,15 +203,15 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     [isExternal],
   );
 
-  const handleOpenEditModal: MouseEventHandler = useCallback(
-    (e) => {
+  const handleOpenEditModal = useCallback(
+    (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
       e.stopPropagation();
       e.preventDefault();
       setIsDeleting(false);
       setIsRenaming(true);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
-      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
+      dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
     [dispatch, prompt.id],
   );
@@ -400,6 +403,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onUnpublish={handleOpenUnpublishing}
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
+              onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
             />
           </div>
@@ -416,13 +420,25 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           )}
         </div>
 
-        {showModal && isSelected && (
-          <PromptModal
-            isOpen
-            onClose={handleClose}
-            onUpdatePrompt={handleUpdate}
-          />
-        )}
+        {showModal &&
+          isSelected &&
+          (isModalPreviewMode ? (
+            <PreviewPromptModal
+              isOpen
+              onDuplicate={(e) => {
+                handleDuplicate(e);
+                handleClose();
+              }}
+              onClose={handleClose}
+              onUnshare={handleOpenUnsharing}
+            />
+          ) : (
+            <PromptModal
+              isOpen
+              onClose={handleClose}
+              onUpdatePrompt={handleUpdate}
+            />
+          ))}
       </div>
 
       {isPublishing && (

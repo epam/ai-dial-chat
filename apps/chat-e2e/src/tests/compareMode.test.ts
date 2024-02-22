@@ -756,12 +756,17 @@ dialTest(
     await dialTest.step(
       'Open chat settings and update them for both models',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [initRandomModel.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
-          .selectModel(firstUpdatedRandomModel.name);
+          .selectModel(
+            firstUpdatedRandomModel.name,
+            firstUpdatedRandomModel.iconUrl,
+          );
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
         await leftEntitySettings
@@ -770,7 +775,10 @@ dialTest(
 
         await rightConversationSettings
           .getTalkToSelector()
-          .selectModel(secondUpdatedRandomModel.name);
+          .selectModel(
+            secondUpdatedRandomModel.name,
+            secondUpdatedRandomModel.iconUrl,
+          );
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
         await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
@@ -823,7 +831,9 @@ dialTest(
       'Hover over chat headers and verify chat settings updated on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await rightChatHeader.chatModel.hoverOver();
+        await rightChatHeader.hoverOverChatModel(
+          secondUpdatedRandomModel.iconUrl,
+        );
         const rightModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
@@ -845,7 +855,9 @@ dialTest(
           .toBe(secondUpdatedTemp.toString());
 
         await errorPopup.cancelPopup();
-        await leftChatHeader.chatModel.hoverOver();
+        await leftChatHeader.hoverOverChatModel(
+          firstUpdatedRandomModel.iconUrl,
+        );
         const leftModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)

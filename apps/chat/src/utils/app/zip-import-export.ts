@@ -27,7 +27,7 @@ const getAttachmentFromApi = async (file: DialFile) => {
   return fileResult.blob();
 };
 
-const getFolderPath = (folderId: string) =>
+export const getFolderPath = (folderId: string) =>
   folderId.replace(/^files\/[\w]+\//, '');
 
 export async function getZippedFile({
@@ -38,7 +38,7 @@ export async function getZippedFile({
   const zip = new JSZip();
   files.forEach((file) => {
     const fileBlob = getAttachmentFromApi(file);
-    const folderPath = file.folderId.replace(/^files\/[\w]+\//, '');
+    const folderPath = getFolderPath(file.folderId);
     zip.file(`res/${folderPath}/${file.name}`, fileBlob);
   });
 

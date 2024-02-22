@@ -46,7 +46,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(randomModel.name);
+        await talkToSelector.selectModel(randomModel.name, randomModel.iconUrl);
       },
     );
 

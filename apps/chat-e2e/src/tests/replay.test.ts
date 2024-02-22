@@ -137,7 +137,7 @@ dialTest(
     await dialTest.step(
       'Select some model and verify it has the same settings as parent model',
       async () => {
-        await talkToSelector.selectModel(gpt35Model.name);
+        await talkToSelector.selectModel(gpt35Model.name, gpt35Model.iconUrl);
 
         const newModelSystemPrompt = await entitySettings.getSystemPrompt();
         expect
@@ -260,9 +260,11 @@ dialTest(
     await dialTest.step(
       'Change model and settings for replay conversation and press Start replay',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [gpt35Model.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectModel(bison.name);
+        await talkToSelector.selectModel(bison.name, bison.iconUrl);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
         replayRequest = await chat.startReplay();
@@ -302,7 +304,7 @@ dialTest(
       'Hover over chat header model and verify chat settings on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await chatHeader.chatModel.hoverOver();
+        await chatHeader.hoverOverChatModel(bison.iconUrl);
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
@@ -546,7 +548,7 @@ dialTest(
       'Hover over chat header model and verify chat settings on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await chatHeader.chatModel.hoverOver();
+        await chatHeader.hoverOverChatModel(gpt35Model.iconUrl);
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
@@ -947,7 +949,7 @@ dialTest(
     await dialTest.step(
       'Select any available model and start replaying',
       async () => {
-        await talkToSelector.selectModel(gpt35Model.name);
+        await talkToSelector.selectModel(gpt35Model.name, gpt35Model.iconUrl);
         const replayRequest = await chat.startReplay();
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
@@ -988,12 +990,15 @@ dialTest(
         await dialHomePage.importFile({ path: filename }, () =>
           chatBar.importButton.click(),
         );
+        await conversations
+          .getConversationByName(
+            ExpectedConstants.newConversationTitle,
+            filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
+          )
+          .waitFor();
         await folderConversations.expandFolder(Import.oldVersionAppFolderName, {
           isHttpMethodTriggered: true,
         });
-        await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle)
-          .waitFor();
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,
@@ -1004,7 +1009,7 @@ dialTest(
         for (let i = 1; i <= newModels.length; i++) {
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
-          await talkToSelector.selectModel(newModel.name);
+          await talkToSelector.selectModel(newModel.name, newModel.iconUrl);
           await chat.applyNewEntity(newModel.iconUrl);
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);

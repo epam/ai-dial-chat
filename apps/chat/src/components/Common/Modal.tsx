@@ -31,7 +31,7 @@ export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   portalId: string;
   state?: ModalState | boolean;
   heading?: string | ReactNode;
-
+  headingClassName?: string;
   dataQa: string;
   initialFocus?: number | MutableRefObject<HTMLElement | null>;
   overlayClassName?: string;
@@ -51,6 +51,7 @@ function ModalView({
   portalId,
   state = ModalState.CLOSED,
   heading,
+  headingClassName,
   onClose,
   children,
   dataQa,
@@ -118,7 +119,12 @@ function ModalView({
                 </button>
               )}
               {heading && typeof heading === 'string' ? (
-                <h4 className="mb-2 max-h-[50px] text-left text-base font-semibold">
+                <h4
+                  className={classNames(
+                    'mb-2 max-h-[50px] text-left text-base font-semibold',
+                    headingClassName,
+                  )}
+                >
                   <Tooltip tooltip={heading}>
                     <div
                       className="line-clamp-2 w-full break-words"

@@ -312,19 +312,31 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               ConversationService.createConversation(info),
             ),
           ).pipe(
-            switchMap(() =>
-              concat(
-                of(
-                  ConversationsActions.addConversations({
-                    conversations: newConversations,
-                    selectAdded: true,
-                  }),
+            switchMap((conversations) => {
+              const newNames = newConversations.map((c) => c.name);
+              const apiNames = conversations
+                .filter(Boolean)
+                .map((c) => (c as Conversation).name);
+
+              return concat(
+                iif(
+                  // check if something renamed
+                  () => apiNames.some((name) => !newNames.includes(name)),
+                  of(
+                    ConversationsActions.uploadConversationsWithFoldersRecursive(),
+                  ),
+                  of(
+                    ConversationsActions.addConversations({
+                      conversations: newConversations,
+                      selectAdded: true,
+                    }),
+                  ),
                 ),
                 of(ConversationsActions.setIsActiveConversationRequest(false)),
-              ),
-            ),
+              );
+            }),
             catchError((err) => {
-              console.error("New conversation wasn't created:", err);
+              console.error("New conversation wasn't created: ", err);
               return concat(
                 of(
                   UIActions.showErrorToast(
@@ -2173,10 +2185,10 @@ const recreateConversationEpic: AppEpic = (action$) =>
     filter(ConversationsActions.recreateConversation.match),
     mergeMap(({ payload }) => {
       return zip(
-        ConversationService.createConversation(payload.new),
         ConversationService.deleteConversation(
           getConversationInfoFromId(payload.old.id),
         ),
+        ConversationService.createConversation(payload.new),
       ).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {

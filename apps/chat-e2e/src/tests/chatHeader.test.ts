@@ -116,7 +116,7 @@ dialTest(
       'Hover over chat header and verify chat settings are correct on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await chatHeader.chatModel.hoverOver();
+        await chatHeader.hoverOverChatModel(defaultModel.iconUrl);
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
