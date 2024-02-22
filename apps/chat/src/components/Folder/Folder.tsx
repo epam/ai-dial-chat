@@ -850,12 +850,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
           heading={t('Confirm deleting folder')}
-          description={`
-            ${t(
-              'Are you sure that you want to remove a folder with all nested elements?',
-            )}
-            ${currentFolder.isShared ? 'Removing will stop sharing and other users will no longer see this folder.' : ''}
-          `}
+          description={`${t('Are you sure that you want to remove a folder with all nested elements?')}${currentFolder.isShared ? ' Removing will stop sharing and other users will no longer see this folder.' : ''}`}
           confirmLabel={t('Remove')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
