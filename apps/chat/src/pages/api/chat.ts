@@ -81,8 +81,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       limits,
     );
 
-    console.log(limits?.maxRequestTokens);
-    console.log(typeof limits?.maxRequestTokens);
     messagesToSend = messagesToSend.map((message) => ({
       ...getMessageCustomContent(message),
       role: message.role,

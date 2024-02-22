@@ -73,7 +73,6 @@ export const OpenAIStream = async ({
 }) => {
   const url = getUrl(model.id, model.type, selectedAddonsIds);
 
-  console.log(url);
   const requestHeaders = getApiHeaders({
     chatId,
     jwt: userJWT,
@@ -93,7 +92,6 @@ export const OpenAIStream = async ({
     2,
   );
 
-  console.log(body);
   const res = await fetch(url, {
     headers: requestHeaders,
     method: 'POST',
