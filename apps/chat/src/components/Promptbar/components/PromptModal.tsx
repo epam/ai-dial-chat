@@ -264,7 +264,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
           </div>
           <ConfirmDialog
             isOpen={isConfirmDialog}
-            heading={t('Confirm renaming')}
+            heading={t('Confirm renaming prompt')}
             confirmLabel={t('Rename')}
             cancelLabel={t('Cancel')}
             description={
