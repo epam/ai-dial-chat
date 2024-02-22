@@ -24,8 +24,6 @@ export const ModelVersionSelect = ({
 }: ModelVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { t } = useTranslation(Translation.Settings);
-
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onSelect(e.currentTarget.value);
     setIsOpen(false);
