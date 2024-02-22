@@ -126,6 +126,9 @@ export const PlaybackControls = ({
   }, [dispatch, isMessageStreaming, isNextMessageInStack, phase]);
 
   const handlePrevMessage = useCallback(() => {
+    if (activeIndex === 0 && phase !== 'MESSAGE') {
+      return;
+    }
     if (phase === 'EMPTY') {
       setPhase('MESSAGE');
     } else {
@@ -139,7 +142,7 @@ export const PlaybackControls = ({
     }
 
     dispatch(ConversationsActions.playbackPrevMessage());
-  }, [dispatch, isPrevMessageInStack, phase]);
+  }, [dispatch, isPrevMessageInStack, phase, activeIndex]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -157,8 +160,8 @@ export const PlaybackControls = ({
         e.preventDefault();
         handlePlayNextMessage();
       } else if (
-        activeIndex &&
-        activeIndex > 0 &&
+        isActiveIndex &&
+        activeIndex >= 0 &&
         (e.key === 'ArrowUp' || e.key === 'ArrowLeft')
       ) {
         e.preventDefault();
@@ -166,6 +169,7 @@ export const PlaybackControls = ({
       }
     },
     [
+      isActiveIndex,
       activeIndex,
       handlePlayNextMessage,
       handlePrevMessage,
