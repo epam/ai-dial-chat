@@ -258,7 +258,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await confirmationDialog.confirm();
+    await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     expect
       .soft(
         await prompts.getPromptByName(prompt.name).isVisible(),

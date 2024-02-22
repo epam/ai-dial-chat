@@ -206,7 +206,7 @@ dialTest(
           promptInsideFolder.prompts[0].name,
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
@@ -326,7 +326,7 @@ dialTest(
       async () => {
         await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await prompts
           .getPromptByName(promptOutsideFolder.name)
           .waitFor({ state: 'hidden' });

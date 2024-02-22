@@ -369,7 +369,7 @@ dialTest(
       conversationInFolder.conversations[0].name,
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await folderConversations.deleteConversation();
+    await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     expect
       .soft(
         await folderConversations.isFolderEntityVisible(
@@ -391,6 +391,7 @@ dialTest(
     conversationData,
     dataInjector,
     localStorageManager,
+    confirmationDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-608');
@@ -402,7 +403,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await conversations.deleteConversationWithTick(conversation.name);
+    await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     expect
       .soft(
         await conversations

@@ -4,7 +4,6 @@ import { BaseElement } from './baseElement';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Styles, Tags } from '@/src/ui/domData';
-import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { Input } from '@/src/ui/webElements/input';
 import { Page } from '@playwright/test';
@@ -15,15 +14,6 @@ export class SideBarEntities extends BaseElement {
   constructor(page: Page, rootSelector: string, entitySelector: string) {
     super(page, rootSelector);
     this.entitySelector = entitySelector;
-  }
-
-  private confirmationDialog!: ConfirmationDialog;
-
-  getConfirmationDialog(): ConfirmationDialog {
-    if (!this.confirmationDialog) {
-      this.confirmationDialog = new ConfirmationDialog(this.page);
-    }
-    return this.confirmationDialog;
   }
 
   private entityInput!: Input;
@@ -145,19 +135,5 @@ export class SideBarEntities extends BaseElement {
       return respPromise;
     }
     await this.getDropdownMenu().selectMenuOption(name);
-  }
-
-  public async deleteEntityWithTick(selector: string, name: string) {
-    const confirmationDialog = this.getConfirmationDialog();
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
-      );
-      await confirmationDialog.confirm();
-      await respPromise;
-    } else {
-      await confirmationDialog.confirm();
-    }
-    await this.getEntityByName(selector, name).waitFor({ state: 'hidden' });
   }
 }

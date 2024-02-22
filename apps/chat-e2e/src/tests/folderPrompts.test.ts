@@ -400,7 +400,7 @@ dialTest(
       promptInFolder.prompts[0].name,
     );
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await confirmationDialog.confirm();
+    await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     expect
       .soft(
         await folderPrompts
