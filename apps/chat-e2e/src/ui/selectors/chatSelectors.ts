@@ -10,6 +10,7 @@ export const ChatSelectors = {
   entitySettings: '[data-qa="entity-settings"]',
   seeFullList: '[data-qa="see-full-list"]',
   recentEntities: '[data-qa="recent"]',
+  groupEntity: '[data-qa="group-entity"]',
   recentEntityNames: '[data-qa="group-entity-name"]',
   recentEntityDescr: '[data-qa="group-entity-descr"]',
   systemPrompt: '[data-qa="system-prompt"]',
