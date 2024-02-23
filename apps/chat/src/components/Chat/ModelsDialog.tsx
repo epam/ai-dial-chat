@@ -226,6 +226,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
                     onSelect={handleSelectModel}
                     selectedModelId={selectedModelId}
                     allEntities={models}
+                    searchTerm={searchTerm}
                   />
                 )}
                 {filteredAssistantsEntities.length > 0 && (
@@ -235,6 +236,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
                     onSelect={handleSelectModel}
                     selectedModelId={selectedModelId}
                     allEntities={models}
+                    searchTerm={searchTerm}
                   />
                 )}
                 {filteredApplicationsEntities.length > 0 && (
@@ -244,6 +246,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
                     onSelect={handleSelectModel}
                     selectedModelId={selectedModelId}
                     allEntities={models}
+                    searchTerm={searchTerm}
                   />
                 )}
               </>

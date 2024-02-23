@@ -8,6 +8,7 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { OpenAIEntity } from '@/src/types/openai';
 
@@ -23,6 +24,7 @@ interface ModelGroupProps {
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
   notAllowExpandDescription?: boolean;
+  searchTerm?: string;
 }
 
 const ModelGroup = ({
@@ -30,6 +32,7 @@ const ModelGroup = ({
   selectedModelId,
   onSelect,
   notAllowExpandDescription,
+  searchTerm,
 }: ModelGroupProps) => {
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
@@ -39,9 +42,18 @@ const ModelGroup = ({
     if (entities.length < 2) {
       return entities[0];
     }
+    // searched
+    const searched = searchTerm
+      ? entities.find((e) => doesOpenAIEntityContainSearchTerm(e, searchTerm))
+      : undefined;
+    if (searched) {
+      return searched;
+    }
     // selected
     const selected = entities.find((e) => e.id === selectedModelId);
-    if (selected) return selected;
+    if (selected) {
+      return selected;
+    }
     // find latest used version
     const minIndex = Math.min(
       ...recentModelsIds
@@ -135,6 +147,7 @@ interface ModelListProps {
   displayCountLimit?: number;
   showInOneColumn?: boolean;
   allEntities: OpenAIEntity[];
+  searchTerm?: string;
 }
 
 export const ModelList = ({
@@ -146,6 +159,7 @@ export const ModelList = ({
   displayCountLimit,
   showInOneColumn,
   allEntities,
+  searchTerm,
 }: ModelListProps) => {
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
@@ -171,6 +185,7 @@ export const ModelList = ({
             selectedModelId={selectedModelId}
             onSelect={onSelect}
             notAllowExpandDescription={notAllowExpandDescription}
+            searchTerm={searchTerm}
           />
         ))}
       </div>
