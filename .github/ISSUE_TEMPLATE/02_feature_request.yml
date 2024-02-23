@@ -7,7 +7,7 @@ body:
     attributes:
       # yamllint disable rule:line-length
       value: "
-        <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=80' align='left' width='80' height='80'>
+        <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=40' align='left' width='40' height='40'>
         Thank you for finding the time to propose new feature!
 
         We really appreciate the community efforts to improve EPAM AI DIAL chat.
