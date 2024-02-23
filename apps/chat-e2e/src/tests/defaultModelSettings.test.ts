@@ -116,9 +116,9 @@ dialTest(
           .toEqual(defaultModel.selectedAddons ?? []);
 
         const expectedDefaultRecentAddons = [];
-        for (const addon of recentAddonIds) {
+        for (const addonId of recentAddonIds) {
           expectedDefaultRecentAddons.push(
-            expectedAddons.find((a) => a.id === addon)!.name,
+            expectedAddons.find((a) => a.id === addonId)?.name || addonId,
           );
         }
         const recentAddons = await addons.getRecentAddons();

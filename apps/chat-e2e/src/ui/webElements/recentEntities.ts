@@ -13,7 +13,9 @@ export class RecentEntities extends BaseElement {
     ChatSelectors.recentEntityNames,
   );
 
-  public recentEntities = this.getChildElementBySelector(Tags.button);
+  public recentEntities = this.getChildElementBySelector(
+    ChatSelectors.groupEntity,
+  );
 
   public getRecentEntity = (entity: string) =>
     this.createElementFromLocator(

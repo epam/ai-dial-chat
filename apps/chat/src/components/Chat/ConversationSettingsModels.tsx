@@ -1,21 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
 
 import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
 
 import { Replay } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityModel } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
+
+import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
+import { ModelList } from './ModelList';
 import { ModelsDialog } from './ModelsDialog';
 import { ReplayAsIsButton } from './ReplayAsIsButton';
 
@@ -27,8 +30,6 @@ interface Props {
   unavailableModelId?: string;
 }
 
-const RECENT_MODELS_COUNT = 5;
-
 export const ConversationSettingsModel = ({
   modelId,
   replay,
@@ -37,21 +38,31 @@ export const ConversationSettingsModel = ({
   unavailableModelId,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const [mappedEntities, setMappedEntities] = useState<OpenAIEntityModel[]>([]);
+  const models = useAppSelector(ModelsSelectors.selectModels);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const mappedEntities = getValidEntitiesFromIds(
-      recentModelsIds,
-      modelsMap,
-    ).slice(
-      0,
-      unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT,
-    );
-    setMappedEntities(mappedEntities);
-  }, [recentModelsIds, modelsMap, unavailableModelId]);
+  const enitities = useMemo(() => {
+    const recentModels = getValidEntitiesFromIds(recentModelsIds, modelsMap);
+    const nameSet = new Set(recentModels.map((m) => m.name));
+
+    return recentModels.concat(models.filter((m) => nameSet.has(m.name)));
+  }, [models, modelsMap, recentModelsIds]);
+
+  const handleModelSelect = useCallback(
+    (entityId: string, rearrange?: boolean) => {
+      onModelSelect(entityId);
+      dispatch(
+        ModelsActions.updateRecentModels({
+          modelId: entityId,
+          rearrange,
+        }),
+      );
+    },
+    [dispatch, onModelSelect],
+  );
 
   return (
     <div className="w-full" data-qa="entity-selector">
@@ -66,10 +77,10 @@ export const ConversationSettingsModel = ({
             <button className="flex items-center gap-3 rounded border border-accent-primary p-3 text-left text-xs">
               <ModelIcon entityId="" entity={undefined} size={24} />
               <div className="flex flex-col gap-1">
-                <span className="text-secondary" data-qa="entity-name">
+                <span className="text-secondary" data-qa="group-entity-name">
                   {unavailableModelId}
                 </span>
-                <span className="text-error" data-qa="entity-descr">
+                <span className="text-error" data-qa="group-entity-descr">
                   <EntityMarkdownDescription isShortDescription>
                     {t('chat.error.incorrect-selected', {
                       context: EntityType.Model,
@@ -79,30 +90,16 @@ export const ConversationSettingsModel = ({
               </div>
             </button>
           )}
-          {mappedEntities.map((entity) => (
-            <button
-              className={classNames(
-                'flex items-center gap-3 rounded border p-3 text-left text-xs',
-                modelId === entity.id && !replay.replayAsIs
-                  ? 'border-accent-primary'
-                  : 'border-primary hover:border-hover',
-              )}
-              key={entity.id}
-              onClick={() => onModelSelect(entity.id)}
-            >
-              <ModelIcon entityId={entity.id} entity={entity} size={24} />
-              <div className="flex flex-col gap-1">
-                <span data-qa="entity-name">{entity.name}</span>
-                {entity.description && (
-                  <span className="text-secondary" data-qa="entity-descr">
-                    <EntityMarkdownDescription isShortDescription>
-                      {entity.description}
-                    </EntityMarkdownDescription>
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
+          <ModelList
+            entities={enitities}
+            onSelect={handleModelSelect}
+            selectedModelId={modelId}
+            showInOneColumn
+            displayCountLimit={
+              unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT
+            }
+            notAllowExpandDescription
+          />
         </div>
       </div>
       <button
@@ -115,7 +112,7 @@ export const ConversationSettingsModel = ({
       <ModelsDialog
         selectedModelId={modelId}
         isOpen={isModelsDialogOpen}
-        onModelSelect={onModelSelect}
+        onModelSelect={handleModelSelect}
         onClose={() => setIsModelsDialogOpen(false)}
       />
     </div>

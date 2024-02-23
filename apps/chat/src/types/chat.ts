@@ -105,6 +105,7 @@ export interface ConversationsTemporarySettings {
   temperature: number;
   currentAssistentModelId: string | undefined;
   addonsIds: string[];
+  isShared: boolean;
 }
 
 export interface ConversationEntityModel {

@@ -26,7 +26,7 @@ export const FooterMessage = () => {
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const router = useRouter();
-  const { hash } = useUrlHash();
+  const { hash, resetHash } = useUrlHash();
 
   useEffect(() => {
     if (hash === requestApiKeyHash) {
@@ -51,6 +51,7 @@ export const FooterMessage = () => {
           onClose={() => {
             setIsRequestAPIDialogOpen(false);
             router.replace(router.basePath);
+            resetHash();
           }}
         />
       )}
@@ -60,6 +61,7 @@ export const FooterMessage = () => {
           onClose={() => {
             setIsReportIssueDialogOpen(false);
             router.replace(router.basePath);
+            resetHash();
           }}
         />
       )}

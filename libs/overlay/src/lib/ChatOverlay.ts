@@ -88,6 +88,7 @@ export class ChatOverlay {
     iframe.sandbox.add('allow-modals');
     iframe.sandbox.add('allow-forms');
     iframe.sandbox.add('allow-popups');
+    iframe.sandbox.add('allow-downloads');
     iframe.sandbox.add('allow-popups-to-escape-sandbox');
 
     iframe.style.height = '100%';
