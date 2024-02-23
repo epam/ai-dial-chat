@@ -6,7 +6,7 @@ import { useTranslation } from 'next-i18next';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { IsPseudoModel } from '@/src/utils/server/api';
 
-import { Replay } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
@@ -41,8 +41,7 @@ interface Props {
   temperature: number | undefined;
   prompts: Prompt[];
   selectedAddons: string[];
-  conversationId: string;
-  replay: Replay;
+  conversation: Conversation;
   isCloseEnabled?: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
@@ -75,8 +74,7 @@ export const ConversationSettings = ({
   temperature,
   selectedAddons,
   isCloseEnabled,
-  conversationId,
-  replay,
+  conversation,
   onClose,
   onSelectModel,
   onSelectAssistantSubModel,
@@ -96,11 +94,15 @@ export const ConversationSettings = ({
 
   const isNoModelInUserMessages = useMemo(() => {
     return (
-      replay.isReplay &&
-      replay.replayUserMessagesStack &&
-      replay.replayUserMessagesStack.some((message) => !message.model)
+      conversation.replay.isReplay &&
+      conversation.replay.replayUserMessagesStack &&
+      conversation.replay.replayUserMessagesStack.some(
+        (message) => !message.model,
+      )
     );
-  }, [replay]);
+  }, [conversation.replay]);
+
+  const isPlayback = conversation.playback?.isPlayback;
 
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
@@ -110,8 +112,7 @@ export const ConversationSettings = ({
       >
         <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
           <ConversationSettingsModel
-            conversationId={conversationId}
-            replay={replay}
+            conversation={conversation}
             modelId={model?.id}
             unavailableModelId={
               !model?.id && !IsPseudoModel(modelId) ? modelId : undefined
@@ -123,7 +124,7 @@ export const ConversationSettings = ({
           className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
           data-qa="entity-settings"
         >
-          {!replay.replayAsIs ? (
+          {!conversation.replay.replayAsIs ? (
             <>
               {model && model.type === EntityType.Application && (
                 <SettingContainer>
@@ -137,6 +138,7 @@ export const ConversationSettings = ({
                       assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
                     }
                     onSelectAssistantSubModel={onSelectAssistantSubModel}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}
@@ -150,6 +152,7 @@ export const ConversationSettings = ({
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}
                     debounceChanges={debounceSystemPromptChanges}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}
@@ -159,6 +162,7 @@ export const ConversationSettings = ({
                     label={t('Temperature')}
                     onChangeTemperature={onChangeTemperature}
                     temperature={temperature}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}
@@ -169,6 +173,7 @@ export const ConversationSettings = ({
                     selectedAddonsIds={selectedAddons}
                     onChangeAddon={onChangeAddon}
                     onApplyAddons={onApplyAddons}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}

@@ -2026,13 +2026,16 @@ const playbackPrevMessageEpic: AppEpic = (action$, state$) =>
 
           const activeAssistantIndex =
             activePlaybackIndex > 2 ? activePlaybackIndex - 3 : 0;
-          const assistantMessage = conv.messages[activeAssistantIndex];
-          const model = assistantMessage.model
+
+          const assistantMessage: Message | undefined =
+            conv.messages[activeAssistantIndex];
+
+          const model = assistantMessage?.model
             ? { ...conv.model, ...assistantMessage.model }
             : conv.model;
 
           const { prompt, temperature, selectedAddons, assistantModelId } =
-            assistantMessage.settings ? assistantMessage.settings : conv;
+            assistantMessage?.settings ? assistantMessage.settings : conv;
           return of(
             ConversationsActions.updateConversation({
               id: conv.id,
