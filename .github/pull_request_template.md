@@ -1,9 +1,3 @@
----
-name: PR template
-title: 'PR name in Conventional Commits format (Issue #<Number>)'
-assignees: @me
----
-
 **Description:**
 
 <SHORT_DESCRIPTION>
