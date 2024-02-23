@@ -4,7 +4,7 @@ import { FolderInterface } from '@/src/types/folder';
 
 import { AttachmentToUpload } from '@/src/store/import-export/importExport.reducers';
 
-import { constructPath, triggerDownload } from './file';
+import { constructPath, getNextFileName, triggerDownload } from './file';
 import {
   currentDate,
   getDownloadFileName,
@@ -179,4 +179,33 @@ export const compressConversationInZip = async ({
     folders: parentFolders,
   });
   return content;
+};
+
+export const updateAttachmentsNames = ({
+  filesFromFolder,
+  attachmentsToUpload,
+}: {
+  filesFromFolder: DialFile[];
+  attachmentsToUpload: DialFile[];
+}) => {
+  const existingFiles = filesFromFolder;
+
+  const updatedAttachments = attachmentsToUpload.map((attachment) => {
+    if (
+      existingFiles.length &&
+      existingFiles.some(({ name }) => name === attachment.name)
+    ) {
+      const newName = getNextFileName(attachment.name, existingFiles);
+
+      const updatedAttachment = { ...attachment, name: newName };
+
+      existingFiles.push(updatedAttachment);
+      return updatedAttachment;
+    }
+
+    existingFiles.push(attachment);
+    return attachment;
+  });
+
+  return updatedAttachments;
 };

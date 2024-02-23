@@ -394,12 +394,14 @@ export const updateAttachment = ({
     return oldAttachment;
   }
 
-  const oldAttachmentId = decodeApiUrl(oldAttachmentUrl);
+  const oldAttachmentDecodedUrl = decodeApiUrl(oldAttachmentUrl);
 
-  const { name } = splitEntityId(oldAttachmentId);
+  const { name, parentPath } = splitEntityId(oldAttachmentDecodedUrl);
 
-  const getHashFromAttachmentName = (name: string) => {
-    const nameArr = name.split('#');
+  const oldAttachmentId = constructPath(parentPath, name);
+
+  const splitByHash = (stringToSplit: string) => {
+    const nameArr = stringToSplit.split('#');
     const oldName = nameArr[0];
     const oldHash = nameArr[nameArr.length - 1];
 
@@ -409,10 +411,11 @@ export const updateAttachment = ({
     };
   };
 
-  const { oldHash } = getHashFromAttachmentName(name);
+  const { oldHash } = splitByHash(name);
+  const { oldName: cleanOldAttachmentId } = splitByHash(oldAttachmentId);
 
   const newAttachmentFile = uploadedAttachments.find(
-    ({ oldId }) => oldId === oldAttachmentId.split('#')[0],
+    ({ oldId }) => oldId === cleanOldAttachmentId,
   );
 
   if (!newAttachmentFile || !newAttachmentFile.name) {
