@@ -1,0 +1,39 @@
+---
+name: 🚀 Feature request
+description: Suggest an idea for EPAM AI DIAL chat
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: "
+        <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=40' align='left' width='40' height='40' style='margin-right:10px'>
+        Thank you for finding the time to propose new feature!
+
+        We really appreciate the community efforts to improve EPAM AI DIAL chat.
+        <br clear='left'/>"
+  - type: textarea
+    attributes:
+      label: Description
+      description: A short description of your feature
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Use case/motivation
+      description: What would you like to happen?
+      placeholder: >
+          Rather than telling us how you might implement this feature, try to take a step back and describe what you are trying to achieve.
+  - type: textarea
+    attributes:
+      label: Related issues
+      description: Is there currently another issue associated with this?
+  - type: checkboxes
+    attributes:
+      label: Confidential information
+      options:
+        - label: >
+            I confirm that do not share any confidential information
+          required: true
+  - type: markdown
+    attributes:
+      value: "Thanks for completing our form!"
