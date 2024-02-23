@@ -17,12 +17,12 @@ body:
     validations:
       required: true
     attributes:
-      label: EPAM AI DIAL version
+      label: EPAM AI DIAL chat version
       # yamllint disable rule:line-length
       description: >
-        On what version of EPAM AI DIAL are you currently experiencing the issue? You can find the version in the footer of page (e.g. "Version 0.4.2").
+        On what version of EPAM AI DIAL chat are you currently experiencing the issue? You can try to find the version in the footer of page (e.g. "Version 0.5.3") or ask your administrator.
       # yamllint enable rule:line-length
-      placeholder: 0.4.2
+      placeholder: 0.5.3
   - type: textarea
     attributes:
       label: What happened?
