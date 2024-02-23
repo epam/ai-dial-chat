@@ -68,7 +68,7 @@ export const ConversationSettingsModel = ({
       conversation.playback.activePlaybackIndex
     ]?.model?.id ?? conversation.model.id;
 
-  const playbackModelName = modelsMap[playbackModelID]?.name;
+  const playbackModelName = modelsMap[playbackModelID]?.name || playbackModelID;
 
   const isPlayback = conversation.playback?.isPlayback;
 
