@@ -38,8 +38,7 @@ body:
         What should we do to reproduce the problem? If you are not able to provide a reproducible case,
         please open a [discussion](https://github.com/epam/ai-dial-chat/discussions) instead.
       placeholder: >
-        Please make sure you provide a reproducible step-by-step case of how to reproduce the problem
-        as minimally and precisely as possible. Keep in mind we do not have access to your cluster or DAGs.
+        Please make sure you provide a reproducible step-by-step case of how to reproduce the problem as minimally and precisely as possible.
         Remember that non-reproducible issues will be closed! Opening a discussion is recommended as a first step.
     validations:
       required: true
