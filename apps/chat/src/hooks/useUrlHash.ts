@@ -17,7 +17,10 @@ export const useUrlHash = () => {
     };
   }, []);
 
+  const resetHash = () => setHash('');
+
   return {
     hash,
+    resetHash,
   };
 };
