@@ -25,14 +25,6 @@ body:
       placeholder: 0.5.3
   - type: textarea
     attributes:
-      label: What happened?
-      description: Describe what happened.
-      placeholder: >
-        Please provide the context in which the problem occurred and explain what happened
-    validations:
-      required: true
-  - type: textarea
-    attributes:
       label: How to reproduce
       description: >
         What should we do to reproduce the problem? If you are not able to provide a reproducible case,
