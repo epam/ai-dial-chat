@@ -47,9 +47,9 @@ const ModelGroup = ({
       ...recentModelsIds
         .map((rid) => entities.findIndex((e) => e.id === rid))
         .filter((ind) => ind !== -1),
-      0,
+      Number.MAX_SAFE_INTEGER,
     );
-    return entities[minIndex];
+    return entities[minIndex === Number.MAX_SAFE_INTEGER ? 0 : minIndex];
   }, [entities, recentModelsIds, selectedModelId]);
 
   const description = currentEntity.description;

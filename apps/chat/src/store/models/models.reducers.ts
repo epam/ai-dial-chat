@@ -109,14 +109,16 @@ export const modelsSlice = createSlice({
         (id) => state.modelsMap[id],
       );
       const oldIndex = recentModels.findIndex((m) => m?.name === newModel.name);
-      if (oldIndex >= 0 && !payload.rearrange) {
+      if (oldIndex >= 0) {
         if (recentModels[oldIndex]?.id !== payload.modelId) {
           //replace
           const newIds = [...state.recentModelsIds];
           newIds[oldIndex] = payload.modelId;
           state.recentModelsIds = newIds;
         }
-        return;
+        if (!payload.rearrange) {
+          return;
+        }
       }
 
       const recentFilteredModels = state.recentModelsIds.filter(
