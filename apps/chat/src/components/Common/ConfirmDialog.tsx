@@ -36,17 +36,23 @@ export const ConfirmDialog = ({
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
     >
-      <div className="flex flex-col gap-2">
+      <div className="flex w-full flex-col gap-2 text-start">
         <h2 id={headingId} className="text-base font-semibold">
           {heading}
         </h2>
-        {description && (
-          <p id={descriptionId} data-qa="confirm-message">
-            {description}
-          </p>
-        )}
+        <div>
+          {description && (
+            <p
+              id={descriptionId}
+              data-qa="confirm-message"
+              className="whitespace-pre-line text-secondary"
+            >
+              {description}
+            </p>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex w-full items-center justify-end gap-3">
         {cancelLabel && (
           <button
             className="button button-secondary"

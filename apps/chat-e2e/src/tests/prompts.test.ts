@@ -248,6 +248,7 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-969');
     const prompt = promptData.prepareDefaultPrompt();
@@ -257,7 +258,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await prompts.getPromptInput(prompt.name).clickTickButton();
+    await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     expect
       .soft(
         await prompts.getPromptByName(prompt.name).isVisible(),
@@ -276,6 +277,7 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     setTestIds,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-970');
     const prompt = promptData.prepareDefaultPrompt();
@@ -285,7 +287,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await prompts.getPromptInput(prompt.name).clickCancelButton();
+    await confirmationDialog.cancelDialog();
     expect
       .soft(
         await prompts.getPromptByName(prompt.name).isVisible(),

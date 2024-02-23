@@ -10,6 +10,7 @@ import { Page } from '@playwright/test';
 
 export class SideBarEntities extends BaseElement {
   protected entitySelector: string;
+
   constructor(page: Page, rootSelector: string, entitySelector: string) {
     super(page, rootSelector);
     this.entitySelector = entitySelector;
@@ -134,19 +135,5 @@ export class SideBarEntities extends BaseElement {
       return respPromise;
     }
     await this.getDropdownMenu().selectMenuOption(name);
-  }
-
-  public async deleteEntityWithTick(selector: string, name: string) {
-    const input = await this.getEntityInput(selector, name);
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
-      );
-      await input.clickTickButton();
-      await respPromise;
-    } else {
-      await input.clickTickButton();
-    }
-    await this.getEntityByName(selector, name).waitFor({ state: 'hidden' });
   }
 }

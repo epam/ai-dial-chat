@@ -1550,7 +1550,7 @@ dialTest(
       async () => {
         await conversations.openConversationDropdownMenu(updatedRequestContent);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await conversations.deleteConversationWithTick(updatedRequestContent);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         expect
           .soft(
             await conversations

@@ -28,6 +28,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
@@ -52,7 +53,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     selectedPrompt?.description || '',
   );
   const [content, setContent] = useState(selectedPrompt?.content || '');
-
+  const [isConfirmDialog, setIsConfirmDialog] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -128,9 +129,14 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
       setSubmitted(true);
 
+      if (selectedPrompt.isShared && selectedPrompt.name !== name) {
+        setIsConfirmDialog(true);
+        return;
+      }
+
       updatePrompt(selectedPrompt);
     },
-    [updatePrompt],
+    [name, updatePrompt],
   );
 
   const handleEnter = useCallback(
@@ -256,6 +262,28 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               {t('Save')}
             </button>
           </div>
+          <ConfirmDialog
+            isOpen={isConfirmDialog}
+            heading={t('Confirm renaming prompt')}
+            confirmLabel={t('Rename')}
+            cancelLabel={t('Cancel')}
+            description={
+              t(
+                'Renaming will stop sharing and other users will no longer see this conversation.',
+              ) || ''
+            }
+            onClose={(result) => {
+              setIsConfirmDialog(false);
+              if (result) {
+                updatePrompt({
+                  ...selectedPrompt,
+                  isShared: false,
+                });
+                setSubmitted(false);
+                onClose();
+              }
+            }}
+          />
         </>
       ) : (
         <NotFoundEntity entity={t('Prompt')} />

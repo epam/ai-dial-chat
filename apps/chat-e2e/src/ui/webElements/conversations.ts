@@ -4,7 +4,6 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Chronology, MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
-import { Input } from '@/src/ui/webElements/input';
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
 import { Page } from '@playwright/test';
 
@@ -16,10 +15,6 @@ interface ConversationsChronologyType {
 export class Conversations extends SideBarEntities {
   constructor(page: Page) {
     super(page, ChatBarSelectors.conversations, ChatBarSelectors.conversation);
-  }
-
-  getConversationInput(name: string): Input {
-    return this.getEntityInput(this.entitySelector, name);
   }
 
   public chronologyByTitle = (chronology: string) =>
@@ -131,10 +126,6 @@ export class Conversations extends SideBarEntities {
       return respPromise;
     }
     await this.page.keyboard.press(keys.enter);
-  }
-
-  public async deleteConversationWithTick(name: string) {
-    await this.deleteEntityWithTick(this.entitySelector, name);
   }
 
   public async openEditConversationNameMode(name: string, newName: string) {
