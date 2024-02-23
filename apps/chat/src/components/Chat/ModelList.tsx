@@ -134,6 +134,7 @@ interface ModelListProps {
   notAllowExpandDescription?: boolean;
   displayCountLimit?: number;
   showInOneColumn?: boolean;
+  allEntities: OpenAIEntity[];
 }
 
 export const ModelList = ({
@@ -144,15 +145,16 @@ export const ModelList = ({
   notAllowExpandDescription,
   displayCountLimit,
   showInOneColumn,
+  allEntities,
 }: ModelListProps) => {
-  const groupedModels = useMemo(
-    () =>
-      groupModelsAndSaveOrder(entities).slice(
-        0,
-        displayCountLimit ?? Number.MAX_SAFE_INTEGER,
-      ),
-    [displayCountLimit, entities],
-  );
+  const groupedModels = useMemo(() => {
+    const nameSet = new Set(entities.map((m) => m.name));
+    const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
+    return groupModelsAndSaveOrder(entities.concat(otherVersions)).slice(
+      0,
+      displayCountLimit ?? Number.MAX_SAFE_INTEGER,
+    );
+  }, [allEntities, displayCountLimit, entities]);
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
       {heading && <span className="text-secondary">{heading}</span>}

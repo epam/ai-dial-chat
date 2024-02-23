@@ -44,12 +44,10 @@ export const ConversationSettingsModel = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
-  const enitities = useMemo(() => {
-    const recentModels = getValidEntitiesFromIds(recentModelsIds, modelsMap);
-    const nameSet = new Set(recentModels.map((m) => m.name));
-
-    return recentModels.concat(models.filter((m) => nameSet.has(m.name)));
-  }, [models, modelsMap, recentModelsIds]);
+  const enitities = useMemo(
+    () => getValidEntitiesFromIds(recentModelsIds, modelsMap),
+    [modelsMap, recentModelsIds],
+  );
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
@@ -99,6 +97,7 @@ export const ConversationSettingsModel = ({
               unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT
             }
             notAllowExpandDescription
+            allEntities={models}
           />
         </div>
       </div>

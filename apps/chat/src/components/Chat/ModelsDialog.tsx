@@ -225,6 +225,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
                     heading={t('Models') || ''}
                     onSelect={handleSelectModel}
                     selectedModelId={selectedModelId}
+                    allEntities={models}
                   />
                 )}
                 {filteredAssistantsEntities.length > 0 && (
@@ -233,6 +234,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
                     heading={t('Assistants') || ''}
                     onSelect={handleSelectModel}
                     selectedModelId={selectedModelId}
+                    allEntities={models}
                   />
                 )}
                 {filteredApplicationsEntities.length > 0 && (
@@ -241,6 +243,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
                     heading={t('Applications') || ''}
                     onSelect={handleSelectModel}
                     selectedModelId={selectedModelId}
+                    allEntities={models}
                   />
                 )}
               </>
