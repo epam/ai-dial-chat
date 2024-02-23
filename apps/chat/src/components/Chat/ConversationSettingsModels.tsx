@@ -71,6 +71,7 @@ export const ConversationSettingsModel = ({
   const playbackModelName = modelsMap[playbackModelID]?.name || playbackModelID;
 
   const isPlayback = conversation.playback?.isPlayback;
+  const isReplay = conversation.replay.isReplay;
 
   return (
     <div className="w-full" data-qa="entity-selector">
@@ -78,10 +79,8 @@ export const ConversationSettingsModel = ({
 
       <div className="flex flex-col gap-3" data-qa="recent">
         <div className="grid grid-cols-1 gap-3">
-          {conversation.playback?.isPlayback && (
-            <PlaybackModelButton modelName={playbackModelName} />
-          )}
-          {conversation.replay.isReplay && (
+          {isPlayback && <PlaybackModelButton modelName={playbackModelName} />}
+          {isReplay && (
             <ReplayAsIsButton
               replay={conversation.replay}
               conversationId={conversation.id}
@@ -110,7 +109,9 @@ export const ConversationSettingsModel = ({
             selectedModelId={modelId}
             showInOneColumn
             displayCountLimit={
-              unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT
+              isReplay || isPlayback || unavailableModelId
+                ? RECENT_MODELS_COUNT - 1
+                : RECENT_MODELS_COUNT
             }
             disabled={isPlayback}
             notAllowExpandDescription
