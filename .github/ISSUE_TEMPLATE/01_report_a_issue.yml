@@ -9,6 +9,8 @@ body:
       value: "
         <img src='https://avatars.githubusercontent.com/u/1589802?s=48&v=4' align='left' width='48' height='48'>
         Thank you for finding the time to report the problem!
+
+        We really appreciate the community's efforts to improve EPAM AI DIAL chat.
         <br clear='left'/>"
       # yamllint enable rule:line-length
   - type: input
