@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
 
-import { Replay } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -20,20 +20,19 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelList } from './ModelList';
 import { ModelsDialog } from './ModelsDialog';
+import { PlaybackModelButton } from './Playback/PlaybackModelButton';
 import { ReplayAsIsButton } from './ReplayAsIsButton';
 
 interface Props {
   modelId: string | undefined;
-  conversationId: string;
-  replay: Replay;
+  conversation: Conversation;
   onModelSelect: (modelId: string) => void;
   unavailableModelId?: string;
 }
 
 export const ConversationSettingsModel = ({
   modelId,
-  replay,
-  conversationId,
+  conversation,
   onModelSelect,
   unavailableModelId,
 }: Props) => {
@@ -64,14 +63,28 @@ export const ConversationSettingsModel = ({
     [dispatch, onModelSelect],
   );
 
+  const playbackModelID =
+    conversation.playback?.messagesStack[
+      conversation.playback.activePlaybackIndex
+    ]?.model?.id ?? conversation.model.id;
+
+  const playbackModelName = modelsMap[playbackModelID]?.name || playbackModelID;
+
+  const isPlayback = conversation.playback?.isPlayback;
+  const isReplay = conversation.replay.isReplay;
+
   return (
     <div className="w-full" data-qa="entity-selector">
       <div className="mb-4">{t('Talk to')}</div>
 
       <div className="flex flex-col gap-3" data-qa="recent">
         <div className="grid grid-cols-1 gap-3">
-          {replay.isReplay && (
-            <ReplayAsIsButton replay={replay} conversationId={conversationId} />
+          {isPlayback && <PlaybackModelButton modelName={playbackModelName} />}
+          {isReplay && (
+            <ReplayAsIsButton
+              replay={conversation.replay}
+              conversationId={conversation.id}
+            />
           )}
           {unavailableModelId && (
             <button className="flex items-center gap-3 rounded border border-accent-primary p-3 text-left text-xs">
@@ -96,14 +109,18 @@ export const ConversationSettingsModel = ({
             selectedModelId={modelId}
             showInOneColumn
             displayCountLimit={
-              unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT
+              isReplay || isPlayback || unavailableModelId
+                ? RECENT_MODELS_COUNT - 1
+                : RECENT_MODELS_COUNT
             }
+            disabled={isPlayback}
             notAllowExpandDescription
           />
         </div>
       </div>
       <button
-        className="mt-3 inline text-left text-accent-primary"
+        disabled={isPlayback}
+        className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >
