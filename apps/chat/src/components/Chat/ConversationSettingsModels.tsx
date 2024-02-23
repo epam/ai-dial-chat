@@ -98,6 +98,7 @@ export const ConversationSettingsModel = ({
             displayCountLimit={
               unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT
             }
+            notAllowExpandDescription
           />
         </div>
       </div>
