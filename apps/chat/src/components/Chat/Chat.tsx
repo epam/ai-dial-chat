@@ -522,6 +522,7 @@ export const ChatView = memo(() => {
               selectedAddons: temporarySettings.addonsIds.filter(
                 (addonId) => addonsMap[addonId],
               ),
+              isShared: temporarySettings.isShared,
             },
           }),
         );

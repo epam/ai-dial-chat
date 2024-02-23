@@ -144,8 +144,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
-
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
@@ -278,6 +278,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         }),
       );
 
+      return;
+    }
+
+    if (currentFolder.isShared && newName !== currentFolder.name) {
+      setIsConfirmRenaming(true);
+      setIsRenaming(false);
+      setIsContextMenu(false);
       return;
     }
 
@@ -759,8 +766,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 if (isRenaming) {
                   handleRename();
                 }
-
-                setIsRenaming(false);
               }}
             >
               <CheckIcon
@@ -845,11 +850,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
           heading={t('Confirm deleting folder')}
-          description={
-            t(
-              'Are you sure that you want to remove a folder with all nested elements?',
-            ) || ''
-          }
+          description={`${t('Are you sure that you want to remove a folder with all nested elements?')}${t(
+            currentFolder.isShared
+              ? '\nRemoving will stop sharing and other users will no longer see this folder.'
+              : '',
+          )}`}
           confirmLabel={t('Remove')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
@@ -912,6 +917,29 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }}
         />
       )}
+      <ConfirmDialog
+        isOpen={isConfirmRenaming}
+        heading={t('Confirm renaming folder')}
+        confirmLabel={t('Rename')}
+        cancelLabel={t('Cancel')}
+        description={
+          t(
+            'Renaming will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          setIsConfirmRenaming(false);
+          if (result) {
+            const newName = prepareEntityName(renameValue, true);
+
+            if (newName) {
+              onRenameFolder!(newName, currentFolder.id);
+            }
+
+            setRenameValue('');
+          }
+        }}
+      />
     </div>
   );
 };
