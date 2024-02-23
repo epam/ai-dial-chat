@@ -5,23 +5,19 @@ labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      # yamllint disable rule:line-length
       value: "
         <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=40' align='left' width='40' height='40' style='margin-right:10px'>
         Thank you for finding the time to report the problem!
 
         We really appreciate the community's efforts to improve EPAM AI DIAL chat.
         <br clear='left'/>"
-      # yamllint enable rule:line-length
   - type: input
     validations:
       required: true
     attributes:
       label: EPAM AI DIAL chat version
-      # yamllint disable rule:line-length
       description: >
         On what version of EPAM AI DIAL chat are you currently experiencing the issue? You can try to find the version in the footer of page (e.g. "Version 0.5.3") or ask your administrator.
-      # yamllint enable rule:line-length
       placeholder: 0.5.3
   - type: textarea
     attributes:
