@@ -29,5 +29,12 @@ body:
         Please provide the context in which the problem occurred and explain what happened
     validations:
       required: true
+  - type: checkboxes
+    attributes:
+      label: Confidential information
+      options:
+        - label: >
+            I confirm that do not share any confidential information
+          required: true
 
 

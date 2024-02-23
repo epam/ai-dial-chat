@@ -24,4 +24,4 @@ List of related pull requests:
 - [ ] the pull request name starts with `fix:`, `feat:`, `feature:`, `chore:`, `hotfix:` or `e2e:`
 - [ ] if contains breaking changes then the pull request name starts with `fix!:`, `feat!:`, `feature!:`, `chore!:`, `hotfix!:` or `e2e!:`
 - [ ] the pull request name ends with `(Issue #<TICKET_ID>)` (comma-separated list of issues)
-- [ ] I confirm that do not share confidential information like API keys or any other secrets and private URLs
+- [ ] I confirm that do not share any confidential information like API keys or any other secrets and private URLs

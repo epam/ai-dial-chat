@@ -62,6 +62,13 @@ body:
         Please provide any suggestions or ideas what should happen instead.
     validations:
       required: true
+  - type: checkboxes
+    attributes:
+      label: Confidential information
+      options:
+        - label: >
+            I confirm that do not share any confidential information
+          required: true
   - type: markdown
     attributes:
       value: "Thanks for completing our form!"

@@ -31,6 +31,13 @@ body:
     attributes:
       label: Related issues
       description: Is there currently another issue associated with this?
+  - type: checkboxes
+    attributes:
+      label: Confidential information
+      options:
+        - label: >
+            I confirm that do not share any confidential information
+          required: true
   - type: markdown
     attributes:
       value: "Thanks for completing our form!"
