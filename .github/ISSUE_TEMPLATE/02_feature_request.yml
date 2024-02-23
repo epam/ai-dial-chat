@@ -25,8 +25,7 @@ body:
       label: Use case/motivation
       description: What would you like to happen?
       placeholder: >
-          Rather than telling us how you might implement this feature, try to take a
-          step back and describe what you are trying to achieve.
+          Rather than telling us how you might implement this feature, try to take a step back and describe what you are trying to achieve.
   - type: textarea
     attributes:
       label: Related issues

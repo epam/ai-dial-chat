@@ -48,10 +48,7 @@ body:
       label: Actial result
       description: What do you think went wrong?
       placeholder: >
-        Please explain why you think the behaviour is erroneous. It is extremely helpful if you copy&paste
-        the fragment of logs showing the exact error messages or wrong behaviour and screenshots for
-        UI problems or YouTube link to a video of you demonstrating the problem. You can include files by
-        dragging and dropping them here.
+        Please explain why you think the behaviour is erroneous. It is extremely helpful if you copy&paste the fragment of logs showing the exact error messages or wrong behaviour and screenshots for UI problems. You can include files by dragging and dropping them here.
     validations:
       required: true
   - type: textarea
