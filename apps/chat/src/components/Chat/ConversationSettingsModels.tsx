@@ -113,6 +113,7 @@ export const ConversationSettingsModel = ({
               unavailableModelId ? RECENT_MODELS_COUNT - 1 : RECENT_MODELS_COUNT
             }
             disabled={isPlayback}
+            notAllowExpandDescription
           />
         </div>
       </div>
