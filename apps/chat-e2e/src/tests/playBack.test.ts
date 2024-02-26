@@ -38,6 +38,7 @@ dialTest(
     chatHeader,
     setTestIds,
     iconApiHelper,
+    talkToRecentGroupEntities,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
     let conversation: TestConversation;
@@ -77,8 +78,8 @@ dialTest(
           .getConversationByName(playbackConversationName)
           .waitFor();
 
-        const modelBorderColors = await recentEntities
-          .getRecentEntity(`[${MenuOptions.playback}] ${defaultModel.name}`)
+        const modelBorderColors = await talkToRecentGroupEntities
+          .groupEntity(`[${MenuOptions.playback}] ${defaultModel.name}`)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {

@@ -375,7 +375,6 @@ dialTest(
   async ({
     dialHomePage,
     chatBar,
-    recentEntities,
     chat,
     talkToSelector,
     talkToRecentGroupEntities,
@@ -411,7 +410,6 @@ dialTest(
   'Search "Talk to" item in "See full list..."',
   async ({
     dialHomePage,
-    chatBar,
     talkToSelector,
     modelsDialog,
     talkToModelsGroupEntities,
@@ -424,13 +422,13 @@ dialTest(
       ModelsUtil.getOpenAIEntities().filter((m) => m.name.length >= 3),
     );
     const searchTerm = randomEntity.name.substring(0, 3);
-    const matchedModels = ModelsUtil.getModels().filter((m) =>
+    const matchedModels = ModelsUtil.getLatestModels().filter((m) =>
       m.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedApplications = ModelsUtil.getApplications().filter((a) =>
+    const matchedApplications = ModelsUtil.getLatestApplications().filter((a) =>
       a.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedAssistants = ModelsUtil.getAssistants().filter((a) =>
+    const matchedAssistants = ModelsUtil.getLatestAssistants().filter((a) =>
       a.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
@@ -441,7 +439,6 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.createNewConversation();
         await talkToSelector.seeFullList();
       },
     );

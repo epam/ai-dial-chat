@@ -42,6 +42,18 @@ export class ModelsUtil {
     );
   }
 
+  public static getLatestAssistants() {
+    return ModelsUtil.getLatestOpenAIEntities().filter(
+      (e) => e.type === 'assistant',
+    );
+  }
+
+  public static getLatestApplications() {
+    return ModelsUtil.getLatestOpenAIEntities().filter(
+      (e) => e.type === 'application',
+    );
+  }
+
   public static getModels() {
     return ModelsUtil.getOpenAIEntities().filter((e) => e.type === 'model');
   }
