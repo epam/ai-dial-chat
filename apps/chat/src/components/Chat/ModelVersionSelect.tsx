@@ -9,7 +9,7 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import sortBy from 'lodash-es/sortBy';
+import orderBy from 'lodash-es/orderBy';
 
 interface ModelVersionSelectProps {
   entities: OpenAIEntity[];
@@ -29,7 +29,10 @@ export const ModelVersionSelect = ({
     setIsOpen(false);
   };
 
-  const sortedEntities = useMemo(() => sortBy(entities, 'version'), [entities]);
+  const sortedEntities = useMemo(
+    () => orderBy(entities, 'version', 'desc'),
+    [entities],
+  );
 
   if (entities.length < 2) {
     return null;
