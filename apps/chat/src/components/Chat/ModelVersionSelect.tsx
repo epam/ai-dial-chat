@@ -1,4 +1,4 @@
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -9,6 +9,7 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import sortBy from 'lodash-es/sortBy';
 
 interface ModelVersionSelectProps {
   entities: OpenAIEntity[];
@@ -27,6 +28,8 @@ export const ModelVersionSelect = ({
     onSelect(e.currentTarget.value);
     setIsOpen(false);
   };
+
+  const sortedEntities = useMemo(() => sortBy(entities, 'version'), [entities]);
 
   if (entities.length < 2) {
     return null;
@@ -58,7 +61,7 @@ export const ModelVersionSelect = ({
         </div>
       }
     >
-      {entities.map((entity) => (
+      {sortedEntities.map((entity) => (
         <MenuItem
           key={entity.id}
           className={classNames(
