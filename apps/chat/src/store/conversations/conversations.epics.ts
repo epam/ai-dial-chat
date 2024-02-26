@@ -1814,12 +1814,39 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ),
       }),
     ),
-    switchMap(({ selectedConversationsIds }) =>
-      concat(
+    switchMap(({ selectedConversationsIds }) => {
+      return concat(
         of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
         iif(() => isSmallScreen(), of(UIActions.setShowChatbar(false)), EMPTY),
-      ),
-    ),
+      );
+    }),
+  );
+
+const selectConversationsByIdsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.selectConversationsByIds.match),
+    switchMap(({ payload }) => {
+      return ConversationService.setSelectedConversationsIds(payload.ids).pipe(
+        switchMap(() =>
+          ConversationService.getConversation(
+            getConversationInfoFromId(payload.ids[0]),
+          ).pipe(
+            switchMap((conv) => {
+              if (conv) {
+                return of(
+                  ConversationsActions.addConversations({
+                    conversations: [conv],
+                    selectAdded: true,
+                  }),
+                );
+              }
+
+              return EMPTY;
+            }),
+          ),
+        ),
+      );
+    }),
   );
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
@@ -2142,6 +2169,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       const conversationsWithIncorrectKeys = uploadedConversations.filter(
         (conv) => conv && conv.id !== getGeneratedConversationId(conv),
       ) as Conversation[];
+
       if (conversationsWithIncorrectKeys.length) {
         conversationsWithIncorrectKeys.forEach((conv) =>
           actions.push(
@@ -2461,4 +2489,5 @@ export const ConversationsEpics = combineEpics(
   toggleFolderEpic,
   openFolderEpic,
   compareConversationsEpic,
+  selectConversationsByIdsEpic,
 );

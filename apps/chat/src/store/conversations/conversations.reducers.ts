@@ -301,6 +301,7 @@ export const conversationsSlice = createSlice({
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
       }
+
     },
     setIsActiveConversationRequest: (
       state,
@@ -754,6 +755,16 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
+    selectConversationsByIds: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        ids: string[];
+      }>,
+    ) => {
+      state.selectedConversationsIds = payload.ids;
+    },
   },
 });
 

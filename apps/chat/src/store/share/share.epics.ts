@@ -19,7 +19,11 @@ import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
-import { encodeApiUrl, parseConversationApiKey } from '@/src/utils/server/api';
+import {
+  decodeApiUrl,
+  encodeApiUrl,
+  parseConversationApiKey,
+} from '@/src/utils/server/api';
 
 import { Conversation, Message } from '@/src/types/chat';
 import {
@@ -248,9 +252,22 @@ const acceptInvitationEpic: AppEpic = (action$) =>
       return ShareService.shareAccept({
         invitationId: payload.invitationId,
       }).pipe(
-        map(() => {
-          return ShareActions.acceptShareInvitationSuccess();
-        }),
+        switchMap(() =>
+          ShareService.getShareDetails({
+            invitationId: payload.invitationId,
+          }).pipe(
+            switchMap((data) => {
+              return concat(
+                of(ShareActions.acceptShareInvitationSuccess()),
+                of(
+                  ConversationsActions.selectConversationsByIds({
+                    ids: [decodeApiUrl(data.resources[0].url)],
+                  }),
+                ),
+              );
+            }),
+          ),
+        ),
         catchError((err) => {
           console.error(err);
           let message = errorsMessages.acceptShareFailed;
@@ -389,12 +406,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const actions = [];
       if (payload.resourceType === BackendResourceType.CONVERSATION) {
-        if (payload.sharedWith === ShareRelations.others) {
-          const conversations = ConversationsSelectors.selectConversations(
-            state$.value,
-          );
-          const folders = ConversationsSelectors.selectFolders(state$.value);
+        const conversations = ConversationsSelectors.selectConversations(
+          state$.value,
+        );
+        const folders = ConversationsSelectors.selectFolders(state$.value);
 
+        if (payload.sharedWith === ShareRelations.others) {
           actions.push(
             ...(payload.resources.folders
               .map((item) => {
@@ -432,11 +449,27 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
+          const [selectedConvId] =
+            ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+          const selectedConv = payload.resources.entities.find(
+            (conv) => conv.id === selectedConvId,
+          );
+
+          if (selectedConv) {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [selectedConv.id],
+              }),
+            );
+          }
+
           payload.resources.entities.length &&
             actions.push(
               ConversationsActions.addConversations({
                 conversations: payload.resources.entities.map((res) => ({
-                  ...res,
+                  ...(selectedConv && selectedConv.id === res.id
+                    ? selectedConv
+                    : res),
                   sharedWithMe: true,
                 })) as Conversation[],
               }),
