@@ -72,7 +72,7 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'flex items-center gap-3 rounded border px-3 py-2 hover:border-hover',
+        'relative rounded border hover:border-hover',
         !disabled && selectedModelId === currentEntity.id
           ? 'border-accent-primary'
           : 'border-primary',
@@ -94,53 +94,63 @@ const ModelGroup = ({
       }}
       data-qa="group-entity"
     >
-      <ModelIcon entityId={currentEntity.id} entity={currentEntity} size={24} />
-      <div className="flex w-full flex-col gap-1 text-left">
-        <div className="flex items-center justify-between">
-          <span data-qa="group-entity-name">
-            {entities.length === 1
-              ? getOpenAIEntityFullName(currentEntity)
-              : currentEntity.name}
-          </span>
-          <ModelVersionSelect
-            entities={entities}
-            onSelect={onSelect}
-            currentEntity={currentEntity}
-          />
-        </div>
-        {description && (
-          <span
-            className="text-secondary"
-            onClick={(e) => {
-              if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
-                e.stopPropagation();
-              }
-            }}
-            data-qa="group-entity-descr"
-          >
-            <EntityMarkdownDescription isShortDescription={!isOpened}>
-              {description}
-            </EntityMarkdownDescription>
-          </span>
-        )}
-      </div>
-      {!notAllowExpandDescription &&
-        description &&
-        description.indexOf('\n\n') !== -1 && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsOpened((isOpened) => !isOpened);
-            }}
-            data-qa="expand-group-entity"
-          >
-            <IconChevronDown
-              size={18}
-              className={classNames('transition-all', isOpened && 'rotate-180')}
+      {disabled && <DisableOverlay />}
+      <div className="flex h-full items-center gap-3 px-3 py-2">
+        <ModelIcon
+          entityId={currentEntity.id}
+          entity={currentEntity}
+          size={24}
+        />
+        <div className="flex w-full flex-col gap-1 text-left">
+          <div className="flex items-center justify-between">
+            <span data-qa="group-entity-name">
+              {entities.length === 1
+                ? getOpenAIEntityFullName(currentEntity)
+                : currentEntity.name}
+            </span>
+            <ModelVersionSelect
+              entities={entities}
+              onSelect={onSelect}
+              currentEntity={currentEntity}
             />
-          </button>
-        )}
+          </div>
+          {description && (
+            <span
+              className="text-secondary"
+              onClick={(e) => {
+                if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
+                  e.stopPropagation();
+                }
+              }}
+              data-qa="group-entity-descr"
+            >
+              <EntityMarkdownDescription isShortDescription={!isOpened}>
+                {description}
+              </EntityMarkdownDescription>
+            </span>
+          )}
+        </div>
+        {!notAllowExpandDescription &&
+          description &&
+          description.indexOf('\n\n') !== -1 && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsOpened((isOpened) => !isOpened);
+              }}
+              data-qa="expand-group-entity"
+            >
+              <IconChevronDown
+                size={18}
+                className={classNames(
+                  'transition-all',
+                  isOpened && 'rotate-180',
+                )}
+              />
+            </button>
+          )}
+      </div>
     </div>
   );
 };
@@ -188,17 +198,15 @@ export const ModelList = ({
         )}
       >
         {groupedModels.map((modelGroup) => (
-          <div className="relative" key={modelGroup.groupName}>
-            {disabled && <DisableOverlay />}
-            <ModelGroup
-              entities={modelGroup.entities}
-              selectedModelId={selectedModelId}
-              onSelect={onSelect}
-              notAllowExpandDescription={notAllowExpandDescription}
-              disabled={disabled}
-              searchTerm={searchTerm}
-            />
-          </div>
+          <ModelGroup
+            key={modelGroup.groupName}
+            entities={modelGroup.entities}
+            selectedModelId={selectedModelId}
+            onSelect={onSelect}
+            notAllowExpandDescription={notAllowExpandDescription}
+            disabled={disabled}
+            searchTerm={searchTerm}
+          />
         ))}
       </div>
     </div>
