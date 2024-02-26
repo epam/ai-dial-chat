@@ -15,6 +15,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
+import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
 
@@ -23,6 +24,7 @@ interface ModelGroupProps {
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
   notAllowExpandDescription?: boolean;
+  disabled?: boolean;
 }
 
 const ModelGroup = ({
@@ -30,6 +32,7 @@ const ModelGroup = ({
   selectedModelId,
   onSelect,
   notAllowExpandDescription,
+  disabled,
 }: ModelGroupProps) => {
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
@@ -57,13 +60,17 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'flex cursor-pointer items-center gap-3 rounded border px-3 py-2 hover:border-hover',
-        selectedModelId === currentEntity.id
+        'flex items-center gap-3 rounded border px-3 py-2 hover:border-hover',
+        !disabled && selectedModelId === currentEntity.id
           ? 'border-accent-primary'
           : 'border-primary',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
+        !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
+        if (disabled) {
+          return;
+        }
         if (
           !hasParentWithAttribute(
             e.target as HTMLAnchorElement,
@@ -134,6 +141,7 @@ interface ModelListProps {
   notAllowExpandDescription?: boolean;
   displayCountLimit?: number;
   showInOneColumn?: boolean;
+  disabled?: boolean;
 }
 
 export const ModelList = ({
@@ -144,6 +152,7 @@ export const ModelList = ({
   notAllowExpandDescription,
   displayCountLimit,
   showInOneColumn,
+  disabled,
 }: ModelListProps) => {
   const groupedModels = useMemo(
     () =>
@@ -163,13 +172,16 @@ export const ModelList = ({
         )}
       >
         {groupedModels.map((modelGroup) => (
-          <ModelGroup
-            key={modelGroup.groupName}
-            entities={modelGroup.entities}
-            selectedModelId={selectedModelId}
-            onSelect={onSelect}
-            notAllowExpandDescription={notAllowExpandDescription}
-          />
+          <div className="relative" key={modelGroup.groupName}>
+            {disabled && <DisableOverlay />}
+            <ModelGroup
+              entities={modelGroup.entities}
+              selectedModelId={selectedModelId}
+              onSelect={onSelect}
+              notAllowExpandDescription={notAllowExpandDescription}
+              disabled={disabled}
+            />
+          </div>
         ))}
       </div>
     </div>
