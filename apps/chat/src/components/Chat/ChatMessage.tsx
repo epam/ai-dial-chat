@@ -26,7 +26,7 @@ import {
   getDialFilesFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
-import { isOnlySmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
@@ -321,7 +321,7 @@ export const ChatMessage: FC<Props> = memo(
 
     const chatIconSize = isOverlay
       ? OVERLAY_ICON_SIZE
-      : isOnlySmallScreen()
+      : isSmallScreen()
         ? MOBILE_ICON_SIZE
         : DEFAULT_ICON_SIZE;
 
@@ -338,7 +338,7 @@ export const ChatMessage: FC<Props> = memo(
           className={classNames(
             'relative m-auto flex h-full md:gap-6 md:py-6 lg:px-0',
             !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
-            isOnlySmallScreen() || isOverlay ? 'px-4 py-3' : 'p-4',
+            isSmallScreen() || isOverlay ? 'px-4 py-3' : 'p-4',
           )}
         >
           <div className="min-w-[40px] font-bold" data-qa="message-icon">
@@ -438,7 +438,7 @@ export const ChatMessage: FC<Props> = memo(
                           {
                             'max-w-none': isChatFullWidth,
                             'text-sm': isOverlay,
-                            'leading-[150%]': isOnlySmallScreen() || isOverlay,
+                            'leading-[150%]': isSmallScreen() || isOverlay,
                           },
                         )}
                       >
