@@ -5,6 +5,7 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
 import { Locator, Page } from '@playwright/test';
 
 export class PromptList extends BaseElement {
@@ -68,5 +69,6 @@ export class PromptList extends BaseElement {
         optionIndex++;
       }
     }
+    await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 }
