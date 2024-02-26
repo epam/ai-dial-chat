@@ -101,7 +101,7 @@ export const MobileChatMessage = ({
                 item={
                   <div className="flex items-center gap-3">
                     <IconCheck size={20} className="text-secondary" />
-                    <p>Copied</p>
+                    <p>{t('Copied')}</p>
                   </div>
                 }
               />
