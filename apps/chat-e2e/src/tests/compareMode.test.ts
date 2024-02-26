@@ -173,8 +173,8 @@ dialTest(
           .toBe(expectedModels.length);
 
         for (const expectedModel of expectedModels) {
-          const actualOptionIcon = compareOptionsIcons.find(
-            (o) => o.entityName === expectedModel.name,
+          const actualOptionIcon = compareOptionsIcons.find((o) =>
+            o.entityName.includes(expectedModel.name),
           )!;
           const expectedModelIcon =
             await iconApiHelper.getEntityIcon(expectedModel);
@@ -714,13 +714,14 @@ dialTest(
     setTestIds('EPMRTC-1021');
     let firstConversation: TestConversation;
     let secondConversation: TestConversation;
-    const models = ModelsUtil.getModels();
+    const models = ModelsUtil.getLatestModels();
     const initRandomModel = GeneratorUtil.randomArrayElement(models);
     const modelsForUpdate = models.filter((m) => m !== initRandomModel);
     const firstUpdatedRandomModel =
       GeneratorUtil.randomArrayElement(modelsForUpdate);
-    const secondUpdatedRandomModel =
-      GeneratorUtil.randomArrayElement(modelsForUpdate);
+    const secondUpdatedRandomModel = GeneratorUtil.randomArrayElement(
+      modelsForUpdate.filter((m) => m !== firstUpdatedRandomModel),
+    );
     const firstUpdatedPrompt = 'first prompt';
     const secondUpdatedPrompt = 'second prompt';
     const firstUpdatedTemp = 0.5;
@@ -837,7 +838,7 @@ dialTest(
         const rightModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(secondUpdatedRandomModel.name);
+          .toBe(ModelsUtil.getModelInfo(secondUpdatedRandomModel.id));
 
         const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect
@@ -861,7 +862,7 @@ dialTest(
         const leftModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(firstUpdatedRandomModel.name);
+          .toBe(ModelsUtil.getModelInfo(firstUpdatedRandomModel.id));
 
         const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect
@@ -1247,10 +1248,7 @@ dialTest(
       'Create new chat and verify Compare mode is closed',
       async () => {
         await chatBar.createNewConversation();
-        const isCompareModeOn = await compare.isVisible();
-        expect
-          .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
-          .toBeFalsy();
+        const isCompareModeOn = await compare.waitForState({ state: 'hidden' });
       },
     );
 
@@ -1551,15 +1549,9 @@ dialTest(
         await conversations.openConversationDropdownMenu(updatedRequestContent);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        expect
-          .soft(
-            await conversations
-              .getConversationByName(updatedRequestContent)
-              .isVisible(),
-            ExpectedMessages.conversationDeleted,
-          )
-          .toBeFalsy();
-
+        await conversations
+          .getConversationByName(updatedRequestContent)
+          .waitFor({ state: 'hidden' });
         const isCompareModeOpened = await compare.isVisible();
         expect
           .soft(isCompareModeOpened, ExpectedMessages.compareModeClosed)

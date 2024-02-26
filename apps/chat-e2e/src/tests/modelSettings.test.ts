@@ -12,7 +12,7 @@ let models: OpenAIEntityModel[];
 let defaultModel: OpenAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  models = ModelsUtil.getModels();
+  models = ModelsUtil.getLatestModels();
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
@@ -20,12 +20,12 @@ dialTest(
   'Selected settings are saved if to switch from Model1 to Model2',
   async ({
     dialHomePage,
-    recentEntities,
     entitySettings,
     temperatureSlider,
     addons,
     setTestIds,
     talkToSelector,
+    talkToRecentGroupEntities,
   }) => {
     setTestIds('EPMRTC-1046');
     await dialHomePage.openHomePage();
@@ -38,8 +38,8 @@ dialTest(
     await temperatureSlider.setTemperature(temp);
 
     await talkToSelector.selectModel(randomModel.name, randomModel.iconUrl);
-    const modelBorderColors = await recentEntities
-      .getRecentEntity(randomModel.name)
+    const modelBorderColors = await talkToRecentGroupEntities
+      .groupEntity(randomModel.name)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {

@@ -1,10 +1,5 @@
 import dialTest from '@/src/core/dialFixtures';
-import {
-  ExpectedConstants,
-  ExpectedMessages,
-  Groups,
-  ModelIds,
-} from '@/src/testData';
+import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -20,6 +15,9 @@ dialTest(
     addonsDialog,
     conversations,
     iconApiHelper,
+    talkToModelsGroupEntities,
+    talkToAssistantsGroupEntities,
+    talkToApplicationGroupEntities,
     setTestIds,
   }) => {
     dialTest.slow();
@@ -36,18 +34,24 @@ dialTest(
     );
 
     await dialTest.step('Verify all entities have valid icons', async () => {
-      const allExpectedEntities = ModelsUtil.getOpenAIEntities();
-      const actualEntitiesIcons = await modelsDialog.getEntitiesIcons();
+      const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities();
+      const actualModelsIcons =
+        await talkToModelsGroupEntities.getEntitiesIcons();
+      const actualAssistantsIcons =
+        await talkToAssistantsGroupEntities.getEntitiesIcons();
+      const actualAppsIcons =
+        await talkToApplicationGroupEntities.getEntitiesIcons();
+      const actualIcons = actualModelsIcons.concat(
+        actualAssistantsIcons,
+        actualAppsIcons,
+      );
       expect
-        .soft(
-          actualEntitiesIcons.length,
-          ExpectedMessages.entitiesIconsCountIsValid,
-        )
+        .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)
         .toBe(allExpectedEntities.length);
 
       const randomEntity =
         GeneratorUtil.randomArrayElement(allExpectedEntities);
-      const actualEntity = actualEntitiesIcons.find(
+      const actualEntity = actualIcons.find(
         (e) => e.entityName === randomEntity.name,
       )!;
       const expectedEntityIcon =
@@ -109,9 +113,9 @@ dialTest(
       'Select any entity and verify corresponding icon is displayed on chat bar panel',
       async () => {
         const randomEntity = GeneratorUtil.randomArrayElement(
-          ModelsUtil.getModels(),
+          ModelsUtil.getLatestModels(),
         );
-        await talkToSelector.selectEntity(randomEntity.name, Groups.models);
+        await talkToSelector.selectModel(randomEntity.name);
 
         const conversationIcon = await conversations.getConversationIcon(
           ExpectedConstants.newConversationTitle,
