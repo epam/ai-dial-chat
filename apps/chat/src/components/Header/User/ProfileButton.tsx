@@ -8,12 +8,15 @@ import { useTranslation } from 'next-i18next';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import UserIcon from '../../../../public/images/icons/user.svg';
 
 export const ProfileButton = () => {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.SideBar);
@@ -23,9 +26,11 @@ export const ProfileButton = () => {
     dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
   }, [dispatch, isProfileOpen]);
 
+  const iconSize = isOverlay ? 18 : 24;
+
   return (
     <button
-      className="flex size-full items-center justify-center"
+      className="flex size-full items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
     >
       {isProfileOpen ? (
@@ -34,12 +39,12 @@ export const ProfileButton = () => {
         <img
           className="rounded"
           src={session?.user?.image}
-          width={24}
-          height={24}
+          width={iconSize}
+          height={iconSize}
           alt={t(`User avatar`) || ''}
         />
       ) : (
-        <UserIcon width={18} height={18} />
+        <UserIcon width={iconSize} height={iconSize} />
       )}
     </button>
   );

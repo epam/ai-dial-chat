@@ -9,6 +9,7 @@ import {
   getSelectedAddons,
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
+import { isOnlySmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -156,7 +157,7 @@ export const ChatHeader = ({
                   <ModelIcon
                     entityId={conversation.model.id}
                     entity={model}
-                    size={18}
+                    size={isOnlySmallScreen() ? 20 : 18}
                     isCustomTooltip
                   />
                 </Tooltip>
@@ -184,7 +185,7 @@ export const ChatHeader = ({
                         <ModelIcon
                           key={addon}
                           entityId={addon}
-                          size={18}
+                          size={isOnlySmallScreen() ? 20 : 18}
                           entity={addonsMap[addon]}
                         />
                       ))}
@@ -201,7 +202,7 @@ export const ChatHeader = ({
                         <ModelIcon
                           key={addon}
                           entityId={addon}
-                          size={18}
+                          size={isOnlySmallScreen() ? 20 : 18}
                           entity={addonsMap[addon]}
                         />
                       ))}
@@ -219,7 +220,7 @@ export const ChatHeader = ({
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
                 >
-                  <IconSettings size={18} />
+                  <IconSettings size={isOnlySmallScreen() ? 20 : 18} />
                 </button>
               </Tooltip>
             )}
@@ -233,7 +234,7 @@ export const ChatHeader = ({
                   onClick={() => setIsClearConversationModalOpen(true)}
                   data-qa="clear-conversation"
                 >
-                  <IconEraser size={18} />
+                  <IconEraser size={isOnlySmallScreen() ? 20 : 18} />
                 </button>
               </Tooltip>
             )}
