@@ -40,8 +40,8 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 
 interface MessageUserButtonsProps {
   toggleEditing: () => void;
-  editDisabled: boolean;
   onDelete: () => void;
+  editDisabled?: boolean;
 }
 
 export const MessageUserButtons = ({
@@ -96,15 +96,15 @@ export const MessageUserButtons = ({
 };
 
 interface MessageAssistantButtonsProps {
-  messagedCopied: boolean;
+  messageCopied?: boolean;
   copyOnClick: () => void;
   isLikesEnabled: boolean;
   message: Message;
-  onLike: (likeStatus: number) => () => void;
+  onLike: (likeStatus: number) => void;
 }
 
 export const MessageAssistantButtons = ({
-  messagedCopied,
+  messageCopied,
   copyOnClick,
   message,
   isLikesEnabled,
@@ -115,7 +115,7 @@ export const MessageAssistantButtons = ({
   return (
     <div className="flex w-[60px] shrink-0 flex-col justify-between">
       <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
-        {messagedCopied ? (
+        {messageCopied ? (
           <IconCheck size={20} className="text-secondary" />
         ) : (
           <Tooltip placement="top" isTriggerClickable tooltip={t('Copy text')}>
@@ -130,7 +130,11 @@ export const MessageAssistantButtons = ({
           <>
             {message.like !== -1 && (
               <Button
-                onClick={message.like !== 1 ? onLike(1) : void 0}
+                onClick={() => {
+                  if (message.like !== 1) {
+                    onLike(1);
+                  }
+                }}
                 className={
                   message.like !== 1 ? void 0 : 'visible text-secondary'
                 }
@@ -142,7 +146,11 @@ export const MessageAssistantButtons = ({
             )}
             {message.like !== 1 && (
               <Button
-                onClick={message.like !== -1 ? onLike(-1) : void 0}
+                onClick={() => {
+                  if (message.like !== -1) {
+                    onLike(-1);
+                  }
+                }}
                 className={
                   message.like !== -1 ? void 0 : 'visible text-secondary'
                 }

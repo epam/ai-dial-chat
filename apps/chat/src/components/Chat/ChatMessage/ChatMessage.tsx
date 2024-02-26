@@ -24,7 +24,7 @@ export const ChatMessage: FC<Props> = memo(
     const [isEditing, setIsEditing] = useState<boolean>(false);
 
     const handleLike = useCallback(
-      (likeStatus: number) => () => {
+      (likeStatus: number) => {
         if (conversation && onLike) {
           onLike(likeStatus);
         }

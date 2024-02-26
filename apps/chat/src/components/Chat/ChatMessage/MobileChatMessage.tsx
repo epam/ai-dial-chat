@@ -26,7 +26,7 @@ interface Props {
   isLikesEnabled: boolean;
   editDisabled: boolean;
   onEdit: (editedMessage: Message, index: number) => void;
-  onLike: (likeStatus: number) => () => void;
+  onLike: (likeStatus: number) => void;
   onDelete: () => void;
   onCopy: () => void;
   messageCopied: boolean;
@@ -79,18 +79,13 @@ export const MobileChatMessage = ({
           <ChatMessageContent
             isEditing={isEditing}
             toggleEditing={toggleEditing}
-            onDelete={onDelete}
-            editDisabled={editDisabled}
-            onLike={onLike}
-            messageCopied={messageCopied}
-            onCopy={onCopy}
             message={message}
-            {...props}
             onClick={(e, messageRef) => {
               const rect = messageRef.current!.getBoundingClientRect();
               setClientY(e.clientY - rect.top);
               setClientX(e.clientX);
             }}
+            {...props}
           />
         }
       >
@@ -136,7 +131,11 @@ export const MobileChatMessage = ({
                 }
                 disabled={message.like === 1}
                 data-qa="like"
-                onClick={message.like !== 1 ? onLike(1) : void 0}
+                onClick={() => {
+                  if (message.like !== 1) {
+                    onLike(1);
+                  }
+                }}
               />
             )}
             {message.like !== 1 && (
@@ -158,7 +157,11 @@ export const MobileChatMessage = ({
                     </p>
                   </div>
                 }
-                onClick={message.like !== -1 ? onLike(-1) : void 0}
+                onClick={() => {
+                  if (message.like !== -1) {
+                    onLike(-1);
+                  }
+                }}
               />
             )}
           </>

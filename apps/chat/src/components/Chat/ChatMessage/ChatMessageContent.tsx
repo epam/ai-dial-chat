@@ -48,18 +48,18 @@ export interface Props {
   messageIndex: number;
   conversation: Conversation;
   isLikesEnabled: boolean;
-  editDisabled: boolean;
   onEdit: (editedMessage: Message, index: number) => void;
-  onLike: (likeStatus: number) => () => void;
-  onDelete: () => void;
-  onCopy: () => void;
-  messageCopied: boolean;
+  isEditing: boolean;
+  messageCopied?: boolean;
+  editDisabled?: boolean;
+  onCopy?: () => void;
+  onLike?: (likeStatus: number) => void;
+  toggleEditing: (value: boolean) => void;
+  onDelete?: () => void;
   onClick?: (
     e: MouseEvent<HTMLDivElement>,
     messageRef: RefObject<HTMLDivElement>,
   ) => void;
-  isEditing: boolean;
-  toggleEditing: (value: boolean) => void;
 }
 
 const OVERLAY_ICON_SIZE = 18;
@@ -418,7 +418,7 @@ export const ChatMessageContent = ({
                 !isOnlySmallScreen() && (
                   <MessageUserButtons
                     editDisabled={editDisabled}
-                    onDelete={onDelete}
+                    onDelete={() => onDelete?.()}
                     toggleEditing={() => toggleEditing(!isEditing)}
                   />
                 )}
@@ -451,11 +451,11 @@ export const ChatMessageContent = ({
 
               {!isOnlySmallScreen() && (
                 <MessageAssistantButtons
-                  copyOnClick={onCopy}
+                  copyOnClick={() => onCopy?.()}
                   isLikesEnabled={isLikesEnabled}
                   message={message}
-                  messagedCopied={messageCopied}
-                  onLike={onLike}
+                  messageCopied={messageCopied}
+                  onLike={(likeStatus) => onLike?.(likeStatus)}
                 />
               )}
             </div>
