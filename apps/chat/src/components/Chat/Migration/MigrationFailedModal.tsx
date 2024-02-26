@@ -14,7 +14,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { isOnlySmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
@@ -373,7 +373,7 @@ export const MigrationFailedWindow = ({
                 ) : (
                   <IconDownload size={18} className="mr-3 text-secondary" />
                 )}
-                {!isOnlySmallScreen() && t('Backup')} {t('prompts')}
+                {!isSmallScreen() && t('Backup')} {t('prompts')}
               </button>
             )}
             {!!failedMigratedConversations.length && (
@@ -390,7 +390,7 @@ export const MigrationFailedWindow = ({
                 ) : (
                   <IconDownload size={18} className="mr-3 text-secondary" />
                 )}
-                {!isOnlySmallScreen() && t('Backup')} {t('chats')}
+                {!isSmallScreen() && t('Backup')} {t('chats')}
               </button>
             )}
             <button
