@@ -1816,6 +1816,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ selectedConversationsIds }) =>
       concat(
         of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
+        of(UIActions.setShowChatbar(false)),
       ),
     ),
   );
