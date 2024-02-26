@@ -37,6 +37,7 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
 import { Feature } from '@epam/ai-dial-shared';
+import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
@@ -498,13 +499,8 @@ export const selectNewAddedFolderId = createSelector(
   },
 );
 
-export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
-  const map = new Map<string, DialFile>();
-  attachments.forEach((file) =>
-    map.set(constructPath(file.relativePath, file.name), file),
-  );
-  return Array.from(map.values());
-};
+export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] =>
+  uniqBy(attachments, (file) => constructPath(file.relativePath, file.name));
 
 export const getAttachments = createSelector(
   [(state) => state, (_state: RootState, entityId: string) => entityId],
