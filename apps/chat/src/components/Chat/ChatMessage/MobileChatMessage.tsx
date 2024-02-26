@@ -6,7 +6,7 @@ import {
   IconThumbUp,
   IconTrash,
 } from '@tabler/icons-react';
-import React, { RefObject, useCallback, useState } from 'react';
+import React, { RefObject, useCallback, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -16,6 +16,7 @@ import { Conversation, Message, Role } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ChatMessageContent } from '@/src/components/Chat/ChatMessage/ChatMessageContent';
+import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -37,6 +38,8 @@ interface Props {
   isEditing: boolean;
   toggleEditing: (value: boolean) => void;
 }
+
+const CONTEXT_MENU_OFFSET = 100;
 
 export const MobileChatMessage = ({
   message,
@@ -60,8 +63,6 @@ export const MobileChatMessage = ({
     onDelete();
   }, [onDelete]);
 
-  const isAssistant = message.role === Role.Assistant;
-
   return (
     <>
       <Menu
@@ -71,7 +72,11 @@ export const MobileChatMessage = ({
         shouldApplySize={false}
         style={{
           top: `${clientY}px`,
-          left: `${clientX}px`,
+          left: `${
+            clientX > window.innerWidth / 2
+              ? clientX - CONTEXT_MENU_OFFSET
+              : clientX
+          }px`,
         }}
         type="contextMenu"
         className="w-full text-start"
@@ -89,111 +94,17 @@ export const MobileChatMessage = ({
           />
         }
       >
-        {isAssistant ? (
-          <>
-            {messageCopied ? (
-              <MenuItem
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconCheck size={20} className="text-secondary" />
-                    <p>{t('Copied')}</p>
-                  </div>
-                }
-              />
-            ) : (
-              <MenuItem
-                className="hover:bg-accent-primary-alpha"
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconCopy className="text-secondary" size={18} />
-                    <p>{t('Copy')}</p>
-                  </div>
-                }
-                onClick={onCopy}
-              />
-            )}
-            {message.like !== -1 && (
-              <MenuItem
-                className={classNames(
-                  message.like !== 1 && 'hover:bg-accent-primary-alpha',
-                )}
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconThumbUp className="text-secondary" size={18} />
-                    <p
-                      className={classNames(
-                        message.like === 1 && 'text-secondary',
-                      )}
-                    >
-                      {message.like === 1 ? t('Liked') : t('Like')}
-                    </p>
-                  </div>
-                }
-                disabled={message.like === 1}
-                data-qa="like"
-                onClick={() => {
-                  if (message.like !== 1) {
-                    onLike(1);
-                  }
-                }}
-              />
-            )}
-            {message.like !== 1 && (
-              <MenuItem
-                disabled={message.like === -1}
-                className={classNames(
-                  message.like === 1 && 'hover:bg-accent-primary-alpha',
-                )}
-                data-qa="dislike"
-                item={
-                  <div className="flex items-center gap-3">
-                    <IconThumbDown className="text-secondary" size={18} />
-                    <p
-                      className={classNames(
-                        message.like === -1 && 'text-secondary',
-                      )}
-                    >
-                      {message.like === -1 ? t('Disliked') : t('Dislike')}
-                    </p>
-                  </div>
-                }
-                onClick={() => {
-                  if (message.like !== -1) {
-                    onLike(-1);
-                  }
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <>
-            <MenuItem
-              className="hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
-              onClick={() => toggleEditing(!isEditing)}
-              disabled={editDisabled}
-              item={
-                <div className="flex items-center gap-3">
-                  <IconEdit className="text-secondary" size={18} />
-                  <p>{t('Edit')}</p>
-                </div>
-              }
-            />
-            <MenuItem
-              className="hover:text-accent-primary focus:visible group-hover:visible"
-              onClick={() => {
-                setIsRemoveConfirmationOpened(true);
-              }}
-              item={
-                <div className="flex items-center gap-3">
-                  <IconTrash className="text-secondary" size={18} />
-                  <p>{t('Delete')}</p>
-                </div>
-              }
-            />
-          </>
-        )}
+        <MessageMobileButtons
+          message={message}
+          onCopy={onCopy}
+          messageCopied={messageCopied}
+          editDisabled={editDisabled}
+          onLike={onLike}
+          onDelete={onDelete}
+          isEditing={isEditing}
+          toggleEditing={toggleEditing}
+        />
       </Menu>
-
       <ConfirmDialog
         isOpen={isRemoveConfirmationOpened}
         heading={t('Confirm removing message')}
