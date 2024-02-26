@@ -261,17 +261,49 @@ const acceptInvitationEpic: AppEpic = (action$) =>
               return concat(
                 of(ShareActions.acceptShareInvitationSuccess()),
                 iif(
-                  () => !data.resources[0].url.endsWith('/'),
-                  of(
-                    ConversationsActions.selectConversationsByIds({
-                      ids: [decodeApiUrl(data.resources[0].url)],
-                    }),
+                  () => data.resources[0].url.startsWith('conversations'),
+                  iif(
+                    () => !data.resources[0].url.endsWith('/'),
+                    of(
+                      ConversationsActions.selectConversationsByIds({
+                        ids: [decodeApiUrl(data.resources[0].url)],
+                      }),
+                    ),
+                    of(
+                      ConversationsActions.uploadConversationsWithFolders({
+                        paths: [decodeApiUrl(data.resources[0].url)],
+                        selectFirst: true,
+                      }),
+                    ),
                   ),
-                  of(
-                    ConversationsActions.uploadConversationsWithFolders({
-                      paths: [decodeApiUrl(data.resources[0].url)],
-                      selectFirst: true,
-                    }),
+                  concat(
+                    iif(
+                      () => !data.resources[0].url.endsWith('/'),
+                      concat(
+                        of(
+                          PromptsActions.setSelectedPrompt({
+                            promptId: decodeApiUrl(data.resources[0].url),
+                          }),
+                        ),
+                        of(
+                          PromptsActions.uploadPrompt({
+                            promptId: decodeApiUrl(data.resources[0].url),
+                          }),
+                        ),
+                      ),
+                      of(
+                        PromptsActions.uploadChildPromptsWithFolders({
+                          ids: [decodeApiUrl(data.resources[0].url)],
+                          selectFirst: true,
+                        }),
+                      ),
+                    ),
+                    of(
+                      PromptsActions.setIsEditModalOpen({
+                        isOpen: true,
+                        isPreview: true,
+                      }),
+                    ),
                   ),
                 ),
               );

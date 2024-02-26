@@ -53,7 +53,11 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
+import {
+  ApiKeys,
+  getPromptApiKey,
+  parsePromptApiKey,
+} from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
@@ -940,12 +944,32 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
         switchMap((foldersAndEntities) => {
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
-          return of(
-            PromptsActions.uploadChildPromptsWithFoldersSuccess({
-              parentIds: payload.ids,
-              folders,
-              prompts,
-            }),
+          return concat(
+            of(
+              PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                parentIds: payload.ids,
+                folders,
+                prompts,
+              }),
+            ),
+            iif(
+              () => !!payload.selectFirst,
+              concat(
+                of(
+                  PromptsActions.setSelectedPrompt({
+                    promptId: prompts[0].id,
+                  }),
+                ),
+                of(PromptsActions.uploadPrompt({ promptId: prompts[0].id })),
+                of(
+                  UIActions.openFolder({
+                    featureType: FeatureType.Prompt,
+                    id: prompts[0].folderId,
+                  }),
+                ),
+              ),
+              EMPTY,
+            ),
           );
         }),
         catchError((err) => {
@@ -977,8 +1001,13 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
         payload.promptId,
       ) as PromptInfo;
 
-      return PromptService.getPrompt(originalPrompt).pipe(
-        map((servicePrompt) => ({ originalPrompt, servicePrompt })),
+      return PromptService.getPrompt(
+        originalPrompt || { id: payload.promptId },
+      ).pipe(
+        map((servicePrompt) => ({
+          originalPrompt: originalPrompt || { id: payload.promptId },
+          servicePrompt,
+        })),
       );
     }),
     map(({ servicePrompt, originalPrompt }) => {

@@ -469,6 +469,7 @@ export const promptsSlice = createSlice({
         payload,
       }: PayloadAction<{
         ids: string[];
+        selectFirst?: boolean;
       }>,
     ) => {
       state.loadingFolderIds = state.loadingFolderIds.concat(
