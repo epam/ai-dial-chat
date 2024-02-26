@@ -51,8 +51,8 @@ dialTest(
 
       const randomEntity =
         GeneratorUtil.randomArrayElement(allExpectedEntities);
-      const actualEntity = actualIcons.find(
-        (e) => e.entityName === randomEntity.name,
+      const actualEntity = actualIcons.find((e) =>
+        e.entityName.includes(randomEntity.name),
       )!;
       const expectedEntityIcon =
         await iconApiHelper.getEntityIcon(randomEntity);
