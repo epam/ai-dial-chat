@@ -1,24 +1,14 @@
-import {
-  IconCheck,
-  IconCopy,
-  IconEdit,
-  IconThumbDown,
-  IconThumbUp,
-  IconTrash,
-} from '@tabler/icons-react';
-import React, { RefObject, useCallback, useRef, useState } from 'react';
+import React, { RefObject, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
-import { Conversation, Message, Role } from '@/src/types/chat';
+import { Conversation, Message } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ChatMessageContent } from '@/src/components/Chat/ChatMessage/ChatMessageContent';
 import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+import { Menu } from '@/src/components/Common/DropdownMenu';
 
 interface Props {
   message: Message;
