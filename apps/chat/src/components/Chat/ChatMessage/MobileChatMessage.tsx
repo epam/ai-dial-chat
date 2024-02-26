@@ -127,10 +127,10 @@ export const MobileChatMessage = ({
                     <IconThumbUp className="text-secondary" size={24} />
                     <p
                       className={classNames(
-                        message.like !== -1 && 'text-secondary',
+                        message.like === 1 && 'text-secondary',
                       )}
                     >
-                      {message.like === -1 ? t('Like') : t('Liked')}
+                      {message.like === 1 ? t('Liked') : t('Like')}
                     </p>
                   </div>
                 }
@@ -151,10 +151,10 @@ export const MobileChatMessage = ({
                     <IconThumbDown className="text-secondary" size={24} />
                     <p
                       className={classNames(
-                        message.like !== 1 && 'text-secondary',
+                        message.like === -1 && 'text-secondary',
                       )}
                     >
-                      {message.like === 1 ? t('Dislike') : t('Disliked')}
+                      {message.like === -1 ? t('Disliked') : t('Dislike')}
                     </p>
                   </div>
                 }
