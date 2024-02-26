@@ -12,6 +12,8 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { RootState } from '../index';
 
+import uniq from 'lodash-es/uniq';
+
 export interface ModelsState {
   status: UploadStatus;
   error: ErrorMessage | undefined;
@@ -91,7 +93,7 @@ export const modelsSlice = createSlice({
       } else {
         state.recentModelsIds = [state.models[0].id];
       }
-      state.recentModelsIds = state.recentModelsIds.slice(
+      state.recentModelsIds = uniq(state.recentModelsIds).slice(
         0,
         RECENT_MODELS_COUNT,
       );
@@ -107,14 +109,16 @@ export const modelsSlice = createSlice({
         (id) => state.modelsMap[id],
       );
       const oldIndex = recentModels.findIndex((m) => m?.name === newModel.name);
-      if (oldIndex >= 0 && !payload.rearrange) {
+      if (oldIndex >= 0) {
         if (recentModels[oldIndex]?.id !== payload.modelId) {
           //replace
           const newIds = [...state.recentModelsIds];
           newIds[oldIndex] = payload.modelId;
           state.recentModelsIds = newIds;
         }
-        return;
+        if (!payload.rearrange) {
+          return;
+        }
       }
 
       const recentFilteredModels = state.recentModelsIds.filter(
@@ -122,7 +126,7 @@ export const modelsSlice = createSlice({
       );
       recentFilteredModels.unshift(payload.modelId);
 
-      state.recentModelsIds = recentFilteredModels.slice(
+      state.recentModelsIds = uniq(recentFilteredModels).slice(
         0,
         RECENT_MODELS_COUNT,
       );
