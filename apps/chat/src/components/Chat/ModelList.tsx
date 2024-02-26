@@ -8,6 +8,7 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { OpenAIEntity } from '@/src/types/openai';
 
@@ -24,6 +25,7 @@ interface ModelGroupProps {
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
   notAllowExpandDescription?: boolean;
+  searchTerm?: string;
   disabled?: boolean;
 }
 
@@ -32,6 +34,7 @@ const ModelGroup = ({
   selectedModelId,
   onSelect,
   notAllowExpandDescription,
+  searchTerm,
   disabled,
 }: ModelGroupProps) => {
   const [isOpened, setIsOpened] = useState(false);
@@ -42,18 +45,27 @@ const ModelGroup = ({
     if (entities.length < 2) {
       return entities[0];
     }
+    // searched
+    const searched = searchTerm
+      ? entities.find((e) => doesOpenAIEntityContainSearchTerm(e, searchTerm))
+      : undefined;
+    if (searched) {
+      return searched;
+    }
     // selected
     const selected = entities.find((e) => e.id === selectedModelId);
-    if (selected) return selected;
+    if (selected) {
+      return selected;
+    }
     // find latest used version
     const minIndex = Math.min(
       ...recentModelsIds
         .map((rid) => entities.findIndex((e) => e.id === rid))
         .filter((ind) => ind !== -1),
-      0,
+      Number.MAX_SAFE_INTEGER,
     );
-    return entities[minIndex];
-  }, [entities, recentModelsIds, selectedModelId]);
+    return entities[minIndex === Number.MAX_SAFE_INTEGER ? 0 : minIndex];
+  }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
   const description = currentEntity.description;
 
@@ -141,6 +153,8 @@ interface ModelListProps {
   notAllowExpandDescription?: boolean;
   displayCountLimit?: number;
   showInOneColumn?: boolean;
+  allEntities: OpenAIEntity[];
+  searchTerm?: string;
   disabled?: boolean;
 }
 
@@ -152,16 +166,18 @@ export const ModelList = ({
   notAllowExpandDescription,
   displayCountLimit,
   showInOneColumn,
+  allEntities,
+  searchTerm,
   disabled,
 }: ModelListProps) => {
-  const groupedModels = useMemo(
-    () =>
-      groupModelsAndSaveOrder(entities).slice(
-        0,
-        displayCountLimit ?? Number.MAX_SAFE_INTEGER,
-      ),
-    [displayCountLimit, entities],
-  );
+  const groupedModels = useMemo(() => {
+    const nameSet = new Set(entities.map((m) => m.name));
+    const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
+    return groupModelsAndSaveOrder(entities.concat(otherVersions)).slice(
+      0,
+      displayCountLimit ?? Number.MAX_SAFE_INTEGER,
+    );
+  }, [allEntities, displayCountLimit, entities]);
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
       {heading && <span className="text-secondary">{heading}</span>}
@@ -180,6 +196,7 @@ export const ModelList = ({
               onSelect={onSelect}
               notAllowExpandDescription={notAllowExpandDescription}
               disabled={disabled}
+              searchTerm={searchTerm}
             />
           </div>
         ))}
