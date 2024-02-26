@@ -223,7 +223,7 @@ const resizeEpic: AppEpic = (action$, state$) =>
               of(UIActions.setIsProfileOpen(false)),
               of(UIActions.setShowPromptbar(false)),
             );
-          } else if (showPromptbar) {
+          } else {
             actions.push(of(UIActions.setIsProfileOpen(false)));
           }
         }
