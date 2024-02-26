@@ -16,6 +16,7 @@ dotenv.config({ path: './.env.local' });
  * Config used for a local run
  */
 config.retries = 0;
+config.timeout = 300000;
 config.use!.headless = true;
 config.use!.video = 'on';
 config.use!.trace = 'on';

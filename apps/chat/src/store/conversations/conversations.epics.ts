@@ -69,6 +69,7 @@ import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { ApiKeys } from '@/src/utils/server/api';
@@ -1816,6 +1817,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ selectedConversationsIds }) =>
       concat(
         of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
+        iif(() => isSmallScreen(), of(UIActions.setShowChatbar(false)), EMPTY),
       ),
     ),
   );

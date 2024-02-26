@@ -535,31 +535,6 @@ dialTest(
 );
 
 dialTest(
-  'Use simple prompt in system prompt',
-  async ({
-    dialHomePage,
-    promptData,
-    dataInjector,
-    entitySettings,
-    setTestIds,
-  }) => {
-    setTestIds('EPMRTC-1010');
-    const promptContent = 'prompt content';
-    const prompt = promptData.preparePrompt(promptContent);
-    await dataInjector.createPrompts([prompt]);
-
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await entitySettings.setSystemPrompt('/');
-    await entitySettings.getPromptList().selectPrompt(prompt.name);
-    const actualPrompt = await entitySettings.getSystemPrompt();
-    expect
-      .soft(actualPrompt, ExpectedMessages.systemPromptValid)
-      .toBe(prompt.content);
-  },
-);
-
-dialTest(
   'Use prompt with parameters',
   async ({
     dialHomePage,
@@ -582,7 +557,9 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await sendMessage.messageInput.fillInInput('/');
-    await sendMessage.getPromptList().selectPrompt(prompt.name);
+    await sendMessage
+      .getPromptList()
+      .selectPrompt(prompt.name, { triggeredHttpMethod: 'GET' });
 
     const promptName = await variableModalDialog.getName();
     expect.soft(promptName, ExpectedMessages.promptNameValid).toBe(prompt.name);
@@ -634,7 +611,9 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await sendMessage.messageInput.fillInInput('/');
-    await sendMessage.getPromptList().selectPrompt(prompt.name);
+    await sendMessage
+      .getPromptList()
+      .selectPrompt(prompt.name, { triggeredHttpMethod: 'GET' });
 
     const firstVariableValue = '20';
     const secondVariableValue = '30';

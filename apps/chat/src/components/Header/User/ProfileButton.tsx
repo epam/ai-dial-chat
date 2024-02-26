@@ -5,6 +5,8 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isSmallScreen } from '@/src/utils/app/mobile';
+
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -20,6 +22,10 @@ export const ProfileButton = () => {
   const { data: session } = useSession();
 
   const onClick = useCallback(() => {
+    if (!isProfileOpen && isSmallScreen()) {
+      dispatch(UIActions.setShowPromptbar(false));
+      dispatch(UIActions.setShowChatbar(false));
+    }
     dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
   }, [dispatch, isProfileOpen]);
 

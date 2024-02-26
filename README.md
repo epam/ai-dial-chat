@@ -59,10 +59,25 @@ npm run test
 To run npm publish for all publishable libraries
 
 ```bash
-npm run publish -- --ver=*.*.* --tag=next
+npm run publish -- --ver=*.*.* --tag=* --dry --development
 ```
 
-It also supported to have run publish in 'dry' mode - nothing will be published, just displayed on screen
+Params (all optional):
+
+```
+ver - version to publish
+dry - dry run
+tag - tag to publish with (default: 'next')
+development - if set and not version provided will increment version automatically according to current global package.json version (e.g. 0.5.0-rc.1, 0.5.0-rc.2, etc.)
+```
+
+**It also supported to have run publish in 'dry' mode - nothing will be published, just displayed on screen**
+
+```bash
+npm run publish -- --dry
+```
+
+or just
 
 ```bash
 npm run publish:dry

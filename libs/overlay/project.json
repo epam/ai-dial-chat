@@ -33,7 +33,7 @@
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs overlay --version={args.ver} --dry={args.dry} --tag={args.tag}"
+      "command": "node tools/publish-lib.mjs overlay --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
     },
     "lint": {
       "options": {
