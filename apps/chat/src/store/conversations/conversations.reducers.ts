@@ -22,6 +22,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
+import uniq from 'lodash-es/uniq';
+
 export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
@@ -176,7 +178,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ conversationIds: string[] }>,
     ) => {
-      const newSelectedIds = Array.from(new Set(payload.conversationIds));
+      const newSelectedIds = uniq(payload.conversationIds);
 
       state.selectedConversationsIds = newSelectedIds;
     },

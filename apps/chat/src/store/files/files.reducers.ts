@@ -16,6 +16,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 
+import uniq from 'lodash-es/uniq';
+
 export interface FilesState {
   files: DialFile[];
   selectedFilesIds: string[];
@@ -81,9 +83,7 @@ export const filesSlice = createSlice({
       file.percent = 0;
     },
     selectFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
-      state.selectedFilesIds = Array.from(
-        new Set(state.selectedFilesIds.concat(payload.ids)),
-      );
+      state.selectedFilesIds = uniq(state.selectedFilesIds.concat(payload.ids));
     },
     resetSelectedFiles: (state) => {
       state.selectedFilesIds = [];

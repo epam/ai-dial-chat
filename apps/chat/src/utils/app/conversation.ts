@@ -24,6 +24,7 @@ import { compareEntitiesByName, splitEntityId } from './folders';
 import { getRootId } from './id';
 
 import groupBy from 'lodash-es/groupBy';
+import uniq from 'lodash-es/uniq';
 import uniqBy from 'lodash-es/uniqBy';
 
 export const getAssitantModelId = (
@@ -49,9 +50,9 @@ export const getSelectedAddons = (
 ) => {
   if (model && model.type !== EntityType.Application) {
     const preselectedAddons = model.selectedAddons ?? [];
-    const addonsSet = new Set([...preselectedAddons, ...selectedAddons]);
+    const addons = uniq([...preselectedAddons, ...selectedAddons]);
 
-    return getValidEntitiesFromIds(Array.from(addonsSet), addonsMap);
+    return getValidEntitiesFromIds(addons, addonsMap);
   }
 
   return null;

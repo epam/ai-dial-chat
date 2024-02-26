@@ -106,6 +106,8 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import uniq from 'lodash-es/uniq';
+
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.init.match(action)),
@@ -1237,12 +1239,10 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     })),
     map(({ payload, modelsMap }) => {
       const lastModel = modelsMap[payload.conversation.model.id];
-      const selectedAddons = Array.from(
-        new Set([
-          ...payload.conversation.selectedAddons,
-          ...(lastModel?.selectedAddons ?? []),
-        ]),
-      );
+      const selectedAddons = uniq([
+        ...payload.conversation.selectedAddons,
+        ...(lastModel?.selectedAddons ?? []),
+      ]);
       const assistantModelId = payload.conversation.assistantModelId;
       const conversationModelType = lastModel?.type ?? EntityType.Model;
       let modelAdditionalSettings = {};
@@ -2328,11 +2328,9 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
       ConversationService.getConversations(undefined, true).pipe(
         switchMap((conversations) => {
           const conv = conversations.flat();
-          const folderIds = Array.from(new Set(conv.map((c) => c.folderId)));
-          const paths = Array.from(
-            new Set(
-              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-            ),
+          const folderIds = uniq(conv.map((c) => c.folderId));
+          const paths = uniq(
+            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
           );
           return concat(
             of(

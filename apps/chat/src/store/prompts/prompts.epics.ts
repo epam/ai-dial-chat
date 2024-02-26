@@ -72,6 +72,7 @@ import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
+import uniq from 'lodash-es/uniq';
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -595,16 +596,12 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
     ),
     switchMap((promptsListing) => {
       const onlyMyPromptsListing = filterOnlyMyEntities(promptsListing);
-      const foldersIds = Array.from(
-        new Set(onlyMyPromptsListing.map((info) => info.folderId)),
+      const foldersIds = uniq(
+        onlyMyPromptsListing.map((info) => info.folderId),
       );
       //calculate all folders;
       const foldersWithPrompts = getFoldersFromIds(
-        Array.from(
-          new Set(
-            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-          ),
-        ),
+        uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
         FolderType.Prompt,
       );
 
@@ -702,16 +699,14 @@ const importPromptsEpic: AppEpic = (action$) =>
                 return of(ImportExportActions.importPromptsFail());
               }
 
-              const foldersIds = Array.from(
-                new Set(promptsListing.map((info) => info.folderId)),
+              const foldersIds = uniq(
+                promptsListing.map((info) => info.folderId),
               );
               //calculate all folders;
               const promptsFolders = getFoldersFromIds(
-                Array.from(
-                  new Set(
-                    foldersIds.flatMap((id) =>
-                      getParentFolderIdsFromFolderId(id),
-                    ),
+                uniq(
+                  foldersIds.flatMap((id) =>
+                    getParentFolderIdsFromFolderId(id),
                   ),
                 ),
                 FolderType.Prompt,
@@ -906,11 +901,9 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
         ),
         of(
           PromptsActions.setFolders({
-            folders: Array.from(
-              new Set(
-                prompts.flatMap((p) =>
-                  getParentFolderIdsFromFolderId(p.folderId),
-                ),
+            folders: uniq(
+              prompts.flatMap((p) =>
+                getParentFolderIdsFromFolderId(p.folderId),
               ),
             ).map((path) => ({
               ...getFolderFromId(path, FolderType.Prompt),

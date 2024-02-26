@@ -17,6 +17,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 import { isRootId } from './id';
 
 import escapeStringRegexp from 'escape-string-regexp';
+import uniq from 'lodash-es/uniq';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -290,14 +291,12 @@ export const getParentAndChildFolders = (
 ) => {
   const folderIds = folders.map(({ id }) => id);
 
-  const setFolders = new Set(
+  return uniq(
     folderIds.flatMap((folderId) => [
       ...getParentAndCurrentFoldersById(allFolders, folderId),
       ...getChildAndCurrentFoldersById(folderId, allFolders),
     ]),
   );
-
-  return Array.from(setFolders);
 };
 
 export const getTemporaryFoldersToPublish = (
