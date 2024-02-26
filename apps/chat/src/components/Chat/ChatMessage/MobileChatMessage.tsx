@@ -105,7 +105,7 @@ export const MobileChatMessage = ({
                 className="hover:bg-accent-primary-alpha"
                 item={
                   <div className="flex items-center gap-3">
-                    <IconCopy className="text-secondary" size={20} />
+                    <IconCopy className="text-secondary" size={18} />
                     <p>{t('Copy')}</p>
                   </div>
                 }
@@ -119,7 +119,7 @@ export const MobileChatMessage = ({
                 )}
                 item={
                   <div className="flex items-center gap-3">
-                    <IconThumbUp className="text-secondary" size={24} />
+                    <IconThumbUp className="text-secondary" size={18} />
                     <p
                       className={classNames(
                         message.like === 1 && 'text-secondary',
@@ -147,7 +147,7 @@ export const MobileChatMessage = ({
                 data-qa="dislike"
                 item={
                   <div className="flex items-center gap-3">
-                    <IconThumbDown className="text-secondary" size={24} />
+                    <IconThumbDown className="text-secondary" size={18} />
                     <p
                       className={classNames(
                         message.like === -1 && 'text-secondary',
@@ -173,7 +173,7 @@ export const MobileChatMessage = ({
               disabled={editDisabled}
               item={
                 <div className="flex items-center gap-3">
-                  <IconEdit className="text-secondary" size={24} />
+                  <IconEdit className="text-secondary" size={18} />
                   <p>{t('Edit')}</p>
                 </div>
               }
@@ -185,7 +185,7 @@ export const MobileChatMessage = ({
               }}
               item={
                 <div className="flex items-center gap-3">
-                  <IconTrash className="text-secondary" size={24} />
+                  <IconTrash className="text-secondary" size={18} />
                   <p>{t('Delete')}</p>
                 </div>
               }
