@@ -445,14 +445,14 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
 
       const conversation = completeHistory.history[firstConversationIndex];
 
-      const importFolderPath = constructPath(
+      const importFileFolderPath = constructPath(
         getRootId(),
         ImportRoot.Imports,
         conversation.name,
       );
 
       return forkJoin({
-        filesFromFolder: FileService.getFiles(importFolderPath),
+        filesFromFolder: FileService.getFiles(importFileFolderPath),
         attachmentsToUpload: of(attachmentsToUpload),
       }).pipe(
         switchMap(({ filesFromFolder, attachmentsToUpload }) => {
@@ -498,7 +498,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
                   return ImportExportActions.uploadSingleAttachmentSuccess({
                     apiResult: {
                       ...result,
-                      oldId: attachment.id,
+                      oldRelativePath: attachment.id,
                     },
                   });
                 }
