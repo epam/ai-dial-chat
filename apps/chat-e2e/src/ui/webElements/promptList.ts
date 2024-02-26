@@ -5,6 +5,7 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
 import { Locator, Page } from '@playwright/test';
 
 export class PromptList extends BaseElement {
@@ -20,14 +21,19 @@ export class PromptList extends BaseElement {
     return this.getPromptOptions().getElementLocatorByText(name);
   }
 
-  public async selectOptionFromList(name: string) {
+  public async selectOptionFromList(
+    name: string,
+    {
+      triggeredHttpMethod = undefined,
+    }: { triggeredHttpMethod?: 'PUT' | 'GET' } = {},
+  ) {
     let isSelected = false;
     const promptOption = this.getPromptByName(name);
     const classValue = await promptOption.getAttribute(Attributes.class);
     if (classValue!.includes(ExpectedConstants.backgroundAccentAttribute)) {
       if (isApiStorageType) {
         const respPromise = this.page.waitForResponse(
-          (resp) => resp.request().method() === 'GET',
+          (resp) => resp.request().method() === triggeredHttpMethod,
         );
         await this.page.keyboard.press(keys.enter);
         await respPromise;
@@ -40,19 +46,29 @@ export class PromptList extends BaseElement {
     return isSelected;
   }
 
-  public async selectPrompt(name: string) {
-    let isPromptSelected = await this.selectOptionFromList(name);
+  public async selectPrompt(
+    name: string,
+    {
+      triggeredHttpMethod = undefined,
+    }: { triggeredHttpMethod?: 'PUT' | 'GET' } = {},
+  ) {
+    let isPromptSelected = await this.selectOptionFromList(name, {
+      triggeredHttpMethod,
+    });
     if (!isPromptSelected) {
       const optionsCount = await this.getPromptOptions().getElementsCount();
       let optionIndex = 1;
       while (optionIndex < optionsCount) {
         await this.page.keyboard.press(keys.arrowDown);
-        isPromptSelected = await this.selectOptionFromList(name);
+        isPromptSelected = await this.selectOptionFromList(name, {
+          triggeredHttpMethod,
+        });
         if (isPromptSelected) {
           break;
         }
         optionIndex++;
       }
     }
+    await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 }

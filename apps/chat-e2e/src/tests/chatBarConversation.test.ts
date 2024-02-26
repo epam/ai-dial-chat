@@ -399,7 +399,7 @@ dialTest(
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);
 
-    await dialHomePage.openHomePage();
+    await dialHomePage.openHomePage({ iconsToBeLoaded: [gpt35Model.iconUrl] });
     await dialHomePage.waitForPageLoaded();
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
