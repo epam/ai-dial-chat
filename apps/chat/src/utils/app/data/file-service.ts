@@ -30,7 +30,7 @@ export class FileService {
 
     return ApiUtils.requestOld({
       url: `api/${resultPath}`,
-      method: 'PUT',
+      method: 'POST',
       async: true,
       body: formData,
     }).pipe(

@@ -28,11 +28,9 @@ import {
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
-  generateNextName,
   getConversationAttachmentWithPath,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 import {
@@ -49,6 +47,7 @@ import {
   downloadExportZip,
   getUnZipAttachments,
   importZippedHistory,
+  updateAttachmentsNames,
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
@@ -66,7 +65,6 @@ import {
 } from '../conversations/conversations.reducers';
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
-import { selectFolders } from '../prompts/prompts.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
@@ -331,7 +329,7 @@ const importConversationsEpic: AppEpic = (action$) =>
     catchError(() => of(ImportExportActions.importFail())),
   );
 
-const importZipEpic: AppEpic = (action$, state$) =>
+const importZipEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importZipConversations.match),
     switchMap(({ payload }) => {
@@ -397,25 +395,10 @@ const importZipEpic: AppEpic = (action$, state$) =>
                 );
               }
 
-              const conversationId =
-                cleanConversations[firstConversationIndex].id;
-              const conversationFromState =
-                ConversationsSelectors.selectConversation(
-                  state$.value,
-                  conversationId,
-                );
-              if (conversationFromState) {
-                return of(ImportExportActions.resetState());
-              }
-              const foldersLocal = selectFolders(state$.value);
-              const folders = Array.from(
-                new Set([...foldersLocal, ...cleanFolders]),
-              );
-
               const attachments = getUniqueAttachments(
                 getConversationAttachmentWithPath(
                   cleanConversations[firstConversationIndex],
-                  folders,
+                  cleanFolders,
                 ),
               );
 
@@ -460,23 +443,25 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
         return of(ImportExportActions.importFail());
       }
 
-      const importFolderPath = constructPath(getRootId(), ImportRoot.Imports);
+      const conversation = completeHistory.history[firstConversationIndex];
+
+      const importFileFolderPath = constructPath(
+        getRootId(),
+        ImportRoot.Imports,
+        conversation.name,
+      );
 
       return forkJoin({
-        folders: FileService.getFileFolders(importFolderPath),
+        filesFromFolder: FileService.getFiles(importFileFolderPath),
         attachmentsToUpload: of(attachmentsToUpload),
       }).pipe(
-        switchMap(({ folders, attachmentsToUpload }) => {
-          const conversation = completeHistory.history[firstConversationIndex];
-          const conversationName = conversation.name;
-          const isFolderNameExist = folders.some(
-            (folder) => folder.name === conversationName,
-          );
-          const rootFolderName = isFolderNameExist
-            ? generateNextName(conversationName, conversationName, folders)
-            : conversationName;
+        switchMap(({ filesFromFolder, attachmentsToUpload }) => {
+          const updatedAttachments = updateAttachmentsNames({
+            filesFromFolder,
+            attachmentsToUpload,
+          });
 
-          const actions = attachmentsToUpload.map((attachment) => {
+          const actions = updatedAttachments.map((attachment) => {
             const formData = new FormData();
 
             if (!attachment.fileContent) {
@@ -492,14 +477,10 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
               attachment.fileContent,
               attachment.name,
             );
-            const { parentPath } = splitEntityId(attachment.id);
-            const newParentPath =
-              parentPath && parentPath.replace(`${ImportRoot.Imports}/`, '');
 
             const relativePath = constructPath(
               ImportRoot.Imports,
-              rootFolderName,
-              newParentPath,
+              conversation.name,
             );
 
             return FileService.sendFile(
@@ -517,7 +498,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
                   return ImportExportActions.uploadSingleAttachmentSuccess({
                     apiResult: {
                       ...result,
-                      oldId: attachment.id,
+                      oldRelativePath: attachment.id,
                     },
                   });
                 }
