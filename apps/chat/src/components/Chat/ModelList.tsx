@@ -72,7 +72,7 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'flex items-center gap-3 rounded border px-3 py-2 hover:border-hover',
+        'relative flex items-center gap-3 rounded border px-3 py-2 hover:border-hover',
         !disabled && selectedModelId === currentEntity.id
           ? 'border-accent-primary'
           : 'border-primary',
@@ -94,6 +94,7 @@ const ModelGroup = ({
       }}
       data-qa="group-entity"
     >
+      {disabled && <DisableOverlay />}
       <ModelIcon entityId={currentEntity.id} entity={currentEntity} size={24} />
       <div className="flex w-full flex-col gap-1 text-left">
         <div className="flex items-center justify-between">
@@ -188,17 +189,15 @@ export const ModelList = ({
         )}
       >
         {groupedModels.map((modelGroup) => (
-          <div className="relative" key={modelGroup.groupName}>
-            {disabled && <DisableOverlay />}
-            <ModelGroup
-              entities={modelGroup.entities}
-              selectedModelId={selectedModelId}
-              onSelect={onSelect}
-              notAllowExpandDescription={notAllowExpandDescription}
-              disabled={disabled}
-              searchTerm={searchTerm}
-            />
-          </div>
+          <ModelGroup
+            key={modelGroup.groupName}
+            entities={modelGroup.entities}
+            selectedModelId={selectedModelId}
+            onSelect={onSelect}
+            notAllowExpandDescription={notAllowExpandDescription}
+            disabled={disabled}
+            searchTerm={searchTerm}
+          />
         ))}
       </div>
     </div>
