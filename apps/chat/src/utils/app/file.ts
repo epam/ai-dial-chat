@@ -245,3 +245,56 @@ export const renameAttachments = (
     })),
   };
 };
+
+export const getNextFileName = (
+  defaultName: string,
+  files: DialFile[],
+  index = 0,
+  startWithEmptyPostfix = false,
+  parentFolderId?: string,
+): string => {
+  const defaultFileName = getFileNameWithoutExtension(defaultName);
+  const defaultFileExtension = getFileNameExtension(defaultName);
+  const prefix = `${defaultFileName} `;
+  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
+
+  if (!files.length) {
+    return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
+  }
+
+  const maxNumber =
+    Math.max(
+      ...files
+        .filter(
+          (file) =>
+            file.name === defaultName ||
+            (getFileNameExtension(file.name) === defaultFileExtension &&
+              getFileNameWithoutExtension(file.name).match(regex) &&
+              (parentFolderId ? file.folderId === parentFolderId : true)),
+        )
+        .map((file) => {
+          return (
+            parseInt(
+              `${getFileNameWithoutExtension(file.name).replace(defaultFileName, '')}`,
+              10,
+            ) || (startWithEmptyPostfix ? 0 : 1)
+          );
+        }),
+      startWithEmptyPostfix ? -1 : 0,
+    ) + index; // max number
+
+  if (maxNumber >= 9999999) {
+    return getNextFileName(
+      `${prefix}${maxNumber}${defaultFileExtension}`,
+      files,
+      index,
+      startWithEmptyPostfix,
+    );
+  }
+
+  if (startWithEmptyPostfix && maxNumber === -1) {
+    return defaultName;
+  }
+
+  return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
+};

@@ -6,6 +6,7 @@ import {
   getChildAndCurrentFoldersIdsById,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
@@ -113,7 +114,7 @@ export const useHandleFileFolders = (
    * Handles the creation of a new folder.
    */
   const handleNewFolder = useCallback(() => {
-    dispatch(FilesActions.addNewFolder({}));
+    dispatch(FilesActions.addNewFolder({ parentId: getRootId() }));
     setIsAllFilesOpened(true);
   }, [dispatch, setIsAllFilesOpened]);
 
