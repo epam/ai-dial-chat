@@ -1,0 +1,38 @@
+---
+name: 🐞 Report an issue
+description: Problems and issues in EPAM AI DIAL chat
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "
+        <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=40' align='left' width='40' height='40' style='margin-right:10px'>
+        Thank you for finding the time to report the problem!
+
+        We really appreciate the community's efforts to improve EPAM AI DIAL chat.
+        <br clear='left'/>"
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: EPAM AI DIAL chat version
+      description: >
+        On what version of EPAM AI DIAL chat are you currently experiencing the issue? You can try to find the version in the footer of page (e.g. "Version 0.5.3") or ask your administrator.
+      placeholder: 0.5.3
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Describe what happened.
+      placeholder: >
+        Please provide the context in which the problem occurred and explain what happened
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Confidential information
+      options:
+        - label: >
+            I confirm that do not share any confidential information
+          required: true
+
+

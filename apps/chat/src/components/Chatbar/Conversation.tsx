@@ -77,7 +77,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
     <>
       <ShareIcon
         {...conversation}
-        isHighlighted={!!isHighlited}
+        isHighlighted={isHighlited}
         featureType={FeatureType.Chat}
       >
         {conversation.isReplay && (
@@ -158,7 +158,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+
   const isSelected = selectedConversationIds.includes(conversation.id);
 
   const { refs, context } = useFloating({
@@ -183,37 +185,16 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (conversation as Conversation).messages?.length > 0
   );
 
-  const handleRename = useCallback(
-    (conversation: ConversationInfo) => {
-      const newName = prepareEntityName(renameValue, true);
-      setRenameValue(newName);
-
-      if (
-        !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
-      ) {
-        dispatch(
-          UIActions.showToast({
-            message: t(
-              'Conversation with name "{{newName}}" already exists in this folder.',
-              {
-                ns: 'chat',
-                newName,
-              },
-            ),
-            type: 'error',
-          }),
-        );
-
-        return;
-      }
-
-      if (newName.length > 0) {
+  const performRename = useCallback(
+    (name: string, removeShareIcon?: boolean) => {
+      if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              name: newName,
+              name,
               isNameChanged: true,
+              isShared: removeShareIcon ? false : conversation.isShared,
             },
           }),
         );
@@ -224,18 +205,51 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       setIsRenaming(false);
     },
-    [allConversations, dispatch, renameValue, t],
+    [conversation.id, conversation.isShared, dispatch],
   );
+
+  const handleRename = useCallback(() => {
+    const newName = prepareEntityName(renameValue, true);
+    setRenameValue(newName);
+
+    if (
+      !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
+    ) {
+      dispatch(
+        UIActions.showToast({
+          message: t(
+            'Conversation with name "{{newName}}" already exists in this folder.',
+            {
+              ns: 'chat',
+              newName,
+            },
+          ),
+          type: 'error',
+        }),
+      );
+
+      return;
+    }
+
+    if (conversation.isShared && newName !== conversation.name) {
+      setIsConfirmRenaming(true);
+      setIsContextMenu(false);
+      setIsRenaming(false);
+      return;
+    }
+
+    performRename(newName);
+  }, [allConversations, conversation, dispatch, performRename, renameValue, t]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
-        handleRename(conversation);
+        handleRename();
       }
     },
-    [conversation, handleRename],
+    [handleRename],
   );
 
   const handleDragStart = useCallback(
@@ -251,37 +265,28 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [isExternal],
   );
 
-  const handleConfirm: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (isDeleting) {
-        if (conversation.sharedWithMe) {
-          dispatch(
-            ShareActions.discardSharedWithMe({
-              resourceId: conversation.id,
-              nodeType: BackendDataNodeType.ITEM,
-              resourceType: BackendResourceType.CONVERSATION,
-            }),
-          );
-        } else {
-          dispatch(
-            ConversationsActions.deleteConversations({
-              conversationIds: [conversation.id],
-            }),
-          );
-        }
-        setIsDeleting(false);
-      } else if (isRenaming) {
-        handleRename(conversation);
-      }
-    },
-    [conversation, dispatch, handleRename, isDeleting, isRenaming],
-  );
+  const handleDelete = useCallback(() => {
+    if (conversation.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceId: conversation.id,
+          nodeType: BackendDataNodeType.ITEM,
+          resourceType: BackendResourceType.CONVERSATION,
+        }),
+      );
+    } else {
+      dispatch(
+        ConversationsActions.deleteConversations({
+          conversationIds: [conversation.id],
+        }),
+      );
+    }
+    setIsDeleting(false);
+  }, [conversation.id, conversation.sharedWithMe, dispatch]);
 
-  const handleCancel: MouseEventHandler<HTMLButtonElement> = useCallback(
+  const handleCancelRename: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
-      setIsDeleting(false);
       setIsRenaming(false);
     },
     [],
@@ -629,12 +634,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         )}
       </div>
 
-      {(isDeleting || isRenaming) && (
+      {isRenaming && (
         <div className="absolute right-1 z-10 flex">
-          <SidebarActionButton handleClick={handleConfirm}>
+          <SidebarActionButton handleClick={() => handleRename()}>
             <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
-          <SidebarActionButton handleClick={handleCancel}>
+          <SidebarActionButton handleClick={handleCancelRename}>
             <IconX
               size={18}
               strokeWidth="2"
@@ -686,6 +691,42 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           }}
         />
       )}
+      <ConfirmDialog
+        isOpen={isDeleting}
+        heading={t('Confirm deleting conversation')}
+        description={`${t('Are you sure that you want to remove a conversation?')}${t(
+          conversation.isShared
+            ? '\nRemoving will stop sharing and other users will no longer see this conversation.'
+            : '',
+        )}`}
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsDeleting(false);
+          if (result) handleDelete();
+        }}
+      />
+      <ConfirmDialog
+        isOpen={isConfirmRenaming}
+        heading={t('Confirm renaming conversation')}
+        confirmLabel={t('Rename')}
+        cancelLabel={t('Cancel')}
+        description={
+          t(
+            'Renaming will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          setIsConfirmRenaming(false);
+
+          if (result) {
+            performRename(prepareEntityName(renameValue, true), true);
+          }
+
+          setIsContextMenu(false);
+          setIsRenaming(false);
+        }}
+      />
     </div>
   );
 };

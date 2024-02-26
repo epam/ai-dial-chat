@@ -55,23 +55,27 @@ export const PreviewPromptModal = ({
     >
       {selectedPrompt ? (
         <>
-          <ul className="mb-4 max-h-[435px] overflow-auto px-3 md:p-6">
-            <li className="mb-4 flex gap-2.5">
+          <ul className="mb-4 flex max-h-[435px] flex-col gap-4 overflow-auto px-3 md:p-6">
+            <li className="flex gap-2.5">
               <p className="mb-1 flex min-w-28 text-secondary">{t('Name: ')}</p>
               <p>{selectedPrompt.name}</p>
             </li>
-            <li className="mb-4 flex gap-2.5">
-              <p className="mb-1 flex min-w-28 text-secondary">
-                {t('Description: ')}
-              </p>
-              <p>{selectedPrompt.description}</p>
-            </li>
-            <li className="flex gap-2.5">
-              <p className="mb-1 flex min-w-28 text-secondary">
-                {t('Prompt: ')}
-              </p>
-              <p>{selectedPrompt.content}</p>
-            </li>
+            {!!selectedPrompt.description && (
+              <li className="flex gap-2.5">
+                <p className="mb-1 flex min-w-28 text-secondary">
+                  {t('Description: ')}
+                </p>
+                <p>{selectedPrompt.description}</p>
+              </li>
+            )}
+            {!!selectedPrompt.content && (
+              <li className="flex gap-2.5">
+                <p className="mb-1 flex min-w-28 text-secondary">
+                  {t('Prompt: ')}
+                </p>
+                <p>{selectedPrompt.content}</p>
+              </li>
+            )}
           </ul>
           <div className="flex items-center justify-between px-3 md:p-6">
             <div className="flex h-[34px] gap-2">

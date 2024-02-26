@@ -48,7 +48,6 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 
 import { Feature } from '@epam/ai-dial-shared';
 import throttle from 'lodash/throttle';
@@ -522,6 +521,7 @@ export const ChatView = memo(() => {
               selectedAddons: temporarySettings.addonsIds.filter(
                 (addonId) => addonsMap[addonId],
               ),
+              isShared: temporarySettings.isShared,
             },
           }),
         );
@@ -584,8 +584,7 @@ export const ChatView = memo(() => {
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
                     (conv) =>
-                      conv.messages.length === 0 &&
-                      (!conv.playback?.isPlayback ? (
+                      conv.messages.length === 0 && (
                         <div
                           key={conv.id}
                           className={`flex h-full flex-col justify-between ${
@@ -633,28 +632,7 @@ export const ChatView = memo(() => {
                             style={{ height: inputHeight }}
                           />
                         </div>
-                      ) : (
-                        <div
-                          key={conv.id}
-                          className={`flex h-full flex-col justify-between overflow-auto ${
-                            selectedConversations.length > 1
-                              ? 'w-[50%]'
-                              : 'w-full'
-                          }`}
-                        >
-                          <div
-                            className="shrink-0"
-                            style={{
-                              height: `calc(100%-${inputHeight})`,
-                            }}
-                          >
-                            <PlaybackEmptyInfo
-                              conversationName={conv.name}
-                              appName={appName}
-                            />
-                          </div>
-                        </div>
-                      )),
+                      ),
                   )}
                 </div>
                 <div className="flex w-full">

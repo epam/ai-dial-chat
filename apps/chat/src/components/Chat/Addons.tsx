@@ -21,6 +21,7 @@ interface AddonProps {
   isSelected: boolean;
   preselectedAddonsIds: string[];
   onChangeAddon: (addonId: string) => void;
+  disabled?: boolean;
 }
 
 const Addon = ({
@@ -28,6 +29,7 @@ const Addon = ({
   preselectedAddonsIds,
   isSelected = false,
   onChangeAddon,
+  disabled,
 }: AddonProps) => {
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 
@@ -39,13 +41,13 @@ const Addon = ({
   const template = (
     <button
       className={classNames(
-        `flex items-center gap-2 rounded px-3 py-2 text-left`,
+        `flex items-center gap-2 rounded px-3 py-2 text-left disabled:cursor-not-allowed`,
         { 'bg-accent-primary-alpha': isSelected },
         {
           'bg-layer-3 hover:bg-layer-4': !isSelected,
         },
       )}
-      disabled={preselectedAddonsIds.includes(addonId)}
+      disabled={disabled || preselectedAddonsIds.includes(addonId)}
       onClick={() => {
         onChangeAddon(addonId);
       }}
@@ -82,6 +84,7 @@ interface AddonsProps {
   selectedAddonsIds: string[];
   onChangeAddon: (addonId: string) => void;
   onApplyAddons: (addonsIds: string[]) => void;
+  disabled?: boolean;
 }
 
 const filterRecentAddons = (
@@ -103,6 +106,7 @@ export const Addons = ({
   selectedAddonsIds,
   onChangeAddon,
   onApplyAddons,
+  disabled,
 }: AddonsProps) => {
   const { t } = useTranslation(Translation.Chat);
   const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
@@ -150,6 +154,7 @@ export const Addons = ({
                 isSelected
                 onChangeAddon={onChangeAddon}
                 preselectedAddonsIds={preselectedAddonsIds}
+                disabled={disabled}
               />
             ))}
             {selectedAddonsIds
@@ -163,6 +168,7 @@ export const Addons = ({
                   isSelected
                   onChangeAddon={onChangeAddon}
                   preselectedAddonsIds={preselectedAddonsIds}
+                  disabled={disabled}
                 />
               ))}
           </div>
@@ -183,6 +189,7 @@ export const Addons = ({
                       isSelected={false}
                       onChangeAddon={onChangeAddon}
                       preselectedAddonsIds={preselectedAddonsIds}
+                      disabled={disabled}
                     />
                   ))
                   .filter(Boolean)}
@@ -191,7 +198,10 @@ export const Addons = ({
           )}
           <div>
             <button
-              className="mt-3 inline text-left text-accent-primary"
+              disabled={disabled}
+              className={classNames(
+                'mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed',
+              )}
               onClick={() => {
                 setIsAddonsDialogOpen(true);
               }}

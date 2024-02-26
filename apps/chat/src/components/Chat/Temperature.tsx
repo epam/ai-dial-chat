@@ -17,6 +17,8 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { DisableOverlay } from '../Common/DisableOverlay';
+
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { HandleProps } from 'rc-slider/lib/Handles/Handle';
@@ -52,12 +54,14 @@ interface Props {
   label: string;
   temperature: number | undefined;
   onChangeTemperature: (temperature: number) => void;
+  disabled?: boolean;
 }
 
 export const TemperatureSlider: FC<Props> = ({
   label,
   onChangeTemperature,
   temperature,
+  disabled,
 }) => {
   const [currentTemperature, setCurrentTemperature] = useState<number>(() => {
     return temperature ?? DEFAULT_TEMPERATURE;
@@ -87,7 +91,8 @@ export const TemperatureSlider: FC<Props> = ({
           <IconHelp size={18} />
         </Tooltip>
       </div>
-      <div className="px-5">
+      <div className="relative px-5">
+        {disabled && <DisableOverlay />}
         <Slider
           className="temperature-slider !h-10"
           value={temperature}

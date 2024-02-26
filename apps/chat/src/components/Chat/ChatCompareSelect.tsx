@@ -43,9 +43,9 @@ const Option = ({ item }: OptionProps) => {
   return (
     <div className="group flex items-center gap-3 pl-1">
       <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
-        <ModelIcon entity={model} entityId={model.id} size={24} />
+        <ModelIcon entity={model} entityId={model.id} size={18} />
       </ShareIcon>
-      <span>{item.name}</span>
+      <span className="truncate">{item.name}</span>
     </div>
   );
 };

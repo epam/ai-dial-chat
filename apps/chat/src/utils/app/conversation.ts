@@ -8,7 +8,11 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
-import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/openai';
+import {
+  DialAIEntity,
+  DialAIEntityAddon,
+  DialAIEntityModel,
+} from '@/src/types/openai';
 
 import {
   ApiKeys,
@@ -18,6 +22,9 @@ import {
 import { constructPath } from './file';
 import { compareEntitiesByName, splitEntityId } from './folders';
 import { getRootId } from './id';
+
+import groupBy from 'lodash-es/groupBy';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -208,4 +215,31 @@ export const isChosenConversationValidForCompare = (
   }
 
   return true;
+};
+
+export const getOpenAIEntityFullName = (model: DialAIEntity) =>
+  [model.name, model.version].filter(Boolean).join(' ') || model.id;
+
+interface ModelGroup {
+  groupName: string;
+  entities: DialAIEntity[];
+}
+
+export const groupModelsAndSaveOrder = (
+  models: DialAIEntity[],
+): ModelGroup[] => {
+  const uniqModels = uniqBy(models, 'id');
+  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);
+  const insertedSet = new Set();
+  const result: ModelGroup[] = [];
+
+  uniqModels.forEach((m) => {
+    const key = m.name ?? m.id;
+    if (!insertedSet.has(key)) {
+      result.push({ groupName: key, entities: groupedModels[key] });
+      insertedSet.add(key);
+    }
+  });
+
+  return result;
 };

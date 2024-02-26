@@ -3,6 +3,8 @@ import SVG from 'react-inlinesvg';
 
 import classNames from 'classnames';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/openai';
 
@@ -22,6 +24,7 @@ const ModelIconTemplate = memo(
       entity?.type === EntityType.Addon
         ? `api/themes/image?name=default-addon`
         : `api/themes/image?name=default-model`;
+    const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
     return (
       <span
@@ -37,14 +40,13 @@ const ModelIconTemplate = memo(
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height={size}
-          description={entity?.name || entityId}
-          cacheRequests
+          description={description}
         >
           <SVG
             src={fallbackUrl}
             width={size}
             height={size}
-            description={entity?.name || entityId}
+            description={description}
           />
         </SVG>
       </span>
@@ -63,7 +65,7 @@ export const ModelIcon = ({
   return (
     <Tooltip
       hideTooltip={isCustomTooltip}
-      tooltip={entity?.name || entityId}
+      tooltip={entity ? getOpenAIEntityFullName(entity) : entityId}
       triggerClassName="flex shrink-0 relative"
     >
       <ModelIconTemplate

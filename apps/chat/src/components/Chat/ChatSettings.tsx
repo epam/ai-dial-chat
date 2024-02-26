@@ -9,6 +9,8 @@ import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
@@ -24,6 +26,7 @@ interface Props {
     temperature: number;
     currentAssistentModelId: string | undefined;
     addonsIds: string[];
+    isShared: boolean;
   }) => void;
   onApplySettings: () => void;
 }
@@ -52,6 +55,7 @@ export const ChatSettings = ({
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],
   );
+  const [isConfirmModelChanging, setIsConfirmModelChanging] = useState(false);
 
   const handleOnSelectModel = (modelId: string) => {
     if (modelId) {
@@ -86,6 +90,11 @@ export const ChatSettings = ({
   };
 
   const handleOnApplySettings = () => {
+    if (conversation.isShared && currentModelId !== conversation.model.id) {
+      setIsConfirmModelChanging(true);
+      return;
+    }
+
     onClose();
     onApplySettings();
   };
@@ -97,8 +106,10 @@ export const ChatSettings = ({
       prompt: currentPrompt,
       temperature: currentTemperature,
       addonsIds: currentSelectedAddonsIds,
+      isShared: !!conversation.isShared,
     });
   }, [
+    conversation.isShared,
     currentAssistentModelId,
     currentModelId,
     currentPrompt,
@@ -116,8 +127,7 @@ export const ChatSettings = ({
       <div className="max-h-full w-full overflow-auto rounded xl:max-w-[720px] 2xl:max-w-[1000px]">
         <div className="flex flex-col divide-y divide-tertiary bg-layer-2">
           <ConversationSettings
-            conversationId={conversation.id}
-            replay={conversation.replay}
+            conversation={conversation}
             isCloseEnabled
             modelId={currentModelId}
             prompts={prompts}
@@ -144,6 +154,33 @@ export const ChatSettings = ({
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={isConfirmModelChanging}
+        heading={t('Confirm model changing')}
+        confirmLabel={t('Rename')}
+        cancelLabel={t('Cancel')}
+        description={
+          t(
+            'Model changing will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          setIsConfirmModelChanging(false);
+
+          if (result) {
+            onClose();
+            onChangeSettings({
+              modelId: currentModelId,
+              currentAssistentModelId,
+              prompt: currentPrompt,
+              temperature: currentTemperature,
+              addonsIds: currentSelectedAddonsIds,
+              isShared: false,
+            });
+            onApplySettings();
+          }
+        }}
+      />
     </div>
   );
 };

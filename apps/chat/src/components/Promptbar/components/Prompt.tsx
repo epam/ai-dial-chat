@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb, IconCheck, IconX } from '@tabler/icons-react';
+import { IconBulb } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEvent,
@@ -44,7 +44,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import { PreviewPromptModal } from '@/src/components/Promptbar/components/PreviewPromptModal';
@@ -143,6 +142,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             name: prompt.name,
             description: prompt.description,
             content: prompt.content,
+            isShared: prompt.isShared,
           },
         }),
       );
@@ -152,38 +152,25 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     [dispatch],
   );
 
-  const handleDelete: MouseEventHandler = useCallback(
-    (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-
-      if (isDeleting) {
-        if (prompt.sharedWithMe) {
-          dispatch(
-            ShareActions.discardSharedWithMe({
-              resourceId: prompt.id,
-              nodeType: BackendDataNodeType.ITEM,
-              resourceType: BackendResourceType.PROMPT,
-            }),
-          );
-        } else {
-          dispatch(PromptsActions.deletePrompt({ prompt }));
-        }
-        dispatch(PromptsActions.resetSearch());
+  const handleDelete = useCallback(() => {
+    if (isDeleting) {
+      if (prompt.sharedWithMe) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceId: prompt.id,
+            nodeType: BackendDataNodeType.ITEM,
+            resourceType: BackendResourceType.PROMPT,
+          }),
+        );
+      } else {
+        dispatch(PromptsActions.deletePrompt({ prompt }));
       }
-
-      setIsDeleting(false);
-      dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-    },
-    [dispatch, isDeleting, prompt],
-  );
-
-  const handleCancelDelete: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    e.preventDefault();
+      dispatch(PromptsActions.resetSearch());
+    }
 
     setIsDeleting(false);
-  }, []);
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+  }, [dispatch, isDeleting, prompt]);
 
   const handleOpenDeleteModal: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -359,22 +346,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             {prompt.name}
           </div>
         </div>
-
-        {isDeleting && (
-          <div className="absolute right-1 z-10 flex">
-            <SidebarActionButton handleClick={handleDelete}>
-              <IconCheck size={18} className="hover:text-accent-primary" />
-            </SidebarActionButton>
-
-            <SidebarActionButton handleClick={handleCancelDelete}>
-              <IconX
-                size={18}
-                strokeWidth="2"
-                className="hover:text-accent-primary"
-              />
-            </SidebarActionButton>
-          </div>
-        )}
         {!isDeleting && !isRenaming && (
           <div
             ref={refs.setFloating}
@@ -457,6 +428,21 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           onClose={handleCloseUnpublishModal}
         />
       )}
+      <ConfirmDialog
+        isOpen={isDeleting}
+        heading={t('Confirm deleting prompt')}
+        description={`${t('Are you sure that you want to remove a prompt?')}${t(
+          prompt.isShared
+            ? '\nRemoving will stop sharing and other users will no longer see this prompt.'
+            : '',
+        )}`}
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsDeleting(false);
+          if (result) handleDelete();
+        }}
+      />
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}

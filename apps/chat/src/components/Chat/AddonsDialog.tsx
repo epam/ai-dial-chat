@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { doesAddonContainSearchTerm } from '@/src/utils/app/search';
+import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { DialAIEntity } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
@@ -134,7 +134,7 @@ export const AddonsDialog: FC<Props> = ({
   });
   const [displayedAddons, setDisplayedAddons] = useState(() => {
     return addons.filter((addon) =>
-      doesAddonContainSearchTerm(addon, searchTerm),
+      doesOpenAIEntityContainSearchTerm(addon, searchTerm),
     );
   });
 
@@ -153,7 +153,9 @@ export const AddonsDialog: FC<Props> = ({
 
   useEffect(() => {
     setDisplayedAddons(
-      addons.filter((addon) => doesAddonContainSearchTerm(addon, searchTerm)),
+      addons.filter((addon) =>
+        doesOpenAIEntityContainSearchTerm(addon, searchTerm),
+      ),
     );
   }, [searchTerm, addons, selectedAddons]);
 

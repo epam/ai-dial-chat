@@ -22,6 +22,7 @@ import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-ui-settings';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
 
+import { DisableOverlay } from '../Common/DisableOverlay';
 import { PromptDialog } from './ChatInput/PromptDialog';
 import { PromptList } from './ChatInput/PromptList';
 
@@ -33,6 +34,7 @@ interface Props {
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
   debounceChanges?: boolean;
+  disabled?: boolean;
 }
 
 const MAX_HEIGHT = 300;
@@ -43,6 +45,7 @@ export const SystemPrompt: FC<Props> = ({
   prompt,
   onChangePrompt,
   debounceChanges = false,
+  disabled,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -171,6 +174,7 @@ export const SystemPrompt: FC<Props> = ({
     <div className="flex flex-col">
       <label className="mb-4 text-left">{t('System prompt')}</label>
       <div className="relative flex flex-col">
+        {disabled && <DisableOverlay />}
         <textarea
           ref={textareaRef}
           className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"

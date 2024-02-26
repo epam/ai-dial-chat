@@ -4,6 +4,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
   id: string;
   object: T;
   display_name?: string;
+  display_version?: string;
   icon_url?: string;
   description?: string;
   capabilities?: {
@@ -30,6 +31,7 @@ export interface DialAIEntity {
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
+  version?: string;
 }
 
 export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
