@@ -22,12 +22,11 @@ import {
   ApiKeys,
   ApiUtils,
   decodeApiUrl,
-  getFolderTypeByApiKey,
   parseConversationApiKey,
-  parsePromptApiKey,
 } from '../../server/api';
 import { constructPath } from '../file';
 import { splitEntityId } from '../folders';
+import { EnumMapper } from '../mappers';
 
 export class ShareService {
   public static share(
@@ -106,7 +105,7 @@ export class ShareService {
                 id,
                 name: folder.name,
                 folderId: constructPath(apiKey, bucket, parentPath),
-                type: getFolderTypeByApiKey(ApiKeys.Conversations),
+                type: EnumMapper.getFolderTypeByApiKey(ApiKeys.Conversations),
               });
             }
           }
@@ -122,7 +121,7 @@ export class ShareService {
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
               entities.push({
-                ...parsePromptApiKey(conversation.name),
+                name: conversation.name,
                 id,
                 lastActivityDate: conversation.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
@@ -139,7 +138,7 @@ export class ShareService {
                 id,
                 name: folder.name,
                 folderId: constructPath(apiKey, bucket, parentPath),
-                type: getFolderTypeByApiKey(ApiKeys.Prompts),
+                type: EnumMapper.getFolderTypeByApiKey(ApiKeys.Prompts),
               });
             }
           }

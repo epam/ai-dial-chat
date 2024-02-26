@@ -5,7 +5,6 @@ import {
   ApiUtils,
   decodeApiUrl,
   encodeApiUrl,
-  getFolderTypeByApiKey,
 } from '@/src/utils/server/api';
 
 import {
@@ -23,6 +22,7 @@ import { resetShareEntity } from '@/src/constants/chat';
 import { constructPath } from '../../../file';
 import { splitEntityId } from '../../../folders';
 import { getRootId } from '../../../id';
+import { EnumMapper } from '../../../mappers';
 
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,
@@ -37,7 +37,7 @@ export abstract class ApiEntityStorage<
       id,
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
-      type: getFolderTypeByApiKey(this.getStorageKey()),
+      type: EnumMapper.getFolderTypeByApiKey(this.getStorageKey()),
       ...resetShareEntity,
     };
   }
@@ -171,7 +171,7 @@ export abstract class ApiEntityStorage<
 
   abstract getEntityKey(info: TEntityInfo): string;
 
-  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId'>;
+  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId' | 'id'>;
 
   abstract getStorageKey(): ApiKeys;
 

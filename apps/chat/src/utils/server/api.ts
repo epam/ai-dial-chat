@@ -4,8 +4,6 @@ import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { BackendResourceType, FeatureType } from '@/src/types/common';
-import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
@@ -17,54 +15,6 @@ export enum ApiKeys {
   Conversations = 'conversations',
   Prompts = 'prompts',
 }
-
-export const getFolderTypeByApiKey = (key: ApiKeys): FolderType => {
-  switch (key) {
-    case ApiKeys.Conversations:
-      return FolderType.Chat;
-    case ApiKeys.Prompts:
-      return FolderType.Prompt;
-    case ApiKeys.Files:
-    default:
-      return FolderType.File;
-  }
-};
-
-export const getApiKeyByResourceType = (entityType: BackendResourceType) => {
-  switch (entityType) {
-    case BackendResourceType.PROMPT:
-      return ApiKeys.Prompts;
-    case BackendResourceType.CONVERSATION:
-      return ApiKeys.Conversations;
-    case BackendResourceType.FILE:
-    default:
-      return ApiKeys.Files;
-  }
-};
-export const getApiKeyByFeatureType = (featureType: FeatureType) => {
-  switch (featureType) {
-    case FeatureType.Prompt:
-      return ApiKeys.Prompts;
-    case FeatureType.Chat:
-      return ApiKeys.Conversations;
-    default:
-      return ApiKeys.Files;
-  }
-};
-
-export const getBackendResourceTypeByFeatureType = (
-  entityType: FeatureType,
-) => {
-  switch (entityType) {
-    case FeatureType.Chat:
-      return BackendResourceType.CONVERSATION;
-    case FeatureType.Prompt:
-      return BackendResourceType.PROMPT;
-    case FeatureType.File:
-    default:
-      return BackendResourceType.FILE;
-  }
-};
 
 export const isValidEntityApiType = (apiKey: string): boolean => {
   return Object.values(ApiKeys).includes(apiKey as ApiKeys);
@@ -89,9 +39,6 @@ export const decodeApiUrl = (path: string): string =>
 
 const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
-
-export const combineApiKey = (...args: (string | number)[]): string =>
-  args.join(pathKeySeparator);
 
 export const encodeModelId = (modelId: string): string =>
   modelId
@@ -128,16 +75,16 @@ export const getConversationApiKey = (
   if (conversation.model.id === EMPTY_MODEL_ID) {
     return conversation.name;
   }
-  return combineApiKey(
+  return [
     encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
-  );
+  ].join(pathKeySeparator);
 };
 
 // Format key: {modelId}__{name}
 export const parseConversationApiKey = (
   apiKey: string,
-): Omit<ConversationInfo, 'folderId'> => {
+): Omit<ConversationInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
 
   const [modelId, name] =
@@ -146,7 +93,6 @@ export const parseConversationApiKey = (
       : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
   return {
-    id: name,
     model: { id: modelId },
     name,
     isPlayback: modelId === PseudoModel.Playback,
@@ -162,9 +108,8 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
 // Format key: {name}
 export const parsePromptApiKey = (
   name: string,
-): Omit<PromptInfo, 'folderId'> => {
+): Omit<PromptInfo, 'folderId' | 'id'> => {
   return {
-    id: name,
     name,
   };
 };

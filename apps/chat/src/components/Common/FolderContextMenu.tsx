@@ -14,8 +14,8 @@ import { MouseEventHandler, useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { getRootId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { getApiKeyByFeatureType } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -143,7 +143,9 @@ export const FolderContextMenu = ({
         display:
           !!onDelete &&
           folder.id.startsWith(
-            getRootId({ apiKey: getApiKeyByFeatureType(featureType) }),
+            getRootId({
+              apiKey: EnumMapper.getApiKeyByFeatureType(featureType),
+            }),
           ),
         dataQa: 'delete',
         Icon: IconTrashX,

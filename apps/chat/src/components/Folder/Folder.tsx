@@ -29,6 +29,7 @@ import {
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
 } from '@/src/utils/app/folders';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import {
   getDragImage,
@@ -38,7 +39,6 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { getBackendResourceTypeByFeatureType } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { BackendDataNodeType, FeatureType } from '@/src/types/common';
@@ -179,7 +179,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       dispatch(
         ShareActions.share({
           resourceId: currentFolder.id,
-          resourceType: getBackendResourceTypeByFeatureType(featureType),
+          resourceType:
+            EnumMapper.getBackendResourceTypeByFeatureType(featureType),
           nodeType: BackendDataNodeType.FOLDER,
         }),
       );
@@ -910,7 +911,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   resourceId: currentFolder.id,
                   nodeType: BackendDataNodeType.FOLDER,
                   resourceType:
-                    getBackendResourceTypeByFeatureType(featureType),
+                    EnumMapper.getBackendResourceTypeByFeatureType(featureType),
                 }),
               );
             }

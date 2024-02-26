@@ -22,8 +22,8 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { getRootId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { getApiKeyByFeatureType } from '@/src/utils/server/api';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -276,7 +276,9 @@ export default function ItemContextMenu({
         dataQa: 'delete',
         display:
           entity.id.startsWith(
-            getRootId({ apiKey: getApiKeyByFeatureType(featureType) }),
+            getRootId({
+              apiKey: EnumMapper.getApiKeyByFeatureType(featureType),
+            }),
           ) || entity.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,

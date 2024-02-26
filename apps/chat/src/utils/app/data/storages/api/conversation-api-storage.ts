@@ -44,7 +44,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
     return getConversationApiKey(info);
   }
 
-  parseEntityKey(key: string): Omit<ConversationInfo, 'folderId'> {
+  parseEntityKey(key: string): Omit<ConversationInfo, 'folderId' | 'id'> {
     return parseConversationApiKey(key);
   }
 
