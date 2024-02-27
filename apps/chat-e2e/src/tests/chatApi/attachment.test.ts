@@ -1,4 +1,4 @@
-import test, { skipReason } from '@/src/core/baseFixtures';
+import { skipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
@@ -25,12 +25,13 @@ for (const modelToUse of modelsForRequestWithAttachment) {
   dialTest(
     `Generate response on request with attachment for model: ${modelToUse.modelId}`,
     async ({ conversationData, chatApiHelper }) => {
-      test.skip(process.env.E2E_HOST === undefined, skipReason);
-      const conversation = conversationData.prepareConversationWithAttachment(
-        imageUrl,
-        modelToUse.modelId,
-        modelToUse.isTextRequestRequired,
-      );
+      dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
+      const conversation =
+        conversationData.prepareConversationWithAttachmentInRequest(
+          imageUrl,
+          modelToUse.modelId,
+          modelToUse.isTextRequestRequired,
+        );
       const modelResponse = await chatApiHelper.postRequest(conversation);
       const status = modelResponse.status();
       expect
@@ -52,7 +53,3 @@ for (const modelToUse of modelsForRequestWithAttachment) {
     },
   );
 }
-
-dialTest.afterEach(async ({ fileApiHelper }) => {
-  await fileApiHelper.deleteUploadedFile(Attachment.sunImageName);
-});

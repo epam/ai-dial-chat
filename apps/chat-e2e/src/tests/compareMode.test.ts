@@ -766,7 +766,9 @@ dialTest(
           .getTalkToSelector()
           .selectModel(
             firstUpdatedRandomModel.name,
-            firstUpdatedRandomModel.iconUrl,
+            firstUpdatedRandomModel.id !== defaultModel.id
+              ? firstUpdatedRandomModel.iconUrl
+              : undefined,
           );
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
@@ -778,7 +780,9 @@ dialTest(
           .getTalkToSelector()
           .selectModel(
             secondUpdatedRandomModel.name,
-            secondUpdatedRandomModel.iconUrl,
+            secondUpdatedRandomModel.id !== defaultModel.id
+              ? secondUpdatedRandomModel.iconUrl
+              : undefined,
           );
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
@@ -1248,7 +1252,7 @@ dialTest(
       'Create new chat and verify Compare mode is closed',
       async () => {
         await chatBar.createNewConversation();
-        const isCompareModeOn = await compare.waitForState({ state: 'hidden' });
+        await compare.waitForState({ state: 'hidden' });
       },
     );
 

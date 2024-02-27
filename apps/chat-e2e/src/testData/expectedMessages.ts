@@ -192,4 +192,8 @@ export enum ExpectedMessages {
   responseCodeIsValid = 'Response code is valid for model: ',
   responseTextIsValid = 'Response text is valid for model: ',
   imageUrlReturnedInResponse = 'Image url is returned in the response for model: ',
+  attachmentUrlIsValid = 'Conversation attachment url is valid',
+  dataIsNotExported = 'Data is not exported',
+  dataIsExported = 'Data is exported',
+  dataIsNotImported = 'Data is not imported',
 }

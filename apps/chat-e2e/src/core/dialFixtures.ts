@@ -162,8 +162,9 @@ const dialTest = test.extend<
     await use(callback);
   },
   beforeTestCleanup: [
-    async ({ dataInjector }, use) => {
+    async ({ dataInjector, fileApiHelper }, use) => {
       await dataInjector.deleteAllData();
+      await fileApiHelper.deleteAllFiles();
       await use('beforeTestCleanup');
     },
     { scope: 'test', auto: true },
