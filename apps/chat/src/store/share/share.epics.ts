@@ -400,12 +400,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       const actions = [];
       const acceptedId = ShareSelectors.selectAcceptedId(state$.value);
       const decodedAcceptedId = acceptedId && ApiUtils.decodeApiUrl(acceptedId);
-      const newResource = [
+      const isNewResource = [
         ...payload.resources.entities,
         ...payload.resources.folders,
-      ].find((item) => item.id === decodedAcceptedId);
+      ].some((item) => item.id === decodedAcceptedId);
 
-      if (decodedAcceptedId && newResource) {
+      if (decodedAcceptedId && isNewResource) {
         if (acceptedId.startsWith(ApiKeys.Conversations)) {
           if (isFolderId(acceptedId)) {
             actions.push(
@@ -502,7 +502,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           if (
             selectedConv &&
-            !newResource &&
+            !isNewResource &&
             payload.resources.entities.some(
               (conv) => conv.id === selectedConv.id,
             )
