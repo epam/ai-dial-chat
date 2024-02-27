@@ -86,11 +86,16 @@ export const ChatHeader = ({
     dispatch(ConversationsActions.playbackCancel());
   }, [dispatch]);
 
+  const conversationSelectedAddons =
+    conversation.selectedAddons?.filter(
+      (id) => !model?.selectedAddons?.includes(id),
+    ) || [];
+
   return (
     <>
       <div
         className={classNames(
-          'sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-2 bg-layer-2 py-2 text-sm lg:flex-row',
+          'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
           {
             'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth,
           },
@@ -103,12 +108,12 @@ export const ChatHeader = ({
             triggerClassName={
               isChatFullWidth
                 ? 'flex h-full max-w-full lg:max-w-[90%] items-center justify-center'
-                : ''
+                : 'truncate text-center'
             }
           >
             <span
               className={classNames('truncate text-center', {
-                'block w-full max-w-[200px] md:max-w-[330px] lg:max-w-[425px]':
+                'block max-w-full md:max-w-[330px] lg:max-w-[425px]':
                   !isChatFullWidth,
               })}
               data-qa="chat-title"
@@ -179,16 +184,29 @@ export const ChatHeader = ({
                         entity={addonsMap[addon]}
                       />
                     ))}
-                    {conversation.selectedAddons
-                      ?.filter((id) => !model.selectedAddons?.includes(id))
-                      .map((addon) => (
-                        <ModelIcon
-                          key={addon}
-                          entityId={addon}
-                          size={isOnlySmallScreen() ? 20 : 18}
-                          entity={addonsMap[addon]}
-                        />
-                      ))}
+                    {isOnlySmallScreen()
+                      ? !!conversationSelectedAddons.length && (
+                          <>
+                            <ModelIcon
+                              entityId={conversationSelectedAddons[0]}
+                              size={isOnlySmallScreen() ? 20 : 18}
+                              entity={addonsMap[conversationSelectedAddons[0]]}
+                            />
+                            <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-[10px] md:size-[18px]">
+                              +{conversationSelectedAddons.length - 1}
+                            </div>
+                          </>
+                        )
+                      : conversation.selectedAddons
+                          ?.filter((id) => !model.selectedAddons?.includes(id))
+                          .map((addon) => (
+                            <ModelIcon
+                              key={addon}
+                              entityId={addon}
+                              size={isOnlySmallScreen() ? 20 : 18}
+                              entity={addonsMap[addon]}
+                            />
+                          ))}
                   </span>
                 )
               ) : (
@@ -259,7 +277,7 @@ export const ChatHeader = ({
                 onClick={onCancelPlaybackMode}
                 data-qa="cancel-playback-mode"
               >
-                {t('Stop playback')}
+                {isOnlySmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
           </div>
