@@ -25,9 +25,9 @@ import {
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
-  compareEntitiesByName,
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
+  sortByName,
 } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import {
@@ -38,10 +38,9 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { getBackendResourceTypeByFeatureType } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { BackendDataNodeType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
@@ -179,8 +178,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       dispatch(
         ShareActions.share({
           resourceId: currentFolder.id,
-          resourceType: getBackendResourceTypeByFeatureType(featureType),
-          nodeType: BackendDataNodeType.FOLDER,
+          featureType,
+          isFolder: true,
         }),
       );
     },
@@ -213,19 +212,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     return openedFoldersIds.includes(currentFolder.id);
   }, [currentFolder.id, openedFoldersIds]);
   const filteredChildFolders = useMemo(() => {
-    return allFolders
-      .filter((folder) => folder.folderId === currentFolder.id)
-      .sort(compareEntitiesByName);
+    return sortByName(
+      allFolders.filter((folder) => folder.folderId === currentFolder.id),
+    );
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
-    return (
-      allItems
-        ?.filter(
-          (item) =>
-            item.folderId === currentFolder.id &&
-            (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
-        )
-        .sort(compareEntitiesByName) || []
+    return sortByName(
+      allItems?.filter(
+        (item) =>
+          item.folderId === currentFolder.id &&
+          (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
+      ) || [],
     );
   }, [allItems, currentFolder.id, searchTerm]);
 
@@ -908,9 +905,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               dispatch(
                 ShareActions.revokeAccess({
                   resourceId: currentFolder.id,
-                  nodeType: BackendDataNodeType.FOLDER,
-                  resourceType:
-                    getBackendResourceTypeByFeatureType(featureType),
+                  isFolder: true,
+                  featureType,
                 }),
               );
             }

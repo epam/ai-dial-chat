@@ -1,14 +1,9 @@
 import { Observable, map } from 'rxjs';
 
-import {
-  ApiKeys,
-  ApiUtils,
-  decodeApiUrl,
-  encodeApiUrl,
-  getFolderTypeByApiKey,
-} from '@/src/utils/server/api';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
+  ApiKeys,
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
@@ -23,6 +18,7 @@ import { resetShareEntity } from '@/src/constants/chat';
 import { constructPath } from '../../../file';
 import { splitEntityId } from '../../../folders';
 import { getRootId } from '../../../id';
+import { EnumMapper } from '../../../mappers';
 
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,
@@ -30,21 +26,23 @@ export abstract class ApiEntityStorage<
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
-    const id = decodeApiUrl(folder.url.slice(0, folder.url.length - 1));
+    const id = ApiUtils.decodeApiUrl(
+      folder.url.slice(0, folder.url.length - 1),
+    );
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
       id,
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
-      type: getFolderTypeByApiKey(this.getStorageKey()),
+      type: EnumMapper.getFolderTypeByApiKey(this.getStorageKey()),
       ...resetShareEntity,
     };
   }
 
   private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
-    const id = decodeApiUrl(entity.url);
+    const id = ApiUtils.decodeApiUrl(entity.url);
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -57,7 +55,7 @@ export abstract class ApiEntityStorage<
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
-    encodeApiUrl(constructPath('api', entity.id));
+    ApiUtils.encodeApiUrl(constructPath('api', entity.id));
 
   private getListingUrl = ({
     path,
@@ -66,10 +64,15 @@ export abstract class ApiEntityStorage<
     path?: string;
     resultQuery?: string;
   }): string => {
-    const listingUrl = encodeApiUrl(
+    const listingUrl = ApiUtils.encodeApiUrl(
       constructPath(
         'api/listing',
-        path || getRootId({ apiKey: this.getStorageKey() }),
+        path ||
+          getRootId({
+            featureType: EnumMapper.getFeatureTypeByApiKey(
+              this.getStorageKey(),
+            ),
+          }),
       ),
     );
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
@@ -171,7 +174,7 @@ export abstract class ApiEntityStorage<
 
   abstract getEntityKey(info: TEntityInfo): string;
 
-  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId'>;
+  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId' | 'id'>;
 
   abstract getStorageKey(): ApiKeys;
 
