@@ -189,7 +189,7 @@ export const ChatHeader = ({
                           <>
                             <ModelIcon
                               entityId={conversationSelectedAddons[0]}
-                              size={isSmallScreen() ? 20 : 18}
+                              size={20}
                               entity={addonsMap[conversationSelectedAddons[0]]}
                             />
                             <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-[10px] md:size-[18px]">
@@ -203,7 +203,7 @@ export const ChatHeader = ({
                             <ModelIcon
                               key={addon}
                               entityId={addon}
-                              size={isSmallScreen() ? 20 : 18}
+                              size={20}
                               entity={addonsMap[addon]}
                             />
                           ))}
@@ -220,7 +220,7 @@ export const ChatHeader = ({
                         <ModelIcon
                           key={addon}
                           entityId={addon}
-                          size={isSmallScreen() ? 20 : 18}
+                          size={18}
                           entity={addonsMap[addon]}
                         />
                       ))}
