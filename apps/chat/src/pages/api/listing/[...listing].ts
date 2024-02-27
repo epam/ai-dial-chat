@@ -5,9 +5,9 @@ import { getServerSession } from 'next-auth/next';
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
-import { encodeSlugs } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils } from '@/src/utils/server/server';
 
 import {
   BackendChatEntity,
@@ -51,7 +51,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const url = `${constructPath(
       process.env.DIAL_API_HOST,
       'v1/metadata',
-      encodeSlugs(slugs),
+      ServerUtils.encodeSlugs(slugs),
     )}/?limit=${limit}&recursive=${recursive}`;
 
     const response = await fetch(url, {

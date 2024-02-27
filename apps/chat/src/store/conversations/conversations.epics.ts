@@ -39,13 +39,13 @@ import {
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
-  compareConversationsByDate,
   getConversationInfoFromId,
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
   isSettingsChanged,
   regenerateConversationId,
+  sortByDateAndName,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import {
@@ -64,7 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -72,7 +72,6 @@ import {
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -106,6 +105,8 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from './conversations.reducers';
+
+import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -303,7 +304,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 lastActivityDate: Date.now(),
                 isMessageStreaming: false,
                 status: UploadStatus.LOADED,
-                folderId: getRootId({ apiKey: ApiKeys.Conversations }),
+                folderId: getConversationRootId(),
               });
             },
           );
@@ -381,7 +382,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? getRootId({ apiKey: ApiKeys.Conversations })
+        ? getConversationRootId()
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
@@ -451,7 +452,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? getRootId({ apiKey: ApiKeys.Conversations })
+        ? getConversationRootId()
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
@@ -517,7 +518,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
+        folderId: getConversationRootId(),
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
@@ -761,9 +762,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             ConversationsActions.selectConversations({
-              conversationIds: [
-                otherConversations.sort(compareConversationsByDate)[0].id,
-              ],
+              conversationIds: [sortByDateAndName(otherConversations)[0].id],
             }),
           ),
         );
@@ -1238,12 +1237,10 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     })),
     map(({ payload, modelsMap }) => {
       const lastModel = modelsMap[payload.conversation.model.id];
-      const selectedAddons = Array.from(
-        new Set([
-          ...payload.conversation.selectedAddons,
-          ...(lastModel?.selectedAddons ?? []),
-        ]),
-      );
+      const selectedAddons = uniq([
+        ...payload.conversation.selectedAddons,
+        ...(lastModel?.selectedAddons ?? []),
+      ]);
       const assistantModelId = payload.conversation.assistantModelId;
       const conversationModelType = lastModel?.type ?? EntityType.Model;
       let modelAdditionalSettings = {};
@@ -2349,11 +2346,9 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
       ConversationService.getConversations(undefined, true).pipe(
         switchMap((conversations) => {
           const conv = conversations.flat();
-          const folderIds = Array.from(new Set(conv.map((c) => c.folderId)));
-          const paths = Array.from(
-            new Set(
-              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-            ),
+          const folderIds = uniq(conv.map((c) => c.folderId));
+          const paths = uniq(
+            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
           );
           return concat(
             of(

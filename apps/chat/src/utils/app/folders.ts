@@ -5,11 +5,16 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { PartialBy, ShareEntity, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import {
+  Entity,
+  PartialBy,
+  ShareEntity,
+  UploadStatus,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
@@ -17,6 +22,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 import { isRootId } from './id';
 
 import escapeStringRegexp from 'escape-string-regexp';
+import sortBy from 'lodash-es/sortBy';
+import uniq from 'lodash-es/uniq';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -275,13 +282,13 @@ export const getFilteredFolders = ({
       ),
   );
 
-  return childAndCurrentSectionFilteredFolders
-    .filter(
+  return sortByName(
+    childAndCurrentSectionFilteredFolders.filter(
       (folder) =>
         childAndCurrentSectionFilteredIds.has(folder.id) &&
         filteredFolderIds.has(folder.id),
-    )
-    .sort(compareEntitiesByName);
+    ),
+  );
 };
 
 export const getParentAndChildFolders = (
@@ -290,14 +297,12 @@ export const getParentAndChildFolders = (
 ) => {
   const folderIds = folders.map(({ id }) => id);
 
-  const setFolders = new Set(
+  return uniq(
     folderIds.flatMap((folderId) => [
       ...getParentAndCurrentFoldersById(allFolders, folderId),
       ...getChildAndCurrentFoldersById(folderId, allFolders),
     ]),
   );
-
-  return Array.from(setFolders);
 };
 
 export const getTemporaryFoldersToPublish = (
@@ -453,20 +458,8 @@ export const getFoldersFromIds = (
   );
 };
 
-export const compareEntitiesByName = <
-  T extends ConversationInfo | PromptInfo | DialFile,
->(
-  a: T,
-  b: T,
-) => {
-  if (a.name > b.name) {
-    return 1;
-  }
-  if (a.name < b.name) {
-    return -1;
-  }
-  return 0;
-};
+export const sortByName = <T extends Entity>(entities: T[]): T[] =>
+  sortBy(entities, (entity) => entity.name.toLowerCase());
 
 export const updateMovedFolderId = (
   oldParentFolderId: string,

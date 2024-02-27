@@ -1,3 +1,4 @@
+/*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
@@ -19,11 +20,24 @@ import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
 
 const UserInfo = () => {
+  const { t } = useTranslation(Translation.SideBar);
+
   const { data: session } = useSession();
+
   return (
-    <div className=" w-full border-b border-tertiary p-2 text-primary">
+    <div className="w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
-        <UserIcon className="mx-2" width={18} height={18} />
+        {session?.user?.image ? (
+          <img
+            className="mx-2 rounded"
+            src={session?.user?.image}
+            width={18}
+            height={18}
+            alt={t('User avatar') || ''}
+          />
+        ) : (
+          <UserIcon className="mx-2 text-secondary" width={18} height={18} />
+        )}
 
         <span className="grow">{session?.user?.name ?? ''}</span>
       </div>

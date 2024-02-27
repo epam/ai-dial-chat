@@ -3,8 +3,8 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { sortByName } from '@/src/utils/app/folders';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -12,14 +12,9 @@ import {
   SharedWithMeRootFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -133,7 +128,7 @@ const ChatFolderTemplate = ({
   );
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface) => {
-      const folderId = getRootId({ apiKey: ApiKeys.Conversations });
+      const folderId = getConversationRootId();
 
       if (
         !isEntityNameOnSameLevelUnique(
@@ -209,8 +204,8 @@ const ChatFolderTemplate = ({
             dispatch(
               ShareActions.discardSharedWithMe({
                 resourceId: folder.id,
-                nodeType: BackendDataNodeType.FOLDER,
-                resourceType: BackendResourceType.CONVERSATION,
+                isFolder: true,
+                featureType: FeatureType.Chat,
               }),
             );
           } else {
@@ -262,7 +257,7 @@ export const ChatSection = ({
   );
 
   const sortedRootConversations = useMemo(
-    () => rootConversations.sort(compareEntitiesByName),
+    () => sortByName(rootConversations),
     [rootConversations],
   );
   const selectedFoldersIds = useAppSelector(

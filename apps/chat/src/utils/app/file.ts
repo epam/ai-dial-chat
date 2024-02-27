@@ -3,7 +3,7 @@ import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
-import { decodeApiUrl, encodeApiUrl } from '../server/api';
+import { ApiUtils } from '../server/api';
 import { getPathToFolderById } from './folders';
 
 import escapeStringRegexp from 'escape-string-regexp';
@@ -54,7 +54,7 @@ export const getUserCustomContent = (
       .map((file) => ({
         type: file.contentType,
         title: file.name,
-        url: encodeApiUrl(`${file.absolutePath}/${file.name}`),
+        url: ApiUtils.encodeApiUrl(`${file.absolutePath}/${file.name}`),
       })),
   };
 };
@@ -123,7 +123,7 @@ export const getFilesWithInvalidFileSize = (
 };
 
 const parseAttachmentUrl = (url: string) => {
-  const decodedUrl = decodeApiUrl(url);
+  const decodedUrl = ApiUtils.decodeApiUrl(url);
   const lastIndexSlash = decodedUrl.lastIndexOf('/');
 
   return {

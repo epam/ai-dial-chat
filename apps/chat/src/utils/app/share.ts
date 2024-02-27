@@ -1,10 +1,4 @@
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  Entity,
-  FeatureType,
-  ShareEntity,
-} from '@/src/types/common';
+import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -103,27 +97,27 @@ export const getAttachments = (type: SharingType) => {
 };
 
 export const getShareType = (
-  resourceType: BackendResourceType | undefined,
-  nodeType: BackendDataNodeType | undefined,
+  featureType?: FeatureType,
+  isFolder?: boolean,
 ): SharingType | undefined => {
-  if (!resourceType || !nodeType) {
+  if (!featureType || !isFolder) {
     return undefined;
   }
 
-  if (nodeType === BackendDataNodeType.FOLDER) {
-    switch (resourceType) {
-      case BackendResourceType.CONVERSATION:
+  if (isFolder) {
+    switch (featureType) {
+      case FeatureType.Chat:
         return SharingType.ConversationFolder;
-      case BackendResourceType.PROMPT:
+      case FeatureType.Prompt:
         return SharingType.PromptFolder;
       default:
         return undefined;
     }
   } else {
-    switch (resourceType) {
-      case BackendResourceType.CONVERSATION:
+    switch (featureType) {
+      case FeatureType.Chat:
         return SharingType.Conversation;
-      case BackendResourceType.PROMPT:
+      case FeatureType.Prompt:
         return SharingType.Prompt;
       default:
         return undefined;
