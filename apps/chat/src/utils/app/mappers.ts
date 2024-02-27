@@ -1,7 +1,5 @@
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { ApiKeys, BackendResourceType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-
-import { ApiKeys } from '../server/api';
 
 export class EnumMapper {
   public static getFolderTypeByApiKey = (key: ApiKeys): FolderType => {

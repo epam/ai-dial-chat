@@ -16,7 +16,7 @@ import { Prompt } from '@/src/types/prompt';
 
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
 
-import { decodeApiUrl, encodeApiUrl } from '../server/api';
+import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
 import { constructPath, triggerDownload } from './file';
@@ -375,7 +375,7 @@ export const getAttachmentId = ({
 }) => {
   const regExpForAttachmentId = /^files\/\w*\//;
 
-  const attachmentId = decodeApiUrl(url).split(regExpForAttachmentId)[
+  const attachmentId = ApiUtils.decodeApiUrl(url).split(regExpForAttachmentId)[
     attachmentIdIndex
   ];
 
@@ -395,7 +395,7 @@ export const updateAttachment = ({
     return oldAttachment;
   }
 
-  const oldAttachmentDecodedUrl = decodeApiUrl(oldAttachmentUrl);
+  const oldAttachmentDecodedUrl = ApiUtils.decodeApiUrl(oldAttachmentUrl);
 
   const { name, parentPath } = splitEntityId(oldAttachmentDecodedUrl);
 
@@ -427,13 +427,13 @@ export const updateAttachment = ({
 
   const newAttachmentUrl =
     oldAttachment.url &&
-    encodeApiUrl(
+    ApiUtils.encodeApiUrl(
       constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
     );
 
   const newReferenceUrl =
     oldAttachment.reference_url &&
-    encodeApiUrl(
+    ApiUtils.encodeApiUrl(
       constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
     ) + `#${oldHash}`;
 

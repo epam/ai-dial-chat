@@ -1,8 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getPromptRootId, isRootId } from '@/src/utils/app/id';
-import { ApiKeys } from '@/src/utils/server/api';
+import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
 
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -76,9 +75,6 @@ export const getPreparedPrompts = ({
       folderId: addRoot ? constructPath(getPromptRootId(), path) : path,
     };
   }); // to send prompts with proper parentPath
-
-const isRootPromptId = (id?: string) =>
-  isRootId(id) && id?.startsWith(`${ApiKeys.Prompts}/`);
 
 export const getImportPreparedPrompts = ({
   prompts,

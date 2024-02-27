@@ -1,4 +1,4 @@
-import { FeatureType } from '@/src/types/common';
+import { ApiKeys, FeatureType } from '@/src/types/common';
 
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
@@ -31,3 +31,9 @@ export const getPromptRootId = (bucket?: string) =>
 export const isRootId = (id?: string) => {
   return id?.split('/').length === 2 || false;
 };
+
+export const isRootConversationsId = (id?: string) =>
+  isRootId(id) && id?.startsWith(`${ApiKeys.Conversations}/`);
+
+export const isRootPromptId = (id?: string) =>
+  isRootId(id) && id?.startsWith(`${ApiKeys.Prompts}/`);

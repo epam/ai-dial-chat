@@ -1,13 +1,9 @@
 import { Observable, map } from 'rxjs';
 
-import {
-  ApiKeys,
-  ApiUtils,
-  decodeApiUrl,
-  encodeApiUrl,
-} from '@/src/utils/server/api';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
+  ApiKeys,
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
@@ -30,7 +26,9 @@ export abstract class ApiEntityStorage<
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
-    const id = decodeApiUrl(folder.url.slice(0, folder.url.length - 1));
+    const id = ApiUtils.decodeApiUrl(
+      folder.url.slice(0, folder.url.length - 1),
+    );
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -44,7 +42,7 @@ export abstract class ApiEntityStorage<
 
   private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
-    const id = decodeApiUrl(entity.url);
+    const id = ApiUtils.decodeApiUrl(entity.url);
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -57,7 +55,7 @@ export abstract class ApiEntityStorage<
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
-    encodeApiUrl(constructPath('api', entity.id));
+    ApiUtils.encodeApiUrl(constructPath('api', entity.id));
 
   private getListingUrl = ({
     path,
@@ -66,7 +64,7 @@ export abstract class ApiEntityStorage<
     path?: string;
     resultQuery?: string;
   }): string => {
-    const listingUrl = encodeApiUrl(
+    const listingUrl = ApiUtils.encodeApiUrl(
       constructPath(
         'api/listing',
         path ||

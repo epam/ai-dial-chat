@@ -1,5 +1,3 @@
-import { NextApiRequest } from 'next';
-
 import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
@@ -10,35 +8,13 @@ import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
 
 import { constructPath } from '../app/file';
 
-export enum ApiKeys {
-  Files = 'files',
-  Conversations = 'conversations',
-  Prompts = 'prompts',
-}
-
-export const isValidEntityApiType = (apiKey: string): boolean => {
-  return Object.values(ApiKeys).includes(apiKey as ApiKeys);
-};
-
-export const getEntityTypeFromPath = (
-  req: NextApiRequest,
-): string | undefined => {
-  return Array.isArray(req.query.entitytype) ? '' : req.query.entitytype;
-};
-
-export const encodeSlugs = (slugs: (string | undefined)[]): string =>
-  constructPath(
-    ...slugs.filter(Boolean).map((part) => encodeURIComponent(part as string)),
-  );
-
-export const encodeApiUrl = (path: string): string =>
-  constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
-
-export const decodeApiUrl = (path: string): string =>
-  constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
-
 const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
+
+enum PseudoModel {
+  Replay = 'replay',
+  Playback = 'playback',
+}
 
 export const encodeModelId = (modelId: string): string =>
   modelId
@@ -52,12 +28,7 @@ export const decodeModelId = (modelKey: string): string =>
     .map((i) => decodeURI(i))
     .join(pathKeySeparator);
 
-enum PseudoModel {
-  Replay = 'replay',
-  Playback = 'playback',
-}
-
-export const IsPseudoModel = (modelId: string | undefined) =>
+export const isPseudoModel = (modelId: string | undefined) =>
   modelId ? Object.values(PseudoModel).includes(modelId as PseudoModel) : false;
 
 const getModelApiIdFromConversation = (conversation: Conversation): string => {
@@ -115,6 +86,12 @@ export const parsePromptApiKey = (
 };
 
 export class ApiUtils {
+  static encodeApiUrl = (path: string): string =>
+    constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
+
+  static decodeApiUrl = (path: string): string =>
+    constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
+
   static request(url: string, options?: RequestInit) {
     return fromFetch(url, {
       headers: { 'Content-Type': 'application/json' },

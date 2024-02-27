@@ -20,7 +20,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
-import { encodeApiUrl, parseConversationApiKey } from '@/src/utils/server/api';
+import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { Conversation, Message } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -109,7 +109,7 @@ const shareConversationEpic: AppEpic = (action$) =>
             invitationType: ShareRequestType.link,
             resources: [
               {
-                url: encodeApiUrl(payload.resourceId),
+                url: ApiUtils.encodeApiUrl(payload.resourceId),
               },
               ...internalResources.map((res) => ({ url: res })),
             ],
@@ -157,7 +157,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             invitationType: ShareRequestType.link,
             resources: [
               {
-                url: encodeApiUrl(payload.resourceId) + '/',
+                url: ApiUtils.encodeApiUrl(payload.resourceId) + '/',
               },
               ...internalResourcesIds,
             ],
@@ -188,7 +188,7 @@ const sharePromptEpic: AppEpic = (action$) =>
         invitationType: ShareRequestType.link,
         resources: [
           {
-            url: encodeApiUrl(payload.resourceId),
+            url: ApiUtils.encodeApiUrl(payload.resourceId),
           },
         ],
       }).pipe(
@@ -213,7 +213,7 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
         invitationType: ShareRequestType.link,
         resources: [
           {
-            url: encodeApiUrl(payload.resourceId) + '/',
+            url: ApiUtils.encodeApiUrl(payload.resourceId) + '/',
           },
         ],
       }).pipe(
@@ -521,8 +521,8 @@ const revokeAccessEpic: AppEpic = (action$) =>
     filter(ShareActions.revokeAccess.match),
     switchMap(({ payload }) => {
       const resourceUrl = payload.isFolder
-        ? encodeApiUrl(payload.resourceId) + '/'
-        : encodeApiUrl(payload.resourceId);
+        ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
+        : ApiUtils.encodeApiUrl(payload.resourceId);
 
       return ShareService.shareRevoke([resourceUrl]).pipe(
         map(() => ShareActions.revokeAccessSuccess(payload)),
@@ -596,8 +596,8 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
     filter(ShareActions.discardSharedWithMe.match),
     switchMap(({ payload }) => {
       const resourceUrl = payload.isFolder
-        ? encodeApiUrl(payload.resourceId) + '/'
-        : encodeApiUrl(payload.resourceId);
+        ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
+        : ApiUtils.encodeApiUrl(payload.resourceId);
 
       return ShareService.shareDiscard([resourceUrl]).pipe(
         map(() => ShareActions.discardSharedWithMeSuccess(payload)),
