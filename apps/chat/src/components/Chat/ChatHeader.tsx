@@ -9,7 +9,7 @@ import {
   getSelectedAddons,
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
-import { isOnlySmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -162,7 +162,7 @@ export const ChatHeader = ({
                   <ModelIcon
                     entityId={conversation.model.id}
                     entity={model}
-                    size={isOnlySmallScreen() ? 20 : 18}
+                    size={isSmallScreen() ? 20 : 18}
                     isCustomTooltip
                   />
                 </Tooltip>
@@ -184,12 +184,12 @@ export const ChatHeader = ({
                         entity={addonsMap[addon]}
                       />
                     ))}
-                    {isOnlySmallScreen()
+                    {isSmallScreen()
                       ? !!conversationSelectedAddons.length && (
                           <>
                             <ModelIcon
                               entityId={conversationSelectedAddons[0]}
-                              size={isOnlySmallScreen() ? 20 : 18}
+                              size={isSmallScreen() ? 20 : 18}
                               entity={addonsMap[conversationSelectedAddons[0]]}
                             />
                             <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-[10px] md:size-[18px]">
@@ -203,7 +203,7 @@ export const ChatHeader = ({
                             <ModelIcon
                               key={addon}
                               entityId={addon}
-                              size={isOnlySmallScreen() ? 20 : 18}
+                              size={isSmallScreen() ? 20 : 18}
                               entity={addonsMap[addon]}
                             />
                           ))}
@@ -220,7 +220,7 @@ export const ChatHeader = ({
                         <ModelIcon
                           key={addon}
                           entityId={addon}
-                          size={isOnlySmallScreen() ? 20 : 18}
+                          size={isSmallScreen() ? 20 : 18}
                           entity={addonsMap[addon]}
                         />
                       ))}
@@ -238,7 +238,7 @@ export const ChatHeader = ({
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
                 >
-                  <IconSettings size={isOnlySmallScreen() ? 20 : 18} />
+                  <IconSettings size={isSmallScreen() ? 20 : 18} />
                 </button>
               </Tooltip>
             )}
@@ -252,7 +252,7 @@ export const ChatHeader = ({
                   onClick={() => setIsClearConversationModalOpen(true)}
                   data-qa="clear-conversation"
                 >
-                  <IconEraser size={isOnlySmallScreen() ? 20 : 18} />
+                  <IconEraser size={isSmallScreen() ? 20 : 18} />
                 </button>
               </Tooltip>
             )}
@@ -277,7 +277,7 @@ export const ChatHeader = ({
                 onClick={onCancelPlaybackMode}
                 data-qa="cancel-playback-mode"
               >
-                {isOnlySmallScreen() ? t('Stop') : t('Stop playback')}
+                {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
           </div>

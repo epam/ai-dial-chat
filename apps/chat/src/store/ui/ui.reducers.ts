@@ -163,6 +163,7 @@ export const uiSlice = createSlice({
     ) => {
       state.textOfClosedAnnouncement = payload.announcement;
     },
+    resize: (state) => state,
   },
 });
 

@@ -8,10 +8,8 @@ import {
   ConversationToCompare,
   Conversations,
   EntitySelector,
-  ModelsDialog,
   MoreInfo,
   PromptBar,
-  RecentEntities,
   SendMessage,
 } from '../ui/webElements';
 
@@ -44,13 +42,16 @@ import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { Filter } from '@/src/ui/webElements/filter';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
+import { GroupEntity } from '@/src/ui/webElements/groupEntity';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
+import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { Prompts } from '@/src/ui/webElements/prompts';
+import { RecentEntities } from '@/src/ui/webElements/recentEntities';
 import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
 import { Search } from '@/src/ui/webElements/search';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -91,6 +92,10 @@ const dialTest = test.extend<
     folderPrompts: FolderPrompts;
     conversationSettings: ConversationSettings;
     talkToSelector: EntitySelector;
+    talkToRecentGroupEntities: GroupEntity;
+    talkToModelsGroupEntities: GroupEntity;
+    talkToAssistantsGroupEntities: GroupEntity;
+    talkToApplicationGroupEntities: GroupEntity;
     recentEntities: RecentEntities;
     entitySettings: EntitySettings;
     modelSelector: ModelSelector;
@@ -270,6 +275,30 @@ const dialTest = test.extend<
   recentEntities: async ({ talkToSelector }, use) => {
     const recentEntities = talkToSelector.getRecentEntities();
     await use(recentEntities);
+  },
+  talkToRecentGroupEntities: async ({ recentEntities }, use) => {
+    const talkToRecentGroupEntities = recentEntities
+      .getTalkToGroup()
+      .getGroupEntity();
+    await use(talkToRecentGroupEntities);
+  },
+  talkToModelsGroupEntities: async ({ modelsDialog }, use) => {
+    const talkToModelsGroupEntities = modelsDialog
+      .getTalkToModels()
+      .getGroupEntity();
+    await use(talkToModelsGroupEntities);
+  },
+  talkToAssistantsGroupEntities: async ({ modelsDialog }, use) => {
+    const talkToAssistantsGroupEntities = modelsDialog
+      .getTalkToAssistants()
+      .getGroupEntity();
+    await use(talkToAssistantsGroupEntities);
+  },
+  talkToApplicationGroupEntities: async ({ modelsDialog }, use) => {
+    const talkToModelsGroupEntities = modelsDialog
+      .getTalkToApplications()
+      .getGroupEntity();
+    await use(talkToModelsGroupEntities);
   },
   entitySettings: async ({ conversationSettings }, use) => {
     const entitySettings = conversationSettings.getEntitySettings();

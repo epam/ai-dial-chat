@@ -34,7 +34,7 @@ import {
   SettingsSelectors,
   SettingsState,
 } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SHARE_QUERY_PARAM } from '../constants/share';
 
@@ -128,6 +128,7 @@ export default function Home({ initialState }: HomeProps) {
         '--vh',
         window.innerHeight * 0.01 + 'px',
       );
+      dispatch(UIActions.resize());
     };
     handleSetProperVHPoints();
     window.addEventListener('resize', handleSetProperVHPoints);

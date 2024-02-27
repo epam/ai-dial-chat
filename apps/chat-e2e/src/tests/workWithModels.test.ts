@@ -6,6 +6,7 @@ import {
   ExpectedMessages,
   ModelIds,
   TestConversation,
+  TestPrompt,
   Theme,
 } from '@/src/testData';
 import { Cursors, Styles } from '@/src/ui/domData';
@@ -17,7 +18,7 @@ const userRequests = ['first request', 'second request', 'third request'];
 const requestTerm = 'qwer';
 const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
-const sysPrompt = `Type: "${expectedResponse}" if user types ${requestTerm}`;
+const promptContent = `Type: "${expectedResponse}" if user types ${requestTerm}`;
 let gpt35Model: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 
@@ -393,7 +394,7 @@ dialTest(
           isNewConversationVisible: true,
         });
         await talkToSelector.selectModel(gpt4Model.name, gpt4Model.iconUrl);
-        await entitySettings.setSystemPrompt(sysPrompt);
+        await entitySettings.setSystemPrompt(promptContent);
         await chat.sendRequestWithButton(requestTerm);
       },
     );
@@ -403,7 +404,7 @@ dialTest(
       async () => {
         const response = await chatMessages.getLastMessageContent();
         expect
-          .soft(response, ExpectedMessages.regenerateIsAvailable)
+          .soft(response, ExpectedMessages.messageContentIsValid)
           .toBe(expectedResponse);
       },
     );
@@ -614,6 +615,71 @@ dialTest(
         expect
           .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonEnabled)
           .toBeTruthy();
+      },
+    );
+  },
+);
+
+dialTest(
+  'Use simple prompt in system prompt.\n' +
+    'System prompt set using slash is applied in Model',
+  async ({
+    dialHomePage,
+    promptData,
+    dataInjector,
+    entitySettings,
+    chat,
+    chatMessages,
+    chatHeader,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1010', 'EPMRTC-1945');
+    let prompt: TestPrompt;
+
+    await dialTest.step('Prepare prompt with content', async () => {
+      prompt = promptData.preparePrompt(promptContent);
+      await dataInjector.createPrompts([prompt]);
+    });
+
+    await dialTest.step(
+      `'On a New Conversation screen set '/' as a system prompt and verify prompt is suggested in the list`,
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [gpt35Model.iconUrl],
+        });
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await entitySettings.setSystemPrompt('/');
+        await entitySettings
+          .getPromptList()
+          .selectPrompt(prompt.name, { triggeredHttpMethod: 'PUT' });
+        const actualPrompt = await entitySettings.getSystemPrompt();
+        expect
+          .soft(actualPrompt, ExpectedMessages.systemPromptValid)
+          .toBe(prompt.content);
+      },
+    );
+
+    await dialTest.step(
+      'Send request and verify response corresponds system prompt',
+      async () => {
+        await chat.sendRequestWithButton(requestTerm);
+        const response = await chatMessages.getLastMessageContent();
+        expect
+          .soft(response, ExpectedMessages.messageContentIsValid)
+          .toBe(expectedResponse);
+      },
+    );
+
+    await dialTest.step(
+      'Open chat settings and verify system prompt is preserved',
+      async () => {
+        await chatHeader.openConversationSettingsPopup();
+        const actualPrompt = await entitySettings.getSystemPrompt();
+        expect
+          .soft(actualPrompt, ExpectedMessages.systemPromptValid)
+          .toBe(prompt.content);
       },
     );
   },

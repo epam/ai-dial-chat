@@ -131,7 +131,9 @@ dialTest(
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
-          .selectPrompt(promptOutsideFolder.name);
+          .selectPrompt(promptOutsideFolder.name, {
+            triggeredHttpMethod: 'GET',
+          });
 
         const selectedPromptContent =
           await sendMessage.messageInput.getElementContent();
@@ -511,7 +513,9 @@ dialTest(
       'Enter prompt in the request, set params and verify it is applied in the request field',
       async () => {
         await sendMessage.messageInput.fillInInput('/');
-        await sendMessage.getPromptList().selectPrompt(newName);
+        await sendMessage
+          .getPromptList()
+          .selectPrompt(newName, { triggeredHttpMethod: 'GET' });
 
         const promptName = await variableModalDialog.getName();
         expect.soft(promptName, ExpectedMessages.promptNameValid).toBe(newName);
