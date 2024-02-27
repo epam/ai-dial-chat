@@ -52,9 +52,9 @@ export interface Props {
   isEditing: boolean;
   messageCopied?: boolean;
   editDisabled?: boolean;
+  toggleEditing: (value: boolean) => void;
   onCopy?: () => void;
   onLike?: (likeStatus: number) => void;
-  toggleEditing: (value: boolean) => void;
   onDelete?: () => void;
   onClick?: (
     e: MouseEvent<HTMLDivElement>,

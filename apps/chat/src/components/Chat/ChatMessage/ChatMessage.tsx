@@ -60,18 +60,44 @@ export const ChatMessage: FC<Props> = memo(
       });
     };
 
+    const handleDeleteMessage = useCallback(() => {
+      onDelete();
+    }, [onDelete]);
+
+    const confirmationDialog = (
+      <ConfirmDialog
+        isOpen={isRemoveConfirmationOpened}
+        heading={t('Confirm removing message')}
+        description={
+          t('Are you sure that you want to remove the message?') || ''
+        }
+        confirmLabel={t('Remove')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsRemoveConfirmationOpened(false);
+          if (result) handleDeleteMessage();
+        }}
+      />
+    );
+
     if (!isSmallScreen() || isEditing) {
       return (
-        <ChatMessageContent
-          toggleEditing={toggleEditing}
-          isEditing={isEditing}
-          messageCopied={messageCopied}
-          conversation={conversation}
-          onLike={handleLike}
-          onCopy={handleCopy}
-          message={message}
-          {...props}
-        />
+        <>
+          <ChatMessageContent
+            onDelete={() => {
+              setIsRemoveConfirmationOpened(true);
+            }}
+            toggleEditing={toggleEditing}
+            isEditing={isEditing}
+            messageCopied={messageCopied}
+            conversation={conversation}
+            onLike={handleLike}
+            onCopy={handleCopy}
+            message={message}
+            {...props}
+          />
+          {confirmationDialog}
+        </>
       );
     }
 
@@ -95,7 +121,6 @@ export const ChatMessage: FC<Props> = memo(
           trigger={
             <ChatMessageContent
               conversation={conversation}
-              onDelete={onDelete}
               isEditing={isEditing}
               toggleEditing={toggleEditing}
               message={message}
@@ -114,24 +139,12 @@ export const ChatMessage: FC<Props> = memo(
             messageCopied={messageCopied}
             editDisabled={editDisabled}
             onLike={onLike}
-            onDelete={onDelete}
+            onDelete={() => setIsRemoveConfirmationOpened(true)}
             isEditing={isEditing}
             toggleEditing={toggleEditing}
           />
         </Menu>
-        <ConfirmDialog
-          isOpen={isRemoveConfirmationOpened}
-          heading={t('Confirm removing message')}
-          description={
-            t('Are you sure that you want to remove the message?') || ''
-          }
-          confirmLabel={t('Remove')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsRemoveConfirmationOpened(false);
-            if (result) onDelete();
-          }}
-        />
+        {confirmationDialog}
       </>
     );
   },

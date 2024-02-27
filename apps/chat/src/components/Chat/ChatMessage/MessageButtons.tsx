@@ -6,7 +6,7 @@ import {
   IconThumbUp,
   IconTrash,
 } from '@tabler/icons-react';
-import { ButtonHTMLAttributes, FC, useCallback, useState } from 'react';
+import { ButtonHTMLAttributes, FC } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -15,7 +15,6 @@ import classNames from 'classnames';
 import { Message, Role } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
@@ -50,15 +49,6 @@ export const MessageUserButtons = ({
   toggleEditing,
   editDisabled,
 }: MessageUserButtonsProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
-  const handleDeleteMessage = useCallback(() => {
-    onDelete();
-  }, [onDelete]);
-
-  const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
-    useState(false);
-
   return (
     <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
       <button
@@ -70,28 +60,10 @@ export const MessageUserButtons = ({
       </button>
       <button
         className="invisible text-secondary hover:text-accent-primary focus:visible group-hover:visible"
-        onClick={() => {
-          setIsRemoveConfirmationOpened(true);
-        }}
+        onClick={onDelete}
       >
         <IconTrash size={20} />
       </button>
-
-      <ConfirmDialog
-        isOpen={isRemoveConfirmationOpened}
-        heading={t('Confirm removing message')}
-        description={
-          t('Are you sure that you want to remove the message?') || ''
-        }
-        confirmLabel={t('Remove')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsRemoveConfirmationOpened(false);
-          if (result) {
-            handleDeleteMessage();
-          }
-        }}
-      />
     </div>
   );
 };
