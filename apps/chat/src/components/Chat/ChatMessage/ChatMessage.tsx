@@ -1,6 +1,6 @@
 import React, { FC, memo, useCallback, useState } from 'react';
 
-import { isOnlySmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message } from '@/src/types/chat';
 
@@ -47,7 +47,7 @@ export const ChatMessage: FC<Props> = memo(
       });
     };
 
-    if (isOnlySmallScreen() && !isEditing) {
+    if (isSmallScreen() && !isEditing) {
       return (
         <MobileChatMessage
           toggleEditing={toggleEditing}

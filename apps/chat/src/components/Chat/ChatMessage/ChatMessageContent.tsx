@@ -17,7 +17,7 @@ import {
   getDialFilesFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
-import { isOnlySmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
@@ -273,7 +273,7 @@ export const ChatMessageContent = ({
 
   const chatIconSize = isOverlay
     ? OVERLAY_ICON_SIZE
-    : isOnlySmallScreen()
+    : isSmallScreen()
       ? MOBILE_ICON_SIZE
       : DEFAULT_ICON_SIZE;
 
@@ -294,14 +294,14 @@ export const ChatMessageContent = ({
         className={classNames(
           'm-auto flex h-full md:gap-6 md:py-6 lg:px-0',
           !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
-          isOnlySmallScreen() || isOverlay ? 'p-3' : 'p-4',
+          isSmallScreen() || isOverlay ? 'p-3' : 'p-4',
         )}
       >
         <div className="font-bold" data-qa="message-icon">
           <div
             className={classNames(
               'flex justify-center',
-              isOnlySmallScreen() || isOverlay ? 'mr-2.5' : 'mx-2.5',
+              isSmallScreen() || isOverlay ? 'mr-2.5' : 'mx-2.5',
             )}
           >
             {isAssistant ? (
@@ -399,7 +399,7 @@ export const ChatMessageContent = ({
                         {
                           'max-w-none': isChatFullWidth,
                           'text-sm': isOverlay,
-                          'leading-[150%]': isOnlySmallScreen() || isOverlay,
+                          'leading-[150%]': isSmallScreen() || isOverlay,
                         },
                       )}
                     >
@@ -415,7 +415,7 @@ export const ChatMessageContent = ({
               {!isPlayback &&
                 !isEditing &&
                 !isExternal &&
-                !isOnlySmallScreen() && (
+                !isSmallScreen() && (
                   <MessageUserButtons
                     editDisabled={editDisabled}
                     onDelete={() => onDelete?.()}
@@ -449,7 +449,7 @@ export const ChatMessageContent = ({
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
 
-              {!isOnlySmallScreen() && (
+              {!isSmallScreen() && (
                 <MessageAssistantButtons
                   copyOnClick={() => onCopy?.()}
                   isLikesEnabled={isLikesEnabled}
