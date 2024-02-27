@@ -365,22 +365,6 @@ export const importPrompts = (
   return { prompts: newPrompts, folders: newFolders, isError: false };
 };
 
-export const getAttachmentId = ({
-  url,
-  attachmentIdIndex,
-}: {
-  url: string;
-  attachmentIdIndex: number;
-}) => {
-  const regExpForAttachmentId = /^files\/\w*\//;
-
-  const attachmentId = decodeApiUrl(url).split(regExpForAttachmentId)[
-    attachmentIdIndex
-  ];
-
-  return attachmentId;
-};
-
 export const updateAttachment = ({
   oldAttachment,
   uploadedAttachments,
@@ -389,7 +373,6 @@ export const updateAttachment = ({
   uploadedAttachments: UploadedAttachment[];
 }) => {
   const oldAttachmentUrl = oldAttachment.url || oldAttachment.reference_url;
-
   if (!oldAttachmentUrl) {
     return oldAttachment;
   }
@@ -416,9 +399,9 @@ export const updateAttachment = ({
     oldAttachmentRelativePath,
   );
 
-  const newAttachmentFile = uploadedAttachments.find(
-    ({ oldRelativePath }) => oldRelativePath === cleanOldAttachmentRelativePath,
-  );
+  const newAttachmentFile = uploadedAttachments.find(({ oldRelativePath }) => {
+    return oldRelativePath === cleanOldAttachmentRelativePath;
+  });
 
   if (!newAttachmentFile || !newAttachmentFile.name) {
     return oldAttachment;
@@ -438,6 +421,7 @@ export const updateAttachment = ({
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
+    title: newAttachmentFile.name,
     type: newAttachmentFile.contentType ?? oldAttachment.type,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,

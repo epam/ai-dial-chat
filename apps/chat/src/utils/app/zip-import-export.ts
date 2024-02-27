@@ -27,8 +27,18 @@ const getAttachmentFromApi = async (file: DialFile) => {
   return fileResult.blob();
 };
 
-export const getFolderPath = (folderId: string) =>
-  folderId.replace(/^files\/[\w]+\//, '');
+const splitFolderId = (folderId: string) => {
+  const parts = folderId.split('/');
+  const parentPath =
+    parts.length > 2 ? constructPath(...parts.slice(2)) : undefined;
+
+  return parentPath;
+};
+
+export const getRelativeParentPath = (folderId: string) => {
+  const parentPath = splitFolderId(folderId);
+  return parentPath;
+};
 
 export async function getZippedFile({
   files,
@@ -38,8 +48,10 @@ export async function getZippedFile({
   const zip = new JSZip();
   files.forEach((file) => {
     const fileBlob = getAttachmentFromApi(file);
-    const folderPath = getFolderPath(file.folderId);
-    zip.file(`res/${folderPath}/${file.name}`, fileBlob);
+    const relativeParentPath = getRelativeParentPath(file.folderId);
+    const filePath = constructPath('res', relativeParentPath, file.name);
+
+    zip.file(filePath, fileBlob);
   });
 
   const history = prepareConversationsForExport({ conversations, folders });
@@ -67,33 +79,44 @@ export async function importZippedHistory(zipFile: File) {
   const zip = await JSZip.loadAsync(zipFile);
   const chatsLib = {} as PreUnZipedHistory;
   chatsLib.res = [];
-  const regExpConversationsFolder = 'conversations/*';
+  const regExpConversationsFolder = /^conversations\/*/;
   const regExpConversationsHistory = /\.json$/i;
-  const regExpResFolder = 'res/*';
-  const regExpRes = /^.+\..+$/;
+  const regExpResFolder = /^res\/*/;
+  const regExpRes = /\..+$/;
 
   zip.forEach((relativePath, zipEntry) => {
     if (
-      relativePath.match(regExpConversationsFolder) &&
-      relativePath.match(regExpConversationsHistory)
+      regExpConversationsFolder.test(relativePath) &&
+      regExpConversationsHistory.test(relativePath) &&
+      !zipEntry.dir
     ) {
       chatsLib.history = zipEntry;
     }
 
-    if (relativePath.match(regExpResFolder) && relativePath.match(regExpRes)) {
+    if (
+      regExpResFolder.test(relativePath) &&
+      regExpRes.test(relativePath) &&
+      !zipEntry.dir
+    ) {
       chatsLib.res.push({ relativePath, zipEntry });
     }
   });
   chatsLib.zip = zip;
-
   return chatsLib;
 }
 
-const searchSubstring = 'res/';
-const substringLength = searchSubstring.length;
+const getFieldsFromZipName = (zipName: string) => {
+  const parts = zipName.split('/');
 
-const getFirstSlashIndex = (relativePath: string) => {
-  return relativePath.indexOf('res/');
+  const fileName = parts[parts.length - 1];
+  const fileId = constructPath(...parts.slice(1));
+  const fileRelativePath = constructPath(...parts.slice(1, parts.length - 1));
+
+  return {
+    fileId,
+    fileRelativePath,
+    fileName,
+  };
 };
 
 export const getUnZipAttachments = async ({
@@ -104,15 +127,16 @@ export const getUnZipAttachments = async ({
   preUnzipedHistory: PreUnZipedHistory;
 }) => {
   const getAllAttachments = attachments.map(async (attachment) => {
-    const fileToUpload = preUnzipedHistory.res.find(({ relativePath }) => {
-      const fileId = relativePath.slice(
-        getFirstSlashIndex(relativePath) + substringLength,
-      );
+    const fileToUpload = preUnzipedHistory.res.find((file) => {
+      const fileId = file.relativePath.replace(/^res\//, '');
 
       if (!attachment.folderId) {
         return false;
       }
-      const attachmentId = `${getFolderPath(attachment.folderId)}/${attachment.name}`;
+      const attachmentId = constructPath(
+        getRelativeParentPath(attachment.folderId),
+        attachment.name,
+      );
 
       return fileId === attachmentId;
     });
@@ -121,7 +145,7 @@ export const getUnZipAttachments = async ({
       return;
     }
 
-    const { relativePath, zipEntry } = fileToUpload;
+    const { zipEntry } = fileToUpload;
     const { zip } = preUnzipedHistory;
     const file = zip.file(zipEntry.name);
 
@@ -129,15 +153,10 @@ export const getUnZipAttachments = async ({
       return;
     }
 
-    const firstSlashIndex = getFirstSlashIndex(relativePath);
-    const lastSlashIndex = zipEntry.name.lastIndexOf('/');
-
-    const fileName = zipEntry.name.slice(lastSlashIndex + 1);
-    const fileRelativePath = relativePath.slice(
-      firstSlashIndex + substringLength,
-      lastSlashIndex,
+    const { fileId, fileRelativePath, fileName } = getFieldsFromZipName(
+      zipEntry.name,
     );
-    const fileId = relativePath.slice(firstSlashIndex + substringLength);
+
     const fileContentBlob = await file.async('blob');
 
     const fileContent = fileContentBlob.type.length
