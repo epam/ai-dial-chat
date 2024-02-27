@@ -1,9 +1,9 @@
+/*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import Image from 'next/image';
 
 import classNames from 'classnames';
 
@@ -28,7 +28,7 @@ const UserInfo = () => {
     <div className="w-full border-b border-tertiary p-2 text-primary">
       <div className="flex h-[42px] items-center">
         {session?.user?.image ? (
-          <Image
+          <img
             className="mx-2 rounded"
             src={session?.user?.image}
             width={18}
