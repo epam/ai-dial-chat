@@ -30,7 +30,6 @@ import {
   BackendDataNodeType,
   BackendResourceType,
   FeatureType,
-  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -258,58 +257,10 @@ const acceptInvitationEpic: AppEpic = (action$) =>
             invitationId: payload.invitationId,
           }).pipe(
             switchMap((data) =>
-              concat(
-                of(
-                  ShareActions.acceptShareInvitationSuccess({
-                    acceptedId: data.resources[0].url,
-                  }),
-                ),
-                // iif(
-                //   () => data.resources[0].url.startsWith('conversations'),
-                //   iif(
-                //     () => !data.resources[0].url.endsWith('/'),
-                //     of(
-                //       ConversationsActions.uploadAndSelectConversationById({
-                //         id: decodeApiUrl(data.resources[0].url),
-                //       }),
-                //     ),
-                //     of(
-                //       ConversationsActions.uploadConversationsWithFolders({
-                //         paths: [decodeApiUrl(data.resources[0].url)],
-                //         selectFirst: true,
-                //       }),
-                //     ),
-                //   ),
-                //   concat(
-                //     iif(
-                //       () => !data.resources[0].url.endsWith('/'),
-                //       concat(
-                //         of(
-                //           PromptsActions.setSelectedPrompt({
-                //             promptId: decodeApiUrl(data.resources[0].url),
-                //           }),
-                //         ),
-                //         of(
-                //           PromptsActions.uploadPrompt({
-                //             promptId: decodeApiUrl(data.resources[0].url),
-                //           }),
-                //         ),
-                //       ),
-                //       of(
-                //         PromptsActions.uploadChildPromptsWithFolders({
-                //           ids: [decodeApiUrl(data.resources[0].url)],
-                //           selectFirst: true,
-                //         }),
-                //       ),
-                //     ),
-                //     of(
-                //       PromptsActions.setIsEditModalOpen({
-                //         isOpen: true,
-                //         isPreview: true,
-                //       }),
-                //     ),
-                //   ),
-                // ),
+              of(
+                ShareActions.acceptShareInvitationSuccess({
+                  acceptedId: data.resources[0].url,
+                }),
               ),
             ),
           ),
@@ -510,44 +461,43 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
           const folders = ConversationsSelectors.selectFolders(state$.value);
 
-          payload.resources.folders &&
-            actions.push(
-              ...(payload.resources.folders
-                .map((item) => {
-                  const isShared = folders.find((res) => res.id === item.id);
+          actions.push(
+            ...(payload.resources.folders
+              .map((item) => {
+                const isShared = folders.find((res) => res.id === item.id);
 
-                  if (isShared) {
-                    return ConversationsActions.updateFolder({
-                      folderId: item.id,
-                      values: {
-                        isShared: true,
-                      },
-                    });
-                  }
-                  return undefined;
-                })
-                .filter(Boolean) as AnyAction[]),
-            );
-          payload.resources.entities &&
-            actions.push(
-              ...(payload.resources.entities
-                .map((conv) => {
-                  const isSharedConv = conversations.find(
-                    (res) => res.id === conv.id,
-                  );
+                if (isShared) {
+                  return ConversationsActions.updateFolder({
+                    folderId: item.id,
+                    values: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
 
-                  if (isSharedConv) {
-                    return ConversationsActions.updateConversationSuccess({
-                      id: conv.id,
-                      conversation: {
-                        isShared: true,
-                      },
-                    });
-                  }
-                  return undefined;
-                })
-                .filter(Boolean) as AnyAction[]),
-            );
+          actions.push(
+            ...(payload.resources.entities
+              .map((conv) => {
+                const isSharedConv = conversations.find(
+                  (res) => res.id === conv.id,
+                );
+
+                if (isSharedConv) {
+                  return ConversationsActions.updateConversationSuccess({
+                    id: conv.id,
+                    conversation: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
         } else {
           const [selectedConv] =
             ConversationsSelectors.selectSelectedConversations(state$.value);

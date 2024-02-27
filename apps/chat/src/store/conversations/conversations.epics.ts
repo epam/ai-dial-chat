@@ -118,7 +118,7 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
+const initSelectedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     switchMap(() => ConversationService.getSelectedConversationsIds()),
@@ -167,16 +167,12 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
     }),
     switchMap(({ conversations, selectedConversationsIds }) => {
       const actions: Observable<AnyAction>[] = [];
-      const alreadySelectedConversations =
-        ConversationsSelectors.selectSelectedConversations(state$.value);
 
       if (conversations.length) {
         actions.push(
           of(
             ConversationsActions.addConversations({
-              conversations: alreadySelectedConversations.length
-                ? alreadySelectedConversations
-                : conversations,
+              conversations,
               selectAdded: true,
             }),
           ),
