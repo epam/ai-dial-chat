@@ -1822,9 +1822,9 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const selectConversationsByIdsEpic: AppEpic = (action$) =>
+const uploadAndSelectConversationByIdEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.selectConversationsByIds.match),
+    filter(ConversationsActions.uploadAndSelectConversationById.match),
     switchMap(({ payload }) => {
       return ConversationService.setSelectedConversationsIds(payload.ids).pipe(
         switchMap(() =>
@@ -2506,5 +2506,5 @@ export const ConversationsEpics = combineEpics(
   toggleFolderEpic,
   openFolderEpic,
   compareConversationsEpic,
-  selectConversationsByIdsEpic,
+  uploadAndSelectConversationByIdEpic,
 );

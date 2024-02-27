@@ -257,15 +257,15 @@ const acceptInvitationEpic: AppEpic = (action$) =>
           ShareService.getShareDetails({
             invitationId: payload.invitationId,
           }).pipe(
-            switchMap((data) => {
-              return concat(
+            switchMap((data) =>
+              concat(
                 of(ShareActions.acceptShareInvitationSuccess()),
                 iif(
                   () => data.resources[0].url.startsWith('conversations'),
                   iif(
                     () => !data.resources[0].url.endsWith('/'),
                     of(
-                      ConversationsActions.selectConversationsByIds({
+                      ConversationsActions.uploadAndSelectConversationById({
                         ids: [decodeApiUrl(data.resources[0].url)],
                       }),
                     ),
@@ -306,8 +306,8 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                     ),
                   ),
                 ),
-              );
-            }),
+              ),
+            ),
           ),
         ),
         catchError((err) => {
