@@ -277,6 +277,8 @@ export const ChatMessageContent = ({
       ? MOBILE_ICON_SIZE
       : DEFAULT_ICON_SIZE;
 
+  const showUserButtons = !isPlayback && !isEditing && !isExternal && !isSmallScreen();
+
   return (
     <div
       ref={messageRef}
@@ -412,16 +414,13 @@ export const ChatMessageContent = ({
                 </div>
               )}
 
-              {!isPlayback &&
-                !isEditing &&
-                !isExternal &&
-                !isSmallScreen() && (
-                  <MessageUserButtons
-                    editDisabled={editDisabled}
-                    onDelete={() => onDelete?.()}
-                    toggleEditing={() => toggleEditing(!isEditing)}
-                  />
-                )}
+              {showUserButtons && (
+                <MessageUserButtons
+                  editDisabled={editDisabled}
+                  onDelete={() => onDelete?.()}
+                  toggleEditing={() => toggleEditing(!isEditing)}
+                />
+              )}
             </div>
           ) : (
             <div className="flex h-full flex-row gap-1">
