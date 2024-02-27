@@ -3,9 +3,8 @@ import { DragEvent, useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -106,7 +105,7 @@ export const Chatbar = () => {
         const conversationData = e.dataTransfer.getData(MoveType.Conversation);
         if (conversationData) {
           const conversation = JSON.parse(conversationData);
-          const folderId = getRootId({ apiKey: ApiKeys.Conversations });
+          const folderId = getConversationRootId();
 
           if (
             !isEntityNameOnSameLevelUnique(

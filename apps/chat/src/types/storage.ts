@@ -62,7 +62,7 @@ export interface EntityStorage<
 
   getEntityKey(info: TEntityInfo): string;
 
-  parseEntityKey(key: string): Omit<TEntityInfo, 'folderId'>;
+  parseEntityKey(key: string): Omit<TEntityInfo, 'folderId' | 'id'>;
 
   getStorageKey(): string; // e.g. ApiKeys or `conversationHistory`/`prompts` in case of localStorage
 }

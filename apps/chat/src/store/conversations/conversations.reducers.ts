@@ -6,10 +6,9 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
@@ -21,6 +20,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
+
+import uniq from 'lodash-es/uniq';
 
 export { ConversationsSelectors };
 
@@ -176,7 +177,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ conversationIds: string[] }>,
     ) => {
-      const newSelectedIds = Array.from(new Set(payload.conversationIds));
+      const newSelectedIds = uniq(payload.conversationIds);
 
       state.selectedConversationsIds = newSelectedIds;
     },
@@ -431,7 +432,7 @@ export const conversationsSlice = createSlice({
         true,
       );
       const id = constructPath(
-        payload.relativePath || getRootId({ apiKey: ApiKeys.Conversations }),
+        payload.relativePath || getConversationRootId(),
         folderName,
       );
 
@@ -439,8 +440,7 @@ export const conversationsSlice = createSlice({
         id,
         name: folderName,
         type: FolderType.Chat,
-        folderId:
-          payload.relativePath || getRootId({ apiKey: ApiKeys.Conversations }),
+        folderId: payload.relativePath || getConversationRootId(),
         temporary: true,
       });
       state.newAddedFolderId = id;

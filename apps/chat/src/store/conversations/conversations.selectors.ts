@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { compareConversationsByDate } from '@/src/utils/app/conversation';
+import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -11,7 +11,7 @@ import {
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
@@ -22,7 +22,6 @@ import {
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -37,6 +36,7 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
 import { Feature } from '@epam/ai-dial-shared';
+import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
@@ -121,7 +121,7 @@ export const selectLastConversation = createSelector(
   [selectConversations],
   (conversations): ConversationInfo | undefined => {
     if (!conversations.length) return undefined;
-    return [...conversations].sort(compareConversationsByDate)[0];
+    return sortByDateAndName([...conversations])[0];
   },
 );
 export const selectConversation = createSelector(
@@ -406,8 +406,7 @@ export const selectCanAttach = createSelector(
 export const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId: string) => folderId],
   (folders, folderId) => {
-    const rootID = getRootId({ apiKey: ApiKeys.Conversations });
-    if (!folderId.startsWith(rootID)) {
+    if (!folderId.startsWith(getConversationRootId())) {
       return true;
     }
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
@@ -498,13 +497,8 @@ export const selectNewAddedFolderId = createSelector(
   },
 );
 
-export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
-  const map = new Map<string, DialFile>();
-  attachments.forEach((file) =>
-    map.set(constructPath(file.relativePath, file.name), file),
-  );
-  return Array.from(map.values());
-};
+export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] =>
+  uniqBy(attachments, (file) => constructPath(file.relativePath, file.name));
 
 export const getAttachments = createSelector(
   [(state) => state, (_state: RootState, entityId: string) => entityId],

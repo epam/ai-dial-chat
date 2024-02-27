@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { compareConversationsByDate } from '@/src/utils/app/conversation';
+import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { isRootId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
@@ -70,7 +70,7 @@ export const Conversations = ({ conversations }: Props) => {
       older: [],
       other: [],
     };
-    conversationsToDisplay.sort(compareConversationsByDate).forEach((conv) => {
+    sortByDateAndName(conversationsToDisplay).forEach((conv) => {
       const lastActivityDateNumber = conv.lastActivityDate;
       if (
         !lastActivityDateNumber ||

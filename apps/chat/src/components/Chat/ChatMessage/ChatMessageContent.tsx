@@ -43,6 +43,8 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
+import uniq from 'lodash-es/uniq';
+
 export interface Props {
   message: Message;
   messageIndex: number;
@@ -243,7 +245,7 @@ export const ChatMessageContent = ({
   const handleSelectAlreadyUploaded = useCallback((result: unknown) => {
     if (typeof result === 'object') {
       const selectedFilesIds = result as string[];
-      const uniqueFilesIds = Array.from(new Set(selectedFilesIds));
+      const uniqueFilesIds = uniq(selectedFilesIds);
       setNewEditableAttachmentsIds(uniqueFilesIds);
     }
   }, []);
@@ -265,7 +267,7 @@ export const ChatMessageContent = ({
       });
 
       setNewEditableAttachmentsIds((ids) =>
-        Array.from(new Set(ids.concat(selectedFiles.map(({ id }) => id)))),
+        uniq(ids.concat(selectedFiles.map(({ id }) => id))),
       );
     },
     [dispatch],
