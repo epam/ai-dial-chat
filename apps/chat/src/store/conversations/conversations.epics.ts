@@ -39,7 +39,6 @@ import {
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
-  compareConversationsByDate,
   getConversationInfoFromId,
   getGeneratedConversationId,
   getNewConversationName,
@@ -106,6 +105,7 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -763,7 +763,11 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
           of(
             ConversationsActions.selectConversations({
               conversationIds: [
-                otherConversations.sort(compareConversationsByDate)[0].id,
+                orderBy(
+                  otherConversations,
+                  ['lastActivityDate', 'name'],
+                  'desc',
+                )[0].id,
               ],
             }),
           ),

@@ -5,11 +5,11 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { PartialBy, ShareEntity, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
@@ -17,6 +17,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 import { isRootId } from './id';
 
 import escapeStringRegexp from 'escape-string-regexp';
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 export const getFoldersDepth = (
@@ -276,13 +277,14 @@ export const getFilteredFolders = ({
       ),
   );
 
-  return childAndCurrentSectionFilteredFolders
-    .filter(
+  return sortBy(
+    childAndCurrentSectionFilteredFolders.filter(
       (folder) =>
         childAndCurrentSectionFilteredIds.has(folder.id) &&
         filteredFolderIds.has(folder.id),
-    )
-    .sort(compareEntitiesByName);
+    ),
+    'name',
+  );
 };
 
 export const getParentAndChildFolders = (
@@ -450,21 +452,6 @@ export const getFoldersFromIds = (
   return (ids.filter(Boolean) as string[]).map((path) =>
     getFolderFromId(path, type, status),
   );
-};
-
-export const compareEntitiesByName = <
-  T extends ConversationInfo | PromptInfo | DialFile,
->(
-  a: T,
-  b: T,
-) => {
-  if (a.name > b.name) {
-    return 1;
-  }
-  if (a.name < b.name) {
-    return -1;
-  }
-  return 0;
 };
 
 export const updateMovedFolderId = (

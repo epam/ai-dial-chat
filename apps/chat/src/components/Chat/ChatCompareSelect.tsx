@@ -4,7 +4,6 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isValidConversationForCompare } from '@/src/utils/app/conversation';
-import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -20,6 +19,8 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Combobox } from '../Common/Combobox';
 import Loader from '../Common/Loader';
 import ShareIcon from '../Common/ShareIcon';
+
+import sortBy from 'lodash-es/sortBy';
 
 interface OptionProps {
   item: ConversationInfo;
@@ -88,9 +89,7 @@ export const ChatCompareSelect = ({
           ? conv.id !== selectedConversation.id
           : isValidConversationForCompare(selectedConversation, conv),
       );
-      setComparableConversations(
-        comparableConversations.sort(compareEntitiesByName),
-      );
+      setComparableConversations(sortBy(comparableConversations, 'name'));
     }
   }, [conversations, selectedConversations, showAll]);
 

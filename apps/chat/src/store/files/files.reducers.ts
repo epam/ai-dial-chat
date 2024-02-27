@@ -16,6 +16,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 export interface FilesState {
@@ -303,9 +304,7 @@ export const filesSlice = createSlice({
 const rootSelector = (state: RootState): FilesState => state.files;
 
 const selectFiles = createSelector([rootSelector], (state) => {
-  return [...state.files].sort((a, b) =>
-    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
-  );
+  return sortBy([...state.files], (file: DialFile) => file.name.toLowerCase());
 });
 
 const selectFilesByIds = createSelector(

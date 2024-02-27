@@ -3,7 +3,6 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { compareEntitiesByName } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
@@ -42,6 +41,8 @@ import Folder from '@/src/components/Folder/Folder';
 import CollapsableSection from '../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
+
+import sortBy from 'lodash-es/sortBy';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -261,7 +262,7 @@ export const ChatSection = ({
   );
 
   const sortedRootConversations = useMemo(
-    () => rootConversations.sort(compareEntitiesByName),
+    () => sortBy(rootConversations, 'name'),
     [rootConversations],
   );
   const selectedFoldersIds = useAppSelector(

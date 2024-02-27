@@ -16,7 +16,7 @@ import {
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
-import { compareEntitiesByName, splitEntityId } from './folders';
+import { splitEntityId } from './folders';
 import { getConversationRootId } from './id';
 
 import groupBy from 'lodash-es/groupBy';
@@ -144,21 +144,6 @@ export const getConversationInfoFromId = (id: string): ConversationInfo => {
     ...parseConversationApiKey(name),
     folderId: constructPath(apiKey, bucket, parentPath),
   });
-};
-
-export const compareConversationsByDate = (
-  convA: ConversationInfo,
-  convB: ConversationInfo,
-): number => {
-  if (convA.lastActivityDate === convB.lastActivityDate) {
-    return compareEntitiesByName(convA, convB);
-  }
-  if (convA.lastActivityDate && convB.lastActivityDate) {
-    const dateA = convA.lastActivityDate;
-    const dateB = convB.lastActivityDate;
-    return dateB - dateA;
-  }
-  return -1;
 };
 
 const removePostfix = (name: string): string => {
