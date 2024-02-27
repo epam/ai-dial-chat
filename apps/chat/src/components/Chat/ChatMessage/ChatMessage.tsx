@@ -1,11 +1,16 @@
 import React, { FC, memo, useCallback, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { ChatMessageContent } from '@/src/components/Chat/ChatMessage/ChatMessageContent';
-import { MobileChatMessage } from '@/src/components/Chat/ChatMessage/MobileChatMessage';
+import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { Menu } from '@/src/components/Common/DropdownMenu';
 
 export interface Props {
   message: Message;
@@ -18,10 +23,19 @@ export interface Props {
   onDelete: () => void;
 }
 
+const CONTEXT_MENU_OFFSET = 100;
+
 export const ChatMessage: FC<Props> = memo(
-  ({ message, conversation, onLike, ...props }) => {
+  ({ message, conversation, onLike, onDelete, editDisabled, ...props }) => {
     const [messageCopied, setMessageCopied] = useState(false);
     const [isEditing, setIsEditing] = useState<boolean>(false);
+
+    const { t } = useTranslation(Translation.Chat);
+
+    const [clientY, setClientY] = useState(0);
+    const [clientX, setClientX] = useState(0);
+    const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
+      useState(false);
 
     const handleLike = useCallback(
       (likeStatus: number) => {
@@ -47,9 +61,9 @@ export const ChatMessage: FC<Props> = memo(
       });
     };
 
-    if (isSmallScreen() && !isEditing) {
+    if (!isSmallScreen() || isEditing) {
       return (
-        <MobileChatMessage
+        <ChatMessageContent
           toggleEditing={toggleEditing}
           isEditing={isEditing}
           messageCopied={messageCopied}
@@ -63,16 +77,63 @@ export const ChatMessage: FC<Props> = memo(
     }
 
     return (
-      <ChatMessageContent
-        toggleEditing={toggleEditing}
-        isEditing={isEditing}
-        messageCopied={messageCopied}
-        conversation={conversation}
-        onLike={handleLike}
-        onCopy={handleCopy}
-        message={message}
-        {...props}
-      />
+      <>
+        <Menu
+          placement="top-start"
+          listClassName="z-0 context-menu-chat"
+          shouldFlip={false}
+          shouldApplySize={false}
+          style={{
+            top: `${clientY}px`,
+            left: `${
+              clientX > window.innerWidth / 2
+                ? clientX - CONTEXT_MENU_OFFSET
+                : clientX
+            }px`,
+          }}
+          type="contextMenu"
+          className="w-full text-start"
+          trigger={
+            <ChatMessageContent
+              conversation={conversation}
+              onDelete={onDelete}
+              isEditing={isEditing}
+              toggleEditing={toggleEditing}
+              message={message}
+              onClick={(e, messageRef) => {
+                const rect = messageRef.current!.getBoundingClientRect();
+                setClientY(e.clientY - rect.top);
+                setClientX(e.clientX);
+              }}
+              {...props}
+            />
+          }
+        >
+          <MessageMobileButtons
+            message={message}
+            onCopy={handleCopy}
+            messageCopied={messageCopied}
+            editDisabled={editDisabled}
+            onLike={onLike}
+            onDelete={onDelete}
+            isEditing={isEditing}
+            toggleEditing={toggleEditing}
+          />
+        </Menu>
+        <ConfirmDialog
+          isOpen={isRemoveConfirmationOpened}
+          heading={t('Confirm removing message')}
+          description={
+            t('Are you sure that you want to remove the message?') || ''
+          }
+          confirmLabel={t('Remove')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsRemoveConfirmationOpened(false);
+            if (result) onDelete();
+          }}
+        />
+      </>
     );
   },
 );
