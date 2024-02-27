@@ -266,7 +266,7 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                     () => !data.resources[0].url.endsWith('/'),
                     of(
                       ConversationsActions.uploadAndSelectConversationById({
-                        ids: [decodeApiUrl(data.resources[0].url)],
+                        id: decodeApiUrl(data.resources[0].url),
                       }),
                     ),
                     of(

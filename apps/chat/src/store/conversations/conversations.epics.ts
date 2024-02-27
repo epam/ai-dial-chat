@@ -1826,16 +1826,16 @@ const uploadAndSelectConversationByIdEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadAndSelectConversationById.match),
     switchMap(({ payload }) => {
-      return ConversationService.setSelectedConversationsIds(payload.ids).pipe(
+      return ConversationService.setSelectedConversationsIds([payload.id]).pipe(
         switchMap(() =>
           ConversationService.getConversation(
-            getConversationInfoFromId(payload.ids[0]),
+            getConversationInfoFromId(payload.id),
           ).pipe(
-            switchMap((conv) => {
-              if (conv) {
+            switchMap((conversation) => {
+              if (conversation) {
                 return of(
                   ConversationsActions.addConversations({
-                    conversations: [conv],
+                    conversations: [conversation],
                     selectAdded: true,
                   }),
                 );

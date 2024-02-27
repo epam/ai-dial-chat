@@ -760,10 +760,10 @@ export const conversationsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        ids: string[];
+        id: string;
       }>,
     ) => {
-      state.selectedConversationsIds = payload.ids;
+      state.selectedConversationsIds = [payload.id];
     },
   },
 });
