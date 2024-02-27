@@ -3,7 +3,6 @@ import {
   catchError,
   concat,
   filter,
-  iif,
   map,
   mergeMap,
   of,
@@ -31,6 +30,7 @@ import {
   BackendDataNodeType,
   BackendResourceType,
   FeatureType,
+  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -50,7 +50,7 @@ import {
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { ShareActions } from './share.reducers';
+import { ShareActions, ShareSelectors } from './share.reducers';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -259,53 +259,57 @@ const acceptInvitationEpic: AppEpic = (action$) =>
           }).pipe(
             switchMap((data) =>
               concat(
-                of(ShareActions.acceptShareInvitationSuccess()),
-                iif(
-                  () => data.resources[0].url.startsWith('conversations'),
-                  iif(
-                    () => !data.resources[0].url.endsWith('/'),
-                    of(
-                      ConversationsActions.uploadAndSelectConversationById({
-                        id: decodeApiUrl(data.resources[0].url),
-                      }),
-                    ),
-                    of(
-                      ConversationsActions.uploadConversationsWithFolders({
-                        paths: [decodeApiUrl(data.resources[0].url)],
-                        selectFirst: true,
-                      }),
-                    ),
-                  ),
-                  concat(
-                    iif(
-                      () => !data.resources[0].url.endsWith('/'),
-                      concat(
-                        of(
-                          PromptsActions.setSelectedPrompt({
-                            promptId: decodeApiUrl(data.resources[0].url),
-                          }),
-                        ),
-                        of(
-                          PromptsActions.uploadPrompt({
-                            promptId: decodeApiUrl(data.resources[0].url),
-                          }),
-                        ),
-                      ),
-                      of(
-                        PromptsActions.uploadChildPromptsWithFolders({
-                          ids: [decodeApiUrl(data.resources[0].url)],
-                          selectFirst: true,
-                        }),
-                      ),
-                    ),
-                    of(
-                      PromptsActions.setIsEditModalOpen({
-                        isOpen: true,
-                        isPreview: true,
-                      }),
-                    ),
-                  ),
+                of(
+                  ShareActions.acceptShareInvitationSuccess({
+                    acceptedId: data.resources[0].url,
+                  }),
                 ),
+                // iif(
+                //   () => data.resources[0].url.startsWith('conversations'),
+                //   iif(
+                //     () => !data.resources[0].url.endsWith('/'),
+                //     of(
+                //       ConversationsActions.uploadAndSelectConversationById({
+                //         id: decodeApiUrl(data.resources[0].url),
+                //       }),
+                //     ),
+                //     of(
+                //       ConversationsActions.uploadConversationsWithFolders({
+                //         paths: [decodeApiUrl(data.resources[0].url)],
+                //         selectFirst: true,
+                //       }),
+                //     ),
+                //   ),
+                //   concat(
+                //     iif(
+                //       () => !data.resources[0].url.endsWith('/'),
+                //       concat(
+                //         of(
+                //           PromptsActions.setSelectedPrompt({
+                //             promptId: decodeApiUrl(data.resources[0].url),
+                //           }),
+                //         ),
+                //         of(
+                //           PromptsActions.uploadPrompt({
+                //             promptId: decodeApiUrl(data.resources[0].url),
+                //           }),
+                //         ),
+                //       ),
+                //       of(
+                //         PromptsActions.uploadChildPromptsWithFolders({
+                //           ids: [decodeApiUrl(data.resources[0].url)],
+                //           selectFirst: true,
+                //         }),
+                //       ),
+                //     ),
+                //     of(
+                //       PromptsActions.setIsEditModalOpen({
+                //         isOpen: true,
+                //         isPreview: true,
+                //       }),
+                //     ),
+                //   ),
+                // ),
               ),
             ),
           ),
@@ -447,63 +451,117 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.getSharedListingSuccess.match),
     switchMap(({ payload }) => {
       const actions = [];
+      const acceptedId = ShareSelectors.selectAcceptedId(state$.value);
+      const decodedAcceptedId = acceptedId && decodeApiUrl(acceptedId);
+      const newResource = [
+        ...payload.resources.entities,
+        ...payload.resources.folders,
+      ].find((item) => item.id === decodedAcceptedId);
+
+      if (decodedAcceptedId && newResource) {
+        if (acceptedId.startsWith('conversations')) {
+          if (acceptedId.endsWith('/')) {
+            actions.push(
+              ConversationsActions.uploadConversationsWithFolders({
+                paths: [decodedAcceptedId],
+                selectFirst: true,
+              }),
+            );
+          } else {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [decodedAcceptedId],
+              }),
+            );
+          }
+        } else if (acceptedId.startsWith('prompts')) {
+          if (acceptedId.endsWith('/')) {
+            actions.push(
+              PromptsActions.uploadChildPromptsWithFolders({
+                ids: [decodedAcceptedId],
+                selectFirst: true,
+              }),
+            );
+          } else {
+            actions.push(
+              PromptsActions.setSelectedPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+            actions.push(
+              PromptsActions.uploadPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+          }
+          actions.push(
+            PromptsActions.setIsEditModalOpen({
+              isOpen: true,
+              isPreview: true,
+            }),
+          );
+        }
+      }
+
       if (payload.resourceType === BackendResourceType.CONVERSATION) {
-        const conversations = ConversationsSelectors.selectConversations(
-          state$.value,
-        );
-        const folders = ConversationsSelectors.selectFolders(state$.value);
-
         if (payload.sharedWith === ShareRelations.others) {
-          actions.push(
-            ...(payload.resources.folders
-              .map((item) => {
-                const isShared = folders.find((res) => res.id === item.id);
-
-                if (isShared) {
-                  return ConversationsActions.updateFolder({
-                    folderId: item.id,
-                    values: {
-                      isShared: true,
-                    },
-                  });
-                }
-                return undefined;
-              })
-              .filter(Boolean) as AnyAction[]),
+          const conversations = ConversationsSelectors.selectConversations(
+            state$.value,
           );
-          actions.push(
-            ...(payload.resources.entities
-              .map((conv) => {
-                const isSharedConv = conversations.find(
-                  (res) => res.id === conv.id,
-                );
+          const folders = ConversationsSelectors.selectFolders(state$.value);
 
-                if (isSharedConv) {
-                  return ConversationsActions.updateConversationSuccess({
-                    id: conv.id,
-                    conversation: {
-                      isShared: true,
-                    },
-                  });
-                }
-                return undefined;
-              })
-              .filter(Boolean) as AnyAction[]),
-          );
+          payload.resources.folders &&
+            actions.push(
+              ...(payload.resources.folders
+                .map((item) => {
+                  const isShared = folders.find((res) => res.id === item.id);
+
+                  if (isShared) {
+                    return ConversationsActions.updateFolder({
+                      folderId: item.id,
+                      values: {
+                        isShared: true,
+                      },
+                    });
+                  }
+                  return undefined;
+                })
+                .filter(Boolean) as AnyAction[]),
+            );
+          payload.resources.entities &&
+            actions.push(
+              ...(payload.resources.entities
+                .map((conv) => {
+                  const isSharedConv = conversations.find(
+                    (res) => res.id === conv.id,
+                  );
+
+                  if (isSharedConv) {
+                    return ConversationsActions.updateConversationSuccess({
+                      id: conv.id,
+                      conversation: {
+                        isShared: true,
+                      },
+                    });
+                  }
+                  return undefined;
+                })
+                .filter(Boolean) as AnyAction[]),
+            );
         } else {
           const [selectedConv] =
             ConversationsSelectors.selectSelectedConversations(state$.value);
 
-          if (selectedConv) {
+          if (
+            selectedConv &&
+            !newResource &&
+            payload.resources.entities.some(
+              (conv) => conv.id === selectedConv.id,
+            )
+          ) {
             actions.push(
-              ConversationsActions.addConversations({
-                conversations: [
-                  {
-                    ...selectedConv,
-                    sharedWithMe: true,
-                  },
-                ],
-                selectAdded: true,
+              ConversationsActions.selectConversations({
+                conversationIds: [selectedConv.id],
               }),
             );
           }
@@ -511,12 +569,10 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           payload.resources.entities.length &&
             actions.push(
               ConversationsActions.addConversations({
-                conversations: payload.resources.entities
-                  .filter((conv) => conv.id !== selectedConv?.id)
-                  .map((res) => ({
-                    ...res,
-                    sharedWithMe: true,
-                  })) as Conversation[],
+                conversations: payload.resources.entities.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as Conversation[],
               }),
             );
           payload.resources.folders.length &&

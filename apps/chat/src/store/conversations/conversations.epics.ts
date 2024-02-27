@@ -118,7 +118,7 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$) =>
+const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     switchMap(() => ConversationService.getSelectedConversationsIds()),
@@ -167,12 +167,16 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
     }),
     switchMap(({ conversations, selectedConversationsIds }) => {
       const actions: Observable<AnyAction>[] = [];
+      const alreadySelectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
 
       if (conversations.length) {
         actions.push(
           of(
             ConversationsActions.addConversations({
-              conversations,
+              conversations: alreadySelectedConversations.length
+                ? alreadySelectedConversations
+                : conversations,
               selectAdded: true,
             }),
           ),
@@ -1814,39 +1818,12 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ),
       }),
     ),
-    switchMap(({ selectedConversationsIds }) => {
-      return concat(
+    switchMap(({ selectedConversationsIds }) =>
+      concat(
         of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
         iif(() => isSmallScreen(), of(UIActions.setShowChatbar(false)), EMPTY),
-      );
-    }),
-  );
-
-const uploadAndSelectConversationByIdEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ConversationsActions.uploadAndSelectConversationById.match),
-    switchMap(({ payload }) => {
-      return ConversationService.setSelectedConversationsIds([payload.id]).pipe(
-        switchMap(() =>
-          ConversationService.getConversation(
-            getConversationInfoFromId(payload.id),
-          ).pipe(
-            switchMap((conversation) => {
-              if (conversation) {
-                return of(
-                  ConversationsActions.addConversations({
-                    conversations: [conversation],
-                    selectAdded: true,
-                  }),
-                );
-              }
-
-              return EMPTY;
-            }),
-          ),
-        ),
-      );
-    }),
+      ),
+    ),
   );
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
@@ -2155,6 +2132,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     }),
     switchMap(({ uploadedConversations, setIds, showLoader }) => {
       const actions: Observable<AnyAction>[] = [];
+
       actions.push(
         of(
           ConversationsActions.uploadConversationsByIdsSuccess({
@@ -2506,5 +2484,4 @@ export const ConversationsEpics = combineEpics(
   toggleFolderEpic,
   openFolderEpic,
   compareConversationsEpic,
-  uploadAndSelectConversationByIdEpic,
 );

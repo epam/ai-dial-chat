@@ -755,16 +755,6 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
-    uploadAndSelectConversationById: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        id: string;
-      }>,
-    ) => {
-      state.selectedConversationsIds = [payload.id];
-    },
   },
 });
 

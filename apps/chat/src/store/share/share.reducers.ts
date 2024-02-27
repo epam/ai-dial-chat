@@ -25,6 +25,7 @@ export interface ShareState {
   shareModalState: ModalState;
   shareResourceType: BackendResourceType | undefined;
   shareNodeType: BackendDataNodeType | undefined;
+  acceptedId: string | undefined;
 }
 
 const initialState: ShareState = {
@@ -35,6 +36,7 @@ const initialState: ShareState = {
   shareModalState: ModalState.CLOSED,
   shareResourceType: undefined,
   shareNodeType: undefined,
+  acceptedId: undefined,
 };
 
 export const shareSlice = createSlice({
@@ -154,7 +156,12 @@ export const shareSlice = createSlice({
         invitationId: string;
       }>,
     ) => state,
-    acceptShareInvitationSuccess: (state) => state,
+    acceptShareInvitationSuccess: (
+      state,
+      { payload }: PayloadAction<{ acceptedId: string }>,
+    ) => {
+      state.acceptedId = payload.acceptedId;
+    },
     acceptShareInvitationFail: (
       state,
       _action: PayloadAction<{
@@ -203,6 +210,9 @@ const selectShareResourceType = createSelector([rootSelector], (state) => {
 const selectShareNodeType = createSelector([rootSelector], (state) => {
   return state.shareNodeType;
 });
+const selectAcceptedId = createSelector([rootSelector], (state) => {
+  return state.acceptedId;
+});
 
 export const ShareSelectors = {
   selectInvitationId,
@@ -211,6 +221,7 @@ export const ShareSelectors = {
   selectShareResourceName,
   selectShareResourceType,
   selectShareNodeType,
+  selectAcceptedId,
 };
 
 export const ShareActions = shareSlice.actions;
