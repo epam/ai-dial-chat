@@ -53,11 +53,7 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import {
-  ApiKeys,
-  getPromptApiKey,
-  parsePromptApiKey,
-} from '@/src/utils/server/api';
+import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
