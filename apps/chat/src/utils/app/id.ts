@@ -37,3 +37,5 @@ export const isRootConversationsId = (id?: string) =>
 
 export const isRootPromptId = (id?: string) =>
   isRootId(id) && id?.startsWith(`${ApiKeys.Prompts}/`);
+
+export const isFolderId = (id: string) => id.endsWith('/');

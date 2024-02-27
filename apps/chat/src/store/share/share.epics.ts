@@ -18,12 +18,13 @@ import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
+import { isFolderId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { Conversation, Message } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { ApiKeys, FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import {
@@ -405,8 +406,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       ].find((item) => item.id === decodedAcceptedId);
 
       if (decodedAcceptedId && newResource) {
-        if (acceptedId.startsWith('conversations')) {
-          if (acceptedId.endsWith('/')) {
+        if (acceptedId.startsWith(ApiKeys.Conversations)) {
+          if (isFolderId(acceptedId)) {
             actions.push(
               ConversationsActions.uploadConversationsWithFolders({
                 paths: [decodedAcceptedId],
@@ -420,8 +421,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
           }
-        } else if (acceptedId.startsWith('prompts')) {
-          if (acceptedId.endsWith('/')) {
+        } else if (acceptedId.startsWith(ApiKeys.Prompts)) {
+          if (isFolderId(acceptedId)) {
             actions.push(
               PromptsActions.uploadChildPromptsWithFolders({
                 ids: [decodedAcceptedId],
