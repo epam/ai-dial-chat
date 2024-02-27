@@ -406,8 +406,7 @@ export const selectCanAttach = createSelector(
 export const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId: string) => folderId],
   (folders, folderId) => {
-    const rootId = getConversationRootId();
-    if (!folderId.startsWith(rootId)) {
+    if (!folderId.startsWith(getConversationRootId())) {
       return true;
     }
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
