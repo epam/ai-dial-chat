@@ -3,6 +3,7 @@ import {
   catchError,
   concat,
   filter,
+  iif,
   map,
   mergeMap,
   of,
@@ -259,10 +260,19 @@ const acceptInvitationEpic: AppEpic = (action$) =>
             switchMap((data) => {
               return concat(
                 of(ShareActions.acceptShareInvitationSuccess()),
-                of(
-                  ConversationsActions.selectConversationsByIds({
-                    ids: [decodeApiUrl(data.resources[0].url)],
-                  }),
+                iif(
+                  () => !data.resources[0].url.endsWith('/'),
+                  of(
+                    ConversationsActions.selectConversationsByIds({
+                      ids: [decodeApiUrl(data.resources[0].url)],
+                    }),
+                  ),
+                  of(
+                    ConversationsActions.uploadConversationsWithFolders({
+                      paths: [decodeApiUrl(data.resources[0].url)],
+                      selectFirst: true,
+                    }),
+                  ),
                 ),
               );
             }),

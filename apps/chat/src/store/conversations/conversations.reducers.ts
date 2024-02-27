@@ -663,6 +663,7 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: (string | undefined)[];
+        selectFirst?: boolean;
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;

@@ -2322,6 +2322,23 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
                 conversations: conversations,
               }),
             ),
+            iif(
+              () => !!payload.selectFirst,
+              concat(
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [conversations[0].id],
+                  }),
+                ),
+                of(
+                  UIActions.openFolder({
+                    featureType: FeatureType.Chat,
+                    id: conversations[0].folderId,
+                  }),
+                ),
+              ),
+              EMPTY,
+            ),
           );
         }),
         catchError((err) => {
