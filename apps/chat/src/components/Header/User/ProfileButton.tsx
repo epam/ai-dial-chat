@@ -1,9 +1,9 @@
-/*eslint-disable @next/next/no-img-element*/
 import { IconX } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import Image from 'next/image';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
@@ -42,7 +42,7 @@ export const ProfileButton = () => {
       {isProfileOpen ? (
         <IconX className="text-secondary" width={24} height={24} />
       ) : session?.user?.image ? (
-        <img
+        <Image
           className="rounded"
           src={session?.user?.image}
           width={iconSize}
