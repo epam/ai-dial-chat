@@ -277,7 +277,8 @@ export const ChatMessageContent = ({
       ? MOBILE_ICON_SIZE
       : DEFAULT_ICON_SIZE;
 
-  const showUserButtons = !isPlayback && !isEditing && !isExternal && !isSmallScreen();
+  const showUserButtons =
+    !isPlayback && !isEditing && !isExternal && !isSmallScreen();
 
   return (
     <div
