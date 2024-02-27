@@ -98,6 +98,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
+        await importExportLoader.waitForState({ state: 'attached' });
         await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
         const exportedFiles = FileUtil.getExportedFiles();
@@ -145,6 +146,7 @@ dialTest(
         await dialHomePage.uploadData(exportedData, () =>
           chatBar.importButton.click(),
         );
+        await importExportLoader.waitForState({ state: 'attached' });
         await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
         const isConversationImported = await conversations
