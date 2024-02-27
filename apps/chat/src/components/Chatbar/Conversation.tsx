@@ -539,10 +539,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200',
-            messageIsStreaming && 'disabled:cursor-not-allowed',
-            isDeleting && 'pr-12',
-            !messageIsStreaming && !isDeleting && 'group-hover:pr-6',
+            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
             isSelected && 'pr-0',
           )}
           onClick={() => {
