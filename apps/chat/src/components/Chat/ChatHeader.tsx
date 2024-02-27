@@ -91,6 +91,8 @@ export const ChatHeader = ({
       (id) => !model?.selectedAddons?.includes(id),
     ) || [];
 
+  const ICON_SIZE = isSmallScreen() ? 20 : 18;
+
   return (
     <>
       <div
@@ -162,7 +164,7 @@ export const ChatHeader = ({
                   <ModelIcon
                     entityId={conversation.model.id}
                     entity={model}
-                    size={isSmallScreen() ? 20 : 18}
+                    size={ICON_SIZE}
                     isCustomTooltip
                   />
                 </Tooltip>
@@ -189,7 +191,7 @@ export const ChatHeader = ({
                           <>
                             <ModelIcon
                               entityId={conversationSelectedAddons[0]}
-                              size={20}
+                              size={ICON_SIZE}
                               entity={addonsMap[conversationSelectedAddons[0]]}
                             />
                             <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-[10px] md:size-[18px]">
@@ -203,7 +205,7 @@ export const ChatHeader = ({
                             <ModelIcon
                               key={addon}
                               entityId={addon}
-                              size={20}
+                              size={ICON_SIZE}
                               entity={addonsMap[addon]}
                             />
                           ))}
@@ -220,7 +222,7 @@ export const ChatHeader = ({
                         <ModelIcon
                           key={addon}
                           entityId={addon}
-                          size={18}
+                          size={ICON_SIZE}
                           entity={addonsMap[addon]}
                         />
                       ))}
@@ -238,7 +240,7 @@ export const ChatHeader = ({
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
                 >
-                  <IconSettings size={isSmallScreen() ? 20 : 18} />
+                  <IconSettings size={ICON_SIZE} />
                 </button>
               </Tooltip>
             )}
@@ -252,7 +254,7 @@ export const ChatHeader = ({
                   onClick={() => setIsClearConversationModalOpen(true)}
                   data-qa="clear-conversation"
                 >
-                  <IconEraser size={isSmallScreen() ? 20 : 18} />
+                  <IconEraser size={ICON_SIZE} />
                 </button>
               </Tooltip>
             )}
