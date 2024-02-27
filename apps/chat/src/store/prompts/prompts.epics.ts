@@ -44,7 +44,7 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isRootId } from '@/src/utils/app/id';
 import {
   cleanPromptsFolders,
   exportPrompt,
@@ -53,7 +53,7 @@ import {
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
@@ -87,7 +87,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
         ),
         description: '',
         content: '',
-        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
+        folderId: getPromptRootId(),
       });
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
@@ -232,7 +232,7 @@ const recreatePromptEpic: AppEpic = (action$) =>
         PromptService.createPrompt(payload.new),
         PromptService.deletePrompt({
           id: payload.old.id,
-          folderId: parentPath || getRootId({ apiKey: ApiKeys.Prompts }),
+          folderId: parentPath || getPromptRootId(),
           name: payload.old.name,
         }),
       ).pipe(
@@ -575,7 +575,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       const newPrompt = addGeneratedPromptId({
         ...prompt,
         ...resetShareEntity,
-        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
+        folderId: getPromptRootId(),
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
           prompt.name,

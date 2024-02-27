@@ -15,13 +15,12 @@ import classNames from 'classnames';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import {
   BackendDataNodeType,
@@ -256,7 +255,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           PromptsActions.createFolder({
             name: folderPath,
-            parentId: getRootId({ apiKey: ApiKeys.Prompts }),
+            parentId: getPromptRootId(),
           }),
         );
       }
@@ -265,10 +264,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           id: prompt.id,
           values: {
             folderId: isNewFolder
-              ? constructPath(
-                  getRootId({ apiKey: ApiKeys.Prompts }),
-                  folderPath,
-                )
+              ? constructPath(getPromptRootId(), folderPath)
               : folderPath,
           },
         }),

@@ -21,13 +21,12 @@ import {
 } from '@/src/utils/app/common';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import {
@@ -431,7 +430,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         dispatch(
           ConversationsActions.createFolder({
             name: folderPath,
-            parentId: getRootId({ apiKey: ApiKeys.Conversations }),
+            parentId: getConversationRootId(),
           }),
         );
       }
@@ -440,10 +439,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           id: conversation.id,
           values: {
             folderId: isNewFolder
-              ? constructPath(
-                  getRootId({ apiKey: ApiKeys.Conversations }),
-                  folderPath,
-                )
+              ? constructPath(getConversationRootId(), folderPath)
               : folderPath,
           },
         }),

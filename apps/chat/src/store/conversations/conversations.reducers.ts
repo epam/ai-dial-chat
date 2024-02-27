@@ -6,10 +6,9 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
@@ -433,7 +432,7 @@ export const conversationsSlice = createSlice({
         true,
       );
       const id = constructPath(
-        payload.relativePath || getRootId({ apiKey: ApiKeys.Conversations }),
+        payload.relativePath || getConversationRootId(),
         folderName,
       );
 
@@ -441,8 +440,7 @@ export const conversationsSlice = createSlice({
         id,
         name: folderName,
         type: FolderType.Chat,
-        folderId:
-          payload.relativePath || getRootId({ apiKey: ApiKeys.Conversations }),
+        folderId: payload.relativePath || getConversationRootId(),
         temporary: true,
       });
       state.newAddedFolderId = id;

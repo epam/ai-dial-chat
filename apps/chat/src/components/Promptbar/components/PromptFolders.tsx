@@ -4,14 +4,13 @@ import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import {
   BackendDataNodeType,
@@ -125,7 +124,7 @@ const PromptFolderTemplate = ({
 
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface) => {
-      const folderId = getRootId({ apiKey: ApiKeys.Prompts });
+      const folderId = getPromptRootId();
 
       if (
         !isEntityNameOnSameLevelUnique(

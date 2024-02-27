@@ -14,14 +14,10 @@ import {
   OpenAIEntityModel,
 } from '@/src/types/openai';
 
-import {
-  ApiKeys,
-  getConversationApiKey,
-  parseConversationApiKey,
-} from '../server/api';
+import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { compareEntitiesByName, splitEntityId } from './folders';
-import { getRootId } from './id';
+import { getConversationRootId } from './id';
 
 import groupBy from 'lodash-es/groupBy';
 import uniq from 'lodash-es/uniq';
@@ -124,7 +120,7 @@ export const getGeneratedConversationId = <T extends ConversationInfo>(
     );
   }
   return constructPath(
-    getRootId({ apiKey: ApiKeys.Conversations }),
+    getConversationRootId(),
     getConversationApiKey(conversation),
   );
 };

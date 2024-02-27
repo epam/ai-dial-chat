@@ -69,7 +69,12 @@ export abstract class ApiEntityStorage<
     const listingUrl = encodeApiUrl(
       constructPath(
         'api/listing',
-        path || getRootId({ apiKey: this.getStorageKey() }),
+        path ||
+          getRootId({
+            featureType: EnumMapper.getFeatureTypeByApiKey(
+              this.getStorageKey(),
+            ),
+          }),
       ),
     );
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;

@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -12,7 +12,6 @@ import {
   SharedWithMeRootFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import {
@@ -133,7 +132,7 @@ const ChatFolderTemplate = ({
   );
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface) => {
-      const folderId = getRootId({ apiKey: ApiKeys.Conversations });
+      const folderId = getConversationRootId();
 
       if (
         !isEntityNameOnSameLevelUnique(

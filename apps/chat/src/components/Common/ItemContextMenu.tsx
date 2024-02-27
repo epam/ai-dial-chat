@@ -22,7 +22,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { getRootId } from '@/src/utils/app/id';
-import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -277,7 +276,7 @@ export default function ItemContextMenu({
         display:
           entity.id.startsWith(
             getRootId({
-              apiKey: EnumMapper.getApiKeyByFeatureType(featureType),
+              featureType,
             }),
           ) || entity.sharedWithMe,
         Icon: IconTrashX,

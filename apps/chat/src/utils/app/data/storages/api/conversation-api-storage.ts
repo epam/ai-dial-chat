@@ -17,7 +17,7 @@ import { prepareEntityName } from '../../../common';
 import { getGeneratedConversationId } from '../../../conversation';
 import { constructPath } from '../../../file';
 import { getPathToFolderById } from '../../../folders';
-import { getRootId, isRootId } from '../../../id';
+import { getConversationRootId, isRootId } from '../../../id';
 import { ConversationService } from '../../conversation-service';
 import { ApiEntityStorage } from './api-entity-storage';
 
@@ -109,9 +109,7 @@ export const getPreparedConversations = ({
         folderId: path,
       }),
       name: newName,
-      folderId: addRoot
-        ? constructPath(getRootId({ apiKey: ApiKeys.Conversations }), path)
-        : path,
+      folderId: addRoot ? constructPath(getConversationRootId(), path) : path,
     };
   }); // to send conversation with proper parentPath and lastActivityDate order
 
@@ -133,9 +131,7 @@ export const getImportPreparedConversations = ({
     );
 
     const newName = prepareEntityName(conv.name);
-    const rootId = isRootConversationsId(path)
-      ? path
-      : getRootId({ apiKey: ApiKeys.Conversations });
+    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
     const folderId = constructPath(rootId, path);
 
     return {

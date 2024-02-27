@@ -14,7 +14,6 @@ import { MouseEventHandler, useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { getRootId } from '@/src/utils/app/id';
-import { EnumMapper } from '@/src/utils/app/mappers';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
@@ -144,7 +143,7 @@ export const FolderContextMenu = ({
           !!onDelete &&
           folder.id.startsWith(
             getRootId({
-              apiKey: EnumMapper.getApiKeyByFeatureType(featureType),
+              featureType,
             }),
           ),
         dataQa: 'delete',

@@ -1,4 +1,5 @@
 import { Attachment, Conversation, ConversationInfo } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportFormatV1,
@@ -15,12 +16,12 @@ import { Prompt } from '@/src/types/prompt';
 
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
 
-import { ApiKeys, decodeApiUrl, encodeApiUrl } from '../server/api';
+import { decodeApiUrl, encodeApiUrl } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
 import { constructPath, triggerDownload } from './file';
 import { splitEntityId } from './folders';
-import { getRootId } from './id';
+import { getConversationRootId, getRootId } from './id';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -59,19 +60,19 @@ export interface CleanDataResponse extends LatestExportFormat {
 
 export function cleanFolders({
   folders,
-  apiKey,
+  featureType,
   folderType,
 }: {
   folders: FolderInterface[];
   folderType: FolderType;
-  apiKey: ApiKeys;
+  featureType: FeatureType;
 }) {
   return (folders || []).map((folder) => {
     const parentFolder = folders.find((parentFolder) => {
       return parentFolder.id === folder.folderId;
     });
     const newFolderId = constructPath(
-      getRootId({ apiKey }),
+      getRootId({ featureType }),
       parentFolder?.name,
     );
     const newId = constructPath(newFolderId, folder.name);
@@ -88,14 +89,14 @@ export const cleanConversationsFolders = (folders: FolderInterface[]) =>
   cleanFolders({
     folders,
     folderType: FolderType.Chat,
-    apiKey: ApiKeys.Conversations,
+    featureType: FeatureType.Chat,
   });
 
 export const cleanPromptsFolders = (folders: FolderInterface[]) =>
   cleanFolders({
     folders,
     folderType: FolderType.Prompt,
-    apiKey: ApiKeys.Prompts,
+    featureType: FeatureType.Prompt,
   });
 
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
@@ -120,7 +121,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
         id: chatFolder.id.toString(),
         name: chatFolder.name,
         type: FolderType.Chat,
-        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
+        folderId: getConversationRootId(),
       })),
       prompts: [],
       isError: false,

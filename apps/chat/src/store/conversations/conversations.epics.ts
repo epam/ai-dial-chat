@@ -64,7 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -72,7 +72,6 @@ import {
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -305,7 +304,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 lastActivityDate: Date.now(),
                 isMessageStreaming: false,
                 status: UploadStatus.LOADED,
-                folderId: getRootId({ apiKey: ApiKeys.Conversations }),
+                folderId: getConversationRootId(),
               });
             },
           );
@@ -383,7 +382,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? getRootId({ apiKey: ApiKeys.Conversations })
+        ? getConversationRootId()
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
@@ -453,7 +452,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         state$.value,
         conversation.folderId,
       )
-        ? getRootId({ apiKey: ApiKeys.Conversations })
+        ? getConversationRootId()
         : conversation.folderId;
 
       const newConversationName = getNextDefaultName(
@@ -519,7 +518,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
+        folderId: getConversationRootId(),
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,

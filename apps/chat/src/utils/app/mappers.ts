@@ -22,8 +22,21 @@ export class EnumMapper {
         return ApiKeys.Prompts;
       case FeatureType.Chat:
         return ApiKeys.Conversations;
+      case FeatureType.File:
       default:
         return ApiKeys.Files;
+    }
+  };
+
+  public static getFeatureTypeByApiKey = (apiKey: ApiKeys) => {
+    switch (apiKey) {
+      case ApiKeys.Prompts:
+        return FeatureType.Prompt;
+      case ApiKeys.Conversations:
+        return FeatureType.Chat;
+      case ApiKeys.Files:
+      default:
+        return FeatureType.File;
     }
   };
 

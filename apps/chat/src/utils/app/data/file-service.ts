@@ -128,7 +128,7 @@ export class FileService {
             ),
             relativePath: relativePath,
             folderId: constructPath(
-              getRootId({ apiKey: ApiKeys.Files, bucket: folder.bucket }),
+              getRootId({ bucket: folder.bucket }),
               relativePath,
             ),
             serverSynced: true,
@@ -176,7 +176,7 @@ export class FileService {
             ),
             relativePath: relativePath,
             folderId: constructPath(
-              getRootId({ apiKey: ApiKeys.Files, bucket: file.bucket }),
+              getRootId({ bucket: file.bucket }),
               relativePath,
             ),
             contentLength: file.contentLength,
