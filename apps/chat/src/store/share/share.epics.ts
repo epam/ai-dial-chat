@@ -20,11 +20,6 @@ import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
-import {
-  decodeApiUrl,
-  encodeApiUrl,
-  parseConversationApiKey,
-} from '@/src/utils/server/api';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { Conversation, Message } from '@/src/types/chat';
@@ -403,7 +398,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const actions = [];
       const acceptedId = ShareSelectors.selectAcceptedId(state$.value);
-      const decodedAcceptedId = acceptedId && decodeApiUrl(acceptedId);
+      const decodedAcceptedId = acceptedId && ApiUtils.decodeApiUrl(acceptedId);
       const newResource = [
         ...payload.resources.entities,
         ...payload.resources.folders,
