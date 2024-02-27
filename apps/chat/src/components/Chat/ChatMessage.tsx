@@ -51,6 +51,8 @@ import { ChatInputAttachments } from './ChatInput/ChatInputAttachments';
 import { MessageAttachments } from './MessageAttachments';
 import { MessageStages } from './MessageStages';
 
+import uniq from 'lodash-es/uniq';
+
 export interface Props {
   message: Message;
   messageIndex: number;
@@ -279,7 +281,7 @@ export const ChatMessage: FC<Props> = memo(
     const handleSelectAlreadyUploaded = useCallback((result: unknown) => {
       if (typeof result === 'object') {
         const selectedFilesIds = result as string[];
-        const uniqueFilesIds = Array.from(new Set(selectedFilesIds));
+        const uniqueFilesIds = uniq(selectedFilesIds);
         setNewEditableAttachmentsIds(uniqueFilesIds);
       }
     }, []);
@@ -302,7 +304,7 @@ export const ChatMessage: FC<Props> = memo(
         });
 
         setNewEditableAttachmentsIds((ids) =>
-          Array.from(new Set(ids.concat(selectedFiles.map(({ id }) => id)))),
+          uniq(ids.concat(selectedFiles.map(({ id }) => id))),
         );
       },
       [dispatch],

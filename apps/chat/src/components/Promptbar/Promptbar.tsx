@@ -3,9 +3,8 @@ import { DragEvent, useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { getRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
@@ -83,7 +82,7 @@ const Promptbar = () => {
     (e: DragEvent<HTMLDivElement>) => {
       if (e.dataTransfer) {
         const promptData = e.dataTransfer.getData(MoveType.Prompt);
-        const folderId = getRootId({ apiKey: ApiKeys.Prompts });
+        const folderId = getPromptRootId();
 
         if (promptData) {
           const prompt = JSON.parse(promptData);

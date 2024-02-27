@@ -15,19 +15,14 @@ import classNames from 'classnames';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
@@ -104,9 +99,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     useCallback(() => {
       dispatch(
         ShareActions.share({
-          resourceType: BackendResourceType.PROMPT,
+          featureType: FeatureType.Prompt,
           resourceId: prompt.id,
-          nodeType: BackendDataNodeType.ITEM,
         }),
       );
     }, [dispatch, prompt.id]);
@@ -158,8 +152,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           ShareActions.discardSharedWithMe({
             resourceId: prompt.id,
-            nodeType: BackendDataNodeType.ITEM,
-            resourceType: BackendResourceType.PROMPT,
+            featureType: FeatureType.Prompt,
           }),
         );
       } else {
@@ -256,7 +249,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           PromptsActions.createFolder({
             name: folderPath,
-            parentId: getRootId({ apiKey: ApiKeys.Prompts }),
+            parentId: getPromptRootId(),
           }),
         );
       }
@@ -265,10 +258,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           id: prompt.id,
           values: {
             folderId: isNewFolder
-              ? constructPath(
-                  getRootId({ apiKey: ApiKeys.Prompts }),
-                  folderPath,
-                )
+              ? constructPath(getPromptRootId(), folderPath)
               : folderPath,
           },
         }),
@@ -461,8 +451,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               dispatch(
                 ShareActions.revokeAccess({
                   resourceId: prompt.id,
-                  nodeType: BackendDataNodeType.ITEM,
-                  resourceType: BackendResourceType.PROMPT,
+                  featureType: FeatureType.Prompt,
                 }),
               );
             }
