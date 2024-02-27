@@ -452,6 +452,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             }),
           );
         }
+
+        actions.push(ShareActions.resetShareId());
       }
 
       if (payload.resourceType === BackendResourceType.CONVERSATION) {

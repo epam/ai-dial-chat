@@ -168,6 +168,9 @@ export const shareSlice = createSlice({
         message?: string;
       }>,
     ) => state,
+    resetShareId: (state) => {
+      state.acceptedId = undefined;
+    },
     getSharedListing: (
       state,
       _action: PayloadAction<{
