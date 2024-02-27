@@ -12,11 +12,7 @@ import {
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -204,8 +200,8 @@ const PromptFolderTemplate = ({
             dispatch(
               ShareActions.discardSharedWithMe({
                 resourceId: folder.id,
-                nodeType: BackendDataNodeType.FOLDER,
-                resourceType: BackendResourceType.PROMPT,
+                isFolder: true,
+                featureType: FeatureType.Prompt,
               }),
             );
           } else {

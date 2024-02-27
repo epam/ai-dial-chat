@@ -14,11 +14,7 @@ import {
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -208,8 +204,8 @@ const ChatFolderTemplate = ({
             dispatch(
               ShareActions.discardSharedWithMe({
                 resourceId: folder.id,
-                nodeType: BackendDataNodeType.FOLDER,
-                resourceType: BackendResourceType.CONVERSATION,
+                isFolder: true,
+                featureType: FeatureType.Chat,
               }),
             );
           } else {

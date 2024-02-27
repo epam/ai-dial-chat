@@ -22,11 +22,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
@@ -103,9 +99,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     useCallback(() => {
       dispatch(
         ShareActions.share({
-          resourceType: BackendResourceType.PROMPT,
+          featureType: FeatureType.Prompt,
           resourceId: prompt.id,
-          nodeType: BackendDataNodeType.ITEM,
         }),
       );
     }, [dispatch, prompt.id]);
@@ -157,8 +152,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           ShareActions.discardSharedWithMe({
             resourceId: prompt.id,
-            nodeType: BackendDataNodeType.ITEM,
-            resourceType: BackendResourceType.PROMPT,
+            featureType: FeatureType.Prompt,
           }),
         );
       } else {
@@ -457,8 +451,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               dispatch(
                 ShareActions.revokeAccess({
                   resourceId: prompt.id,
-                  nodeType: BackendDataNodeType.ITEM,
-                  resourceType: BackendResourceType.PROMPT,
+                  featureType: FeatureType.Prompt,
                 }),
               );
             }

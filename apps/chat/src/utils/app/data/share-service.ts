@@ -111,24 +111,24 @@ export class ShareService {
           }
 
           if (entity.resourceType === BackendResourceType.PROMPT) {
-            const conversationResource = entity as
+            const promptResource = entity as
               | BackendChatEntity
               | BackendChatFolder;
 
             if (entity.nodeType === BackendDataNodeType.ITEM) {
-              const conversation = conversationResource as BackendChatEntity;
-              const id = decodeApiUrl(conversation.url);
+              const prompt = promptResource as BackendChatEntity;
+              const id = decodeApiUrl(prompt.url);
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
               entities.push({
-                name: conversation.name,
+                name: prompt.name,
                 id,
-                lastActivityDate: conversation.updatedAt,
+                lastActivityDate: prompt.updatedAt,
                 folderId: constructPath(apiKey, bucket, parentPath),
               });
             }
             if (entity.nodeType === BackendDataNodeType.FOLDER) {
-              const folder = conversationResource as BackendChatFolder;
+              const folder = promptResource as BackendChatFolder;
               const id = decodeApiUrl(
                 folder.url.slice(0, folder.url.length - 1),
               );

@@ -29,12 +29,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-  isNotLoaded,
-} from '@/src/types/common';
+import { FeatureType, isNotLoaded } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -269,8 +264,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         ShareActions.discardSharedWithMe({
           resourceId: conversation.id,
-          nodeType: BackendDataNodeType.ITEM,
-          resourceType: BackendResourceType.CONVERSATION,
+          featureType: FeatureType.Chat,
         }),
       );
     } else {
@@ -358,9 +352,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     useCallback(() => {
       dispatch(
         ShareActions.share({
-          resourceType: BackendResourceType.CONVERSATION,
+          featureType: FeatureType.Chat,
           resourceId: conversation.id,
-          nodeType: BackendDataNodeType.ITEM,
         }),
       );
       setIsContextMenu(false);
@@ -679,8 +672,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
               dispatch(
                 ShareActions.revokeAccess({
                   resourceId: conversation.id,
-                  nodeType: BackendDataNodeType.ITEM,
-                  resourceType: BackendResourceType.CONVERSATION,
+                  featureType: FeatureType.Chat,
                 }),
               );
             }
