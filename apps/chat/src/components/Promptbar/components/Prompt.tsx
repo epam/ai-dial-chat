@@ -187,7 +187,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
       e.stopPropagation();
       e.preventDefault();
-      setIsDeleting(false);
       setIsRenaming(true);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
@@ -310,13 +309,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         data-qa="prompt"
       >
         <div
-          className={classNames(
-            'flex size-full items-center gap-2',
-            isDeleting ? 'pr-12' : 'group-hover:pr-6',
-            {
-              'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
-            },
-          )}
+          className={classNames('flex size-full items-center gap-2', {
+            'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
+          })}
           draggable={!isExternal}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
