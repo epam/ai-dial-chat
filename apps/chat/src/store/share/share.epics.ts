@@ -491,16 +491,19 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          const [selectedConvId] =
-            ConversationsSelectors.selectSelectedConversationsIds(state$.value);
-          const selectedConv = payload.resources.entities.find(
-            (conv) => conv.id === selectedConvId,
-          );
+          const [selectedConv] =
+            ConversationsSelectors.selectSelectedConversations(state$.value);
 
           if (selectedConv) {
             actions.push(
-              ConversationsActions.selectConversations({
-                conversationIds: [selectedConv.id],
+              ConversationsActions.addConversations({
+                conversations: [
+                  {
+                    ...selectedConv,
+                    sharedWithMe: true,
+                  },
+                ],
+                selectAdded: true,
               }),
             );
           }
@@ -508,12 +511,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           payload.resources.entities.length &&
             actions.push(
               ConversationsActions.addConversations({
-                conversations: payload.resources.entities.map((res) => ({
-                  ...(selectedConv && selectedConv.id === res.id
-                    ? selectedConv
-                    : res),
-                  sharedWithMe: true,
-                })) as Conversation[],
+                conversations: payload.resources.entities
+                  .filter((conv) => conv.id !== selectedConv?.id)
+                  .map((res) => ({
+                    ...res,
+                    sharedWithMe: true,
+                  })) as Conversation[],
               }),
             );
           payload.resources.folders.length &&
