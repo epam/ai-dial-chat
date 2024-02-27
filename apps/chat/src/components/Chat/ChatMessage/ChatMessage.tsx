@@ -27,11 +27,10 @@ const CONTEXT_MENU_OFFSET = 100;
 
 export const ChatMessage: FC<Props> = memo(
   ({ message, conversation, onLike, onDelete, editDisabled, ...props }) => {
-    const [messageCopied, setMessageCopied] = useState(false);
-    const [isEditing, setIsEditing] = useState<boolean>(false);
-
     const { t } = useTranslation(Translation.Chat);
 
+    const [messageCopied, setMessageCopied] = useState(false);
+    const [isEditing, setIsEditing] = useState<boolean>(false);
     const [clientY, setClientY] = useState(0);
     const [clientX, setClientX] = useState(0);
     const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
