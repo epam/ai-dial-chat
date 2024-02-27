@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isMediaQuery } from '@/src/utils/app/style-helpers';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Translation } from '@/src/types/translation';
 
@@ -36,14 +36,15 @@ const Header = () => {
   const { t } = useTranslation(Translation.SideBar);
 
   const handleToggleChatbar = useCallback(() => {
-    if (!showChatbar && isMediaQuery('(width <= 767px)')) {
+    if (!showChatbar && isSmallScreen()) {
       dispatch(UIActions.setShowPromptbar(false));
+      dispatch(UIActions.setIsProfileOpen(false));
     }
     dispatch(UIActions.setShowChatbar(!showChatbar));
   }, [dispatch, showChatbar]);
 
   const handleTogglePromtbar = useCallback(() => {
-    if (!showPromptbar && isMediaQuery('(width <= 767px)')) {
+    if (!showPromptbar && isSmallScreen()) {
       dispatch(UIActions.setShowChatbar(false));
       dispatch(UIActions.setIsProfileOpen(false));
     }

@@ -91,3 +91,9 @@ export const isNotLoaded = (status?: UploadStatus) => {
 };
 
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+export enum ApiKeys {
+  Files = 'files',
+  Conversations = 'conversations',
+  Prompts = 'prompts',
+}

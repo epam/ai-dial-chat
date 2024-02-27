@@ -4,7 +4,7 @@ import { ReactNode, useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
-import { IsPseudoModel } from '@/src/utils/server/api';
+import { isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -115,7 +115,7 @@ export const ConversationSettings = ({
             conversation={conversation}
             modelId={model?.id}
             unavailableModelId={
-              !model?.id && !IsPseudoModel(modelId) ? modelId : undefined
+              !model?.id && !isPseudoModel(modelId) ? modelId : undefined
             }
             onModelSelect={onSelectModel}
           />

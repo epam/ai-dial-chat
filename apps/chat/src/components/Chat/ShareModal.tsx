@@ -36,14 +36,14 @@ export default function ShareModal() {
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
-  const shareResourceType = useAppSelector(
-    ShareSelectors.selectShareResourceType,
+  const shareFeatureType = useAppSelector(
+    ShareSelectors.selectShareFeatureType,
   );
-  const shareNodeType = useAppSelector(ShareSelectors.selectShareNodeType);
+  const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
 
   const sharingType = useMemo(() => {
-    return getShareType(shareResourceType, shareNodeType);
-  }, [shareResourceType, shareNodeType]);
+    return getShareType(shareFeatureType, isFolder);
+  }, [shareFeatureType, isFolder]);
   const [url, setUrl] = useState('');
 
   useEffect(() => {

@@ -9,8 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getRootId } from '@/src/utils/app/id';
-import { ApiKeys } from '@/src/utils/server/api';
+import { getConversationRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/import-export';
@@ -91,7 +90,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(
             ConversationsActions.createFolder({
-              parentId: getRootId({ apiKey: ApiKeys.Conversations }),
+              parentId: getConversationRootId(),
             }),
           );
         },

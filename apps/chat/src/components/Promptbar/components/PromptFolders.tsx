@@ -3,21 +3,16 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
-import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { sortByName } from '@/src/utils/app/folders';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { ApiKeys } from '@/src/utils/server/api';
 
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -125,7 +120,7 @@ const PromptFolderTemplate = ({
 
   const onDropBetweenFolders = useCallback(
     (folder: FolderInterface) => {
-      const folderId = getRootId({ apiKey: ApiKeys.Prompts });
+      const folderId = getPromptRootId();
 
       if (
         !isEntityNameOnSameLevelUnique(
@@ -205,8 +200,8 @@ const PromptFolderTemplate = ({
             dispatch(
               ShareActions.discardSharedWithMe({
                 resourceId: folder.id,
-                nodeType: BackendDataNodeType.FOLDER,
-                resourceType: BackendResourceType.PROMPT,
+                isFolder: true,
+                featureType: FeatureType.Prompt,
               }),
             );
           } else {
@@ -252,10 +247,7 @@ export const PromptSection = ({
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
 
-  const rootPrompts = useMemo(
-    () => prompts.sort(compareEntitiesByName),
-    [prompts],
-  );
+  const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
 
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,

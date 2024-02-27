@@ -7,7 +7,7 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
@@ -15,7 +15,6 @@ import {
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
@@ -204,7 +203,7 @@ export const selectSelectedPromptFoldersIds = createSelector(
 export const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId: string) => folderId],
   (folders, folderId) => {
-    const rootID = getRootId({ apiKey: ApiKeys.Prompts });
+    const rootID = getPromptRootId();
     if (!folderId.startsWith(rootID)) {
       return true;
     }

@@ -72,6 +72,8 @@ import {
   ImportExportSelectors,
 } from './importExport.reducers';
 
+import uniq from 'lodash-es/uniq';
+
 const firstConversationIndex = 0;
 
 const exportConversationEpic: AppEpic = (action$, state$) =>
@@ -153,16 +155,12 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
     switchMap((conversationsListing) => {
       const onlyMyConversationsListing =
         filterOnlyMyEntities(conversationsListing);
-      const foldersIds = Array.from(
-        new Set(onlyMyConversationsListing.map((info) => info.folderId)),
+      const foldersIds = uniq(
+        onlyMyConversationsListing.map((info) => info.folderId),
       );
       //calculate all folders;
       const foldersWithConversation = getFoldersFromIds(
-        Array.from(
-          new Set(
-            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-          ),
-        ),
+        uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
         FolderType.Chat,
       );
 
@@ -277,16 +275,14 @@ const importConversationsEpic: AppEpic = (action$) =>
                 return of(ImportExportActions.importFail());
               }
 
-              const foldersIds = Array.from(
-                new Set(conversationsListing.map((info) => info.folderId)),
+              const foldersIds = uniq(
+                conversationsListing.map((info) => info.folderId),
               );
               //calculate all folders;
               const conversationsFolders = getFoldersFromIds(
-                Array.from(
-                  new Set(
-                    foldersIds.flatMap((id) =>
-                      getParentFolderIdsFromFolderId(id),
-                    ),
+                uniq(
+                  foldersIds.flatMap((id) =>
+                    getParentFolderIdsFromFolderId(id),
                   ),
                 ),
                 FolderType.Chat,
