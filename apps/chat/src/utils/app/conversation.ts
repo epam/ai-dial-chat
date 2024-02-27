@@ -20,6 +20,7 @@ import { splitEntityId } from './folders';
 import { getConversationRootId } from './id';
 
 import groupBy from 'lodash-es/groupBy';
+import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 import uniqBy from 'lodash-es/uniqBy';
 
@@ -145,6 +146,15 @@ export const getConversationInfoFromId = (id: string): ConversationInfo => {
     folderId: constructPath(apiKey, bucket, parentPath),
   });
 };
+
+export const sortByDateAndName = <T extends ConversationInfo>(
+  conversations: T[],
+): T[] =>
+  orderBy(
+    conversations,
+    ['lastActivityDate', (conv) => conv.name.toLowerCase()],
+    ['desc', 'desc'],
+  );
 
 const removePostfix = (name: string): string => {
   const regex = / \d{1,3}$/;

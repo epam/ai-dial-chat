@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -35,7 +36,6 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
 import { Feature } from '@epam/ai-dial-shared';
-import orderBy from 'lodash-es/orderBy';
 import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState): ConversationsState =>
@@ -121,7 +121,7 @@ export const selectLastConversation = createSelector(
   [selectConversations],
   (conversations): ConversationInfo | undefined => {
     if (!conversations.length) return undefined;
-    return orderBy([...conversations], ['lastActivityDate', 'name'], 'desc')[0];
+    return sortByDateAndName([...conversations])[0];
   },
 );
 export const selectConversation = createSelector(

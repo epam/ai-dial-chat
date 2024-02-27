@@ -27,6 +27,7 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
+  sortByName,
 } from '@/src/utils/app/folders';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
@@ -62,8 +63,6 @@ import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
-
-import sortBy from 'lodash-es/sortBy';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -215,19 +214,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     return openedFoldersIds.includes(currentFolder.id);
   }, [currentFolder.id, openedFoldersIds]);
   const filteredChildFolders = useMemo(() => {
-    return sortBy(
+    return sortByName(
       allFolders.filter((folder) => folder.folderId === currentFolder.id),
-      'name',
     );
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
-    return sortBy(
+    return sortByName(
       allItems?.filter(
         (item) =>
           item.folderId === currentFolder.id &&
           (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
       ) || [],
-      'name',
     );
   }, [allItems, currentFolder.id, searchTerm]);
 

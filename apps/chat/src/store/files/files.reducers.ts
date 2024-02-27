@@ -5,6 +5,7 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
   getParentAndChildFolders,
+  sortByName,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 
@@ -16,7 +17,6 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 
-import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 export interface FilesState {
@@ -304,7 +304,7 @@ export const filesSlice = createSlice({
 const rootSelector = (state: RootState): FilesState => state.files;
 
 const selectFiles = createSelector([rootSelector], (state) => {
-  return sortBy([...state.files], (file: DialFile) => file.name.toLowerCase());
+  return sortByName([...state.files]);
 });
 
 const selectFilesByIds = createSelector(

@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { isRootId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsRenderer } from './ConversationsRenderer';
-
-import orderBy from 'lodash-es/orderBy';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -71,11 +70,7 @@ export const Conversations = ({ conversations }: Props) => {
       older: [],
       other: [],
     };
-    orderBy(
-      conversationsToDisplay,
-      ['lastActivityDate', 'name'],
-      'desc',
-    ).forEach((conv) => {
+    sortByDateAndName(conversationsToDisplay).forEach((conv) => {
       const lastActivityDateNumber = conv.lastActivityDate;
       if (
         !lastActivityDateNumber ||

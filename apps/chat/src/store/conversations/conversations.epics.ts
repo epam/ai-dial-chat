@@ -45,6 +45,7 @@ import {
   isChosenConversationValidForCompare,
   isSettingsChanged,
   regenerateConversationId,
+  sortByDateAndName,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import {
@@ -105,7 +106,6 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
-import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -762,13 +762,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             ConversationsActions.selectConversations({
-              conversationIds: [
-                orderBy(
-                  otherConversations,
-                  ['lastActivityDate', 'name'],
-                  'desc',
-                )[0].id,
-              ],
+              conversationIds: [sortByDateAndName(otherConversations)[0].id],
             }),
           ),
         );

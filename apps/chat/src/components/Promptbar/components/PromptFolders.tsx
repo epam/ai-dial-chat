@@ -3,6 +3,7 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { sortByName } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
@@ -40,8 +41,6 @@ import Folder from '@/src/components/Folder/Folder';
 import CollapsableSection from '../../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
-
-import sortBy from 'lodash-es/sortBy';
 
 interface promptFolderProps {
   folder: FolderInterface;
@@ -252,7 +251,7 @@ export const PromptSection = ({
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
 
-  const rootPrompts = useMemo(() => sortBy(prompts, 'name'), [prompts]);
+  const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
 
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,

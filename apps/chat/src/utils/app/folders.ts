@@ -6,7 +6,12 @@ import {
 } from '@/src/utils/app/file';
 
 import { Conversation } from '@/src/types/chat';
-import { PartialBy, ShareEntity, UploadStatus } from '@/src/types/common';
+import {
+  Entity,
+  PartialBy,
+  ShareEntity,
+  UploadStatus,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -277,13 +282,12 @@ export const getFilteredFolders = ({
       ),
   );
 
-  return sortBy(
+  return sortByName(
     childAndCurrentSectionFilteredFolders.filter(
       (folder) =>
         childAndCurrentSectionFilteredIds.has(folder.id) &&
         filteredFolderIds.has(folder.id),
     ),
-    'name',
   );
 };
 
@@ -453,6 +457,9 @@ export const getFoldersFromIds = (
     getFolderFromId(path, type, status),
   );
 };
+
+export const sortByName = <T extends Entity>(entities: T[]): T[] =>
+  sortBy(entities, (entity) => entity.name.toLowerCase());
 
 export const updateMovedFolderId = (
   oldParentFolderId: string,
