@@ -393,7 +393,7 @@ export const FileManagerModal = ({
                 onClick={handleStartRemoveMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
-                <Tooltip tooltip="Delete files">
+                <Tooltip tooltip="Delete files" isTriggerClickable>
                   <IconTrash size={24} />
                 </Tooltip>
               </button>
@@ -401,7 +401,7 @@ export const FileManagerModal = ({
                 onClick={handleDownloadMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
-                <Tooltip tooltip="Download files">
+                <Tooltip tooltip="Download files" isTriggerClickable>
                   <IconDownload size={24} />
                 </Tooltip>
               </button>
