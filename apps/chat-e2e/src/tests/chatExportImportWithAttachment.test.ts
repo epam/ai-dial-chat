@@ -92,7 +92,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.throttleAndAbortAPIResponse('**/*');
+        await dialHomePage.throttleAndAbortAPIResponse('**/*', 500);
         await conversations.openConversationDropdownMenu(
           historyConversation.name,
         );
@@ -146,7 +146,7 @@ dialTest(
         await chatBar.deleteAllEntities();
         await fileApiHelper.deleteAllFiles();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await dialHomePage.throttleAndAbortAPIResponse('**/*');
+        await dialHomePage.throttleAndAbortAPIResponse('**/*', 500);
         await dialHomePage.uploadData(exportedData, () =>
           chatBar.importButton.click(),
         );
