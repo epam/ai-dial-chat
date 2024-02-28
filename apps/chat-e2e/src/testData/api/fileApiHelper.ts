@@ -1,4 +1,5 @@
 import { BackendFile } from '@/chat/types/files';
+
 import { API, Attachment } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil } from '@/src/utils';
@@ -44,7 +45,10 @@ export class FileApiHelper extends BaseApiHelper {
       case 'png':
         return 'image/png';
       case 'jpg':
+      case 'jpeg':
         return 'image/jpeg';
+      case 'gif':
+        return 'image/gif';
       default:
         return 'text/plain';
     }
