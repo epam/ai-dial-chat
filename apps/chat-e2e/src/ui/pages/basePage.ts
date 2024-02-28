@@ -146,7 +146,7 @@ export class BasePage {
 
   public async throttleNetwork(url: string, timeout?: number) {
     await this.page.route(url, async (route) => {
-      await new Promise((f) => setTimeout(f, timeout ?? 3000));
+      await new Promise((f) => setTimeout(f, timeout ?? 4000));
       await route.continue();
     });
   }

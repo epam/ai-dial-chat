@@ -100,7 +100,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
-        await importExportLoader.stopLoading.click();
+        await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await page.unroute(API.fileHost);
         const exportedFiles = FileUtil.getExportedFiles();
@@ -148,7 +148,7 @@ dialTest(
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.throttleNetwork(API.fileHost);
         await dialHomePage.uploadData(exportedData, () =>
-          chatBar.importButton.click(),
+          chatBar.importButton.click({ force: true }),
         );
         await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
@@ -171,6 +171,7 @@ dialTest(
         await conversations
           .getConversationByName(historyConversation.name)
           .waitFor();
+        await conversations.selectConversation(historyConversation.name);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
