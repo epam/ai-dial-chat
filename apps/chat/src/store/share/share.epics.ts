@@ -604,7 +604,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         actions.push(ShareActions.resetShareId());
       }
 
-
       return concat(actions);
     }),
   );
