@@ -29,7 +29,7 @@ export const getPromptRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Prompt, bucket });
 
 export const isRootId = (id?: string) => {
-  return id?.split('/').length === 2 || false;
+  return id?.split('/').length === 2 ?? false;
 };
 
 export const isRootConversationsId = (id?: string) =>

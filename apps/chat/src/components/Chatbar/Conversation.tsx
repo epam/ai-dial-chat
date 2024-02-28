@@ -21,7 +21,7 @@ import {
 } from '@/src/utils/app/common';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getConversationRootId, isRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
@@ -387,11 +387,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const conversationRootId = getConversationRootId();
       const folderPath = (
         isNewFolder
           ? getNextDefaultName(
               translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => isRootId(f.folderId)),
+              folders.filter((f) => f.folderId === conversationRootId), // only my root conversation folders
             )
           : folderId
       ) as string;

@@ -44,7 +44,7 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import {
   cleanPromptsFolders,
   exportPrompt,
@@ -79,15 +79,15 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.createNewPrompt.match),
     switchMap(() => {
       const prompts = PromptsSelectors.selectPrompts(state$.value);
-
+      const promptRootId = getPromptRootId();
       const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(
           DEFAULT_PROMPT_NAME,
-          prompts.filter((prompt) => isRootId(prompt.folderId)),
+          prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
         ),
         description: '',
         content: '',
-        folderId: getPromptRootId(),
+        folderId: promptRootId,
       });
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
@@ -572,14 +572,15 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       if (!prompt) return EMPTY;
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const promptRootId = getPromptRootId();
       const newPrompt = addGeneratedPromptId({
         ...prompt,
         ...resetShareEntity,
-        folderId: getPromptRootId(),
+        folderId: promptRootId,
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
           prompt.name,
-          prompts.filter((prompt) => isRootId(prompt.folderId)),
+          prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
         ),
       });
 
