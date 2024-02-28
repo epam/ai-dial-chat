@@ -387,11 +387,21 @@ export const conversationsSlice = createSlice({
       state.conversationsLoaded = false;
     },
     clearConversationsSuccess: (state) => {
-      state.conversations = state.conversations.filter((conv) =>
-        isEntityExternal(conv),
+      state.conversations = state.conversations.filter(
+        (conv) =>
+          isEntityExternal(conv) ||
+          ConversationsSelectors.hasExternalParent(
+            { conversations: state },
+            conv.folderId,
+          ),
       );
-      state.folders = state.folders.filter((folder) =>
-        isEntityExternal(folder),
+      state.folders = state.folders.filter(
+        (folder) =>
+          isEntityExternal(folder) ||
+          ConversationsSelectors.hasExternalParent(
+            { conversations: state },
+            folder.folderId,
+          ),
       );
     },
     createFolder: (

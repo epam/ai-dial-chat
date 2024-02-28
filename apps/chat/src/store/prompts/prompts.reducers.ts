@@ -259,11 +259,21 @@ export const promptsSlice = createSlice({
       state.promptsLoaded = false;
     },
     clearPromptsSuccess: (state) => {
-      state.prompts = state.prompts.filter((prompt) =>
-        isEntityExternal(prompt),
+      state.prompts = state.prompts.filter(
+        (prompt) =>
+          isEntityExternal(prompt) ||
+          PromptsSelectors.hasExternalParent(
+            { prompts: state },
+            prompt.folderId,
+          ),
       );
-      state.folders = state.folders.filter((folder) =>
-        isEntityExternal(folder),
+      state.folders = state.folders.filter(
+        (folder) =>
+          isEntityExternal(folder) ||
+          PromptsSelectors.hasExternalParent(
+            { prompts: state },
+            folder.folderId,
+          ),
       );
     },
     exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
