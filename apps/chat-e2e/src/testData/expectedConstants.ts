@@ -157,7 +157,6 @@ export enum ModelIds {
   AI21_GRANDE = 'ai21.j2-grande-instruct',
   AI21_JUMBO = 'ai21.j2-jumbo-instruct',
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
-  ANTHROPIC_CLAUDE_V1 = 'anthropic.claude-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',

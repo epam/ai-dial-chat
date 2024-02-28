@@ -26,7 +26,6 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.AWS_TITAN, isSysPromptAllowed: true },
   { modelId: ModelIds.AI21_GRANDE, isSysPromptAllowed: true },
   { modelId: ModelIds.AI21_JUMBO, isSysPromptAllowed: true },
-  { modelId: ModelIds.ANTHROPIC_CLAUDE_V1, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V2, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V21, isSysPromptAllowed: true },
   {
