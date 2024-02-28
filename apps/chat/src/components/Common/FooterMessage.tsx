@@ -50,7 +50,7 @@ export const FooterMessage = () => {
           isOpen={isRequestAPIDialogOpen}
           onClose={() => {
             setIsRequestAPIDialogOpen(false);
-            router.replace(router.basePath);
+            window.location.hash = '';
             resetHash();
           }}
         />
@@ -60,7 +60,7 @@ export const FooterMessage = () => {
           isOpen={isReportIssueDialogOpen}
           onClose={() => {
             setIsReportIssueDialogOpen(false);
-            router.replace(router.basePath);
+            window.location.hash = '';
             resetHash();
           }}
         />
