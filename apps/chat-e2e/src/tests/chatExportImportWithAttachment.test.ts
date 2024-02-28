@@ -92,7 +92,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.throttleAPIResponse('**/*');
+        await dialHomePage.throttleAndAbortAPIResponse('**/*');
         await conversations.openConversationDropdownMenu(
           historyConversation.name,
         );
@@ -100,7 +100,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
-        await importExportLoader.stopLoading.click();
+        await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await page.unrouteAll({ behavior: 'ignoreErrors' });
         const exportedFiles = FileUtil.getExportedFiles();
@@ -146,11 +146,11 @@ dialTest(
         await chatBar.deleteAllEntities();
         await fileApiHelper.deleteAllFiles();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await dialHomePage.throttleAPIResponse('**/*');
+        await dialHomePage.throttleAndAbortAPIResponse('**/*');
         await dialHomePage.uploadData(exportedData, () =>
           chatBar.importButton.click(),
         );
-        await importExportLoader.stopLoading.click();
+        await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await page.unrouteAll({ behavior: 'ignoreErrors' });
         const isConversationImported = await conversations

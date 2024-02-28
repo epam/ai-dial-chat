@@ -87,6 +87,15 @@ export class BasePage {
     });
   }
 
+  async throttleAndAbortAPIResponse(url: string, timeout?: number) {
+    await this.page.route(url, async (route) => {
+      await new Promise((f) =>
+        setTimeout(f, timeout ?? responseThrottlingTimeout),
+      );
+      await route.abort();
+    });
+  }
+
   async unRouteResponse(url: string) {
     await this.page.unroute(url);
   }
