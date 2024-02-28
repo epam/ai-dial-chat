@@ -56,7 +56,7 @@ export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
 
 export const MyItemFilter: EntityFilter<ShareEntity> = (item) =>
   item.folderId === getConversationRootId() ||
-  item.folderId === getPromptRootId();
+  item.folderId === getPromptRootId(); // only my root items
 
 export const SharedWithMeFilters: EntityFilters = {
   searchFilter: TrueFilter,
