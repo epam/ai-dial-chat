@@ -80,14 +80,8 @@ export abstract class ApiEntityStorage<
 
   getFoldersAndEntities(
     path?: string,
-    recursive?: boolean,
   ): Observable<FoldersAndEntities<TEntityInfo>> {
-    const query = new URLSearchParams({
-      ...(recursive && { recursive: String(recursive) }),
-    });
-    const resultQuery = query.toString();
-
-    return ApiUtils.request(this.getListingUrl({ path, resultQuery })).pipe(
+    return ApiUtils.request(this.getListingUrl({ path })).pipe(
       map((items: (BackendChatFolder | BackendChatEntity)[]) => {
         const folders = items.filter(
           (item) => item.nodeType === BackendDataNodeType.FOLDER,

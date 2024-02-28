@@ -28,9 +28,8 @@ export class PromptService {
 
   public static getPromptsAndFolders(
     path?: string,
-    recursive?: boolean,
   ): Observable<FoldersAndEntities<PromptInfo>> {
-    return DataService.getDataStorage().getPromptsAndFolders(path, recursive);
+    return DataService.getDataStorage().getPromptsAndFolders(path);
   }
 
   public static getPrompt(info: PromptInfo): Observable<Prompt | null> {

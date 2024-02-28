@@ -38,12 +38,8 @@ export class ConversationService {
 
   public static getConversationsAndFolders(
     path?: string,
-    recursive?: boolean,
   ): Observable<FoldersAndEntities<ConversationInfo>> {
-    return DataService.getDataStorage().getConversationsAndFolders(
-      path,
-      recursive,
-    );
+    return DataService.getDataStorage().getConversationsAndFolders(path);
   }
 
   public static getConversations(

@@ -555,12 +555,10 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         if (isConversationId(acceptedId)) {
           if (isFolderId(acceptedId)) {
             actions.push(
-              ConversationsActions.uploadConversationsWithFolders({
-                paths: [decodedAcceptedId],
-                options: {
-                  selectFirst: true,
-                  recursive: true,
-                },
+              ConversationsActions.uploadConversationsWithFoldersRecursive({
+                path: decodedAcceptedId,
+                selectFirst: true,
+                noLoader: true,
               }),
             );
           } else {
@@ -573,12 +571,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         } else if (isPromptId(acceptedId)) {
           if (isFolderId(acceptedId)) {
             actions.push(
-              PromptsActions.uploadChildPromptsWithFolders({
-                ids: [decodedAcceptedId],
-                options: {
-                  selectFirst: true,
-                  recursive: true,
-                },
+              PromptsActions.uploadPromptsWithFoldersRecursive({
+                path: decodedAcceptedId,
+                selectFirst: true,
               }),
             );
           } else {
