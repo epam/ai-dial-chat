@@ -96,9 +96,10 @@ export class ApiStorage implements DialStorage {
   }
 
   getConversationsAndFolders(
-    path?: string | undefined,
+    path?: string,
+    recursive?: boolean,
   ): Observable<FoldersAndEntities<ConversationInfo>> {
-    return this._conversationApiStorage.getFoldersAndEntities(path);
+    return this._conversationApiStorage.getFoldersAndEntities(path, recursive);
   }
 
   getConversations(
@@ -166,9 +167,10 @@ export class ApiStorage implements DialStorage {
   }
 
   getPromptsAndFolders(
-    path?: string | undefined,
+    path?: string,
+    recursive?: boolean,
   ): Observable<FoldersAndEntities<Entity>> {
-    return this._promptApiStorage.getFoldersAndEntities(path);
+    return this._promptApiStorage.getFoldersAndEntities(path, recursive);
   }
 
   getPrompts(path?: string, recursive?: boolean): Observable<Prompt[]> {

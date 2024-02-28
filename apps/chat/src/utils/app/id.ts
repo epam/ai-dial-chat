@@ -33,9 +33,14 @@ export const isRootId = (id?: string) => {
 };
 
 export const isRootConversationsId = (id?: string) =>
-  isRootId(id) && id?.startsWith(`${ApiKeys.Conversations}/`);
+  isRootId(id) && isConversationId(id);
 
-export const isRootPromptId = (id?: string) =>
-  isRootId(id) && id?.startsWith(`${ApiKeys.Prompts}/`);
+export const isRootPromptId = (id?: string) => isRootId(id) && isPromptId(id);
 
 export const isFolderId = (id: string) => id.endsWith('/');
+
+export const isConversationId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Conversations}/`);
+
+export const isPromptId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Prompts}/`);

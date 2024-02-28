@@ -18,7 +18,7 @@ import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { isFolderId } from '@/src/utils/app/id';
+import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
@@ -138,16 +138,19 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareConversationFolder.match),
     switchMap(({ payload }) => {
-      return ConversationService.getConversations(payload.resourceId).pipe(
-        switchMap((res) =>
-          zip(
+      return ConversationService.getConversations(
+        payload.resourceId,
+        true,
+      ).pipe(
+        switchMap((res) => {
+          return zip(
             res.map((res) =>
               ConversationService.getConversation({
                 ...res,
               }),
             ),
-          ),
-        ),
+          );
+        }),
         map((res) => res.filter(Boolean) as Conversation[]),
         switchMap((conversations: Conversation[]) => {
           const internalResourcesIds = conversations
@@ -406,12 +409,15 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       ].some((item) => item.id === decodedAcceptedId);
 
       if (decodedAcceptedId && isNewResource) {
-        if (acceptedId.startsWith(ApiKeys.Conversations)) {
+        if (isConversationId(acceptedId)) {
           if (isFolderId(acceptedId)) {
             actions.push(
               ConversationsActions.uploadConversationsWithFolders({
                 paths: [decodedAcceptedId],
-                selectFirst: true,
+                options: {
+                  selectFirst: true,
+                  recursive: true,
+                },
               }),
             );
           } else {
@@ -421,12 +427,15 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
           }
-        } else if (acceptedId.startsWith(ApiKeys.Prompts)) {
+        } else if (isPromptId(acceptedId)) {
           if (isFolderId(acceptedId)) {
             actions.push(
               PromptsActions.uploadChildPromptsWithFolders({
                 ids: [decodedAcceptedId],
-                selectFirst: true,
+                options: {
+                  selectFirst: true,
+                  recursive: true,
+                },
               }),
             );
           } else {

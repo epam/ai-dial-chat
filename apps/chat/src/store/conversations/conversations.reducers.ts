@@ -672,7 +672,10 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         paths: (string | undefined)[];
-        selectFirst?: boolean;
+        options?: {
+          selectFirst?: boolean;
+          recursive?: boolean;
+        }
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;

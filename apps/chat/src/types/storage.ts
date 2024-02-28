@@ -50,6 +50,7 @@ export interface EntityStorage<
 
   getFoldersAndEntities(
     path?: string,
+    recursive?: boolean,
   ): Observable<FoldersAndEntities<TEntityInfo>>;
 
   getEntity(info: TEntityInfo): Observable<TEntity | null>;
@@ -78,6 +79,7 @@ export interface DialStorage {
 
   getConversationsAndFolders(
     path?: string,
+    recursive?: boolean,
   ): Observable<FoldersAndEntities<ConversationInfo>>;
 
   getConversations(
@@ -99,6 +101,7 @@ export interface DialStorage {
 
   getPromptsAndFolders(
     path?: string,
+    recursive?: boolean,
   ): Observable<FoldersAndEntities<PromptInfo>>;
 
   getPrompts(path?: string, recursive?: boolean): Observable<PromptInfo[]>;

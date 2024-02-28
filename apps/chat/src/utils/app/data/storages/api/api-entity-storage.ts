@@ -79,9 +79,15 @@ export abstract class ApiEntityStorage<
   };
 
   getFoldersAndEntities(
-    path?: string | undefined,
+    path?: string,
+    recursive?: boolean,
   ): Observable<FoldersAndEntities<TEntityInfo>> {
-    return ApiUtils.request(this.getListingUrl({ path })).pipe(
+    const query = new URLSearchParams({
+      ...(recursive && { recursive: String(recursive) }),
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(this.getListingUrl({ path, resultQuery })).pipe(
       map((items: (BackendChatFolder | BackendChatEntity)[]) => {
         const folders = items.filter(
           (item) => item.nodeType === BackendDataNodeType.FOLDER,
@@ -98,7 +104,7 @@ export abstract class ApiEntityStorage<
     );
   }
 
-  getFolders(path?: string | undefined): Observable<FolderInterface[]> {
+  getFolders(path?: string): Observable<FolderInterface[]> {
     const filter = BackendDataNodeType.FOLDER;
 
     const query = new URLSearchParams({

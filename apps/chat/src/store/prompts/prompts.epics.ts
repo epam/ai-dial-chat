@@ -61,6 +61,7 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -928,37 +929,59 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
     filter(PromptsActions.uploadChildPromptsWithFolders.match),
     switchMap(({ payload }) =>
       zip(
-        payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
+        payload.ids.map((path) =>
+          PromptService.getPromptsAndFolders(
+            path,
+            !!payload.options?.recursive,
+          ),
+        ),
       ).pipe(
         switchMap((foldersAndEntities) => {
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
-          return concat(
-            of(
-              PromptsActions.uploadChildPromptsWithFoldersSuccess({
-                parentIds: payload.ids,
-                folders,
-                prompts,
-              }),
-            ),
-            iif(
-              () => !!payload.selectFirst,
-              concat(
-                of(
-                  PromptsActions.setSelectedPrompt({
-                    promptId: prompts[0].id,
-                  }),
-                ),
-                of(PromptsActions.uploadPrompt({ promptId: prompts[0].id })),
-                of(
-                  UIActions.openFolder({
-                    featureType: FeatureType.Prompt,
-                    id: prompts[0].folderId,
-                  }),
-                ),
+
+          if (!!payload.options?.selectFirst && !!prompts.length) {
+            const folderIds = uniq(prompts.map((c) => c.folderId));
+            const paths = uniq(
+              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            ).filter((folderId) => !payload.ids.includes(folderId));
+
+            return concat(
+              of(
+                PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                  parentIds: [...payload.ids, ...paths],
+                  folders: getFoldersFromIds(
+                    paths,
+                    FolderType.Prompt,
+                    UploadStatus.LOADED,
+                  ),
+                  prompts,
+                }),
               ),
-              EMPTY,
-            ),
+              of(PromptsActions.uploadPrompt({ promptId: prompts[0]?.id })),
+              of(
+                PromptsActions.setSelectedPrompt({
+                  promptId: prompts[0]?.id,
+                }),
+              ),
+              of(
+                UIActions.setOpenedFoldersIds({
+                  featureType: FeatureType.Prompt,
+                  openedFolderIds: [
+                    ...paths,
+                    ...(payload.ids.filter(Boolean) as string[]),
+                  ],
+                }),
+              ),
+            );
+          }
+
+          return of(
+            PromptsActions.uploadChildPromptsWithFoldersSuccess({
+              parentIds: payload.ids,
+              folders,
+              prompts,
+            }),
           );
         }),
         catchError((err) => {

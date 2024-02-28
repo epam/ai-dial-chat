@@ -2274,12 +2274,54 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       zip(
         payload.paths.map((path) =>
-          ConversationService.getConversationsAndFolders(path),
+          ConversationService.getConversationsAndFolders(
+            path,
+            !!payload.options?.recursive,
+          ),
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
+          const actions: Observable<AnyAction>[] = [];
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const conversations = foldersAndEntities.flatMap((f) => f.entities);
+
+          if (!!payload.options?.selectFirst && !!conversations.length) {
+            const folderIds = uniq(conversations.map((c) => c.folderId));
+            const paths = uniq(
+              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            ).filter((folderId) => !payload.paths.includes(folderId));
+
+            actions.push(
+              concat(
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [conversations[0]?.id],
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    featureType: FeatureType.Chat,
+                    openedFolderIds: [
+                      ...paths,
+                      ...(payload.paths.filter(Boolean) as string[]),
+                    ],
+                  }),
+                ),
+                of(
+                  ConversationsActions.uploadFoldersSuccess({
+                    paths: new Set(),
+                    folders: getFoldersFromIds(
+                      paths,
+                      FolderType.Chat,
+                      UploadStatus.LOADED,
+                    ),
+                    allLoaded: true,
+                  }),
+                ),
+              ),
+            );
+          }
+
           return concat(
             of(
               ConversationsActions.uploadFoldersSuccess({
@@ -2293,23 +2335,7 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
                 conversations: conversations,
               }),
             ),
-            iif(
-              () => !!payload.selectFirst,
-              concat(
-                of(
-                  ConversationsActions.selectConversations({
-                    conversationIds: [conversations[0].id],
-                  }),
-                ),
-                of(
-                  UIActions.openFolder({
-                    featureType: FeatureType.Chat,
-                    id: conversations[0].folderId,
-                  }),
-                ),
-              ),
-              EMPTY,
-            ),
+            ...actions,
           );
         }),
         catchError((err) => {
