@@ -40,7 +40,10 @@ export class ConversationService {
     path?: string,
     recursive?: boolean,
   ): Observable<FoldersAndEntities<ConversationInfo>> {
-    return DataService.getDataStorage().getConversationsAndFolders(path, recursive);
+    return DataService.getDataStorage().getConversationsAndFolders(
+      path,
+      recursive,
+    );
   }
 
   public static getConversations(

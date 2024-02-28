@@ -675,7 +675,7 @@ export const conversationsSlice = createSlice({
         options?: {
           selectFirst?: boolean;
           recursive?: boolean;
-        }
+        };
       }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;

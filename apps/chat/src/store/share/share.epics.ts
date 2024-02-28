@@ -24,7 +24,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { Conversation, Message } from '@/src/types/chat';
-import { ApiKeys, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import {
