@@ -32,7 +32,7 @@ export const SelectFolder = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
       dataQa={modalDataQa}
-      containerClassName="flex min-w-full flex-col gap-4 md:min-w-[425px] md:max-w-full"
+      containerClassName="flex min-w-full flex-col gap-4 md:min-w-[425px] sm:w-[525px] w-full"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
