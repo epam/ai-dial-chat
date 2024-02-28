@@ -15,7 +15,7 @@ import classNames from 'classnames';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getPromptRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
@@ -212,11 +212,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const promptRootId = getPromptRootId();
       const folderPath = (
         isNewFolder
           ? getNextDefaultName(
               translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => isRootId(f.folderId)),
+              folders.filter((f) => f.folderId === promptRootId), // only my root prompt folders
             )
           : folderId
       ) as string;

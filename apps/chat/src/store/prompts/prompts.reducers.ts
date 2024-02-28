@@ -253,7 +253,7 @@ export const promptsSlice = createSlice({
       state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
-      state.prompts = state.prompts.concat(payload.prompts);
+      state.prompts = combineEntities(payload.prompts, state.prompts);
     },
     clearPrompts: (state) => {
       state.promptsLoaded = false;

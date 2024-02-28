@@ -64,7 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, isRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -280,7 +280,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           if (!model) {
             return EMPTY;
           }
-
+          const conversationRootId = getConversationRootId();
           const newConversations: Conversation[] = names.map(
             (name: string, index): Conversation => {
               return regenerateConversationId({
@@ -289,7 +289,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     ? name
                     : getNextDefaultName(
                         DEFAULT_CONVERSATION_NAME,
-                        conversations.filter((conv) => isRootId(conv.folderId)), //only root conversations
+                        conversations.filter(
+                          (conv) => conv.folderId === conversationRootId, // only my root conversations
+                        ),
                         index,
                       ),
                 messages: [],
@@ -304,7 +306,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 lastActivityDate: Date.now(),
                 isMessageStreaming: false,
                 status: UploadStatus.LOADED,
-                folderId: getConversationRootId(),
+                folderId: conversationRootId,
               });
             },
           );
@@ -515,14 +517,15 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
+      const conversationRootId = getConversationRootId();
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: getConversationRootId(),
+        folderId: conversationRootId,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          conversations.filter((conv) => isRootId(conv.folderId)),
+          conversations.filter((conv) => conv.folderId === conversationRootId), // only my root conversations
         ),
         lastActivityDate: Date.now(),
       });

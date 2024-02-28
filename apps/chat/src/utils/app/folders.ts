@@ -125,10 +125,11 @@ export const getNextDefaultName = (
               (entity.name.match(regex) &&
                 (parentFolderId ? entity.folderId === parentFolderId : true))),
         )
-        .map(
-          (entity) =>
-            parseInt(entity.name.replace(prefix, ''), 10) ||
-            (startWithEmptyPostfix ? 0 : 1),
+        .map((entity) =>
+          entity.name === defaultName
+            ? 0
+            : parseInt(entity.name.replace(prefix, ''), 10) ||
+              (startWithEmptyPostfix ? 0 : 1),
         ),
       startWithEmptyPostfix ? -1 : 0,
     ) + index; // max number
