@@ -43,6 +43,8 @@ import {
 
 import classNames from 'classnames';
 
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
+
 const menuItemClassNames = classNames(
   'flex max-w-[300px] cursor-pointer items-center gap-3 focus-visible:border-none focus-visible:outline-none',
 );
@@ -119,6 +121,15 @@ export const MenuComponent = forwardRef<
     nodeId,
     open: isOpen,
     onOpenChange: (isOpened) => {
+      if (
+        hasParentWithAttribute(
+          context.dataRef.current.openEvent?.target as Element | null,
+          'data-no-context-menu',
+        )
+      ) {
+        return;
+      }
+
       setIsOpen(isOpened);
       onOpenChange?.(isOpened);
     },
