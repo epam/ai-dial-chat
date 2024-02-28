@@ -96,10 +96,10 @@ dialTest(
           historyConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
+        await dialHomePage.throttleNetwork(API.fileHost);
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
-        await dialHomePage.throttleNetwork(API.fileHost);
         await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
         await page.unroute(API.fileHost);
@@ -146,10 +146,10 @@ dialTest(
         await chatBar.deleteAllEntities();
         await fileApiHelper.deleteAllFiles();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.throttleNetwork(API.fileHost);
         await dialHomePage.uploadData(exportedData, () =>
           chatBar.importButton.click(),
         );
-        await dialHomePage.throttleNetwork(API.fileHost);
         await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
         await page.unroute(API.fileHost);
