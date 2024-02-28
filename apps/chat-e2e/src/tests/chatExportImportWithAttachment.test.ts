@@ -57,11 +57,11 @@ dialTest(
       'Upload images to DALL-E-3 path and root folder and prepare conversations with request and response containing this images',
       async () => {
         dalleImageUrl = await fileApiHelper.putFile(
-          Attachment.sunImageName,
+          Attachment.sunImageFullName(),
           API.modelFilePath(ModelIds.DALLE),
         );
         gptProVisionImageUrl = await fileApiHelper.putFile(
-          Attachment.heartImageName,
+          Attachment.heartImageFullName(),
         );
 
         dalleConversation =
@@ -92,17 +92,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.throttleAPIResponse('**/*');
         await conversations.openConversationDropdownMenu(
           historyConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        await dialHomePage.throttleNetwork(API.fileHost);
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
-        await importExportLoader.stopLoading.click({ force: true });
+        await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
-        await page.unroute(API.fileHost);
+        await page.unrouteAll({ behavior: 'ignoreErrors' });
         const exportedFiles = FileUtil.getExportedFiles();
         expect
           .soft(
@@ -146,13 +146,13 @@ dialTest(
         await chatBar.deleteAllEntities();
         await fileApiHelper.deleteAllFiles();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await dialHomePage.throttleNetwork(API.fileHost);
+        await dialHomePage.throttleAPIResponse('**/*');
         await dialHomePage.uploadData(exportedData, () =>
-          chatBar.importButton.click({ force: true }),
+          chatBar.importButton.click(),
         );
         await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
-        await page.unroute(API.fileHost);
+        await page.unrouteAll({ behavior: 'ignoreErrors' });
         const isConversationImported = await conversations
           .getConversationByName(historyConversation.name)
           .isVisible();

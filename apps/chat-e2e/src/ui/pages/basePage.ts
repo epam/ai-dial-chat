@@ -143,11 +143,4 @@ export class BasePage {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(directory, uploadData.path));
   }
-
-  public async throttleNetwork(url: string, timeout?: number) {
-    await this.page.route(url, async (route) => {
-      await new Promise((f) => setTimeout(f, timeout ?? 4000));
-      await route.continue();
-    });
-  }
 }
