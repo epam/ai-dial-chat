@@ -141,9 +141,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete conversation, re-import exported file and stop import in the middle',
+      'Delete conversation and files, re-import exported file and stop import in the middle',
       async () => {
         await chatBar.deleteAllEntities();
+        await fileApiHelper.deleteAllFiles();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.uploadData(exportedData, () =>
           chatBar.importButton.click(),
@@ -199,19 +200,20 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Download attachment from request and verify attachment url is pointing to import path',
-      async () => {
-        gptProVisionAttachmentPath = `${conversationPath}/${Attachment.heartImageName}`;
-        const gptProVisionActualDownloadUrl =
-          await chatMessages.getChatMessageDownloadUrl(3);
-        expect
-          .soft(
-            gptProVisionActualDownloadUrl,
-            ExpectedMessages.attachmentUrlIsValid,
-          )
-          .toContain(gptProVisionAttachmentPath);
-      },
-    );
+    //TODO: uncomment when https://github.com/epam/ai-dial-chat/issues/865 fixed
+    // await dialTest.step(
+    //   'Download attachment from request and verify attachment url is pointing to import path',
+    //   async () => {
+    //     gptProVisionAttachmentPath = `${conversationPath}/${Attachment.heartImageName}`;
+    //     const gptProVisionActualDownloadUrl =
+    //       await chatMessages.getChatMessageDownloadUrl(3);
+    //     expect
+    //       .soft(
+    //         gptProVisionActualDownloadUrl,
+    //         ExpectedMessages.attachmentUrlIsValid,
+    //       )
+    //       .toContain(gptProVisionAttachmentPath);
+    //   },
+    // );
   },
 );
