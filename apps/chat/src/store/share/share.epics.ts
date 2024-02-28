@@ -408,59 +408,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         ...payload.resources.folders,
       ].some((item) => item.id === decodedAcceptedId);
 
-      if (decodedAcceptedId && isNewResource) {
-        if (isConversationId(acceptedId)) {
-          if (isFolderId(acceptedId)) {
-            actions.push(
-              ConversationsActions.uploadConversationsWithFolders({
-                paths: [decodedAcceptedId],
-                options: {
-                  selectFirst: true,
-                  recursive: true,
-                },
-              }),
-            );
-          } else {
-            actions.push(
-              ConversationsActions.selectConversations({
-                conversationIds: [decodedAcceptedId],
-              }),
-            );
-          }
-        } else if (isPromptId(acceptedId)) {
-          if (isFolderId(acceptedId)) {
-            actions.push(
-              PromptsActions.uploadChildPromptsWithFolders({
-                ids: [decodedAcceptedId],
-                options: {
-                  selectFirst: true,
-                  recursive: true,
-                },
-              }),
-            );
-          } else {
-            actions.push(
-              PromptsActions.setSelectedPrompt({
-                promptId: decodedAcceptedId,
-              }),
-            );
-            actions.push(
-              PromptsActions.uploadPrompt({
-                promptId: decodedAcceptedId,
-              }),
-            );
-          }
-          actions.push(
-            PromptsActions.setIsEditModalOpen({
-              isOpen: true,
-              isPreview: true,
-            }),
-          );
-        }
-
-        actions.push(ShareActions.resetShareId());
-      }
-
       if (payload.featureType === FeatureType.Chat) {
         if (payload.sharedWith === ShareRelations.others) {
           const conversations = ConversationsSelectors.selectConversations(
@@ -603,6 +550,60 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             );
         }
       }
+
+      if (decodedAcceptedId && isNewResource) {
+        if (isConversationId(acceptedId)) {
+          if (isFolderId(acceptedId)) {
+            actions.push(
+              ConversationsActions.uploadConversationsWithFolders({
+                paths: [decodedAcceptedId],
+                options: {
+                  selectFirst: true,
+                  recursive: true,
+                },
+              }),
+            );
+          } else {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [decodedAcceptedId],
+              }),
+            );
+          }
+        } else if (isPromptId(acceptedId)) {
+          if (isFolderId(acceptedId)) {
+            actions.push(
+              PromptsActions.uploadChildPromptsWithFolders({
+                ids: [decodedAcceptedId],
+                options: {
+                  selectFirst: true,
+                  recursive: true,
+                },
+              }),
+            );
+          } else {
+            actions.push(
+              PromptsActions.setSelectedPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+            actions.push(
+              PromptsActions.uploadPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+          }
+          actions.push(
+            PromptsActions.setIsEditModalOpen({
+              isOpen: true,
+              isPreview: true,
+            }),
+          );
+        }
+
+        actions.push(ShareActions.resetShareId());
+      }
+
 
       return concat(actions);
     }),
