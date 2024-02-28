@@ -28,12 +28,23 @@ export const getConversationRootId = (bucket?: string) =>
 export const getPromptRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Prompt, bucket });
 
+export const isConversationsId = (id?: string): boolean =>
+  id?.startsWith(`${ApiKeys.Conversations}/`) ?? false;
+
+export const isPrompsId = (id?: string): boolean =>
+  id?.startsWith(`${ApiKeys.Prompts}/`) ?? false;
+
+export const isMyConversationsId = (id?: string): boolean =>
+  id?.startsWith(getConversationRootId()) ?? false;
+
+export const isMyPrompsId = (id?: string): boolean =>
+  id?.startsWith(getPromptRootId()) ?? false;
+
 export const isRootId = (id?: string) => {
-  return id?.split('/').length === 2 || false;
+  return id?.split('/').length === 2 ?? false;
 };
 
 export const isRootConversationsId = (id?: string) =>
-  isRootId(id) && id?.startsWith(`${ApiKeys.Conversations}/`);
+  isRootId(id) && isConversationsId(id);
 
-export const isRootPromptId = (id?: string) =>
-  isRootId(id) && id?.startsWith(`${ApiKeys.Prompts}/`);
+export const isRootPromptId = (id?: string) => isRootId(id) && isPrompsId(id);
