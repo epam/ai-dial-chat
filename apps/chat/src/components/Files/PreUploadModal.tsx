@@ -305,7 +305,7 @@ export const PreUploadDialog = ({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 p-6 md:min-w-[425px] md:max-w-[500px]"
+      containerClassName="flex flex-col gap-4 p-6 md:w-[425px]"
       dataQa="pre-upload-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
