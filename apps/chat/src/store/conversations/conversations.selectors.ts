@@ -11,7 +11,7 @@ import {
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
-import { isMyConversationsId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
@@ -406,7 +406,7 @@ export const selectCanAttach = createSelector(
 export const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId: string) => folderId],
   (folders, folderId) => {
-    if (!isMyConversationsId(folderId)) {
+    if (!folderId.startsWith(getConversationRootId())) {
       return true;
     }
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);

@@ -34,12 +34,6 @@ export const isConversationsId = (id?: string): boolean =>
 export const isPrompsId = (id?: string): boolean =>
   id?.startsWith(`${ApiKeys.Prompts}/`) ?? false;
 
-export const isMyConversationsId = (id?: string): boolean =>
-  id?.startsWith(getConversationRootId()) ?? false;
-
-export const isMyPrompsId = (id?: string): boolean =>
-  id?.startsWith(getPromptRootId()) ?? false;
-
 export const isRootId = (id?: string) => {
   return id?.split('/').length === 2 ?? false;
 };

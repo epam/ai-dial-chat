@@ -7,7 +7,7 @@ import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
 import { getOpenAIEntityFullName } from './conversation';
-import { isMyConversationsId, isMyPrompsId, isRootId } from './id';
+import { getConversationRootId, getPromptRootId } from './id';
 
 export const doesPromptOrConversationContainSearchTerm = (
   conversation: ConversationInfo | PromptInfo,
@@ -55,8 +55,8 @@ export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.sharedWithMe;
 
 export const MyItemFilter: EntityFilter<ShareEntity> = (item) =>
-  isRootId(item.folderId) &&
-  (isMyConversationsId(item.folderId) || isMyPrompsId(item.folderId));
+  item.folderId === getConversationRootId() ||
+  item.folderId === getPromptRootId();
 
 export const SharedWithMeFilters: EntityFilters = {
   searchFilter: TrueFilter,

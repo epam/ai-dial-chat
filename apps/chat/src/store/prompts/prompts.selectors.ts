@@ -7,7 +7,7 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
-import { isMyPrompsId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
@@ -203,7 +203,7 @@ export const selectSelectedPromptFoldersIds = createSelector(
 export const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId: string) => folderId],
   (folders, folderId) => {
-    if (!isMyPrompsId(folderId)) {
+    if (!folderId.startsWith(getPromptRootId())) {
       return true;
     }
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
