@@ -32,7 +32,6 @@ import {
   HTMLProps,
   MouseEvent,
   ReactNode,
-  RefObject,
   SetStateAction,
   createContext,
   forwardRef,
