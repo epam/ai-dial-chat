@@ -21,7 +21,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { isRootId } from './id';
 
-import escapeStringRegexp from 'escape-string-regexp';
+import escapeRegExp from 'lodash-es/escapeRegExp';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
@@ -108,7 +108,7 @@ export const getNextDefaultName = (
   parentFolderId?: string,
 ): string => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
+  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
     return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;

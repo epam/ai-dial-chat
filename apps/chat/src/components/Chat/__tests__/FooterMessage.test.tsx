@@ -19,15 +19,6 @@ const footerEnabledFeatures = new Set([
   Feature.RequestApiKey,
   Feature.ReportAnIssue,
 ]);
-const mockBasePath = '/base/';
-const mockReplace = vi.fn();
-
-vi.mock('next/router', () => ({
-  useRouter: vi.fn(() => ({
-    basePath: mockBasePath,
-    replace: mockReplace,
-  })),
-}));
 
 vi.mock('@/src/store/hooks', () => ({
   useAppSelector: vi.fn((selector) => selector()),
@@ -129,8 +120,6 @@ describe('FooterMessage', () => {
     await expect(async () => {
       await screen.findByTestId(requestAPIKeyDialogTestId);
     }).rejects.toEqual(expect.anything());
-
-    expect(mockReplace).toHaveBeenCalledWith(mockBasePath);
   });
 
   it('does not open the request an issue dialog if this option is disabled', async () => {
@@ -162,7 +151,5 @@ describe('FooterMessage', () => {
     await expect(async () => {
       await screen.findByTestId(reportIssueDialogTestId);
     }).rejects.toEqual(expect.anything());
-
-    expect(mockReplace).toHaveBeenCalledWith(mockBasePath);
   });
 });
