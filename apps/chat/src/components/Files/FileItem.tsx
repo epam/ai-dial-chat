@@ -63,6 +63,7 @@ export const FileItem = ({
   }, [item.id, onEvent]);
 
   const handleRemove = useCallback(() => {
+    setIsContextMenu(false);
     onEvent?.(FileItemEventIds.Remove, item.id);
   }, [item.id, onEvent]);
 
