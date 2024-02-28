@@ -456,7 +456,7 @@ export const FileManagerModal = ({
         )}
         description={
           t(
-            `Are you sure that you want to remove these file${deletingFileIds.length > 1 ? 's' : ''}?`,
+            `Are you sure that you want to remove ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
           ) || ''
         }
         confirmLabel={t('Delete')}
