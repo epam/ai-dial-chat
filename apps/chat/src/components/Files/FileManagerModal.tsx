@@ -40,6 +40,7 @@ interface Props {
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
   isInConversation?: boolean;
+  isInLogoSelect?: boolean;
   onClose: (result: boolean | string[]) => void;
 }
 
@@ -48,6 +49,7 @@ export const FileManagerModal = ({
   allowedTypes = [],
   initialSelectedFilesIds = [],
   isInConversation = false,
+  isInLogoSelect = false,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
@@ -80,6 +82,10 @@ export const FileManagerModal = ({
     initialSelectedFilesIds,
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
+
+  const headerLabel = isInLogoSelect
+    ? t('Select custom logo')
+    : t('Manage attachments');
 
   const {
     handleRenameFolder,
@@ -280,7 +286,7 @@ export const FileManagerModal = ({
       <div className="flex flex-col gap-2 overflow-auto p-6">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
-            {isInConversation ? t('Attach files') : t('Manage attachments')}
+            {isInConversation ? t('Attach files') : headerLabel}
           </h2>
         </div>
         <p id={descriptionId}>
@@ -432,6 +438,15 @@ export const FileManagerModal = ({
               disabled={selectedFilesIds.length === 0}
             >
               {t('Attach files')}
+            </button>
+          )}
+          {isInLogoSelect && (
+            <button
+              onClick={handleAttachFiles}
+              className="button button-primary"
+              disabled={selectedFilesIds.length === 0}
+            >
+              {t('Select file')}
             </button>
           )}
         </div>
