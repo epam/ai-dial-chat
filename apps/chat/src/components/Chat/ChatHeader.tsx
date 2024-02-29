@@ -107,11 +107,12 @@ export const ChatHeader = ({
         {isShowChatInfo && (
           <Tooltip
             tooltip={conversation.name}
-            triggerClassName={`truncate text-center ${
+            triggerClassName={classNames(
+              'truncate text-center',
               isChatFullWidth
-                ? 'flex h-full max-w-full lg:max-w-[90%] items-center justify-center'
-                : ''
-            }`}
+                ? 'flex h-full max-w-full items-center justify-center lg:max-w-[90%]'
+                : '',
+            )}
           >
             <span
               className={classNames('truncate text-center', {
