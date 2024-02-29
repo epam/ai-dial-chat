@@ -267,7 +267,7 @@ export const selectPlaybackActiveIndex = createSelector(
 export const selectIsErrorReplayConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => conv.replay.isError);
+    return conversations.some((conv) => conv.replay?.isError);
   },
 );
 

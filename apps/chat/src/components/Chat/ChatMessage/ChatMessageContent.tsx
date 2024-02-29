@@ -108,7 +108,7 @@ export const ChatMessageContent = ({
     messageIndex == (conversation?.messages.length ?? 0) - 1;
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
-    conversation.isMessageStreaming && isLastMessage;
+    !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
   const messageRef = useRef<HTMLDivElement>(null);
 
