@@ -1,3 +1,4 @@
+import { defaultReplay } from '@/chat/constants/replay';
 import { Message, Role, Stage } from '@/chat/types/chat';
 import { FolderType } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
@@ -355,8 +356,14 @@ export class ConversationData extends FolderData {
     replayConversation.id = uuidv4();
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
+    if (!replayConversation.replay) {
+      replayConversation.replay = defaultReplay;
+    }
     replayConversation.replay.isReplay = true;
     replayConversation.replay.activeReplayIndex = 0;
+    if (!replayConversation.replay.replayUserMessagesStack) {
+      replayConversation.replay.replayUserMessagesStack = [];
+    }
     replayConversation.replay.replayUserMessagesStack.push(...userMessages);
     replayConversation.replay.replayAsIs = true;
     return replayConversation;
