@@ -479,12 +479,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         },
         isReplay: false,
         isPlayback: true,
-        replay: {
-          isReplay: false,
-          replayUserMessagesStack: [],
-          activeReplayIndex: 0,
-          replayAsIs: false,
-        },
+        replay: defaultReplay,
       });
 
       return of(
@@ -1627,7 +1622,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
-      const activeMessage = messagesStack[conv.replay.activeReplayIndex];
+      const activeMessage = messagesStack[conv.replay.activeReplayIndex ?? 0];
       let updatedConversation: Conversation = conv;
 
       if (
@@ -1679,7 +1674,8 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
                     : 1)) ||
                 0
               : 0,
-            activeReplayIndex: updatedConversation.replay.activeReplayIndex,
+            activeReplayIndex:
+              updatedConversation.replay.activeReplayIndex ?? 0,
             message: activeMessage,
           }),
         ),
@@ -1704,7 +1700,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             return of(
               ConversationsActions.replayConversation({
                 conversationId: updatedConversation.id,
-                activeReplayIndex: convReplay.activeReplayIndex + 1,
+                activeReplayIndex: (convReplay.activeReplayIndex ?? 0) + 1,
               }),
             );
           }),

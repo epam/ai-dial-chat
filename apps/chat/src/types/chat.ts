@@ -87,7 +87,7 @@ export interface Replay {
   replayAsIs?: boolean;
   isReplay: boolean;
   replayUserMessagesStack?: Message[];
-  activeReplayIndex: number;
+  activeReplayIndex?: number;
   isError?: boolean;
 }
 
