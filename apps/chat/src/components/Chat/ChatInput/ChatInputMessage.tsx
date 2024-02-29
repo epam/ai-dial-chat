@@ -81,14 +81,10 @@ export const ChatInputMessage = ({
   const isLastAssistantMessageEmpty = useAppSelector(
     ConversationsSelectors.selectIsLastAssistantMessageEmpty,
   );
-  const notModelConversations = useAppSelector(
-    ConversationsSelectors.selectNotModelConversations,
-  );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
-  const isError =
-    isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
+  const isError = isLastAssistantMessageEmpty || isMessageError;
 
   const selectedModels = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsModels,
