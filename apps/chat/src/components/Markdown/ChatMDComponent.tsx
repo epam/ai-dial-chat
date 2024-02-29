@@ -1,33 +1,23 @@
 import { Components } from 'react-markdown';
 
-
-
 import classnames from 'classnames';
 
-
-
 import { isSmallScreen } from '@/src/utils/app/mobile';
-
-
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-
-
-import { modelCursorSign, modelCursorSignWithBackquote } from '../../constants/chat';
-
-
+import {
+  modelCursorSign,
+  modelCursorSignWithBackquote,
+} from '../../constants/chat';
 
 import BlinkingCursor from '../Chat/BlinkingCursor';
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
-
-
 import remarkGfm from 'remark-gfm';
-
 
 export const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
