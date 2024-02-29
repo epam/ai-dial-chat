@@ -21,7 +21,7 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '../settings/settings.reducers';

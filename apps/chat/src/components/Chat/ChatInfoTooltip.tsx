@@ -8,7 +8,7 @@ import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
 import { ConversationEntityModel } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';

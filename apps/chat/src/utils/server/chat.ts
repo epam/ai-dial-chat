@@ -1,11 +1,11 @@
 import { NextApiResponse } from 'next';
 
 import { Message, Role } from '@/src/types/chat';
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIError } from '@/src/types/error';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { OpenAIError } from './error';
 import { logger } from './logger';
 
 import { Tiktoken, get_encoding } from '@dqbd/tiktoken';
@@ -93,7 +93,7 @@ export const chatErrorHandler = ({
   msg,
   isStreamingError,
 }: {
-  error: OpenAIError | unknown;
+  error: DialAIError | unknown;
   res: NextApiResponse;
   msg?: string;
   isStreamingError?: boolean;
@@ -102,7 +102,7 @@ export const chatErrorHandler = ({
   const fieldName = isStreamingError ? 'errorMessage' : 'message';
 
   logger.error(error, msg);
-  if (error instanceof OpenAIError) {
+  if (error instanceof DialAIError) {
     // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
     if (['429', '504'].includes(error.code)) {
       return res

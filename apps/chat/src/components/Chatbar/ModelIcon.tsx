@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
 import { EntityType } from '@/src/types/common';
-import { DialAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/models';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 

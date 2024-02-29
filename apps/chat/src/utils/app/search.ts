@@ -1,7 +1,7 @@
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { DialAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/models';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';

@@ -7,7 +7,7 @@ import { getEntities } from '@/src/utils/server/get-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { EntityType } from '@/src/types/common';
-import { CoreAIEntity, DialAIEntity } from '@/src/types/openai';
+import { CoreAIEntity, DialAIEntity } from '@/src/types/models';
 
 import { authOptions } from './auth/[...nextauth]';
 

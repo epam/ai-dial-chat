@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
 import { Stage } from '@/src/types/chat';
-import { DialAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/models';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';

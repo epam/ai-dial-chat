@@ -13,7 +13,7 @@ import classNames from 'classnames';
 
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
-import { DialAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';

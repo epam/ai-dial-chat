@@ -15,7 +15,7 @@ import { useTokenizer } from '@/src/hooks/useTokenizer';
 
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 

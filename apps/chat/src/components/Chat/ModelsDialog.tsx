@@ -14,7 +14,7 @@ import classNames from 'classnames';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
-import { DialAIEntity, DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';

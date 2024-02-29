@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { DialAIEntityModel } from '../types/openai';
+import { DialAIEntityModel } from '../types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';

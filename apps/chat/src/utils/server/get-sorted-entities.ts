@@ -5,7 +5,7 @@ import {
   CoreAIEntity,
   DialAIEntityModel,
   TokenizerModel,
-} from '@/src/types/openai';
+} from '@/src/types/models';
 
 import {
   MAX_PROMPT_TOKENS_DEFAULT_PERCENT,

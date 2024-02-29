@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';

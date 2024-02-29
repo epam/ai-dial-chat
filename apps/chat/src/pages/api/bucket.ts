@@ -3,7 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
-import { OpenAIError } from '@/src/utils/server';
+import { DialAIError } from '@/src/utils/server';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
@@ -30,7 +30,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     if (!response.ok) {
       const serverErrorMessage = await response.text();
-      throw new OpenAIError(serverErrorMessage, '', '', response.status + '');
+      throw new DialAIError(serverErrorMessage, '', '', response.status + '');
     }
 
     const json = (await response.json()) as { bucket: string };

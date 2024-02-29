@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { translate } from '@/src/utils/app/translation';
 
 import { ErrorMessage } from '@/src/types/error';
-import { DialAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/models';
 
 import { errorsMessages } from '@/src/constants/errors';
 

@@ -5,7 +5,7 @@ import { translate } from '@/src/utils/app/translation';
 import { EntityType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { ModelsMap } from '@/src/types/models';
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';

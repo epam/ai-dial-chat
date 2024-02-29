@@ -22,7 +22,7 @@ import {
 
 import { Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';

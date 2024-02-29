@@ -8,16 +8,14 @@ import { isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Addons } from './Addons';

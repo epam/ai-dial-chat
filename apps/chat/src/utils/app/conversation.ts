@@ -12,7 +12,7 @@ import {
   DialAIEntity,
   DialAIEntityAddon,
   DialAIEntityModel,
-} from '@/src/types/openai';
+} from '@/src/types/models';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';

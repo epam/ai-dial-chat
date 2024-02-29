@@ -1,7 +1,7 @@
 import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIError } from '@/src/types/error';
-import { DialAIEntityModel } from '@/src/types/openai';
+import { DialAIError } from '@/src/types/error';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import {
   DIAL_API_HOST,
@@ -18,10 +18,10 @@ import {
 } from 'eventsource-parser';
 import fetch from 'node-fetch';
 
-export { OpenAIError };
+export { DialAIError };
 
-interface OpenAIErrorResponse extends Response {
-  error?: OpenAIError;
+interface DialAIErrorResponse extends Response {
+  error?: DialAIError;
 }
 
 function getUrl(
@@ -95,11 +95,11 @@ export const OpenAIStream = async ({
   });
 
   if (res.status !== 200) {
-    let result: OpenAIErrorResponse;
+    let result: DialAIErrorResponse;
     try {
-      result = (await res.json()) as OpenAIErrorResponse;
+      result = (await res.json()) as DialAIErrorResponse;
     } catch (e) {
-      throw new OpenAIError(
+      throw new DialAIError(
         `Chat Server error: ${res.statusText}`,
         '',
         '',
@@ -107,7 +107,7 @@ export const OpenAIStream = async ({
       );
     }
     if (result.error) {
-      throw new OpenAIError(
+      throw new DialAIError(
         result.error.message ?? '',
         result.error.type ?? '',
         result.error.param ?? '',
@@ -138,7 +138,7 @@ export const OpenAIStream = async ({
             const data = event.data;
             const json = JSON.parse(data);
             if (json.error) {
-              throw new OpenAIError(
+              throw new DialAIError(
                 json.error.message,
                 json.error.type,
                 json.error.param,
@@ -152,7 +152,7 @@ export const OpenAIStream = async ({
 
             if (json.choices?.[0].delta) {
               if (json.choices[0].finish_reason === 'content_filter') {
-                throw new OpenAIError(
+                throw new DialAIError(
                   errorsMessages.contentFiltering,
                   '',
                   '',
