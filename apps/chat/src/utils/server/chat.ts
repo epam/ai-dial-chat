@@ -67,9 +67,33 @@ export function limitMessagesByTokens({
     messagesToSend = [messages[i], ...messagesToSend];
   }
 
+  if (messagesToSend.length === 0) {
+    throw new DialAIError(
+      'User sended messages cannot be empty after limit messages by tokens process',
+      '',
+      '',
+      '400',
+    );
+  }
+
   encoding?.free();
   return messagesToSend;
 }
+
+export const hardLimitMessages = (messages: Message[]) => {
+  let userMessageFound = false;
+  return messages
+    .filter((message) => message.role !== Role.Assistant)
+    .reduce((acc, current) => {
+      if (current.role === Role.User && !userMessageFound) {
+        acc.push(current);
+        userMessageFound = true;
+      } else if (current.role === Role.System) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as Message[]);
+};
 
 export function getMessageCustomContent(
   message: Message,

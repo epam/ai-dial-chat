@@ -62,6 +62,7 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
     maxTotalTokens: number;
     maxResponseTokens: number;
     maxRequestTokens: number;
+    isMaxRequestTokensCustom: boolean;
   };
   type: EntityType;
 }

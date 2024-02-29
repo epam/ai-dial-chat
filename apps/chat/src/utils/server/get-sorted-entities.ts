@@ -126,6 +126,8 @@ export const getSortedEntities = async (token: JWT | null) => {
               maxRequestTokens,
               maxResponseTokens,
               maxTotalTokens,
+              isMaxRequestTokensCustom:
+                typeof entity.limits?.max_prompt_tokens === 'undefined',
             }
           : undefined,
       features: entity.features && {
