@@ -14,7 +14,6 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '../../constants/default-settings';
-import { defaultReplay } from '@/src/constants/replay';
 
 import { constructPath } from './file';
 import { getConversationRootId } from './id';
@@ -87,7 +86,7 @@ export const cleanConversation = (
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
-    replay: conversation.replay || defaultReplay,
+    replay: conversation.replay,
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
     lastActivityDate: conversation.lastActivityDate || Date.now(),

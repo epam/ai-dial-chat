@@ -26,7 +26,6 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-settings';
-import { defaultReplay } from '@/src/constants/replay';
 
 import { BucketService } from '../data/bucket-service';
 import { getConversationRootId } from '../id';
@@ -115,7 +114,6 @@ describe('cleanData Functions', () => {
     model: expectedModel,
     prompt: DEFAULT_SYSTEM_PROMPT,
     temperature: DEFAULT_TEMPERATURE,
-    replay: defaultReplay,
     selectedAddons: [],
     assistantModelId: 'gpt-4',
     folderId: getConversationRootId(bucket),

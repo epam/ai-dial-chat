@@ -1,5 +1,6 @@
-import { TestConversation, TestPrompt } from '@/src/testData';
 import { BucketUtil } from '@/src/utils/bucketUtil';
+
+import { TestConversation, TestPrompt } from '@/src/testData';
 
 export class ItemUtil {
   static conversationIdSeparator = '__';
@@ -18,7 +19,7 @@ export class ItemUtil {
   ) {
     const bucketPath = ItemUtil.getConversationBucketPath();
     const conversationId = `${ItemUtil.conversationIdSeparator}${conversation.name}`;
-    if (conversation.replay.isReplay) {
+    if (conversation.replay?.isReplay) {
       const replayConversationId = `replay${conversationId}`;
       return path.length === 0
         ? `${bucketPath}/${replayConversationId}`

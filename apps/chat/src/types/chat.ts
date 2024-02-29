@@ -72,7 +72,7 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
   prompt: string;
   temperature: number;
-  replay: Replay;
+  replay?: Replay;
   playback?: Playback;
 
   // Addons selected by user clicks
