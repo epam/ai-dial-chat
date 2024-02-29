@@ -89,7 +89,13 @@ export const MessageAssistantButtons = ({
     <div className="mt-4 flex w-full justify-end gap-2">
       <div className="ml-1 flex items-center">
         {messageCopied ? (
-          <IconCheck size={18} className="text-secondary" />
+          <Tooltip
+            placement="top"
+            isTriggerClickable
+            tooltip={t('Text copied')}
+          >
+            <IconCheck size={18} className="text-secondary" />
+          </Tooltip>
         ) : (
           <Tooltip placement="top" isTriggerClickable tooltip={t('Copy text')}>
             <Button onClick={copyOnClick}>
@@ -102,32 +108,44 @@ export const MessageAssistantButtons = ({
         {isLikesEnabled && !!message.responseId && (
           <>
             {message.like !== -1 && (
-              <Button
-                onClick={() => {
-                  if (message.like !== 1) {
-                    onLike(1);
-                  }
-                }}
-                className={message.like !== 1 ? void 0 : 'text-secondary'}
-                disabled={message.like === 1}
-                data-qa="like"
+              <Tooltip
+                placement="top"
+                isTriggerClickable
+                tooltip={message.like !== 1 ? t('Like') : t('Liked')}
               >
-                <IconThumbUp size={18} />
-              </Button>
+                <Button
+                  onClick={() => {
+                    if (message.like !== 1) {
+                      onLike(1);
+                    }
+                  }}
+                  className={message.like !== 1 ? void 0 : 'text-secondary'}
+                  disabled={message.like === 1}
+                  data-qa="like"
+                >
+                  <IconThumbUp size={18} />
+                </Button>
+              </Tooltip>
             )}
             {message.like !== 1 && (
-              <Button
-                onClick={() => {
-                  if (message.like !== -1) {
-                    onLike(-1);
-                  }
-                }}
-                className={message.like !== -1 ? void 0 : 'text-secondary'}
-                disabled={message.like === -1}
-                data-qa="dislike"
+              <Tooltip
+                placement="top"
+                isTriggerClickable
+                tooltip={message.like !== -1 ? t('Dislike') : t('Disliked')}
               >
-                <IconThumbDown size={18} />
-              </Button>
+                <Button
+                  onClick={() => {
+                    if (message.like !== -1) {
+                      onLike(-1);
+                    }
+                  }}
+                  className={message.like !== -1 ? void 0 : 'text-secondary'}
+                  disabled={message.like === -1}
+                  data-qa="dislike"
+                >
+                  <IconThumbDown size={18} />
+                </Button>
+              </Tooltip>
             )}
           </>
         )}
