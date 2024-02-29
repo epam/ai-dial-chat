@@ -87,8 +87,8 @@ export class BasePage {
     });
   }
 
-  async unRouteResponse(url: string) {
-    await this.page.unroute(url);
+  async unRouteAllResponses() {
+    await this.page.unrouteAll({ behavior: 'ignoreErrors' });
   }
 
   async reloadPage() {

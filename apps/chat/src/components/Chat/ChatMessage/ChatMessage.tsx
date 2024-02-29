@@ -2,10 +2,13 @@ import { FC, memo, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, Message } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ChatMessageContent } from '@/src/components/Chat/ChatMessage/ChatMessageContent';
 import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
@@ -35,6 +38,8 @@ export const ChatMessage: FC<Props> = memo(
     const [clientX, setClientX] = useState(0);
     const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
       useState(false);
+
+    const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
     const handleLike = useCallback(
       (likeStatus: number) => {
@@ -80,7 +85,10 @@ export const ChatMessage: FC<Props> = memo(
       />
     );
 
-    if (!isSmallScreen() || isEditing) {
+    if (
+      (!isSmallScreen() || isEditing || isOverlay) &&
+      !(isMobile() && isOverlay) // skip if overlay on mobile
+    ) {
       return (
         <>
           <ChatMessageContent
@@ -94,6 +102,7 @@ export const ChatMessage: FC<Props> = memo(
             onLike={handleLike}
             onCopy={handleCopy}
             message={message}
+            withButtons
             {...props}
           />
           {confirmationDialog}

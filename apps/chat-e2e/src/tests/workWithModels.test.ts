@@ -450,7 +450,7 @@ dialTest(
     await dialTest.step(
       'Verify no content received and model icon is visible',
       async () => {
-        await dialHomePage.unRouteResponse(API.chatHost);
+        await dialHomePage.unRouteAllResponses();
         const receivedContent = await chatMessages.getLastMessageContent();
         expect
           .soft(receivedContent, ExpectedMessages.messageContentIsValid)

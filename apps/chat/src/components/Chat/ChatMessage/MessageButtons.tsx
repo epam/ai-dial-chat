@@ -20,7 +20,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
-  className = 'invisible group-hover:visible',
+  className,
   type = 'button',
   ...props
 }) => {
@@ -28,7 +28,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-secondary focus:visible [&:not(:disabled)]:hover:text-accent-primary',
+        'text-secondary [&:not(:disabled)]:hover:text-accent-primary',
         className,
       )}
       {...props}
@@ -50,19 +50,19 @@ export const MessageUserButtons = ({
   editDisabled,
 }: MessageUserButtonsProps) => {
   return (
-    <div className="flex w-[60px] flex-col items-center justify-end gap-4 md:flex-row md:items-start md:justify-start md:gap-1">
+    <div className="mt-4 flex w-full items-center justify-end gap-2">
       <button
-        className="invisible text-secondary hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
+        className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
         onClick={toggleEditing}
         disabled={editDisabled}
       >
-        <IconEdit size={20} />
+        <IconEdit size={18} />
       </button>
       <button
-        className="invisible text-secondary hover:text-accent-primary focus:visible group-hover:visible"
+        className="text-secondary hover:text-accent-primary"
         onClick={onDelete}
       >
-        <IconTrash size={20} />
+        <IconTrash size={18} />
       </button>
     </div>
   );
@@ -86,52 +86,66 @@ export const MessageAssistantButtons = ({
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex w-[60px] shrink-0 flex-col justify-between">
-      <div className="ml-1 flex flex-col items-center justify-end gap-4 md:-mr-8 md:ml-0 md:flex-row md:items-start md:justify-start md:gap-1">
+    <div className="mt-4 flex w-full justify-end gap-2">
+      <div className="ml-1 flex items-center">
         {messageCopied ? (
-          <IconCheck size={20} className="text-secondary" />
+          <Tooltip
+            placement="top"
+            isTriggerClickable
+            tooltip={t('Text copied')}
+          >
+            <IconCheck size={18} className="text-secondary" />
+          </Tooltip>
         ) : (
           <Tooltip placement="top" isTriggerClickable tooltip={t('Copy text')}>
             <Button onClick={copyOnClick}>
-              <IconCopy size={20} />
+              <IconCopy size={18} />
             </Button>
           </Tooltip>
         )}
       </div>
-      <div className="bottom-0 right-8 flex flex-row gap-2">
+      <div className="flex flex-row gap-2">
         {isLikesEnabled && !!message.responseId && (
           <>
             {message.like !== -1 && (
-              <Button
-                onClick={() => {
-                  if (message.like !== 1) {
-                    onLike(1);
-                  }
-                }}
-                className={
-                  message.like !== 1 ? void 0 : 'visible text-secondary'
-                }
-                disabled={message.like === 1}
-                data-qa="like"
+              <Tooltip
+                placement="top"
+                isTriggerClickable
+                tooltip={message.like !== 1 ? t('Like') : t('Liked')}
               >
-                <IconThumbUp size={24} />
-              </Button>
+                <Button
+                  onClick={() => {
+                    if (message.like !== 1) {
+                      onLike(1);
+                    }
+                  }}
+                  className={message.like !== 1 ? void 0 : 'text-secondary'}
+                  disabled={message.like === 1}
+                  data-qa="like"
+                >
+                  <IconThumbUp size={18} />
+                </Button>
+              </Tooltip>
             )}
             {message.like !== 1 && (
-              <Button
-                onClick={() => {
-                  if (message.like !== -1) {
-                    onLike(-1);
-                  }
-                }}
-                className={
-                  message.like !== -1 ? void 0 : 'visible text-secondary'
-                }
-                disabled={message.like === -1}
-                data-qa="dislike"
+              <Tooltip
+                placement="top"
+                isTriggerClickable
+                tooltip={message.like !== -1 ? t('Dislike') : t('Disliked')}
               >
-                <IconThumbDown size={24} />
-              </Button>
+                <Button
+                  onClick={() => {
+                    if (message.like !== -1) {
+                      onLike(-1);
+                    }
+                  }}
+                  className={message.like !== -1 ? void 0 : 'text-secondary'}
+                  disabled={message.like === -1}
+                  data-qa="dislike"
+                >
+                  <IconThumbDown size={18} />
+                </Button>
+              </Tooltip>
             )}
           </>
         )}
