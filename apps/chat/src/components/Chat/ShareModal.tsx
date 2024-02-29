@@ -4,11 +4,14 @@ import {
   MouseEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { getShareType } from '@/src/utils/app/share';
 
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -33,6 +36,14 @@ export default function ShareModal() {
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
+  const shareFeatureType = useAppSelector(
+    ShareSelectors.selectShareFeatureType,
+  );
+  const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
+
+  const sharingType = useMemo(() => {
+    return getShareType(shareFeatureType, isFolder);
+  }, [shareFeatureType, isFolder]);
   const [url, setUrl] = useState('');
 
   useEffect(() => {
@@ -77,6 +88,9 @@ export default function ShareModal() {
       <div className="flex flex-col justify-between gap-2">
         <p className="text-sm text-secondary">
           {t('share.modal.link.description')}
+        </p>
+        <p className="text-sm text-secondary">
+          {t('share.modal.link', { context: sharingType })}
         </p>
         <div className="relative mt-2">
           <Tooltip tooltip={url}>

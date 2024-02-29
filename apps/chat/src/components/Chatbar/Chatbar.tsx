@@ -2,6 +2,8 @@ import { DragEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
 import { ConversationInfo } from '@/src/types/chat';
@@ -14,9 +16,11 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
@@ -29,6 +33,9 @@ const ChatActionsBlock = () => {
   const dispatch = useAppDispatch();
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const isActiveNewConversationRequest = useAppSelector(
+    ConversationsSelectors.selectIsActiveNewConversationRequest,
   );
 
   return (
@@ -43,10 +50,14 @@ const ChatActionsBlock = () => {
           );
           dispatch(ConversationsActions.resetSearch());
         }}
-        disabled={!!messageIsStreaming}
+        disabled={messageIsStreaming || isActiveNewConversationRequest}
         data-qa="new-entity"
       >
-        <PlusIcon className="text-secondary" width={18} height={18} />
+        {isActiveNewConversationRequest ? (
+          <Spinner size={18} className="text-secondary" />
+        ) : (
+          <PlusIcon className="text-secondary" width={18} height={18} />
+        )}
         {t('New conversation')}
       </button>
     </div>
@@ -54,10 +65,15 @@ const ChatActionsBlock = () => {
 };
 
 export const Chatbar = () => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
   const areEntitiesUploaded = useAppSelector(
     ConversationsSelectors.areConversationsUploaded,
   );
@@ -75,6 +91,13 @@ export const Chatbar = () => {
       searchTerm,
     ),
   );
+  const filteredFolders = useAppSelector((state) =>
+    ConversationsSelectors.selectFilteredFolders(
+      state,
+      myItemsFilters,
+      searchTerm,
+    ),
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent) => {
@@ -82,17 +105,42 @@ export const Chatbar = () => {
         const conversationData = e.dataTransfer.getData(MoveType.Conversation);
         if (conversationData) {
           const conversation = JSON.parse(conversationData);
+          const folderId = getConversationRootId();
+
+          if (
+            !isEntityNameOnSameLevelUnique(
+              conversation.name,
+              { ...conversation, folderId },
+              allConversations,
+            )
+          ) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  'Conversation with name "{{name}}" already exists at the root.',
+                  {
+                    ns: 'chat',
+                    name: conversation.name,
+                  },
+                ),
+                type: 'error',
+              }),
+            );
+
+            return;
+          }
+
           dispatch(
             ConversationsActions.updateConversation({
               id: conversation.id,
-              values: { folderId: undefined },
+              values: { folderId },
             }),
           );
           dispatch(ConversationsActions.resetSearch());
         }
       }
     },
-    [dispatch],
+    [allConversations, dispatch, t],
   );
 
   return (
@@ -104,6 +152,7 @@ export const Chatbar = () => {
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}
       filteredItems={filteredConversations}
+      filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
       handleSearchTerm={(searchTerm: string) =>

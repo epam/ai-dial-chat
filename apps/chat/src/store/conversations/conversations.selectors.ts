@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { compareConversationsByDate } from '@/src/utils/app/conversation';
+import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -11,11 +11,11 @@ import {
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
-  searchSectionFolders,
 } from '@/src/utils/app/search';
 import {
   isEntityExternal,
@@ -24,7 +24,7 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -32,7 +32,11 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
+
+import { Feature } from '@epam/ai-dial-shared';
+import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
@@ -47,8 +51,10 @@ export const selectFilteredConversations = createSelector(
     selectConversations,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
+    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
+      ignoreSectionFilter,
   ],
-  (conversations, filters, searchTerm?) => {
+  (conversations, filters, searchTerm?, ignoreSectionFilter?) => {
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
@@ -56,8 +62,9 @@ export const selectFilteredConversations = createSelector(
             conversation,
             searchTerm,
           )) &&
-        filters.searchFilter(conversation) &&
-        filters.sectionFilter(conversation),
+        (filters.searchFilter?.(conversation) ?? true) &&
+        (ignoreSectionFilter ||
+          (filters.sectionFilter?.(conversation) ?? true)),
     );
   },
 );
@@ -104,22 +111,17 @@ export const selectFilteredFolders = createSelector(
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredConversations(state, filters, searchTerm),
+      entities: selectFilteredConversations(state, filters, searchTerm, true),
       searchTerm,
       includeEmptyFolders,
     }),
-);
-
-export const selectSectionFolders = createSelector(
-  [selectFolders, (_state, filters: EntityFilters) => filters],
-  (folders, filters) => searchSectionFolders(folders, filters),
 );
 
 export const selectLastConversation = createSelector(
   [selectConversations],
   (conversations): ConversationInfo | undefined => {
     if (!conversations.length) return undefined;
-    return [...conversations].sort(compareConversationsByDate)[0];
+    return sortByDateAndName([...conversations])[0];
   },
 );
 export const selectConversation = createSelector(
@@ -166,6 +168,18 @@ export const selectChildAndCurrentFoldersIdsById = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
     return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
+  },
+);
+export const selectFullTreeChildConversationsByFolderId = createSelector(
+  [selectConversations, selectChildAndCurrentFoldersIdsById],
+  (conversations, foldersIds) => {
+    return conversations.filter((conv) => foldersIds.has(conv.folderId));
+  },
+);
+export const selectFullTreeChildFoldersByFolderId = createSelector(
+  [selectFolders, selectChildAndCurrentFoldersIdsById],
+  (folders, foldersIds) => {
+    return folders.filter((folder) => foldersIds.has(folder.id));
   },
 );
 export const selectFirstSelectedConversation = createSelector(
@@ -253,7 +267,7 @@ export const selectPlaybackActiveIndex = createSelector(
 export const selectIsErrorReplayConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => conv.replay.isError);
+    return conversations.some((conv) => conv.replay?.isError);
   },
 );
 
@@ -311,16 +325,6 @@ export const selectIsLastAssistantMessageEmpty = createSelector(
   },
 );
 
-export const selectNotModelConversations = createSelector(
-  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
-  (conversations, modelsMap) => {
-    return conversations.some(
-      (conv) =>
-        modelsMap[conv.model.id]?.type !== EntityType.Model ||
-        conv.selectedAddons.length > 0,
-    );
-  },
-);
 const selectSelectedConversationsModels = createSelector(
   [selectSelectedConversations, ModelsSelectors.selectModelsMap],
   (conversations, modelsMap) => {
@@ -364,16 +368,37 @@ export const selectMaximumAttachmentsAmount = createSelector(
     }
 
     return Math.min(
-      ...models.map((model) =>
-        model?.inputAttachmentTypes ? Number.MAX_SAFE_INTEGER : 0,
+      ...models.map(
+        (model) => model?.maxInputAttachments ?? Number.MAX_SAFE_INTEGER,
       ),
     );
   },
 );
 
+export const selectCanAttach = createSelector(
+  [
+    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
+    selectSelectedConversationsModels,
+  ],
+  (displayAttachFunctionality, models) => {
+    if (!displayAttachFunctionality || models.length === 0) {
+      return false;
+    }
+
+    return (
+      Math.min(
+        ...models.map((model) => model?.inputAttachmentTypes?.length ?? 0),
+      ) > 0
+    );
+  },
+);
+
 export const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId?: string) => folderId],
-  (folders, folderId?) => {
+  [selectFolders, (_state: RootState, folderId: string) => folderId],
+  (folders, folderId) => {
+    if (!folderId.startsWith(getConversationRootId())) {
+      return true;
+    }
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
     return parentFolders.some((folder) => isEntityExternal(folder));
   },
@@ -430,8 +455,8 @@ export const selectTemporaryFolders = createSelector(
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
-    return folders.filter((folder) =>
-      PublishedWithMeFilter.sectionFilter(folder),
+    return folders.filter(
+      (folder) => PublishedWithMeFilter.sectionFilter?.(folder) ?? folder,
     );
   },
 );
@@ -462,13 +487,8 @@ export const selectNewAddedFolderId = createSelector(
   },
 );
 
-export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] => {
-  const map = new Map<string, DialFile>();
-  attachments.forEach((file) =>
-    map.set(constructPath(file.relativePath, file.name), file),
-  );
-  return Array.from(map.values());
-};
+export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] =>
+  uniqBy(attachments, (file) => constructPath(file.relativePath, file.name));
 
 export const getAttachments = createSelector(
   [(state) => state, (_state: RootState, entityId: string) => entityId],
@@ -569,4 +589,16 @@ export const selectIsCompareLoading = createSelector(
   (state) => {
     return state.compareLoading;
   },
+);
+
+export const selectIsActiveNewConversationRequest = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isActiveNewConversationRequest;
+  },
+);
+
+export const selectIsChatsBackedUp = createSelector(
+  [rootSelector],
+  (state) => state.isChatsBackedUp,
 );

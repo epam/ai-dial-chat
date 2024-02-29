@@ -1,10 +1,12 @@
 import { Observable } from 'rxjs';
 
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
+import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
 
-import { FolderInterface } from '@/src/types/folder';
+import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
+import { prepareEntityName } from '../common';
 import { getPathToFolderById } from '../folders';
 import { DataService } from './data-service';
 
@@ -24,15 +26,21 @@ export class PromptService {
     return DataService.getDataStorage().getPrompts(path, recursive);
   }
 
+  public static getPromptsAndFolders(
+    path?: string,
+  ): Observable<FoldersAndEntities<PromptInfo>> {
+    return DataService.getDataStorage().getPromptsAndFolders(path);
+  }
+
   public static getPrompt(info: PromptInfo): Observable<Prompt | null> {
     return DataService.getDataStorage().getPrompt(info);
   }
 
-  public static setPrompts(prompts: Prompt[]): Observable<void> {
+  public static setPrompts(prompts: Prompt[]): Observable<PromptInfo> {
     return DataService.getDataStorage().setPrompts(prompts);
   }
 
-  public static createPrompt(prompt: Prompt): Observable<void> {
+  public static createPrompt(prompt: Prompt): Observable<PromptInfo | null> {
     return DataService.getDataStorage().createPrompt(prompt);
   }
 
@@ -48,18 +56,46 @@ export class PromptService {
 export const getPreparedPrompts = ({
   prompts,
   folders,
+  addRoot = false,
+}: {
+  prompts: Prompt[];
+  folders: FolderInterface[];
+  addRoot?: boolean;
+}) =>
+  prompts.map((prompt) => {
+    const { path } = getPathToFolderById(folders, prompt.folderId, true);
+    const newName = prepareEntityName(prompt.name);
+
+    return {
+      ...prompt,
+      id: addRoot
+        ? constructPath(getPromptRootId(), path, newName)
+        : constructPath(path, newName),
+      name: newName,
+      folderId: addRoot ? constructPath(getPromptRootId(), path) : path,
+    };
+  }); // to send prompts with proper parentPath
+
+export const getImportPreparedPrompts = ({
+  prompts,
+  folders,
 }: {
   prompts: Prompt[];
   folders: FolderInterface[];
 }) =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, true);
-    const newName = prompt.name.replace(notAllowedSymbolsRegex, '');
+    const newName = prepareEntityName(prompt.name);
+
+    const folderId = isRootPromptId(path)
+      ? path
+      : constructPath(getPromptRootId(), path);
+    const promptId = constructPath(folderId, newName);
 
     return {
       ...prompt,
-      id: constructPath(...[path, newName]),
+      id: promptId,
       name: newName,
-      folderId: path,
+      folderId: folderId,
     };
   }); // to send prompts with proper parentPath

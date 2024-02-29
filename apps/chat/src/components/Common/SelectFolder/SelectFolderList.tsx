@@ -4,8 +4,6 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isRootId } from '@/src/utils/app/id';
-
 import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
@@ -19,9 +17,10 @@ import Folder, { FolderProps } from '@/src/components/Folder/Folder';
 
 interface Props<T, P = unknown> {
   folderProps: Omit<FolderProps<T, P>, 'currentFolder'>;
-  handleToggleFolder: (folderId?: string) => void;
+  handleFolderSelect: (folderId: string) => void;
   isAllEntitiesOpened: boolean;
   rootFolderName: string;
+  rootFolderId: string;
   selectedFolderId?: string;
   initiallySelectedFolderId?: string;
   highlightTemporaryFolders?: boolean;
@@ -29,12 +28,13 @@ interface Props<T, P = unknown> {
 
 export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   folderProps,
-  handleToggleFolder,
+  handleFolderSelect,
   isAllEntitiesOpened,
   selectedFolderId,
   initiallySelectedFolderId,
   highlightTemporaryFolders,
   rootFolderName,
+  rootFolderId,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -47,11 +47,11 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
       <button
         className={classNames(
           'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
-          !selectedFolderId
+          selectedFolderId === rootFolderId
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
         )}
-        onClick={() => handleToggleFolder()}
+        onClick={() => handleFolderSelect(rootFolderId)}
       >
         <CaretIconComponent isOpen={isAllEntitiesOpened} />
         {t(rootFolderName)}
@@ -62,7 +62,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             <div className="flex flex-col gap-1 overflow-auto">
               {folderProps.allFolders.map((folder) => {
                 if (
-                  !isRootId(folder.folderId) ||
+                  folder.folderId !== rootFolderId ||
                   (initiallySelectedFolderId &&
                     folder.originalId === initiallySelectedFolderId)
                 ) {

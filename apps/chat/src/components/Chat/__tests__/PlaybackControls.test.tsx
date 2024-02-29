@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 
+import { MutableRefObject } from 'react';
+
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { Role } from '@/src/types/chat';
 
 import {
@@ -18,14 +22,14 @@ vi.mock('@/src/components/Common/FooterMessage', () => ({
 }));
 
 vi.mock('@/src/store/hooks', async () => {
-  const actual: any = await vi.importActual('@/src/store/hooks');
   return {
-    ...actual,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useAppSelector: (selector: any) => selector({}),
-    useAppDispatch: () => (action: any) => action,
+    useAppDispatch: () => (action: AnyAction) => action,
   };
 });
 vi.mock('@/src/store/conversations/conversations.reducers', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const actual: any = await vi.importActual(
     '@/src/store/conversations/conversations.reducers',
   );
@@ -45,6 +49,7 @@ vi.mock('@/src/store/conversations/conversations.reducers', async () => {
 });
 
 vi.mock('@/src/store/ui/ui.reducers', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const actual: any = await vi.importActual('@/src/store/ui/ui.reducers');
   return {
     ...actual,
@@ -65,7 +70,9 @@ window.ResizeObserver =
 describe('PlaybackControls', () => {
   const onScrollDownClick = vi.fn();
   const onResize = vi.fn();
-  const nextMessageBoxRef = { current: null } as any;
+  const nextMessageBoxRef: MutableRefObject<HTMLDivElement | null> = {
+    current: null,
+  };
 
   // cleanup
   beforeEach(() => {
@@ -84,6 +91,7 @@ describe('PlaybackControls', () => {
       {
         id: '1',
         name: '1',
+        folderId: 'conversations/Test',
         playback: {
           isPlayback: true,
           messagesStack: [
@@ -223,6 +231,9 @@ describe('PlaybackControls', () => {
     const playbackPrevMessage = vi.fn();
     vi.mocked(ConversationsActions.playbackPrevMessage).mockImplementation(
       playbackPrevMessage,
+    );
+    vi.mocked(ConversationsSelectors.selectPlaybackActiveIndex).mockReturnValue(
+      2,
     );
     render(
       <PlaybackControls

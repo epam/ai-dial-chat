@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { useRouter } from 'next/router';
-
 import { useUrlHash } from '@/src/hooks/useUrlHash';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -25,8 +23,7 @@ export const FooterMessage = () => {
 
   const [isRequestAPIDialogOpen, setIsRequestAPIDialogOpen] = useState(false);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
-  const router = useRouter();
-  const { hash } = useUrlHash();
+  const { hash, resetHash } = useUrlHash();
 
   useEffect(() => {
     if (hash === requestApiKeyHash) {
@@ -50,7 +47,8 @@ export const FooterMessage = () => {
           isOpen={isRequestAPIDialogOpen}
           onClose={() => {
             setIsRequestAPIDialogOpen(false);
-            router.replace(router.basePath);
+            window.location.hash = '';
+            resetHash();
           }}
         />
       )}
@@ -59,7 +57,8 @@ export const FooterMessage = () => {
           isOpen={isReportIssueDialogOpen}
           onClose={() => {
             setIsReportIssueDialogOpen(false);
-            router.replace(router.basePath);
+            window.location.hash = '';
+            resetHash();
           }}
         />
       )}

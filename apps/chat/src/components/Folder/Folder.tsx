@@ -25,9 +25,9 @@ import {
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
-  compareEntitiesByName,
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
+  sortByName,
 } from '@/src/utils/app/folders';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import {
@@ -38,10 +38,9 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { getBackendResourceTypeByFeatureType } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { BackendDataNodeType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
@@ -144,15 +143,16 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
+  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
   const dragDropElement = useRef<HTMLDivElement>(null);
-
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
   const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, currentFolder, FeatureType.Chat),
+    isEntityOrParentsExternal(state, currentFolder, featureType),
   );
 
   useEffect(() => {
@@ -178,13 +178,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       dispatch(
         ShareActions.share({
           resourceId: currentFolder.id,
-          resourceType: getBackendResourceTypeByFeatureType(featureType),
-          nodeType: BackendDataNodeType.FOLDER,
+          featureType,
+          isFolder: true,
         }),
       );
     },
     [currentFolder.id, dispatch, featureType],
   );
+  const handleUnshare: MouseEventHandler = useCallback((e) => {
+    e.stopPropagation();
+    setIsUnshareConfirmOpened(true);
+  }, []);
 
   const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
     e.stopPropagation();
@@ -208,25 +212,32 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     return openedFoldersIds.includes(currentFolder.id);
   }, [currentFolder.id, openedFoldersIds]);
   const filteredChildFolders = useMemo(() => {
-    return allFolders
-      .filter((folder) => folder.folderId === currentFolder.id)
-      .sort(compareEntitiesByName);
+    return sortByName(
+      allFolders.filter((folder) => folder.folderId === currentFolder.id),
+    );
   }, [currentFolder, allFolders]);
   const filteredChildItems = useMemo(() => {
-    return (
-      allItems
-        ?.filter(
-          (item) =>
-            item.folderId === currentFolder.id &&
-            (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
-        )
-        .sort(compareEntitiesByName) || []
+    return sortByName(
+      allItems?.filter(
+        (item) =>
+          item.folderId === currentFolder.id &&
+          (!searchTerm || doesEntityContainSearchItem(item, searchTerm)),
+      ) || [],
     );
   }, [allItems, currentFolder.id, searchTerm]);
 
   const hasChildElements = useMemo(() => {
     return filteredChildFolders.length > 0 || filteredChildItems.length > 0;
   }, [filteredChildFolders.length, filteredChildItems.length]);
+
+  const hasChildItemOnAnyLevel = useMemo(() => {
+    const prefix = `${currentFolder.id}/`;
+    return allItemsWithoutFilters.some(
+      (entity) =>
+        entity.folderId === currentFolder.id ||
+        entity.folderId.startsWith(prefix),
+    );
+  }, [allItemsWithoutFilters, currentFolder.id]);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -241,7 +252,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const newName = prepareEntityName(renameValue);
+    const newName = prepareEntityName(renameValue, true);
     setRenameValue(newName);
 
     if (
@@ -264,6 +275,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         }),
       );
 
+      return;
+    }
+
+    if (currentFolder.isShared && newName !== currentFolder.name) {
+      setIsConfirmRenaming(true);
+      setIsRenaming(false);
+      setIsContextMenu(false);
       return;
     }
 
@@ -724,12 +742,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onDelete={onDeleteFolder && onDelete}
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
+                    onUnshare={handleUnshare}
                     onPublish={handleOpenPublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onUnpublish={handleOpenUnpublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
+                    isEmpty={!hasChildItemOnAnyLevel}
                   />
                 </div>
               )}
@@ -743,8 +763,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 if (isRenaming) {
                   handleRename();
                 }
-
-                setIsRenaming(false);
               }}
             >
               <CheckIcon
@@ -829,11 +847,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
           heading={t('Confirm deleting folder')}
-          description={
-            t(
-              'Are you sure that you want to remove a folder with all nested elements?',
-            ) || ''
-          }
+          description={`${t('Are you sure that you want to remove a folder with all nested elements?')}${t(
+            currentFolder.isShared
+              ? '\nRemoving will stop sharing and other users will no longer see this folder.'
+              : '',
+          )}`}
           confirmLabel={t('Remove')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
@@ -869,6 +887,55 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           onClose={handleCloseUnpublishModal}
         />
       )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen={isUnshareConfirmOpened}
+          heading={t('Confirm revoking access to {{folderName}}', {
+            folderName: currentFolder.name,
+          })}
+          description={
+            t('Are you sure that you want to revoke access to this folder?') ||
+            ''
+          }
+          confirmLabel={t('Revoke access')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            if (result) {
+              dispatch(
+                ShareActions.revokeAccess({
+                  resourceId: currentFolder.id,
+                  isFolder: true,
+                  featureType,
+                }),
+              );
+            }
+          }}
+        />
+      )}
+      <ConfirmDialog
+        isOpen={isConfirmRenaming}
+        heading={t('Confirm renaming folder')}
+        confirmLabel={t('Rename')}
+        cancelLabel={t('Cancel')}
+        description={
+          t(
+            'Renaming will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          setIsConfirmRenaming(false);
+          if (result) {
+            const newName = prepareEntityName(renameValue, true);
+
+            if (newName) {
+              onRenameFolder!(newName, currentFolder.id);
+            }
+
+            setRenameValue('');
+          }
+        }}
+      />
     </div>
   );
 };

@@ -2,12 +2,13 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { compareEntitiesByName } from '@/src/utils/app/folders';
-import { isRootId } from '@/src/utils/app/id';
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { sortByName } from '@/src/utils/app/folders';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
-  SharedWithMeFilter,
+  SharedWithMeFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
@@ -23,6 +24,7 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
@@ -49,6 +51,8 @@ const PromptFolderTemplate = ({
   filters,
   includeEmpty = false,
 }: promptFolderProps) => {
+  const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
@@ -70,6 +74,9 @@ const PromptFolderTemplate = ({
   );
   const openedFoldersIds = useAppSelector((state) =>
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
+  );
+  const loadingFolderIds = useAppSelector((state) =>
+    PromptsSelectors.selectLoadingFolderIds(state),
   );
 
   const isExternal = useAppSelector((state) =>
@@ -112,23 +119,47 @@ const PromptFolderTemplate = ({
   );
 
   const onDropBetweenFolders = useCallback(
-    (folder: FolderInterface, parentFolderId: string | undefined) => {
+    (folder: FolderInterface) => {
+      const folderId = getPromptRootId();
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          folder.name,
+          { ...folder, folderId },
+          allFolders,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Folder with name "{{name}}" already exists at the root.',
+              {
+                ns: 'folder',
+                name: folder.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       dispatch(
         PromptsActions.updateFolder({
           folderId: folder.id,
-          values: { folderId: parentFolderId },
+          values: { folderId },
         }),
       );
     },
-    [dispatch],
+    [allFolders, dispatch, t],
   );
 
   const handleFolderClick = useCallback(
     (folderId: string) => {
       dispatch(
-        UIActions.toggleFolder({
+        PromptsActions.toggleFolder({
           id: folderId,
-          featureType: FeatureType.Prompt,
         }),
       );
     },
@@ -140,7 +171,6 @@ const PromptFolderTemplate = ({
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
-        parentFolderId={folder.folderId}
         featureType={FeatureType.Prompt}
         denyDrop={isExternal}
       />
@@ -153,6 +183,7 @@ const PromptFolderTemplate = ({
         allItemsWithoutFilters={allPrompts}
         allFolders={promptFolders}
         allFoldersWithoutFilters={allFolders}
+        loadingFolderIds={loadingFolderIds}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
@@ -164,9 +195,19 @@ const PromptFolderTemplate = ({
             }),
           );
         }}
-        onDeleteFolder={(folderId: string) =>
-          dispatch(PromptsActions.deleteFolder({ folderId }))
-        }
+        onDeleteFolder={(folderId: string) => {
+          if (folder.sharedWithMe) {
+            dispatch(
+              ShareActions.discardSharedWithMe({
+                resourceId: folder.id,
+                isFolder: true,
+                featureType: FeatureType.Prompt,
+              }),
+            );
+          } else {
+            dispatch(PromptsActions.deleteFolder({ folderId }));
+          }
+        }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
       />
@@ -174,7 +215,6 @@ const PromptFolderTemplate = ({
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
-          parentFolderId={folder.folderId}
           featureType={FeatureType.Prompt}
           denyDrop={isExternal}
         />
@@ -195,7 +235,7 @@ export const PromptSection = ({
   const { t } = useTranslation(Translation.PromptBar);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
-  const folders = useAppSelector((state) =>
+  const rootFolders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
       state,
       filters,
@@ -207,18 +247,7 @@ export const PromptSection = ({
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
 
-  const rootFolders = useMemo(
-    () => folders.filter(({ folderId }) => isRootId(folderId)),
-    [folders],
-  );
-
-  const rootPrompts = useMemo(
-    () =>
-      prompts
-        .filter(({ folderId }) => isRootId(folderId))
-        .sort(compareEntitiesByName),
-    [prompts],
-  );
+  const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
 
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
@@ -266,7 +295,7 @@ export const PromptSection = ({
             key={folder.id}
             folder={folder}
             isLast={index === arr.length - 1}
-            filters={filters}
+            filters={{ searchFilter: filters.searchFilter }}
             includeEmpty={showEmptyFolders}
           />
         ))}
@@ -312,7 +341,8 @@ export function PromptFolders() {
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
           name: t('Shared with me'),
-          filters: SharedWithMeFilter,
+          filters: SharedWithMeFilters,
+          ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
           openByDefault: true,

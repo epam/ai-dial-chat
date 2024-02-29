@@ -13,7 +13,7 @@ import {
   mergeMap,
   of,
   switchMap,
-  tap,
+  toArray,
   zip,
 } from 'rxjs';
 
@@ -29,12 +29,14 @@ import {
 } from '@/src/utils/app/common';
 import {
   PromptService,
+  getImportPreparedPrompts,
   getPreparedPrompts,
 } from '@/src/utils/app/data/prompt-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  generateNextName,
   getFolderFromId,
   getFoldersFromIds,
   getNextDefaultName,
@@ -42,26 +44,26 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import {
+  cleanPromptsFolders,
   exportPrompt,
   exportPrompts,
-  importPrompts,
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
 import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys, getPromptApiKey } from '@/src/utils/server/api';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -70,33 +72,72 @@ import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
+import uniq from 'lodash-es/uniq';
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.createNewPrompt.match),
     switchMap(() => {
       const prompts = PromptsSelectors.selectPrompts(state$.value);
-
+      const promptRootId = getPromptRootId();
       const newPrompt: Prompt = addGeneratedPromptId({
         name: getNextDefaultName(
           DEFAULT_PROMPT_NAME,
-          prompts.filter((prompt) => !prompt.folderId),
+          prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
         ),
         description: '',
         content: '',
-        folderId: getRootId({ apiKey: ApiKeys.Prompts }),
+        folderId: promptRootId,
       });
-
-      return of(PromptsActions.createNewPromptSuccess({ newPrompt }));
+      return PromptService.createPrompt(newPrompt).pipe(
+        switchMap((apiPrompt) => {
+          return concat(
+            iif(
+              // check if something renamed
+              () => apiPrompt?.name !== newPrompt.name,
+              of(PromptsActions.uploadPromptsWithFoldersRecursive()),
+              of(
+                PromptsActions.createNewPromptSuccess({
+                  newPrompt,
+                }),
+              ),
+            ),
+            of(PromptsActions.setIsActiveNewPromptRequest(false)),
+          );
+        }),
+        catchError((err) => {
+          console.error("New prompt wasn't created:", err);
+          return concat(
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
+                ),
+              ),
+            ),
+            of(PromptsActions.setIsActiveNewPromptRequest(false)),
+          );
+        }),
+      );
     }),
   );
 
-const createNewPromptSuccessEpic: AppEpic = (action$) =>
+const saveNewPromptEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PromptsActions.createNewPromptSuccess.match),
+    filter(PromptsActions.saveNewPrompt.match),
     switchMap(({ payload }) =>
       PromptService.createPrompt(payload.newPrompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        switchMap(() => of(PromptsActions.createNewPromptSuccess(payload))),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
       ),
     ),
   );
@@ -117,7 +158,16 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       promptsFolders: PromptsSelectors.selectFolders(state$.value),
     })),
     switchMap(({ promptsFolders }) => {
-      return PromptService.setPromptFolders(promptsFolders);
+      return PromptService.setPromptFolders(promptsFolders).pipe(
+        catchError((err) => {
+          console.error('An error occurred during the saving folders', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('An error occurred during the saving folders'),
+            ),
+          );
+        }),
+      );
     }),
     ignoreElements(),
   );
@@ -139,7 +189,12 @@ const getOrUploadPrompt = (
     });
 
     return forkJoin({
-      prompt: PromptService.getPrompt(prompt),
+      prompt: PromptService.getPrompt(prompt).pipe(
+        catchError((err) => {
+          console.error('The prompt was not found:', err);
+          return of(null);
+        }),
+      ),
       payload: of(payload),
     });
   } else {
@@ -153,9 +208,17 @@ const getOrUploadPrompt = (
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.savePrompt.match),
-    switchMap(({ payload: newPrompt }) => {
-      return PromptService.updatePrompt(newPrompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    switchMap(({ payload: newPrompt }) =>
+      PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
+    ),
+    catchError((err) => {
+      console.error(err);
+      return of(
+        UIActions.showErrorToast(
+          translate(
+            'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
+          ),
+        ),
       );
     }),
   );
@@ -165,15 +228,33 @@ const recreatePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.recreatePrompt.match),
     mergeMap(({ payload }) => {
       const { parentPath } = splitEntityId(payload.old.id);
-      return concat(
-        PromptService.createPrompt(payload.new).pipe(
-          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
-        ),
+      return zip(
+        PromptService.createPrompt(payload.new),
         PromptService.deletePrompt({
           id: payload.old.id,
-          folderId: parentPath || getRootId({ apiKey: ApiKeys.Prompts }),
+          folderId: parentPath || getPromptRootId(),
           name: payload.old.name,
-        }).pipe(switchMap(() => EMPTY)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        }),
+      ).pipe(
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return concat(
+            of(
+              PromptsActions.recreatePromptFail({
+                newId: payload.new.id,
+                oldPrompt: payload.old,
+              }),
+            ),
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the prompt. Please refresh the page.',
+                ),
+              ),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -189,7 +270,13 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       };
 
       if (!prompt) {
-        return EMPTY; // TODO: handle?
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this prompt has been deleted. Please reload the page',
+            ),
+          ),
+        );
       }
 
       const newPrompt: Prompt = {
@@ -217,7 +304,17 @@ export const deletePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.deletePrompt.match),
     switchMap(({ payload }) => {
       return PromptService.deletePrompt(payload.prompt).pipe(
-        switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+        switchMap(() => EMPTY),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                `An error occurred while removing the prompt "${payload.prompt.name}"`,
+              ),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -240,14 +337,40 @@ const deletePromptsEpic: AppEpic = (action$) =>
       deletePrompts: payload.promptsToRemove,
     })),
     switchMap(({ deletePrompts }) =>
-      concat(
-        of(
-          PromptsActions.deletePromptsSuccess({
-            deletePrompts,
-          }),
+      zip(
+        deletePrompts.map((info) =>
+          PromptService.deletePrompt(info).pipe(
+            switchMap(() => of(null)),
+            catchError((err) => {
+              console.error(
+                `An error occurred while deleting the prompt "${info.name}"`,
+                err,
+              );
+              return of(info.name);
+            }),
+          ),
         ),
-        zip(deletePrompts.map((id) => PromptService.deletePrompt(id))).pipe(
-          switchMap(() => EMPTY), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+      ).pipe(
+        switchMap((failedNames) =>
+          concat(
+            iif(
+              () => failedNames.filter(Boolean).length > 0,
+              of(
+                UIActions.showErrorToast(
+                  translate(
+                    `An error occurred while removing the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                  ),
+                ),
+              ),
+              EMPTY,
+            ),
+            of(
+              PromptsActions.deletePromptsComplete({
+                deletePrompts,
+              }),
+            ),
+            of(PromptsActions.setPrompts({ prompts: [] })),
+          ),
         ),
       ),
     ),
@@ -334,6 +457,14 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           return concat(...actions);
         }),
+        catchError((err) => {
+          console.error('An error occurred while updating the folder:', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('An error occurred while updating the folder.'),
+            ),
+          );
+        }),
       );
     }),
   );
@@ -344,7 +475,15 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) =>
       forkJoin({
         folderId: of(payload.folderId),
-        promptsToRemove: PromptService.getPrompts(payload.folderId, true),
+        promptsToRemove: PromptService.getPrompts(payload.folderId, true).pipe(
+          catchError((err) => {
+            console.error(
+              'An error occurred while uploading prompts and folders:',
+              err,
+            );
+            return [];
+          }),
+        ),
         folders: of(PromptsSelectors.selectFolders(state$.value)),
       }),
     ),
@@ -370,48 +509,133 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         );
+      } else {
+        actions.push(of(PromptsActions.setPrompts({ prompts: [] })));
       }
 
       return concat(...actions);
     }),
   );
 
+const toggleFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.toggleFolder.match),
+    switchMap(({ payload }) => {
+      const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
+        state$.value,
+        FeatureType.Prompt,
+      );
+      const isOpened = openedFoldersIds.includes(payload.id);
+      const action = isOpened ? UIActions.closeFolder : UIActions.openFolder;
+      return of(
+        action({
+          id: payload.id,
+          featureType: FeatureType.Prompt,
+        }),
+      );
+    }),
+  );
+
+const openFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        UIActions.openFolder.match(action) &&
+        action.payload.featureType === FeatureType.Prompt,
+    ),
+    switchMap(({ payload }) => {
+      const folder = PromptsSelectors.selectFolders(state$.value).find(
+        (f) => f.id === payload.id,
+      );
+      if (folder?.status === UploadStatus.LOADED) {
+        return EMPTY;
+      }
+      return concat(
+        of(
+          PromptsActions.uploadChildPromptsWithFolders({
+            ids: [payload.id],
+          }),
+        ),
+      );
+    }),
+  );
+
+const duplicatePromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.duplicatePrompt.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        prompt: PromptService.getPrompt(payload),
+      }),
+    ),
+    switchMap(({ prompt }) => {
+      if (!prompt) return EMPTY;
+
+      const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const promptRootId = getPromptRootId();
+      const newPrompt = addGeneratedPromptId({
+        ...prompt,
+        ...resetShareEntity,
+        folderId: promptRootId,
+        name: generateNextName(
+          DEFAULT_PROMPT_NAME,
+          prompt.name,
+          prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
+        ),
+      });
+
+      return of(PromptsActions.saveNewPrompt({ newPrompt }));
+    }),
+  );
+
 const exportPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.exportPrompts.match),
-    switchMap(
-      () => PromptService.getPrompts(undefined, true), //listing of all entities
+    switchMap(() =>
+      //listing of all entities
+      PromptService.getPrompts(undefined, true),
     ),
     switchMap((promptsListing) => {
-      const foldersIds = Array.from(
-        new Set(promptsListing.map((info) => info.folderId)),
+      const onlyMyPromptsListing = filterOnlyMyEntities(promptsListing);
+      const foldersIds = uniq(
+        onlyMyPromptsListing.map((info) => info.folderId),
       );
       //calculate all folders;
-      const folders = getFoldersFromIds(
-        Array.from(
-          new Set(
-            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-          ),
-        ),
+      const foldersWithPrompts = getFoldersFromIds(
+        uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
         FolderType.Prompt,
       );
+
+      const allFolders = PromptsSelectors.selectFolders(state$.value);
+
+      const folders = combineEntities(foldersWithPrompts, allFolders);
 
       return forkJoin({
         //get all prompts from api
         prompts: zip(
-          promptsListing.map((info) => PromptService.getPrompt(info)),
+          onlyMyPromptsListing.map((info) => PromptService.getPrompt(info)),
         ),
         folders: of(folders),
       });
     }),
-    tap(({ prompts, folders }) => {
+    switchMap(({ prompts, folders }) => {
       const filteredPrompts = prompts.filter(Boolean) as Prompt[];
 
       const appName = SettingsSelectors.selectAppName(state$.value);
 
       exportPrompts(filteredPrompts, folders, appName);
+      return EMPTY;
     }),
-    ignoreElements(),
+    catchError(() =>
+      concat(
+        of(
+          UIActions.showErrorToast(
+            translate('An error occurred while uploading prompts'),
+          ),
+        ),
+        of(ImportExportActions.exportFail()),
+      ),
+    ),
   );
 
 const exportPromptEpic: AppEpic = (action$, state$) =>
@@ -422,7 +646,14 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
     switchMap((promptAndPayload) => {
       const { prompt } = promptAndPayload;
       if (!prompt) {
-        return of(ImportExportActions.exportFail());
+        return concat(
+          of(
+            UIActions.showErrorToast(
+              translate('An error occurred while uploading prompt'),
+            ),
+          ),
+          of(ImportExportActions.exportFail()),
+        );
       }
 
       const appName = SettingsSelectors.selectAppName(state$.value);
@@ -439,86 +670,77 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
 const importPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.importPrompts.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        promptsListing: PromptService.getPrompts(undefined, true), //listing of all entities
-        promptsHistory: of(payload.promptsHistory),
-      }),
-    ),
-    switchMap(({ promptsListing, promptsHistory }) => {
-      if (!promptsListing.length) {
-        return forkJoin({
-          currentPrompts: of([]),
-          currentFolders: of([]),
-          promptsHistory: of(promptsHistory),
-        });
-      }
+    switchMap(({ payload }) => {
+      const { promptsHistory } = payload;
 
-      const foldersIds = Array.from(
-        new Set(promptsListing.map((info) => info.folderId)),
-      );
-      //calculate all folders;
-      const folders = getFoldersFromIds(
-        Array.from(
-          new Set(
-            foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-          ),
-        ),
-        FolderType.Prompt,
-      );
-      //get all prompts from api
-      const currentPrompts = zip(
-        promptsListing.map((info) => PromptService.getPrompt(info)),
-      );
-
-      return forkJoin({
-        currentPrompts,
-        currentFolders: of(folders),
-        promptsHistory: of(promptsHistory),
-      });
-    }),
-    switchMap(({ currentPrompts, currentFolders, promptsHistory }) => {
-      const filteredPrompts = currentPrompts.filter(Boolean) as Prompt[];
       if (!isPromptsFormat(promptsHistory)) {
-        return of(
-          UIActions.showToast({
-            message: translate(errorsMessages.unsupportedDataFormat, {
-              ns: 'common',
-            }),
-            type: 'error',
-          }),
+        return concat(
+          of(ImportExportActions.importPromptsFail()),
+          of(
+            UIActions.showErrorToast(
+              translate(errorsMessages.unsupportedDataFormat, {
+                ns: 'common',
+              }),
+            ),
+          ),
         );
       }
-      const preparedPrompts: Prompt[] = getPreparedPrompts({
+
+      const preparedPrompts: Prompt[] = getImportPreparedPrompts({
         prompts: promptsHistory.prompts,
         folders: promptsHistory.folders,
       });
 
-      const preparedPromptsHistory: PromptsHistory = {
-        ...promptsHistory,
-        prompts: preparedPrompts,
-      };
+      return PromptService.setPrompts(preparedPrompts).pipe(
+        toArray(),
+        switchMap(() => {
+          return PromptService.getPrompts(undefined, true).pipe(
+            switchMap((promptsListing) => {
+              if (preparedPrompts.length && !promptsListing.length) {
+                return of(ImportExportActions.importPromptsFail());
+              }
 
-      const { prompts, folders, isError } = importPrompts(
-        preparedPromptsHistory,
-        {
-          currentFolders,
-          currentPrompts: filteredPrompts,
-        },
-      );
+              const foldersIds = uniq(
+                promptsListing.map((info) => info.folderId),
+              );
+              //calculate all folders;
+              const promptsFolders = getFoldersFromIds(
+                uniq(
+                  foldersIds.flatMap((id) =>
+                    getParentFolderIdsFromFolderId(id),
+                  ),
+                ),
+                FolderType.Prompt,
+              );
 
-      if (isError) {
-        return of(
-          UIActions.showToast({
-            message: translate(errorsMessages.unsupportedDataFormat, {
-              ns: 'common',
+              const cleanFolders = cleanPromptsFolders(promptsHistory.folders);
+
+              const folders = combineEntities(promptsFolders, cleanFolders);
+
+              return of(
+                PromptsActions.importPromptsSuccess({
+                  prompts: promptsListing,
+                  folders,
+                }),
+              );
             }),
-            type: 'error',
-          }),
-        );
-      }
-      return of(PromptsActions.importPromptsSuccess({ prompts, folders }));
+            catchError(() => {
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while uploading prompts and folders',
+                    ),
+                  ),
+                ),
+                of(ImportExportActions.importPromptsFail()),
+              );
+            }),
+          ); //listing of all entities
+        }),
+      );
     }),
+    catchError(() => of(ImportExportActions.importPromptsFail())),
   );
 
 const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
@@ -538,6 +760,9 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         failedMigratedPromptIds: BrowserStorage.getFailedMigratedEntityIds(
           MigrationStorageKeys.FailedMigratedPromptIds,
         ),
+        isPromptsBackedUp: BrowserStorage.getEntityBackedUp(
+          MigrationStorageKeys.PromptsBackedUp,
+        ),
       }),
     ),
     switchMap(
@@ -546,6 +771,7 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         promptsFolders,
         migratedPromptIds,
         failedMigratedPromptIds,
+        isPromptsBackedUp,
       }) => {
         const notMigratedPrompts = filterMigratedEntities(
           prompts,
@@ -559,21 +785,26 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
           !notMigratedPrompts.length
         ) {
           if (failedMigratedPromptIds.length) {
-            return of(
-              PromptsActions.setFailedMigratedPrompts({
-                failedMigratedPrompts: filterMigratedEntities(
-                  prompts,
-                  failedMigratedPromptIds,
-                ),
-              }),
+            return concat(
+              of(PromptsActions.setIsPromptsBackedUp({ isPromptsBackedUp })),
+              of(
+                PromptsActions.setFailedMigratedPrompts({
+                  failedMigratedPrompts: filterMigratedEntities(
+                    prompts,
+                    failedMigratedPromptIds,
+                  ),
+                }),
+              ),
             );
           }
+
           return EMPTY;
         }
 
         const preparedPrompts: Prompt[] = getPreparedPrompts({
           prompts: notMigratedPrompts,
           folders: promptsFolders,
+          addRoot: true,
         }); // to send prompts with proper parentPath
 
         let migratedPromptsCount = 0;
@@ -658,41 +889,127 @@ export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
     ),
   );
 
-const initPromptsEpic: AppEpic = (action$) =>
+const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.initPrompts.match),
-    switchMap(() => PromptService.getPrompts(undefined, true)),
-    switchMap((prompts) => {
-      return concat(
-        of(
-          PromptsActions.updatePrompts({
-            prompts,
-          }),
-        ),
-        of(
-          PromptsActions.setFolders({
-            folders: Array.from(
-              new Set(
-                prompts.flatMap((p) =>
-                  getParentFolderIdsFromFolderId(p.folderId),
+    filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
+    switchMap(({ payload }) =>
+      PromptService.getPrompts(payload?.path, true).pipe(
+        switchMap((prompts) => {
+          const actions: Observable<AnyAction>[] = [];
+
+          if (!!payload?.selectFirst && !!prompts.length && !!payload?.path) {
+            const folderIds = uniq(prompts.map((c) => c.folderId));
+            const paths = uniq(
+              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            );
+
+            const openedFolders = UISelectors.selectOpenedFoldersIds(
+              state$.value,
+              FeatureType.Prompt,
+            );
+
+            actions.push(
+              concat(
+                of(
+                  PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                    parentIds: [...payload.path, ...paths],
+                    folders: getFoldersFromIds(
+                      paths,
+                      FolderType.Prompt,
+                      UploadStatus.LOADED,
+                    ),
+                    prompts,
+                  }),
+                ),
+                of(PromptsActions.uploadPrompt({ promptId: prompts[0]?.id })),
+                of(
+                  PromptsActions.setSelectedPrompt({
+                    promptId: prompts[0]?.id,
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    featureType: FeatureType.Prompt,
+                    openedFolderIds: [
+                      ...getParentFolderIdsFromFolderId(prompts[0].folderId),
+                      ...payload.path,
+                      ...openedFolders,
+                    ],
+                  }),
                 ),
               ),
-            ).map((path) => getFolderFromId(path, FolderType.Prompt)),
-          }),
-        ),
-        of(PromptsActions.initPromptsSuccess()),
-      );
-    }),
+            );
+          }
+
+          return concat(
+            of(
+              PromptsActions.setPrompts({
+                prompts,
+              }),
+            ),
+            of(
+              PromptsActions.setFolders({
+                folders: uniq(
+                  prompts.flatMap((p) =>
+                    getParentFolderIdsFromFolderId(p.folderId),
+                  ),
+                ).map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            of(PromptsActions.initPromptsSuccess()),
+            ...actions,
+          );
+        }),
+        catchError((err) => {
+          console.error(
+            'An error occurred while uploading prompts and folders:',
+            err,
+          );
+          return [];
+        }),
+      ),
+    ),
+  );
+
+const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadChildPromptsWithFolders.match),
+    switchMap(({ payload }) =>
+      zip(
+        payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
+      ).pipe(
+        switchMap((foldersAndEntities) => {
+          const folders = foldersAndEntities.flatMap((f) => f.folders);
+          const prompts = foldersAndEntities.flatMap((f) => f.entities);
+
+          return of(
+            PromptsActions.uploadChildPromptsWithFoldersSuccess({
+              parentIds: payload.ids,
+              folders,
+              prompts,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error('Error during upload prompts and folders', err);
+          return of(
+            UIActions.showErrorToast(
+              translate('Error during upload prompts and folders'),
+            ),
+          );
+        }),
+      ),
+    ),
   );
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => PromptsActions.init.match(action)),
     switchMap(() =>
-      concat(
-        // of(PromptsActions.initFolders()),
-        of(PromptsActions.initPrompts()),
-      ),
+      concat(of(PromptsActions.uploadPromptsWithFoldersRecursive())),
     ),
   );
 
@@ -715,16 +1032,26 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
         originalPromptId: originalPrompt.id,
       });
     }),
+    catchError((err) => {
+      console.error('An error occurred while uploading the prompt:', err);
+      return of(
+        UIActions.showErrorToast(
+          translate('An error occurred while uploading the prompt'),
+        ),
+      );
+    }),
   );
 
 export const PromptsEpics = combineEpics(
   migratePromptsIfRequiredEpic,
   skipFailedMigratedPromptsEpic,
-
   initEpic,
-  initPromptsEpic,
-
+  uploadPromptsWithFoldersRecursiveEpic,
+  uploadPromptsWithFoldersEpic,
+  openFolderEpic,
+  toggleFolderEpic,
   saveFoldersEpic,
+  saveNewPromptEpic,
   deleteFolderEpic,
   exportPromptsEpic,
   exportPromptEpic,
@@ -737,7 +1064,7 @@ export const PromptsEpics = combineEpics(
   deletePromptsEpic,
   updateFolderEpic,
   createNewPromptEpic,
-  createNewPromptSuccessEpic,
-
+  duplicatePromptEpic,
   uploadPromptEpic,
+  // importPromptsSuccessEpic,
 );

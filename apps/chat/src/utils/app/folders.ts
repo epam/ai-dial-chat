@@ -5,18 +5,25 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { PartialBy, ShareEntity, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import {
+  Entity,
+  PartialBy,
+  ShareEntity,
+  UploadStatus,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
 
 import { isRootId } from './id';
 
-import escapeStringRegexp from 'escape-string-regexp';
+import escapeRegExp from 'lodash-es/escapeRegExp';
+import sortBy from 'lodash-es/sortBy';
+import uniq from 'lodash-es/uniq';
 
 export const getFoldersDepth = (
   childFolder: FolderInterface,
@@ -91,33 +98,17 @@ export const getChildAndCurrentFoldersIdsById = (
     (folder) => folder.id,
   );
 
-export const getAvailableNameOnSameFolderLevel = (
-  items: { name: string; folderId?: string }[],
-  itemPrefix: string,
-  parentFolderId?: string,
-) => {
-  const names = items
-    .filter((item) => item.folderId === parentFolderId)
-    .map((item) => item.name);
-  let itemNumber = 0;
-  let itemName;
-  do {
-    itemNumber++;
-    itemName = [itemPrefix, itemNumber].join(' ');
-  } while (names.includes(itemName));
-
-  return itemName;
-};
-
+// TODO: refactor this and use parametrized object as single arg
 export const getNextDefaultName = (
   defaultName: string,
   entities: ShareEntity[],
   index = 0,
   startWithEmptyPostfix = false,
   includingPublishedWithMe = false,
+  parentFolderId?: string,
 ): string => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeStringRegexp(prefix)}(\\d+)$`);
+  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
     return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
@@ -130,12 +121,15 @@ export const getNextDefaultName = (
           (entity) =>
             !entity.sharedWithMe &&
             (!entity.publishedWithMe || includingPublishedWithMe) &&
-            (entity.name === defaultName || entity.name.match(regex)),
+            (entity.name === defaultName ||
+              (entity.name.match(regex) &&
+                (parentFolderId ? entity.folderId === parentFolderId : true))),
         )
-        .map(
-          (entity) =>
-            parseInt(entity.name.replace(prefix, ''), 10) ||
-            (startWithEmptyPostfix ? 0 : 1),
+        .map((entity) =>
+          entity.name === defaultName
+            ? 0
+            : parseInt(entity.name.replace(prefix, ''), 10) ||
+              (startWithEmptyPostfix ? 0 : 1),
         ),
       startWithEmptyPostfix ? -1 : 0,
     ) + index; // max number
@@ -239,42 +233,63 @@ export const getFilteredFolders = ({
   searchTerm,
   includeEmptyFolders,
 }: GetFilteredFoldersProps) => {
-  const rootFolders = allFolders.filter(
-    (folder) => isRootId(folder.folderId) && filters.sectionFilter(folder),
+  // Get roots of section filtered items
+  const sectionFilteredFolders = allFolders.filter(
+    (folder) => filters.sectionFilter?.(folder) ?? true,
   );
-  const filteredIds = new Set(
-    rootFolders.flatMap((folder) =>
+  // Get full child tree
+  const childAndCurrentSectionFilteredIds = new Set(
+    sectionFilteredFolders.flatMap((folder) =>
       getChildAndCurrentFoldersIdsById(folder.id, allFolders),
     ),
   );
-  const folders = allFolders.filter((folder) => filteredIds.has(folder.id));
-  const folderIds = entities
-    .map((c) => c.folderId)
-    .filter((fid) => fid && filteredIds.has(fid));
-
-  if (!searchTerm?.trim().length) {
-    const markedFolderIds = folders
-      .filter((folder) => filters?.searchFilter(folder))
-      .map((f) => f.id);
-    folderIds.push(...markedFolderIds);
-
-    if (includeEmptyFolders && !searchTerm?.length) {
-      folderIds.push(...emptyFolderIds);
-    }
-  }
-
-  const filteredFolderIds = new Set(
-    folderIds
-      .filter((fid) => fid && filteredIds.has(fid))
-      .flatMap((fid) => getParentAndCurrentFolderIdsById(folders, fid)),
+  // Map back to folders objects
+  const childAndCurrentSectionFilteredFolders = allFolders.filter((folder) =>
+    childAndCurrentSectionFilteredIds.has(folder.id),
   );
 
-  return folders
-    .filter(
+  // Apply search filters to section folders
+  const searchedFolderIds = childAndCurrentSectionFilteredFolders
+    .filter((folder) => filters.searchFilter?.(folder) ?? true)
+    .map((f) => f.id);
+
+  // Section filtered entities folder ids
+  const entitiesFolderIds = entities
+    .map((c) => c.folderId)
+    .filter((fid) => childAndCurrentSectionFilteredIds.has(fid));
+
+  // Merged final searched and filtered folders ids
+  const searchedFoldersByEntitiesAndFolders = [
+    ...(searchTerm?.trim().length ? [] : searchedFolderIds), // Ignore filtered folders from section if search term
+    ...entitiesFolderIds,
+  ];
+
+  if (includeEmptyFolders && !searchTerm?.length) {
+    searchedFoldersByEntitiesAndFolders.push(...emptyFolderIds);
+  }
+
+  // Get roots again for merged array
+  const filteredFolderIds = new Set(
+    searchedFoldersByEntitiesAndFolders
+      .flatMap((fid) =>
+        getParentAndCurrentFolderIdsById(
+          childAndCurrentSectionFilteredFolders,
+          fid,
+        ),
+      )
+      .filter(
+        (fid) =>
+          fid && sectionFilteredFolders.map(({ id }) => id).includes(fid),
+      ),
+  );
+
+  return sortByName(
+    childAndCurrentSectionFilteredFolders.filter(
       (folder) =>
-        filteredIds.has(folder.id) && filteredFolderIds.has(folder.id),
-    )
-    .sort(compareEntitiesByName);
+        childAndCurrentSectionFilteredIds.has(folder.id) &&
+        filteredFolderIds.has(folder.id),
+    ),
+  );
 };
 
 export const getParentAndChildFolders = (
@@ -283,14 +298,12 @@ export const getParentAndChildFolders = (
 ) => {
   const folderIds = folders.map(({ id }) => id);
 
-  const setFolders = new Set(
+  return uniq(
     folderIds.flatMap((folderId) => [
       ...getParentAndCurrentFoldersById(allFolders, folderId),
       ...getChildAndCurrentFoldersById(folderId, allFolders),
     ]),
   );
-
-  return Array.from(setFolders);
 };
 
 export const getTemporaryFoldersToPublish = (
@@ -323,7 +336,7 @@ export const findRootFromItems = (
   const parentIds = new Set(items.map((item) => item.id));
 
   return items.find((item) => {
-    if (!item.folderId) return true;
+    if (isRootId(item.folderId)) return true;
     return !parentIds.has(item.folderId);
   });
 };
@@ -418,8 +431,7 @@ export const getParentFolderIdsFromFolderId = (path?: string): string[] => {
 };
 
 export const getParentFolderIdsFromEntityId = (id: string): string[] => {
-  const { parentPath } = splitEntityId(id);
-  return getParentFolderIdsFromFolderId(parentPath);
+  return getParentFolderIdsFromFolderId(id);
 };
 
 export const getFolderFromId = (
@@ -447,20 +459,8 @@ export const getFoldersFromIds = (
   );
 };
 
-export const compareEntitiesByName = <
-  T extends ConversationInfo | PromptInfo | DialFile,
->(
-  a: T,
-  b: T,
-) => {
-  if (a.name > b.name) {
-    return 1;
-  }
-  if (a.name < b.name) {
-    return -1;
-  }
-  return 0;
-};
+export const sortByName = <T extends Entity>(entities: T[]): T[] =>
+  sortBy(entities, (entity) => entity.name.toLowerCase());
 
 export const updateMovedFolderId = (
   oldParentFolderId: string,

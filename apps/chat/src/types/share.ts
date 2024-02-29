@@ -34,6 +34,13 @@ export enum FiltersTypes {
   Regex = 'Regex',
 }
 
+export interface InvitationDetails {
+  id: string;
+  resources: { url: string }[];
+  createdAt: number;
+  expireAt: number;
+}
+
 export interface TargetAudienceFilter extends TargetAudienceFilterItem {
   filterType: FiltersTypes;
   filterParams: string[];
@@ -77,6 +84,12 @@ export interface ShareByLinkResponseModel {
 
 export interface ShareAcceptRequestModel {
   invitationId: string;
+}
+
+export interface ShareRevokeRequestModel {
+  resources: {
+    url: string;
+  }[];
 }
 
 export enum ShareRelations {

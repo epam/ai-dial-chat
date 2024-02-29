@@ -4,17 +4,19 @@ import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
 import { ReporterDescription } from '@playwright/test';
 import dotenv from 'dotenv';
+import path from 'path';
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-dotenv.config({ path: './.env.development' });
+dotenv.config({ path: path.resolve(__dirname, '../../chat/.env.local') });
 dotenv.config({ path: './.env.local' });
 /**
  * Config used for a local run
  */
 config.retries = 0;
+config.timeout = 300000;
 config.use!.headless = true;
 config.use!.video = 'on';
 config.use!.trace = 'on';

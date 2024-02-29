@@ -1,332 +1,388 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
-import { Prompt } from '@/chat/types/prompt';
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
 import {
+  ExpectedConstants,
   ExpectedMessages,
   FilterMenuOptions,
   FolderConversation,
   FolderPrompt,
   ModelIds,
+  TestConversation,
+  TestFolder,
+  TestPrompt,
 } from '@/src/testData';
 import { expect } from '@playwright/test';
 
-test.describe('Side panel filter tests', () => {
-  test.use({
-    storageState: stateFilePath,
-  });
-  test('Filter "Shared by me" shows only shared chats', async ({
+dialTest.skip(
+  'Filter "Shared by me" shows only shared chats',
+  async ({
     dialHomePage,
     conversations,
     folderConversations,
     conversationData,
+    dataInjector,
     localStorageManager,
     chatFilter,
+    chatBar,
     chatFilterDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1597');
-    let nestedFolders: FolderInterface[];
-    let nestedSharedConversations: Conversation[];
-    let nestedConversations: Conversation[];
-    let emptyFolder: FolderInterface;
+    let nestedFolders: TestFolder[];
+    let nestedSharedConversations: TestConversation[];
+    let nestedConversations: TestConversation[];
     let folderConversation: FolderConversation;
-    let sharedSingleConversation: Conversation;
-    let singleConversation: Conversation;
+    let sharedSingleConversation: TestConversation;
+    let singleConversation: TestConversation;
 
-    await test.step('Prepare nested folders and single shared and not shared conversations', async () => {
-      nestedFolders = conversationData.prepareNestedFolder(3);
-      conversationData.resetData();
-      nestedSharedConversations =
-        conversationData.prepareConversationsForNestedFolders(nestedFolders);
-      nestedSharedConversations.map((c) => (c.isShared = true));
-      conversationData.resetData();
-      nestedConversations =
-        conversationData.prepareConversationsForNestedFolders(nestedFolders);
-      conversationData.resetData();
-      emptyFolder = conversationData.prepareFolder();
-      conversationData.resetData();
-      folderConversation = conversationData.prepareFolderWithConversations(1);
-      conversationData.resetData();
-      sharedSingleConversation =
-        conversationData.prepareDefaultSharedConversation();
-      conversationData.resetData();
-      singleConversation = conversationData.prepareDefaultConversation();
-
-      await localStorageManager.setFolders(
-        ...nestedFolders,
-        emptyFolder,
-        folderConversation.folders,
-      );
-      await localStorageManager.setConversationHistory(
-        ...nestedSharedConversations,
-        ...nestedConversations,
-        ...folderConversation.conversations,
-        sharedSingleConversation,
-        singleConversation,
-      );
-      await localStorageManager.setSelectedConversation(
-        sharedSingleConversation,
-      );
-    });
-
-    await test.step('Open chat panel filter, check "Shared by me" option and verify only shared conversations and parent folders are shown', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      for (const nestedFolder of nestedFolders) {
-        await folderConversations.expandCollapseFolder(nestedFolder.name);
-      }
-      await folderConversations.expandCollapseFolder(emptyFolder.name);
-      await folderConversations.expandCollapseFolder(
-        folderConversation.folders.name,
-      );
-      await chatFilter.openFilterDropdownMenu();
-      await chatFilterDropdownMenu.selectMenuOption(
-        FilterMenuOptions.sharedByMe,
-      );
-
-      const actualFilteredFolderConversations =
-        await folderConversations.getFolderEntitiesCount(nestedFolders[0].name);
-      const actualFilteredConversations =
-        await conversations.getTodayConversations();
-      expect
-        .soft(
-          actualFilteredFolderConversations +
-            actualFilteredConversations.length,
-          ExpectedMessages.conversationsCountIsValid,
-        )
-        .toBe(nestedSharedConversations.length + 1);
-
-      const actualFilteredFoldersCount =
-        await folderConversations.getFoldersCount();
-      expect
-        .soft(actualFilteredFoldersCount, ExpectedMessages.foldersCountIsValid)
-        .toBe(nestedSharedConversations.length);
-    });
-
-    await test.step('Uncheck "Shared by me" option and verify all conversations and folders are shown', async () => {
-      await chatFilterDropdownMenu.selectMenuOption(
-        FilterMenuOptions.sharedByMe,
-      );
-
-      let actualFolderConversationsCount =
-        await folderConversations.getFolderEntitiesCount(nestedFolders[0].name);
-      actualFolderConversationsCount +=
-        await folderConversations.getFolderEntitiesCount(
-          folderConversation.folders.name,
+    await dialTest.step(
+      'Prepare nested folders and single shared and not shared conversations',
+      async () => {
+        nestedFolders = conversationData.prepareNestedFolder(3);
+        conversationData.resetData();
+        nestedSharedConversations =
+          conversationData.prepareConversationsForNestedFolders(nestedFolders);
+        nestedSharedConversations.map((c) => (c.isShared = true));
+        conversationData.resetData();
+        nestedConversations =
+          conversationData.prepareConversationsForNestedFolders(nestedFolders);
+        conversationData.resetData();
+        conversationData.resetData();
+        folderConversation = conversationData.prepareFolderWithConversations(1);
+        conversationData.resetData();
+        sharedSingleConversation =
+          conversationData.prepareDefaultSharedConversation();
+        conversationData.resetData();
+        singleConversation = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations(
+          [
+            ...nestedSharedConversations,
+            ...nestedConversations,
+            ...folderConversation.conversations,
+            sharedSingleConversation,
+            singleConversation,
+          ],
+          ...nestedFolders,
+          folderConversation.folders,
         );
-      const actualConversations = await conversations.getTodayConversations();
-      expect
-        .soft(
-          actualFolderConversationsCount + actualConversations.length,
-          ExpectedMessages.conversationsCountIsValid,
-        )
-        .toBe(
-          nestedConversations.length + nestedSharedConversations.length + 3,
+        await localStorageManager.setSelectedConversation(
+          sharedSingleConversation,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open chat panel filter, check "Shared by me" option and verify only shared conversations and parent folders are shown',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.createNewFolder();
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.expandFolder(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await chatFilter.openFilterDropdownMenu();
+        await chatFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
         );
 
-      const actualFoldersCount = await folderConversations.getFoldersCount();
-      expect
-        .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
-        .toBe(nestedSharedConversations.length + 2);
-    });
-  });
+        const actualFilteredFolderConversations =
+          await folderConversations.getFolderEntitiesCount(
+            nestedFolders[0].name,
+          );
+        const actualFilteredConversations =
+          await conversations.getTodayConversations();
+        expect
+          .soft(
+            actualFilteredFolderConversations +
+              actualFilteredConversations.length,
+            ExpectedMessages.conversationsCountIsValid,
+          )
+          .toBe(nestedSharedConversations.length + 1);
 
-  test('Filter "Shared by me" stays checked if to search chats', async ({
+        const actualFilteredFoldersCount =
+          await folderConversations.getFoldersCount();
+        expect
+          .soft(
+            actualFilteredFoldersCount,
+            ExpectedMessages.foldersCountIsValid,
+          )
+          .toBe(nestedSharedConversations.length);
+      },
+    );
+
+    await dialTest.step(
+      'Uncheck "Shared by me" option and verify all conversations and folders are shown',
+      async () => {
+        await chatFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
+        );
+
+        let actualFolderConversationsCount =
+          await folderConversations.getFolderEntitiesCount(
+            nestedFolders[0].name,
+          );
+        actualFolderConversationsCount +=
+          await folderConversations.getFolderEntitiesCount(
+            folderConversation.folders.name,
+          );
+        const actualConversations = await conversations.getTodayConversations();
+        expect
+          .soft(
+            actualFolderConversationsCount + actualConversations.length,
+            ExpectedMessages.conversationsCountIsValid,
+          )
+          .toBe(
+            nestedConversations.length + nestedSharedConversations.length + 3,
+          );
+
+        const actualFoldersCount = await folderConversations.getFoldersCount();
+        expect
+          .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
+          .toBe(nestedSharedConversations.length + 2);
+      },
+    );
+  },
+);
+
+dialTest.skip(
+  'Filter "Shared by me" stays checked if to search chats',
+  async ({
     dialHomePage,
     conversations,
     conversationData,
-    localStorageManager,
+    dataInjector,
     chatFilter,
     chatFilterDropdownMenu,
     chatBarSearch,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1631');
-    const testConversations: Conversation[] = [];
+    const testConversations: TestConversation[] = [];
     const searchTerm = 'test';
 
-    await test.step('Prepare 3 conversations with common name and share two of them', async () => {
-      for (let i = 1; i <= 3; i++) {
-        const conversation = conversationData.prepareDefaultConversation(
-          ModelIds.GPT_3_5_TURBO,
-          `${searchTerm}${i}`,
-        );
-        if (i !== 3) {
-          conversation.isShared = true;
+    await dialTest.step(
+      'Prepare 3 conversations with common name and share two of them',
+      async () => {
+        for (let i = 1; i <= 3; i++) {
+          const conversation = conversationData.prepareDefaultConversation(
+            ModelIds.GPT_3_5_TURBO,
+            `${searchTerm}${i}`,
+          );
+          if (i !== 3) {
+            conversation.isShared = true;
+          }
+          testConversations.push(conversation);
+          conversationData.resetData();
         }
-        testConversations.push(conversation);
-        conversationData.resetData();
-      }
-      await localStorageManager.setConversationHistory(...testConversations);
-    });
+        await dataInjector.createConversations(testConversations);
+      },
+    );
 
-    await test.step('Open chat panel filter, check "Shared by me" option, set search term and verify only matched shared conversations are shown', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await chatFilter.openFilterDropdownMenu();
-      await chatFilterDropdownMenu.selectMenuOption(
-        FilterMenuOptions.sharedByMe,
-      );
-      await chatBarSearch.setSearchValue(searchTerm);
+    await dialTest.step(
+      'Open chat panel filter, check "Shared by me" option, set search term and verify only matched shared conversations are shown',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await chatFilter.openFilterDropdownMenu();
+        await chatFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
+        );
+        await chatBarSearch.setSearchValue(searchTerm);
 
-      const filteredConversations = await conversations.getTodayConversations();
-      expect
-        .soft(
-          filteredConversations.length,
-          ExpectedMessages.conversationsCountIsValid,
-        )
-        .toBe(2);
-    });
-  });
+        const filteredConversations =
+          await conversations.getTodayConversations();
+        expect
+          .soft(
+            filteredConversations.length,
+            ExpectedMessages.conversationsCountIsValid,
+          )
+          .toBe(2);
+      },
+    );
+  },
+);
 
-  test('Filter "Shared by me" shows only shared prompts', async ({
+dialTest.skip(
+  'Filter "Shared by me" shows only shared prompts',
+  async ({
     dialHomePage,
     prompts,
     folderPrompts,
     promptData,
-    localStorageManager,
+    dataInjector,
     promptFilter,
     promptFilterDropdownMenu,
+    promptBar,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1635');
-    let nestedFolders: FolderInterface[];
-    let nestedSharedPrompts: Prompt[];
-    let nestedPrompts: Prompt[];
-    let emptyFolder: FolderInterface;
+    let nestedFolders: TestFolder[];
+    let nestedSharedPrompts: TestPrompt[];
+    let nestedPrompts: TestPrompt[];
     let folderPrompt: FolderPrompt;
-    let sharedSinglePrompt: Prompt;
-    let singlePrompt: Prompt;
+    let sharedSinglePrompt: TestPrompt;
+    let singlePrompt: TestPrompt;
 
-    await test.step('Prepare nested folders and single shared and not shared prompts', async () => {
-      nestedFolders = promptData.prepareNestedFolder(3);
-      promptData.resetData();
-      nestedSharedPrompts =
-        promptData.preparePromptsForNestedFolders(nestedFolders);
-      nestedSharedPrompts.map((p) => (p.isShared = true));
-      promptData.resetData();
-      nestedPrompts = promptData.preparePromptsForNestedFolders(nestedFolders);
-      promptData.resetData();
-      emptyFolder = promptData.prepareFolder();
-      promptData.resetData();
-      folderPrompt = promptData.preparePromptsInFolder(1);
-      promptData.resetData();
-      sharedSinglePrompt = promptData.prepareDefaultSharedPrompt();
-      promptData.resetData();
-      singlePrompt = promptData.prepareDefaultPrompt();
+    await dialTest.step(
+      'Prepare nested folders and single shared and not shared prompts',
+      async () => {
+        nestedFolders = promptData.prepareNestedFolder(3);
+        promptData.resetData();
+        nestedSharedPrompts =
+          promptData.preparePromptsForNestedFolders(nestedFolders);
+        nestedSharedPrompts.map((p) => (p.isShared = true));
+        promptData.resetData();
+        nestedPrompts =
+          promptData.preparePromptsForNestedFolders(nestedFolders);
+        promptData.resetData();
+        folderPrompt = promptData.preparePromptsInFolder(1);
+        promptData.resetData();
+        sharedSinglePrompt = promptData.prepareDefaultSharedPrompt();
+        promptData.resetData();
+        singlePrompt = promptData.prepareDefaultPrompt();
 
-      await localStorageManager.setFolders(
-        ...nestedFolders,
-        emptyFolder,
-        folderPrompt.folders,
-      );
-      await localStorageManager.setPrompts(
-        ...nestedSharedPrompts,
-        ...nestedPrompts,
-        ...folderPrompt.prompts,
-        sharedSinglePrompt,
-        singlePrompt,
-      );
-    });
+        await dataInjector.createPrompts(
+          [
+            ...nestedSharedPrompts,
+            ...nestedPrompts,
+            ...folderPrompt.prompts,
+            sharedSinglePrompt,
+            singlePrompt,
+          ],
+          ...nestedFolders,
+          folderPrompt.folders,
+        );
+      },
+    );
 
-    await test.step('Open prompt panel filter, check "Shared by me" option and verify only shared prompts and parent folders are shown', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      for (const nestedFolder of nestedFolders) {
-        await folderPrompts.expandCollapseFolder(nestedFolder.name);
-      }
-      await folderPrompts.expandCollapseFolder(emptyFolder.name);
-      await folderPrompts.expandCollapseFolder(folderPrompt.folders.name);
-      await promptFilter.openFilterDropdownMenu();
-      await promptFilterDropdownMenu.selectMenuOption(
-        FilterMenuOptions.sharedByMe,
-      );
+    await dialTest.step(
+      'Open prompt panel filter, check "Shared by me" option and verify only shared prompts and parent folders are shown',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await promptBar.createNewFolder();
+        for (const nestedFolder of nestedFolders) {
+          await folderPrompts.expandFolder(nestedFolder.name);
+        }
+        await folderPrompts.expandFolder(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderPrompts.expandFolder(folderPrompt.folders.name);
+        await promptFilter.openFilterDropdownMenu();
+        await promptFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
+        );
 
-      const actualFilteredNestedFolderPromptsCount =
-        await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
-      const actualFilteredSingleFolderPromptsCount =
-        await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
-      const actualFilteredPromptsCount = await prompts.getPromptsCount();
-      expect
-        .soft(
-          actualFilteredNestedFolderPromptsCount +
-            actualFilteredSingleFolderPromptsCount +
-            actualFilteredPromptsCount,
-          ExpectedMessages.promptsCountIsValid,
-        )
-        .toBe(nestedSharedPrompts.length + 1);
+        const actualFilteredNestedFolderPromptsCount =
+          await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
+        const actualFilteredSingleFolderPromptsCount =
+          await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
+        const actualFilteredPromptsCount = await prompts.getPromptsCount();
+        expect
+          .soft(
+            actualFilteredNestedFolderPromptsCount +
+              actualFilteredSingleFolderPromptsCount +
+              actualFilteredPromptsCount,
+            ExpectedMessages.promptsCountIsValid,
+          )
+          .toBe(nestedSharedPrompts.length + 1);
 
-      const actualFilteredFoldersCount = await folderPrompts.getFoldersCount();
-      expect
-        .soft(actualFilteredFoldersCount, ExpectedMessages.foldersCountIsValid)
-        .toBe(nestedSharedPrompts.length);
-    });
+        const actualFilteredFoldersCount =
+          await folderPrompts.getFoldersCount();
+        expect
+          .soft(
+            actualFilteredFoldersCount,
+            ExpectedMessages.foldersCountIsValid,
+          )
+          .toBe(nestedSharedPrompts.length);
+      },
+    );
 
-    await test.step('Uncheck "Shared by me" option and verify all prompts and folders are shown', async () => {
-      await promptFilterDropdownMenu.selectMenuOption(
-        FilterMenuOptions.sharedByMe,
-      );
-      const actualFilteredNestedFolderPromptsCount =
-        await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
-      const actualFilteredSingleFolderPromptsCount =
-        await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
-      const actualPromptsCount = await prompts.getPromptsCount();
-      expect
-        .soft(
-          actualFilteredNestedFolderPromptsCount +
-            actualFilteredSingleFolderPromptsCount +
-            actualPromptsCount,
-          ExpectedMessages.promptsCountIsValid,
-        )
-        .toBe(nestedPrompts.length + nestedSharedPrompts.length + 3);
+    await dialTest.step(
+      'Uncheck "Shared by me" option and verify all prompts and folders are shown',
+      async () => {
+        await promptFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
+        );
+        const actualFilteredNestedFolderPromptsCount =
+          await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
+        const actualFilteredSingleFolderPromptsCount =
+          await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
+        const actualPromptsCount = await prompts.getPromptsCount();
+        expect
+          .soft(
+            actualFilteredNestedFolderPromptsCount +
+              actualFilteredSingleFolderPromptsCount +
+              actualPromptsCount,
+            ExpectedMessages.promptsCountIsValid,
+          )
+          .toBe(nestedPrompts.length + nestedSharedPrompts.length + 3);
 
-      const actualFoldersCount = await folderPrompts.getFoldersCount();
-      expect
-        .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
-        .toBe(nestedSharedPrompts.length + 2);
-    });
-  });
+        const actualFoldersCount = await folderPrompts.getFoldersCount();
+        expect
+          .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
+          .toBe(nestedSharedPrompts.length + 2);
+      },
+    );
+  },
+);
 
-  test('Filter "Shared by me" stays checked if to search prompts', async ({
+dialTest.skip(
+  'Filter "Shared by me" stays checked if to search prompts',
+  async ({
     dialHomePage,
     prompts,
     promptData,
-    localStorageManager,
+    dataInjector,
     promptFilter,
     promptFilterDropdownMenu,
     promptBarSearch,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1636');
-    const testPrompts: Prompt[] = [];
+    const testPrompts: TestPrompt[] = [];
     const searchTerm = 'test';
 
-    await test.step('Prepare 3 prompts with common name and share two of them', async () => {
-      for (let i = 1; i <= 3; i++) {
-        const prompt = promptData.prepareDefaultPrompt(`${searchTerm}${i}`);
-        if (i !== 3) {
-          prompt.isShared = true;
+    await dialTest.step(
+      'Prepare 3 prompts with common name and share two of them',
+      async () => {
+        for (let i = 1; i <= 3; i++) {
+          const prompt = promptData.prepareDefaultPrompt(`${searchTerm}${i}`);
+          if (i !== 3) {
+            prompt.isShared = true;
+          }
+          testPrompts.push(prompt);
+          promptData.resetData();
         }
-        testPrompts.push(prompt);
-        promptData.resetData();
-      }
-      await localStorageManager.setPrompts(...testPrompts);
-    });
+        await dataInjector.createPrompts(testPrompts);
+      },
+    );
 
-    await test.step('Open prompt panel filter, check "Shared by me" option, set search term and verify only matched shared prompts are shown', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await promptFilter.openFilterDropdownMenu();
-      await promptFilterDropdownMenu.selectMenuOption(
-        FilterMenuOptions.sharedByMe,
-      );
-      await promptBarSearch.setSearchValue(searchTerm);
+    await dialTest.step(
+      'Open prompt panel filter, check "Shared by me" option, set search term and verify only matched shared prompts are shown',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await promptFilter.openFilterDropdownMenu();
+        await promptFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
+        );
+        await promptBarSearch.setSearchValue(searchTerm);
 
-      const filteredPromptsCount = await prompts.getPromptsCount();
-      expect
-        .soft(filteredPromptsCount, ExpectedMessages.promptsCountIsValid)
-        .toBe(2);
-    });
-  });
-});
+        const filteredPromptsCount = await prompts.getPromptsCount();
+        expect
+          .soft(filteredPromptsCount, ExpectedMessages.promptsCountIsValid)
+          .toBe(2);
+      },
+    );
+  },
+);

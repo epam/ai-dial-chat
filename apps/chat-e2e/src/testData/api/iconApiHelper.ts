@@ -11,7 +11,7 @@ export class IconApiHelper extends BaseApiHelper {
 
   public async getEntityIcon(entity: OpenAIEntityModel) {
     let icon;
-    if (entity.iconUrl) {
+    if (entity.iconUrl && entity.iconUrl.includes(Tags.svg)) {
       const response = await this.request.get(entity.iconUrl);
       icon = await this.formatIconResponse(response.text());
     } else {

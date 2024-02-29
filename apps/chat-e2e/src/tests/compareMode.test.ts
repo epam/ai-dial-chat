@@ -1,6 +1,6 @@
-import { Conversation } from '@/chat/types/chat';
 import { OpenAIEntityModel } from '@/chat/types/openai';
-import test, { stateFilePath } from '@/src/core/fixtures';
+import dialTest from '@/src/core/dialFixtures';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   API,
   ExpectedConstants,
@@ -10,6 +10,7 @@ import {
   ModelIds,
   Rate,
   Side,
+  TestConversation,
 } from '@/src/testData';
 import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -20,101 +21,118 @@ let defaultModel: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 let bisonModel: OpenAIEntityModel;
 
-test.beforeAll(async () => {
+dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
 });
 
-test.describe('Compare mode tests', () => {
-  test.use({
-    storageState: stateFilePath,
-  });
-  test('Compare mode button creates two new chats and opens them in compare mode', async ({
+dialTest(
+  'Compare mode button creates two new chats and opens them in compare mode',
+  async ({ dialHomePage, setTestIds, chatBar, conversations, compare }) => {
+    setTestIds('EPMRTC-537');
+    await dialTest.step(
+      'Click on compare button on bottom of chat bar and verify compare mode is opened for new two chats',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await chatBar.openCompareMode();
+        await compare.waitForState();
+        const chatsCount = await compare.getConversationsCount();
+        expect.soft(chatsCount, ExpectedMessages.compareModeOpened).toBe(2);
+
+        const todayConversations = await conversations.getTodayConversations();
+        expect
+          .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
+          .toBe(3);
+
+        todayConversations.forEach((value) =>
+          expect
+            .soft(value, ExpectedMessages.conversationOfToday)
+            .toContain(ExpectedConstants.newConversationTitle),
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Check the list of available conversations.\n' +
+    'Chat icon is shown in Select conversation drop down list  in compare mode',
+  async ({
     dialHomePage,
     setTestIds,
-    chatBar,
+    conversationDropdownMenu,
     conversations,
+    conversationData,
+    localStorageManager,
+    dataInjector,
     compare,
+    compareConversationSelector,
+    iconApiHelper,
   }) => {
-    setTestIds('EPMRTC-537');
-    await test.step('Click on compare button on bottom of chat bar and verify compare mode is opened for new two chats', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-      await chatBar.openCompareMode();
-      await compare.waitForState();
-      const chatsCount = await compare.getConversationsCount();
-      expect.soft(chatsCount, ExpectedMessages.compareModeOpened).toBe(2);
+    setTestIds('EPMRTC-546', 'EPMRTC-383');
+    let firstModelConversation: TestConversation;
+    let secondModelConversation: TestConversation;
+    let modelConversationInFolder: FolderConversation;
+    let thirdModelConversation: TestConversation;
+    const conversationName = GeneratorUtil.randomString(7);
 
-      const todayConversations = await conversations.getTodayConversations();
-      expect
-        .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-        .toBe(3);
-
-      todayConversations.forEach((value) =>
-        expect
-          .soft(value, ExpectedMessages.conversationOfToday)
-          .toContain(ExpectedConstants.newConversationTitle),
+    await dialTest.step('Prepare three conversations to compare', async () => {
+      firstModelConversation = conversationData.prepareDefaultConversation(
+        defaultModel,
+        conversationName,
       );
-    });
-  });
-
-  test(
-    'Check the list of available conversations.\n' +
-      'Chat icon is shown in Select conversation drop down list  in compare mode',
-    async ({
-      dialHomePage,
-      setTestIds,
-      conversationDropdownMenu,
-      conversations,
-      conversationData,
-      localStorageManager,
-      compare,
-      compareConversationSelector,
-      iconApiHelper,
-    }) => {
-      setTestIds('EPMRTC-546', 'EPMRTC-383');
-      let firstModelConversation: Conversation;
-      let secondModelConversation: Conversation;
-      let modelConversationInFolder: FolderConversation;
-      let thirdModelConversation: Conversation;
-
-      await test.step('Prepare three conversations to compare', async () => {
-        firstModelConversation = conversationData.prepareDefaultConversation(
-          defaultModel,
-          ExpectedConstants.newConversationTitle,
+      const request = firstModelConversation.messages.find(
+        (m) => m.role === 'user',
+      )?.content;
+      conversationData.resetData();
+      secondModelConversation =
+        conversationData.prepareModelConversationBasedOnRequests(
+          gpt4Model,
+          [request!],
+          conversationName,
         );
-        const request = firstModelConversation.messages.find(
-          (m) => m.role === 'user',
-        )?.content;
-        conversationData.resetData();
-        secondModelConversation =
-          conversationData.prepareModelConversationBasedOnRequests(gpt4Model, [
-            request!,
-          ]);
-        conversationData.resetData();
-        modelConversationInFolder =
-          conversationData.prepareDefaultConversationInFolder(bisonModel);
-        conversationData.resetData();
-        thirdModelConversation =
-          conversationData.prepareDefaultConversation(bisonModel);
-        await localStorageManager.setFolders(modelConversationInFolder.folders);
-        await localStorageManager.setConversationHistory(
+      conversationData.resetData();
+      modelConversationInFolder =
+        conversationData.prepareDefaultConversationInFolder(
+          bisonModel,
+          conversationName,
+        );
+      conversationData.resetData();
+      thirdModelConversation = conversationData.prepareDefaultConversation(
+        bisonModel,
+        conversationName,
+      );
+
+      await dataInjector.createConversations(
+        [
           firstModelConversation,
           secondModelConversation,
           thirdModelConversation,
-          modelConversationInFolder.conversations[0],
-        );
-        await localStorageManager.setSelectedConversation(
-          thirdModelConversation,
-        );
-      });
+          ...modelConversationInFolder.conversations,
+        ],
+        modelConversationInFolder.folders,
+      );
+      await localStorageManager.setSelectedConversation(thirdModelConversation);
+    });
 
-      await test.step('Open compare mode from 1st chat dropdown menu and verify chats with valid icons available for comparison', async () => {
-        await dialHomePage.openHomePage();
+    await dialTest.step(
+      'Open compare mode from 1st chat dropdown menu and verify chats with valid icons available for comparison',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [
+            defaultModel.iconUrl,
+            gpt4Model.iconUrl,
+            bisonModel.iconUrl,
+          ],
+        });
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
           thirdModelConversation.name,
+          3,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
@@ -155,8 +173,8 @@ test.describe('Compare mode tests', () => {
           .toBe(expectedModels.length);
 
         for (const expectedModel of expectedModels) {
-          const actualOptionIcon = compareOptionsIcons.find(
-            (o) => o.entityName === expectedModel.name,
+          const actualOptionIcon = compareOptionsIcons.find((o) =>
+            o.entityName.includes(expectedModel.name),
           )!;
           const expectedModelIcon =
             await iconApiHelper.getEntityIcon(expectedModel);
@@ -164,50 +182,69 @@ test.describe('Compare mode tests', () => {
             .soft(actualOptionIcon.icon, ExpectedMessages.entityIconIsValid)
             .toBe(expectedModelIcon);
         }
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test(
-    'Check replay chats are not included in Select conversation drop down list.\n' +
-      'Compare mode is closed if to switch to another chat',
-    async ({
-      dialHomePage,
-      setTestIds,
-      conversationDropdownMenu,
-      conversations,
-      conversationData,
-      localStorageManager,
-      compareConversationSelector,
-      compare,
-    }) => {
-      setTestIds('EPMRTC-1133', 'EPMRTC-541');
-      let modelConversation: Conversation;
-      let replayConversation: Conversation;
-      let firstEmptyConversation: Conversation;
-      let secondEmptyConversation: Conversation;
+dialTest(
+  'Check replay chats are not included in Select conversation drop down list.\n' +
+    'Compare mode is closed if to switch to another chat',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversationDropdownMenu,
+    conversations,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    compareConversationSelector,
+    compare,
+  }) => {
+    setTestIds('EPMRTC-1133', 'EPMRTC-541');
+    let modelConversation: TestConversation;
+    let replayConversation: TestConversation;
+    let firstEmptyConversation: TestConversation;
+    let secondEmptyConversation: TestConversation;
+    const conversationName = GeneratorUtil.randomString(7);
 
-      await test.step('Prepare one conversation with replay conversation and two empty conversations', async () => {
-        modelConversation = conversationData.prepareDefaultConversation();
+    await dialTest.step(
+      'Prepare one conversation with replay conversation and two empty conversations',
+      async () => {
+        modelConversation = conversationData.prepareDefaultConversation(
+          defaultModel,
+          conversationName,
+        );
         replayConversation =
           conversationData.prepareDefaultReplayConversation(modelConversation);
         conversationData.resetData();
-        firstEmptyConversation = conversationData.prepareEmptyConversation();
+        firstEmptyConversation = conversationData.prepareEmptyConversation(
+          defaultModel,
+          `${conversationName} 1`,
+        );
         conversationData.resetData();
-        secondEmptyConversation = conversationData.prepareEmptyConversation();
-        await localStorageManager.setConversationHistory(
+        secondEmptyConversation = conversationData.prepareEmptyConversation(
+          defaultModel,
+          `${conversationName} 2`,
+        );
+        await dataInjector.createConversations([
           modelConversation,
           replayConversation,
           firstEmptyConversation,
           secondEmptyConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(
           firstEmptyConversation,
         );
-      });
+      },
+    );
 
-      await test.step('Open compare mode for the 1st empty chat and verify only one empty chat is available for comparison', async () => {
-        await dialHomePage.openHomePage();
+    await dialTest.step(
+      'Open compare mode for the 1st empty chat and verify only one empty chat is available for comparison',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [defaultModel.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
           firstEmptyConversation.name,
@@ -216,55 +253,68 @@ test.describe('Compare mode tests', () => {
         await compareConversationSelector.click();
         const conversationsList =
           await compareConversationSelector.getListOptions();
+        const expectedCompareConversations = isApiStorageType
+          ? [modelConversation.name, secondEmptyConversation.name]
+          : [secondEmptyConversation.name];
         expect
           .soft(
             conversationsList,
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
-          .toEqual([secondEmptyConversation.name]);
-      });
+          .toEqual(expectedCompareConversations);
+      },
+    );
 
-      await test.step('Open another conversation and verify compare mode is closed', async () => {
+    await dialTest.step(
+      'Open another conversation and verify compare mode is closed',
+      async () => {
         await conversations.selectConversation(modelConversation.name);
         const isCompareModeOn = await compare.isVisible();
         expect
           .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
           .toBeFalsy();
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test(
-    `Compare mode is closed on "x" button in chat1.\n` +
-      'Compare mode is closed on "x" button in chat2',
-    async ({
-      dialHomePage,
-      setTestIds,
-      conversationData,
-      localStorageManager,
-      compare,
-      rightChatHeader,
-      leftChatHeader,
-    }) => {
-      setTestIds('EPMRTC-544', 'EPMRTC-545');
-      let firstConversation: Conversation;
-      let secondConversation: Conversation;
+dialTest(
+  `Compare mode is closed on "x" button in chat1.\n` +
+    'Compare mode is closed on "x" button in chat2',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    compare,
+    rightChatHeader,
+    leftChatHeader,
+  }) => {
+    setTestIds('EPMRTC-544', 'EPMRTC-545');
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
 
-      await test.step('Prepare two conversations in compare mode', async () => {
+    await dialTest.step(
+      'Prepare two conversations in compare mode',
+      async () => {
         firstConversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         secondConversation = conversationData.prepareDefaultConversation();
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           firstConversation,
           secondConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(
           firstConversation,
           secondConversation,
         );
-      });
+      },
+    );
 
-      await test.step('Remove 1st conversation from compare mode using Close btn in the header', async () => {
+    await dialTest.step(
+      'Remove 1st conversation from compare mode using Close btn in the header',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         const randomSide = GeneratorUtil.randomArrayElement(
@@ -289,15 +339,19 @@ test.describe('Compare mode tests', () => {
         expect
           .soft(activeChatHeader, ExpectedMessages.headerTitleIsValid)
           .toBe(activeChat);
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test('Check the list of No conversations available', async ({
+dialTest(
+  'Check the list of No conversations available',
+  async ({
     dialHomePage,
     setTestIds,
     conversationData,
     localStorageManager,
+    dataInjector,
     conversations,
     compareConversationSelector,
     conversationDropdownMenu,
@@ -306,130 +360,142 @@ test.describe('Compare mode tests', () => {
     const firstRequest = 'What is EPAM official name?';
     const secondRequest = 'What is DIAL?';
     const thirdRequest = 'Who is EPAM founder?';
-    let firstConversation: Conversation;
-    let secondConversation: Conversation;
-    let thirdConversation: Conversation;
-    let forthConversation: Conversation;
-    let fifthConversation: Conversation;
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
+    let thirdConversation: TestConversation;
+    let forthConversation: TestConversation;
+    let fifthConversation: TestConversation;
 
-    await test.step('Prepare five conversations with requests combination', async () => {
-      firstConversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          [firstRequest, secondRequest],
-          'firstConv',
-        );
-      conversationData.resetData();
-      secondConversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          [secondRequest, firstRequest],
-          'secondConv',
-        );
-      conversationData.resetData();
-      thirdConversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          [firstRequest],
-          'thirdConv',
-        );
-      conversationData.resetData();
-      forthConversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          [firstRequest, thirdRequest],
-          'forthConv',
-        );
-      conversationData.resetData();
-      fifthConversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          [firstRequest.toLowerCase(), secondRequest],
-          'fifthConv',
-        );
+    await dialTest.step(
+      'Prepare five conversations with requests combination',
+      async () => {
+        firstConversation =
+          conversationData.prepareModelConversationBasedOnRequests(
+            defaultModel,
+            [firstRequest, secondRequest],
+            'firstConv',
+          );
+        conversationData.resetData();
+        secondConversation =
+          conversationData.prepareModelConversationBasedOnRequests(
+            defaultModel,
+            [secondRequest, firstRequest],
+            'secondConv',
+          );
+        conversationData.resetData();
+        thirdConversation =
+          conversationData.prepareModelConversationBasedOnRequests(
+            defaultModel,
+            [firstRequest],
+            'thirdConv',
+          );
+        conversationData.resetData();
+        forthConversation =
+          conversationData.prepareModelConversationBasedOnRequests(
+            defaultModel,
+            [firstRequest, thirdRequest],
+            'forthConv',
+          );
+        conversationData.resetData();
+        fifthConversation =
+          conversationData.prepareModelConversationBasedOnRequests(
+            defaultModel,
+            [firstRequest.toLowerCase(), secondRequest],
+            'fifthConv',
+          );
 
-      await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
+          firstConversation,
+          secondConversation,
+          thirdConversation,
+          forthConversation,
+          fifthConversation,
+        ]);
+        await localStorageManager.setSelectedConversation(firstConversation);
+      },
+    );
+
+    await dialTest.step(
+      'Open compare mode for the 1st conversation and verify no options are available for comparison',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openConversationDropdownMenu(
+          firstConversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+
+        await compareConversationSelector.click();
+        const selectorPlaceholder =
+          await compareConversationSelector.getSelectorPlaceholder();
+        expect
+          .soft(selectorPlaceholder, ExpectedMessages.noConversationsAvailable)
+          .toBe(ExpectedConstants.noConversationsAvailable);
+
+        const conversationsList =
+          await compareConversationSelector.getListOptions();
+        expect
+          .soft(
+            conversationsList,
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          )
+          .toEqual([]);
+      },
+    );
+  },
+);
+
+dialTest(
+  'Generate new response for two chats in compare mode. GPT models.\n' +
+    'Likes/Dislikes set in compare mode are stored in both chats',
+  async ({
+    dialHomePage,
+    chat,
+    chatMessages,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    compare,
+    conversations,
+  }) => {
+    setTestIds('EPMRTC-552', 'EPMRTC-558');
+
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
+
+    const firstPrompt = 'repeat the same text';
+    const firstTemp = 1;
+    const secondPrompt = 'repeat the same text again';
+    const secondTemp = 0;
+
+    await dialTest.step('Prepare two conversations for comparing', async () => {
+      firstConversation = conversationData.prepareModelConversation(
+        firstTemp,
+        firstPrompt,
+        [],
+        defaultModel,
+      );
+      conversationData.resetData();
+      secondConversation = conversationData.prepareModelConversation(
+        secondTemp,
+        secondPrompt,
+        [],
+        gpt4Model,
+      );
+      await dataInjector.createConversations([
         firstConversation,
         secondConversation,
-        thirdConversation,
-        forthConversation,
-        fifthConversation,
+      ]);
+      await localStorageManager.setSelectedConversation(
+        firstConversation,
+        secondConversation,
       );
-      await localStorageManager.setSelectedConversation(firstConversation);
     });
 
-    await test.step('Open compare mode for the 1st conversation and verify no options are available for comparison', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await conversations.openConversationDropdownMenu(firstConversation.name);
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-
-      await compareConversationSelector.click();
-      const selectorPlaceholder =
-        await compareConversationSelector.getSelectorPlaceholder();
-      expect
-        .soft(selectorPlaceholder, ExpectedMessages.noConversationsAvailable)
-        .toBe(ExpectedConstants.noConversationsAvailable);
-
-      const conversationsList =
-        await compareConversationSelector.getListOptions();
-      expect
-        .soft(
-          conversationsList,
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        )
-        .toEqual([]);
-    });
-  });
-
-  test(
-    'Generate new response for two chats in compare mode. GPT models.\n' +
-      'Likes/Dislikes set in compare mode are stored in both chats',
-    async ({
-      dialHomePage,
-      chat,
-      chatMessages,
-      setTestIds,
-      conversationData,
-      localStorageManager,
-      compare,
-      conversations,
-    }) => {
-      setTestIds('EPMRTC-552', 'EPMRTC-558');
-
-      let firstConversation: Conversation;
-      let secondConversation: Conversation;
-
-      const firstPrompt = 'repeat the same text';
-      const firstTemp = 1;
-      const secondPrompt = 'repeat the same text again';
-      const secondTemp = 0;
-
-      await test.step('Prepare two conversations for comparing', async () => {
-        firstConversation = conversationData.prepareModelConversation(
-          firstTemp,
-          firstPrompt,
-          [],
-          defaultModel,
-        );
-        conversationData.resetData();
-        secondConversation = conversationData.prepareModelConversation(
-          secondTemp,
-          secondPrompt,
-          [],
-          gpt4Model,
-        );
-        await localStorageManager.setConversationHistory(
-          firstConversation,
-          secondConversation,
-        );
-        await localStorageManager.setSelectedConversation(
-          firstConversation,
-          secondConversation,
-        );
-      });
-
-      await test.step('Send new message in compare chat and verify response is displayed for both and API requests are correct', async () => {
+    await dialTest.step(
+      'Send new message in compare chat and verify response is displayed for both and API requests are correct',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await compare.waitForComparedConversationsLoaded();
@@ -491,9 +557,12 @@ test.describe('Compare mode tests', () => {
             ExpectedMessages.requestTempIsValid,
           )
           .toBe(secondTemp);
-      });
+      },
+    );
 
-      await test.step('Put like/dislike for compared chat, open this chat and verify like/dislike saved', async () => {
+    await dialTest.step(
+      'Put like/dislike for compared chat, open this chat and verify like/dislike saved',
+      async () => {
         const rate = GeneratorUtil.randomArrayElement(Object.values(Rate));
         await chatMessages.rateCompareRowMessage(Side.left, rate);
         const isComparedMessageRated =
@@ -503,54 +572,57 @@ test.describe('Compare mode tests', () => {
           .toBeTruthy();
 
         await conversations.selectConversation(firstConversation.name);
-
         await chatMessages
           .getChatMessageRate(firstConversation.messages.length + 2, rate)
           .waitFor();
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test(
-    'Generate new response for two chats in compare mode. Bison and GPT-4-32 which have different response time.\n' +
-      'Regenerate response in compare mode',
-    async ({
-      dialHomePage,
-      chat,
-      chatMessages,
-      setTestIds,
-      conversationData,
-      localStorageManager,
-      page,
-    }) => {
-      setTestIds('EPMRTC-553', 'EPMRTC-555');
-      const request = ['beautiful'];
-      let firstConversation: Conversation;
-      let secondConversation: Conversation;
+dialTest(
+  'Generate new response for two chats in compare mode. Bison and GPT-4-32 which have different response time.\n' +
+    'Regenerate response in compare mode',
+  async ({
+    dialHomePage,
+    chat,
+    chatMessages,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    page,
+  }) => {
+    setTestIds('EPMRTC-553', 'EPMRTC-555');
+    const request = ['beautiful'];
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
 
-      await test.step('Prepare two conversations for comparing', async () => {
-        firstConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            bisonModel,
-            request,
-          );
-        conversationData.resetData();
-        secondConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            ModelsUtil.getModel(ModelIds.GPT_4_32K)!,
-            request,
-          );
-        await localStorageManager.setConversationHistory(
-          firstConversation,
-          secondConversation,
+    await dialTest.step('Prepare two conversations for comparing', async () => {
+      firstConversation =
+        conversationData.prepareModelConversationBasedOnRequests(
+          bisonModel,
+          request,
         );
-        await localStorageManager.setSelectedConversation(
-          firstConversation,
-          secondConversation,
+      conversationData.resetData();
+      secondConversation =
+        conversationData.prepareModelConversationBasedOnRequests(
+          ModelsUtil.getModel(ModelIds.GPT_4_32K)!,
+          request,
         );
-      });
+      await dataInjector.createConversations([
+        firstConversation,
+        secondConversation,
+      ]);
+      await localStorageManager.setSelectedConversation(
+        firstConversation,
+        secondConversation,
+      );
+    });
 
-      await test.step('Send new message in compare chat and verify regenerate is not available until both responses received', async () => {
+    await dialTest.step(
+      'Send new message in compare chat and verify regenerate is not available until both responses received',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
 
@@ -590,9 +662,12 @@ test.describe('Compare mode tests', () => {
         expect
           .soft(isStopButtonVisible, ExpectedMessages.stopGeneratingAvailable)
           .toBeTruthy();
-      });
+      },
+    );
 
-      await test.step('Click "Regenerate" button and verify last response is regenerated for both chats', async () => {
+    await dialTest.step(
+      'Click "Regenerate" button and verify last response is regenerated for both chats',
+      async () => {
         await chat.regenerate.waitForState();
 
         const requestsData = await chat.regenerateResponseInCompareMode({
@@ -612,15 +687,19 @@ test.describe('Compare mode tests', () => {
             ExpectedMessages.requestModeIdIsValid,
           )
           .toBe(secondConversation.model.id);
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test('Apply changes with new settings for both chats in compare mode and check chat headers', async ({
+dialTest(
+  'Apply changes with new settings for both chats in compare mode and check chat headers',
+  async ({
     dialHomePage,
     chat,
     setTestIds,
     conversationData,
+    dataInjector,
     localStorageManager,
     leftChatHeader,
     rightChatHeader,
@@ -631,17 +710,18 @@ test.describe('Compare mode tests', () => {
     errorPopup,
     iconApiHelper,
   }) => {
-    test.slow();
+    dialTest.slow();
     setTestIds('EPMRTC-1021');
-    let firstConversation: Conversation;
-    let secondConversation: Conversation;
-    const models = ModelsUtil.getModels();
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
+    const models = ModelsUtil.getLatestModels();
     const initRandomModel = GeneratorUtil.randomArrayElement(models);
     const modelsForUpdate = models.filter((m) => m !== initRandomModel);
     const firstUpdatedRandomModel =
       GeneratorUtil.randomArrayElement(modelsForUpdate);
-    const secondUpdatedRandomModel =
-      GeneratorUtil.randomArrayElement(modelsForUpdate);
+    const secondUpdatedRandomModel = GeneratorUtil.randomArrayElement(
+      modelsForUpdate.filter((m) => m !== firstUpdatedRandomModel),
+    );
     const firstUpdatedPrompt = 'first prompt';
     const secondUpdatedPrompt = 'second prompt';
     const firstUpdatedTemp = 0.5;
@@ -651,167 +731,201 @@ test.describe('Compare mode tests', () => {
     const expectedFirstUpdatedRandomModelIcon =
       await iconApiHelper.getEntityIcon(firstUpdatedRandomModel);
 
-    await test.step('Prepare two model conversations for comparing', async () => {
-      firstConversation = conversationData.prepareModelConversation(
-        1,
-        'prompt',
-        [],
-        initRandomModel,
-      );
+    await dialTest.step(
+      'Prepare two model conversations for comparing',
+      async () => {
+        firstConversation = conversationData.prepareModelConversation(
+          1,
+          'prompt',
+          [],
+          initRandomModel,
+        );
+        conversationData.resetData();
+        secondConversation =
+          conversationData.prepareDefaultConversation(initRandomModel);
+        await dataInjector.createConversations([
+          firstConversation,
+          secondConversation,
+        ]);
+        await localStorageManager.setSelectedConversation(
+          firstConversation,
+          secondConversation,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open chat settings and update them for both models',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [initRandomModel.iconUrl],
+        });
+        await dialHomePage.waitForPageLoaded();
+        await leftChatHeader.openConversationSettingsPopup();
+        await leftConversationSettings
+          .getTalkToSelector()
+          .selectModel(
+            firstUpdatedRandomModel.name,
+            firstUpdatedRandomModel.id !== defaultModel.id
+              ? firstUpdatedRandomModel.iconUrl
+              : undefined,
+          );
+        const leftEntitySettings = leftConversationSettings.getEntitySettings();
+        await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
+        await leftEntitySettings
+          .getTemperatureSlider()
+          .setTemperature(firstUpdatedTemp);
+
+        await rightConversationSettings
+          .getTalkToSelector()
+          .selectModel(
+            secondUpdatedRandomModel.name,
+            secondUpdatedRandomModel.id !== defaultModel.id
+              ? secondUpdatedRandomModel.iconUrl
+              : undefined,
+          );
+        const rightEntitySettings =
+          rightConversationSettings.getEntitySettings();
+        await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
+        await rightEntitySettings
+          .getTemperatureSlider()
+          .setTemperature(secondUpdatedTemp);
+        await chat.applyNewEntity(
+          firstUpdatedRandomModel.iconUrl,
+          secondUpdatedRandomModel.iconUrl,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify chat icons are updated with new model and addons in the header and chat bar',
+      async () => {
+        const rightHeaderModelIcon = await rightChatHeader.getHeaderModelIcon();
+        expect
+          .soft(
+            rightHeaderModelIcon,
+            `${ExpectedMessages.entityIconIsValid} for ${secondUpdatedRandomModel.name}`,
+          )
+          .toBe(expectedSecondUpdatedRandomModelIcon);
+
+        const leftHeaderModelIcon = await leftChatHeader.getHeaderModelIcon();
+        expect
+          .soft(
+            leftHeaderModelIcon,
+            `${ExpectedMessages.entityIconIsValid} for ${firstUpdatedRandomModel.name}`,
+          )
+          .toBe(expectedFirstUpdatedRandomModelIcon);
+
+        const firstConversationIcon = await conversations.getConversationIcon(
+          firstConversation.name,
+        );
+        expect
+          .soft(firstConversationIcon, ExpectedMessages.entityIconIsValid)
+          .toBe(expectedFirstUpdatedRandomModelIcon);
+
+        const secondConversationIcon = await conversations.getConversationIcon(
+          secondConversation.name,
+        );
+        expect
+          .soft(secondConversationIcon, ExpectedMessages.entityIconIsValid)
+          .toBe(expectedSecondUpdatedRandomModelIcon);
+      },
+    );
+
+    await dialTest.step(
+      'Hover over chat headers and verify chat settings updated on tooltip',
+      async () => {
+        await errorPopup.cancelPopup();
+        await rightChatHeader.hoverOverChatModel(
+          secondUpdatedRandomModel.iconUrl,
+        );
+        const rightModelInfo = await chatInfoTooltip.getModelInfo();
+        expect
+          .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
+          .toBe(ModelsUtil.getModelInfo(secondUpdatedRandomModel.id));
+
+        const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
+        expect
+          .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
+          .toBe(expectedSecondUpdatedRandomModelIcon);
+
+        const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
+        expect
+          .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
+          .toBe(secondUpdatedPrompt);
+
+        const rightTempInfo = await chatInfoTooltip.getTemperatureInfo();
+        expect
+          .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+          .toBe(secondUpdatedTemp.toString());
+
+        await errorPopup.cancelPopup();
+        await leftChatHeader.hoverOverChatModel(
+          firstUpdatedRandomModel.iconUrl,
+        );
+        const leftModelInfo = await chatInfoTooltip.getModelInfo();
+        expect
+          .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
+          .toBe(ModelsUtil.getModelInfo(firstUpdatedRandomModel.id));
+
+        const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
+        expect
+          .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
+          .toBe(expectedFirstUpdatedRandomModelIcon);
+
+        const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
+        expect
+          .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
+          .toBe(firstUpdatedPrompt);
+
+        const leftTempInfo = await chatInfoTooltip.getTemperatureInfo();
+        expect
+          .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+          .toBe(firstUpdatedTemp.toString());
+      },
+    );
+  },
+);
+
+dialTest(
+  'Stop regenerating in compare mode.\n' +
+    'Both "Talk to" item icons are jumping while generating an answer in Compare mode',
+  async ({
+    dialHomePage,
+    chat,
+    chatMessages,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    compare,
+    iconApiHelper,
+  }) => {
+    dialTest.slow();
+    setTestIds('EPMRTC-556', 'EPMRTC-1134');
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
+    const sides = Object.values(Side);
+
+    await dialTest.step('Prepare two conversations for comparing', async () => {
+      firstConversation =
+        conversationData.prepareDefaultConversation(defaultModel);
       conversationData.resetData();
       secondConversation =
-        conversationData.prepareDefaultConversation(initRandomModel);
-      await localStorageManager.setConversationHistory(
+        conversationData.prepareDefaultConversation(defaultModel);
+      await dataInjector.createConversations([
         firstConversation,
         secondConversation,
-      );
+      ]);
       await localStorageManager.setSelectedConversation(
         firstConversation,
         secondConversation,
       );
     });
 
-    await test.step('Open chat settings and update them for both models', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await leftChatHeader.openConversationSettingsPopup();
-      await leftConversationSettings
-        .getTalkToSelector()
-        .selectModel(firstUpdatedRandomModel.name);
-      const leftEntitySettings = leftConversationSettings.getEntitySettings();
-      await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
-      await leftEntitySettings
-        .getTemperatureSlider()
-        .setTemperature(firstUpdatedTemp);
-
-      await rightConversationSettings
-        .getTalkToSelector()
-        .selectModel(secondUpdatedRandomModel.name);
-      const rightEntitySettings = rightConversationSettings.getEntitySettings();
-      await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
-      await rightEntitySettings
-        .getTemperatureSlider()
-        .setTemperature(secondUpdatedTemp);
-      await chat.applyNewEntity(
-        firstUpdatedRandomModel.iconUrl,
-        secondUpdatedRandomModel.iconUrl,
-      );
-    });
-
-    await test.step('Verify chat icons are updated with new model and addons in the header and chat bar', async () => {
-      const rightHeaderModelIcon = await rightChatHeader.getHeaderModelIcon();
-      expect
-        .soft(
-          rightHeaderModelIcon,
-          `${ExpectedMessages.entityIconIsValid} for ${secondUpdatedRandomModel.name}`,
-        )
-        .toBe(expectedSecondUpdatedRandomModelIcon);
-
-      const leftHeaderModelIcon = await leftChatHeader.getHeaderModelIcon();
-      expect
-        .soft(
-          leftHeaderModelIcon,
-          `${ExpectedMessages.entityIconIsValid} for ${firstUpdatedRandomModel.name}`,
-        )
-        .toBe(expectedFirstUpdatedRandomModelIcon);
-
-      const firstConversationIcon = await conversations.getConversationIcon(
-        firstConversation.name,
-      );
-      expect
-        .soft(firstConversationIcon, ExpectedMessages.entityIconIsValid)
-        .toBe(expectedFirstUpdatedRandomModelIcon);
-
-      const secondConversationIcon = await conversations.getConversationIcon(
-        secondConversation.name,
-      );
-      expect
-        .soft(secondConversationIcon, ExpectedMessages.entityIconIsValid)
-        .toBe(expectedSecondUpdatedRandomModelIcon);
-    });
-
-    await test.step('Hover over chat headers and verify chat settings updated on tooltip', async () => {
-      await errorPopup.cancelPopup();
-      await rightChatHeader.chatModel.hoverOver();
-      const rightModelInfo = await chatInfoTooltip.getModelInfo();
-      expect
-        .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
-        .toBe(secondUpdatedRandomModel.name);
-
-      const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
-      expect
-        .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-        .toBe(expectedSecondUpdatedRandomModelIcon);
-
-      const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
-      expect
-        .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-        .toBe(secondUpdatedPrompt);
-
-      const rightTempInfo = await chatInfoTooltip.getTemperatureInfo();
-      expect
-        .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        .toBe(secondUpdatedTemp.toString());
-
-      await errorPopup.cancelPopup();
-      await leftChatHeader.chatModel.hoverOver();
-      const leftModelInfo = await chatInfoTooltip.getModelInfo();
-      expect
-        .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
-        .toBe(firstUpdatedRandomModel.name);
-
-      const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
-      expect
-        .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-        .toBe(expectedFirstUpdatedRandomModelIcon);
-
-      const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
-      expect
-        .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-        .toBe(firstUpdatedPrompt);
-
-      const leftTempInfo = await chatInfoTooltip.getTemperatureInfo();
-      expect
-        .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        .toBe(firstUpdatedTemp.toString());
-    });
-  });
-
-  test(
-    'Stop regenerating in compare mode.\n' +
-      'Both "Talk to" item icons are jumping while generating an answer in Compare mode',
-    async ({
-      dialHomePage,
-      chat,
-      chatMessages,
-      setTestIds,
-      conversationData,
-      localStorageManager,
-      compare,
-      iconApiHelper,
-    }) => {
-      setTestIds('EPMRTC-556', 'EPMRTC-1134');
-      let firstConversation: Conversation;
-      let secondConversation: Conversation;
-      const sides = Object.values(Side);
-
-      await test.step('Prepare two conversations for comparing', async () => {
-        firstConversation =
-          conversationData.prepareDefaultConversation(defaultModel);
-        conversationData.resetData();
-        secondConversation =
-          conversationData.prepareDefaultConversation(defaultModel);
-        await localStorageManager.setConversationHistory(
-          firstConversation,
-          secondConversation,
-        );
-        await localStorageManager.setSelectedConversation(
-          firstConversation,
-          secondConversation,
-        );
-      });
-
-      await test.step('Send new message in compare chat, verify both chat icons are jumping while responding and then stop generation', async () => {
+    await dialTest.step(
+      'Send new message in compare chat, verify both chat icons are jumping while responding and then stop generation',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await compare.waitForComparedConversationsLoaded();
@@ -829,9 +943,12 @@ test.describe('Compare mode tests', () => {
         }
 
         await chat.stopGenerating.click();
-      });
+      },
+    );
 
-      await test.step('Verify response is not received by both chats, stop is done immediately, valid model icons are displayed', async () => {
+    await dialTest.step(
+      'Verify response is not received by both chats, stop is done immediately, valid model icons are displayed',
+      async () => {
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect
           .soft(isResponseLoading, ExpectedMessages.responseLoadingStopped)
@@ -850,38 +967,43 @@ test.describe('Compare mode tests', () => {
             .soft(messageIcon, ExpectedMessages.entityIconIsValid)
             .toBe(expectedModelIcon);
         }
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test(
-    'Search chat in Select conversation drop down.\n' +
-      'Select chat from search results in Select conversation drop down',
-    async ({
-      dialHomePage,
-      setTestIds,
-      conversationDropdownMenu,
-      conversations,
-      conversationData,
-      localStorageManager,
-      compareConversationSelector,
-      rightChatHeader,
-    }) => {
-      setTestIds('EPMRTC-536', 'EPMRTC-1168');
-      const request = 'What is epam official name?';
-      const firstSearchTerm = 'epam';
-      const secondSearchTerm = 'systems';
-      const thirdSearchTerm = 'epam official';
-      const underscoreSearchTerm = '_';
-      const noResultSearchTerm = 'epaQ';
+dialTest(
+  'Search chat in Select conversation drop down.\n' +
+    'Select chat from search results in Select conversation drop down',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversationDropdownMenu,
+    conversations,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    compareConversationSelector,
+    rightChatHeader,
+    compareConversation,
+  }) => {
+    setTestIds('EPMRTC-536', 'EPMRTC-1168');
+    const request = 'What is epam official name';
+    const firstSearchTerm = 'epam';
+    const secondSearchTerm = 'systems';
+    const thirdSearchTerm = 'epam official';
+    const underscoreSearchTerm = '_';
+    const noResultSearchTerm = 'epaQ';
 
-      let firstConversation: Conversation;
-      let secondConversation: Conversation;
-      let thirdConversation: Conversation;
-      let fourthConversation: Conversation;
-      const matchedConversations: string[] = [];
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
+    let thirdConversation: TestConversation;
+    let fourthConversation: TestConversation;
+    const matchedConversations: string[] = [];
 
-      await test.step('Prepare 4 conversations with the same request but different names', async () => {
+    await dialTest.step(
+      'Prepare 4 conversations with the same request but different names',
+      async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
             defaultModel,
@@ -893,7 +1015,7 @@ test.describe('Compare mode tests', () => {
           conversationData.prepareModelConversationBasedOnRequests(
             defaultModel,
             [request],
-            request,
+            'When was epam officially founded',
           );
         conversationData.resetData();
         thirdConversation =
@@ -907,68 +1029,82 @@ test.describe('Compare mode tests', () => {
           conversationData.prepareModelConversationBasedOnRequests(
             defaultModel,
             [request],
-            'epam_systems !@#$%^&*()+=\':",.<>',
+            'epam_systems',
           );
 
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           firstConversation,
           secondConversation,
           thirdConversation,
           fourthConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(firstConversation);
         matchedConversations.push(
-          secondConversation.name,
           thirdConversation.name,
+          secondConversation.name,
           fourthConversation.name,
         );
-      });
+        matchedConversations.sort();
+      },
+    );
 
-      await test.step('Open compare mode for the 1st chat and verify all chats are available for comparison in dropdown list', async () => {
+    await dialTest.step(
+      'Open compare mode for the 1st chat and verify all chats are available for comparison in dropdown list',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
           firstConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await compareConversation.checkShowAllConversations();
         await compareConversationSelector.click();
         const conversationsList =
           await compareConversationSelector.getListOptions();
         expect
           .soft(
-            conversationsList,
+            conversationsList.sort(),
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
           .toEqual(matchedConversations);
-      });
+      },
+    );
 
-      await test.step('Type first search term and verify all chats are available for comparison in dropdown list', async () => {
+    await dialTest.step(
+      'Type first search term and verify all chats are available for comparison in dropdown list',
+      async () => {
         for (const term of [firstSearchTerm, firstSearchTerm.toUpperCase()]) {
           await compareConversationSelector.fillInput(term);
           const conversationsList =
             await compareConversationSelector.getListOptions();
           expect
             .soft(
-              conversationsList,
+              conversationsList.sort(),
               ExpectedMessages.conversationsToCompareOptionsValid,
             )
             .toEqual(matchedConversations);
         }
-      });
+      },
+    );
 
-      await test.step('Type second search term and verify chat 3 and 4 are available for comparison in dropdown list', async () => {
+    await dialTest.step(
+      'Type second search term and verify chat 3 and 4 are available for comparison in dropdown list',
+      async () => {
         await compareConversationSelector.fillInput(secondSearchTerm);
         const conversationsList =
           await compareConversationSelector.getListOptions();
         expect
           .soft(
-            conversationsList,
+            conversationsList.sort(),
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
           .toEqual([thirdConversation.name, fourthConversation.name]);
-      });
+      },
+    );
 
-      await test.step('Type third search term and verify chat 2 is available for comparison in dropdown list', async () => {
+    await dialTest.step(
+      'Type third search term and verify chat 2 is available for comparison in dropdown list',
+      async () => {
         await compareConversationSelector.fillInput(thirdSearchTerm);
         const conversationsList =
           await compareConversationSelector.getListOptions();
@@ -978,9 +1114,12 @@ test.describe('Compare mode tests', () => {
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
           .toEqual([secondConversation.name]);
-      });
+      },
+    );
 
-      await test.step('Type underscore and verify chat 4 is available for comparison in dropdown list', async () => {
+    await dialTest.step(
+      'Type underscore and verify chat 4 is available for comparison in dropdown list',
+      async () => {
         await compareConversationSelector.fillInput(underscoreSearchTerm);
         const conversationsList =
           await compareConversationSelector.getListOptions();
@@ -990,9 +1129,12 @@ test.describe('Compare mode tests', () => {
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
           .toEqual([fourthConversation.name]);
-      });
+      },
+    );
 
-      await test.step('Type not matching search term and verify no chats available for comparison in dropdown list', async () => {
+    await dialTest.step(
+      'Type not matching search term and verify no chats available for comparison in dropdown list',
+      async () => {
         await compareConversationSelector.fillInput(noResultSearchTerm);
         const conversationsList =
           await compareConversationSelector.getListOptions();
@@ -1002,21 +1144,27 @@ test.describe('Compare mode tests', () => {
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
           .toEqual([]);
-      });
+      },
+    );
 
-      await test.step('Delete search term and verify all chats are available for comparison in dropdown list', async () => {
+    await dialTest.step(
+      'Delete search term and verify all chats are available for comparison in dropdown list',
+      async () => {
         await compareConversationSelector.fillInput('');
         const conversationsList =
           await compareConversationSelector.getListOptions();
         expect
           .soft(
-            conversationsList,
+            conversationsList.sort(),
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
           .toEqual(matchedConversations);
-      });
+      },
+    );
 
-      await test.step('Select any chat and verify it shown in the input, dropdown list is closed', async () => {
+    await dialTest.step(
+      'Select any chat and verify it shown in the input, dropdown list is closed',
+      async () => {
         const chatToSelect =
           GeneratorUtil.randomArrayElement(matchedConversations);
         await compareConversationSelector.selectModel(chatToSelect, true);
@@ -1028,33 +1176,37 @@ test.describe('Compare mode tests', () => {
         expect
           .soft(rightHeaderTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(chatToSelect);
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test(
-    'Compare mode is closed if to create new chat.\n' +
-      'Compare mode is closed if to click on chat which is used in compare mode.\n' +
-      'Check chat header in compare mode with long chat names.\n' +
-      'Long chat names in Select conversations drop down list',
-    async ({
-      dialHomePage,
-      setTestIds,
-      conversationData,
-      localStorageManager,
-      compare,
-      conversations,
-      chatBar,
-      chatHeader,
-      compareConversationSelector,
-      conversationDropdownMenu,
-      leftChatHeader,
-    }) => {
-      setTestIds('EPMRTC-542', 'EPMRTC-543', 'EPMRTC-548', 'EPMRTC-828');
-      let firstConversation: Conversation;
-      let secondConversation: Conversation;
+dialTest(
+  'Compare mode is closed if to create new chat.\n' +
+    'Compare mode is closed if to click on chat which is used in compare mode.\n' +
+    'Check chat header in compare mode with long chat names.\n' +
+    'Long chat names in Select conversations drop down list',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    compare,
+    conversations,
+    chatBar,
+    chatHeader,
+    compareConversationSelector,
+    conversationDropdownMenu,
+    leftChatHeader,
+  }) => {
+    setTestIds('EPMRTC-542', 'EPMRTC-543', 'EPMRTC-548', 'EPMRTC-828');
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
 
-      await test.step('Prepare two conversations for compare mode', async () => {
+    await dialTest.step(
+      'Prepare two conversations for compare mode',
+      async () => {
         firstConversation = conversationData.prepareDefaultConversation(
           defaultModel,
           GeneratorUtil.randomString(70),
@@ -1070,35 +1222,43 @@ test.describe('Compare mode tests', () => {
           secondConversationName,
         );
 
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           firstConversation,
           secondConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(
           firstConversation,
           secondConversation,
         );
-      });
+      },
+    );
 
-      await test.step('Open compare mode and verify long chat name is cut', async () => {
-        await dialHomePage.openHomePage();
+    await dialTest.step(
+      'Open compare mode and verify long chat name is cut',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [defaultModel.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
         const isTitleTruncated =
           await chatHeader.chatTitle.isElementWidthTruncated();
         expect
           .soft(isTitleTruncated, ExpectedMessages.chatHeaderTitleTruncated)
           .toBeTruthy();
-      });
+      },
+    );
 
-      await test.step('Create new chat and verify Compare mode is closed', async () => {
+    await dialTest.step(
+      'Create new chat and verify Compare mode is closed',
+      async () => {
         await chatBar.createNewConversation();
-        const isCompareModeOn = await compare.isVisible();
-        expect
-          .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
-          .toBeFalsy();
-      });
+        await compare.waitForState({ state: 'hidden' });
+      },
+    );
 
-      await test.step('Open compare mode again, switch to comparing conversation and verify Compare mode is closed', async () => {
+    await dialTest.step(
+      'Open compare mode again, switch to comparing conversation and verify Compare mode is closed',
+      async () => {
         await dialHomePage.reloadPage();
         await compare.waitForState();
         await conversations.selectConversation(firstConversation.name);
@@ -1106,9 +1266,12 @@ test.describe('Compare mode tests', () => {
         expect
           .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
           .toBeFalsy();
-      });
+      },
+    );
 
-      await test.step('Open compare mode for 1st conversation and verify long compare options are shown in different rows', async () => {
+    await dialTest.step(
+      'Open compare mode for 1st conversation and verify long compare options are shown in different rows',
+      async () => {
         await conversations.openConversationDropdownMenu(
           firstConversation.name,
         );
@@ -1131,17 +1294,20 @@ test.describe('Compare mode tests', () => {
         expect
           .soft(overflowProp[0], ExpectedMessages.entityNameIsTruncated)
           .toBe(Overflow.auto);
-      });
-    },
-  );
+      },
+    );
+  },
+);
 
-  test('Compare two chats located in different folders', async ({
+dialTest(
+  'Compare two chats located in different folders',
+  async ({
     dialHomePage,
     setTestIds,
     conversationDropdownMenu,
     folderConversations,
     conversationData,
-    localStorageManager,
+    dataInjector,
     compare,
     compareConversationSelector,
     chat,
@@ -1149,112 +1315,124 @@ test.describe('Compare mode tests', () => {
     setTestIds('EPMRTC-557');
     let firstFolderConversation: FolderConversation;
     let secondFolderConversation: FolderConversation;
+    const conversationName = GeneratorUtil.randomString(7);
 
-    await test.step('Prepare two conversations in folders', async () => {
+    await dialTest.step('Prepare two conversations in folders', async () => {
       firstFolderConversation =
-        conversationData.prepareDefaultConversationInFolder(defaultModel);
+        conversationData.prepareDefaultConversationInFolder(
+          defaultModel,
+          `${conversationName} 1`,
+        );
       conversationData.resetData();
       secondFolderConversation =
-        conversationData.prepareDefaultConversationInFolder(bisonModel);
-      await localStorageManager.setFolders(
+        conversationData.prepareDefaultConversationInFolder(
+          bisonModel,
+          `${conversationName} 2`,
+        );
+
+      await dataInjector.createConversations(
+        [
+          firstFolderConversation.conversations[0],
+          secondFolderConversation.conversations[0],
+        ],
         firstFolderConversation.folders,
         secondFolderConversation.folders,
       );
-      await localStorageManager.setConversationHistory(
-        firstFolderConversation.conversations[0],
-        secondFolderConversation.conversations[0],
-      );
-      await localStorageManager.setSelectedConversation(
-        firstFolderConversation.conversations[0],
-      );
     });
 
-    await test.step('Open compare mode from 1st chat dropdown menu and verify one chat is available for comparison', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await folderConversations.expandCollapseFolder(
-        firstFolderConversation.folders.name,
-      );
-      await folderConversations.expandCollapseFolder(
-        secondFolderConversation.folders.name,
-      );
-      await folderConversations.openFolderEntityDropdownMenu(
-        firstFolderConversation.folders.name,
-        firstFolderConversation.conversations[0].name,
-      );
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-      await compare.waitForState();
-      await compareConversationSelector.click();
-      const conversationsList =
-        await compareConversationSelector.getListOptions();
-      expect
-        .soft(
-          conversationsList,
-          ExpectedMessages.conversationsToCompareOptionsValid,
-        )
-        .toEqual([secondFolderConversation.conversations[0].name]);
-    });
+    await dialTest.step(
+      'Open compare mode from 1st chat dropdown menu and verify one chat is available for comparison',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(
+          firstFolderConversation.folders.name,
+        );
+        await folderConversations.openFolderEntityDropdownMenu(
+          firstFolderConversation.folders.name,
+          firstFolderConversation.conversations[0].name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await compare.waitForState();
+        await compareConversationSelector.click();
+        const conversationsList =
+          await compareConversationSelector.getListOptions();
+        expect
+          .soft(
+            conversationsList,
+            ExpectedMessages.conversationsToCompareOptionsValid,
+          )
+          .toEqual([secondFolderConversation.conversations[0].name]);
+      },
+    );
 
-    await test.step('Select folder conversation for comparison, send new request and verify response generated for both chats', async () => {
-      await compareConversationSelector.selectModel(
-        secondFolderConversation.conversations[0].name,
-        true,
-      );
-      const requestsData = await chat.sendRequestInCompareMode(
-        'repeat the same response',
-        {
-          rightEntity: firstFolderConversation.conversations[0].model.id,
-          leftEntity: secondFolderConversation.conversations[0].model.id,
-        },
-      );
-      expect
-        .soft(
-          requestsData.rightRequest.modelId,
-          ExpectedMessages.requestModeIdIsValid,
-        )
-        .toBe(firstFolderConversation.conversations[0].model.id);
-      expect
-        .soft(
-          requestsData.leftRequest.modelId,
-          ExpectedMessages.requestModeIdIsValid,
-        )
-        .toBe(secondFolderConversation.conversations[0].model.id);
-    });
-  });
+    await dialTest.step(
+      'Select folder conversation for comparison, send new request and verify response generated for both chats',
+      async () => {
+        await compareConversationSelector.selectModel(
+          secondFolderConversation.conversations[0].name,
+          true,
+        );
+        const requestsData = await chat.sendRequestInCompareMode(
+          'repeat the same response',
+          {
+            rightEntity: firstFolderConversation.conversations[0].model.id,
+            leftEntity: secondFolderConversation.conversations[0].model.id,
+          },
+        );
+        expect
+          .soft(
+            requestsData.rightRequest.modelId,
+            ExpectedMessages.requestModeIdIsValid,
+          )
+          .toBe(firstFolderConversation.conversations[0].model.id);
+        expect
+          .soft(
+            requestsData.leftRequest.modelId,
+            ExpectedMessages.requestModeIdIsValid,
+          )
+          .toBe(secondFolderConversation.conversations[0].model.id);
+      },
+    );
+  },
+);
 
-  test(
-    'In compare mode delete any message in chat2.\n' +
-      'In compare mode copy answer.\n' +
-      'In compare mode save&sumbit any message in chat1.\n' +
-      'In compare mode edit chat name.\n' +
-      'In compare mode delete a chat',
-    async ({
-      dialHomePage,
-      setTestIds,
-      conversationData,
-      localStorageManager,
-      chatMessages,
-      confirmationDialog,
-      page,
-      conversations,
-      leftChatHeader,
-      conversationDropdownMenu,
-      compare,
-    }) => {
-      setTestIds(
-        'EPMRTC-560',
-        'EPMRTC-562',
-        'EPMRTC-559',
-        'EPMRTC-563',
-        'EPMRTC-564',
-      );
-      let firstConversation: Conversation;
-      let secondConversation: Conversation;
-      const firstConversationRequests = ['1+2=', '2+3=', '3+4='];
-      const secondConversationRequests = ['1+2=', '4+5=', '5+6='];
-      let updatedRequestContent: string;
+dialTest(
+  'In compare mode delete any message in chat2.\n' +
+    'In compare mode copy answer.\n' +
+    'In compare mode save&sumbit any message in chat1.\n' +
+    'In compare mode edit chat name.\n' +
+    'In compare mode delete a chat',
+  async ({
+    dialHomePage,
+    setTestIds,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    chatMessages,
+    confirmationDialog,
+    page,
+    conversations,
+    leftChatHeader,
+    conversationDropdownMenu,
+    compare,
+  }) => {
+    setTestIds(
+      'EPMRTC-560',
+      'EPMRTC-562',
+      'EPMRTC-559',
+      'EPMRTC-563',
+      'EPMRTC-564',
+    );
+    let firstConversation: TestConversation;
+    let secondConversation: TestConversation;
+    const firstConversationRequests = ['1+2', '2+3', '3+4'];
+    const secondConversationRequests = ['1+2', '4+5', '5+6'];
+    let updatedRequestContent: string;
 
-      await test.step('Prepare two conversations for compare mode', async () => {
+    await dialTest.step(
+      'Prepare two conversations for compare mode',
+      async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
             defaultModel,
@@ -1268,17 +1446,20 @@ test.describe('Compare mode tests', () => {
             secondConversationRequests,
           );
 
-        await localStorageManager.setConversationHistory(
+        await dataInjector.createConversations([
           firstConversation,
           secondConversation,
-        );
+        ]);
         await localStorageManager.setSelectedConversation(
           firstConversation,
           secondConversation,
         );
-      });
+      },
+    );
 
-      await test.step('Delete 1st message from the left conversation and verify only 1st row deleted for both chats', async () => {
+    await dialTest.step(
+      'Delete 1st message from the left conversation and verify only 1st row deleted for both chats',
+      async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatMessages.openDeleteCompareRowMessageDialog(Side.left, 1);
@@ -1300,9 +1481,12 @@ test.describe('Compare mode tests', () => {
             ExpectedMessages.messageContentIsValid,
           )
           .toBe(firstConversationRequests[1]);
-      });
+      },
+    );
 
-      await test.step('Copy last response from the right conversation and edit the 1st request for the left chat with copied message', async () => {
+    await dialTest.step(
+      'Copy last response from the right conversation and edit the 1st request for the left chat with copied message',
+      async () => {
         await chatMessages.copyCompareRowMessage(
           Side.right,
           (firstConversationRequests.length - 1) * 2,
@@ -1312,9 +1496,12 @@ test.describe('Compare mode tests', () => {
         await page.keyboard.press(keys.ctrlPlusV);
         await chatMessages.saveAndSubmit.click();
         await chatMessages.waitForResponseReceived();
-      });
+      },
+    );
 
-      await test.step('Verify both first requests updated, messages below are deleted', async () => {
+    await dialTest.step(
+      'Verify both first requests updated, messages below are deleted',
+      async () => {
         updatedRequestContent =
           secondConversation.messages[secondConversation.messages.length - 1]
             .content;
@@ -1336,9 +1523,12 @@ test.describe('Compare mode tests', () => {
             )
             .toBe(updatedRequestContent);
         }
-      });
+      },
+    );
 
-      await test.step('Edit left chat title and verify it is updated in the header', async () => {
+    await dialTest.step(
+      'Edit left chat title and verify it is updated in the header',
+      async () => {
         const newLeftChatName = GeneratorUtil.randomString(7);
         await conversations.openConversationDropdownMenu(
           updatedRequestContent,
@@ -1354,28 +1544,23 @@ test.describe('Compare mode tests', () => {
         expect
           .soft(chatTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(chatTitle);
-      });
+      },
+    );
 
-      await test.step('Delete right chat and compare mode closed, left chat is active', async () => {
+    await dialTest.step(
+      'Delete right chat and compare mode closed, left chat is active',
+      async () => {
         await conversations.openConversationDropdownMenu(updatedRequestContent);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await conversations
-          .getConversationInput(updatedRequestContent)
-          .clickTickButton();
-        expect
-          .soft(
-            await conversations
-              .getConversationByName(updatedRequestContent)
-              .isVisible(),
-            ExpectedMessages.conversationDeleted,
-          )
-          .toBeFalsy();
-
+          .getConversationByName(updatedRequestContent)
+          .waitFor({ state: 'hidden' });
         const isCompareModeOpened = await compare.isVisible();
         expect
           .soft(isCompareModeOpened, ExpectedMessages.compareModeClosed)
           .toBeFalsy();
-      });
-    },
-  );
-});
+      },
+    );
+  },
+);

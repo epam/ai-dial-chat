@@ -6,6 +6,7 @@ import {
   getChildAndCurrentFoldersIdsById,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
@@ -18,6 +19,7 @@ import { useAppDispatch } from '@/src/store/hooks';
  *
  * @param folders - Array of folders.
  * @param setErrorMessage - Function to set error message.
+ * @param rootFolderId - root id to check for all items opened.
  * @param openedFoldersIds - Array of opened folders ids.
  * @param setOpenedFoldersIds - Function to set opened folders ids.
  * @param setIsAllFilesOpened - Function to set if all files are opened.
@@ -26,6 +28,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 export const useHandleFileFolders = (
   folders: FolderInterface[],
   openedFoldersIds: string[],
+  rootFolderId: string,
   setErrorMessage: Dispatch<SetStateAction<string | undefined>>,
   setOpenedFoldersIds: Dispatch<SetStateAction<string[]>>,
   setIsAllFilesOpened: Dispatch<SetStateAction<boolean>>,
@@ -60,12 +63,12 @@ export const useHandleFileFolders = (
    * @param relativePath - The relative path where the new folder will be added.
    */
   const handleAddFolder = useCallback(
-    (relativePath: string) => {
-      dispatch(FilesActions.addNewFolder({ relativePath }));
+    (parentId: string) => {
+      dispatch(FilesActions.addNewFolder({ parentId }));
 
-      if (!openedFoldersIds.includes(relativePath)) {
-        setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
-        dispatch(FilesActions.getFolders({ path: relativePath }));
+      if (!openedFoldersIds.includes(parentId)) {
+        setOpenedFoldersIds(openedFoldersIds.concat(parentId));
+        dispatch(FilesActions.getFolders({ id: parentId }));
       }
     },
     [dispatch, openedFoldersIds, setOpenedFoldersIds],
@@ -77,8 +80,8 @@ export const useHandleFileFolders = (
    * @param folderId - ID of the folder to toggle.
    */
   const handleToggleFolder = useCallback(
-    (folderId: string | undefined) => {
-      if (!folderId) {
+    (folderId: string) => {
+      if (folderId === rootFolderId) {
         setIsAllFilesOpened((value) => !value);
         setOpenedFoldersIds([]);
         return;
@@ -94,13 +97,14 @@ export const useHandleFileFolders = (
         );
       } else {
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-        dispatch(FilesActions.getFilesWithFolders({ path: folderId }));
+        dispatch(FilesActions.getFilesWithFolders({ id: folderId }));
       }
     },
     [
       dispatch,
       folders,
       openedFoldersIds,
+      rootFolderId,
       setIsAllFilesOpened,
       setOpenedFoldersIds,
     ],
@@ -110,7 +114,7 @@ export const useHandleFileFolders = (
    * Handles the creation of a new folder.
    */
   const handleNewFolder = useCallback(() => {
-    dispatch(FilesActions.addNewFolder({}));
+    dispatch(FilesActions.addNewFolder({ parentId: getRootId() }));
     setIsAllFilesOpened(true);
   }, [dispatch, setIsAllFilesOpened]);
 

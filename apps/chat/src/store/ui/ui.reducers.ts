@@ -7,6 +7,8 @@ import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '..';
 
+import uniq from 'lodash-es/uniq';
+
 export interface UIState {
   theme: string;
   availableThemes: Theme[];
@@ -110,6 +112,9 @@ export const uiSlice = createSlice({
     ) => {
       state.openedFoldersIds = payload;
     },
+    showErrorToast: (state, _action: PayloadAction<string>) => state,
+    showLoadingToast: (state, _action: PayloadAction<string>) => state,
+    showSuccessToast: (state, _action: PayloadAction<string>) => state,
     setOpenedFoldersIds: (
       state,
       {
@@ -118,7 +123,7 @@ export const uiSlice = createSlice({
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.featureType]: Array.from(new Set(payload.openedFolderIds)),
+        [payload.featureType]: uniq(payload.openedFolderIds),
       };
     },
     toggleFolder: (
@@ -166,6 +171,7 @@ export const uiSlice = createSlice({
     ) => {
       state.textOfClosedAnnouncement = payload.announcement;
     },
+    resize: (state) => state,
   },
 });
 

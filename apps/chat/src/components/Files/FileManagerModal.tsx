@@ -12,7 +12,7 @@ import {
   getDialFilesWithInvalidFileType,
   getExtensionsListForMimeTypes,
 } from '@/src/utils/app/file';
-import { isRootId } from '@/src/utils/app/id';
+import { getRootId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -27,8 +27,10 @@ import Modal from '@/src/components/Common/Modal';
 import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { Spinner } from '../Common/Spinner';
+import Tooltip from '../Common/Tooltip';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
@@ -69,7 +71,7 @@ export const FileManagerModal = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
-    undefined,
+    getRootId(),
   );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
@@ -77,6 +79,7 @@ export const FileManagerModal = ({
   const [selectedFilesIds, setSelectedFilesIds] = useState(
     initialSelectedFilesIds,
   );
+  const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
 
   const {
     handleRenameFolder,
@@ -86,6 +89,7 @@ export const FileManagerModal = ({
   } = useHandleFileFolders(
     folders,
     openedFoldersIds,
+    getRootId(),
     setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
@@ -129,11 +133,19 @@ export const FileManagerModal = ({
 
       if (!openedFoldersIds.includes(relativePath)) {
         setOpenedFoldersIds(openedFoldersIds.concat(relativePath));
-        dispatch(FilesActions.getFolders({ path: relativePath }));
+        dispatch(FilesActions.getFolders({ id: relativePath }));
       }
     },
     [dispatch, openedFoldersIds],
   );
+
+  const handleStartRemoveMultipleFiles = useCallback(() => {
+    if (!selectedFilesIds.length) {
+      return;
+    }
+
+    setDeletingFileIds(selectedFilesIds);
+  }, [selectedFilesIds]);
 
   const handleItemCallback = useCallback(
     (eventId: string, data: unknown) => {
@@ -155,8 +167,10 @@ export const FileManagerModal = ({
           });
           break;
         case FileItemEventIds.Cancel:
-        case FileItemEventIds.Remove:
           dispatch(FilesActions.removeFile({ fileId: data }));
+          break;
+        case FileItemEventIds.Remove:
+          setDeletingFileIds([data]);
           break;
         default:
           break;
@@ -235,13 +249,15 @@ export const FileManagerModal = ({
   );
 
   const handleRemoveMultipleFiles = useCallback(() => {
-    if (!selectedFilesIds.length) {
+    if (!deletingFileIds.length) {
       return;
     }
 
-    dispatch(FilesActions.removeFilesList({ fileIds: selectedFilesIds }));
-    setSelectedFilesIds([]);
-  }, [dispatch, selectedFilesIds]);
+    dispatch(FilesActions.removeFilesList({ fileIds: deletingFileIds }));
+    if (selectedFilesIds === deletingFileIds) {
+      setSelectedFilesIds([]);
+    }
+  }, [deletingFileIds, dispatch, selectedFilesIds]);
 
   const handleDownloadMultipleFiles = useCallback(() => {
     if (!selectedFilesIds.length) {
@@ -301,7 +317,7 @@ export const FileManagerModal = ({
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
                 className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
-                onClick={() => handleToggleFolder(undefined)}
+                onClick={() => handleToggleFolder(getRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
                 {t('All files')}
@@ -374,16 +390,20 @@ export const FileManagerModal = ({
           {selectedFilesIds.length > 0 ? (
             <>
               <button
-                onClick={handleRemoveMultipleFiles}
+                onClick={handleStartRemoveMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
-                <IconTrash size={24} />
+                <Tooltip tooltip="Delete files" isTriggerClickable>
+                  <IconTrash size={24} />
+                </Tooltip>
               </button>
               <button
                 onClick={handleDownloadMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
-                <IconDownload size={24} />
+                <Tooltip tooltip="Download files" isTriggerClickable>
+                  <IconDownload size={24} />
+                </Tooltip>
               </button>
             </>
           ) : (
@@ -425,8 +445,29 @@ export const FileManagerModal = ({
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
+          maximumAttachmentsAmount={maximumAttachmentsAmount}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!deletingFileIds.length}
+        heading={t(
+          `Confirm deleting file${deletingFileIds.length > 1 ? 's' : ''}`,
+        )}
+        description={
+          t(
+            `Are you sure that you want to remove ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
+          ) || ''
+        }
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          if (result) {
+            handleRemoveMultipleFiles();
+          }
+          setDeletingFileIds([]);
+        }}
+      />
     </Modal>
   );
 };

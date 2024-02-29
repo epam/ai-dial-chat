@@ -1,14 +1,12 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds } from '@/src/utils/app/folders';
 
-import { Conversation } from '@/src/types/chat';
-import { ConversationInfo } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
+import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { Prompt } from '@/src/types/prompt';
-import { PromptInfo } from '@/src/types/prompt';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-settings';
+
+import uniq from 'lodash-es/uniq';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -28,27 +26,24 @@ export const combineEntities = <T extends Entity>(
     );
 };
 
-export const isEntityNameOnSameLevelUnique = <
-  T extends Conversation | Prompt | FolderInterface,
->(
+export const isEntityNameOnSameLevelUnique = (
   nameToBeUnique: string,
-  entity: T,
-  entities: T[],
+  entity: Entity,
+  entities: Entity[],
 ): boolean => {
   const sameLevelEntities = entities.filter(
     (e) => entity.id !== e.id && e.folderId === entity.folderId,
   );
+
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
-export const filterOnlyMyEntities = <
-  T extends Conversation | Prompt | FolderInterface,
->(
+export const filterOnlyMyEntities = <T extends ShareEntity>(
   entities: T[],
 ): T[] =>
   entities.filter((entity) => !entity.sharedWithMe && !entity.publishedWithMe);
 
-export const filterMigratedEntities = <T extends Conversation | Prompt>(
+export const filterMigratedEntities = <T extends Entity>(
   entities: T[],
   migratedEntityIds: string[],
   notMigrated = false,
@@ -60,7 +55,7 @@ export const filterMigratedEntities = <T extends Conversation | Prompt>(
   );
 
 export const updateEntitiesFoldersAndIds = (
-  entities: PromptInfo[] | ConversationInfo[],
+  entities: Entity[],
   folders: FolderInterface[],
   updateFolderId: (folderId: string) => string,
   openedFoldersIds: string[],
@@ -73,9 +68,7 @@ export const updateEntitiesFoldersAndIds = (
     folderId: updateFolderId(f.folderId),
   }));
 
-  const newUniqueFolderIds = Array.from(new Set(allFolderIds)).map((id) =>
-    updateFolderId(id),
-  );
+  const newUniqueFolderIds = uniq(allFolderIds).map((id) => updateFolderId(id));
 
   const updatedFolders = combineEntities(
     getFoldersFromIds(newUniqueFolderIds, FolderType.Chat),
@@ -89,8 +82,10 @@ export const updateEntitiesFoldersAndIds = (
   return { updatedFolders, updatedOpenedFoldersIds };
 };
 
-export const prepareEntityName = (name: string) => {
-  const clearName = name.trim().replace(notAllowedSymbolsRegex, '');
+export const prepareEntityName = (name: string, forRenaming = false) => {
+  const clearName = name
+    .replace(notAllowedSymbolsRegex, forRenaming ? '' : ' ')
+    .trim();
 
   if (clearName.length > MAX_ENTITY_LENGTH) {
     return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';

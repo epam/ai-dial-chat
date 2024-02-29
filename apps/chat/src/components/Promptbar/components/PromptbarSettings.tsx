@@ -7,8 +7,7 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getRootId } from '@/src/utils/app/id';
-import { ApiKeys } from '@/src/utils/server/api';
+import { getPromptRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { PromptsHistory } from '@/src/types/import-export';
@@ -16,6 +15,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -45,7 +45,7 @@ export function PromptbarSettings() {
         onClick: () => {
           dispatch(
             PromptsActions.createFolder({
-              parentId: getRootId({ apiKey: ApiKeys.Prompts }),
+              parentId: getPromptRootId(),
             }),
           );
         },
@@ -54,6 +54,7 @@ export function PromptbarSettings() {
         name: t('Import prompts'),
         onClick: (promptsJSON: unknown) => {
           const typedJson = promptsJSON as { content: unknown };
+          dispatch(ImportExportActions.importPrompts());
           dispatch(
             PromptsActions.importPrompts({
               promptsHistory: typedJson.content as PromptsHistory,

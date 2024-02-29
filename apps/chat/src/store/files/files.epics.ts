@@ -17,6 +17,7 @@ import { combineEpics } from 'redux-observable';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
@@ -91,7 +92,7 @@ const getFilesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFiles.match),
     switchMap(({ payload }) =>
-      FileService.getFiles(payload.path).pipe(
+      FileService.getFiles(payload.id).pipe(
         map((files) =>
           FilesActions.getFilesSuccess({
             files,
@@ -105,8 +106,8 @@ const getFilesEpic: AppEpic = (action$) =>
 const getFileFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(FilesActions.getFolders.match),
-    switchMap(({ payload }) =>
-      FileService.getFileFolders(payload?.path).pipe(
+    mergeMap(({ payload }) =>
+      FileService.getFileFolders(payload?.id).pipe(
         map((folders) =>
           FilesActions.getFoldersSuccess({
             folders,
@@ -134,7 +135,9 @@ const getFoldersListEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return concat(
         ...(payload.paths
-          ? payload.paths.map((path) => of(FilesActions.getFolders({ path })))
+          ? payload.paths.map((path) =>
+              of(FilesActions.getFolders({ id: path })),
+            )
           : [of(FilesActions.getFolders({}))]),
       );
     }),
@@ -229,7 +232,7 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     tap(({ files }) => {
       files.forEach((file) =>
         triggerDownload(
-          `api/${encodeURI(`${file.absolutePath}/${file.name}`)}`,
+          `api/${ApiUtils.encodeApiUrl(`${file.absolutePath}/${file.name}`)}`,
           file.name,
         ),
       );

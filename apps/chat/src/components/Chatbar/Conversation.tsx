@@ -20,20 +20,17 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/id';
+import { getNextDefaultName } from '@/src/utils/app/folders';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { ApiKeys } from '@/src/utils/server/api';
+import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-  isNotLoaded,
-} from '@/src/types/common';
+import { FeatureType, isNotLoaded } from '@/src/types/common';
+import { MoveToFolderProps } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -47,6 +44,8 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
@@ -56,6 +55,7 @@ import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import PublishModal from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
@@ -71,7 +71,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
     <>
       <ShareIcon
         {...conversation}
-        isHighlighted={!!isHighlited}
+        isHighlighted={isHighlited}
         featureType={FeatureType.Chat}
       >
         {conversation.isReplay && (
@@ -115,7 +115,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
@@ -133,9 +132,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       true,
     ),
   );
-
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+  );
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -148,17 +152,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const isSelected = selectedConversationIds.includes(conversation.id);
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-  );
+  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
-  const newFolderName = useAppSelector((state) =>
-    ConversationsSelectors.selectNewFolderName(state, conversation.folderId),
-  );
-  const allConversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
+  const isSelected = selectedConversationIds.includes(conversation.id);
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -182,37 +179,16 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (conversation as Conversation).messages?.length > 0
   );
 
-  const handleRename = useCallback(
-    (conversation: ConversationInfo) => {
-      const newName = prepareEntityName(renameValue);
-      setRenameValue(newName);
-
-      if (
-        !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
-      ) {
-        dispatch(
-          UIActions.showToast({
-            message: t(
-              'Conversation with name "{{newName}}" already exists in this folder.',
-              {
-                ns: 'chat',
-                newName,
-              },
-            ),
-            type: 'error',
-          }),
-        );
-
-        return;
-      }
-
-      if (newName.length > 0) {
+  const performRename = useCallback(
+    (name: string, removeShareIcon?: boolean) => {
+      if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              name: newName,
+              name,
               isNameChanged: true,
+              isShared: removeShareIcon ? false : conversation.isShared,
             },
           }),
         );
@@ -223,18 +199,51 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       setIsRenaming(false);
     },
-    [allConversations, dispatch, renameValue, t],
+    [conversation.id, conversation.isShared, dispatch],
   );
+
+  const handleRename = useCallback(() => {
+    const newName = prepareEntityName(renameValue, true);
+    setRenameValue(newName);
+
+    if (
+      !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
+    ) {
+      dispatch(
+        UIActions.showToast({
+          message: t(
+            'Conversation with name "{{newName}}" already exists in this folder.',
+            {
+              ns: 'chat',
+              newName,
+            },
+          ),
+          type: 'error',
+        }),
+      );
+
+      return;
+    }
+
+    if (conversation.isShared && newName !== conversation.name) {
+      setIsConfirmRenaming(true);
+      setIsContextMenu(false);
+      setIsRenaming(false);
+      return;
+    }
+
+    performRename(newName);
+  }, [allConversations, conversation, dispatch, performRename, renameValue, t]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
       e.stopPropagation();
       if (e.key === 'Enter') {
         e.preventDefault();
-        handleRename(conversation);
+        handleRename();
       }
     },
-    [conversation, handleRename],
+    [handleRename],
   );
 
   const handleDragStart = useCallback(
@@ -250,27 +259,27 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [isExternal],
   );
 
-  const handleConfirm: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (isDeleting) {
-        dispatch(
-          ConversationsActions.deleteConversations({
-            conversationIds: [conversation.id],
-          }),
-        );
-        setIsDeleting(false);
-      } else if (isRenaming) {
-        handleRename(conversation);
-      }
-    },
-    [conversation, dispatch, handleRename, isDeleting, isRenaming],
-  );
+  const handleDelete = useCallback(() => {
+    if (conversation.sharedWithMe) {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceId: conversation.id,
+          featureType: FeatureType.Chat,
+        }),
+      );
+    } else {
+      dispatch(
+        ConversationsActions.deleteConversations({
+          conversationIds: [conversation.id],
+        }),
+      );
+    }
+    setIsDeleting(false);
+  }, [conversation.id, conversation.sharedWithMe, dispatch]);
 
-  const handleCancel: MouseEventHandler<HTMLButtonElement> = useCallback(
+  const handleCancelRename: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
-      setIsDeleting(false);
       setIsRenaming(false);
     },
     [],
@@ -343,13 +352,18 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     useCallback(() => {
       dispatch(
         ShareActions.share({
-          resourceType: BackendResourceType.CONVERSATION,
+          featureType: FeatureType.Chat,
           resourceId: conversation.id,
-          nodeType: BackendDataNodeType.ITEM,
         }),
       );
       setIsContextMenu(false);
     }, [conversation.id, dispatch]);
+
+  const handleUnshare: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnshareConfirmOpened(true);
+      setIsContextMenu(false);
+    }, []);
 
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -372,19 +386,45 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   }, []);
 
   const handleMoveToFolder = useCallback(
-    ({
-      folderId,
-      isNewFolder,
-    }: {
-      folderId?: string;
-      isNewFolder?: boolean;
-    }) => {
-      const folderPath = isNewFolder ? newFolderName : folderId;
+    ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const conversationRootId = getConversationRootId();
+      const folderPath = (
+        isNewFolder
+          ? getNextDefaultName(
+              translate(DEFAULT_FOLDER_NAME),
+              folders.filter((f) => f.folderId === conversationRootId), // only my root conversation folders
+            )
+          : folderId
+      ) as string;
+
+      if (
+        !isEntityNameOnSameLevelUnique(
+          conversation.name,
+          { ...conversation, folderId: folderPath },
+          allConversations,
+        )
+      ) {
+        dispatch(
+          UIActions.showToast({
+            message: t(
+              'Conversation with name "{{name}}" already exists in this folder.',
+              {
+                ns: 'chat',
+                name: conversation.name,
+              },
+            ),
+            type: 'error',
+          }),
+        );
+
+        return;
+      }
+
       if (isNewFolder) {
         dispatch(
           ConversationsActions.createFolder({
-            parentId: getRootId({ apiKey: ApiKeys.Conversations }),
-            name: newFolderName,
+            name: folderPath,
+            parentId: getConversationRootId(),
           }),
         );
       }
@@ -393,16 +433,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           id: conversation.id,
           values: {
             folderId: isNewFolder
-              ? constructPath(
-                  getRootId({ apiKey: ApiKeys.Conversations }),
-                  folderPath,
-                )
+              ? constructPath(getConversationRootId(), folderPath)
               : folderPath,
           },
         }),
       );
     },
-    [conversation.id, dispatch, newFolderName],
+    [allConversations, conversation, dispatch, folders, t],
   );
   const handleOpenExportModal = useCallback(() => {
     setIsShowExportModal(true);
@@ -503,10 +540,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200',
-            messageIsStreaming && 'disabled:cursor-not-allowed',
-            isDeleting && 'pr-12',
-            !messageIsStreaming && !isDeleting && 'group-hover:pr-6',
+            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
             isSelected && 'pr-0',
           )}
           onClick={() => {
@@ -557,6 +591,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onReplay={!isPlayback ? handleStartReplay : undefined}
             onPlayback={handleCreatePlayback}
             onShare={handleOpenSharing}
+            onUnshare={handleUnshare}
             onPublish={handleOpenPublishing}
             onPublishUpdate={handleOpenPublishing}
             onUnpublish={handleOpenUnpublishing}
@@ -586,12 +621,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         )}
       </div>
 
-      {(isDeleting || isRenaming) && (
+      {isRenaming && (
         <div className="absolute right-1 z-10 flex">
-          <SidebarActionButton handleClick={handleConfirm}>
+          <SidebarActionButton handleClick={() => handleRename()}>
             <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
-          <SidebarActionButton handleClick={handleCancel}>
+          <SidebarActionButton handleClick={handleCancelRename}>
             <IconX
               size={18}
               strokeWidth="2"
@@ -616,6 +651,68 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           onClose={handleCloseUnpublishModal}
         />
       )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen={isUnshareConfirmOpened}
+          heading={t('Confirm revoking access to {{conversationName}}', {
+            conversationName: conversation.name,
+          })}
+          description={
+            t(
+              'Are you sure that you want to revoke access to this conversation?',
+            ) || ''
+          }
+          confirmLabel={t('Revoke access')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            if (result) {
+              dispatch(
+                ShareActions.revokeAccess({
+                  resourceId: conversation.id,
+                  featureType: FeatureType.Chat,
+                }),
+              );
+            }
+          }}
+        />
+      )}
+      <ConfirmDialog
+        isOpen={isDeleting}
+        heading={t('Confirm deleting conversation')}
+        description={`${t('Are you sure that you want to remove a conversation?')}${t(
+          conversation.isShared
+            ? '\nRemoving will stop sharing and other users will no longer see this conversation.'
+            : '',
+        )}`}
+        confirmLabel={t('Delete')}
+        cancelLabel={t('Cancel')}
+        onClose={(result) => {
+          setIsDeleting(false);
+          if (result) handleDelete();
+        }}
+      />
+      <ConfirmDialog
+        isOpen={isConfirmRenaming}
+        heading={t('Confirm renaming conversation')}
+        confirmLabel={t('Rename')}
+        cancelLabel={t('Cancel')}
+        description={
+          t(
+            'Renaming will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          setIsConfirmRenaming(false);
+
+          if (result) {
+            performRename(prepareEntityName(renameValue, true), true);
+          }
+
+          setIsContextMenu(false);
+          setIsRenaming(false);
+        }}
+      />
     </div>
   );
 };

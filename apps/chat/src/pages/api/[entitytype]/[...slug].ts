@@ -2,15 +2,14 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { JWT, getToken } from 'next-auth/jwt';
 
+import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
-import {
-  getEntityTypeFromPath,
-  getEntityUrlFromSlugs,
-  isValidEntityApiType,
-} from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils } from '@/src/utils/server/server';
+
+import { ApiKeys } from '@/src/types/common';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -19,8 +18,33 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
 
+const getEntityUrlFromSlugs = (
+  dialApiHost: string,
+  req: NextApiRequest,
+): string => {
+  const entityType = ServerUtils.getEntityTypeFromPath(req);
+  const slugs = Array.isArray(req.query.slug)
+    ? req.query.slug
+    : [req.query.slug];
+
+  if (!slugs || slugs.length === 0) {
+    throw new OpenAIError(`No ${entityType} path provided`, '', '', '400');
+  }
+
+  return constructPath(
+    dialApiHost,
+    'v1',
+    entityType,
+    ServerUtils.encodeSlugs(slugs),
+  );
+};
+
+const isValidEntityApiType = (apiKey: string): boolean => {
+  return Object.values(ApiKeys).includes(apiKey as ApiKeys);
+};
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const entityType = getEntityTypeFromPath(req);
+  const entityType = ServerUtils.getEntityTypeFromPath(req);
   if (!entityType || !isValidEntityApiType(entityType)) {
     return res.status(400).json(errorsMessages.notValidEntityType);
   }

@@ -74,7 +74,9 @@ export const PreUploadDialog = ({
   >([]);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState(uploadFolderId);
+  const [selectedFolderId, setSelectedFolderId] = useState(
+    uploadFolderId || getRootId(),
+  );
 
   const headingId = useId();
   const descriptionId = useId();
@@ -161,7 +163,7 @@ export const PreUploadDialog = ({
 
   const handleUpload = useCallback(() => {
     const errors = [];
-    if (attachments.length + selectedFiles.length > 10) {
+    if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
         t(
           `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploadings amount will be {{selectedAttachmentsAmount}}`,
@@ -275,7 +277,9 @@ export const PreUploadDialog = ({
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(FilesActions.getFiles({ path: folderPath }));
+      dispatch(
+        FilesActions.getFiles({ id: constructPath(getRootId(), folderPath) }),
+      );
     }
   }, [dispatch, folderPath, isOpen]);
 
@@ -301,7 +305,7 @@ export const PreUploadDialog = ({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 p-6 md:min-w-[425px] md:max-w-[500px]"
+      containerClassName="flex flex-col gap-4 p-6 md:w-[425px] w-full max-w-[425px]"
       dataQa="pre-upload-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
@@ -403,7 +407,8 @@ export const PreUploadDialog = ({
 
       <SelectFolderModal
         isOpen={isChangeFolderModalOpened}
-        selectedFolderName={selectedFolderId}
+        initialSelectedFolderId={selectedFolderId}
+        rootFolderId={getRootId()}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);

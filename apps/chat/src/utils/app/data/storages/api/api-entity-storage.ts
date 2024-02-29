@@ -1,12 +1,9 @@
-import { EMPTY, Observable, catchError, map, of } from 'rxjs';
+import { Observable, map } from 'rxjs';
+
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApiKeys,
-  ApiUtils,
-  getFolderTypeByApiKey,
-} from '@/src/utils/server/api';
-
-import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
@@ -16,9 +13,12 @@ import {
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
+import { resetShareEntity } from '@/src/constants/chat';
+
 import { constructPath } from '../../../file';
 import { splitEntityId } from '../../../folders';
-import { BucketService } from '../../bucket-service';
+import { getRootId } from '../../../id';
+import { EnumMapper } from '../../../mappers';
 
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,
@@ -26,20 +26,23 @@ export abstract class ApiEntityStorage<
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
-    const id = decodeURI(folder.url.slice(0, folder.url.length - 1));
+    const id = ApiUtils.decodeApiUrl(
+      folder.url.slice(0, folder.url.length - 1),
+    );
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
       id,
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
-      type: getFolderTypeByApiKey(this.getStorageKey()),
+      type: EnumMapper.getFolderTypeByApiKey(this.getStorageKey()),
+      ...resetShareEntity,
     };
   }
 
   private mapEntity(entity: BackendChatEntity): TEntityInfo {
     const info = this.parseEntityKey(entity.name);
-    const id = decodeURI(entity.url);
+    const id = ApiUtils.decodeApiUrl(entity.url);
     const { apiKey, bucket, parentPath } = splitEntityId(id);
 
     return {
@@ -47,32 +50,38 @@ export abstract class ApiEntityStorage<
       id,
       lastActivityDate: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
+      ...resetShareEntity,
     } as unknown as TEntityInfo;
   }
 
-  private encodePath = (path: string): string =>
-    constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
-
   private getEntityUrl = (entity: TEntityInfo): string =>
-    this.encodePath(constructPath('api', entity.id));
+    ApiUtils.encodeApiUrl(constructPath('api', entity.id));
 
-  private getListingUrl = (resultQuery: string): string => {
-    const listingUrl = this.encodePath(
-      constructPath('api', this.getStorageKey(), 'listing'),
+  private getListingUrl = ({
+    path,
+    resultQuery,
+  }: {
+    path?: string;
+    resultQuery?: string;
+  }): string => {
+    const listingUrl = ApiUtils.encodeApiUrl(
+      constructPath(
+        'api/listing',
+        path ||
+          getRootId({
+            featureType: EnumMapper.getFeatureTypeByApiKey(
+              this.getStorageKey(),
+            ),
+          }),
+      ),
     );
-    return `${listingUrl}?${resultQuery}`;
+    return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
 
   getFoldersAndEntities(
-    path?: string | undefined,
+    path?: string,
   ): Observable<FoldersAndEntities<TEntityInfo>> {
-    const query = new URLSearchParams({
-      bucket: BucketService.getBucket(),
-      ...(path && { path }),
-    });
-    const resultQuery = query.toString();
-
-    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
+    return ApiUtils.request(this.getListingUrl({ path })).pipe(
       map((items: (BackendChatFolder | BackendChatEntity)[]) => {
         const folders = items.filter(
           (item) => item.nodeType === BackendDataNodeType.FOLDER,
@@ -86,30 +95,21 @@ export abstract class ApiEntityStorage<
           folders: folders.map((folder) => this.mapFolder(folder)),
         };
       }),
-      catchError(() =>
-        of({
-          entities: [],
-          folders: [],
-        }),
-      ), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
-  getFolders(path?: string | undefined): Observable<FolderInterface[]> {
+  getFolders(path?: string): Observable<FolderInterface[]> {
     const filter = BackendDataNodeType.FOLDER;
 
     const query = new URLSearchParams({
       filter,
-      bucket: BucketService.getBucket(),
-      ...(path && { path }),
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
+    return ApiUtils.request(this.getListingUrl({ path, resultQuery })).pipe(
       map((folders: BackendChatFolder[]) => {
         return folders.map((folder) => this.mapFolder(folder));
       }),
-      catchError(() => of([])), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
@@ -118,17 +118,14 @@ export abstract class ApiEntityStorage<
 
     const query = new URLSearchParams({
       filter,
-      bucket: BucketService.getBucket(),
-      ...(path && { path }),
       ...(recursive && { recursive: String(recursive) }),
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(this.getListingUrl(resultQuery)).pipe(
+    return ApiUtils.request(this.getListingUrl({ path, resultQuery })).pipe(
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
       }),
-      catchError(() => of([])), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
@@ -136,22 +133,24 @@ export abstract class ApiEntityStorage<
     return ApiUtils.request(this.getEntityUrl(info)).pipe(
       map((entity: TEntity) => {
         return {
-          ...this.mergeGetResult(info, entity),
+          ...this.mergeGetResult(info, {
+            ...entity,
+            ...resetShareEntity,
+          }),
           status: UploadStatus.LOADED,
         };
       }),
-      catchError(() => of(null)), // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
     );
   }
 
-  createEntity(entity: TEntity): Observable<void> {
+  createEntity(entity: TEntity): Observable<TEntityInfo> {
     return ApiUtils.request(this.getEntityUrl(entity), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
-    }).pipe(catchError(() => of())); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    }).pipe(map((entity) => this.mapEntity(entity)));
   }
 
   updateEntity(entity: TEntity): Observable<void> {
@@ -161,7 +160,7 @@ export abstract class ApiEntityStorage<
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(this.cleanUpEntity(entity)),
-    }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    });
   }
 
   deleteEntity(info: TEntityInfo): Observable<void> {
@@ -170,12 +169,12 @@ export abstract class ApiEntityStorage<
       headers: {
         'Content-Type': 'application/json',
       },
-    }).pipe(catchError(() => EMPTY)); // TODO: handle error it in https://github.com/epam/ai-dial-chat/issues/663
+    });
   }
 
   abstract getEntityKey(info: TEntityInfo): string;
 
-  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId'>;
+  abstract parseEntityKey(key: string): Omit<TEntityInfo, 'folderId' | 'id'>;
 
   abstract getStorageKey(): ApiKeys;
 

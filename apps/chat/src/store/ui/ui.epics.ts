@@ -1,6 +1,7 @@
 import { toast } from 'react-hot-toast';
 
 import {
+  Observable,
   concat,
   filter,
   forkJoin,
@@ -11,9 +12,12 @@ import {
   tap,
 } from 'rxjs';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -106,7 +110,31 @@ const saveShowPromptbarEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const showToastErrorEpic: AppEpic = (action$) =>
+const showErrorToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showErrorToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: 'error' })),
+    ),
+  );
+
+const showLoadingToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showLoadingToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: 'loading' })),
+    ),
+  );
+
+const showSuccessToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showSuccessToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: 'success' })),
+    ),
+  );
+
+const showToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showToast.match),
     switchMap(({ payload }) => {
@@ -193,17 +221,53 @@ const saveIsChatFullWidthEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const resizeEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(UIActions.resize.match),
+    switchMap(() => {
+      const showChatbar = UISelectors.selectShowChatbar(state$.value);
+      const showPromptbar = UISelectors.selectShowPromptbar(state$.value);
+      const isProfileOpen = UISelectors.selectIsProfileOpen(state$.value);
+      const isUserSettingsOpen = UISelectors.selectIsUserSettingsOpen(
+        state$.value,
+      );
+      const actions: Observable<AnyAction>[] = [];
+      if (isSmallScreen()) {
+        if (isUserSettingsOpen) {
+          actions.push(of(UIActions.setIsUserSettingsOpen(false))); // hide desktop settings dialog
+        }
+        if (
+          [showChatbar, showPromptbar, isProfileOpen].filter(Boolean).length > 1 // more then one panel open for small screen)
+        ) {
+          if (showChatbar) {
+            actions.push(
+              of(UIActions.setIsProfileOpen(false)),
+              of(UIActions.setShowPromptbar(false)),
+            );
+          } else {
+            actions.push(of(UIActions.setIsProfileOpen(false)));
+          }
+        }
+      }
+      return concat(...actions);
+    }),
+  );
+
 const UIEpics = combineEpics(
   initEpic,
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
-  showToastErrorEpic,
   saveOpenedFoldersIdsEpic,
+  showToastEpic,
+  showErrorToastEpic,
+  showLoadingToastEpic,
+  showSuccessToastEpic,
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
   saveIsChatFullWidthEpic,
+  resizeEpic,
 );
 
 export default UIEpics;

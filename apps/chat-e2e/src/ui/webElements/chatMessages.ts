@@ -1,6 +1,8 @@
+import config from '../../../config/playwright.config';
 import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Rate, Side } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -65,6 +67,38 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
   }
 
+  public async openChatMessageAttachment(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    const messageAttachment =
+      this.getChatMessage(message).getByTitle(attachmentTitle);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'GET' &&
+          resp.url().includes(attachmentTitle),
+        { timeout: config.use!.actionTimeout! * 2 },
+      );
+      await messageAttachment.click();
+      return respPromise;
+    }
+    await messageAttachment.click();
+  }
+
+  public async getChatMessageAttachmentUrl(message: string | number) {
+    const openedMessageAttachment =
+      this.getChatMessage(message).getByAltText('Attachment image');
+    return openedMessageAttachment.getAttribute(Attributes.src);
+  }
+
+  public async getChatMessageDownloadUrl(message: string | number) {
+    const openedMessageAttachment = this.getChatMessage(message).locator(
+      `${Tags.a}[${Attributes.download}]`,
+    );
+    return openedMessageAttachment.getAttribute(Attributes.href);
+  }
+
   public async getGeneratedChatContent(messagesCount: number) {
     const chatContent = await this.chatMessages.getElementsInnerContent();
     return chatContent.slice(0, messagesCount - 1).join('\n');
@@ -85,7 +119,7 @@ export class ChatMessages extends BaseElement {
 
   public async getMessageIconSize(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const icon = await this.chatMessages
+    const icon = this.chatMessages
       .getNthElement(index ?? messagesCount)
       .locator(Tags.svg)
       .first();
@@ -187,7 +221,11 @@ export class ChatMessages extends BaseElement {
     );
     await thumb.hover({ force: true });
     await thumb.waitFor();
+    const respPromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'POST',
+    );
     await thumb.click();
+    return respPromise;
   }
 
   public async isComparedRowMessageRated(
@@ -246,7 +284,7 @@ export class ChatMessages extends BaseElement {
       rowIndex,
     );
     await messageToCopy.hover();
-    const copyIcon = await messageToCopy.locator(selector);
+    const copyIcon = messageToCopy.locator(selector);
     await copyIcon.waitFor();
     await copyIcon.click();
   }

@@ -52,7 +52,10 @@ export const ChatSettingsEmpty = ({
                 <Spinner size={16} className="mx-auto" />
               </div>
             ) : (
-              <h4 className="w-full text-center text-xl font-semibold">
+              <h4
+                data-qa="app-name"
+                className="w-full text-center text-xl font-semibold"
+              >
                 {appName}
               </h4>
             )}
@@ -61,8 +64,7 @@ export const ChatSettingsEmpty = ({
           {isShowSettings && isModels && (
             <>
               <ConversationSettings
-                conversationId={conversation.id}
-                replay={conversation.replay}
+                conversation={conversation}
                 modelId={conversation.model.id || defaultModelId}
                 assistantModelId={conversation.assistantModelId}
                 prompt={conversation.prompt}
@@ -75,6 +77,7 @@ export const ChatSettingsEmpty = ({
                 onSelectModel={onSelectModel}
                 onChangeAddon={onChangeAddon}
                 onApplyAddons={handleOnApplyAddons}
+                debounceSystemPromptChanges
               />
             </>
           )}

@@ -2,8 +2,12 @@ import { FolderInterface, FolderType } from '@/chat/types/folder';
 import { ExpectedConstants } from '@/src/testData';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface TestFolder extends Omit<FolderInterface, 'folderId'> {
+  folderId?: string | undefined;
+}
+
 export class FolderBuilder {
-  private folder: FolderInterface;
+  private folder: TestFolder;
 
   constructor() {
     this.folder = {
@@ -37,7 +41,7 @@ export class FolderBuilder {
     return this;
   }
 
-  build(): FolderInterface {
+  build(): TestFolder {
     return this.folder;
   }
 }

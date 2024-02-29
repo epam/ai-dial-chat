@@ -23,6 +23,7 @@ import { sanitize } from 'isomorphic-dompurify';
 const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
   'image/jpeg',
   'image/png',
+  'image/gif',
 ]);
 
 interface AttachmentDataRendererProps {

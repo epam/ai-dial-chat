@@ -47,10 +47,10 @@ export const isEntityExternal = (entity: ShareEntity) =>
 
 export const hasExternalParent = (
   state: RootState,
-  folderId: string | undefined,
+  folderId: string,
   featureType: FeatureType,
 ) => {
-  if (!featureType || !folderId) return false;
+  if (!featureType) return false;
 
   return featureType === FeatureType.Chat
     ? ConversationsSelectors.hasExternalParent(state, folderId)
@@ -93,5 +93,34 @@ export const getAttachments = (type: SharingType) => {
       return () => [];
     default:
       throw new Error('unknown type');
+  }
+};
+
+export const getShareType = (
+  featureType?: FeatureType,
+  isFolder?: boolean,
+): SharingType | undefined => {
+  if (!featureType || !isFolder) {
+    return undefined;
+  }
+
+  if (isFolder) {
+    switch (featureType) {
+      case FeatureType.Chat:
+        return SharingType.ConversationFolder;
+      case FeatureType.Prompt:
+        return SharingType.PromptFolder;
+      default:
+        return undefined;
+    }
+  } else {
+    switch (featureType) {
+      case FeatureType.Chat:
+        return SharingType.Conversation;
+      case FeatureType.Prompt:
+        return SharingType.Prompt;
+      default:
+        return undefined;
+    }
   }
 };

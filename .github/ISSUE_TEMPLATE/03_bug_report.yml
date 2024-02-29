@@ -1,0 +1,58 @@
+---
+name: 🐛 Bug report
+description: Problems and issues with code in EPAM AI DIAL chat
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "
+        <img src='https://www.gravatar.com/avatar/2937817a82464ae07b138d8b57a7ccd4?s=40' align='left' width='40' height='40' style='margin-right:10px'>
+        Thank you for finding the time to report the problem!
+
+        We really appreciate the community's efforts to improve EPAM AI DIAL chat.
+        <br clear='left'/>"
+  - type: input
+    validations:
+      required: true
+    attributes:
+      label: EPAM AI DIAL chat version
+      description: >
+        On what version of EPAM AI DIAL chat are you currently experiencing the issue? You can try to find the version in the footer of page (e.g. "Version 0.5.3") or ask your administrator.
+      placeholder: 0.5.3
+  - type: textarea
+    attributes:
+      label: How to reproduce
+      description: >
+        What should we do to reproduce the problem? If you are not able to provide a reproducible case,
+        please open a [discussion](https://github.com/epam/ai-dial-chat/discussions) instead.
+      placeholder: >
+        Please make sure you provide a reproducible step-by-step case of how to reproduce the problem as minimally and precisely as possible.
+        Remember that non-reproducible issues will be closed! Opening a discussion is recommended as a first step.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual result
+      description: What do you think went wrong?
+      placeholder: >
+        Please explain why you think the behaviour is erroneous. It is extremely helpful if you copy&paste the fragment of logs showing the exact error messages or wrong behaviour and screenshots for UI problems. You can include files by dragging and dropping them here.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected result
+      description: What you think should happen instead?
+      placeholder: >
+        Please provide any suggestions or ideas what should happen instead.
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Confidential information
+      options:
+        - label: >
+            I confirm that do not share any confidential information
+          required: true
+  - type: markdown
+    attributes:
+      value: "Thanks for completing our form!"

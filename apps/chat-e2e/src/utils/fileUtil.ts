@@ -37,4 +37,13 @@ export class FileUtil {
       fs.unlinkSync(path.join(Import.importPath, filename));
     }
   }
+
+  public static getExportedFiles() {
+    if (fs.existsSync(Import.exportPath)) {
+      return fs
+        .readdirSync(Import.exportPath)
+        .map((file) => path.join(Import.exportPath, file))
+        .filter((file) => fs.statSync(file).isFile());
+    }
+  }
 }

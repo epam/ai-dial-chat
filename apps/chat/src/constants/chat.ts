@@ -4,6 +4,7 @@ import { ShareInterface } from '../types/share';
 
 export const modelCursorSign = '▍';
 export const modelCursorSignWithBackquote = '`▍`';
+export const RECENT_MODELS_COUNT = 5;
 
 export const stopBubbling = <T>(e: MouseEvent<T>) => {
   e.stopPropagation();

@@ -1,15 +1,20 @@
+import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
 import { API, Attachment } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil } from '@/src/utils';
+import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
 
 export class FileApiHelper extends BaseApiHelper {
-  public async putFile(filename: string) {
+  public async putFile(filename: string, parentPath?: string) {
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
-    const url = `${API.uploadedFileHost()}/${BucketUtil.getBucket()}/${filename}`;
+    const baseUrl = `${API.fileHost}/${BucketUtil.getBucket()}`;
+    const url = parentPath
+      ? `${baseUrl}/${parentPath}/${filename}`
+      : `${baseUrl}/${filename}`;
     const response = await this.request.put(url, {
       headers: {
         Accept: '*/*',
@@ -23,19 +28,47 @@ export class FileApiHelper extends BaseApiHelper {
         },
       },
     });
+    expect(
+      response.status(),
+      `File ${filename} was uploaded to path: ${parentPath}`,
+    ).toBe(200);
     const responseText = await response.text();
     const body = JSON.parse(responseText) as BackendFile & { url: string };
     return body.url;
   }
 
-  public async deleteUploadedFile(filename: string) {
-    const url = `${API.uploadedFileHost()}/${BucketUtil.getBucket()}/${filename}`;
-    await this.request.delete(url);
+  public async deleteFile(path: string) {
+    const url = `/api/${path}`;
+    const response = await this.request.delete(url);
+    expect(response.status(), `File by path: ${path} was deleted`).toBe(200);
   }
 
-  public async deleteAppDataFile(filename: string) {
-    const url = `${API.fileHost}/${filename}`;
-    await this.request.delete(url);
+  public async listEntities(nodeType: BackendDataNodeType, url?: string) {
+    const host = url
+      ? `${API.listingHost}/${url.substring(0, url.length - 1)}`
+      : `${API.filesListingHost()}/${BucketUtil.getBucket()}`;
+    const response = await this.request.get(host, {
+      params: {
+        filter: nodeType,
+      },
+    });
+    const entities = (await response.json()) as BackendDataEntity[];
+    expect(
+      response.status(),
+      `Received entities: ${JSON.stringify(entities)}`,
+    ).toBe(200);
+    return entities;
+  }
+
+  public async deleteAllFiles(url?: string) {
+    const folders = await this.listEntities(BackendDataNodeType.FOLDER, url);
+    const files = await this.listEntities(BackendDataNodeType.ITEM, url);
+    for (const file of files) {
+      await this.deleteFile(file.url);
+    }
+    for (const folder of folders) {
+      await this.deleteAllFiles(folder.url);
+    }
   }
 
   public static getContentTypeForFile(filename: string) {
@@ -44,9 +77,19 @@ export class FileApiHelper extends BaseApiHelper {
       case 'png':
         return 'image/png';
       case 'jpg':
+      case 'jpeg':
         return 'image/jpeg';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
       default:
         return 'text/plain';
     }
+  }
+
+  public static extractFilename(path: string) {
+    const attachmentPathArray = path.split('/');
+    return attachmentPathArray[attachmentPathArray.length - 1];
   }
 }

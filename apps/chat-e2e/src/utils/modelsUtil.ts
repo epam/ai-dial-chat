@@ -5,8 +5,53 @@ export class ModelsUtil {
     return JSON.parse(process.env.MODELS!) as OpenAIEntityModel[];
   }
 
+  public static getLatestOpenAIEntities() {
+    const latestOpenAIEntities: OpenAIEntityModel[] = [];
+    const allOpenAIEntities = ModelsUtil.getOpenAIEntities();
+    const recentModels = ModelsUtil.getRecentModelIds();
+    let groupedOpenAIEntities = allOpenAIEntities.map((object) => ({
+      key: object.name,
+      object: object,
+    }));
+    for (const recentModelId of recentModels) {
+      const groupedOpenAIEntity = groupedOpenAIEntities.find(
+        (e) => e.object.id === recentModelId,
+      );
+      if (groupedOpenAIEntity) {
+        latestOpenAIEntities.push(groupedOpenAIEntity.object);
+        groupedOpenAIEntities = groupedOpenAIEntities.filter(
+          (e) => e.key !== groupedOpenAIEntity.key,
+        );
+      }
+    }
+    groupedOpenAIEntities.forEach((e) => {
+      if (!latestOpenAIEntities.find((le) => le.name === e.key)) {
+        latestOpenAIEntities.push(e.object);
+      }
+    });
+    return latestOpenAIEntities;
+  }
+
   public static getAddons() {
     return JSON.parse(process.env.ADDONS!) as OpenAIEntityModel[];
+  }
+
+  public static getLatestModels() {
+    return ModelsUtil.getLatestOpenAIEntities().filter(
+      (e) => e.type === 'model',
+    );
+  }
+
+  public static getLatestAssistants() {
+    return ModelsUtil.getLatestOpenAIEntities().filter(
+      (e) => e.type === 'assistant',
+    );
+  }
+
+  public static getLatestApplications() {
+    return ModelsUtil.getLatestOpenAIEntities().filter(
+      (e) => e.type === 'application',
+    );
   }
 
   public static getModels() {
@@ -23,8 +68,17 @@ export class ModelsUtil {
     );
   }
 
-  public static getModel(model: string) {
-    return ModelsUtil.getModels().find((a) => a.id === model);
+  public static getOpenAIEntity(entity: string) {
+    return ModelsUtil.getOpenAIEntities().find((e) => e.id === entity);
+  }
+
+  public static getModel(modelId: string) {
+    return ModelsUtil.getModels().find((a) => a.id === modelId);
+  }
+
+  public static getModelInfo(modelId: string) {
+    const model = ModelsUtil.getModel(modelId)!;
+    return model.version ? `${model.name} ${model.version}` : model.name;
   }
 
   public static getDefaultModel() {

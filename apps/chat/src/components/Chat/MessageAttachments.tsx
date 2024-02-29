@@ -26,7 +26,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
   }
 
   return isUnderSection && !isInner ? (
-    <div className="rounded border border-primary bg-layer-1">
+    <div
+      data-no-context-menu
+      className="rounded border border-primary bg-layer-1"
+    >
       <button
         className="flex w-full items-center gap-2 p-2 text-sm"
         onClick={() => setIsSectionOpened((val) => !val)}

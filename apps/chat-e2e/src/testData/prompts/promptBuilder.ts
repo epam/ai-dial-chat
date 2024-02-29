@@ -2,8 +2,12 @@ import { Prompt } from '@/chat/types/prompt';
 import { ExpectedConstants } from '@/src/testData';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface TestPrompt extends Omit<Prompt, 'folderId'> {
+  folderId?: string | undefined;
+}
+
 export class PromptBuilder {
-  private prompt: Prompt;
+  private prompt: TestPrompt;
 
   constructor() {
     this.prompt = {
@@ -43,7 +47,7 @@ export class PromptBuilder {
     return this;
   }
 
-  build(): Prompt {
+  build(): TestPrompt {
     return this.prompt;
   }
 }

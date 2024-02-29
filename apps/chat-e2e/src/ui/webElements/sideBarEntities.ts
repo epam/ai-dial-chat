@@ -1,15 +1,16 @@
 import { SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Styles, Tags } from '@/src/ui/domData';
-import { keys } from '@/src/ui/keyboard';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { Input } from '@/src/ui/webElements/input';
 import { Page } from '@playwright/test';
 
 export class SideBarEntities extends BaseElement {
   protected entitySelector: string;
+
   constructor(page: Page, rootSelector: string, entitySelector: string) {
     super(page, rootSelector);
     this.entitySelector = entitySelector;
@@ -91,25 +92,6 @@ export class SideBarEntities extends BaseElement {
     await this.getDropdownMenu().waitForState();
   }
 
-  protected async editEntityNameWithTick(
-    selector: string,
-    name: string,
-    newName: string,
-  ) {
-    const input = await this.openEditEntityNameMode(selector, name, newName);
-    await input.clickTickButton();
-  }
-
-  protected async editEntityNameWithEnter(
-    selector: string,
-    name: string,
-    newName: string,
-  ) {
-    await this.openEditEntityNameMode(selector, name, newName);
-    await this.page.keyboard.press(keys.enter);
-    await this.getEntityByName(selector, name).waitFor({ state: 'hidden' });
-  }
-
   protected async openEditEntityNameMode(
     selector: string,
     name: string,
@@ -142,5 +124,16 @@ export class SideBarEntities extends BaseElement {
       '$1)',
     );
     return backgroundColor[0];
+  }
+
+  public async selectMoveToMenuOption(name: string) {
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'DELETE',
+      );
+      await this.getDropdownMenu().selectMenuOption(name);
+      return respPromise;
+    }
+    await this.getDropdownMenu().selectMenuOption(name);
   }
 }

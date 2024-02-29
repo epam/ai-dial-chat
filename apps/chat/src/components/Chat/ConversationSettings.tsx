@@ -3,7 +3,10 @@ import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Replay } from '@/src/types/chat';
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { isPseudoModel } from '@/src/utils/server/api';
+
+import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
@@ -38,8 +41,7 @@ interface Props {
   temperature: number | undefined;
   prompts: Prompt[];
   selectedAddons: string[];
-  conversationId: string;
-  replay: Replay;
+  conversation: Conversation;
   isCloseEnabled?: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
@@ -48,13 +50,14 @@ interface Props {
   onApplyAddons: (addonsIds: string[]) => void;
   onChangeAddon: (addonsId: string) => void;
   onClose?: () => void;
+  debounceSystemPromptChanges?: boolean;
 }
 
 export const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
   return (
     <div className="flex items-center gap-2">
       <ModelIcon entity={item} entityId={item.id} size={18} />
-      <span>{item.name || item.id}</span>
+      <span>{getOpenAIEntityFullName(item)}</span>
     </div>
   );
 };
@@ -71,8 +74,7 @@ export const ConversationSettings = ({
   temperature,
   selectedAddons,
   isCloseEnabled,
-  conversationId,
-  replay,
+  conversation,
   onClose,
   onSelectModel,
   onSelectAssistantSubModel,
@@ -80,6 +82,7 @@ export const ConversationSettings = ({
   onChangeTemperature,
   onChangeAddon,
   onApplyAddons,
+  debounceSystemPromptChanges = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -91,11 +94,16 @@ export const ConversationSettings = ({
 
   const isNoModelInUserMessages = useMemo(() => {
     return (
-      replay.isReplay &&
-      replay.replayUserMessagesStack &&
-      replay.replayUserMessagesStack.some((message) => !message.model)
+      conversation.replay &&
+      conversation.replay.isReplay &&
+      conversation.replay.replayUserMessagesStack &&
+      conversation.replay.replayUserMessagesStack.some(
+        (message) => !message.model,
+      )
     );
-  }, [replay]);
+  }, [conversation.replay]);
+
+  const isPlayback = conversation.playback?.isPlayback;
 
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
@@ -105,10 +113,11 @@ export const ConversationSettings = ({
       >
         <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
           <ConversationSettingsModel
-            conversationId={conversationId}
-            replay={replay}
+            conversation={conversation}
             modelId={model?.id}
-            unavailableModelId={!model?.id ? modelId : undefined}
+            unavailableModelId={
+              !model?.id && !isPseudoModel(modelId) ? modelId : undefined
+            }
             onModelSelect={onSelectModel}
           />
         </div>
@@ -116,7 +125,7 @@ export const ConversationSettings = ({
           className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
           data-qa="entity-settings"
         >
-          {!replay.replayAsIs ? (
+          {!conversation.replay?.replayAsIs ? (
             <>
               {model && model.type === EntityType.Application && (
                 <SettingContainer>
@@ -130,6 +139,7 @@ export const ConversationSettings = ({
                       assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
                     }
                     onSelectAssistantSubModel={onSelectAssistantSubModel}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}
@@ -142,6 +152,8 @@ export const ConversationSettings = ({
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}
+                    debounceChanges={debounceSystemPromptChanges}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}
@@ -151,6 +163,7 @@ export const ConversationSettings = ({
                     label={t('Temperature')}
                     onChangeTemperature={onChangeTemperature}
                     temperature={temperature}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}
@@ -161,6 +174,7 @@ export const ConversationSettings = ({
                     selectedAddonsIds={selectedAddons}
                     onChangeAddon={onChangeAddon}
                     onApplyAddons={onApplyAddons}
+                    disabled={isPlayback}
                   />
                 </SettingContainer>
               )}

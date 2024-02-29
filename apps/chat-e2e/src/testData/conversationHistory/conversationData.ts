@@ -1,11 +1,14 @@
-import { Conversation, Message, Role, Stage } from '@/chat/types/chat';
-import { FolderInterface, FolderType } from '@/chat/types/folder';
+import { defaultReplay } from '@/chat/constants/replay';
+import { Message, Role, Stage } from '@/chat/types/chat';
+import { FolderType } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import {
   ConversationBuilder,
   ExpectedConstants,
   MenuOptions,
   ModelIds,
+  TestConversation,
+  TestFolder,
 } from '@/src/testData';
 import { FileApiHelper } from '@/src/testData/api';
 import { FolderData } from '@/src/testData/folders/folderData';
@@ -14,8 +17,8 @@ import { GeneratorUtil } from '@/src/utils/generatorUtil';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {
-  conversations: Conversation[];
-  folders: FolderInterface;
+  conversations: TestConversation[];
+  folders: TestFolder;
 }
 
 export class ConversationData extends FolderData {
@@ -41,6 +44,7 @@ export class ConversationData extends FolderData {
     const userMessage: Message = {
       role: Role.User,
       content: 'test request',
+      model: { id: modelToUse.id },
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
@@ -130,13 +134,13 @@ export class ConversationData extends FolderData {
     return defaultConversation;
   }
 
-  public prepareDefaultReplayConversation(conversation: Conversation) {
+  public prepareDefaultReplayConversation(conversation: TestConversation) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     return this.fillReplayData(conversation, userMessages!);
   }
 
   public preparePartiallyReplayedStagedConversation(
-    conversation: Conversation,
+    conversation: TestConversation,
   ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     const assistantMessage = conversation.messages.filter(
@@ -157,7 +161,7 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedConversation(conversation: TestConversation) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
     const assistantMessages = conversation.messages.find(
@@ -225,10 +229,8 @@ export class ConversationData extends FolderData {
     return super.prepareNestedFolder(nestedLevel, FolderType.Chat);
   }
 
-  public prepareConversationsForNestedFolders(
-    nestedFolders: FolderInterface[],
-  ) {
-    const nestedConversations: Conversation[] = [];
+  public prepareConversationsForNestedFolders(nestedFolders: TestFolder[]) {
+    const nestedConversations: TestConversation[] = [];
     for (const item of nestedFolders) {
       const nestedConversation = this.prepareDefaultConversation();
       nestedConversations.push(nestedConversation);
@@ -242,7 +244,7 @@ export class ConversationData extends FolderData {
     conversationsCount: number,
   ): FolderConversation {
     const folder = this.prepareFolder();
-    const conversations: Conversation[] = [];
+    const conversations: TestConversation[] = [];
     for (let i = 1; i <= conversationsCount; i++) {
       const conversation = this.prepareDefaultConversation();
       conversation.folderId = folder.id;
@@ -293,7 +295,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultPlaybackConversation(
-    conversation: Conversation,
+    conversation: TestConversation,
     playbackIndex?: number,
   ) {
     const messages = conversation.messages;
@@ -320,12 +322,12 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareConversationWithAttachment(
+  public prepareConversationWithAttachmentInRequest(
     attachmentUrl: string,
     model: OpenAIEntityModel | string,
     hasRequest?: boolean,
   ) {
-    const filename = attachmentUrl.split('/')[2];
+    const filename = FileApiHelper.extractFilename(attachmentUrl);
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const userMessage: Message = {
       role: Role.User,
@@ -340,22 +342,78 @@ export class ConversationData extends FolderData {
         ],
       },
     };
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'Heart',
+      model: modelToUse,
+    };
     return this.conversationBuilder
+      .withName(GeneratorUtil.randomString(10))
       .withMessage(userMessage)
+      .withMessage(assistantMessage)
       .withModel(modelToUse)
       .build();
   }
 
+  public prepareConversationWithAttachmentInResponse(
+    attachmentUrl: string,
+    model: OpenAIEntityModel | string,
+  ) {
+    const filename = FileApiHelper.extractFilename(attachmentUrl);
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'draw smiling emoticon',
+      model: modelToUse,
+    };
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: '',
+      model: modelToUse,
+      custom_content: {
+        attachments: [
+          {
+            type: FileApiHelper.getContentTypeForFile(filename)!,
+            title: filename,
+            url: attachmentUrl,
+          },
+        ],
+      },
+    };
+    return this.conversationBuilder
+      .withName(GeneratorUtil.randomString(10))
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
+  public prepareHistoryConversation(...conversations: TestConversation[]) {
+    const historyMessages: Message[] = [];
+    for (const conversation of conversations) {
+      historyMessages.push(...conversation.messages);
+    }
+    const lastConversation = conversations[conversations.length - 1];
+    lastConversation.messages = historyMessages;
+    return lastConversation;
+  }
+
   private fillReplayData(
-    conversation: Conversation,
+    conversation: TestConversation,
     userMessages: Message[],
-  ): Conversation {
+  ): TestConversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = uuidv4();
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
+    if (!replayConversation.replay) {
+      replayConversation.replay = defaultReplay;
+    }
     replayConversation.replay.isReplay = true;
     replayConversation.replay.activeReplayIndex = 0;
+    if (!replayConversation.replay.replayUserMessagesStack) {
+      replayConversation.replay.replayUserMessagesStack = [];
+    }
     replayConversation.replay.replayUserMessagesStack.push(...userMessages);
     replayConversation.replay.replayAsIs = true;
     return replayConversation;

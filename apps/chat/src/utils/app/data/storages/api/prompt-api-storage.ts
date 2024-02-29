@@ -1,10 +1,7 @@
-import {
-  ApiKeys,
-  getPromptApiKey,
-  parsePromptApiKey,
-} from '@/src/utils/server/api';
+import { cleanPrompt } from '@/src/utils/app/clean';
+import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
-import { Entity } from '@/src/types/common';
+import { ApiKeys, Entity } from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
 import { ApiEntityStorage } from './api-entity-storage';
@@ -16,16 +13,13 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
       ...info,
     };
   }
-  cleanUpEntity(entity: Prompt): Prompt {
-    return {
-      ...entity,
-      status: undefined,
-    };
+  cleanUpEntity(prompt: Prompt): Prompt {
+    return cleanPrompt(prompt);
   }
   getEntityKey(info: PromptInfo): string {
     return getPromptApiKey(info);
   }
-  parseEntityKey(key: string): Omit<PromptInfo, 'folderId'> {
+  parseEntityKey(key: string): Omit<PromptInfo, 'folderId' | 'id'> {
     return parsePromptApiKey(key);
   }
   getStorageKey(): ApiKeys {

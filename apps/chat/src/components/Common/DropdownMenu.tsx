@@ -4,6 +4,7 @@ import {
   FloatingNode,
   FloatingPortal,
   FloatingTree,
+  Placement,
   autoUpdate,
   flip,
   offset,
@@ -42,6 +43,8 @@ import {
 
 import classNames from 'classnames';
 
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
+
 const menuItemClassNames = classNames(
   'flex max-w-[300px] cursor-pointer items-center gap-3 focus-visible:border-none focus-visible:outline-none',
 );
@@ -68,6 +71,9 @@ interface MenuProps {
   type?: 'dropdown' | 'contextMenu';
   isMenuOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  placement?: Placement;
+  shouldFlip?: boolean;
+  shouldApplySize?: boolean;
 }
 
 export const MenuComponent = forwardRef<
@@ -82,8 +88,11 @@ export const MenuComponent = forwardRef<
     label,
     trigger,
     type = 'dropdown',
+    placement,
     isMenuOpen,
     onOpenChange,
+    shouldFlip = true,
+    shouldApplySize = true,
     ...props
   },
   forwardedRef,
@@ -112,23 +121,36 @@ export const MenuComponent = forwardRef<
     nodeId,
     open: isOpen,
     onOpenChange: (isOpened) => {
+      if (
+        hasParentWithAttribute(
+          context.dataRef.current.openEvent?.target as Element | null,
+          'data-no-context-menu',
+        )
+      ) {
+        return;
+      }
+
       setIsOpen(isOpened);
       onOpenChange?.(isOpened);
     },
-    placement: isNested ? 'right-start' : 'bottom-start',
+    placement: placement ?? (isNested ? 'right-start' : 'bottom-start'),
     middleware: [
       offset(0),
-      flip(),
+      ...(shouldFlip ? [flip()] : []),
       shift(),
-      size({
-        apply({ rects, availableWidth, availableHeight, elements }) {
-          setFloatingWidth(rects.reference.width);
-          Object.assign(elements.floating.style, {
-            maxWidth: `${availableWidth}px`,
-            maxHeight: `${availableHeight}px`,
-          });
-        },
-      }),
+      ...(shouldApplySize
+        ? [
+            size({
+              apply({ rects, availableWidth, availableHeight, elements }) {
+                setFloatingWidth(rects.reference.width);
+                Object.assign(elements.floating.style, {
+                  maxWidth: `${availableWidth}px`,
+                  maxHeight: `${availableHeight}px`,
+                });
+              },
+            }),
+          ]
+        : []),
     ],
     whileElementsMounted: autoUpdate,
   });

@@ -2,7 +2,7 @@ import { Components } from 'react-markdown';
 
 import classnames from 'classnames';
 
-import { isOnlySmallScreen } from '@/src/utils/app/mobile';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -111,11 +111,11 @@ const ChatMDComponent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
-    'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
+    'prose min-w-full dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
     {
       'max-w-none': isChatFullWidth,
       'text-sm': isOverlay,
-      'leading-[150%]': isOnlySmallScreen() || isOverlay,
+      'leading-[150%]': isSmallScreen() || isOverlay,
     },
   );
 

@@ -1,5 +1,6 @@
 import { Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
+import { OpenAIError } from '@/src/types/error';
 import {
   OpenAIEntityAddonID,
   OpenAIEntityModel,
@@ -13,7 +14,6 @@ import {
 } from '../../constants/default-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
-import { OpenAIError } from './error';
 import { getApiHeaders } from './get-headers';
 
 import {

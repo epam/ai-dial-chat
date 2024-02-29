@@ -10,21 +10,19 @@ import {
   Message,
   Replay,
 } from '@/chat/types/chat';
-import { constructPath } from '@/chat/utils/app/file';
-import { getRootId } from '@/chat/utils/app/id';
-import { ApiKeys } from '@/chat/utils/server/api';
 import { ModelsUtil } from '@/src/utils';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface TestConversation extends Omit<Conversation, 'folderId'> {
+  folderId?: string | undefined;
+}
+
 export class ConversationBuilder {
-  private conversation: Conversation;
+  private conversation: TestConversation;
 
   constructor() {
     this.conversation = {
-      id: constructPath(
-        getRootId({ apiKey: ApiKeys.Conversations }),
-        DEFAULT_CONVERSATION_NAME,
-      ),
+      id: uuidv4(),
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
       model: { id: ModelsUtil.getDefaultModel()!.id },
@@ -34,7 +32,6 @@ export class ConversationBuilder {
       selectedAddons: ModelsUtil.getDefaultModel()!.selectedAddons ?? [],
       lastActivityDate: Date.now(),
       isMessageStreaming: false,
-      folderId: getRootId({ apiKey: ApiKeys.Conversations }),
     };
   }
 
@@ -42,7 +39,7 @@ export class ConversationBuilder {
     return this.conversation;
   }
 
-  setConversation(conversation: Conversation): Conversation {
+  setConversation(conversation: TestConversation): TestConversation {
     this.conversation = conversation;
     return conversation;
   }
@@ -77,7 +74,7 @@ export class ConversationBuilder {
     return this;
   }
 
-  withFolderId(folderId: string): ConversationBuilder {
+  withFolderId(folderId: undefined | string): ConversationBuilder {
     this.conversation.folderId = folderId;
     return this;
   }
@@ -97,7 +94,7 @@ export class ConversationBuilder {
     return this;
   }
 
-  build(): Conversation {
+  build(): TestConversation {
     return this.conversation;
   }
 }

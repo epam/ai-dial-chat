@@ -38,8 +38,6 @@ import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
 import { SendMessageButton } from './SendMessageButton';
 
-import { Feature } from '@epam/ai-dial-shared';
-
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
@@ -72,19 +70,12 @@ export const ChatInputMessage = ({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
+  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttach);
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
   );
 
-  const maximumAttachmentsAmount = useAppSelector(
-    ConversationsSelectors.selectMaximumAttachmentsAmount,
-  );
-  const displayAttachFunctionality =
-    enabledFeatures.has(Feature.InputFiles) && maximumAttachmentsAmount > 0;
   const attachedFilesIds = useAppSelector(
     FilesSelectors.selectSelectedFilesIds,
   );
@@ -95,14 +86,10 @@ export const ChatInputMessage = ({
   const isLastAssistantMessageEmpty = useAppSelector(
     ConversationsSelectors.selectIsLastAssistantMessageEmpty,
   );
-  const notModelConversations = useAppSelector(
-    ConversationsSelectors.selectNotModelConversations,
-  );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
-  const isError =
-    isLastAssistantMessageEmpty || (isMessageError && notModelConversations);
+  const isError = isLastAssistantMessageEmpty || isMessageError;
 
   const maxLength = useMemo(() => {
     const maxLengthArray = selectedConversations.map(
@@ -132,7 +119,7 @@ export const ChatInputMessage = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
-  } = usePromptSelection(maxLength);
+  } = usePromptSelection(maxLength, '');
 
   const isInputEmpty = useMemo(() => {
     return content.trim().length === 0 && selectedFiles.length === 0;
@@ -320,7 +307,7 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
-  const paddingLeftClass = displayAttachFunctionality
+  const paddingLeftClass = canAttach
     ? isOverlay
       ? 'pl-11'
       : 'pl-12'
@@ -370,8 +357,7 @@ export const ChatInputMessage = ({
           tooltip={tooltipContent()}
           isLoading={isLoading}
         />
-
-        {displayAttachFunctionality && (
+        {canAttach && (
           <>
             <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
               <AttachButton

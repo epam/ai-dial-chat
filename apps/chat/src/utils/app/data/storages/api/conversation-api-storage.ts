@@ -1,23 +1,26 @@
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 
+import { cleanConversation } from '@/src/utils/app/clean';
+import { prepareEntityName } from '@/src/utils/app/common';
+import { getGeneratedConversationId } from '@/src/utils/app/conversation';
+import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
+import { constructPath } from '@/src/utils/app/file';
+import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
-  ApiKeys,
+  getConversationRootId,
+  isRootConversationsId,
+} from '@/src/utils/app/id';
+import {
   getConversationApiKey,
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
+import { ApiKeys, UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-
-import { cleanConversation } from '../../../clean';
-import { getGeneratedConversationId } from '../../../conversation';
-import { notAllowedSymbolsRegex } from '../../../file';
-import { getPathToFolderById } from '../../../folders';
-import { ConversationService } from '../../conversation-service';
-import { ApiEntityStorage } from './api-entity-storage';
 
 import { RootState } from '@/src/store';
 
@@ -33,15 +36,19 @@ export class ConversationApiStorage extends ApiEntityStorage<
       model: entity.model,
     };
   }
+
   cleanUpEntity(conversation: Conversation): Conversation {
     return cleanConversation(conversation);
   }
+
   getEntityKey(info: ConversationInfo): string {
     return getConversationApiKey(info);
   }
-  parseEntityKey(key: string): Omit<ConversationInfo, 'folderId'> {
+
+  parseEntityKey(key: string): Omit<ConversationInfo, 'folderId' | 'id'> {
     return parseConversationApiKey(key);
   }
+
   getStorageKey(): ApiKeys {
     return ApiKeys.Conversations;
   }
@@ -61,7 +68,12 @@ export const getOrUploadConversation = (
 
   if (conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
-      conversation: ConversationService.getConversation(conversation),
+      conversation: ConversationService.getConversation(conversation).pipe(
+        catchError((err) => {
+          console.error('The conversation was not found:', err);
+          return of(null);
+        }),
+      ),
       payload: of(payload),
     });
   } else {
@@ -75,9 +87,11 @@ export const getOrUploadConversation = (
 export const getPreparedConversations = ({
   conversations,
   conversationsFolders,
+  addRoot = false,
 }: {
   conversations: Conversation[];
   conversationsFolders: FolderInterface[];
+  addRoot?: boolean;
 }) =>
   conversations.map((conv) => {
     const { path } = getPathToFolderById(
@@ -85,7 +99,8 @@ export const getPreparedConversations = ({
       conv.folderId,
       true,
     );
-    const newName = conv.name.replace(notAllowedSymbolsRegex, '');
+
+    const newName = prepareEntityName(conv.name);
 
     return {
       ...conv,
@@ -95,6 +110,36 @@ export const getPreparedConversations = ({
         folderId: path,
       }),
       name: newName,
-      folderId: path,
+      folderId: addRoot ? constructPath(getConversationRootId(), path) : path,
+    };
+  }); // to send conversation with proper parentPath and lastActivityDate order
+
+export const getImportPreparedConversations = ({
+  conversations,
+  conversationsFolders,
+}: {
+  conversations: Conversation[] | ConversationInfo[];
+  conversationsFolders: FolderInterface[];
+}) =>
+  conversations.map((conv) => {
+    const { path } = getPathToFolderById(
+      conversationsFolders,
+      conv.folderId,
+      true,
+    );
+
+    const newName = prepareEntityName(conv.name);
+    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
+    const folderId = constructPath(rootId, path);
+
+    return {
+      ...conv,
+      id: getGeneratedConversationId({
+        ...conv,
+        name: newName,
+        folderId: folderId,
+      }),
+      name: newName,
+      folderId: folderId,
     };
   }); // to send conversation with proper parentPath and lastActivityDate order

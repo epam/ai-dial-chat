@@ -2,15 +2,12 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIError } from '@/src/utils/server';
-import {
-  ApiKeys,
-  getEntityTypeFromPath,
-  isValidEntityApiType,
-} from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils } from '@/src/utils/server/server';
 
 import {
   BackendChatEntity,
@@ -26,11 +23,6 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const entityType = getEntityTypeFromPath(req);
-  if (!entityType || !isValidEntityApiType(entityType)) {
-    return res.status(400).json(errorsMessages.notValidEntityType);
-  }
-
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -39,22 +31,28 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const {
-      path = '',
       filter,
-      bucket,
       recursive = false,
+      limit = 1000,
     } = req.query as {
-      path: string;
       filter?: BackendDataNodeType;
-      bucket: string;
       recursive?: string;
+      limit?: number;
     };
-
     const token = await getToken({ req });
+    const slugs = Array.isArray(req.query.listing)
+      ? req.query.listing
+      : [req.query.listing];
 
-    const url = `${
-      process.env.DIAL_API_HOST
-    }/v1/metadata/${path ? `${encodeURI(path)}` : `${entityType}/${bucket}`}/?limit=1000${recursive ? '&recursive=true' : ''}`;
+    if (!slugs || slugs.length === 0) {
+      throw new OpenAIError(`No path provided`, '', '', '400');
+    }
+
+    const url = `${constructPath(
+      process.env.DIAL_API_HOST,
+      'v1/metadata',
+      ServerUtils.encodeSlugs(slugs),
+    )}/?limit=${limit}&recursive=${recursive}`;
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
@@ -77,8 +75,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       | BackendChatFolder
     )[] = json.items || [];
 
-    const filterableEntityTypes: string[] = Object.values(ApiKeys);
-    if (filter && filterableEntityTypes.includes(entityType)) {
+    if (filter) {
       result = result.filter((item) => item.nodeType === filter);
     }
 

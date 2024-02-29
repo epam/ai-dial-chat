@@ -2,6 +2,8 @@ import { DragEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
@@ -14,11 +16,12 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
@@ -26,6 +29,10 @@ import Sidebar from '../Sidebar';
 const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
+
+  const isPromptRequestSent = useAppSelector(
+    PromptsSelectors.selectIsActiveNewPromptRequest,
+  );
 
   return (
     <div className="flex px-2 py-1">
@@ -36,9 +43,14 @@ const PromptActionsBlock = () => {
           dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
         }}
+        disabled={isPromptRequestSent}
         data-qa="new-entity"
       >
-        <PlusIcon className="text-secondary" width={18} height={18} />
+        {isPromptRequestSent ? (
+          <Spinner size={18} className="text-secondary" />
+        ) : (
+          <PlusIcon className="text-secondary" width={18} height={18} />
+        )}
         {t('New prompt')}
       </button>
     </div>
@@ -46,8 +58,11 @@ const PromptActionsBlock = () => {
 };
 
 const Promptbar = () => {
+  const { t } = useTranslation(Translation.PromptBar);
+
   const dispatch = useAppDispatch();
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const myItemsFilters = useAppSelector(PromptsSelectors.selectMyItemsFilters);
   const areEntitiesUploaded = useAppSelector(
@@ -57,6 +72,9 @@ const Promptbar = () => {
   const filteredPrompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
   );
+  const filteredFolders = useAppSelector((state) =>
+    PromptsSelectors.selectFilteredFolders(state, myItemsFilters, searchTerm),
+  );
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
@@ -64,20 +82,44 @@ const Promptbar = () => {
     (e: DragEvent<HTMLDivElement>) => {
       if (e.dataTransfer) {
         const promptData = e.dataTransfer.getData(MoveType.Prompt);
+        const folderId = getPromptRootId();
+
         if (promptData) {
           const prompt = JSON.parse(promptData);
+
+          if (
+            !isEntityNameOnSameLevelUnique(
+              prompt.name,
+              { ...prompt, folderId },
+              allPrompts,
+            )
+          ) {
+            dispatch(
+              UIActions.showToast({
+                message: t(
+                  'Prompt with name "{{name}}" already exists at the root.',
+                  {
+                    ns: 'prompt',
+                    name: prompt.name,
+                  },
+                ),
+                type: 'error',
+              }),
+            );
+
+            return;
+          }
+
           dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
-              values: {
-                folderId: e.currentTarget.dataset.folderId,
-              },
+              values: { folderId },
             }),
           );
         }
       }
     },
-    [dispatch],
+    [allPrompts, dispatch, t],
   );
 
   return (
@@ -89,6 +131,7 @@ const Promptbar = () => {
       actionButtons={<PromptActionsBlock />}
       folderComponent={<PromptFolders />}
       filteredItems={filteredPrompts}
+      filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
       handleSearchTerm={(searchTerm: string) =>

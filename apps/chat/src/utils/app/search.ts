@@ -1,12 +1,13 @@
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
+import { OpenAIEntity } from '@/src/types/openai';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
-import { getChildAndCurrentFoldersIdsById } from './folders';
+import { getOpenAIEntityFullName } from './conversation';
+import { getConversationRootId, getPromptRootId } from './id';
 
 export const doesPromptOrConversationContainSearchTerm = (
   conversation: ConversationInfo | PromptInfo,
@@ -22,17 +23,10 @@ export const doesFileContainSearchTerm = (
   return file.name.toLowerCase().includes(searchTerm.toLowerCase());
 };
 
-export const doesAddonContainSearchTerm = (
-  addon: OpenAIEntityAddon,
+export const doesOpenAIEntityContainSearchTerm = (
+  model: OpenAIEntity,
   searchTerm: string,
-) => {
-  return (addon.name || addon.id).toLowerCase().trim().includes(searchTerm);
-};
-
-export const doesModelContainSearchTerm = (
-  model: OpenAIEntityModel,
-  searchTerm: string,
-) => model.name.toLowerCase().trim().includes(searchTerm);
+) => getOpenAIEntityFullName(model).toLowerCase().trim().includes(searchTerm);
 
 export const doesEntityContainSearchItem = <
   T extends Conversation | Prompt | DialFile,
@@ -57,12 +51,20 @@ export const doesEntityContainSearchItem = <
 
 export const TrueFilter: EntityFilter<ShareInterface> = () => true;
 
-export const MyItemFilter: EntityFilter<ShareInterface> = (item) =>
-  !item.sharedWithMe && !item.publishedWithMe;
+export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
+  !!item.sharedWithMe;
 
-export const SharedWithMeFilter: EntityFilters = {
+export const MyItemFilter: EntityFilter<ShareEntity> = (item) =>
+  item.folderId === getConversationRootId() ||
+  item.folderId === getPromptRootId(); // only my root items
+
+export const SharedWithMeFilters: EntityFilters = {
   searchFilter: TrueFilter,
-  sectionFilter: (item) => !!item.sharedWithMe,
+  sectionFilter: SharedWithMeFilter,
+};
+export const SharedWithMeRootFilters: EntityFilters = {
+  searchFilter: TrueFilter,
+  sectionFilter: SharedWithMeFilter,
 };
 
 export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
@@ -89,8 +91,8 @@ export const isSearchFilterSelected = (
 
 export const getMyItemsFilter = (
   searchFilters: SearchFilters,
-): EntityFilter<ShareInterface> => {
-  const itemFilters: EntityFilter<ShareInterface>[] = [];
+): EntityFilter<ShareEntity> => {
+  const itemFilters: EntityFilter<ShareEntity>[] = [];
   if (isSearchFilterSelected(searchFilters, SearchFilters.SharedByMe)) {
     itemFilters.push(SharedByMeFilter);
   }
@@ -99,29 +101,14 @@ export const getMyItemsFilter = (
   }
   if (!itemFilters.length) return TrueFilter;
 
-  return (item: ShareInterface) => itemFilters.some((filter) => filter(item));
+  return (item: ShareEntity) => itemFilters.some((filter) => filter(item));
 };
 
 export const getMyItemsFilters = (
   searchFilters: SearchFilters = SearchFilters.None,
 ): EntityFilters => ({
-  sectionFilter: MyItemFilter,
   searchFilter: getMyItemsFilter(searchFilters),
+  sectionFilter: MyItemFilter,
 });
 
 export const defaultMyItemsFilters = getMyItemsFilters();
-
-export const searchSectionFolders = (
-  folders: FolderInterface[],
-  filters: EntityFilters,
-) => {
-  const folderIds = folders // direct parent folders
-    .filter((folder) => filters.sectionFilter(folder))
-    .map((folder) => folder.id);
-
-  const filteredFolderIds = new Set(
-    folderIds.flatMap((fid) => getChildAndCurrentFoldersIdsById(fid, folders)),
-  );
-
-  return folders.filter((folder) => filteredFolderIds.has(folder.id));
-};

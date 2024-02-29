@@ -2,6 +2,7 @@ import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Addons } from '@/src/ui/webElements/addons';
+import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PromptList } from '@/src/ui/webElements/promptList';
@@ -62,6 +63,7 @@ export class EntitySettings extends BaseElement {
 
   public async setSystemPrompt(prompt: string) {
     await this.systemPrompt.fillInInput(prompt);
+    await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 
   public async getSystemPrompt() {

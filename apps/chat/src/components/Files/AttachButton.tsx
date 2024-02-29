@@ -45,6 +45,7 @@ export const AttachButton = ({
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
+  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttach);
   const [isPreUploadDialogOpened, setIsPreUploadDialogOpened] = useState(false);
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -73,6 +74,8 @@ export const AttachButton = ({
     ],
     [handleAttachFromComputer, handleOpenAttachmentsModal, t],
   );
+
+  if (!canAttach) return null;
 
   return (
     <>

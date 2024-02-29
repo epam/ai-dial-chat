@@ -1,5 +1,5 @@
 import { Attachment, Conversation, ConversationInfo } from '@/src/types/chat';
-import { DialFile } from '@/src/types/files';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportFormatV1,
@@ -14,11 +14,14 @@ import {
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
-import { ApiKeys } from '../server/api';
+import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
+
+import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
-import { triggerDownload } from './file';
-import { getRootId } from './id';
+import { constructPath, triggerDownload } from './file';
+import { splitEntityId } from './folders';
+import { getConversationRootId, getRootId } from './id';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -54,6 +57,48 @@ export const isLatestExportFormat = isExportFormatV5;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
+
+export function cleanFolders({
+  folders,
+  featureType,
+  folderType,
+}: {
+  folders: FolderInterface[];
+  folderType: FolderType;
+  featureType: FeatureType;
+}) {
+  return (folders || []).map((folder) => {
+    const parentFolder = folders.find((parentFolder) => {
+      return parentFolder.id === folder.folderId;
+    });
+    const newFolderId = constructPath(
+      getRootId({ featureType }),
+      parentFolder?.name,
+    );
+    const newId = constructPath(newFolderId, folder.name);
+    return {
+      id: newId,
+      name: folder.name,
+      type: folderType,
+      folderId: newFolderId,
+    };
+  });
+}
+
+export const cleanConversationsFolders = (folders: FolderInterface[]) =>
+  cleanFolders({
+    folders,
+    folderType: FolderType.Chat,
+    featureType: FeatureType.Chat,
+  });
+
+export const cleanPromptsFolders = (folders: FolderInterface[]) =>
+  cleanFolders({
+    folders,
+    folderType: FolderType.Prompt,
+    featureType: FeatureType.Prompt,
+  });
+
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
     const cleanHistoryData: LatestExportFormat = {
@@ -76,7 +121,7 @@ export function cleanData(data: SupportedExportFormats): CleanDataResponse {
         id: chatFolder.id.toString(),
         name: chatFolder.name,
         type: FolderType.Chat,
-        folderId: getRootId({ apiKey: ApiKeys.Conversations }),
+        folderId: getConversationRootId(),
       })),
       prompts: [],
       isError: false,
@@ -289,6 +334,7 @@ export interface ImportPromtsResponse {
   folders: FolderInterface[];
   isError: boolean;
 }
+
 export const importPrompts = (
   importedData: PromptsHistory,
   {
@@ -314,76 +360,48 @@ export const importPrompts = (
 
   const newFolders: FolderInterface[] = combineEntities(
     currentFolders,
-    importedData.folders,
+    cleanPromptsFolders(importedData.folders),
   ).filter((folder) => folder.type === FolderType.Prompt);
 
   return { prompts: newPrompts, folders: newFolders, isError: false };
 };
-
-export const getAttachmentId = ({
-  url,
-  attachmentIdIndex,
-}: {
-  url: string;
-  attachmentIdIndex: number;
-}) => {
-  const regExpForAttachmentId = /^files\/\w*\//;
-
-  const attachmentId = decodeURI(url).split(regExpForAttachmentId)[
-    attachmentIdIndex
-  ];
-
-  return attachmentId;
-};
-
-const getNewAttachmentFileFromUploaded = ({
-  uploadedAttachments,
-  oldAttachmentId,
-  attachmentIdIndex,
-}: {
-  uploadedAttachments: Partial<DialFile>[];
-  oldAttachmentId: string;
-  attachmentIdIndex: number;
-}) =>
-  uploadedAttachments.find((newAttachment) => {
-    if (!newAttachment.id) {
-      return;
-    }
-    const regExpForNewAttachmentId = /^imports\/[\w\s-]+\//;
-
-    const newAttachmentId = newAttachment.id.split(regExpForNewAttachmentId)[
-      attachmentIdIndex
-    ];
-
-    return (
-      newAttachmentId === oldAttachmentId ||
-      oldAttachmentId.includes(newAttachmentId)
-    );
-  });
 
 export const updateAttachment = ({
   oldAttachment,
   uploadedAttachments,
 }: {
   oldAttachment: Attachment;
-  uploadedAttachments: Partial<DialFile>[];
+  uploadedAttachments: UploadedAttachment[];
 }) => {
   const oldAttachmentUrl = oldAttachment.url || oldAttachment.reference_url;
-
   if (!oldAttachmentUrl) {
     return oldAttachment;
   }
 
-  const attachmentIdIndex = 1;
-  const oldAttachmentId = getAttachmentId({
-    url: oldAttachmentUrl,
-    attachmentIdIndex,
-  });
+  const oldAttachmentDecodedUrl = ApiUtils.decodeApiUrl(oldAttachmentUrl);
 
-  const newAttachmentFile = getNewAttachmentFileFromUploaded({
-    uploadedAttachments,
-    oldAttachmentId,
-    attachmentIdIndex,
+  const { name, parentPath } = splitEntityId(oldAttachmentDecodedUrl);
+
+  const oldAttachmentRelativePath = constructPath(parentPath, name);
+
+  const splitByHash = (stringToSplit: string) => {
+    const nameArr = stringToSplit.split('#');
+    const oldName = nameArr[0];
+    const oldHash = nameArr[nameArr.length - 1];
+
+    return {
+      oldName,
+      oldHash,
+    };
+  };
+
+  const { oldHash } = splitByHash(name);
+  const { oldName: cleanOldAttachmentRelativePath } = splitByHash(
+    oldAttachmentRelativePath,
+  );
+
+  const newAttachmentFile = uploadedAttachments.find(({ oldRelativePath }) => {
+    return oldRelativePath === cleanOldAttachmentRelativePath;
   });
 
   if (!newAttachmentFile || !newAttachmentFile.name) {
@@ -392,16 +410,19 @@ export const updateAttachment = ({
 
   const newAttachmentUrl =
     oldAttachment.url &&
-    encodeURI(`${newAttachmentFile.absolutePath}/${newAttachmentFile.name}`);
-  const lastSlashIndex = oldAttachmentId.lastIndexOf('/');
-  const oldAttachmentNameInPath = oldAttachmentId.slice(lastSlashIndex + 1);
+    ApiUtils.encodeApiUrl(
+      constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
+    );
 
   const newReferenceUrl =
     oldAttachment.reference_url &&
-    encodeURI(`${newAttachmentFile.absolutePath}/${oldAttachmentNameInPath}`);
+    ApiUtils.encodeApiUrl(
+      constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
+    ) + `#${oldHash}`;
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
+    title: newAttachmentFile.name,
     type: newAttachmentFile.contentType ?? oldAttachment.type,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,

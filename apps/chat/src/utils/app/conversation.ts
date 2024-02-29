@@ -8,16 +8,21 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
-import { OpenAIEntityAddon, OpenAIEntityModel } from '@/src/types/openai';
-
 import {
-  ApiKeys,
-  getConversationApiKey,
-  parseConversationApiKey,
-} from '../server/api';
+  OpenAIEntity,
+  OpenAIEntityAddon,
+  OpenAIEntityModel,
+} from '@/src/types/openai';
+
+import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
-import { compareEntitiesByName, splitEntityId } from './folders';
-import { getRootId } from './id';
+import { splitEntityId } from './folders';
+import { getConversationRootId } from './id';
+
+import groupBy from 'lodash-es/groupBy';
+import orderBy from 'lodash-es/orderBy';
+import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const getAssitantModelId = (
   modelType: EntityType,
@@ -42,9 +47,9 @@ export const getSelectedAddons = (
 ) => {
   if (model && model.type !== EntityType.Application) {
     const preselectedAddons = model.selectedAddons ?? [];
-    const addonsSet = new Set([...preselectedAddons, ...selectedAddons]);
+    const addons = uniq([...preselectedAddons, ...selectedAddons]);
 
-    return getValidEntitiesFromIds(Array.from(addonsSet), addonsMap);
+    return getValidEntitiesFromIds(addons, addonsMap);
   }
 
   return null;
@@ -89,7 +94,7 @@ export const getNewConversationName = (
   const convName = prepareEntityName(conversation.name);
 
   if (
-    conversation.replay.isReplay ||
+    conversation.replay?.isReplay ||
     updatedMessages.length !== 2 ||
     conversation.isNameChanged
   ) {
@@ -116,7 +121,7 @@ export const getGeneratedConversationId = <T extends ConversationInfo>(
     );
   }
   return constructPath(
-    getRootId({ apiKey: ApiKeys.Conversations }),
+    getConversationRootId(),
     getConversationApiKey(conversation),
   );
 };
@@ -142,20 +147,14 @@ export const getConversationInfoFromId = (id: string): ConversationInfo => {
   });
 };
 
-export const compareConversationsByDate = (
-  convA: ConversationInfo,
-  convB: ConversationInfo,
-): number => {
-  if (convA.lastActivityDate === convB.lastActivityDate) {
-    return compareEntitiesByName(convA, convB);
-  }
-  if (convA.lastActivityDate && convB.lastActivityDate) {
-    const dateA = convA.lastActivityDate;
-    const dateB = convB.lastActivityDate;
-    return dateB - dateA;
-  }
-  return -1;
-};
+export const sortByDateAndName = <T extends ConversationInfo>(
+  conversations: T[],
+): T[] =>
+  orderBy(
+    conversations,
+    ['lastActivityDate', (conv) => conv.name.toLowerCase()],
+    ['desc', 'desc'],
+  );
 
 const removePostfix = (name: string): string => {
   const regex = / \d{1,3}$/;
@@ -208,4 +207,31 @@ export const isChosenConversationValidForCompare = (
   }
 
   return true;
+};
+
+export const getOpenAIEntityFullName = (model: OpenAIEntity) =>
+  [model.name, model.version].filter(Boolean).join(' ') || model.id;
+
+interface ModelGroup {
+  groupName: string;
+  entities: OpenAIEntity[];
+}
+
+export const groupModelsAndSaveOrder = (
+  models: OpenAIEntity[],
+): ModelGroup[] => {
+  const uniqModels = uniqBy(models, 'id');
+  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);
+  const insertedSet = new Set();
+  const result: ModelGroup[] = [];
+
+  uniqModels.forEach((m) => {
+    const key = m.name ?? m.id;
+    if (!insertedSet.has(key)) {
+      result.push({ groupName: key, entities: groupedModels[key] });
+      insertedSet.add(key);
+    }
+  });
+
+  return result;
 };

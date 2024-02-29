@@ -9,8 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getRootId } from '@/src/utils/app/id';
-import { ApiKeys } from '@/src/utils/server/api';
+import { getConversationRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { SupportedExportFormats } from '@/src/types/import-export';
@@ -52,6 +51,9 @@ export const ChatbarSettings = () => {
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
+  const isActiveNewConversationRequest = useAppSelector(
+    ConversationsSelectors.selectIsActiveNewConversationRequest,
+  );
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -88,7 +90,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(
             ConversationsActions.createFolder({
-              parentId: getRootId({ apiKey: ApiKeys.Conversations }),
+              parentId: getConversationRootId(),
             }),
           );
         },
@@ -130,7 +132,7 @@ export const ChatbarSettings = () => {
         name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
-        disabled: isStreaming,
+        disabled: isStreaming || isActiveNewConversationRequest,
         onClick: () => {
           handleToggleCompare();
         },
@@ -147,13 +149,14 @@ export const ChatbarSettings = () => {
       },
     ],
     [
-      dispatch,
-      enabledFeatures,
-      handleToggleCompare,
-      isStreaming,
       t,
+      isStreaming,
+      isActiveNewConversationRequest,
+      enabledFeatures,
+      dispatch,
       jsonImportHandler,
       zipImportHandler,
+      handleToggleCompare,
     ],
   );
 

@@ -3,8 +3,10 @@ import { Banner } from '@/src/ui/webElements/banner';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
+import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { ConversationSettings } from '@/src/ui/webElements/conversationSettings';
 import { Header } from '@/src/ui/webElements/header';
+import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
 import { Page } from '@playwright/test';
 
@@ -19,6 +21,8 @@ export class AppContainer extends BaseElement {
   private chatBar!: ChatBar;
   private promptBar!: PromptBar;
   private conversationSettings!: ConversationSettings;
+  private chatLoader!: ChatLoader;
+  private importExportLoader!: ImportExportLoader;
 
   getHeader(): Header {
     if (!this.header) {
@@ -60,5 +64,22 @@ export class AppContainer extends BaseElement {
       this.conversationSettings = new ConversationSettings(this.page);
     }
     return this.conversationSettings;
+  }
+
+  getChatLoader(): ChatLoader {
+    if (!this.chatLoader) {
+      this.chatLoader = new ChatLoader(this.page, this.rootLocator);
+    }
+    return this.chatLoader;
+  }
+
+  getImportExportLoader(): ImportExportLoader {
+    if (!this.importExportLoader) {
+      this.importExportLoader = new ImportExportLoader(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.importExportLoader;
   }
 }

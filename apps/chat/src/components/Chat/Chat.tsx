@@ -3,7 +3,6 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { throttle } from '@/src/utils/data/throttle';
 
 import { OpenAIEntityModelID } from '../../types/openai';
 import {
@@ -50,14 +49,15 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { PlaybackEmptyInfo } from './Playback/PlaybackEmptyInfo';
 
 import { Feature } from '@epam/ai-dial-shared';
+import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
+
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -83,7 +83,6 @@ export const ChatView = memo(() => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
@@ -93,7 +92,6 @@ export const ChatView = memo(() => {
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
-
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
@@ -113,8 +111,8 @@ export const ChatView = memo(() => {
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
-  const isSentRef = useRef(false);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const lastScrollTop = useRef(0);
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
@@ -131,6 +129,7 @@ export const ChatView = memo(() => {
       (models.length === 0 ||
         selectedConversations.some((conv) => {
           if (
+            conv.replay &&
             conv.replay.isReplay &&
             conv.replay.replayAsIs &&
             conv.replay.replayUserMessagesStack &&
@@ -194,10 +193,7 @@ export const ChatView = memo(() => {
     textareaRef.current?.focus();
   }, [scrollDown]);
 
-  const throttledScrollDown = throttle<boolean, typeof scrollDown>(
-    scrollDown,
-    scrollThrottlingTimeout,
-  );
+  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
 
   useEffect(() => {
     throttledScrollDown();
@@ -211,10 +207,14 @@ export const ChatView = memo(() => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         chatContainerRef.current;
-      const bottomTolerance = 30;
+      const bottomTolerance = 25;
 
-      if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
+      if (lastScrollTop.current > scrollTop) {
+        setAutoScrollEnabled(false);
+        setShowScrollDownButton(true);
+      } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
         clearTimeout(disableAutoScrollTimeoutRef.current);
+
         disableAutoScrollTimeoutRef.current = setTimeout(() => {
           setAutoScrollEnabled(false);
           setShowScrollDownButton(true);
@@ -222,6 +222,8 @@ export const ChatView = memo(() => {
       } else {
         setAutoScroll();
       }
+
+      lastScrollTop.current = scrollTop;
     }
   }, []);
 
@@ -253,11 +255,6 @@ export const ChatView = memo(() => {
     setIsShowChatSettings(false);
 
     if (selectedConversations.length > 0) {
-      if (isSentRef.current) {
-        handleScroll();
-        isSentRef.current = false;
-      }
-
       const mergedMessages: MergedMessages[] = [];
       for (let i = 0; i < selectedConversations[0].messages.length; i++) {
         if (selectedConversations[0].messages[i].role === Role.System) continue;
@@ -270,6 +267,8 @@ export const ChatView = memo(() => {
           ]),
         );
       }
+
+      handleScroll();
       setMergedMessages([...mergedMessages]);
     }
 
@@ -325,16 +324,17 @@ export const ChatView = memo(() => {
         return {};
       }
 
-      const updatedReplay: Replay = !conversation.replay.isReplay
+      const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
         ? conversation.replay
         : {
             ...conversation.replay,
             replayAsIs: false,
           };
       const updatedAddons =
+        conversation.replay &&
         conversation.replay.isReplay &&
         conversation.replay.replayAsIs &&
-        !updatedReplay.replayAsIs
+        !updatedReplay?.replayAsIs
           ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
           : conversation.selectedAddons;
 
@@ -466,7 +466,6 @@ export const ChatView = memo(() => {
           activeReplayIndex: 0,
         }),
       );
-      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
@@ -484,7 +483,13 @@ export const ChatView = memo(() => {
         activeReplayIndex: 0,
       }),
     );
-    isSentRef.current = true;
+
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   }, [dispatch, selectedConversations]);
 
   const onEditMessage = useCallback(
@@ -498,7 +503,6 @@ export const ChatView = memo(() => {
           activeReplayIndex: 0,
         }),
       );
-      isSentRef.current = true;
     },
     [dispatch, selectedConversations],
   );
@@ -513,13 +517,14 @@ export const ChatView = memo(() => {
             id: conversation.id,
             values: {
               messages: clearStateForMessages(conversation.messages),
+              ...applySelectedModel(conversation, temporarySettings.modelId),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
+              assistantModelId: temporarySettings.currentAssistentModelId,
               selectedAddons: temporarySettings.addonsIds.filter(
                 (addonId) => addonsMap[addonId],
               ),
-              ...applySelectedModel(conversation, temporarySettings.modelId),
-              assistantModelId: temporarySettings.currentAssistentModelId,
+              isShared: temporarySettings.isShared,
             },
           }),
         );
@@ -582,8 +587,7 @@ export const ChatView = memo(() => {
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
                     (conv) =>
-                      conv.messages.length === 0 &&
-                      (!conv.playback?.isPlayback ? (
+                      conv.messages.length === 0 && (
                         <div
                           key={conv.id}
                           className={`flex h-full flex-col justify-between ${
@@ -633,28 +637,7 @@ export const ChatView = memo(() => {
                             style={{ height: inputHeight }}
                           />
                         </div>
-                      ) : (
-                        <div
-                          key={conv.id}
-                          className={`flex h-full flex-col justify-between overflow-auto ${
-                            selectedConversations.length > 1
-                              ? 'w-[50%]'
-                              : 'w-full'
-                          }`}
-                        >
-                          <div
-                            className="shrink-0"
-                            style={{
-                              height: `calc(100%-${inputHeight})`,
-                            }}
-                          >
-                            <PlaybackEmptyInfo
-                              conversationName={conv.name}
-                              appName={appName}
-                            />
-                          </div>
-                        </div>
-                      )),
+                      ),
                   )}
                 </div>
                 <div className="flex w-full">

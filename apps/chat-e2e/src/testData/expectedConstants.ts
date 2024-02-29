@@ -5,6 +5,8 @@ export const ExpectedConstants = {
   newPromptTitle: (index: number) => `Prompt ${index}`,
   promptPlaceholder: (variable: string) => `Enter a value for ${variable}...`,
   newFolderTitle: 'New folder',
+  newFolderWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newFolderTitle} ${index}`,
   emptyString: '',
   defaultTemperature: '1',
   signInButtonTitle: 'Sign in with Credentials',
@@ -70,6 +72,7 @@ export enum MenuOptions {
   withoutAttachments = 'Without attachments',
   moveTo = 'Move to',
   share = 'Share',
+  unshare = 'Unshare',
   publish = 'Publish',
   update = 'Update',
   unpublish = 'Unpublish',
@@ -102,9 +105,14 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
-  bucketHost: '/api/files/bucket',
-  fileHost: '/api/files/file',
-  uploadedFileHost: () => `${API.fileHost}/files`,
+  bucketHost: '/api/bucket',
+  listingHost: '/api/listing',
+  conversationsHost: () => `${API.listingHost}/conversations`,
+  promptsHost: () => `${API.listingHost}/prompts`,
+  filesListingHost: () => `${API.listingHost}/files`,
+  fileHost: '/api/files',
+  modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
+  importFilePath: (bucket: string) => `files/${bucket}/imports`,
 };
 
 export const Import = {
@@ -115,13 +123,19 @@ export const Import = {
   v14AppBisonChatName: 'bison chat king',
   v14AppImportedFilename: 'ai_dial_chat_history_1-4_version.json',
   v19AppImportedFilename: 'ai_dial_chat_history_1-9_version.json',
+  importedAttachmentsFilename: 'ai_dial_chat_with_attachments.zip',
+  importedConversationWithAttachmentsName: `test`,
+  importedGpt4VisionAttachmentName: 'SDRequestAttachment.png',
+  importedStableDiffusionAttachmentName: 'SDResponseAttachment.png',
   v14AppFolderPromptName: 'Version 1.4 A*B',
   oldVersionAppGpt35Message: '11 * 12 =',
+  importAttachmentExtension: '.zip',
 };
 
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',
+  heartImageName: 'heart.webp',
 };
 
 export enum Side {
@@ -139,6 +153,7 @@ export enum ModelIds {
   GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
+  GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',
   GPT_4_32K = 'gpt-4-32k',
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
@@ -147,12 +162,11 @@ export enum ModelIds {
   BISON_32k_002 = 'chat-bison-32k@002',
   CODE_BISON_001 = 'codechat-bison@001',
   CODE_BISON_32K_002 = 'codechat-bison-32k@002',
-  DALLE = 'dalle3',
+  DALLE = 'dall-e-3',
   AWS_TITAN = 'amazon.titan-tg1-large',
   AI21_GRANDE = 'ai21.j2-grande-instruct',
   AI21_JUMBO = 'ai21.j2-jumbo-instruct',
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
-  ANTHROPIC_CLAUDE_V1 = 'anthropic.claude-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',

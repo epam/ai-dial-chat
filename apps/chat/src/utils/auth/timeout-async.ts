@@ -5,7 +5,7 @@ class TimeoutError extends Error {
 }
 
 export const timeoutAsync = (t: number) =>
-  new Promise((resolve, reject) => {
+  new Promise((_, reject) => {
     setTimeout(() => {
       reject(new TimeoutError());
     }, t);

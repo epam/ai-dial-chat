@@ -4,7 +4,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isValidConversationForCompare } from '@/src/utils/app/conversation';
-import { compareEntitiesByName } from '@/src/utils/app/folders';
+import { sortByName } from '@/src/utils/app/folders';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -43,9 +43,9 @@ const Option = ({ item }: OptionProps) => {
   return (
     <div className="group flex items-center gap-3 pl-1">
       <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
-        <ModelIcon entity={model} entityId={model.id} size={24} />
+        <ModelIcon entity={model} entityId={model.id} size={18} />
       </ShareIcon>
-      <span>{item.name}</span>
+      <span className="truncate">{item.name}</span>
     </div>
   );
 };
@@ -88,9 +88,7 @@ export const ChatCompareSelect = ({
           ? conv.id !== selectedConversation.id
           : isValidConversationForCompare(selectedConversation, conv),
       );
-      setComparableConversations(
-        comparableConversations.sort(compareEntitiesByName),
-      );
+      setComparableConversations(sortByName(comparableConversations));
     }
   }, [conversations, selectedConversations, showAll]);
 
