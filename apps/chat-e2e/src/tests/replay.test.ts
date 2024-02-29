@@ -267,7 +267,9 @@ dialTest(
         await talkToSelector.selectModel(bison.name, bison.iconUrl);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
-        replayRequest = await chat.startReplay();
+        replayRequest = await dialHomePage.waitForIconLoaded(() => {
+          return chat.startReplay();
+        }, bison.iconUrl!);
       },
     );
 

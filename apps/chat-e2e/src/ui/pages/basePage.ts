@@ -34,6 +34,15 @@ export class BasePage {
     );
   }
 
+  async waitForIconLoaded<T>(method: () => Promise<T>, iconUrl: string) {
+    const iconResponse = this.page.waitForResponse((response) =>
+      response.url().includes(iconUrl),
+    );
+    const result = await method();
+    await iconResponse;
+    return result;
+  }
+
   async waitForApiResponsesReceived(
     method: () => Promise<void>,
     options?: {
