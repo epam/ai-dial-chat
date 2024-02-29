@@ -118,7 +118,6 @@ describe('cleanData Functions', () => {
     replay: defaultReplay,
     selectedAddons: [],
     assistantModelId: 'gpt-4',
-    isMessageStreaming: false,
     folderId: getConversationRootId(bucket),
     lastActivityDate: expect.any(Number),
   };
