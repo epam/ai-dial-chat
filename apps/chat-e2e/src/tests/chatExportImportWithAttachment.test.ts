@@ -9,7 +9,7 @@ import {
   TestConversation,
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { BucketUtil, FileUtil } from '@/src/utils';
+import { BucketUtil, FileUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let dalleImageUrl: string;
@@ -136,6 +136,8 @@ dialTest(
     confirmationDialog,
     chatMessages,
     chat,
+    chatHeader,
+    talkToSelector,
     setTestIds,
   }) => {
     setTestIds(
@@ -337,7 +339,10 @@ dialTest(
     await dialTest.step(
       'Send new request in chat and verify response received',
       async () => {
-        await chat.sendRequestWithButton('black square');
+        await chatHeader.openConversationSettingsPopup();
+        await talkToSelector.selectModel(ModelsUtil.getDefaultModel()!.name);
+        await chat.applyNewEntity();
+        await chat.sendRequestWithButton('1+2=');
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
