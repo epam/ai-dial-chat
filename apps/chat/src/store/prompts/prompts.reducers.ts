@@ -49,8 +49,15 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    uploadPromptsWithFoldersRecursive: (state) => {
-      state.promptsLoaded = false;
+    uploadPromptsWithFoldersRecursive: (
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
+      >,
+    ) => {
+      state.promptsLoaded = !payload?.noLoader;
     },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
@@ -288,8 +295,8 @@ export const promptsSlice = createSlice({
         payload,
       }: PayloadAction<{ prompts: Prompt[]; folders: FolderInterface[] }>,
     ) => {
-      state.prompts = payload.prompts;
-      state.folders = payload.folders;
+      state.prompts = combineEntities(payload.prompts, state.prompts);
+      state.folders = combineEntities(payload.folders, state.folders);
     },
     createFolder: (
       state,

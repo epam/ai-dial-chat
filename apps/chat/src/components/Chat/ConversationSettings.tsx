@@ -94,6 +94,7 @@ export const ConversationSettings = ({
 
   const isNoModelInUserMessages = useMemo(() => {
     return (
+      conversation.replay &&
       conversation.replay.isReplay &&
       conversation.replay.replayUserMessagesStack &&
       conversation.replay.replayUserMessagesStack.some(
@@ -124,7 +125,7 @@ export const ConversationSettings = ({
           className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
           data-qa="entity-settings"
         >
-          {!conversation.replay.replayAsIs ? (
+          {!conversation.replay?.replayAsIs ? (
             <>
               {model && model.type === EntityType.Application && (
                 <SettingContainer>

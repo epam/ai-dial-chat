@@ -19,6 +19,7 @@ export interface ShareState {
   invitationId: string | undefined;
   shareResourceName: string | undefined;
   shareModalState: ModalState;
+  acceptedId: string | undefined;
   shareFeatureType?: FeatureType;
   shareIsFolder?: boolean;
 }
@@ -29,6 +30,7 @@ const initialState: ShareState = {
   invitationId: undefined,
   shareResourceName: undefined,
   shareModalState: ModalState.CLOSED,
+  acceptedId: undefined,
   shareFeatureType: undefined,
   shareIsFolder: undefined,
 };
@@ -150,13 +152,21 @@ export const shareSlice = createSlice({
         invitationId: string;
       }>,
     ) => state,
-    acceptShareInvitationSuccess: (state) => state,
+    acceptShareInvitationSuccess: (
+      state,
+      { payload }: PayloadAction<{ acceptedId: string }>,
+    ) => {
+      state.acceptedId = payload.acceptedId;
+    },
     acceptShareInvitationFail: (
       state,
       _action: PayloadAction<{
         message?: string;
       }>,
     ) => state,
+    resetShareId: (state) => {
+      state.acceptedId = undefined;
+    },
     getSharedListing: (
       state,
       _action: PayloadAction<{
@@ -199,12 +209,16 @@ const selectShareFeatureType = createSelector([rootSelector], (state) => {
 const selectShareIsFolder = createSelector([rootSelector], (state) => {
   return state.shareIsFolder;
 });
+const selectAcceptedId = createSelector([rootSelector], (state) => {
+  return state.acceptedId;
+});
 
 export const ShareSelectors = {
   selectInvitationId,
   selectShareModalState,
   selectShareModalClosed,
   selectShareResourceName,
+  selectAcceptedId,
   selectShareFeatureType,
   selectShareIsFolder,
 };

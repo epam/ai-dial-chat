@@ -342,8 +342,11 @@ export const conversationsSlice = createSlice({
         folders: FolderInterface[];
       }>,
     ) => {
-      state.conversations = payload.conversations;
-      state.folders = payload.folders;
+      state.conversations = combineEntities(
+        payload.conversations,
+        state.conversations,
+      );
+      state.folders = combineEntities(payload.folders, state.folders);
       state.selectedConversationsIds = [
         payload.conversations[payload.conversations.length - 1].id,
       ];
@@ -668,11 +671,7 @@ export const conversationsSlice = createSlice({
 
     uploadConversationsWithFolders: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
-        paths: (string | undefined)[];
-      }>,
+      { payload }: PayloadAction<{ paths: (string | undefined)[] }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;
       state.loadingFolderIds = state.loadingFolderIds.concat(
@@ -722,9 +721,16 @@ export const conversationsSlice = createSlice({
       );
       state.foldersStatus = UploadStatus.FAILED;
     },
-    uploadConversationsWithFoldersRecursive: (state) => {
+    uploadConversationsWithFoldersRecursive: (
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
+      >,
+    ) => {
       state.conversationsStatus = UploadStatus.LOADING;
-      state.conversationsLoaded = false;
+      state.conversationsLoaded = !payload?.noLoader;
     },
     uploadConversationsSuccess: (
       state,

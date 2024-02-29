@@ -62,6 +62,7 @@ export interface Props {
     e: MouseEvent<HTMLDivElement>,
     messageRef: RefObject<HTMLDivElement>,
   ) => void;
+  withButtons?: boolean;
 }
 
 const OVERLAY_ICON_SIZE = 18;
@@ -82,6 +83,7 @@ export const ChatMessageContent = ({
   onCopy,
   isEditing,
   toggleEditing,
+  withButtons,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -106,7 +108,7 @@ export const ChatMessageContent = ({
     messageIndex == (conversation?.messages.length ?? 0) - 1;
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
-    conversation.isMessageStreaming && isLastMessage;
+    !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
   const messageRef = useRef<HTMLDivElement>(null);
 
@@ -280,7 +282,7 @@ export const ChatMessageContent = ({
       : DEFAULT_ICON_SIZE;
 
   const showUserButtons =
-    !isPlayback && !isEditing && !isExternal && !isSmallScreen();
+    !isPlayback && !isEditing && !isExternal && withButtons;
 
   return (
     <div
@@ -330,77 +332,77 @@ export const ChatMessageContent = ({
           data-qa="message-content"
         >
           {isUser ? (
-            <div className="flex">
-              {isEditing ? (
-                <div className="flex w-full flex-col gap-3 pr-[60px]">
-                  <div className="relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary">
-                    <textarea
-                      ref={textareaRef}
-                      className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
-                      value={messageContent}
-                      onChange={handleInputChange}
-                      onKeyDown={handlePressEnter}
-                      onCompositionStart={() => setIsTyping(true)}
-                      onCompositionEnd={() => setIsTyping(false)}
-                      style={{
-                        fontFamily: 'inherit',
-                        fontSize: 'inherit',
-                        lineHeight: 'inherit',
-                        margin: '0',
-                        overflow: 'hidden',
-                      }}
-                    />
+            isEditing ? (
+              <div className="flex w-full flex-col gap-3 pr-[60px]">
+                <div className="relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary">
+                  <textarea
+                    ref={textareaRef}
+                    className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
+                    value={messageContent}
+                    onChange={handleInputChange}
+                    onKeyDown={handlePressEnter}
+                    onCompositionStart={() => setIsTyping(true)}
+                    onCompositionEnd={() => setIsTyping(false)}
+                    style={{
+                      fontFamily: 'inherit',
+                      fontSize: 'inherit',
+                      lineHeight: 'inherit',
+                      margin: '0',
+                      overflow: 'hidden',
+                    }}
+                  />
 
-                    {newEditableAttachments.length > 0 && (
-                      <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
-                        <ChatInputAttachments
-                          files={newEditableAttachments}
-                          onUnselectFile={handleUnselectFile}
-                          onRetryFile={handleRetry}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha">
-                      <AttachButton
-                        selectedFilesIds={newEditableAttachmentsIds}
-                        onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                        onUploadFromDevice={handleUploadFromDevice}
+                  {newEditableAttachments.length > 0 && (
+                    <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
+                      <ChatInputAttachments
+                        files={newEditableAttachments}
+                        onUnselectFile={handleUnselectFile}
+                        onRetryFile={handleRetry}
                       />
                     </div>
-                    <div className="flex gap-3">
-                      <button
-                        className="button button-secondary"
-                        onClick={() => {
-                          setMessageContent(message.content);
-                          setNewEditableAttachmentsIds(
-                            mappedUserEditableAttachmentsIds,
-                          );
-                          toggleEditing(false);
-                        }}
-                        data-qa="cancel"
-                      >
-                        {t('Cancel')}
-                      </button>
-                      <button
-                        className="button button-primary"
-                        onClick={handleEditMessage}
-                        disabled={isSubmitAllowed}
-                        data-qa="save-and-submit"
-                      >
-                        {t('Save & Submit')}
-                      </button>
-                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha">
+                    <AttachButton
+                      selectedFilesIds={newEditableAttachmentsIds}
+                      onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                      onUploadFromDevice={handleUploadFromDevice}
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      className="button button-secondary"
+                      onClick={() => {
+                        setMessageContent(message.content);
+                        setNewEditableAttachmentsIds(
+                          mappedUserEditableAttachmentsIds,
+                        );
+                        toggleEditing(false);
+                      }}
+                      data-qa="cancel"
+                    >
+                      {t('Cancel')}
+                    </button>
+                    <button
+                      className="button button-primary"
+                      onClick={handleEditMessage}
+                      disabled={isSubmitAllowed}
+                      data-qa="save-and-submit"
+                    >
+                      {t('Save & Submit')}
+                    </button>
                   </div>
                 </div>
-              ) : (
+              </div>
+            ) : (
+              <>
                 <div className="mr-2 flex w-full flex-col gap-5">
                   {message.content && (
                     <div
                       className={classNames(
-                        'prose flex-1 whitespace-pre-wrap',
+                        'prose min-w-full flex-1 whitespace-pre-wrap',
                         {
                           'max-w-none': isChatFullWidth,
                           'text-sm': isOverlay,
@@ -415,18 +417,17 @@ export const ChatMessageContent = ({
                     attachments={message.custom_content?.attachments}
                   />
                 </div>
-              )}
-
-              {showUserButtons && (
-                <MessageUserButtons
-                  editDisabled={editDisabled}
-                  onDelete={() => onDelete?.()}
-                  toggleEditing={() => toggleEditing(!isEditing)}
-                />
-              )}
-            </div>
+                {showUserButtons && (
+                  <MessageUserButtons
+                    editDisabled={editDisabled}
+                    onDelete={() => onDelete?.()}
+                    toggleEditing={() => toggleEditing(!isEditing)}
+                  />
+                )}
+              </>
+            )
           ) : (
-            <div className="flex h-full flex-row gap-1">
+            <>
               <div
                 className={classNames(
                   'flex min-w-0 shrink grow flex-col',
@@ -450,8 +451,7 @@ export const ChatMessageContent = ({
                 />
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
-
-              {!isSmallScreen() && (
+              {withButtons && (
                 <MessageAssistantButtons
                   copyOnClick={() => onCopy?.()}
                   isLikesEnabled={isLikesEnabled}
@@ -460,7 +460,7 @@ export const ChatMessageContent = ({
                   onLike={(likeStatus) => onLike?.(likeStatus)}
                 />
               )}
-            </div>
+            </>
           )}
         </div>
       </div>

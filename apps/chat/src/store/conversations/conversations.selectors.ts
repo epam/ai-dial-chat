@@ -24,7 +24,7 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -267,7 +267,7 @@ export const selectPlaybackActiveIndex = createSelector(
 export const selectIsErrorReplayConversations = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => conv.replay.isError);
+    return conversations.some((conv) => conv.replay?.isError);
   },
 );
 
@@ -325,16 +325,6 @@ export const selectIsLastAssistantMessageEmpty = createSelector(
   },
 );
 
-export const selectNotModelConversations = createSelector(
-  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
-  (conversations, modelsMap) => {
-    return conversations.some(
-      (conv) =>
-        modelsMap[conv.model.id]?.type !== EntityType.Model ||
-        conv.selectedAddons.length > 0,
-    );
-  },
-);
 const selectSelectedConversationsModels = createSelector(
   [selectSelectedConversations, ModelsSelectors.selectModelsMap],
   (conversations, modelsMap) => {
