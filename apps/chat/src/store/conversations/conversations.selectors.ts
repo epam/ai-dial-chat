@@ -24,7 +24,7 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
