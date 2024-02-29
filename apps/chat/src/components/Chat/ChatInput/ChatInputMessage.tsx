@@ -43,6 +43,7 @@ interface Props {
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
   onSend: (message: Message) => void;
+  onStopConversation: () => void;
 }
 
 const MAX_HEIGHT = 320;
@@ -52,6 +53,7 @@ export const ChatInputMessage = ({
   showScrollDownButton,
   onScrollDownClick,
   onSend,
+  onStopConversation,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -125,10 +127,9 @@ export const ChatInputMessage = ({
     return content.trim().length === 0 && selectedFiles.length === 0;
   }, [content, selectedFiles.length]);
   const isSendDisabled =
-    messageIsStreaming ||
     isReplay ||
     isError ||
-    isInputEmpty ||
+    (isInputEmpty && !messageIsStreaming) ||
     !isModelsLoaded ||
     isUploadingFilePresent;
 
@@ -157,6 +158,10 @@ export const ChatInputMessage = ({
       return;
     }
 
+    if (messageIsStreaming) {
+      onStopConversation();
+      return;
+    }
     onSend({
       role: Role.User,
       content,
@@ -170,12 +175,14 @@ export const ChatInputMessage = ({
     }
   }, [
     isSendDisabled,
+    messageIsStreaming,
     onSend,
     content,
     selectedFiles,
     dispatch,
     setContent,
     textareaRef,
+    onStopConversation,
   ]);
 
   const handleKeyDown = useCallback(
@@ -286,9 +293,7 @@ export const ChatInputMessage = ({
 
   const tooltipContent = (): string => {
     if (messageIsStreaming) {
-      return t(
-        'Please wait for full assistant answer to continue working with chat',
-      );
+      return t('Stop generating');
     }
     if (!isModelsLoaded) {
       return t(
