@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth/next';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
-import { DialAIError } from '@/src/utils/server';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils } from '@/src/utils/server/server';
@@ -14,6 +13,7 @@ import {
   BackendChatFolder,
   BackendDataNodeType,
 } from '@/src/types/common';
+import { DialAIError } from '@/src/types/error';
 import { BackendFile, BackendFileFolder } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';

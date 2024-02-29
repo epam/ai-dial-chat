@@ -18,8 +18,6 @@ import {
 } from 'eventsource-parser';
 import fetch from 'node-fetch';
 
-export { DialAIError };
-
 interface DialAIErrorResponse extends Response {
   error?: DialAIError;
 }

@@ -3,9 +3,10 @@ import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { validateServerSession } from '@/src/utils/auth/session';
-import { DialAIError } from '@/src/utils/server';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+
+import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';
 
