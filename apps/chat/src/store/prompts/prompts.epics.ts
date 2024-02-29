@@ -931,7 +931,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
                   UIActions.setOpenedFoldersIds({
                     featureType: FeatureType.Prompt,
                     openedFolderIds: [
-                      ...paths,
+                      ...getParentFolderIdsFromFolderId(prompts[0].folderId),
                       ...payload.path,
                       ...openedFolders,
                     ],
