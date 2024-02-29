@@ -1,23 +1,33 @@
 import { Components } from 'react-markdown';
 
+
+
 import classnames from 'classnames';
 
+
+
 import { isSmallScreen } from '@/src/utils/app/mobile';
+
+
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  modelCursorSign,
-  modelCursorSignWithBackquote,
-} from '../../constants/chat';
+
+
+import { modelCursorSign, modelCursorSignWithBackquote } from '../../constants/chat';
+
+
 
 import BlinkingCursor from '../Chat/BlinkingCursor';
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
 
+
+
 import remarkGfm from 'remark-gfm';
+
 
 export const replaceCursor = (cursorSign: string) =>
   cursorSign.replace(modelCursorSignWithBackquote, modelCursorSign);
@@ -111,7 +121,7 @@ const ChatMDComponent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
-    'prose dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
+    'prose min-w-full dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
     {
       'max-w-none': isChatFullWidth,
       'text-sm': isOverlay,
