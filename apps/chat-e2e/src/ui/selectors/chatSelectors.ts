@@ -81,4 +81,5 @@ export const ChatSelectors = {
   rate: (rate: Rate) => `[data-qa="${rate}"]`,
   chatLoader: '[data-qa="chat-loader"]',
   importExportLoader: '[data-qa="import-export-loader"]',
+  stopLoading: '[data-qa="stop-loading"]',
 };
