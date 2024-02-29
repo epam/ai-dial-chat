@@ -12,6 +12,7 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import {
+  InvitationDetails,
   ShareAcceptRequestModel,
   ShareByLinkResponseModel,
   ShareListingRequestModel,
@@ -33,6 +34,7 @@ export class ShareService {
       body: JSON.stringify(shareData),
     });
   }
+
   public static shareAccept(
     shareAcceptData: ShareAcceptRequestModel,
   ): Observable<void> {
@@ -41,6 +43,16 @@ export class ShareService {
       body: JSON.stringify(shareAcceptData),
     });
   }
+
+  public static getShareDetails(
+    shareAcceptData: ShareAcceptRequestModel,
+  ): Observable<InvitationDetails> {
+    return ApiUtils.request(`api/share/details`, {
+      method: 'POST',
+      body: JSON.stringify(shareAcceptData),
+    });
+  }
+
   public static shareRevoke(resourceUrls: string[]): Observable<void> {
     return ApiUtils.request(`api/share/revoke`, {
       method: 'POST',
@@ -49,6 +61,7 @@ export class ShareService {
       } as ShareRevokeRequestModel),
     });
   }
+
   public static shareDiscard(resourceUrls: string[]): Observable<void> {
     return ApiUtils.request(`api/share/discard`, {
       method: 'POST',
@@ -57,6 +70,7 @@ export class ShareService {
       } as ShareRevokeRequestModel),
     });
   }
+
   public static getSharedListing(
     sharedListingData: ShareListingRequestModel,
   ): Observable<{

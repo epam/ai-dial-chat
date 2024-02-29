@@ -23,7 +23,7 @@ export const MessageStages = ({ stages }: Props) => {
   );
 
   return (
-    <div className="flex flex-col gap-1">
+    <div data-no-context-menu className="flex flex-col gap-1">
       {displayedStages.map((stage) => (
         <MessageStage key={stage.index} stage={stage} />
       ))}

@@ -889,39 +889,89 @@ export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
     ),
   );
 
-const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
+const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
-    switchMap(() => PromptService.getPrompts(undefined, true)),
-    switchMap((prompts) => {
-      return concat(
-        of(
-          PromptsActions.setPrompts({
-            prompts,
-          }),
-        ),
-        of(
-          PromptsActions.setFolders({
-            folders: uniq(
-              prompts.flatMap((p) =>
-                getParentFolderIdsFromFolderId(p.folderId),
+    switchMap(({ payload }) =>
+      PromptService.getPrompts(payload?.path, true).pipe(
+        switchMap((prompts) => {
+          const actions: Observable<AnyAction>[] = [];
+
+          if (!!payload?.selectFirst && !!prompts.length && !!payload?.path) {
+            const folderIds = uniq(prompts.map((c) => c.folderId));
+            const paths = uniq(
+              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            );
+
+            const openedFolders = UISelectors.selectOpenedFoldersIds(
+              state$.value,
+              FeatureType.Prompt,
+            );
+
+            actions.push(
+              concat(
+                of(
+                  PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                    parentIds: [...payload.path, ...paths],
+                    folders: getFoldersFromIds(
+                      paths,
+                      FolderType.Prompt,
+                      UploadStatus.LOADED,
+                    ),
+                    prompts,
+                  }),
+                ),
+                of(PromptsActions.uploadPrompt({ promptId: prompts[0]?.id })),
+                of(
+                  PromptsActions.setSelectedPrompt({
+                    promptId: prompts[0]?.id,
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    featureType: FeatureType.Prompt,
+                    openedFolderIds: [
+                      ...getParentFolderIdsFromFolderId(prompts[0].folderId),
+                      ...payload.path,
+                      ...openedFolders,
+                    ],
+                  }),
+                ),
               ),
-            ).map((path) => ({
-              ...getFolderFromId(path, FolderType.Prompt),
-              status: UploadStatus.LOADED,
-            })),
-          }),
-        ),
-        of(PromptsActions.initPromptsSuccess()),
-      );
-    }),
-    catchError((err) => {
-      console.error(
-        'An error occurred while uploading prompts and folders:',
-        err,
-      );
-      return [];
-    }),
+            );
+          }
+
+          return concat(
+            of(
+              PromptsActions.setPrompts({
+                prompts,
+              }),
+            ),
+            of(
+              PromptsActions.setFolders({
+                folders: uniq(
+                  prompts.flatMap((p) =>
+                    getParentFolderIdsFromFolderId(p.folderId),
+                  ),
+                ).map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            of(PromptsActions.initPromptsSuccess()),
+            ...actions,
+          );
+        }),
+        catchError((err) => {
+          console.error(
+            'An error occurred while uploading prompts and folders:',
+            err,
+          );
+          return [];
+        }),
+      ),
+    ),
   );
 
 const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
@@ -934,6 +984,7 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
         switchMap((foldersAndEntities) => {
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
+
           return of(
             PromptsActions.uploadChildPromptsWithFoldersSuccess({
               parentIds: payload.ids,

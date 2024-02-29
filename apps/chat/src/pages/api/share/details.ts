@@ -1,0 +1,63 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
+import { getToken } from 'next-auth/jwt';
+
+import { validateServerSession } from '@/src/utils/auth/session';
+import { OpenAIError } from '@/src/utils/server';
+import { getApiHeaders } from '@/src/utils/server/get-headers';
+import { logger } from '@/src/utils/server/logger';
+
+import { errorsMessages } from '@/src/constants/errors';
+
+import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
+
+import fetch from 'node-fetch';
+
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const session = await getServerSession(req, res, authOptions);
+  const isSessionValid = validateServerSession(session, req, res);
+  const token = await getToken({ req });
+  if (!isSessionValid) {
+    return;
+  }
+
+  try {
+    const { invitationId } = req.body;
+
+    const proxyRes = await fetch(
+      `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}`,
+      {
+        method: 'GET',
+        headers: getApiHeaders({ jwt: token?.access_token as string }),
+      },
+    );
+
+    let json: unknown;
+    try {
+      json = await proxyRes.json();
+    } catch (err) {
+      json = undefined;
+    }
+
+    if (!proxyRes.ok) {
+      throw new OpenAIError(
+        (typeof json === 'string' && json) || proxyRes.statusText,
+        '',
+        '',
+        proxyRes.status + '',
+      );
+    }
+
+    return res.status(200).send(json);
+  } catch (error: unknown) {
+    logger.error(error);
+    if (error instanceof OpenAIError) {
+      return res
+        .status(parseInt(error.code, 10) || 500)
+        .send(error.message || errorsMessages.generalServer);
+    }
+    return res.status(500).send(errorsMessages.generalServer);
+  }
+};
+
+export default handler;
