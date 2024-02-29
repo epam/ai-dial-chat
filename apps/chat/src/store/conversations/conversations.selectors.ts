@@ -325,7 +325,7 @@ export const selectIsLastAssistantMessageEmpty = createSelector(
   },
 );
 
-const selectSelectedConversationsModels = createSelector(
+export const selectSelectedConversationsModels = createSelector(
   [selectSelectedConversations, ModelsSelectors.selectModelsMap],
   (conversations, modelsMap) => {
     return conversations
