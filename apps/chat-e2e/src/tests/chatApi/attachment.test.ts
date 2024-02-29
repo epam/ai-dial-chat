@@ -18,7 +18,7 @@ const modelsForRequestWithAttachment: {
 
 let imageUrl: string;
 dialTest.beforeEach(async ({ fileApiHelper }) => {
-  imageUrl = await fileApiHelper.putFile(Attachment.sunImageFullName());
+  imageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
 });
 
 for (const modelToUse of modelsForRequestWithAttachment) {

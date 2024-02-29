@@ -123,6 +123,12 @@ export const Import = {
   v14AppBisonChatName: 'bison chat king',
   v14AppImportedFilename: 'ai_dial_chat_history_1-4_version.json',
   v19AppImportedFilename: 'ai_dial_chat_history_1-9_version.json',
+  importedAttachmentsFilename: 'ai_dial_chat_with_attachments.zip',
+  importedConversationWithAttachmentsName: `test`,
+  importedGpt4VisionAttachmentName:
+    '23208bc002f83ad199c22fad4f69586f04f0c9727a4384c3db868f3923a2e9da.png',
+  importedStableDiffusionAttachmentName:
+    '40a027dd8f4fd8d4215891b896e15bf05052dc9baca832a5184a5b1bcabf1f98.png',
   v14AppFolderPromptName: 'Version 1.4 A*B',
   oldVersionAppGpt35Message: '11 * 12 =',
   importAttachmentExtension: '.zip',
@@ -130,10 +136,8 @@ export const Import = {
 
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
-  sunImageName: 'sun',
-  heartImageName: 'heart',
-  sunImageFullName: () => `${Attachment.sunImageName}.jpg`,
-  heartImageFullName: () => `${Attachment.heartImageName}.webp`,
+  sunImageName: 'sun.jpg',
+  heartImageName: 'heart.webp',
 };
 
 export enum Side {
