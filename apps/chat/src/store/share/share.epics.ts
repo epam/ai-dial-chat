@@ -561,6 +561,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 noLoader: true,
               }),
             );
+            actions.push(ShareActions.resetShareId());
           } else {
             actions.push(
               ConversationsActions.selectConversations({
@@ -576,6 +577,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 selectFirst: true,
               }),
             );
+            actions.push(ShareActions.resetShareId());
           } else {
             actions.push(
               PromptsActions.setSelectedPrompt({
@@ -595,8 +597,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             }),
           );
         }
-
-        actions.push(ShareActions.resetShareId());
       }
 
       return concat(actions);

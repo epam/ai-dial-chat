@@ -902,7 +902,6 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
             const paths = uniq(
               folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
             );
-            // .filter((folderId) => payload.path !== folderId);
 
             const openedFolders = UISelectors.selectOpenedFoldersIds(
               state$.value,
