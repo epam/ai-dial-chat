@@ -129,7 +129,7 @@ export const ChatInputMessage = ({
   const isSendDisabled =
     isReplay ||
     isError ||
-    (isInputEmpty && !messageIsStreaming) ||
+    isInputEmpty ||
     !isModelsLoaded ||
     isUploadingFilePresent;
 
@@ -154,14 +154,15 @@ export const ChatInputMessage = ({
   );
 
   const handleSend = useCallback(() => {
-    if (isSendDisabled) {
-      return;
-    }
-
     if (messageIsStreaming) {
       onStopConversation();
       return;
     }
+
+    if (isSendDisabled) {
+      return;
+    }
+
     onSend({
       role: Role.User,
       content,

@@ -32,9 +32,9 @@ export const SendMessageButton = ({
   );
 
   const isSpinner = isLoading || isModelsLoading;
-  const [Icon, dataQa] = messageIsStreaming
-    ? [IconPlaystationSquare, 'stop-generating']
-    : [IconSend, 'send'];
+  const [Icon, dataQa, disabled] = messageIsStreaming
+    ? [IconPlaystationSquare, 'stop-generating', false]
+    : [IconSend, 'send', isDisabled];
 
   return (
     <button
@@ -43,12 +43,13 @@ export const SendMessageButton = ({
         isOverlay ? 'right-3' : 'right-4',
       )}
       onClick={handleSend}
-      disabled={isDisabled}
+      disabled={disabled}
       data-qa={dataQa}
     >
       <Tooltip
-        hideTooltip={!isDisabled && !messageIsStreaming}
+        hideTooltip={!disabled && !messageIsStreaming}
         tooltip={tooltip}
+        isTriggerClickable
       >
         {isSpinner ? <Spinner size={20} /> : <Icon size={24} stroke="1.5" />}
       </Tooltip>
