@@ -41,6 +41,7 @@ export const FullPageLoader = ({
         <button
           className="text-sm font-medium text-accent-primary focus-visible:outline-none"
           onClick={onStop}
+          data-qa="stop-loading"
         >
           {stopLabel}
         </button>

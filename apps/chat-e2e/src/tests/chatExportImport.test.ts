@@ -865,7 +865,8 @@ dialTest(
 );
 
 dialTest(
-  'Import a chat from nested folder which was moved to another place',
+  'Import a chat from nested folder which was moved to another place.\n' +
+    'Export and import chat without attachments using menu Export with attachments',
   async ({
     dialHomePage,
     folderConversations,
@@ -876,7 +877,7 @@ dialTest(
     chatBar,
     conversationDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-1387');
+    setTestIds('EPMRTC-1387', 'EPMRTC-1979');
     let nestedFolders: TestFolder[];
     let thirdLevelFolderConversation: TestConversation;
     let exportedData: UploadDownloadData;
@@ -908,9 +909,7 @@ dialTest(
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
       exportedData = await dialHomePage.downloadData(() =>
-        conversationDropdownMenu.selectMenuOption(
-          MenuOptions.withoutAttachments,
-        ),
+        conversationDropdownMenu.selectMenuOption(MenuOptions.withAttachments),
       );
     });
 
