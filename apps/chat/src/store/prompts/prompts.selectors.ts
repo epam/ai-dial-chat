@@ -13,9 +13,13 @@ import {
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
+import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -208,6 +212,20 @@ export const hasExternalParent = createSelector(
     }
     const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
     return parentFolders.some((folder) => isEntityExternal(folder));
+  },
+);
+
+export const selectExternalEntities = createSelector(
+  [selectFolders, selectPrompts, (state) => state],
+  (folders, prompts, state) => {
+    return {
+      externalPrompts: prompts.filter((prompt) =>
+        isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
+      ),
+      externalFolders: folders.filter((folder) =>
+        isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
+      ),
+    };
   },
 );
 

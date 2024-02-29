@@ -51,8 +51,15 @@ export const ChatbarSettings = () => {
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const folders = useAppSelector(ConversationsSelectors.selectFolders);
   const isActiveNewConversationRequest = useAppSelector(
     ConversationsSelectors.selectIsActiveNewConversationRequest,
+  );
+  const { externalConversations, externalFolders } = useAppSelector((state) =>
+    ConversationsSelectors.selectExternalEntities(state),
   );
 
   const handleToggleCompare = useCallback(() => {
@@ -107,6 +114,9 @@ export const ChatbarSettings = () => {
             zipImportHandler(typedArgs.content as File);
           }
         },
+        display:
+          externalConversations.length !== allConversations.length ||
+          folders.length !== externalFolders.length,
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
@@ -122,6 +132,9 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Delete all conversations'),
+        display:
+          externalConversations.length !== allConversations.length ||
+          folders.length !== externalFolders.length,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -150,6 +163,10 @@ export const ChatbarSettings = () => {
     ],
     [
       t,
+      externalConversations.length,
+      allConversations.length,
+      folders.length,
+      externalFolders.length,
       isStreaming,
       isActiveNewConversationRequest,
       enabledFeatures,

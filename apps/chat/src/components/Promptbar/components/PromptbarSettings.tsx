@@ -35,6 +35,9 @@ export function PromptbarSettings() {
   const dispatch = useAppDispatch();
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const folders = useAppSelector(PromptsSelectors.selectFolders);
+  const { externalPrompts, externalFolders } = useAppSelector((state) =>
+    PromptsSelectors.selectExternalEntities(state),
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -66,7 +69,9 @@ export function PromptbarSettings() {
         CustomTriggerRenderer: Import,
       },
       {
-        display: allPrompts.length > 0 || folders.length > 0,
+        display:
+          externalPrompts.length !== allPrompts.length ||
+          folders.length !== externalFolders.length,
         name: t('Export prompts'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
@@ -76,7 +81,9 @@ export function PromptbarSettings() {
       },
       {
         name: t('Delete all'),
-        display: allPrompts.length > 0 || folders.length > 0,
+        display:
+          externalPrompts.length !== allPrompts.length ||
+          folders.length !== externalFolders.length,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -84,7 +91,14 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [allPrompts.length, dispatch, folders.length, t],
+    [
+      allPrompts.length,
+      dispatch,
+      externalFolders.length,
+      externalPrompts.length,
+      folders.length,
+      t,
+    ],
   );
 
   return (
