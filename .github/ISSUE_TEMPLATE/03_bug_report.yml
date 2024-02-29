@@ -1,5 +1,5 @@
 ---
-name: 🪲 Bug report
+name: 🐛 Bug report
 description: Problems and issues with code in EPAM AI DIAL chat
 labels: ["bug"]
 body:
@@ -32,7 +32,7 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Actial result
+      label: Actual result
       description: What do you think went wrong?
       placeholder: >
         Please explain why you think the behaviour is erroneous. It is extremely helpful if you copy&paste the fragment of logs showing the exact error messages or wrong behaviour and screenshots for UI problems. You can include files by dragging and dropping them here.

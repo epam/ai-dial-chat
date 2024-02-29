@@ -36,7 +36,10 @@ export function FileItemContextMenu({
           file.status !== UploadStatus.FAILED,
         dataQa: 'download',
         Icon: IconDownload,
-        onClick: (e: MouseEvent) => stopBubbling(e),
+        onClick: (e: MouseEvent) => {
+          stopBubbling(e);
+          onOpenChange?.(false);
+        },
         className: 'flex gap-3',
         customTriggerData: file,
         CustomTriggerRenderer: DownloadRenderer,
@@ -48,7 +51,7 @@ export function FileItemContextMenu({
         onClick: onDelete,
       },
     ],
-    [file, onDelete, t],
+    [file, onDelete, onOpenChange, t],
   );
 
   return (

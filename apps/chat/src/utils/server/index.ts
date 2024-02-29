@@ -1,5 +1,6 @@
 import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
+import { OpenAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/openai';
 
 import {
@@ -8,7 +9,6 @@ import {
 } from '../../constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
-import { OpenAIError } from './error';
 import { getApiHeaders } from './get-headers';
 
 import {

@@ -15,9 +15,8 @@ import {
 import { FALLBACK_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
-import { ApiKeys } from '../server/api';
 import { constructPath } from './file';
-import { getRootId } from './id';
+import { getConversationRootId } from './id';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
@@ -78,15 +77,14 @@ export const cleanConversation = (
     id:
       conversation.id ||
       constructPath(
-        conversation.folderId || getRootId({ apiKey: ApiKeys.Conversations }),
+        conversation.folderId || getConversationRootId(),
         conversation.name || DEFAULT_CONVERSATION_NAME,
       ),
     name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
     prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
-    folderId:
-      conversation.folderId || getRootId({ apiKey: ApiKeys.Conversations }),
+    folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
     replay: conversation.replay || defaultReplay,
     selectedAddons: conversation.selectedAddons ?? [],

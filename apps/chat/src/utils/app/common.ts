@@ -6,6 +6,8 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 
+import uniq from 'lodash-es/uniq';
+
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
  * @param entities1
@@ -66,9 +68,7 @@ export const updateEntitiesFoldersAndIds = (
     folderId: updateFolderId(f.folderId),
   }));
 
-  const newUniqueFolderIds = Array.from(new Set(allFolderIds)).map((id) =>
-    updateFolderId(id),
-  );
+  const newUniqueFolderIds = uniq(allFolderIds).map((id) => updateFolderId(id));
 
   const updatedFolders = combineEntities(
     getFoldersFromIds(newUniqueFolderIds, FolderType.Chat),

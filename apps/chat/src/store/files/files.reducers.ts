@@ -5,6 +5,7 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
   getParentAndChildFolders,
+  sortByName,
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 
@@ -15,6 +16,8 @@ import { FolderType } from '@/src/types/folder';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
+
+import uniq from 'lodash-es/uniq';
 
 export interface FilesState {
   files: DialFile[];
@@ -81,9 +84,7 @@ export const filesSlice = createSlice({
       file.percent = 0;
     },
     selectFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
-      state.selectedFilesIds = Array.from(
-        new Set(state.selectedFilesIds.concat(payload.ids)),
-      );
+      state.selectedFilesIds = uniq(state.selectedFilesIds.concat(payload.ids));
     },
     resetSelectedFiles: (state) => {
       state.selectedFilesIds = [];
@@ -303,9 +304,7 @@ export const filesSlice = createSlice({
 const rootSelector = (state: RootState): FilesState => state.files;
 
 const selectFiles = createSelector([rootSelector], (state) => {
-  return [...state.files].sort((a, b) =>
-    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
-  );
+  return sortByName([...state.files]);
 });
 
 const selectFilesByIds = createSelector(

@@ -4,7 +4,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { isValidConversationForCompare } from '@/src/utils/app/conversation';
-import { compareEntitiesByName } from '@/src/utils/app/folders';
+import { sortByName } from '@/src/utils/app/folders';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -88,9 +88,7 @@ export const ChatCompareSelect = ({
           ? conv.id !== selectedConversation.id
           : isValidConversationForCompare(selectedConversation, conv),
       );
-      setComparableConversations(
-        comparableConversations.sort(compareEntitiesByName),
-      );
+      setComparableConversations(sortByName(comparableConversations));
     }
   }, [conversations, selectedConversations, showAll]);
 

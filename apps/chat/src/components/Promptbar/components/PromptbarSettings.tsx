@@ -7,8 +7,7 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getRootId } from '@/src/utils/app/id';
-import { ApiKeys } from '@/src/utils/server/api';
+import { getPromptRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { PromptsHistory } from '@/src/types/import-export';
@@ -46,7 +45,7 @@ export function PromptbarSettings() {
         onClick: () => {
           dispatch(
             PromptsActions.createFolder({
-              parentId: getRootId({ apiKey: ApiKeys.Prompts }),
+              parentId: getPromptRootId(),
             }),
           );
         },

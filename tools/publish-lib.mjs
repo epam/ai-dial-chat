@@ -14,6 +14,8 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import minimist from 'minimist';
 import path from 'path';
 import { fileURLToPath } from 'url';
+const PREFIX = '@epam/ai-dial';
+
 const __filename = fileURLToPath(import.meta.url);
 
 const __dirname = path.dirname(__filename);
@@ -30,20 +32,33 @@ function invariant(condition, message) {
 // Executing publish script: node path/to/publish.mjs {name} --version {version} --tag {tag}
 // Default "tag" to "next" so we won't publish the "latest" tag by accident.
 let params = minimist(process.argv);
-const version = params.version || mainPackageJson.version;
+let version = params.version;
+const isDevelopment = params.development;
 const dry = params.dry === 'true';
 const tag = params.tag || 'next';
 const name = params['_'][2];
 
 console.info(
-  `\nPublish run with next values:\nname=${name}\nversion=${version}\ndry=${dry}\ntag=${tag}\n`,
+  `\nPublish run with next values:\nname=${name}\nversion=${version}\ndry=${dry}\ntag=${tag}\ndevelopment=${isDevelopment}\n`,
 );
+
+const getVersion = (version) => {
+  let potentialVersion = version;
+
+  if (isDevelopment && !version) {
+    potentialVersion = getDevVersion(potentialVersion);
+    invariant(potentialVersion !== 'dev', `Version calculated incorrectly - still equal 'dev'.`)
+  }
+
+  return potentialVersion || mainPackageJson.version;
+}
+version = getVersion(version);
 
 // A simple SemVer validation to validate the version
 const validVersion = /^\d+\.\d+\.\d+(-\w+\.\d+)?/;
 invariant(
-  version && validVersion.test(version),
-  `No version provided or version did not match Semantic Versioning, expected: #.#.#-tag.# or #.#.#, got ${version}.`,
+  version && (validVersion.test(version) || version === 'dev'),
+  `No version provided or version did not match Semantic Versioning, expected: #.#.#-tag.# or #.#.# or special name 'dev', got ${version}.`,
 );
 
 const graph = readCachedProjectGraph();
@@ -67,7 +82,6 @@ for (const i in graph.nodes) {
     }
   }
 }
-const PREFIX = '@epam/ai-dial';
 const isFromCurrentProj = (dep) => {
   if (dep.startsWith(PREFIX)) {
     // from current monorepo
@@ -75,6 +89,7 @@ const isFromCurrentProj = (dep) => {
   }
   return false;
 };
+
 
 const getDependencyVersion = (dep) => {
   let localVersion =
@@ -141,3 +156,19 @@ try {
 
 // Execute "npm publish" to publish
 execSync(`npm publish --access public --tag ${tag} --dry-run ${dry}`);
+
+function getDevVersion(potentialVersion) {
+  const result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());
+  const lastVersionToIncrement = result.filter(ver => ver.startsWith(mainPackageJson.version)).sort().reverse()[0];
+
+  const lastNum = lastVersionToIncrement?.match(/\d+$/);
+  if (lastVersionToIncrement && lastNum) {
+    const incrementedNum = parseInt(lastNum[0], 10) + 1;
+    potentialVersion = lastVersionToIncrement.replace(/\d+$/, incrementedNum);
+  } else {
+    potentialVersion = `${mainPackageJson.version}.0`;
+  }
+  console.log(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
+  return potentialVersion;
+}
+

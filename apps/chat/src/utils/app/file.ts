@@ -3,10 +3,10 @@ import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
-import { decodeApiUrl, encodeApiUrl } from '../server/api';
+import { ApiUtils } from '../server/api';
 import { getPathToFolderById } from './folders';
 
-import escapeStringRegexp from 'escape-string-regexp';
+import escapeRegExp from 'lodash-es/escapeRegExp';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -54,7 +54,7 @@ export const getUserCustomContent = (
       .map((file) => ({
         type: file.contentType,
         title: file.name,
-        url: encodeApiUrl(`${file.absolutePath}/${file.name}`),
+        url: ApiUtils.encodeApiUrl(`${file.absolutePath}/${file.name}`),
       })),
   };
 };
@@ -106,7 +106,7 @@ export const getFilesWithInvalidFileType = (
 };
 export const notAllowedSymbols = ':;,=/';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeStringRegexp(notAllowedSymbols)}]|(\r\n|\n|\r)`,
+  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r)`,
   'gm',
 );
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
@@ -123,7 +123,7 @@ export const getFilesWithInvalidFileSize = (
 };
 
 const parseAttachmentUrl = (url: string) => {
-  const decodedUrl = decodeApiUrl(url);
+  const decodedUrl = ApiUtils.decodeApiUrl(url);
   const lastIndexSlash = decodedUrl.lastIndexOf('/');
 
   return {
@@ -244,4 +244,57 @@ export const renameAttachments = (
       },
     })),
   };
+};
+
+export const getNextFileName = (
+  defaultName: string,
+  files: DialFile[],
+  index = 0,
+  startWithEmptyPostfix = false,
+  parentFolderId?: string,
+): string => {
+  const defaultFileName = getFileNameWithoutExtension(defaultName);
+  const defaultFileExtension = getFileNameExtension(defaultName);
+  const prefix = `${defaultFileName} `;
+  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
+
+  if (!files.length) {
+    return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
+  }
+
+  const maxNumber =
+    Math.max(
+      ...files
+        .filter(
+          (file) =>
+            file.name === defaultName ||
+            (getFileNameExtension(file.name) === defaultFileExtension &&
+              getFileNameWithoutExtension(file.name).match(regex) &&
+              (parentFolderId ? file.folderId === parentFolderId : true)),
+        )
+        .map((file) => {
+          return (
+            parseInt(
+              `${getFileNameWithoutExtension(file.name).replace(defaultFileName, '')}`,
+              10,
+            ) || (startWithEmptyPostfix ? 0 : 1)
+          );
+        }),
+      startWithEmptyPostfix ? -1 : 0,
+    ) + index; // max number
+
+  if (maxNumber >= 9999999) {
+    return getNextFileName(
+      `${prefix}${maxNumber}${defaultFileExtension}`,
+      files,
+      index,
+      startWithEmptyPostfix,
+    );
+  }
+
+  if (startWithEmptyPostfix && maxNumber === -1) {
+    return defaultName;
+  }
+
+  return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
 };

@@ -18,15 +18,12 @@ import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
-import { encodeApiUrl, parseConversationApiKey } from '@/src/utils/server/api';
+import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { Conversation, Message } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import {
@@ -64,8 +61,8 @@ const shareEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.share.match),
     switchMap(({ payload }) => {
-      if (payload.resourceType === BackendResourceType.CONVERSATION) {
-        if (payload.nodeType === BackendDataNodeType.ITEM) {
+      if (payload.featureType === FeatureType.Chat) {
+        if (!payload.isFolder) {
           return of(
             ShareActions.shareConversation({ resourceId: payload.resourceId }),
           );
@@ -77,7 +74,7 @@ const shareEpic: AppEpic = (action$) =>
           );
         }
       } else {
-        if (payload.nodeType === BackendDataNodeType.ITEM) {
+        if (!payload.isFolder) {
           return of(
             ShareActions.sharePrompt({ resourceId: payload.resourceId }),
           );
@@ -112,7 +109,7 @@ const shareConversationEpic: AppEpic = (action$) =>
             invitationType: ShareRequestType.link,
             resources: [
               {
-                url: encodeApiUrl(payload.resourceId),
+                url: ApiUtils.encodeApiUrl(payload.resourceId),
               },
               ...internalResources.map((res) => ({ url: res })),
             ],
@@ -160,7 +157,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             invitationType: ShareRequestType.link,
             resources: [
               {
-                url: encodeApiUrl(payload.resourceId) + '/',
+                url: ApiUtils.encodeApiUrl(payload.resourceId) + '/',
               },
               ...internalResourcesIds,
             ],
@@ -191,7 +188,7 @@ const sharePromptEpic: AppEpic = (action$) =>
         invitationType: ShareRequestType.link,
         resources: [
           {
-            url: encodeApiUrl(payload.resourceId),
+            url: ApiUtils.encodeApiUrl(payload.resourceId),
           },
         ],
       }).pipe(
@@ -216,7 +213,7 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
         invitationType: ShareRequestType.link,
         resources: [
           {
-            url: encodeApiUrl(payload.resourceId) + '/',
+            url: ApiUtils.encodeApiUrl(payload.resourceId) + '/',
           },
         ],
       }).pipe(
@@ -302,13 +299,13 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
       return concat(
         of(
           ShareActions.getSharedListing({
-            resourceType: BackendResourceType.CONVERSATION,
+            featureType: FeatureType.Chat,
             sharedWith: ShareRelations.me,
           }),
         ),
         of(
           ShareActions.getSharedListing({
-            resourceType: BackendResourceType.CONVERSATION,
+            featureType: FeatureType.Chat,
             sharedWith: ShareRelations.others,
           }),
         ),
@@ -330,13 +327,13 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
       return concat(
         of(
           ShareActions.getSharedListing({
-            resourceType: BackendResourceType.PROMPT,
+            featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.me,
           }),
         ),
         of(
           ShareActions.getSharedListing({
-            resourceType: BackendResourceType.PROMPT,
+            featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.others,
           }),
         ),
@@ -350,13 +347,15 @@ const getSharedListingEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) => {
       return ShareService.getSharedListing({
         order: 'popular_asc',
-        resourceTypes: [payload.resourceType],
+        resourceTypes: [
+          EnumMapper.getBackendResourceTypeByFeatureType(payload.featureType),
+        ],
         with: payload.sharedWith,
       }).pipe(
         switchMap((entities) => {
           return of(
             ShareActions.getSharedListingSuccess({
-              resourceType: payload.resourceType,
+              featureType: payload.featureType,
               sharedWith: payload.sharedWith,
               resources: entities,
             }),
@@ -388,7 +387,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.getSharedListingSuccess.match),
     switchMap(({ payload }) => {
       const actions = [];
-      if (payload.resourceType === BackendResourceType.CONVERSATION) {
+      if (payload.featureType === FeatureType.Chat) {
         if (payload.sharedWith === ShareRelations.others) {
           const conversations = ConversationsSelectors.selectConversations(
             state$.value,
@@ -452,7 +451,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             );
         }
       }
-      if (payload.resourceType === BackendResourceType.PROMPT) {
+      if (payload.featureType === FeatureType.Prompt) {
         if (payload.sharedWith === ShareRelations.others) {
           const prompts = PromptsSelectors.selectPrompts(state$.value);
           actions.push(
@@ -521,10 +520,9 @@ const revokeAccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.revokeAccess.match),
     switchMap(({ payload }) => {
-      const resourceUrl =
-        payload.nodeType === BackendDataNodeType.FOLDER
-          ? encodeApiUrl(payload.resourceId) + '/'
-          : encodeApiUrl(payload.resourceId);
+      const resourceUrl = payload.isFolder
+        ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
+        : ApiUtils.encodeApiUrl(payload.resourceId);
 
       return ShareService.shareRevoke([resourceUrl]).pipe(
         map(() => ShareActions.revokeAccessSuccess(payload)),
@@ -537,10 +535,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.revokeAccessSuccess.match),
     switchMap(({ payload }) => {
-      if (
-        payload.nodeType === BackendDataNodeType.ITEM &&
-        payload.resourceType === BackendResourceType.CONVERSATION
-      ) {
+      if (!payload.isFolder && payload.featureType === FeatureType.Chat) {
         return of(
           ConversationsActions.updateConversationSuccess({
             id: payload.resourceId,
@@ -550,10 +545,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
           }),
         );
       }
-      if (
-        payload.nodeType === BackendDataNodeType.FOLDER &&
-        payload.resourceType === BackendResourceType.CONVERSATION
-      ) {
+      if (payload.isFolder && payload.featureType === FeatureType.Chat) {
         return of(
           ConversationsActions.updateFolder({
             folderId: payload.resourceId,
@@ -563,10 +555,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
           }),
         );
       }
-      if (
-        payload.nodeType === BackendDataNodeType.ITEM &&
-        payload.resourceType === BackendResourceType.PROMPT
-      ) {
+      if (!payload.isFolder && payload.featureType === FeatureType.Prompt) {
         return of(
           PromptsActions.updatePromptSuccess({
             id: payload.resourceId,
@@ -576,10 +565,7 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
           }),
         );
       }
-      if (
-        payload.nodeType === BackendDataNodeType.FOLDER &&
-        payload.resourceType === BackendResourceType.PROMPT
-      ) {
+      if (payload.isFolder && payload.featureType === FeatureType.Prompt) {
         return of(
           PromptsActions.updateFolder({
             folderId: payload.resourceId,
@@ -609,10 +595,9 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.discardSharedWithMe.match),
     switchMap(({ payload }) => {
-      const resourceUrl =
-        payload.nodeType === BackendDataNodeType.FOLDER
-          ? encodeApiUrl(payload.resourceId) + '/'
-          : encodeApiUrl(payload.resourceId);
+      const resourceUrl = payload.isFolder
+        ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
+        : ApiUtils.encodeApiUrl(payload.resourceId);
 
       return ShareService.shareDiscard([resourceUrl]).pipe(
         map(() => ShareActions.discardSharedWithMeSuccess(payload)),
@@ -625,10 +610,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.discardSharedWithMeSuccess.match),
     switchMap(({ payload }) => {
-      if (
-        payload.nodeType === BackendDataNodeType.ITEM &&
-        payload.resourceType === BackendResourceType.CONVERSATION
-      ) {
+      if (!payload.isFolder && payload.featureType === FeatureType.Chat) {
         const conversations = ConversationsSelectors.selectConversations(
           state$.value,
         );
@@ -641,10 +623,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
-      if (
-        payload.nodeType === BackendDataNodeType.FOLDER &&
-        payload.resourceType === BackendResourceType.CONVERSATION
-      ) {
+      if (payload.isFolder && payload.featureType === FeatureType.Chat) {
         const folders = ConversationsSelectors.selectFolders(state$.value);
         return of(
           ConversationsActions.setFolders({
@@ -652,10 +631,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
-      if (
-        payload.nodeType === BackendDataNodeType.ITEM &&
-        payload.resourceType === BackendResourceType.PROMPT
-      ) {
+      if (!payload.isFolder && payload.featureType === FeatureType.Prompt) {
         const prompts = PromptsSelectors.selectPrompts(state$.value);
         return of(
           PromptsActions.setPrompts({
@@ -664,10 +640,7 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
-      if (
-        payload.nodeType === BackendDataNodeType.FOLDER &&
-        payload.resourceType === BackendResourceType.PROMPT
-      ) {
+      if (payload.isFolder && payload.featureType === FeatureType.Prompt) {
         const folders = PromptsSelectors.selectFolders(state$.value);
         return of(
           PromptsActions.setFolders({

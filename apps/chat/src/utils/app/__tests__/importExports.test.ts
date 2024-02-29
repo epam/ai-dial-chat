@@ -29,9 +29,8 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { defaultReplay } from '@/src/constants/replay';
 
-import { ApiKeys } from '../../server/api';
 import { BucketService } from '../data/bucket-service';
-import { getRootId } from '../id';
+import { getConversationRootId } from '../id';
 
 const bucket = '123';
 beforeAll(() => {
@@ -121,7 +120,7 @@ describe('cleanData Functions', () => {
     selectedAddons: [],
     assistantModelId: 'gpt-4',
     isMessageStreaming: false,
-    folderId: getRootId({ apiKey: ApiKeys.Conversations, bucket }),
+    folderId: getConversationRootId(bucket),
     lastActivityDate: expect.any(Number),
   };
 
@@ -166,7 +165,7 @@ describe('cleanData Functions', () => {
             id: '1',
             name: 'folder 1',
             type: FolderType.Chat,
-            folderId: getRootId({ apiKey: ApiKeys.Conversations, bucket }),
+            folderId: getConversationRootId(bucket),
           },
         ],
         prompts: [],
@@ -246,7 +245,7 @@ describe('Export helpers functions', () => {
           name: 'prompt 1',
           description: '',
           content: '',
-          folderId: getRootId({ apiKey: ApiKeys.Conversations, bucket }),
+          folderId: getConversationRootId(bucket),
         },
       ],
       folders: [
@@ -254,7 +253,7 @@ describe('Export helpers functions', () => {
           id: 'pf-1',
           name: 'Test folder',
           type: FolderType.Prompt,
-          folderId: getRootId({ apiKey: ApiKeys.Conversations, bucket }),
+          folderId: getConversationRootId(bucket),
         },
       ],
     };

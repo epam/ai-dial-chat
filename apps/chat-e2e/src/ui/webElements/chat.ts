@@ -11,6 +11,8 @@ import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { Page } from '@playwright/test';
 
+export const PROMPT_APPLY_DELAY = 500;
+
 export class Chat extends BaseElement {
   constructor(page: Page) {
     super(page, ChatSelectors.chat);

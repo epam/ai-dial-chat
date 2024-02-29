@@ -1,6 +1,6 @@
 import { Observable, map } from 'rxjs';
 
-import { BackendDataNodeType } from '@/src/types/common';
+import { ApiKeys, BackendDataNodeType } from '@/src/types/common';
 import {
   BackendFile,
   BackendFileFolder,
@@ -9,12 +9,7 @@ import {
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import {
-  ApiKeys,
-  ApiUtils,
-  decodeApiUrl,
-  encodeApiUrl,
-} from '../../server/api';
+import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { getRootId } from '../id';
 
@@ -24,13 +19,13 @@ export class FileService {
     relativePath: string | undefined,
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
-    const resultPath = encodeApiUrl(
+    const resultPath = ApiUtils.encodeApiUrl(
       constructPath(getRootId(), relativePath, fileName),
     );
 
     return ApiUtils.requestOld({
       url: `api/${resultPath}`,
-      method: 'PUT',
+      method: 'POST',
       async: true,
       body: formData,
     }).pipe(
@@ -52,12 +47,12 @@ export class FileService {
 
           const typedResult = result as BackendFile;
           const relativePath = typedResult.parentPath
-            ? decodeApiUrl(typedResult.parentPath)
+            ? ApiUtils.decodeApiUrl(typedResult.parentPath)
             : undefined;
 
           return {
             result: {
-              id: decodeApiUrl(typedResult.url),
+              id: ApiUtils.decodeApiUrl(typedResult.url),
               name: typedResult.name,
               absolutePath: constructPath(
                 ApiKeys.Files,
@@ -87,7 +82,7 @@ export class FileService {
     path?: string;
     resultQuery?: string;
   }): string => {
-    const listingUrl = encodeApiUrl(
+    const listingUrl = ApiUtils.encodeApiUrl(
       constructPath('api/listing', path || getRootId()),
     );
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
@@ -109,7 +104,7 @@ export class FileService {
       map((folders: BackendFileFolder[]) => {
         return folders.map((folder): FileFolderInterface => {
           const relativePath = folder.parentPath
-            ? decodeApiUrl(folder.parentPath)
+            ? ApiUtils.decodeApiUrl(folder.parentPath)
             : undefined;
 
           return {
@@ -128,7 +123,7 @@ export class FileService {
             ),
             relativePath: relativePath,
             folderId: constructPath(
-              getRootId({ apiKey: ApiKeys.Files, bucket: folder.bucket }),
+              getRootId({ bucket: folder.bucket }),
               relativePath,
             ),
             serverSynced: true,
@@ -139,7 +134,7 @@ export class FileService {
   }
 
   public static removeFile(filePath: string): Observable<void> {
-    return ApiUtils.request(`api/${encodeApiUrl(filePath)}`, {
+    return ApiUtils.request(`api/${ApiUtils.encodeApiUrl(filePath)}`, {
       method: 'DELETE',
     });
   }
@@ -158,7 +153,7 @@ export class FileService {
       map((files: BackendFile[]) => {
         return files.map((file): DialFile => {
           const relativePath = file.parentPath
-            ? decodeApiUrl(file.parentPath)
+            ? ApiUtils.decodeApiUrl(file.parentPath)
             : undefined;
 
           return {
@@ -176,7 +171,7 @@ export class FileService {
             ),
             relativePath: relativePath,
             folderId: constructPath(
-              getRootId({ apiKey: ApiKeys.Files, bucket: file.bucket }),
+              getRootId({ bucket: file.bucket }),
               relativePath,
             ),
             contentLength: file.contentLength,

@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { compareConversationsByDate } from '@/src/utils/app/conversation';
-import { isRootId } from '@/src/utils/app/id';
+import { sortByDateAndName } from '@/src/utils/app/conversation';
+import { getConversationRootId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
@@ -49,11 +49,12 @@ export const Conversations = ({ conversations }: Props) => {
 
   const { t } = useTranslation(Translation.SideBar);
 
-  const conversationsToDisplay = useMemo(
-    () =>
-      conversations.filter((conversation) => isRootId(conversation.folderId)),
-    [conversations],
-  );
+  const conversationsToDisplay = useMemo(() => {
+    const conversationRootId = getConversationRootId();
+    return conversations.filter(
+      (conversation) => conversation.folderId === conversationRootId, // only my root conversations
+    );
+  }, [conversations]);
 
   const todayDate = useMemo(() => new Date().setHours(0, 0, 0), []);
   const oneDayMilliseconds = 8.64e7;
@@ -70,7 +71,7 @@ export const Conversations = ({ conversations }: Props) => {
       older: [],
       other: [],
     };
-    conversationsToDisplay.sort(compareConversationsByDate).forEach((conv) => {
+    sortByDateAndName(conversationsToDisplay).forEach((conv) => {
       const lastActivityDateNumber = conv.lastActivityDate;
       if (
         !lastActivityDateNumber ||

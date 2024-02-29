@@ -15,19 +15,14 @@ import classNames from 'classnames';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
@@ -104,9 +99,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     useCallback(() => {
       dispatch(
         ShareActions.share({
-          resourceType: BackendResourceType.PROMPT,
+          featureType: FeatureType.Prompt,
           resourceId: prompt.id,
-          nodeType: BackendDataNodeType.ITEM,
         }),
       );
     }, [dispatch, prompt.id]);
@@ -158,8 +152,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           ShareActions.discardSharedWithMe({
             resourceId: prompt.id,
-            nodeType: BackendDataNodeType.ITEM,
-            resourceType: BackendResourceType.PROMPT,
+            featureType: FeatureType.Prompt,
           }),
         );
       } else {
@@ -194,7 +187,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     (e: MouseEvent<unknown, globalThis.MouseEvent>, isPreview = false) => {
       e.stopPropagation();
       e.preventDefault();
-      setIsDeleting(false);
       setIsRenaming(true);
       dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
@@ -220,11 +212,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const promptRootId = getPromptRootId();
       const folderPath = (
         isNewFolder
           ? getNextDefaultName(
               translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => isRootId(f.folderId)),
+              folders.filter((f) => f.folderId === promptRootId), // only my root prompt folders
             )
           : folderId
       ) as string;
@@ -256,7 +249,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         dispatch(
           PromptsActions.createFolder({
             name: folderPath,
-            parentId: getRootId({ apiKey: ApiKeys.Prompts }),
+            parentId: getPromptRootId(),
           }),
         );
       }
@@ -265,10 +258,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           id: prompt.id,
           values: {
             folderId: isNewFolder
-              ? constructPath(
-                  getRootId({ apiKey: ApiKeys.Prompts }),
-                  folderPath,
-                )
+              ? constructPath(getPromptRootId(), folderPath)
               : folderPath,
           },
         }),
@@ -320,13 +310,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         data-qa="prompt"
       >
         <div
-          className={classNames(
-            'flex size-full items-center gap-2',
-            isDeleting ? 'pr-12' : 'group-hover:pr-6',
-            {
-              'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
-            },
-          )}
+          className={classNames('flex size-full items-center gap-2', {
+            'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
+          })}
           draggable={!isExternal}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
@@ -461,8 +447,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               dispatch(
                 ShareActions.revokeAccess({
                   resourceId: prompt.id,
-                  nodeType: BackendDataNodeType.ITEM,
-                  resourceType: BackendResourceType.PROMPT,
+                  featureType: FeatureType.Prompt,
                 }),
               );
             }

@@ -2,13 +2,12 @@ import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Addons } from '@/src/ui/webElements/addons';
+import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PromptList } from '@/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Locator, Page } from '@playwright/test';
-
-const PROMPT_APPLY_DELAY = 500;
 
 export class EntitySettings extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {

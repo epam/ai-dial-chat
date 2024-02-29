@@ -4,11 +4,7 @@ import { splitEntityId } from '@/src/utils/app/folders';
 import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  UploadStatus,
-} from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
@@ -23,8 +19,8 @@ export interface ShareState {
   invitationId: string | undefined;
   shareResourceName: string | undefined;
   shareModalState: ModalState;
-  shareResourceType: BackendResourceType | undefined;
-  shareNodeType: BackendDataNodeType | undefined;
+  shareFeatureType?: FeatureType;
+  shareIsFolder?: boolean;
 }
 
 const initialState: ShareState = {
@@ -33,8 +29,8 @@ const initialState: ShareState = {
   invitationId: undefined,
   shareResourceName: undefined,
   shareModalState: ModalState.CLOSED,
-  shareResourceType: undefined,
-  shareNodeType: undefined,
+  shareFeatureType: undefined,
+  shareIsFolder: undefined,
 };
 
 export const shareSlice = createSlice({
@@ -47,19 +43,19 @@ export const shareSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        resourceType: BackendResourceType;
+        featureType: FeatureType;
         resourceId: string;
-        nodeType: BackendDataNodeType;
+        isFolder?: boolean;
       }>,
     ) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.LOADING;
-      state.shareResourceType = payload.resourceType;
-      state.shareNodeType = payload.nodeType;
+      state.shareFeatureType = payload.featureType;
+      state.shareIsFolder = payload.isFolder;
 
       const name = splitEntityId(payload.resourceId).name;
       state.shareResourceName =
-        payload.resourceType === BackendResourceType.CONVERSATION
+        payload.featureType === FeatureType.Chat
           ? parseConversationApiKey(splitEntityId(payload.resourceId).name).name
           : name;
     },
@@ -107,16 +103,16 @@ export const shareSlice = createSlice({
       state,
       _action: PayloadAction<{
         resourceId: string;
-        resourceType: BackendResourceType;
-        nodeType: BackendDataNodeType;
+        featureType: FeatureType;
+        isFolder?: boolean;
       }>,
     ) => state,
     revokeAccessSuccess: (
       state,
       _action: PayloadAction<{
         resourceId: string;
-        resourceType: BackendResourceType;
-        nodeType: BackendDataNodeType;
+        featureType: FeatureType;
+        isFolder?: boolean;
       }>,
     ) => state,
     revokeAccessFail: (state) => state,
@@ -125,16 +121,16 @@ export const shareSlice = createSlice({
       state,
       _action: PayloadAction<{
         resourceId: string;
-        resourceType: BackendResourceType;
-        nodeType: BackendDataNodeType;
+        featureType: FeatureType;
+        isFolder?: boolean;
       }>,
     ) => state,
     discardSharedWithMeSuccess: (
       state,
       _action: PayloadAction<{
         resourceId: string;
-        resourceType: BackendResourceType;
-        nodeType: BackendDataNodeType;
+        featureType: FeatureType;
+        isFolder?: boolean;
       }>,
     ) => state,
     discardSharedWithMeFail: (state) => state,
@@ -164,14 +160,14 @@ export const shareSlice = createSlice({
     getSharedListing: (
       state,
       _action: PayloadAction<{
-        resourceType: BackendResourceType;
+        featureType: FeatureType;
         sharedWith: ShareRelations;
       }>,
     ) => state,
     getSharedListingSuccess: (
       state,
       _action: PayloadAction<{
-        resourceType: BackendResourceType;
+        featureType: FeatureType;
         sharedWith: ShareRelations;
         resources: {
           entities: (ConversationInfo | Prompt)[];
@@ -197,11 +193,11 @@ const selectShareModalClosed = createSelector([rootSelector], (state) => {
 const selectShareResourceName = createSelector([rootSelector], (state) => {
   return state.shareResourceName;
 });
-const selectShareResourceType = createSelector([rootSelector], (state) => {
-  return state.shareResourceType;
+const selectShareFeatureType = createSelector([rootSelector], (state) => {
+  return state.shareFeatureType;
 });
-const selectShareNodeType = createSelector([rootSelector], (state) => {
-  return state.shareNodeType;
+const selectShareIsFolder = createSelector([rootSelector], (state) => {
+  return state.shareIsFolder;
 });
 
 export const ShareSelectors = {
@@ -209,8 +205,8 @@ export const ShareSelectors = {
   selectShareModalState,
   selectShareModalClosed,
   selectShareResourceName,
-  selectShareResourceType,
-  selectShareNodeType,
+  selectShareFeatureType,
+  selectShareIsFolder,
 };
 
 export const ShareActions = shareSlice.actions;

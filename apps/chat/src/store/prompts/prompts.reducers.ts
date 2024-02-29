@@ -6,10 +6,9 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -254,17 +253,27 @@ export const promptsSlice = createSlice({
       state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
-      state.prompts = state.prompts.concat(payload.prompts);
+      state.prompts = combineEntities(payload.prompts, state.prompts);
     },
     clearPrompts: (state) => {
       state.promptsLoaded = false;
     },
     clearPromptsSuccess: (state) => {
-      state.prompts = state.prompts.filter((prompt) =>
-        isEntityExternal(prompt),
+      state.prompts = state.prompts.filter(
+        (prompt) =>
+          isEntityExternal(prompt) ||
+          PromptsSelectors.hasExternalParent(
+            { prompts: state },
+            prompt.folderId,
+          ),
       );
-      state.folders = state.folders.filter((folder) =>
-        isEntityExternal(folder),
+      state.folders = state.folders.filter(
+        (folder) =>
+          isEntityExternal(folder) ||
+          PromptsSelectors.hasExternalParent(
+            { prompts: state },
+            folder.folderId,
+          ),
       );
     },
     exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
@@ -322,7 +331,7 @@ export const promptsSlice = createSlice({
         true,
       );
       const id = constructPath(
-        payload.relativePath || getRootId({ apiKey: ApiKeys.Prompts }),
+        payload.relativePath || getPromptRootId(),
         folderName,
       );
 

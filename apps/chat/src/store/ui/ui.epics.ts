@@ -1,6 +1,7 @@
 import { toast } from 'react-hot-toast';
 
 import {
+  Observable,
   concat,
   filter,
   forkJoin,
@@ -10,16 +11,19 @@ import {
   tap,
 } from 'rxjs';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions } from './ui.reducers';
+import { UIActions, UISelectors } from './ui.reducers';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -196,6 +200,38 @@ const saveIsChatFullWidthEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const resizeEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(UIActions.resize.match),
+    switchMap(() => {
+      const showChatbar = UISelectors.selectShowChatbar(state$.value);
+      const showPromptbar = UISelectors.selectShowPromptbar(state$.value);
+      const isProfileOpen = UISelectors.selectIsProfileOpen(state$.value);
+      const isUserSettingsOpen = UISelectors.selectIsUserSettingsOpen(
+        state$.value,
+      );
+      const actions: Observable<AnyAction>[] = [];
+      if (isSmallScreen()) {
+        if (isUserSettingsOpen) {
+          actions.push(of(UIActions.setIsUserSettingsOpen(false))); // hide desktop settings dialog
+        }
+        if (
+          [showChatbar, showPromptbar, isProfileOpen].filter(Boolean).length > 1 // more then one panel open for small screen)
+        ) {
+          if (showChatbar) {
+            actions.push(
+              of(UIActions.setIsProfileOpen(false)),
+              of(UIActions.setShowPromptbar(false)),
+            );
+          } else {
+            actions.push(of(UIActions.setIsProfileOpen(false)));
+          }
+        }
+      }
+      return concat(...actions);
+    }),
+  );
+
 const UIEpics = combineEpics(
   initEpic,
   saveThemeEpic,
@@ -209,6 +245,7 @@ const UIEpics = combineEpics(
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
   saveIsChatFullWidthEpic,
+  resizeEpic,
 );
 
 export default UIEpics;

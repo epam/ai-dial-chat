@@ -21,21 +21,15 @@ import {
 } from '@/src/utils/app/common';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { ApiKeys } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-  isNotLoaded,
-} from '@/src/types/common';
+import { FeatureType, isNotLoaded } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -270,8 +264,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         ShareActions.discardSharedWithMe({
           resourceId: conversation.id,
-          nodeType: BackendDataNodeType.ITEM,
-          resourceType: BackendResourceType.CONVERSATION,
+          featureType: FeatureType.Chat,
         }),
       );
     } else {
@@ -359,9 +352,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     useCallback(() => {
       dispatch(
         ShareActions.share({
-          resourceType: BackendResourceType.CONVERSATION,
+          featureType: FeatureType.Chat,
           resourceId: conversation.id,
-          nodeType: BackendDataNodeType.ITEM,
         }),
       );
       setIsContextMenu(false);
@@ -395,11 +387,12 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
+      const conversationRootId = getConversationRootId();
       const folderPath = (
         isNewFolder
           ? getNextDefaultName(
               translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => isRootId(f.folderId)),
+              folders.filter((f) => f.folderId === conversationRootId), // only my root conversation folders
             )
           : folderId
       ) as string;
@@ -431,7 +424,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         dispatch(
           ConversationsActions.createFolder({
             name: folderPath,
-            parentId: getRootId({ apiKey: ApiKeys.Conversations }),
+            parentId: getConversationRootId(),
           }),
         );
       }
@@ -440,10 +433,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           id: conversation.id,
           values: {
             folderId: isNewFolder
-              ? constructPath(
-                  getRootId({ apiKey: ApiKeys.Conversations }),
-                  folderPath,
-                )
+              ? constructPath(getConversationRootId(), folderPath)
               : folderPath,
           },
         }),
@@ -550,10 +540,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200',
-            messageIsStreaming && 'disabled:cursor-not-allowed',
-            isDeleting && 'pr-12',
-            !messageIsStreaming && !isDeleting && 'group-hover:pr-6',
+            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
             isSelected && 'pr-0',
           )}
           onClick={() => {
@@ -683,8 +670,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
               dispatch(
                 ShareActions.revokeAccess({
                   resourceId: conversation.id,
-                  nodeType: BackendDataNodeType.ITEM,
-                  resourceType: BackendResourceType.CONVERSATION,
+                  featureType: FeatureType.Chat,
                 }),
               );
             }
