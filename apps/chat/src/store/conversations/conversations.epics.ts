@@ -2130,6 +2130,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     }),
     switchMap(({ uploadedConversations, setIds, showLoader }) => {
       const actions: Observable<AnyAction>[] = [];
+
       actions.push(
         of(
           ConversationsActions.uploadConversationsByIdsSuccess({
@@ -2144,6 +2145,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
       const conversationsWithIncorrectKeys = uploadedConversations.filter(
         (conv) => conv && conv.id !== getGeneratedConversationId(conv),
       ) as Conversation[];
+
       if (conversationsWithIncorrectKeys.length) {
         conversationsWithIncorrectKeys.forEach((conv) =>
           actions.push(
@@ -2283,6 +2285,7 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
         switchMap((foldersAndEntities) => {
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const conversations = foldersAndEntities.flatMap((f) => f.entities);
+
           return concat(
             of(
               ConversationsActions.uploadFoldersSuccess({
@@ -2325,17 +2328,54 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
+const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
+  action$,
+  state$,
+) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsWithFoldersRecursive.match),
-    switchMap(() =>
-      ConversationService.getConversations(undefined, true).pipe(
-        switchMap((conversations) => {
+    mergeMap(({ payload }) =>
+      ConversationService.getConversations(payload?.path, true).pipe(
+        mergeMap((conversations) => {
+          const actions: Observable<AnyAction>[] = [];
+
           const conv = conversations.flat();
           const folderIds = uniq(conv.map((c) => c.folderId));
           const paths = uniq(
             folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
           );
+
+          if (
+            !!payload?.selectFirst &&
+            !!conversations.length &&
+            !!payload?.path
+          ) {
+            const openedFolders = UISelectors.selectOpenedFoldersIds(
+              state$.value,
+              FeatureType.Chat,
+            );
+
+            actions.push(
+              concat(
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [conversations[0]?.id],
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    featureType: FeatureType.Chat,
+                    openedFolderIds: [
+                      ...openedFolders,
+                      ...getParentFolderIdsFromFolderId(conv[0].folderId),
+                      ...payload.path,
+                    ],
+                  }),
+                ),
+              ),
+            );
+          }
+
           return concat(
             of(
               ConversationsActions.uploadConversationsSuccess({
@@ -2355,6 +2395,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
+            ...actions,
           );
         }),
         catchError((err) => {

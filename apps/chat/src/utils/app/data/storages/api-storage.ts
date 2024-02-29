@@ -96,7 +96,7 @@ export class ApiStorage implements DialStorage {
   }
 
   getConversationsAndFolders(
-    path?: string | undefined,
+    path?: string,
   ): Observable<FoldersAndEntities<ConversationInfo>> {
     return this._conversationApiStorage.getFoldersAndEntities(path);
   }
@@ -165,9 +165,7 @@ export class ApiStorage implements DialStorage {
     );
   }
 
-  getPromptsAndFolders(
-    path?: string | undefined,
-  ): Observable<FoldersAndEntities<Entity>> {
+  getPromptsAndFolders(path?: string): Observable<FoldersAndEntities<Entity>> {
     return this._promptApiStorage.getFoldersAndEntities(path);
   }
 
