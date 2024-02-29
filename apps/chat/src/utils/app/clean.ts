@@ -6,6 +6,7 @@ import {
   Stage,
 } from '@/src/types/chat';
 import { OpenAIEntityModelID } from '@/src/types/openai';
+import { Prompt } from '@/src/types/prompt';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL,
@@ -90,7 +91,6 @@ export const cleanConversation = (
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
     lastActivityDate: conversation.lastActivityDate || Date.now(),
-    isMessageStreaming: false,
     isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: conversation.playback,
@@ -99,6 +99,14 @@ export const cleanConversation = (
 
   return cleanConversation;
 };
+
+export const cleanPrompt = (prompt: Prompt): Prompt => ({
+  id: prompt.id,
+  name: prompt.name,
+  folderId: prompt.folderId,
+  description: prompt.description,
+  content: prompt.content ?? '', // will be required soon in https://github.com/epam/ai-dial-chat/issues/78
+});
 
 export const cleanConversationHistory = (
   history: Conversation[],

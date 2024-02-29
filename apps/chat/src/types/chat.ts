@@ -79,7 +79,7 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   selectedAddons: string[];
   assistantModelId?: string;
 
-  isMessageStreaming: boolean;
+  isMessageStreaming?: boolean;
   isNameChanged?: boolean;
 }
 

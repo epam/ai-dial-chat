@@ -1,3 +1,4 @@
+import { cleanPrompt } from '@/src/utils/app/clean';
 import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
 import { ApiKeys, Entity } from '@/src/types/common';
@@ -13,13 +14,7 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
     };
   }
   cleanUpEntity(prompt: Prompt): Prompt {
-    return {
-      id: prompt.id,
-      name: prompt.name,
-      folderId: prompt.folderId,
-      description: prompt.description,
-      content: prompt.content ?? '', // will be required soon in https://github.com/epam/ai-dial-chat/issues/78
-    };
+    return cleanPrompt(prompt);
   }
   getEntityKey(info: PromptInfo): string {
     return getPromptApiKey(info);
