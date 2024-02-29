@@ -325,16 +325,6 @@ export const selectIsLastAssistantMessageEmpty = createSelector(
   },
 );
 
-export const selectNotModelConversations = createSelector(
-  [selectSelectedConversations, ModelsSelectors.selectModelsMap],
-  (conversations, modelsMap) => {
-    return conversations.some(
-      (conv) =>
-        modelsMap[conv.model.id]?.type !== EntityType.Model ||
-        conv.selectedAddons.length > 0,
-    );
-  },
-);
 const selectSelectedConversationsModels = createSelector(
   [selectSelectedConversations, ModelsSelectors.selectModelsMap],
   (conversations, modelsMap) => {
