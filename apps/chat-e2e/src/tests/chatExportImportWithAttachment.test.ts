@@ -228,6 +228,7 @@ dialTest(
           .getConversationByName(historyConversation.name)
           .waitFor();
         await conversations.selectConversation(historyConversation.name);
+        await chatMessages.waitForState({ state: 'attached' });
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
@@ -286,6 +287,7 @@ dialTest(
         await conversations.selectConversation(
           Import.importedConversationWithAttachmentsName,
         );
+        await chatMessages.waitForState({ state: 'attached' });
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
