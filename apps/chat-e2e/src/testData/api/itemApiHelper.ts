@@ -6,8 +6,8 @@ import { expect } from '@playwright/test';
 
 export class ItemApiHelper extends BaseApiHelper {
   public async deleteAllData() {
-    const conversations = await this.listItems(API.conversationsHost);
-    const prompts = await this.listItems(API.promptsHost);
+    const conversations = await this.listItems(API.conversationsHost());
+    const prompts = await this.listItems(API.promptsHost());
     await this.deleteBackendItem(...conversations, ...prompts);
   }
 
