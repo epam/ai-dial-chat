@@ -59,7 +59,7 @@ export const OpenAIStream = async ({
   chatId,
   userJWT,
   jobTitle,
-  maxPromptTokens,
+  maxRequestTokens,
 }: {
   model: DialAIEntityModel;
   temperature: number | undefined;
@@ -69,7 +69,7 @@ export const OpenAIStream = async ({
   userJWT: string;
   chatId: string;
   jobTitle: string | undefined;
-  maxPromptTokens: number | undefined;
+  maxRequestTokens: number | undefined;
 }) => {
   const url = getUrl(model.id, model.type, selectedAddonsIds);
 
@@ -79,18 +79,14 @@ export const OpenAIStream = async ({
     jobTitle,
   });
 
-  const body = JSON.stringify(
-    {
-      messages,
-      temperature,
-      stream: true,
-      model: assistantModelId ?? model.id,
-      addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
-      max_prompt_tokens: maxPromptTokens,
-    },
-    undefined,
-    2,
-  );
+  const body = JSON.stringify({
+    messages,
+    temperature,
+    stream: true,
+    model: assistantModelId ?? model.id,
+    addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
+    max_prompt_tokens: maxRequestTokens,
+  });
 
   const res = await fetch(url, {
     headers: requestHeaders,
@@ -104,7 +100,7 @@ export const OpenAIStream = async ({
       result = (await res.json()) as OpenAIErrorResponse;
     } catch (e) {
       throw new OpenAIError(
-        `Server error: ${res.statusText}`,
+        `Chat Server error: ${res.statusText}`,
         '',
         '',
         res.status + '',
@@ -119,7 +115,7 @@ export const OpenAIStream = async ({
       );
     } else {
       throw new Error(
-        `OpenAI API returned an error: ${JSON.stringify(result, null, 2)}`,
+        `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
       );
     }
   }

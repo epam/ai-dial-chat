@@ -30,7 +30,7 @@
     "affected:format:fix": "nx affected -t format:fix"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.7",
+    "@dqbd/tiktoken": "^1.0.13",
     "@floating-ui/react": "^0.26.7",
     "@nx/next": "17.2.8",
     "@opentelemetry/exporter-prometheus": "^0.47.0",

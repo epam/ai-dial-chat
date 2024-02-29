@@ -1249,7 +1249,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
       if (conversationModelType === EntityType.Model) {
         modelAdditionalSettings = {
-          prompt: payload.conversation.prompt,
+          prompt: lastModel?.features?.systemPrompt
+            ? payload.conversation.prompt
+            : undefined,
           temperature: payload.conversation.temperature,
           selectedAddons,
         };

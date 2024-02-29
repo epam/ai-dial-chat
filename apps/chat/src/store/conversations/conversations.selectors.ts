@@ -335,7 +335,7 @@ export const selectNotModelConversations = createSelector(
     );
   },
 );
-const selectSelectedConversationsModels = createSelector(
+export const selectSelectedConversationsModels = createSelector(
   [selectSelectedConversations, ModelsSelectors.selectModelsMap],
   (conversations, modelsMap) => {
     return conversations

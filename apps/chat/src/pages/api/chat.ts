@@ -74,12 +74,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model.type === EntityType.Assistant
         ? assistantModel!.limits
         : model.limits;
+    // For assistant submodel limits should be used
+    const features =
+      model.type === EntityType.Assistant
+        ? assistantModel!.features
+        : model.features;
+    const tokenizer =
+      model.type === EntityType.Assistant
+        ? assistantModel!.tokenizer
+        : model.tokenizer;
 
-    let messagesToSend: Message[] = limitMessagesByTokens(
+    let messagesToSend: Message[] = limitMessagesByTokens({
       promptToSend,
       messages,
       limits,
-    );
+      features,
+      tokenizer,
+    });
 
     messagesToSend = messagesToSend.map((message) => ({
       ...getMessageCustomContent(message),
@@ -106,7 +117,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       userJWT: token?.access_token as string,
       chatId: id,
       jobTitle: token?.jobTitle as string,
-      maxPromptTokens: limits?.maxRequestTokens,
+      maxRequestTokens: limits?.maxRequestTokens,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 

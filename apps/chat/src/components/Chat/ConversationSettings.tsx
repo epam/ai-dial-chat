@@ -17,7 +17,6 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL_ID,
-  DEFAULT_USER_MESSAGE_MAX_LENGTH,
 } from '@/src/constants/default-ui-settings';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
@@ -70,7 +69,7 @@ export const SettingContainer = ({ children }: SettingContainerProps) => {
     return null;
   }
 
-  return <div className="grow px-3 py-4 md:px-5">{children}</div>;
+  return <div className="px-3 py-4 md:px-5">{children}</div>;
 };
 
 export const ConversationSettings = ({
@@ -149,10 +148,15 @@ export const ConversationSettings = ({
                   />
                 </SettingContainer>
               )}
-              {(!model || model.type === EntityType.Model) && (
+              {(!model ||
+                (model.type === EntityType.Model &&
+                  model?.features?.systemPrompt)) && (
                 <SettingContainer>
                   <SystemPrompt
-                    maxLength={DEFAULT_USER_MESSAGE_MAX_LENGTH}
+                    maxTokensLength={
+                      model?.limits?.maxRequestTokens ?? Infinity
+                    }
+                    tokenizer={model?.tokenizer}
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}

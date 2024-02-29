@@ -8,24 +8,46 @@ import { errorsMessages } from '@/src/constants/errors';
 import { OpenAIError } from './error';
 import { logger } from './logger';
 
+import { Tiktoken, get_encoding } from '@dqbd/tiktoken';
 import { Blob } from 'buffer';
 
 // This is very conservative calculations of tokens (1 token = 1 byte)
-export const getTokensSize = (str: string): number => {
+export const getBytesTokensSize = (str: string): number => {
   return new Blob([str]).size;
 };
 
-export function limitMessagesByTokens(
-  promptToSend: string | undefined,
-  messages: Message[],
-  limits: DialAIEntityModel['limits'],
-): Message[] {
-  if (!limits || !limits.maxRequestTokens) {
+export function limitMessagesByTokens({
+  promptToSend,
+  messages,
+  limits,
+  features,
+  tokenizer,
+}: {
+  promptToSend: string | undefined;
+  messages: Message[];
+  limits: DialAIEntityModel['limits'];
+  features: DialAIEntityModel['features'];
+  tokenizer: DialAIEntityModel['tokenizer'];
+}): Message[] {
+  if (!limits || !limits.maxRequestTokens || features?.truncatePrompt) {
     return messages;
   }
 
+  let calculateTokensSize: (str: string) => number = getBytesTokensSize;
+  let tokensPerMessage = 0;
+
+  let encoding: Tiktoken | undefined;
+  if (tokenizer && tokenizer.encoding && tokenizer.tokensPerMessage) {
+    encoding = get_encoding(tokenizer.encoding);
+    calculateTokensSize = (str) =>
+      encoding ? encoding.encode(str).length : getBytesTokensSize(str);
+    tokensPerMessage = tokenizer.tokensPerMessage;
+  }
+
   const promptToEncode: string = promptToSend ?? '';
-  const promptTokensSize = getTokensSize(promptToEncode);
+  const promptTokensSize = promptToEncode
+    ? calculateTokensSize(promptToEncode) + tokensPerMessage
+    : 0;
 
   let fullTokensSize = promptTokensSize;
   let messagesToSend: Message[] = [];
@@ -35,7 +57,8 @@ export function limitMessagesByTokens(
     if (!messages[i]) {
       break;
     }
-    const currentMessageTokensSize = getTokensSize(messages[i].content);
+    const currentMessageTokensSize =
+      calculateTokensSize(messages[i].content) + tokensPerMessage;
 
     if (fullTokensSize + currentMessageTokensSize > limits.maxRequestTokens) {
       break;
@@ -43,6 +66,8 @@ export function limitMessagesByTokens(
     fullTokensSize += currentMessageTokensSize;
     messagesToSend = [messages[i], ...messagesToSend];
   }
+
+  encoding?.free();
   return messagesToSend;
 }
 

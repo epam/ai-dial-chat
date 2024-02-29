@@ -14,12 +14,12 @@ export function hasParentWithFloatingOverlay(element: Element | null): boolean {
 }
 
 export const getPromptLimitDescription = (
-  content: string,
-  maxLength: number,
+  contentTokensLength: number,
+  maxTokensLength: number,
 ) => {
-  if (content.length < maxLength) {
-    const remainingCharacters = maxLength - content.length;
-    return `You have entered ${content.length} characters and are trying to select a prompt with more than ${remainingCharacters} characters.`;
+  if (contentTokensLength <= maxTokensLength) {
+    const remainingCharacters = maxTokensLength - contentTokensLength;
+    return `You have entered ${contentTokensLength} tokens and are trying to select a prompt with more than ${remainingCharacters} tokens.`;
   }
 
   return '';

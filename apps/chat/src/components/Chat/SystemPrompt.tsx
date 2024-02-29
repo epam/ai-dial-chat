@@ -11,9 +11,11 @@ import {
 import { useTranslation } from 'next-i18next';
 
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
+import { useTokenizer } from '@/src/hooks/useTokenizer';
 
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
+import { DialAIEntityModel } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -29,7 +31,8 @@ import { PromptList } from './ChatInput/PromptList';
 import debounce from 'lodash-es/debounce';
 
 interface Props {
-  maxLength: number;
+  maxTokensLength: number;
+  tokenizer: DialAIEntityModel['tokenizer'];
   prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
@@ -41,7 +44,8 @@ const MAX_HEIGHT = 300;
 
 export const SystemPrompt: FC<Props> = ({
   prompts,
-  maxLength,
+  tokenizer,
+  maxTokensLength,
   prompt,
   onChangePrompt,
   debounceChanges = false,
@@ -49,6 +53,7 @@ export const SystemPrompt: FC<Props> = ({
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const { getTokensLength } = useTokenizer(tokenizer);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptListRef = useRef<HTMLUListElement | null>(null);
 
@@ -80,7 +85,8 @@ export const SystemPrompt: FC<Props> = ({
     getPrompt,
     isLoading,
   } = usePromptSelection(
-    maxLength,
+    maxTokensLength,
+    tokenizer,
     prompt ?? DEFAULT_SYSTEM_PROMPT,
     debounceOnChange,
   );
@@ -88,8 +94,15 @@ export const SystemPrompt: FC<Props> = ({
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
+      const valueTokensLength = getTokensLength(value);
+      const contentTokensLength = getTokensLength(content);
 
-      if (value.length > maxLength && value.length >= content.length) {
+      if (
+        valueTokensLength &&
+        contentTokensLength &&
+        valueTokensLength > maxTokensLength &&
+        valueTokensLength >= contentTokensLength
+      ) {
         setIsPromptLimitModalOpen(true);
         return;
       }
@@ -100,12 +113,13 @@ export const SystemPrompt: FC<Props> = ({
       debounceOnChange(value);
     },
     [
-      debounceOnChange,
+      getTokensLength,
       content,
-      maxLength,
+      maxTokensLength,
       setContent,
-      setIsPromptLimitModalOpen,
       updatePromptListVisibility,
+      debounceOnChange,
+      setIsPromptLimitModalOpen,
     ],
   );
 
@@ -212,8 +226,7 @@ export const SystemPrompt: FC<Props> = ({
         heading={t('Prompt limit exceeded')}
         description={
           t(
-            `Prompt limit is ${maxLength} characters.
-            ${getPromptLimitDescription(content, maxLength)}`,
+            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content) ?? 0, maxTokensLength)}`,
           ) || ''
         }
         confirmLabel={t('Confirm')}

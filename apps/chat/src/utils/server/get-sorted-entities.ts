@@ -1,30 +1,45 @@
 import { JWT } from 'next-auth/jwt';
 
 import { EntityType } from '@/src/types/common';
-import { CoreAIEntity, DialAIEntityModel } from '@/src/types/openai';
+import {
+  CoreAIEntity,
+  DialAIEntityModel,
+  TokenizerModel,
+} from '@/src/types/openai';
+
+import {
+  MAX_PROMPT_TOKENS_DEFAULT_PERCENT,
+  MAX_PROMPT_TOKENS_DEFAULT_VALUE,
+} from '@/src/constants/default-server-settings';
 
 import { getEntities } from './get-entities';
 import { logger } from './logger';
 
-const getPromptTokens = (
-  currentTokensValue: number | undefined,
-  tokens2: number | undefined,
-  totalTokens: number | undefined,
-  partOfTotalTokens: number,
+import { TiktokenEncoding } from '@dqbd/tiktoken';
+
+const getTiktokenEncoding = (
+  tokenizerModel: TokenizerModel,
+): TiktokenEncoding | undefined => {
+  switch (tokenizerModel) {
+    case TokenizerModel.GPT_35_TURBO_0301:
+    case TokenizerModel.GPT_4_0314:
+      return 'cl100k_base';
+    default:
+      return undefined;
+  }
+};
+
+const getTokensPerMessage = (
+  tokenizerModel: TokenizerModel,
 ): number | undefined => {
-  if (currentTokensValue) {
-    return currentTokensValue;
+  switch (tokenizerModel) {
+    case TokenizerModel.GPT_35_TURBO_0301:
+      return 4;
+    case TokenizerModel.GPT_4_0314:
+      return 3;
+    default:
+      return undefined;
   }
-
-  if (tokens2 && totalTokens) {
-    return totalTokens - tokens2;
-  }
-
-  if (totalTokens) {
-    return Math.floor(totalTokens * partOfTotalTokens);
-  }
-
-  return undefined;
 };
 
 export const getSortedEntities = async (token: JWT | null) => {
@@ -69,22 +84,31 @@ export const getSortedEntities = async (token: JWT | null) => {
     let maxTotalTokens;
 
     if (entity.object === EntityType.Model) {
-      maxRequestTokens = getPromptTokens(
-        entity.limits?.max_prompt_tokens,
-        entity.limits?.max_completion_tokens,
-        entity.limits?.max_total_tokens,
-        3 / 4,
-      );
-      maxResponseTokens = getPromptTokens(
-        entity.limits?.max_completion_tokens,
-        entity.limits?.max_prompt_tokens,
-        entity.limits?.max_total_tokens,
-        1 / 4,
-      );
+      const resTotalTokens = entity.limits?.max_total_tokens;
+      const resPromptTokens = entity.limits?.max_prompt_tokens;
+      const resCompletionTokens = entity.limits?.max_completion_tokens;
+
       maxTotalTokens =
-        entity.limits?.max_total_tokens ??
-        (maxResponseTokens && maxRequestTokens
-          ? maxResponseTokens + maxRequestTokens
+        resTotalTokens ??
+        (resPromptTokens && resCompletionTokens
+          ? resPromptTokens + resCompletionTokens
+          : undefined);
+
+      maxRequestTokens =
+        resPromptTokens ??
+        (maxTotalTokens
+          ? Math.min(
+              MAX_PROMPT_TOKENS_DEFAULT_VALUE,
+              Math.floor(
+                (MAX_PROMPT_TOKENS_DEFAULT_PERCENT * maxTotalTokens) / 100,
+              ),
+            )
+          : undefined);
+
+      maxResponseTokens =
+        resCompletionTokens ??
+        (maxTotalTokens && maxRequestTokens
+          ? maxTotalTokens - maxRequestTokens
           : undefined);
     }
 
@@ -104,8 +128,16 @@ export const getSortedEntities = async (token: JWT | null) => {
               maxTotalTokens,
             }
           : undefined,
+      features: entity.features && {
+        systemPrompt: entity.features?.system_prompt || false,
+        truncatePrompt: entity.features?.truncate_prompt || false,
+      },
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
+      tokenizer: entity.tokenizer_model && {
+        encoding: getTiktokenEncoding(entity.tokenizer_model),
+        tokensPerMessage: getTokensPerMessage(entity.tokenizer_model),
+      },
     });
   }
 
