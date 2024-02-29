@@ -117,7 +117,7 @@ export const OpenAIStream = async ({
       } catch (e) {
         throw new DialAIError(
           `Chat Server error: ${res.statusText}`,
-          '', 
+          '',
           '',
           res.status + '',
         );
