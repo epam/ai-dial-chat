@@ -25,7 +25,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const { invitationId } = req.body;
 
     const proxyRes = await fetch(
-      `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}?accept=true`,
+      `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}`,
       {
         method: 'GET',
         headers: getApiHeaders({ jwt: token?.access_token as string }),
@@ -33,13 +33,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     );
 
     let json: unknown;
-    if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch (err) {
-        json = undefined;
-      }
+    try {
+      json = await proxyRes.json();
+    } catch (err) {
+      json = undefined;
+    }
 
+    if (!proxyRes.ok) {
       throw new OpenAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
         '',
@@ -48,7 +48,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       );
     }
 
-    return res.status(200).send(JSON.stringify({}));
+    return res.status(200).send(json);
   } catch (error: unknown) {
     logger.error(error);
     if (error instanceof OpenAIError) {

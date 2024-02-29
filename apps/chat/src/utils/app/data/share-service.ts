@@ -47,9 +47,9 @@ export class ShareService {
   public static getShareDetails(
     shareAcceptData: ShareAcceptRequestModel,
   ): Observable<InvitationDetails> {
-    return ApiUtils.request(`api/share/accept`, {
+    return ApiUtils.request(`api/share/details`, {
       method: 'POST',
-      body: JSON.stringify({ ...shareAcceptData, withAccept: false }),
+      body: JSON.stringify(shareAcceptData),
     });
   }
 
