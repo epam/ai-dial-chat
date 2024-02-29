@@ -12,10 +12,13 @@ export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
       ...info,
     };
   }
-  cleanUpEntity(entity: Prompt): Prompt {
+  cleanUpEntity(prompt: Prompt): Prompt {
     return {
-      ...entity,
-      status: undefined,
+      id: prompt.id,
+      name: prompt.name,
+      folderId: prompt.folderId,
+      description: prompt.description,
+      content: prompt.content ?? '', // will be required soon in https://github.com/epam/ai-dial-chat/issues/78
     };
   }
   getEntityKey(info: PromptInfo): string {
