@@ -97,7 +97,15 @@ export class Conversations extends SideBarEntities {
   }
 
   public async selectConversation(name: string, index?: number) {
-    await this.getConversationByName(name, index).click();
+    const conversationToSelect = this.getConversationByName(name, index);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET',
+      );
+      await conversationToSelect.click();
+      return respPromise;
+    }
+    await conversationToSelect.click();
   }
 
   public async openConversationDropdownMenu(name: string, index?: number) {

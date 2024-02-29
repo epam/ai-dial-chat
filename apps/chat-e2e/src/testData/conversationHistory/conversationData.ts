@@ -1,3 +1,4 @@
+import { defaultReplay } from '@/chat/constants/replay';
 import { Message, Role, Stage } from '@/chat/types/chat';
 import { FolderType } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
@@ -321,12 +322,12 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareConversationWithAttachment(
+  public prepareConversationWithAttachmentInRequest(
     attachmentUrl: string,
     model: OpenAIEntityModel | string,
     hasRequest?: boolean,
   ) {
-    const filename = attachmentUrl.split('/')[2];
+    const filename = FileApiHelper.extractFilename(attachmentUrl);
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const userMessage: Message = {
       role: Role.User,
@@ -341,10 +342,60 @@ export class ConversationData extends FolderData {
         ],
       },
     };
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'Heart',
+      model: modelToUse,
+    };
     return this.conversationBuilder
+      .withName(GeneratorUtil.randomString(10))
       .withMessage(userMessage)
+      .withMessage(assistantMessage)
       .withModel(modelToUse)
       .build();
+  }
+
+  public prepareConversationWithAttachmentInResponse(
+    attachmentUrl: string,
+    model: OpenAIEntityModel | string,
+  ) {
+    const filename = FileApiHelper.extractFilename(attachmentUrl);
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'draw smiling emoticon',
+      model: modelToUse,
+    };
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: '',
+      model: modelToUse,
+      custom_content: {
+        attachments: [
+          {
+            type: FileApiHelper.getContentTypeForFile(filename)!,
+            title: filename,
+            url: attachmentUrl,
+          },
+        ],
+      },
+    };
+    return this.conversationBuilder
+      .withName(GeneratorUtil.randomString(10))
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
+  public prepareHistoryConversation(...conversations: TestConversation[]) {
+    const historyMessages: Message[] = [];
+    for (const conversation of conversations) {
+      historyMessages.push(...conversation.messages);
+    }
+    const lastConversation = conversations[conversations.length - 1];
+    lastConversation.messages = historyMessages;
+    return lastConversation;
   }
 
   private fillReplayData(
@@ -355,8 +406,14 @@ export class ConversationData extends FolderData {
     replayConversation.id = uuidv4();
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
+    if (!replayConversation.replay) {
+      replayConversation.replay = defaultReplay;
+    }
     replayConversation.replay.isReplay = true;
     replayConversation.replay.activeReplayIndex = 0;
+    if (!replayConversation.replay.replayUserMessagesStack) {
+      replayConversation.replay.replayUserMessagesStack = [];
+    }
     replayConversation.replay.replayUserMessagesStack.push(...userMessages);
     replayConversation.replay.replayAsIs = true;
     return replayConversation;

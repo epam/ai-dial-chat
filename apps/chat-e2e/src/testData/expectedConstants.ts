@@ -106,9 +106,13 @@ export const API = {
   sessionHost: '/api/auth/session',
   defaultIconHost: '/api/themes/image?name=default-model',
   bucketHost: '/api/bucket',
-  conversationsHost: '/api/listing/conversations',
-  promptsHost: '/api/listing/prompts',
+  listingHost: '/api/listing',
+  conversationsHost: () => `${API.listingHost}/conversations`,
+  promptsHost: () => `${API.listingHost}/prompts`,
+  filesListingHost: () => `${API.listingHost}/files`,
   fileHost: '/api/files',
+  modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
+  importFilePath: (bucket: string) => `files/${bucket}/imports`,
 };
 
 export const Import = {
@@ -119,13 +123,19 @@ export const Import = {
   v14AppBisonChatName: 'bison chat king',
   v14AppImportedFilename: 'ai_dial_chat_history_1-4_version.json',
   v19AppImportedFilename: 'ai_dial_chat_history_1-9_version.json',
+  importedAttachmentsFilename: 'ai_dial_chat_with_attachments.zip',
+  importedConversationWithAttachmentsName: `test`,
+  importedGpt4VisionAttachmentName: 'SDRequestAttachment.png',
+  importedStableDiffusionAttachmentName: 'SDResponseAttachment.png',
   v14AppFolderPromptName: 'Version 1.4 A*B',
   oldVersionAppGpt35Message: '11 * 12 =',
+  importAttachmentExtension: '.zip',
 };
 
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',
+  heartImageName: 'heart.webp',
 };
 
 export enum Side {

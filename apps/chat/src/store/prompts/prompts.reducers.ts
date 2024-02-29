@@ -295,8 +295,8 @@ export const promptsSlice = createSlice({
         payload,
       }: PayloadAction<{ prompts: Prompt[]; folders: FolderInterface[] }>,
     ) => {
-      state.prompts = payload.prompts;
-      state.folders = payload.folders;
+      state.prompts = combineEntities(payload.prompts, state.prompts);
+      state.folders = combineEntities(payload.folders, state.folders);
     },
     createFolder: (
       state,

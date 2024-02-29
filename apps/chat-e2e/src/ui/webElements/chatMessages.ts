@@ -1,6 +1,8 @@
+import config from '../../../config/playwright.config';
 import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Rate, Side } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -63,6 +65,38 @@ export class ChatMessages extends BaseElement {
 
   public getChatMessageRate(message: string | number, rate: Rate) {
     return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
+  }
+
+  public async openChatMessageAttachment(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    const messageAttachment =
+      this.getChatMessage(message).getByTitle(attachmentTitle);
+    if (isApiStorageType) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'GET' &&
+          resp.url().includes(attachmentTitle),
+        { timeout: config.use!.actionTimeout! * 2 },
+      );
+      await messageAttachment.click();
+      return respPromise;
+    }
+    await messageAttachment.click();
+  }
+
+  public async getChatMessageAttachmentUrl(message: string | number) {
+    const openedMessageAttachment =
+      this.getChatMessage(message).getByAltText('Attachment image');
+    return openedMessageAttachment.getAttribute(Attributes.src);
+  }
+
+  public async getChatMessageDownloadUrl(message: string | number) {
+    const openedMessageAttachment = this.getChatMessage(message).locator(
+      `${Tags.a}[${Attributes.download}]`,
+    );
+    return openedMessageAttachment.getAttribute(Attributes.href);
   }
 
   public async getGeneratedChatContent(messagesCount: number) {
