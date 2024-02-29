@@ -49,8 +49,15 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    uploadPromptsWithFoldersRecursive: (state) => {
-      state.promptsLoaded = false;
+    uploadPromptsWithFoldersRecursive: (
+      state,
+      {
+        payload,
+      }: PayloadAction<
+        { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
+      >,
+    ) => {
+      state.promptsLoaded = !payload?.noLoader;
     },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,

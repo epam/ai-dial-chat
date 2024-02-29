@@ -18,6 +18,7 @@ import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
+import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
@@ -42,7 +43,7 @@ import {
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { ShareActions } from './share.reducers';
+import { ShareActions, ShareSelectors } from './share.reducers';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -137,16 +138,19 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareConversationFolder.match),
     switchMap(({ payload }) => {
-      return ConversationService.getConversations(payload.resourceId).pipe(
-        switchMap((res) =>
-          zip(
+      return ConversationService.getConversations(
+        payload.resourceId,
+        true,
+      ).pipe(
+        switchMap((res) => {
+          return zip(
             res.map((res) =>
               ConversationService.getConversation({
                 ...res,
               }),
             ),
-          ),
-        ),
+          );
+        }),
         map((res) => res.filter(Boolean) as Conversation[]),
         switchMap((conversations: Conversation[]) => {
           const internalResourcesIds = conversations
@@ -245,9 +249,19 @@ const acceptInvitationEpic: AppEpic = (action$) =>
       return ShareService.shareAccept({
         invitationId: payload.invitationId,
       }).pipe(
-        map(() => {
-          return ShareActions.acceptShareInvitationSuccess();
-        }),
+        switchMap(() =>
+          ShareService.getShareDetails({
+            invitationId: payload.invitationId,
+          }).pipe(
+            switchMap((data) =>
+              of(
+                ShareActions.acceptShareInvitationSuccess({
+                  acceptedId: data.resources[0].url,
+                }),
+              ),
+            ),
+          ),
+        ),
         catchError((err) => {
           console.error(err);
           let message = errorsMessages.acceptShareFailed;
@@ -387,6 +401,13 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.getSharedListingSuccess.match),
     switchMap(({ payload }) => {
       const actions = [];
+      const acceptedId = ShareSelectors.selectAcceptedId(state$.value);
+      const decodedAcceptedId = acceptedId && ApiUtils.decodeApiUrl(acceptedId);
+      const isNewResource = [
+        ...payload.resources.entities,
+        ...payload.resources.folders,
+      ].some((item) => item.id === decodedAcceptedId);
+
       if (payload.featureType === FeatureType.Chat) {
         if (payload.sharedWith === ShareRelations.others) {
           const conversations = ConversationsSelectors.selectConversations(
@@ -411,6 +432,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               })
               .filter(Boolean) as AnyAction[]),
           );
+
           actions.push(
             ...(payload.resources.entities
               .map((conv) => {
@@ -431,6 +453,23 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
+          const [selectedConv] =
+            ConversationsSelectors.selectSelectedConversations(state$.value);
+
+          if (
+            selectedConv &&
+            !isNewResource &&
+            payload.resources.entities.some(
+              (conv) => conv.id === selectedConv.id,
+            )
+          ) {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [selectedConv.id],
+              }),
+            );
+          }
+
           payload.resources.entities.length &&
             actions.push(
               ConversationsActions.addConversations({
@@ -509,6 +548,54 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 })) as FolderInterface[],
               }),
             );
+        }
+      }
+
+      if (decodedAcceptedId && isNewResource) {
+        if (isConversationId(acceptedId)) {
+          if (isFolderId(acceptedId)) {
+            actions.push(
+              ConversationsActions.uploadConversationsWithFoldersRecursive({
+                path: decodedAcceptedId,
+                selectFirst: true,
+                noLoader: true,
+              }),
+            );
+            actions.push(ShareActions.resetShareId());
+          } else {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [decodedAcceptedId],
+              }),
+            );
+          }
+        } else if (isPromptId(acceptedId)) {
+          if (isFolderId(acceptedId)) {
+            actions.push(
+              PromptsActions.uploadPromptsWithFoldersRecursive({
+                path: decodedAcceptedId,
+                selectFirst: true,
+              }),
+            );
+            actions.push(ShareActions.resetShareId());
+          } else {
+            actions.push(
+              PromptsActions.setSelectedPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+            actions.push(
+              PromptsActions.uploadPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+          }
+          actions.push(
+            PromptsActions.setIsEditModalOpen({
+              isOpen: true,
+              isPreview: true,
+            }),
+          );
         }
       }
 
