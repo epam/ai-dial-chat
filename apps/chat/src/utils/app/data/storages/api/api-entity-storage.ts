@@ -79,7 +79,7 @@ export abstract class ApiEntityStorage<
   };
 
   getFoldersAndEntities(
-    path?: string | undefined,
+    path?: string,
   ): Observable<FoldersAndEntities<TEntityInfo>> {
     return ApiUtils.request(this.getListingUrl({ path })).pipe(
       map((items: (BackendChatFolder | BackendChatEntity)[]) => {
@@ -98,7 +98,7 @@ export abstract class ApiEntityStorage<
     );
   }
 
-  getFolders(path?: string | undefined): Observable<FolderInterface[]> {
+  getFolders(path?: string): Observable<FolderInterface[]> {
     const filter = BackendDataNodeType.FOLDER;
 
     const query = new URLSearchParams({
