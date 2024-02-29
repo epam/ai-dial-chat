@@ -517,9 +517,9 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        replayRequest = await chat.startReplay(
-          conversation.messages[0].content,
-        );
+        replayRequest = await dialHomePage.waitForIconLoaded(() => {
+          return chat.startReplay(conversation.messages[0].content);
+        }, gpt35Model.iconUrl!);
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
           .toBe(conversation.model.id);
