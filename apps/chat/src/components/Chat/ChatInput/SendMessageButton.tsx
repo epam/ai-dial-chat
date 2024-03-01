@@ -1,4 +1,4 @@
-import { IconSend } from '@tabler/icons-react';
+import { IconPlaystationSquare, IconSend } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
@@ -31,7 +31,10 @@ export const SendMessageButton = ({
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
-  const isSpinner = isLoading || isModelsLoading || messageIsStreaming;
+  const isSpinner = isLoading || isModelsLoading;
+  const [Icon, dataQa, disabled] = messageIsStreaming
+    ? [IconPlaystationSquare, 'stop-generating', false]
+    : [IconSend, 'send', isDisabled];
 
   return (
     <button
@@ -40,15 +43,15 @@ export const SendMessageButton = ({
         isOverlay ? 'right-3' : 'right-4',
       )}
       onClick={handleSend}
-      disabled={isDisabled}
-      data-qa="send"
+      disabled={disabled}
+      data-qa={dataQa}
     >
-      <Tooltip hideTooltip={!isDisabled} tooltip={tooltip}>
-        {isSpinner ? (
-          <Spinner size={20} />
-        ) : (
-          <IconSend size={24} stroke="1.5" />
-        )}
+      <Tooltip
+        hideTooltip={!disabled && !messageIsStreaming}
+        tooltip={tooltip}
+        isTriggerClickable
+      >
+        {isSpinner ? <Spinner size={20} /> : <Icon size={24} stroke="1.5" />}
       </Tooltip>
     </button>
   );

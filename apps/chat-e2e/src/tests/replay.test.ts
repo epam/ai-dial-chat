@@ -267,7 +267,9 @@ dialTest(
         await talkToSelector.selectModel(bison.name, bison.iconUrl);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
-        replayRequest = await chat.startReplay();
+        replayRequest = await dialHomePage.waitForIconLoaded(() => {
+          return chat.startReplay();
+        }, bison.iconUrl!);
       },
     );
 
@@ -515,9 +517,9 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        replayRequest = await chat.startReplay(
-          conversation.messages[0].content,
-        );
+        replayRequest = await dialHomePage.waitForIconLoaded(() => {
+          return chat.startReplay(conversation.messages[0].content);
+        }, gpt35Model.iconUrl!);
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
           .toBe(conversation.model.id);
@@ -692,16 +694,16 @@ dialTest(
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
-        await sendMessage.sendMessageButton.hoverOver();
+        await chat.stopGenerating.hoverOver();
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.waitForAssistantAnswerTooltip);
+          .toBe(ExpectedConstants.stopGeneratingTooltip);
 
-        const isSendButtonEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
+        const isSendButtonVisible =
+          await sendMessage.sendMessageButton.isVisible();
         expect
-          .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonDisabled)
+          .soft(isSendButtonVisible, ExpectedMessages.sendMessageButtonDisabled)
           .toBeFalsy();
       },
     );
