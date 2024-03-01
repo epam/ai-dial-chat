@@ -54,6 +54,9 @@ export const ChatbarSettings = () => {
   const isActiveNewConversationRequest = useAppSelector(
     ConversationsSelectors.selectIsActiveNewConversationRequest,
   );
+  const isMyItemsExist = useAppSelector(
+    ConversationsSelectors.selectDoesAnyMyItemExist,
+  );
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -107,6 +110,7 @@ export const ChatbarSettings = () => {
             zipImportHandler(typedArgs.content as File);
           }
         },
+        display: isMyItemsExist,
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
@@ -122,6 +126,7 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Delete all conversations'),
+        display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -150,6 +155,7 @@ export const ChatbarSettings = () => {
     ],
     [
       t,
+      isMyItemsExist,
       isStreaming,
       isActiveNewConversationRequest,
       enabledFeatures,
