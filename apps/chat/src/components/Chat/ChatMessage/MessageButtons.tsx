@@ -21,6 +21,11 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+enum LikeState {
+  Disliked = -1,
+  Liked = 1,
+}
+
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
   className,
@@ -129,48 +134,54 @@ export const MessageAssistantButtons = ({
       <div className="flex flex-row gap-2">
         {isLikesEnabled && !!message.responseId && (
           <>
-            {message.like !== -1 && (
+            {message.like !== LikeState.Disliked && (
               <Tooltip
                 placement="top"
-                isTriggerClickable={message.like !== 1}
-                tooltip={message.like !== 1 ? t('Like') : t('Liked')}
+                isTriggerClickable={message.like !== LikeState.Liked}
+                tooltip={
+                  message.like !== LikeState.Liked ? t('Like') : t('Liked')
+                }
               >
                 <Button
                   onClick={() => {
-                    if (message.like !== 1) {
-                      onLike(1);
+                    if (message.like !== LikeState.Liked) {
+                      onLike(LikeState.Liked);
                     }
                   }}
                   className={
-                    message.like !== 1
+                    message.like !== LikeState.Liked
                       ? 'text-secondary'
                       : 'text-accent-primary'
                   }
-                  disabled={message.like === 1}
+                  disabled={message.like === LikeState.Liked}
                   data-qa="like"
                 >
                   <IconThumbUp size={18} />
                 </Button>
               </Tooltip>
             )}
-            {message.like !== 1 && (
+            {message.like !== LikeState.Liked && (
               <Tooltip
                 placement="top"
-                isTriggerClickable={message.like !== -1}
-                tooltip={message.like !== -1 ? t('Dislike') : t('Disliked')}
+                isTriggerClickable={message.like !== LikeState.Disliked}
+                tooltip={
+                  message.like !== LikeState.Disliked
+                    ? t('Dislike')
+                    : t('Disliked')
+                }
               >
                 <Button
                   onClick={() => {
-                    if (message.like !== -1) {
-                      onLike(-1);
+                    if (message.like !== LikeState.Disliked) {
+                      onLike(LikeState.Disliked);
                     }
                   }}
                   className={
-                    message.like !== -1
+                    message.like !== LikeState.Disliked
                       ? 'text-secondary'
                       : 'text-accent-primary'
                   }
-                  disabled={message.like === -1}
+                  disabled={message.like === LikeState.Disliked}
                   data-qa="dislike"
                 >
                   <IconThumbDown size={18} />
@@ -232,48 +243,48 @@ export const MessageMobileButtons = ({
           onClick={onCopy}
         />
       )}
-      {message.like !== -1 && (
+      {message.like !== LikeState.Disliked && (
         <MenuItem
           className={classNames(
-            message.like !== 1 && 'hover:bg-accent-primary-alpha',
+            message.like !== LikeState.Liked && 'hover:bg-accent-primary-alpha',
           )}
           item={
             <div className="flex items-center gap-3">
               <IconThumbUp className="text-secondary" size={18} />
-              <p className={classNames(message.like === 1 && 'text-secondary')}>
-                {message.like === 1 ? t('Liked') : t('Like')}
+              <p className={classNames(message.like === LikeState.Liked && 'text-secondary')}>
+                {message.like === LikeState.Liked ? t('Liked') : t('Like')}
               </p>
             </div>
           }
-          disabled={message.like === 1}
+          disabled={message.like === LikeState.Liked}
           data-qa="like"
           onClick={() => {
-            if (message.like !== 1) {
-              onLike(1);
+            if (message.like !== LikeState.Liked) {
+              onLike(LikeState.Liked);
             }
           }}
         />
       )}
-      {message.like !== 1 && (
+      {message.like !== LikeState.Liked && (
         <MenuItem
-          disabled={message.like === -1}
+          disabled={message.like === LikeState.Disliked}
           className={classNames(
-            message.like === 1 && 'hover:bg-accent-primary-alpha',
+            message.like === LikeState.Liked && 'hover:bg-accent-primary-alpha',
           )}
           data-qa="dislike"
           item={
             <div className="flex items-center gap-3">
               <IconThumbDown className="text-secondary" size={18} />
               <p
-                className={classNames(message.like === -1 && 'text-secondary')}
+                className={classNames(message.like === LikeState.Disliked && 'text-secondary')}
               >
-                {message.like === -1 ? t('Disliked') : t('Dislike')}
+                {message.like === LikeState.Disliked ? t('Disliked') : t('Dislike')}
               </p>
             </div>
           }
           onClick={() => {
-            if (message.like !== -1) {
-              onLike(-1);
+            if (message.like !== LikeState.Disliked) {
+              onLike(LikeState.Disliked);
             }
           }}
         />
