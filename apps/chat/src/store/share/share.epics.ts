@@ -753,6 +753,34 @@ const discardSharedWithMeFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ConversationsActions.deleteFolder.match(action) ||
+        PromptsActions.deleteFolder.match(action) ||
+        ConversationsActions.updateFolder.match(action) ||
+        PromptsActions.updateFolder.match(action),
+    ),
+    switchMap(({ payload }) => {
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const isSharedFolder = folders.find(
+        (folder) => folder.id === payload.folderId,
+      )?.isShared;
+      const requireRevoke = payload.values ? payload.values.name : true;
+
+      return payload.folderId && isSharedFolder && requireRevoke
+        ? of(
+            ShareActions.revokeAccess({
+              resourceId: payload.folderId,
+              featureType: FeatureType.Chat,
+              isFolder: true,
+            }),
+          )
+        : EMPTY;
+    }),
+  );
+
 export const ShareEpics = combineEpics(
   shareEpic,
   shareFailEpic,
@@ -780,4 +808,6 @@ export const ShareEpics = combineEpics(
 
   triggerGettingSharedListingsConversationsEpic,
   triggerGettingSharedListingsPromptsEpic,
+
+  deleteOrRenameSharedFolderEpic,
 );
