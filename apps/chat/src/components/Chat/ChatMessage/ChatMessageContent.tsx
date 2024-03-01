@@ -333,8 +333,13 @@ export const ChatMessageContent = ({
         >
           {isUser ? (
             isEditing ? (
-              <div className="flex w-full flex-col gap-3 pr-[60px]">
-                <div className="relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary">
+              <div className="flex w-full flex-col gap-3">
+                <div
+                  className={classNames(
+                    'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+                    !isOverlay && 'text-base',
+                  )}
+                >
                   <textarea
                     ref={textareaRef}
                     className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
