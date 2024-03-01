@@ -15,9 +15,8 @@ import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
-  modelId: string | undefined;
+  modelId: string;
   prompts: Prompt[];
-  defaultModelId: string;
   addons: DialAIEntityAddon[];
   onClose: () => void;
   onChangeSettings: (args: {
@@ -33,7 +32,6 @@ interface Props {
 
 export const ChatSettings = ({
   modelId,
-  defaultModelId,
   conversation,
   prompts,
   onClose,
@@ -42,9 +40,7 @@ export const ChatSettings = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [currentModelId, setCurrentModelId] = useState<string>(
-    modelId ?? defaultModelId,
-  );
+  const [currentModelId, setCurrentModelId] = useState<string>(modelId);
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,

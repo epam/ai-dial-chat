@@ -62,7 +62,6 @@ export const ChatView = memo(() => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
-  const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
@@ -605,7 +604,6 @@ export const ChatView = memo(() => {
                               conversation={conv}
                               isModels={models.length !== 0}
                               prompts={prompts}
-                              defaultModelId={defaultModelId}
                               isShowSettings={enabledFeatures.has(
                                 Feature.EmptyChatSettings,
                               )}
@@ -774,7 +772,6 @@ export const ChatView = memo(() => {
                     <div className="relative h-full" key={conv.id}>
                       <ChatSettings
                         conversation={conv}
-                        defaultModelId={defaultModelId}
                         modelId={conv.model.id}
                         prompts={prompts}
                         addons={addons}

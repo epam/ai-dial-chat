@@ -58,6 +58,7 @@ export interface DialAIEntity {
 }
 
 export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
+  isDefault: boolean;
   limits?: {
     maxTotalTokens: number;
     maxResponseTokens: number;

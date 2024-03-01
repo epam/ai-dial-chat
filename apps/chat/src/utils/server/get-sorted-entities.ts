@@ -70,6 +70,11 @@ export const getSortedEntities = async (token: JWT | null) => {
     return [];
   });
 
+  const preProcessedEntities = [...models, ...applications, ...assistants];
+  const defaultModelId =
+    preProcessedEntities.find((model) => model.id === process.env.DEFAULT_MODEL)
+      ?.id || preProcessedEntities[0].id;
+
   for (const entity of [...models, ...applications, ...assistants]) {
     if (
       entity.capabilities?.embeddings ||
@@ -115,6 +120,7 @@ export const getSortedEntities = async (token: JWT | null) => {
     entities.push({
       id: entity.id,
       name: entity.display_name ?? entity.id,
+      isDefault: defaultModelId === entity.id,
       version: entity.display_version,
       description: entity.description,
       iconUrl: entity.icon_url,

@@ -1,6 +1,7 @@
 import { signOut } from 'next-auth/react';
 
 import {
+  EMPTY,
   catchError,
   filter,
   from,
@@ -24,7 +25,10 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { SettingsSelectors } from '../settings/settings.reducers';
+import {
+  SettingsActions,
+  SettingsSelectors,
+} from '../settings/settings.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -123,6 +127,22 @@ const updateRecentModelsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
+const getModelsSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ModelsActions.getModelsSuccess.match),
+    switchMap(({ payload }) => {
+      const defaultModelId = payload.models.find(
+        (model) => model.isDefault,
+      )?.id;
+
+      if (defaultModelId) {
+        return of(SettingsActions.setDefaultModelId({ defaultModelId }));
+      }
+
+      return EMPTY;
+    }),
+  );
+
 const getModelsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.getModelsFail.match),
@@ -137,7 +157,8 @@ const getModelsFailEpic: AppEpic = (action$) =>
 export const ModelsEpics = combineEpics(
   initEpic,
   getModelsEpic,
-  updateRecentModelsEpic,
+  getModelsSuccessEpic,
   getModelsFailEpic,
+  updateRecentModelsEpic,
   initRecentModelsEpic,
 );
