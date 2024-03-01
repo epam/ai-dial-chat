@@ -10,7 +10,12 @@ import { getConversationRootId } from '@/src/utils/app/id';
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationInfo,
+  LikeState,
+  Message,
+} from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
@@ -558,7 +563,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversationId: string;
         messageIndex: number;
-        rate: number;
+        rate: LikeState;
       }>,
     ) => state,
     rateMessageSuccess: (
@@ -566,7 +571,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversationId: string;
         messageIndex: number;
-        rate: number;
+        rate: LikeState;
       }>,
     ) => state,
     rateMessageFail: (

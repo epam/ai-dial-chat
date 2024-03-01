@@ -7,6 +7,7 @@ import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   Conversation,
   ConversationsTemporarySettings,
+  LikeState,
   MergedMessages,
   Message,
   Replay,
@@ -156,7 +157,7 @@ export const ChatView = memo(() => {
   }, [selectedConversations, models, isModelsLoaded, addonsMap]);
 
   const onLikeHandler = useCallback(
-    (index: number, conversation: Conversation) => (rate: number) => {
+    (index: number, conversation: Conversation) => (rate: LikeState) => {
       dispatch(
         ConversationsActions.rateMessage({
           conversationId: conversation.id,
