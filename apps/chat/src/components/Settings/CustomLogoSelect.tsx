@@ -60,7 +60,7 @@ export const CustomLogoSelect = ({
             onLogoSelect(files as string[]);
             setIsSelectFilesDialogOpened(false);
           }}
-          customHeaderLabel={t('Select custom logo') as string}
+          headerLabel={t('Select custom logo')}
           customButtonLabel={t('Select file') as string}
         />
       )}

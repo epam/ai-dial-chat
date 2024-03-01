@@ -93,7 +93,7 @@ export const AttachButton = ({
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          customHeaderLabel={t('Attach files') as string}
+          headerLabel={t('Attach files')}
           customButtonLabel={t('Attach files') as string}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {

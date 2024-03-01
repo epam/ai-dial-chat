@@ -178,6 +178,7 @@ export const ChatbarSettings = () => {
           onClose={() => {
             setIsSelectFilesDialogOpened(false);
           }}
+          headerLabel={t('Manage attachments')}
         />
       )}
 

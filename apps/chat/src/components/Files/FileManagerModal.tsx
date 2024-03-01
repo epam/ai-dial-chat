@@ -39,7 +39,7 @@ interface Props {
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
-  customHeaderLabel?: string;
+  headerLabel: string;
   customButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
 }
@@ -48,7 +48,7 @@ export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
   initialSelectedFilesIds = [],
-  customHeaderLabel,
+  headerLabel,
   customButtonLabel,
   maximumAttachmentsAmount = 0,
   onClose,
@@ -82,10 +82,6 @@ export const FileManagerModal = ({
     initialSelectedFilesIds,
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
-
-  const headerLabel = customHeaderLabel
-    ? customHeaderLabel
-    : t('Manage attachments');
 
   const {
     handleRenameFolder,
@@ -426,7 +422,7 @@ export const FileManagerModal = ({
             onClick={handleStartUploadFiles}
             className={classNames(
               'button',
-              customHeaderLabel ? 'button-secondary' : 'button-primary',
+              customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
           >
             {t('Upload from device')}
