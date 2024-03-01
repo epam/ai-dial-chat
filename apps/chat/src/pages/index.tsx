@@ -35,7 +35,6 @@ import {
 } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
 import { SHARE_QUERY_PARAM } from '../constants/share';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
@@ -274,7 +273,6 @@ export const getServerSideProps: GetServerSideProps = async ({
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
-    defaultModelId: process.env.DEFAULT_MODEL || FALLBACK_MODEL_ID,
     defaultRecentModelsIds:
       (process.env.RECENT_MODELS_IDS &&
         process.env.RECENT_MODELS_IDS.split(',')) ||
@@ -299,6 +297,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
+    defaultModelId: undefined,
   };
 
   return {

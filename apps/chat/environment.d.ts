@@ -35,6 +35,8 @@ declare global {
       SHOW_TOKEN_SUB?: string;
       STORAGE_TYPE?: string;
       TRACES_URL?: string;
+      MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
+      MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;
