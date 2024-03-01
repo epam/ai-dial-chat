@@ -61,6 +61,7 @@ export const CustomLogoSelect = ({
             setIsSelectFilesDialogOpened(false);
           }}
           customHeaderLabel={t('Select custom logo') as string}
+          customButtonLabel={t('Select file') as string}
         />
       )}
     </div>

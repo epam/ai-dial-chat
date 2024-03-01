@@ -34,11 +34,11 @@ const Header = () => {
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
   const customLogoUrl =
-    enabledFeatures.has(Feature.CustomLogo) &&
+    isCustomLogoFeatureEnabled &&
     customLogo &&
     `api/${ApiUtils.encodeApiUrl(customLogo)}`;
 

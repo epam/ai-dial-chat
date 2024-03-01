@@ -4,7 +4,6 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { splitEntityId } from '@/src/utils/app/folders';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -12,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Modal from '@/src/components/Common/Modal';
@@ -19,6 +19,8 @@ import Modal from '@/src/components/Common/Modal';
 import { ToggleSwitchLabeled } from '../Common/ToggleSwitch/ToggleSwitchLabeled';
 import { CustomLogoSelect } from './CustomLogoSelect';
 import { ThemeSelect } from './ThemeSelect';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
   open: boolean;
@@ -29,8 +31,11 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const files = useAppSelector(FilesSelectors.selectFiles);
-  const customLogoUrl = useAppSelector(UISelectors.selectCustomLogo);
-  const customLogoId = customLogoUrl && ApiUtils.decodeApiUrl(customLogoUrl);
+  const customLogoId = useAppSelector(UISelectors.selectCustomLogo);
+  const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
+  );
+
   const customLogoLocalStoreName = useMemo(() => {
     return customLogoId && splitEntityId(customLogoId).name;
   }, [customLogoId]);
@@ -110,13 +115,15 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
         />
-        <CustomLogoSelect
-          files={files}
-          setLocalLogoFile={setLocalLogoFile}
-          localLogo={
-            (localLogoFile && localLogoFile.name) ?? customLogoLocalStoreName
-          }
-        />
+        {isCustomLogoFeatureEnabled && (
+          <CustomLogoSelect
+            files={files}
+            setLocalLogoFile={setLocalLogoFile}
+            localLogo={
+              (localLogoFile && localLogoFile.name) ?? customLogoLocalStoreName
+            }
+          />
+        )}
         <ToggleSwitchLabeled
           isOn={isChatFullWidthLocal}
           labelText={t('Full width chat')}

@@ -39,8 +39,8 @@ interface Props {
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
-  isInConversation?: boolean;
   customHeaderLabel?: string;
+  customButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
 }
 
@@ -48,8 +48,8 @@ export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
   initialSelectedFilesIds = [],
-  isInConversation = false,
   customHeaderLabel,
+  customButtonLabel,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
@@ -286,7 +286,7 @@ export const FileManagerModal = ({
       <div className="flex flex-col gap-2 overflow-auto p-6">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
-            {isInConversation ? t('Attach files') : headerLabel}
+            {headerLabel}
           </h2>
         </div>
         <p id={descriptionId}>
@@ -426,29 +426,18 @@ export const FileManagerModal = ({
             onClick={handleStartUploadFiles}
             className={classNames(
               'button',
-              isInConversation || customHeaderLabel
-                ? 'button-secondary'
-                : 'button-primary',
+              customHeaderLabel ? 'button-secondary' : 'button-primary',
             )}
           >
             {t('Upload from device')}
           </button>
-          {isInConversation && (
+          {customButtonLabel && (
             <button
               onClick={handleAttachFiles}
               className="button button-primary"
               disabled={selectedFilesIds.length === 0}
             >
-              {t('Attach files')}
-            </button>
-          )}
-          {customHeaderLabel && (
-            <button
-              onClick={handleAttachFiles}
-              className="button button-primary"
-              disabled={selectedFilesIds.length === 0}
-            >
-              {t('Select file')}
+              {customButtonLabel}
             </button>
           )}
         </div>

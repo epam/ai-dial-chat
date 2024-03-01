@@ -93,7 +93,8 @@ export const AttachButton = ({
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          isInConversation
+          customHeaderLabel={t('Attach files') as string}
+          customButtonLabel={t('Attach files') as string}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
