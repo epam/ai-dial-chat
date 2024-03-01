@@ -6,4 +6,8 @@ export class ImportExportLoader extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
     super(page, ChatSelectors.importExportLoader, parentLocator);
   }
+
+  public stopLoading = this.getChildElementBySelector(
+    ChatSelectors.stopLoading,
+  );
 }

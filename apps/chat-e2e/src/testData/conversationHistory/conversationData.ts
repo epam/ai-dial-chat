@@ -321,12 +321,12 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareConversationWithAttachment(
+  public prepareConversationWithAttachmentInRequest(
     attachmentUrl: string,
     model: OpenAIEntityModel | string,
     hasRequest?: boolean,
   ) {
-    const filename = attachmentUrl.split('/')[2];
+    const filename = FileApiHelper.extractFilename(attachmentUrl);
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const userMessage: Message = {
       role: Role.User,
@@ -341,10 +341,60 @@ export class ConversationData extends FolderData {
         ],
       },
     };
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'Heart',
+      model: modelToUse,
+    };
     return this.conversationBuilder
+      .withName(GeneratorUtil.randomString(10))
       .withMessage(userMessage)
+      .withMessage(assistantMessage)
       .withModel(modelToUse)
       .build();
+  }
+
+  public prepareConversationWithAttachmentInResponse(
+    attachmentUrl: string,
+    model: OpenAIEntityModel | string,
+  ) {
+    const filename = FileApiHelper.extractFilename(attachmentUrl);
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'draw smiling emoticon',
+      model: modelToUse,
+    };
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: '',
+      model: modelToUse,
+      custom_content: {
+        attachments: [
+          {
+            type: FileApiHelper.getContentTypeForFile(filename)!,
+            title: filename,
+            url: attachmentUrl,
+          },
+        ],
+      },
+    };
+    return this.conversationBuilder
+      .withName(GeneratorUtil.randomString(10))
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
+  public prepareHistoryConversation(...conversations: TestConversation[]) {
+    const historyMessages: Message[] = [];
+    for (const conversation of conversations) {
+      historyMessages.push(...conversation.messages);
+    }
+    const lastConversation = conversations[conversations.length - 1];
+    lastConversation.messages = historyMessages;
+    return lastConversation;
   }
 
   private fillReplayData(

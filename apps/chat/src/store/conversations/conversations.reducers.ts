@@ -342,8 +342,11 @@ export const conversationsSlice = createSlice({
         folders: FolderInterface[];
       }>,
     ) => {
-      state.conversations = payload.conversations;
-      state.folders = payload.folders;
+      state.conversations = combineEntities(
+        payload.conversations,
+        state.conversations,
+      );
+      state.folders = combineEntities(payload.folders, state.folders);
       state.selectedConversationsIds = [
         payload.conversations[payload.conversations.length - 1].id,
       ];
