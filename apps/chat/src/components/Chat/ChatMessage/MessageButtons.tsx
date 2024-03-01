@@ -106,7 +106,7 @@ export const MessageAssistantButtons = ({
   return (
     <div
       className={classNames(
-        'mt-4 flex w-full justify-end gap-2',
+        'flex w-full justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >

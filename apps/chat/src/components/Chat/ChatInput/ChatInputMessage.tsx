@@ -332,9 +332,6 @@ export const ChatInputMessage = ({
     : isOverlay
       ? 'pl-3'
       : 'pl-4';
-  const overlayPaddingAndTextStyleClass = isOverlay
-    ? 'py-[7px] pr-9 text-sm'
-    : 'py-2.5 pr-10 text-base md:py-3';
 
   return (
     <div
@@ -351,7 +348,7 @@ export const ChatInputMessage = ({
           ref={textareaRef}
           className={classNames(
             'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
-            overlayPaddingAndTextStyleClass,
+            isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-3',
             paddingLeftClass,
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}

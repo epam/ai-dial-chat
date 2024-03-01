@@ -153,7 +153,9 @@ async function handleGetRequest(
   res.setHeader('transfer-encoding', 'chunked');
   res.setHeader(
     'Content-Type',
-    proxyRes.headers.get('Content-Type') || 'text/plain',
+    proxyRes.headers.get('Content-Type') ??
+      req.headers['content-type'] ??
+      'application/json',
   );
 
   proxyRes.body?.pipe(res);
