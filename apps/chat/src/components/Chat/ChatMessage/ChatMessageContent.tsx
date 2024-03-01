@@ -288,7 +288,7 @@ export const ChatMessageContent = ({
     <div
       ref={messageRef}
       className={classNames(
-        'group h-full min-h-[78px] border-b border-secondary md:px-4 xl:px-8',
+        'group h-full border-b border-secondary md:px-4 xl:px-8',
         isAssistant && 'bg-layer-2',
       )}
       style={{ overflowWrap: 'anywhere' }}

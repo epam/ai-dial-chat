@@ -15,6 +15,9 @@ import classNames from 'classnames';
 import { Message, Role } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
@@ -28,7 +31,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        'text-secondary [&:not(:disabled)]:hover:text-accent-primary',
+        '[&:not(:disabled)]:hover:text-accent-primary',
         className,
       )}
       {...props}
@@ -49,21 +52,34 @@ export const MessageUserButtons = ({
   toggleEditing,
   editDisabled,
 }: MessageUserButtonsProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
   return (
-    <div className="mt-4 flex w-full items-center justify-end gap-2">
-      <button
-        className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
-        onClick={toggleEditing}
-        disabled={editDisabled}
-      >
-        <IconEdit size={18} />
-      </button>
-      <button
-        className="text-secondary hover:text-accent-primary"
-        onClick={onDelete}
-      >
-        <IconTrash size={18} />
-      </button>
+    <div
+      className={classNames(
+        'flex w-full items-center justify-end gap-2',
+        isOverlay ? 'mt-3' : 'mt-4',
+      )}
+    >
+      <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+        <button
+          className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+          onClick={toggleEditing}
+          disabled={editDisabled}
+        >
+          <IconEdit size={18} />
+        </button>
+      </Tooltip>
+      <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
+        <button
+          className="text-secondary hover:text-accent-primary"
+          onClick={onDelete}
+        >
+          <IconTrash size={18} />
+        </button>
+      </Tooltip>
     </div>
   );
 };
@@ -85,32 +101,33 @@ export const MessageAssistantButtons = ({
 }: MessageAssistantButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
   return (
-    <div className="mt-4 flex w-full justify-end gap-2">
-      <div className="ml-1 flex items-center">
-        {messageCopied ? (
-          <Tooltip
-            placement="top"
-            isTriggerClickable
-            tooltip={t('Text copied')}
-          >
-            <IconCheck size={18} className="text-secondary" />
-          </Tooltip>
-        ) : (
-          <Tooltip placement="top" isTriggerClickable tooltip={t('Copy text')}>
-            <Button onClick={copyOnClick}>
-              <IconCopy size={18} />
-            </Button>
-          </Tooltip>
-        )}
-      </div>
+    <div
+      className={classNames(
+        'mt-4 flex w-full justify-end gap-2',
+        isOverlay ? 'mt-3' : 'mt-4',
+      )}
+    >
+      {messageCopied ? (
+        <Tooltip placement="top" isTriggerClickable tooltip={t('Copied')}>
+          <IconCheck size={18} className="text-secondary" />
+        </Tooltip>
+      ) : (
+        <Tooltip placement="top" isTriggerClickable tooltip={t('Copy')}>
+          <Button className="text-secondary" onClick={copyOnClick}>
+            <IconCopy size={18} />
+          </Button>
+        </Tooltip>
+      )}
       <div className="flex flex-row gap-2">
         {isLikesEnabled && !!message.responseId && (
           <>
             {message.like !== -1 && (
               <Tooltip
                 placement="top"
-                isTriggerClickable
+                isTriggerClickable={message.like !== 1}
                 tooltip={message.like !== 1 ? t('Like') : t('Liked')}
               >
                 <Button
@@ -119,7 +136,11 @@ export const MessageAssistantButtons = ({
                       onLike(1);
                     }
                   }}
-                  className={message.like !== 1 ? void 0 : 'text-secondary'}
+                  className={
+                    message.like !== 1
+                      ? 'text-secondary'
+                      : 'text-accent-primary'
+                  }
                   disabled={message.like === 1}
                   data-qa="like"
                 >
@@ -130,7 +151,7 @@ export const MessageAssistantButtons = ({
             {message.like !== 1 && (
               <Tooltip
                 placement="top"
-                isTriggerClickable
+                isTriggerClickable={message.like !== -1}
                 tooltip={message.like !== -1 ? t('Dislike') : t('Disliked')}
               >
                 <Button
@@ -139,7 +160,11 @@ export const MessageAssistantButtons = ({
                       onLike(-1);
                     }
                   }}
-                  className={message.like !== -1 ? void 0 : 'text-secondary'}
+                  className={
+                    message.like !== -1
+                      ? 'text-secondary'
+                      : 'text-accent-primary'
+                  }
                   disabled={message.like === -1}
                   data-qa="dislike"
                 >
