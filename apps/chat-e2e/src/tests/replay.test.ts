@@ -1,5 +1,5 @@
 import { ChatBody } from '@/chat/types/chat';
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
@@ -14,10 +14,10 @@ import { Colors, Styles } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let allModels: OpenAIEntityModel[];
-let gpt35Model: OpenAIEntityModel;
-let gpt4Model: OpenAIEntityModel;
-let bison: OpenAIEntityModel;
+let allModels: DialAIEntityModel[];
+let gpt35Model: DialAIEntityModel;
+let gpt4Model: DialAIEntityModel;
+let bison: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
@@ -267,9 +267,7 @@ dialTest(
         await talkToSelector.selectModel(bison.name, bison.iconUrl);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
-        replayRequest = await dialHomePage.waitForIconLoaded(() => {
-          return chat.startReplay();
-        }, bison.iconUrl!);
+        replayRequest = await chat.startReplay();
       },
     );
 
@@ -306,7 +304,7 @@ dialTest(
       'Hover over chat header model and verify chat settings on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await chatHeader.hoverOverChatModel(bison.iconUrl);
+        await chatHeader.hoverOverChatModel();
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
@@ -517,9 +515,9 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        replayRequest = await dialHomePage.waitForIconLoaded(() => {
-          return chat.startReplay(conversation.messages[0].content);
-        }, gpt35Model.iconUrl!);
+        replayRequest = await chat.startReplay(
+          conversation.messages[0].content,
+        );
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
           .toBe(conversation.model.id);
@@ -549,7 +547,7 @@ dialTest(
       'Hover over chat header model and verify chat settings on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await chatHeader.hoverOverChatModel(gpt35Model.iconUrl);
+        await chatHeader.hoverOverChatModel();
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)

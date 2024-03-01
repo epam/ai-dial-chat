@@ -1,7 +1,7 @@
 import { defaultReplay } from '@/chat/constants/replay';
 import { Message, Role, Stage } from '@/chat/types/chat';
 import { FolderType } from '@/chat/types/folder';
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import {
   ConversationBuilder,
   ExpectedConstants,
@@ -35,7 +35,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultConversation(
-    model?: OpenAIEntityModel | string,
+    model?: DialAIEntityModel | string,
     name?: string,
   ) {
     const modelToUse = model
@@ -63,7 +63,7 @@ export class ConversationData extends FolderData {
     temp: number,
     sysPrompt: string,
     addons: string[],
-    model?: OpenAIEntityModel | string,
+    model?: DialAIEntityModel | string,
   ) {
     const basicConversation = this.prepareDefaultConversation(model);
     this.conversationBuilder.setConversation(basicConversation);
@@ -75,7 +75,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareModelConversationBasedOnRequests(
-    model: OpenAIEntityModel | string,
+    model: DialAIEntityModel | string,
     requests: string[],
     name?: string,
   ) {
@@ -96,7 +96,7 @@ export class ConversationData extends FolderData {
     return this.conversationBuilder.build();
   }
 
-  public prepareConversationWithDifferentModels(models: OpenAIEntityModel[]) {
+  public prepareConversationWithDifferentModels(models: DialAIEntityModel[]) {
     const requests: string[] = new Array(models.length);
     for (let i = 0; i < requests.length; i++) {
       requests[i] = `${i} + ${i + 1} =`;
@@ -115,7 +115,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareEmptyConversation(
-    model?: OpenAIEntityModel | string,
+    model?: DialAIEntityModel | string,
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -124,7 +124,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareErrorResponseConversation(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ) {
     const defaultConversation = this.prepareDefaultConversation(model, name);
@@ -173,7 +173,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareAddonsConversation(
-    model: OpenAIEntityModel,
+    model: DialAIEntityModel,
     addons: string[],
     request?: string,
   ) {
@@ -214,9 +214,9 @@ export class ConversationData extends FolderData {
   }
 
   public prepareAssistantConversation(
-    assistant: OpenAIEntityModel,
+    assistant: DialAIEntityModel,
     addons: string[],
-    assistantModel?: OpenAIEntityModel,
+    assistantModel?: DialAIEntityModel,
   ) {
     const conversation = this.prepareAddonsConversation(assistant, addons);
     conversation.assistantModelId = assistantModel
@@ -255,7 +255,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultConversationInFolder(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ): FolderConversation {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -265,7 +265,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareYesterdayConversation(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -273,14 +273,14 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareLastWeekConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareLastWeekConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getLastWeekDate();
     return conversation;
   }
 
   public prepareLastMonthConversation(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -288,7 +288,7 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareOlderConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareOlderConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getOlderDate();
     return conversation;
@@ -324,7 +324,7 @@ export class ConversationData extends FolderData {
 
   public prepareConversationWithAttachmentInRequest(
     attachmentUrl: string,
-    model: OpenAIEntityModel | string,
+    model: DialAIEntityModel | string,
     hasRequest?: boolean,
   ) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
@@ -357,7 +357,7 @@ export class ConversationData extends FolderData {
 
   public prepareConversationWithAttachmentInResponse(
     attachmentUrl: string,
-    model: OpenAIEntityModel | string,
+    model: DialAIEntityModel | string,
   ) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     const modelToUse = { id: typeof model === 'string' ? model : model.id };

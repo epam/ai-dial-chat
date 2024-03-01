@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -17,9 +17,9 @@ import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let defaultModel: OpenAIEntityModel;
-let gpt4Model: OpenAIEntityModel;
-let bisonModel: OpenAIEntityModel;
+let defaultModel: DialAIEntityModel;
+let gpt4Model: DialAIEntityModel;
+let bisonModel: DialAIEntityModel;
 let recentModels: string[];
 
 dialTest.beforeAll(async () => {
@@ -788,20 +788,14 @@ dialTest(
 
         await rightConversationSettings
           .getTalkToSelector()
-          .selectModel(
-            secondUpdatedRandomModel.name,
-            secondUpdatedRandomModelIcon,
-          );
+          .selectModel(secondUpdatedRandomModel.name);
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
         await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
         await rightEntitySettings
           .getTemperatureSlider()
           .setTemperature(secondUpdatedTemp);
-        await chat.applyNewEntity(
-          firstUpdatedRandomModel.iconUrl,
-          secondUpdatedRandomModel.iconUrl,
-        );
+        await chat.applyNewEntity();
       },
     );
 
@@ -844,9 +838,7 @@ dialTest(
       'Hover over chat headers and verify chat settings updated on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await rightChatHeader.hoverOverChatModel(
-          secondUpdatedRandomModel.iconUrl,
-        );
+        await rightChatHeader.hoverOverChatModel();
         const rightModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
@@ -868,9 +860,7 @@ dialTest(
           .toBe(secondUpdatedTemp.toString());
 
         await errorPopup.cancelPopup();
-        await leftChatHeader.hoverOverChatModel(
-          firstUpdatedRandomModel.iconUrl,
-        );
+        await leftChatHeader.hoverOverChatModel();
         const leftModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)

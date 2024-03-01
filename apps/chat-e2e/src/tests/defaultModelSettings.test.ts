@@ -2,16 +2,16 @@ import dialTest from '../core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages, ModelIds } from '../testData';
 import { Colors, Cursors, Styles } from '../ui/domData';
 
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let defaultModel: OpenAIEntityModel;
-let bison: OpenAIEntityModel;
+let defaultModel: DialAIEntityModel;
+let bison: DialAIEntityModel;
 let recentAddonIds: string[];
 let recentModelIds: string[];
-let allEntities: OpenAIEntityModel[];
+let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;

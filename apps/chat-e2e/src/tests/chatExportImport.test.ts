@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -26,8 +26,8 @@ let newFolderConversationData: UploadDownloadData;
 let threeConversationsData: UploadDownloadData;
 const exportedConversations: UploadDownloadData[] = [];
 const updatedExportedConversations: UploadDownloadData[] = [];
-let gpt35Model: OpenAIEntityModel;
-let gpt4Model: OpenAIEntityModel;
+let gpt35Model: DialAIEntityModel;
+let gpt4Model: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;

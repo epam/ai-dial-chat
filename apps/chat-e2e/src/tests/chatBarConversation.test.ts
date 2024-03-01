@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -15,9 +15,9 @@ import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 
-let gpt35Model: OpenAIEntityModel;
-let gpt4Model: OpenAIEntityModel;
-let bisonModel: OpenAIEntityModel;
+let gpt35Model: DialAIEntityModel;
+let gpt4Model: DialAIEntityModel;
+let bisonModel: DialAIEntityModel;
 
 const request = 'What is epam official name';
 const notMatchingSearchTerm = 'abc';

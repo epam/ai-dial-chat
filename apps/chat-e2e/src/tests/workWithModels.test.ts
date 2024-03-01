@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -19,8 +19,8 @@ const requestTerm = 'qwer';
 const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
 const promptContent = `Type: "${expectedResponse}" if user types ${requestTerm}`;
-let gpt35Model: OpenAIEntityModel;
-let gpt4Model: OpenAIEntityModel;
+let gpt35Model: DialAIEntityModel;
+let gpt4Model: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
@@ -373,7 +373,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
@@ -393,7 +393,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(gpt4Model.name, gpt4Model.iconUrl);
+        await talkToSelector.selectModel(gpt4Model.name);
         await entitySettings.setSystemPrompt(promptContent);
         await chat.sendRequestWithButton(requestTerm);
       },

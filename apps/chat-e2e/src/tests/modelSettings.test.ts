@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
@@ -8,8 +8,8 @@ import { expect } from '@playwright/test';
 const sysPrompt = 'test prompt';
 const temp = 0.8;
 
-let models: OpenAIEntityModel[];
-let defaultModel: OpenAIEntityModel;
+let models: DialAIEntityModel[];
+let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels();
