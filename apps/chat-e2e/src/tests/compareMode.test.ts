@@ -20,11 +20,13 @@ import { expect } from '@playwright/test';
 let defaultModel: OpenAIEntityModel;
 let gpt4Model: OpenAIEntityModel;
 let bisonModel: OpenAIEntityModel;
+let recentModels: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  recentModels = ModelsUtil.getRecentModelIds();
 });
 
 dialTest(
@@ -762,13 +764,21 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
+        const firstUpdatedRandomModelIcon = recentModels.includes(
+          firstUpdatedRandomModel.id,
+        )
+          ? undefined
+          : firstUpdatedRandomModel.iconUrl;
+        const secondUpdatedRandomModelIcon = recentModels.includes(
+          secondUpdatedRandomModel.id,
+        )
+          ? undefined
+          : secondUpdatedRandomModel.iconUrl;
         await leftConversationSettings
           .getTalkToSelector()
           .selectModel(
             firstUpdatedRandomModel.name,
-            firstUpdatedRandomModel.id !== defaultModel.id
-              ? firstUpdatedRandomModel.iconUrl
-              : undefined,
+            firstUpdatedRandomModelIcon,
           );
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
@@ -780,9 +790,7 @@ dialTest(
           .getTalkToSelector()
           .selectModel(
             secondUpdatedRandomModel.name,
-            secondUpdatedRandomModel.id !== defaultModel.id
-              ? secondUpdatedRandomModel.iconUrl
-              : undefined,
+            secondUpdatedRandomModelIcon,
           );
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
