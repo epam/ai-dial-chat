@@ -19,7 +19,7 @@ import {
 } from '@/src/utils/app/file';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { Conversation, Message, Role } from '@/src/types/chat';
+import {Conversation, LikeState, Message, Role} from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
@@ -56,7 +56,7 @@ export interface Props {
   editDisabled?: boolean;
   toggleEditing: (value: boolean) => void;
   onCopy?: () => void;
-  onLike?: (likeStatus: number) => void;
+  onLike?: (likeStatus: LikeState) => void;
   onDelete?: () => void;
   onClick?: (
     e: MouseEvent<HTMLDivElement>,

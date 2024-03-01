@@ -12,7 +12,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { Message, Role } from '@/src/types/chat';
+import { LikeState, Message, Role } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -20,11 +20,6 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
-
-enum LikeState {
-  Disliked = -1,
-  Liked = 1,
-}
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
@@ -94,7 +89,7 @@ interface MessageAssistantButtonsProps {
   copyOnClick: () => void;
   isLikesEnabled: boolean;
   message: Message;
-  onLike: (likeStatus: number) => void;
+  onLike: (likeStatus: LikeState) => void;
 }
 
 export const MessageAssistantButtons = ({
@@ -144,7 +139,7 @@ export const MessageAssistantButtons = ({
               >
                 <Button
                   onClick={() => {
-                    if (message.like !== LikeState.Liked) {
+                    if (message.like !== LikeState.NoState) {
                       onLike(LikeState.Liked);
                     }
                   }}
@@ -172,7 +167,7 @@ export const MessageAssistantButtons = ({
               >
                 <Button
                   onClick={() => {
-                    if (message.like !== LikeState.Disliked) {
+                    if (message.like !== LikeState.NoState) {
                       onLike(LikeState.Disliked);
                     }
                   }}
@@ -200,7 +195,7 @@ interface MessageMobileButtonsProps {
   onCopy: () => void;
   messageCopied: boolean;
   editDisabled: boolean;
-  onLike: (likeStatus: number) => void;
+  onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
   isEditing: boolean;
   toggleEditing: (value: boolean) => void;
@@ -263,7 +258,7 @@ export const MessageMobileButtons = ({
           disabled={message.like === LikeState.Liked}
           data-qa="like"
           onClick={() => {
-            if (message.like !== LikeState.Liked) {
+            if (message.like !== LikeState.NoState) {
               onLike(LikeState.Liked);
             }
           }}
@@ -273,7 +268,8 @@ export const MessageMobileButtons = ({
         <MenuItem
           disabled={message.like === LikeState.Disliked}
           className={classNames(
-            message.like === LikeState.Liked && 'hover:bg-accent-primary-alpha',
+            message.like !== LikeState.Disliked &&
+              'hover:bg-accent-primary-alpha',
           )}
           data-qa="dislike"
           item={
@@ -291,7 +287,7 @@ export const MessageMobileButtons = ({
             </div>
           }
           onClick={() => {
-            if (message.like !== LikeState.Disliked) {
+            if (message.like !== LikeState.NoState) {
               onLike(LikeState.Disliked);
             }
           }}
