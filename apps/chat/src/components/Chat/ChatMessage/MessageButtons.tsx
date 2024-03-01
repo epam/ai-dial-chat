@@ -111,7 +111,7 @@ export const MessageAssistantButtons = ({
       )}
     >
       {messageCopied ? (
-        <Tooltip key="copied" placement="top" tooltip={t('Copied')}>
+        <Tooltip key="copied" placement="top" tooltip={t('Copied text')}>
           <IconCheck size={18} className="text-secondary" />
         </Tooltip>
       ) : (
@@ -119,7 +119,7 @@ export const MessageAssistantButtons = ({
           key="copy"
           placement="top"
           isTriggerClickable
-          tooltip={t('Copy')}
+          tooltip={t('Copy text')}
         >
           <Button className="text-secondary" onClick={copyOnClick}>
             <IconCopy size={18} />
