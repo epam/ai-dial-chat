@@ -211,6 +211,17 @@ export const hasExternalParent = createSelector(
   },
 );
 
+export const selectDoesAnyMyItemExist = createSelector(
+  [selectFolders, selectPrompts],
+  (folders, prompts) => {
+    const promptRootId = getPromptRootId();
+    return (
+      prompts.some((prompt) => prompt.id.startsWith(promptRootId)) ||
+      folders.some((folder) => folder.id.startsWith(promptRootId))
+    );
+  },
+);
+
 export const isPublishFolderVersionUnique = createSelector(
   [
     selectFolders,
