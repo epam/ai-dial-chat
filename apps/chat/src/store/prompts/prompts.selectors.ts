@@ -13,13 +13,9 @@ import {
   doesPromptOrConversationContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
-import {
-  isEntityExternal,
-  isEntityOrParentsExternal,
-} from '@/src/utils/app/share';
+import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
