@@ -146,4 +146,12 @@ export class DataService {
       closedAnnouncementText || '',
     );
   }
+
+  public static getCustomLogo(): Observable<string | undefined> {
+    return BrowserStorage.getData(UIStorageKeys.CustomLogo, undefined);
+  }
+
+  public static setCustomLogo(customLogo: string): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.CustomLogo, customLogo);
+  }
 }

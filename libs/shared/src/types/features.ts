@@ -17,6 +17,7 @@ export enum Feature {
   AttachmentsManager = 'attachments-manager',
   ConversationsPublishing = 'conversations-publishing',
   PromptsPublishing = 'prompts-publishing',
+  CustomLogo = 'custom-logo',
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -38,4 +39,5 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.AttachmentsManager]: true,
   [Feature.ConversationsPublishing]: true,
   [Feature.PromptsPublishing]: true,
+  [Feature.CustomLogo]: true,
 };
