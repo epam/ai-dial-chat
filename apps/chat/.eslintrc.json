@@ -25,6 +25,7 @@
       "rules": {
         "@next/next/no-html-link-for-pages": ["error", "./apps/chat/src/pages"],
         "react/jsx-boolean-value": ["error", "never"],
+        "import/no-duplicates": "error",
         "tailwindcss/no-custom-classname": "error",
         "tailwindcss/no-contradicting-classname": "error",
         "no-restricted-imports": ["error", { "paths": ["react-i18next"] }],
