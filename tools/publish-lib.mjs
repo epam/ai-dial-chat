@@ -159,12 +159,17 @@ execSync(`npm publish --access public --tag ${tag} --dry-run ${dry}`);
 
 function getDevVersion(potentialVersion) {
   const result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());
-  const lastVersionToIncrement = result.filter(ver => ver.startsWith(mainPackageJson.version)).sort().reverse()[0];
+  const lastVersionToIncrement = result
+    .filter(ver => ver.startsWith(mainPackageJson.version))
+    .map(ver => ver.match(/\d+$/)?.[0])
+    .filter(Boolean)
+    .map(ver => parseInt(ver, 10))
+    .sort((a, b) => a - b)
+    .reverse()[0];
 
-  const lastNum = lastVersionToIncrement?.match(/\d+$/);
-  if (lastVersionToIncrement && lastNum) {
-    const incrementedNum = parseInt(lastNum[0], 10) + 1;
-    potentialVersion = lastVersionToIncrement.replace(/\d+$/, incrementedNum);
+  if (typeof lastVersionToIncrement !== 'undefined') {
+    const incrementedNum = lastVersionToIncrement + 1;
+    potentialVersion = `${mainPackageJson.version}.${incrementedNum}`;
   } else {
     potentialVersion = `${mainPackageJson.version}.0`;
   }
