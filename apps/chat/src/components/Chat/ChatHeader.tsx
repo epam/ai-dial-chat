@@ -92,8 +92,7 @@ export const ChatHeader = ({
     ) || [];
 
   const iconSize = isSmallScreen() ? 20 : 18;
-  const showAllAddons =
-    isSmallScreen() && conversationSelectedAddons.length > 2;
+  const hideAddons = isSmallScreen() && conversationSelectedAddons.length > 2;
 
   return (
     <>
@@ -189,7 +188,7 @@ export const ChatHeader = ({
                         entity={addonsMap[addon]}
                       />
                     ))}
-                    {showAllAddons ? (
+                    {hideAddons ? (
                       <>
                         <ModelIcon
                           entityId={conversationSelectedAddons[0]}
