@@ -6,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
@@ -20,6 +21,8 @@ import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 const DEFAULT_HEADER_ICON_SIZE = 24;
 const OVERLAY_HEADER_ICON_SIZE = 18;
 
@@ -30,6 +33,14 @@ const Header = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
+  const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
+  );
+  const customLogoUrl =
+    isCustomLogoFeatureEnabled &&
+    customLogo &&
+    `api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const dispatch = useAppDispatch();
 
@@ -99,9 +110,14 @@ const Header = () => {
       <CreateNewChatMobile iconSize={headerIconSize} />
       <div className="flex grow justify-between">
         <span
-          className="min-w-[110px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left"
+          className={classNames(
+            'min-w-[110px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
+            { 'bg-contain': customLogoUrl },
+          )}
           style={{
-            backgroundImage: `var(--app-logo)`,
+            backgroundImage: customLogoUrl
+              ? `url(${customLogoUrl})`
+              : `var(--app-logo)`,
           }}
         ></span>
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
