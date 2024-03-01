@@ -92,6 +92,8 @@ export const ChatHeader = ({
     ) || [];
 
   const iconSize = isSmallScreen() ? 20 : 18;
+  const showAllAddons =
+    isSmallScreen() && conversationSelectedAddons.length > 2;
 
   return (
     <>
@@ -187,29 +189,29 @@ export const ChatHeader = ({
                         entity={addonsMap[addon]}
                       />
                     ))}
-                    {isSmallScreen()
-                      ? !!conversationSelectedAddons.length && (
-                          <>
-                            <ModelIcon
-                              entityId={conversationSelectedAddons[0]}
-                              size={iconSize}
-                              entity={addonsMap[conversationSelectedAddons[0]]}
-                            />
-                            <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-[10px] md:size-[18px]">
-                              +{conversationSelectedAddons.length - 1}
-                            </div>
-                          </>
-                        )
-                      : conversation.selectedAddons
-                          ?.filter((id) => !model.selectedAddons?.includes(id))
-                          .map((addon) => (
-                            <ModelIcon
-                              key={addon}
-                              entityId={addon}
-                              size={iconSize}
-                              entity={addonsMap[addon]}
-                            />
-                          ))}
+                    {showAllAddons ? (
+                      <>
+                        <ModelIcon
+                          entityId={conversationSelectedAddons[0]}
+                          size={iconSize}
+                          entity={addonsMap[conversationSelectedAddons[0]]}
+                        />
+                        <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-[10px] md:size-[18px]">
+                          +{conversationSelectedAddons.length - 1}
+                        </div>
+                      </>
+                    ) : (
+                      conversation.selectedAddons
+                        ?.filter((id) => !model.selectedAddons?.includes(id))
+                        .map((addon) => (
+                          <ModelIcon
+                            key={addon}
+                            entityId={addon}
+                            size={iconSize}
+                            entity={addonsMap[addon]}
+                          />
+                        ))
+                    )}
                   </span>
                 )
               ) : (
