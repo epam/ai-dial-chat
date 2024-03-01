@@ -128,6 +128,7 @@ export const ChatView = memo(() => {
       (models.length === 0 ||
         selectedConversations.some((conv) => {
           if (
+            conv.replay &&
             conv.replay.isReplay &&
             conv.replay.replayAsIs &&
             conv.replay.replayUserMessagesStack &&
@@ -322,16 +323,17 @@ export const ChatView = memo(() => {
         return {};
       }
 
-      const updatedReplay: Replay = !conversation.replay.isReplay
+      const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
         ? conversation.replay
         : {
             ...conversation.replay,
             replayAsIs: false,
           };
       const updatedAddons =
+        conversation.replay &&
         conversation.replay.isReplay &&
         conversation.replay.replayAsIs &&
-        !updatedReplay.replayAsIs
+        !updatedReplay?.replayAsIs
           ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
           : conversation.selectedAddons;
 

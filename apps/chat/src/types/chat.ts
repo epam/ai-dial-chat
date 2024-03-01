@@ -72,14 +72,14 @@ export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
   prompt: string;
   temperature: number;
-  replay: Replay;
+  replay?: Replay;
   playback?: Playback;
 
   // Addons selected by user clicks
   selectedAddons: string[];
   assistantModelId?: string;
 
-  isMessageStreaming: boolean;
+  isMessageStreaming?: boolean;
   isNameChanged?: boolean;
 }
 
@@ -87,7 +87,7 @@ export interface Replay {
   replayAsIs?: boolean;
   isReplay: boolean;
   replayUserMessagesStack?: Message[];
-  activeReplayIndex: number;
+  activeReplayIndex?: number;
   isError?: boolean;
 }
 

@@ -5,6 +5,7 @@ import {
   Message,
   Stage,
 } from '@/src/types/chat';
+import { Prompt } from '@/src/types/prompt';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL_ID,
@@ -13,7 +14,6 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { FALLBACK_MODEL_ID } from '@/src/constants/default-ui-settings';
-import { defaultReplay } from '@/src/constants/replay';
 
 import { constructPath } from './file';
 import { getConversationRootId } from './id';
@@ -86,11 +86,10 @@ export const cleanConversation = (
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
-    replay: conversation.replay || defaultReplay,
+    replay: conversation.replay,
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
     lastActivityDate: conversation.lastActivityDate || Date.now(),
-    isMessageStreaming: false,
     isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: conversation.playback,
@@ -99,6 +98,14 @@ export const cleanConversation = (
 
   return cleanConversation;
 };
+
+export const cleanPrompt = (prompt: Prompt): Prompt => ({
+  id: prompt.id,
+  name: prompt.name,
+  folderId: prompt.folderId,
+  description: prompt.description,
+  content: prompt.content ?? '', // will be required soon in https://github.com/epam/ai-dial-chat/issues/78
+});
 
 export const cleanConversationHistory = (
   history: Conversation[],

@@ -301,10 +301,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 prompt: DEFAULT_SYSTEM_PROMPT,
                 temperature:
                   lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-                replay: defaultReplay,
                 selectedAddons: [],
                 lastActivityDate: Date.now(),
-                isMessageStreaming: false,
                 status: UploadStatus.LOADED,
                 folderId: conversationRootId,
               });
@@ -479,12 +477,6 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         },
         isReplay: false,
         isPlayback: true,
-        replay: {
-          isReplay: false,
-          replayUserMessagesStack: [],
-          activeReplayIndex: 0,
-          replayAsIs: false,
-        },
       });
 
       return of(
@@ -1173,10 +1165,12 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       const updatedConversation: Conversation = regenerateConversationId({
         ...payload.conversation,
         lastActivityDate: Date.now(),
-        replay: {
-          ...payload.conversation.replay,
-          activeReplayIndex: payload.activeReplayIndex,
-        },
+        replay: payload.conversation.replay
+          ? {
+              ...payload.conversation.replay,
+              activeReplayIndex: payload.activeReplayIndex,
+            }
+          : undefined,
         messages: updatedMessages,
         name: newConversationName,
         isMessageStreaming: true,
@@ -1472,6 +1466,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
       };
       if (isReplay) {
         values.replay = {
+          ...defaultReplay,
           ...payload.conversation.replay,
           isError: true,
         };
@@ -1617,11 +1612,11 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
     filter(({ conversation }) => !!conversation),
     switchMap(({ payload, conversation }) => {
       const conv = conversation as Conversation;
-      const messagesStack = conv.replay.replayUserMessagesStack;
+      const messagesStack = conv.replay?.replayUserMessagesStack;
 
       if (
         !messagesStack ||
-        conv.replay.activeReplayIndex === messagesStack.length
+        conv.replay?.activeReplayIndex === messagesStack.length
       ) {
         return of(
           ConversationsActions.endReplayConversation({
@@ -1629,11 +1624,11 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
           }),
         );
       }
-      const activeMessage = messagesStack[conv.replay.activeReplayIndex];
+      const activeMessage = messagesStack[conv.replay?.activeReplayIndex ?? 0];
       let updatedConversation: Conversation = conv;
 
       if (
-        conv.replay.replayAsIs &&
+        conv.replay?.replayAsIs &&
         activeMessage.model &&
         activeMessage.model.id
       ) {
@@ -1681,7 +1676,8 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
                     : 1)) ||
                 0
               : 0,
-            activeReplayIndex: updatedConversation.replay.activeReplayIndex,
+            activeReplayIndex:
+              updatedConversation.replay?.activeReplayIndex ?? 0,
             message: activeMessage,
           }),
         ),
@@ -1706,7 +1702,7 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             return of(
               ConversationsActions.replayConversation({
                 conversationId: updatedConversation.id,
-                activeReplayIndex: convReplay.activeReplayIndex + 1,
+                activeReplayIndex: (convReplay?.activeReplayIndex ?? 0) + 1,
               }),
             );
           }),

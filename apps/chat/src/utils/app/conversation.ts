@@ -94,7 +94,7 @@ export const getNewConversationName = (
   const convName = prepareEntityName(conversation.name);
 
   if (
-    conversation.replay.isReplay ||
+    conversation.replay?.isReplay ||
     updatedMessages.length !== 2 ||
     conversation.isNameChanged
   ) {
