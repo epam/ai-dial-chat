@@ -69,12 +69,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperatureToUse = DEFAULT_TEMPERATURE;
     }
 
-    // For assistant submodel limits should be used
+    // For assistant submodel features, limits, tokenizer should be used
     const limits =
       model.type === EntityType.Assistant
         ? assistantModel!.limits
         : model.limits;
-    // For assistant submodel limits should be used
     const features =
       model.type === EntityType.Assistant
         ? assistantModel!.features
