@@ -251,7 +251,11 @@ export const MessageMobileButtons = ({
           item={
             <div className="flex items-center gap-3">
               <IconThumbUp className="text-secondary" size={18} />
-              <p className={classNames(message.like === LikeState.Liked && 'text-secondary')}>
+              <p
+                className={classNames(
+                  message.like === LikeState.Liked && 'text-secondary',
+                )}
+              >
                 {message.like === LikeState.Liked ? t('Liked') : t('Like')}
               </p>
             </div>
@@ -276,9 +280,13 @@ export const MessageMobileButtons = ({
             <div className="flex items-center gap-3">
               <IconThumbDown className="text-secondary" size={18} />
               <p
-                className={classNames(message.like === LikeState.Disliked && 'text-secondary')}
+                className={classNames(
+                  message.like === LikeState.Disliked && 'text-secondary',
+                )}
               >
-                {message.like === LikeState.Disliked ? t('Disliked') : t('Dislike')}
+                {message.like === LikeState.Disliked
+                  ? t('Disliked')
+                  : t('Dislike')}
               </p>
             </div>
           }
