@@ -753,6 +753,92 @@ const discardSharedWithMeFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const deleteSharedConversationFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.deleteFolder.match),
+    switchMap(({ payload }) => {
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const isSharedFolder = folders.find(
+        (folder) => folder.id === payload.folderId,
+      )?.isShared;
+
+      return payload.folderId && isSharedFolder
+        ? of(
+            ShareActions.revokeAccess({
+              resourceId: payload.folderId,
+              featureType: FeatureType.Chat,
+              isFolder: true,
+            }),
+          )
+        : EMPTY;
+    }),
+  );
+
+const deleteSharedPromptFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.deleteFolder.match),
+    switchMap(({ payload }) => {
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const isSharedFolder = folders.find(
+        (folder) => folder.id === payload.folderId,
+      )?.isShared;
+
+      return payload.folderId && isSharedFolder
+        ? of(
+            ShareActions.revokeAccess({
+              resourceId: payload.folderId,
+              featureType: FeatureType.Prompt,
+              isFolder: true,
+            }),
+          )
+        : EMPTY;
+    }),
+  );
+
+const renameSharedConversationFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.updateFolder.match),
+    switchMap(({ payload }) => {
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const isSharedFolder = folders.find(
+        (folder) => folder.id === payload.folderId,
+      )?.isShared;
+      const requireRevoke = !!payload.values.name;
+
+      return payload.folderId && isSharedFolder && requireRevoke
+        ? of(
+            ShareActions.revokeAccess({
+              resourceId: payload.folderId,
+              featureType: FeatureType.Chat,
+              isFolder: true,
+            }),
+          )
+        : EMPTY;
+    }),
+  );
+
+const renameSharedPromptFolderEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.updateFolder.match),
+    switchMap(({ payload }) => {
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const isSharedFolder = folders.find(
+        (folder) => folder.id === payload.folderId,
+      )?.isShared;
+      const requireRevoke = payload.values.name;
+
+      return payload.folderId && isSharedFolder && requireRevoke
+        ? of(
+            ShareActions.revokeAccess({
+              resourceId: payload.folderId,
+              featureType: FeatureType.Prompt,
+              isFolder: true,
+            }),
+          )
+        : EMPTY;
+    }),
+  );
+
 export const ShareEpics = combineEpics(
   shareEpic,
   shareFailEpic,
@@ -780,4 +866,9 @@ export const ShareEpics = combineEpics(
 
   triggerGettingSharedListingsConversationsEpic,
   triggerGettingSharedListingsPromptsEpic,
+
+  deleteSharedConversationFolderEpic,
+  deleteSharedPromptFolderEpic,
+  renameSharedConversationFolderEpic,
+  renameSharedPromptFolderEpic,
 );
