@@ -30,11 +30,11 @@ import FolderPlus from '@/public/images/icons/folder-plus.svg';
 export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
 
-  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-
   const dispatch = useAppDispatch();
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
+  const isMyItemsExist = useAppSelector(
+    PromptsSelectors.selectDoesAnyMyItemExist,
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -66,7 +66,7 @@ export function PromptbarSettings() {
         CustomTriggerRenderer: Import,
       },
       {
-        display: allPrompts.length > 0 || folders.length > 0,
+        display: isMyItemsExist,
         name: t('Export prompts'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
@@ -76,7 +76,7 @@ export function PromptbarSettings() {
       },
       {
         name: t('Delete all'),
-        display: allPrompts.length > 0 || folders.length > 0,
+        display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -84,7 +84,7 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [allPrompts.length, dispatch, folders.length, t],
+    [dispatch, isMyItemsExist, t],
   );
 
   return (
