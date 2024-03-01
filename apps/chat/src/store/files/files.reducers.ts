@@ -227,8 +227,8 @@ export const filesSlice = createSlice({
       const rootFileId = getRootId();
       const folderName = getNextDefaultName(
         DEFAULT_FOLDER_NAME,
-        state.folders.filter((folder) =>
-          folder.id.startsWith(payload.parentId ?? rootFileId),
+        state.folders.filter(
+          (folder) => folder.id.startsWith(payload.parentId ?? rootFileId), // only folders on the same level
         ),
         0,
         false,
