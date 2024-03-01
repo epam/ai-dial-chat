@@ -1,22 +1,38 @@
+import { useState } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
+
+import { FileManagerModal } from '../Files/FileManagerModal';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
-  setOpenFilesModal: (isOpen: boolean) => void;
+  setLocalLogoFile: (file: DialFile | undefined) => void;
+  files: DialFile[];
 }
 
 export const CustomLogoSelect = ({
   localLogo,
-  setOpenFilesModal,
+  setLocalLogoFile,
+  files,
 }: CustomLogoSelectProps) => {
+  const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
+    useState(false);
   const { t } = useTranslation(Translation.Settings);
+  const maximumAttachmentsAmount = 1;
+
+  const onLogoSelect = (filesIds: string[]) => {
+    const selectedFileId = filesIds[0];
+    const newFile = files.find((file) => file.id === selectedFileId);
+    setLocalLogoFile(newFile);
+  };
 
   const onClickHandler = () => {
-    setOpenFilesModal(true);
+    setIsSelectFilesDialogOpened(true);
   };
 
   return (
@@ -35,6 +51,18 @@ export const CustomLogoSelect = ({
           {localLogo ? t('Change') : t('Add')}
         </button>
       </div>
+      {isSelectFilesDialogOpened && (
+        <FileManagerModal
+          isOpen
+          allowedTypes={['image/*']}
+          maximumAttachmentsAmount={maximumAttachmentsAmount}
+          onClose={(files: unknown) => {
+            onLogoSelect(files as string[]);
+            setIsSelectFilesDialogOpened(false);
+          }}
+          customHeaderLabel={t('Select custom logo') as string}
+        />
+      )}
     </div>
   );
 };

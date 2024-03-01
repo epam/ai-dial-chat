@@ -5,8 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
@@ -39,7 +39,8 @@ const Header = () => {
   );
   const customLogoUrl =
     enabledFeatures.has(Feature.CustomLogo) &&
-    getMappedAttachmentUrl(customLogo);
+    customLogo &&
+    `api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const dispatch = useAppDispatch();
 

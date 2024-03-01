@@ -40,7 +40,7 @@ interface Props {
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
   isInConversation?: boolean;
-  isInLogoSelect?: boolean;
+  customHeaderLabel?: string;
   onClose: (result: boolean | string[]) => void;
 }
 
@@ -49,7 +49,7 @@ export const FileManagerModal = ({
   allowedTypes = [],
   initialSelectedFilesIds = [],
   isInConversation = false,
-  isInLogoSelect = false,
+  customHeaderLabel,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
@@ -83,8 +83,8 @@ export const FileManagerModal = ({
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
 
-  const headerLabel = isInLogoSelect
-    ? t('Select custom logo')
+  const headerLabel = customHeaderLabel
+    ? customHeaderLabel
     : t('Manage attachments');
 
   const {
@@ -426,7 +426,9 @@ export const FileManagerModal = ({
             onClick={handleStartUploadFiles}
             className={classNames(
               'button',
-              isInConversation ? 'button-secondary' : 'button-primary',
+              isInConversation || customHeaderLabel
+                ? 'button-secondary'
+                : 'button-primary',
             )}
           >
             {t('Upload from device')}
@@ -440,7 +442,7 @@ export const FileManagerModal = ({
               {t('Attach files')}
             </button>
           )}
-          {isInLogoSelect && (
+          {customHeaderLabel && (
             <button
               onClick={handleAttachFiles}
               className="button button-primary"
