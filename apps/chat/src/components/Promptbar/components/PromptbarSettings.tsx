@@ -30,13 +30,10 @@ import FolderPlus from '@/public/images/icons/folder-plus.svg';
 export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
 
-  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-
   const dispatch = useAppDispatch();
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
-  const folders = useAppSelector(PromptsSelectors.selectFolders);
-  const { externalPrompts, externalFolders } = useAppSelector((state) =>
-    PromptsSelectors.selectExternalEntities(state),
+  const isMyItemsExist = useAppSelector(
+    PromptsSelectors.selectDoesAnyMyItemExist,
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -69,9 +66,7 @@ export function PromptbarSettings() {
         CustomTriggerRenderer: Import,
       },
       {
-        display:
-          externalPrompts.length !== allPrompts.length ||
-          folders.length !== externalFolders.length,
+        display: isMyItemsExist,
         name: t('Export prompts'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
@@ -81,9 +76,7 @@ export function PromptbarSettings() {
       },
       {
         name: t('Delete all'),
-        display:
-          externalPrompts.length !== allPrompts.length ||
-          folders.length !== externalFolders.length,
+        display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -91,14 +84,7 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [
-      allPrompts.length,
-      dispatch,
-      externalFolders.length,
-      externalPrompts.length,
-      folders.length,
-      t,
-    ],
+    [dispatch, isMyItemsExist, t],
   );
 
   return (

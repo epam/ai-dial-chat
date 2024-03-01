@@ -215,17 +215,14 @@ export const hasExternalParent = createSelector(
   },
 );
 
-export const selectExternalEntities = createSelector(
-  [selectFolders, selectPrompts, (state) => state],
-  (folders, prompts, state) => {
-    return {
-      externalPrompts: prompts.filter((prompt) =>
-        isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
-      ),
-      externalFolders: folders.filter((folder) =>
-        isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
-      ),
-    };
+export const selectDoesAnyMyItemExist = createSelector(
+  [selectFolders, selectPrompts],
+  (folders, prompts) => {
+    const promptRootId = getPromptRootId();
+    return (
+      prompts.some((prompt) => prompt.id.startsWith(promptRootId)) ||
+      folders.some((folder) => folder.id.startsWith(promptRootId))
+    );
   },
 );
 

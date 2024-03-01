@@ -255,17 +255,14 @@ export const selectAreSelectedConversationsExternal = createSelector(
   },
 );
 
-export const selectExternalEntities = createSelector(
-  [selectFolders, selectConversations, (state) => state],
-  (folders, conversations, state) => {
-    return {
-      externalConversations: conversations.filter((prompt) =>
-        isEntityOrParentsExternal(state, prompt, FeatureType.Chat),
-      ),
-      externalFolders: folders.filter((folder) =>
-        isEntityOrParentsExternal(state, folder, FeatureType.Chat),
-      ),
-    };
+export const selectDoesAnyMyItemExist = createSelector(
+  [selectFolders, selectConversations],
+  (folders, conversations) => {
+    const conversationRootId = getConversationRootId();
+    return (
+      conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
+      folders.some((folder) => folder.id.startsWith(conversationRootId))
+    );
   },
 );
 
