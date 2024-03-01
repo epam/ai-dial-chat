@@ -40,7 +40,7 @@ export const ProfileButton = () => {
       onClick={onClick}
     >
       {isProfileOpen ? (
-        <IconX className="text-secondary" width={24} height={24} />
+        <IconX className="text-secondary" width={iconSize} height={iconSize} />
       ) : session?.user?.image ? (
         <img
           className="rounded"

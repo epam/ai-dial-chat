@@ -62,10 +62,6 @@ export const SharedWithMeFilters: EntityFilters = {
   searchFilter: TrueFilter,
   sectionFilter: SharedWithMeFilter,
 };
-export const SharedWithMeRootFilters: EntityFilters = {
-  searchFilter: TrueFilter,
-  sectionFilter: SharedWithMeFilter,
-};
 
 export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isShared;

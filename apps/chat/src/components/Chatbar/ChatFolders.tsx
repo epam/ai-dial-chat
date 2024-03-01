@@ -9,7 +9,6 @@ import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
-  SharedWithMeRootFilters,
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
@@ -362,7 +361,6 @@ export function ChatFolders() {
           displayRootFiles: true,
           dataQa: 'shared-with-me',
           openByDefault: true,
-          rootFilters: SharedWithMeRootFilters,
         },
         {
           name: t('Pinned chats'),
