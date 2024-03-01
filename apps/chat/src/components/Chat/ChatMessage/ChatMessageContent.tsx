@@ -19,7 +19,7 @@ import {
 } from '@/src/utils/app/file';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import {Conversation, LikeState, Message, Role} from '@/src/types/chat';
+import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
