@@ -373,7 +373,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
