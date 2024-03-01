@@ -98,7 +98,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }));
     messagesToSend =
       !promptToSend || promptToSend.trim().length === 0
-        ? messages
+        ? messagesToSend
         : [
             {
               role: Role.System,
