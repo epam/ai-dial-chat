@@ -1,6 +1,12 @@
 import { ShareEntity } from './common';
 import { MIMEType } from './files';
 
+export enum LikeState {
+  Disliked = -1,
+  Liked = 1,
+  NoState = 0,
+}
+
 export interface Attachment {
   index?: number;
   type: MIMEType;
@@ -38,7 +44,7 @@ export interface Message {
     stages?: Stage[];
     state?: object;
   };
-  like?: number;
+  like?: LikeState;
   errorMessage?: string;
   model?: ConversationEntityModel;
   settings?: MessageSettings;
