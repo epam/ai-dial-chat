@@ -255,6 +255,17 @@ export const selectAreSelectedConversationsExternal = createSelector(
   },
 );
 
+export const selectDoesAnyMyItemExist = createSelector(
+  [selectFolders, selectConversations],
+  (folders, conversations) => {
+    const conversationRootId = getConversationRootId();
+    return (
+      conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
+      folders.some((folder) => folder.id.startsWith(conversationRootId))
+    );
+  },
+);
+
 export const selectPlaybackActiveIndex = createSelector(
   [selectSelectedConversations],
   (conversations) => {
