@@ -1,4 +1,3 @@
-import { IconPlayerStop } from '@tabler/icons-react';
 import {
   Children,
   MutableRefObject,
@@ -73,21 +72,6 @@ export const ChatInput = ({
       className="gradient-top-bottom absolute bottom-0 left-0 w-full pt-6 md:pt-2"
     >
       <div className="relative">
-        {messageIsStreaming && (
-          <button
-            className="button button-chat"
-            onClick={onStopConversation}
-            data-qa="stop-generating"
-          >
-            <IconPlayerStop
-              size={18}
-              className="text-secondary"
-              strokeWidth="1.5"
-            />{' '}
-            {t('Stop generating')}
-          </button>
-        )}
-
         {!Children.toArray(children).length &&
           !messageIsStreaming &&
           isMessagesPresented && (
@@ -110,6 +94,7 @@ export const ChatInput = ({
           showScrollDownButton={showScrollDownButton}
           onScrollDownClick={onScrollDownClick}
           onSend={onSend}
+          onStopConversation={onStopConversation}
         />
       )}
       <ChatInputFooter />
