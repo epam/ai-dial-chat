@@ -112,7 +112,7 @@ export default function Home({ initialState }: HomeProps) {
   // EFFECTS  --------------------------------------------
   useEffect(() => {
     if (!isOverlay && shouldLogin) {
-      signIn(undefined, { callbackUrl: '/?share=123' });
+      signIn();
     }
   }, [isOverlay, shouldLogin]);
 
