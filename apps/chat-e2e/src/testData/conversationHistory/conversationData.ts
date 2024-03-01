@@ -1,5 +1,5 @@
 import { defaultReplay } from '@/chat/constants/replay';
-import { Message, Role, Stage } from '@/chat/types/chat';
+import { Message, MessageSettings, Role, Stage } from '@/chat/types/chat';
 import { FolderType } from '@/chat/types/folder';
 import { OpenAIEntityModel } from '@/chat/types/openai';
 import {
@@ -66,6 +66,14 @@ export class ConversationData extends FolderData {
     model?: OpenAIEntityModel | string,
   ) {
     const basicConversation = this.prepareDefaultConversation(model);
+    const messageSettings: MessageSettings = {
+      prompt: sysPrompt,
+      temperature: temp,
+      selectedAddons: addons,
+    };
+    basicConversation.messages.forEach(
+      (message) => (message.settings = messageSettings),
+    );
     this.conversationBuilder.setConversation(basicConversation);
     return this.conversationBuilder
       .withTemperature(temp)
@@ -180,9 +188,16 @@ export class ConversationData extends FolderData {
     const conversation = this.conversationBuilder.getConversation();
     conversation.model = { id: model.id };
     conversation.selectedAddons = addons;
+    const messageSettings: MessageSettings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: addons,
+    };
     const userMessage: Message = {
       role: Role.User,
       content: request ?? 'what is epam? what is epam revenue in 2020?',
+      model: { id: conversation.model.id },
+      settings: messageSettings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
@@ -208,6 +223,7 @@ export class ConversationData extends FolderData {
           invocations: [{ index: 0, request: 'request', response: 'response' }],
         },
       },
+      settings: messageSettings,
     };
     conversation.messages.push(userMessage, assistantMessage);
     return this.conversationBuilder.build();
@@ -222,6 +238,10 @@ export class ConversationData extends FolderData {
     conversation.assistantModelId = assistantModel
       ? assistantModel.id
       : ModelIds.GPT_4;
+    conversation.messages.forEach(
+      (message) =>
+        (message.settings!.assistantModelId = conversation.assistantModelId),
+    );
     return conversation;
   }
 
@@ -341,6 +361,7 @@ export class ConversationData extends FolderData {
           },
         ],
       },
+      model: modelToUse,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,

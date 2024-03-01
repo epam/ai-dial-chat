@@ -798,10 +798,7 @@ dialTest(
         await rightEntitySettings
           .getTemperatureSlider()
           .setTemperature(secondUpdatedTemp);
-        await chat.applyNewEntity(
-          firstUpdatedRandomModel.iconUrl,
-          secondUpdatedRandomModel.iconUrl,
-        );
+        await chat.applyNewEntity();
       },
     );
 

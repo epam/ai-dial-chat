@@ -404,14 +404,9 @@ dialTest(
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    expect
-      .soft(
-        await conversations
-          .getConversationByName(conversation.name)
-          .isVisible(),
-        ExpectedMessages.conversationDeleted,
-      )
-      .toBeFalsy();
+    await conversations
+      .getConversationByName(conversation.name)
+      .waitFor({ state: 'hidden' });
   },
 );
 
