@@ -335,7 +335,10 @@ dialTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
-    await talkToSelector.selectModel(randomModel.name, randomModel.iconUrl);
+    await talkToSelector.selectModel(
+      randomModel.name,
+      recentModelIds.includes(randomModel.id) ? undefined : randomModel.iconUrl,
+    );
     const sysPrompt = 'test prompt';
     const temp = 0;
     await entitySettings.setSystemPrompt(sysPrompt);
