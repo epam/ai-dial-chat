@@ -117,7 +117,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       userJWT: token?.access_token as string,
       chatId: id,
       jobTitle: token?.jobTitle as string,
-      maxRequestTokens: limits?.maxRequestTokens,
+      maxRequestTokens: features?.truncatePrompt
+        ? limits?.maxRequestTokens
+        : undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 
