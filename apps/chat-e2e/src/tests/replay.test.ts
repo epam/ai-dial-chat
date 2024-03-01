@@ -694,16 +694,16 @@ dialTest(
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
-        await sendMessage.sendMessageButton.hoverOver();
+        await chat.stopGenerating.hoverOver();
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.waitForAssistantAnswerTooltip);
+          .toBe(ExpectedConstants.stopGeneratingTooltip);
 
-        const isSendButtonEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
+        const isSendButtonVisible =
+          await sendMessage.sendMessageButton.isVisible();
         expect
-          .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonDisabled)
+          .soft(isSendButtonVisible, ExpectedMessages.sendMessageButtonDisabled)
           .toBeFalsy();
       },
     );

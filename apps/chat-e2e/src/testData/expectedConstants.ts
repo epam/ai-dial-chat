@@ -32,8 +32,7 @@ export const ExpectedConstants = {
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
-  waitForAssistantAnswerTooltip:
-    'Please wait for full assistant answer to continue working with chat',
+  stopGeneratingTooltip: 'Stop generating',
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
