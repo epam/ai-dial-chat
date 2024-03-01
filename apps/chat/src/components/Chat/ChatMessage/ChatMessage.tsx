@@ -4,7 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, LikeState, Message } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -22,7 +22,7 @@ export interface Props {
   isLikesEnabled: boolean;
   editDisabled: boolean;
   onEdit: (editedMessage: Message, index: number) => void;
-  onLike: (likeStatus: number) => void;
+  onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
 }
 
@@ -42,7 +42,7 @@ export const ChatMessage: FC<Props> = memo(
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
     const handleLike = useCallback(
-      (likeStatus: number) => {
+      (likeStatus: LikeState) => {
         if (conversation && onLike) {
           onLike(likeStatus);
         }
