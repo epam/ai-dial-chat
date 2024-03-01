@@ -41,7 +41,6 @@ interface Props {
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
-  customHeaderLabel?: string;
   onClose: (result: boolean | string[]) => void;
 }
 
