@@ -2,6 +2,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 
 import { OpenAIEntityModelID } from '../../types/openai';
@@ -102,10 +104,11 @@ export const ChatView = memo(() => {
     useState<boolean>(false);
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
+  const [isLastMesssageError, setIsLastMesssageError] = useState(false);
+
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
   >({});
-
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -554,6 +557,9 @@ export const ChatView = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
+  const isRegenerateAvailable =
+    !isPlayback && !isExternal && !messageIsStreaming && !isLastMesssageError;
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -565,24 +571,27 @@ export const ChatView = memo(() => {
       ) : (
         <>
           <div
-            className={`flex size-full ${
-              isCompareMode ? 'landscape:hidden' : 'hidden'
-            }`}
+            className={classNames(
+              'flex size-full',
+              isCompareMode ? 'landscape:hidden' : 'hidden',
+            )}
           >
             <ChatCompareRotate />
           </div>
           <div
-            className={`relative size-full ${
-              isCompareMode ? 'portrait:hidden' : ''
-            }`}
+            className={classNames(
+              'relative size-full',
+              isCompareMode && 'portrait:hidden',
+            )}
           >
             <div className="flex h-full">
               <div
-                className={`flex h-full flex-col ${
+                className={classNames(
+                  'flex h-full flex-col',
                   isCompareMode && selectedConversations.length < 2
                     ? 'w-[50%]'
-                    : 'w-full'
-                }`}
+                    : 'w-full',
+                )}
                 data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
               >
                 <div className="flex max-h-full w-full">
@@ -591,11 +600,12 @@ export const ChatView = memo(() => {
                       conv.messages.length === 0 && (
                         <div
                           key={conv.id}
-                          className={`flex h-full flex-col justify-between ${
+                          className={classNames(
+                            'flex h-full flex-col justify-between',
                             selectedConversations.length > 1
                               ? 'w-[50%]'
-                              : 'w-full'
-                          }`}
+                              : 'w-full',
+                          )}
                         >
                           <div
                             className="shrink-0"
@@ -725,35 +735,50 @@ export const ChatView = memo(() => {
                               Conversation,
                               Message,
                               number,
-                            ]) => (
-                              <div
-                                key={conv.id}
-                                className={`${
-                                  isCompareMode &&
-                                  selectedConversations.length > 1
-                                    ? 'w-[50%]'
-                                    : 'w-full'
-                                }`}
-                              >
-                                <div className="size-full">
-                                  <MemoizedChatMessage
-                                    key={conv.id}
-                                    message={message}
-                                    messageIndex={index}
-                                    conversation={conv}
-                                    isLikesEnabled={enabledFeatures.has(
-                                      Feature.Likes,
-                                    )}
-                                    editDisabled={!!notAllowedType}
-                                    onEdit={onEditMessage}
-                                    onLike={onLikeHandler(index, conv)}
-                                    onDelete={() => {
-                                      handleDeleteMessage(index);
-                                    }}
-                                  />
+                            ]) => {
+                              if (
+                                index === conv.messages.length - 1 &&
+                                isLastMesssageError !== !!message.errorMessage
+                              ) {
+                                setIsLastMesssageError(!!message.errorMessage);
+                              }
+
+                              return (
+                                <div
+                                  key={conv.id}
+                                  className={classNames(
+                                    isCompareMode &&
+                                      selectedConversations.length > 1
+                                      ? 'w-[50%]'
+                                      : 'w-full',
+                                  )}
+                                >
+                                  <div className="size-full">
+                                    <MemoizedChatMessage
+                                      key={conv.id}
+                                      message={message}
+                                      messageIndex={index}
+                                      conversation={conv}
+                                      isLikesEnabled={enabledFeatures.has(
+                                        Feature.Likes,
+                                      )}
+                                      editDisabled={!!notAllowedType}
+                                      onEdit={onEditMessage}
+                                      onLike={onLikeHandler(index, conv)}
+                                      onDelete={() => {
+                                        handleDeleteMessage(index);
+                                      }}
+                                      onRegenerate={
+                                        index === conv.messages.length - 1 &&
+                                        isRegenerateAvailable
+                                          ? onRegenerateMessage
+                                          : undefined
+                                      }
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            ),
+                              );
+                            },
                           )}
                         </div>
                       ),
@@ -768,11 +793,12 @@ export const ChatView = memo(() => {
               </div>
               {isShowChatSettings && (
                 <div
-                  className={`absolute left-0 top-0 grid size-full ${
+                  className={classNames(
+                    'absolute left-0 top-0 grid size-full',
                     selectedConversations.length === 1
                       ? 'grid-cols-1'
-                      : 'grid-cols-2'
-                  }`}
+                      : 'grid-cols-2',
+                  )}
                 >
                   {selectedConversations.map((conv) => (
                     <div className="relative h-full" key={conv.id}>
@@ -823,7 +849,9 @@ export const ChatView = memo(() => {
                     showScrollDownButton={showScrollDownButton}
                     onSend={onSendMessage}
                     onScrollDownClick={handleScrollDown}
-                    onRegenerate={onRegenerateMessage}
+                    onRegenerate={
+                      isLastMesssageError ? onRegenerateMessage : undefined
+                    }
                     onStopConversation={() => {
                       dispatch(ConversationsActions.stopStreamMessage());
                     }}

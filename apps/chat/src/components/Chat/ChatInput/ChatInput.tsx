@@ -20,7 +20,6 @@ import { ChatInputMessage } from './ChatInputMessage';
 
 interface Props {
   onSend: (message: Message) => void;
-  onRegenerate: () => void;
   onScrollDownClick: () => void;
   onStopConversation: () => void;
   onResize: (height: number) => void;
@@ -28,6 +27,7 @@ interface Props {
   showScrollDownButton: boolean;
   isMessagesPresented: boolean;
   isShowInput: boolean;
+  onRegenerate?: () => void;
   children?: ReactNode;
 }
 
@@ -73,6 +73,7 @@ export const ChatInput = ({
     >
       <div className="relative">
         {!Children.toArray(children).length &&
+          onRegenerate &&
           !messageIsStreaming &&
           isMessagesPresented && (
             <button

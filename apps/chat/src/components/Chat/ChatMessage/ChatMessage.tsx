@@ -24,12 +24,22 @@ export interface Props {
   onEdit: (editedMessage: Message, index: number) => void;
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
+  onRegenerate?: () => void;
 }
 
 const CONTEXT_MENU_OFFSET = 100;
+const CONTEXT_MENU_REGENERATE_OFFSET = 130;
 
 export const ChatMessage: FC<Props> = memo(
-  ({ message, conversation, onLike, onDelete, editDisabled, ...props }) => {
+  ({
+    message,
+    conversation,
+    onLike,
+    onDelete,
+    editDisabled,
+    onRegenerate,
+    ...props
+  }) => {
     const { t } = useTranslation(Translation.Chat);
 
     const [messageCopied, setMessageCopied] = useState(false);
@@ -102,6 +112,7 @@ export const ChatMessage: FC<Props> = memo(
             onLike={handleLike}
             onCopy={handleCopy}
             message={message}
+            onRegenerate={onRegenerate}
             withButtons
             {...props}
           />
@@ -121,7 +132,10 @@ export const ChatMessage: FC<Props> = memo(
             top: `${clientY}px`,
             left: `${
               clientX > window.innerWidth / 2
-                ? clientX - CONTEXT_MENU_OFFSET
+                ? clientX -
+                  (onRegenerate
+                    ? CONTEXT_MENU_REGENERATE_OFFSET
+                    : CONTEXT_MENU_OFFSET)
                 : clientX
             }px`,
           }}
@@ -151,6 +165,7 @@ export const ChatMessage: FC<Props> = memo(
             onDelete={() => setIsRemoveConfirmationOpened(true)}
             isEditing={isEditing}
             toggleEditing={toggleEditing}
+            onRegenerate={onRegenerate}
           />
         </Menu>
         {confirmationDialog}
