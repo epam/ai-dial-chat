@@ -43,10 +43,14 @@ export const ConversationSettingsModel = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
-  const enitities = useMemo(
-    () => getValidEntitiesFromIds(recentModelsIds, modelsMap),
-    [modelsMap, recentModelsIds],
-  );
+  const enitities = useMemo(() => {
+    return getValidEntitiesFromIds(
+      modelId && !recentModelsIds.includes(modelId)
+        ? [modelId, ...recentModelsIds]
+        : recentModelsIds,
+      modelsMap,
+    );
+  }, [modelId, modelsMap, recentModelsIds]);
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
