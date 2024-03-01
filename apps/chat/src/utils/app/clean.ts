@@ -12,8 +12,8 @@ import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
-import { FALLBACK_MODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { constructPath } from './file';
 import { getConversationRootId } from './id';

@@ -91,10 +91,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import {
+  DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
