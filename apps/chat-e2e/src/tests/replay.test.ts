@@ -264,7 +264,7 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectModel(bison.name, bison.iconUrl);
+        await talkToSelector.selectModel(bison.name);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
         replayRequest = await chat.startReplay();
@@ -1009,7 +1009,7 @@ dialTest(
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
           await talkToSelector.selectModel(newModel.name);
-          await chat.applyNewEntity(newModel.iconUrl);
+          await chat.applyNewEntity();
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);
         }

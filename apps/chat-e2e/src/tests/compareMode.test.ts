@@ -776,10 +776,7 @@ dialTest(
           : secondUpdatedRandomModel.iconUrl;
         await leftConversationSettings
           .getTalkToSelector()
-          .selectModel(
-            firstUpdatedRandomModel.name,
-            firstUpdatedRandomModelIcon,
-          );
+          .selectModel(firstUpdatedRandomModel.name);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
         await leftEntitySettings

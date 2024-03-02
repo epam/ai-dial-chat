@@ -215,7 +215,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(bison.name, bison.iconUrl);
+        await talkToSelector.selectModel(bison.name);
 
         const isSendMessageBtnEnabled =
           await sendMessage.sendMessageButton.isElementEnabled();
@@ -335,10 +335,7 @@ dialTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
-    await talkToSelector.selectModel(
-      randomModel.name,
-      recentModelIds.includes(randomModel.id) ? undefined : randomModel.iconUrl,
-    );
+    await talkToSelector.selectModel(randomModel.name);
     const sysPrompt = 'test prompt';
     const temp = 0;
     await entitySettings.setSystemPrompt(sysPrompt);
@@ -388,7 +385,7 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(bison.name, bison.iconUrl);
+    await talkToSelector.selectModel(bison.name);
     await chat.sendRequestWithButton('test message');
     await chatBar.createNewConversation();
     const modelBorderColors = await talkToRecentGroupEntities
@@ -425,14 +422,20 @@ dialTest(
       ModelsUtil.getOpenAIEntities().filter((m) => m.name.length >= 3),
     );
     const searchTerm = randomEntity.name.substring(0, 3);
-    const matchedModels = ModelsUtil.getLatestModels().filter((m) =>
-      m.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    const matchedModels = ModelsUtil.getLatestModels().filter(
+      (m) =>
+        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedApplications = ModelsUtil.getLatestApplications().filter((a) =>
-      a.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    const matchedApplications = ModelsUtil.getLatestApplications().filter(
+      (a) =>
+        a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedAssistants = ModelsUtil.getLatestAssistants().filter((a) =>
-      a.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    const matchedAssistants = ModelsUtil.getLatestAssistants().filter(
+      (a) =>
+        a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     await dialTest.step(
