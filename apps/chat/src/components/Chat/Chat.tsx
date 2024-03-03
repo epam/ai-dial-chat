@@ -602,7 +602,7 @@ export const ChatView = memo(() => {
               >
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
-                    (conv, selectedConvIdx) =>
+                    (conv) =>
                       conv.messages.length === 0 && (
                         <div
                           key={conv.id}
