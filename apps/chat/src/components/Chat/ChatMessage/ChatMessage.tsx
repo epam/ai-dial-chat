@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useState } from 'react';
+import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -130,14 +130,7 @@ export const ChatMessage: FC<Props> = memo(
           shouldApplySize={false}
           style={{
             top: `${clientY}px`,
-            left: `${
-              clientX > window.innerWidth / 2
-                ? clientX -
-                  (onRegenerate
-                    ? CONTEXT_MENU_REGENERATE_OFFSET
-                    : CONTEXT_MENU_OFFSET)
-                : clientX
-            }px`,
+            left: `${clientX}px`,
           }}
           type="contextMenu"
           className="w-full text-start"
@@ -149,8 +142,16 @@ export const ChatMessage: FC<Props> = memo(
               message={message}
               onClick={(e, messageRef) => {
                 const rect = messageRef.current!.getBoundingClientRect();
-                setClientY(e.clientY - rect.top);
-                setClientX(e.clientX);
+                setClientY(e.clientY - rect.y);
+                setClientX(
+                  e.clientX -
+                    rect.x -
+                    (e.pageX > window.innerWidth / 2
+                      ? onRegenerate
+                        ? CONTEXT_MENU_REGENERATE_OFFSET
+                        : CONTEXT_MENU_OFFSET
+                      : 0),
+                );
               }}
               {...props}
             />

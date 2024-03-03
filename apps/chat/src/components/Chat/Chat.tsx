@@ -557,8 +557,14 @@ export const ChatView = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
-  const isRegenerateAvailable =
-    !isPlayback && !isExternal && !messageIsStreaming && !isLastMesssageError;
+  const showLastMessageRegenerate =
+    !isPlayback &&
+    !isExternal &&
+    !messageIsStreaming &&
+    !isLastMesssageError &&
+    selectedConversationsIds.length === 1;
+  const showBigRegenerate =
+    isLastMesssageError || selectedConversationsIds.length > 1;
 
   return (
     <div
@@ -596,7 +602,7 @@ export const ChatView = memo(() => {
               >
                 <div className="flex max-h-full w-full">
                   {selectedConversations.map(
-                    (conv) =>
+                    (conv, selectedConvIdx) =>
                       conv.messages.length === 0 && (
                         <div
                           key={conv.id}
@@ -770,7 +776,7 @@ export const ChatView = memo(() => {
                                       }}
                                       onRegenerate={
                                         index === conv.messages.length - 1 &&
-                                        isRegenerateAvailable
+                                        showLastMessageRegenerate
                                           ? onRegenerateMessage
                                           : undefined
                                       }
@@ -850,7 +856,7 @@ export const ChatView = memo(() => {
                     onSend={onSendMessage}
                     onScrollDownClick={handleScrollDown}
                     onRegenerate={
-                      isLastMesssageError ? onRegenerateMessage : undefined
+                      showBigRegenerate ? onRegenerateMessage : undefined
                     }
                     onStopConversation={() => {
                       dispatch(ConversationsActions.stopStreamMessage());
