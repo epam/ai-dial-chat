@@ -1,3 +1,4 @@
+import { IconRefresh } from '@tabler/icons-react';
 import {
   Children,
   MutableRefObject,
@@ -14,7 +15,6 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import RefreshCWAlt from '../../../../public/images/icons/refresh-cw-alt.svg';
 import { ChatInputFooter } from './ChatInputFooter';
 import { ChatInputMessage } from './ChatInputMessage';
 
@@ -82,7 +82,7 @@ export const ChatInput = ({
               data-qa="regenerate"
             >
               <span className="text-secondary">
-                <RefreshCWAlt width={18} height={18} />
+                <IconRefresh width={20} height={20} />
               </span>
               {t('Regenerate response')}
             </button>

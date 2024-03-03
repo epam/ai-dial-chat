@@ -125,7 +125,7 @@ export const ChatMessage: FC<Props> = memo(
       <>
         <Menu
           placement="top-start"
-          listClassName="z-0 context-menu-chat"
+          listClassName="context-menu-chat bg-layer-3"
           shouldFlip={false}
           shouldApplySize={false}
           style={{
@@ -134,6 +134,8 @@ export const ChatMessage: FC<Props> = memo(
           }}
           type="contextMenu"
           className="w-full text-start"
+          dismissIfScroll
+          noFocusReturn
           trigger={
             <ChatMessageContent
               conversation={conversation}
