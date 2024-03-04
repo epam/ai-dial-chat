@@ -151,7 +151,7 @@ export class DataService {
     return BrowserStorage.getData(UIStorageKeys.CustomLogo, undefined);
   }
 
-  public static setCustomLogo(customLogo: string): Observable<void> {
+  public static setCustomLogo(customLogo?: string): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.CustomLogo, customLogo);
   }
 }

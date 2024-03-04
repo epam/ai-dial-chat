@@ -246,6 +246,13 @@ const setCustomLogoEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const removeCustomLogoEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.removeCustomLogo.match),
+    switchMap(() => DataService.setCustomLogo()),
+    ignoreElements(),
+  );
+
 const UIEpics = combineEpics(
   initEpic,
   saveThemeEpic,
@@ -260,6 +267,7 @@ const UIEpics = combineEpics(
   savePromptbarWidthEpic,
   saveIsChatFullWidthEpic,
   setCustomLogoEpic,
+  removeCustomLogoEpic,
   resizeEpic,
 );
 
