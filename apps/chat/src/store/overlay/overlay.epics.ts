@@ -94,7 +94,7 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
                 state$.value,
               );
 
-              sendPMResponse(OverlayRequests.sendMessage, {
+              sendPMResponse(OverlayRequests.setSystemPrompt, {
                 requestId,
                 hostDomain,
               });
