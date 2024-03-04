@@ -287,9 +287,7 @@ export const ChatView = memo(() => {
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              messages: messages.filter(
-                (message) => message.role === Role.System,
-              ),
+              messages,
             },
           }),
         );

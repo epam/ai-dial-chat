@@ -20,16 +20,20 @@ export interface SendMessageOptions {
   content: string;
 }
 
-export interface SetSystemPromptOptions {
-  systemPrompt: string;
+export interface SetOverlayContextOptions {
+  overlayContext: string;
 }
 
 interface OverlayState {
   hostDomain: string;
+
+  overlayContext: string | null;
 }
 
 const initialState: OverlayState = {
   hostDomain: '*',
+
+  overlayContext: null,
 };
 
 export const overlaySlice = createSlice({
@@ -48,10 +52,12 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<{ hostDomain: string }>>,
     ) => state,
-    setSystemPrompt: (
+    setOverlayContext: (
       state,
-      _action: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
-    ) => state,
+      { payload }: PayloadAction<WithRequestId<SetOverlayContextOptions>>,
+    ) => {
+      state.overlayContext = payload.overlayContext;
+    },
     sendMessage: (
       state,
       _action: PayloadAction<WithRequestId<SendMessageOptions>>,
@@ -65,8 +71,13 @@ const selectHostDomain = createSelector([rootSelector], (state) => {
   return state.hostDomain;
 });
 
+const selectOverlayContext = createSelector([rootSelector], (state) => {
+  return state.overlayContext;
+});
+
 export const OverlaySelectors = {
   selectHostDomain,
+  selectOverlayContext,
 };
 
 export const OverlayActions = overlaySlice.actions;

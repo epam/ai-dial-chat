@@ -20,7 +20,7 @@ import {
   sendPMResponse,
 } from '@/src/utils/app/overlay';
 
-import { Message, Role } from '@/src/types/chat';
+import { Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { OpenAIEntityModel } from '@/src/types/openai';
 import { AppEpic } from '@/src/types/store';
@@ -44,7 +44,7 @@ import {
   OverlayOptions,
   OverlaySelectors,
   SendMessageOptions,
-  SetSystemPromptOptions,
+  SetOverlayContextOptions,
 } from './overlay.reducers';
 
 import {
@@ -55,7 +55,7 @@ import {
   validateFeature,
 } from '@epam/ai-dial-shared';
 
-export const postMessageMapperEpic: AppEpic = () =>
+export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
     ? fromEvent<MessageEvent>(window, 'message').pipe(
         filter(isPostMessageOverlayRequest),
@@ -87,11 +87,23 @@ export const postMessageMapperEpic: AppEpic = () =>
 
               return of(OverlayActions.sendMessage({ content, requestId }));
             }
-            case OverlayRequests.setSystemPrompt: {
-              const { systemPrompt } = payload as SetSystemPromptOptions;
+            case OverlayRequests.setOverlayContext: {
+              const { overlayContext } = payload as SetOverlayContextOptions;
+
+              const hostDomain = OverlaySelectors.selectHostDomain(
+                state$.value,
+              );
+
+              sendPMResponse(OverlayRequests.sendMessage, {
+                requestId,
+                hostDomain,
+              });
 
               return of(
-                OverlayActions.setSystemPrompt({ systemPrompt, requestId }),
+                OverlayActions.setOverlayContext({
+                  overlayContext,
+                  requestId,
+                }),
               );
             }
             default: {
@@ -296,51 +308,6 @@ const setOverlayOptionsSuccessEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const setSystemPromptEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(OverlayActions.setSystemPrompt.match),
-    map(({ payload: { requestId, systemPrompt } }) => {
-      const currentConversation =
-        ConversationsSelectors.selectFirstSelectedConversation(state$.value);
-
-      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
-
-      return { requestId, systemPrompt, currentConversation, hostDomain };
-    }),
-    switchMap(
-      ({ requestId, systemPrompt, currentConversation, hostDomain }) => {
-        if (!currentConversation) return EMPTY;
-
-        sendPMResponse(OverlayRequests.setSystemPrompt, {
-          requestId,
-          hostDomain,
-        });
-
-        const { messages } = currentConversation;
-
-        const systemMessage: Message = {
-          role: Role.System,
-          content: systemPrompt,
-        };
-
-        // add system prompt
-        const newMessages = [
-          systemMessage,
-          ...messages.filter(({ role }) => role !== Role.System),
-        ];
-
-        return of(
-          ConversationsActions.updateConversation({
-            id: currentConversation.id,
-            values: {
-              messages: newMessages,
-            },
-          }),
-        );
-      },
-    ),
-  );
-
 const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
   state$.pipe(
     // we shouldn't proceed if we are not overlay
@@ -392,7 +359,6 @@ export const OverlayEpics = combineEpics(
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,
-  setSystemPromptEpic,
   notifyHostGPTMessageStatus,
   setOverlayOptionsSuccessEpic,
 );
