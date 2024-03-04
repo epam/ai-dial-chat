@@ -1,6 +1,5 @@
 import { Prompt } from '@/chat/types/prompt';
 import { ExpectedConstants } from '@/src/testData';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface TestPrompt extends Omit<Prompt, 'folderId'> {
   folderId?: string | undefined;
@@ -11,7 +10,7 @@ export class PromptBuilder {
 
   constructor() {
     this.prompt = {
-      id: uuidv4(),
+      id: '',
       name: ExpectedConstants.newPromptTitle(1),
       description: '',
       content: '',
