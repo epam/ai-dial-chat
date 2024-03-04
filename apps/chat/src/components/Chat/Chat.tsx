@@ -230,15 +230,15 @@ export const ChatView = memo(() => {
   }, []);
 
   useEffect(() => {
-    if (mergedMessages && mergedMessages.length > 0) {
-      mergedMessages.forEach((mergedStr: [Conversation, Message, number][]) => {
-        const lastMergedStrTuple = mergedStr[mergedStr.length - 1];
-        const [__conv, message] = lastMergedStrTuple;
-        if (message.errorMessage) {
-          setIsLastMesssageError(true);
-        }
-      });
-    }
+    mergedMessages.forEach((mergedStr: [Conversation, Message, number][]) => {
+      const lastMergedStrTuple = mergedStr[mergedStr.length - 1];
+      const [__conv, message] = lastMergedStrTuple;
+      if (message.errorMessage) {
+        setIsLastMesssageError(true);
+      } else {
+        setIsLastMesssageError(false);
+      }
+    });
   }, [mergedMessages]);
 
   useEffect(() => {
