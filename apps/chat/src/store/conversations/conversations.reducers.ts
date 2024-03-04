@@ -151,8 +151,8 @@ export const conversationsSlice = createSlice({
         if (conv.id === payload.id) {
           return {
             ...conv,
-            ...payload.conversation,
             lastActivityDate: Date.now(),
+            ...payload.conversation,
           };
         }
 
