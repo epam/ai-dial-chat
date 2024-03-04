@@ -1,5 +1,5 @@
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -19,11 +19,13 @@ import { Translation } from '../types/translation';
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import { ShareActions, ShareSelectors } from '../store/share/share.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import {
   selectConversationsToMigrateAndMigratedCount,
   selectFailedMigratedConversations,
 } from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import {
   selectFailedMigratedPrompts,
   selectPromptsToMigrateAndMigratedCount,
@@ -70,16 +72,16 @@ export default function Home({ initialState }: HomeProps) {
 
   const dispatch = useAppDispatch();
 
+  const [lastBlurTime, setLastBlurTime] = useState<number | null>(null);
+
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   const isShareModalClosed = useAppSelector(
     ShareSelectors.selectShareModalClosed,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
   const { conversationsToMigrateCount, migratedConversationsCount } =
@@ -91,7 +93,6 @@ export default function Home({ initialState }: HomeProps) {
     selectFailedMigratedConversations,
   );
   const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
-
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
@@ -119,6 +120,27 @@ export default function Home({ initialState }: HomeProps) {
   useEffect(() => {
     dispatch(AuthActions.setSession(session));
   }, [dispatch, session]);
+
+  useEffect(() => {
+    const handleBlur = () => {
+      setLastBlurTime(Date.now());
+    };
+
+    const handleFocus = () => {
+      if (lastBlurTime && Date.now() - lastBlurTime > 60 * 1000) {
+        dispatch(ConversationsActions.reloadConversationsState());
+        dispatch(PromptsActions.reloadPromptsState());
+      }
+      setLastBlurTime(null);
+    };
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [dispatch, lastBlurTime]);
 
   // ON LOAD --------------------------------------------
 

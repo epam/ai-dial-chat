@@ -58,6 +58,7 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    reloadConversationsState: (state) => state,
     migrateConversationsIfRequired: (state) => state,
     initConversationsMigration: (
       state,
@@ -103,7 +104,10 @@ export const conversationsSlice = createSlice({
       state,
       { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
     ) => state,
-    initSelectedConversations: (state) => state,
+    initSelectedConversations: (
+      state,
+      _action: PayloadAction<{ noLoader: boolean } | undefined>,
+    ) => state,
     initFoldersAndConversations: (state) => state,
     initFoldersAndConversationsSuccess: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
@@ -180,7 +184,9 @@ export const conversationsSlice = createSlice({
     },
     selectConversations: (
       state,
-      { payload }: PayloadAction<{ conversationIds: string[] }>,
+      {
+        payload,
+      }: PayloadAction<{ conversationIds: string[]; noLoader?: boolean }>,
     ) => {
       const newSelectedIds = uniq(payload.conversationIds);
 
@@ -683,6 +689,23 @@ export const conversationsSlice = createSlice({
         payload.paths as string[],
       );
     },
+    reloadConversationFoldersStateSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        paths: Set<string | undefined>;
+        folders: FolderInterface[];
+      }>,
+    ) => {
+      state.loadingFolderIds = state.loadingFolderIds.filter(
+        (id) => !payload.paths.has(id),
+      );
+      state.foldersStatus = UploadStatus.LOADED;
+      state.folders = payload.folders;
+      state.conversationsLoaded = true;
+      state.foldersStatus = UploadStatus.ALL_LOADED;
+    },
     uploadFoldersSuccess: (
       state,
       {
@@ -735,7 +758,33 @@ export const conversationsSlice = createSlice({
       >,
     ) => {
       state.conversationsStatus = UploadStatus.LOADING;
-      state.conversationsLoaded = !payload?.noLoader;
+      state.conversationsLoaded = !!payload?.noLoader;
+    },
+    reloadConversationsStateSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        paths: Set<string | undefined>;
+        conversations: ConversationInfo[];
+      }>,
+    ) => {
+      const conversationMap = state.conversations.reduce((map, conv) => {
+        map.set(conv.id, conv);
+        return map;
+      }, new Map<string, ConversationInfo>());
+
+      const ids = new Set(payload.conversations.map((c) => c.id));
+
+      state.conversations = payload.conversations.map((conv) =>
+        ids.has(conv.id)
+          ? {
+              ...conversationMap.get(conv.id),
+              ...conv,
+            }
+          : conv,
+      );
+      state.conversationsStatus = UploadStatus.LOADED;
     },
     uploadConversationsSuccess: (
       state,

@@ -332,6 +332,7 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.initPromptsSuccess.match(action) ||
+        PromptsActions.reloadPromptsStateSuccess.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>

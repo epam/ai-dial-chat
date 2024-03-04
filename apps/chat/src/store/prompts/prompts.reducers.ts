@@ -49,6 +49,8 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    reloadPromptsState: (state) => state,
+    reloadPromptsStateSuccess: (state) => state,
     uploadPromptsWithFoldersRecursive: (
       state,
       {
@@ -57,7 +59,7 @@ export const promptsSlice = createSlice({
         { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
       >,
     ) => {
-      state.promptsLoaded = !payload?.noLoader;
+      state.promptsLoaded = !!payload?.noLoader;
     },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
@@ -248,6 +250,16 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
+    setReloadedPrompts: (
+      state,
+      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
+    ) => {
+      state.prompts = combineEntities(
+        state.prompts.filter((prompt) => prompt.id === state.selectedPromptId),
+        payload.prompts,
+      );
+      state.promptsLoaded = true;
+    },
     setPrompts: (
       state,
       {
@@ -455,8 +467,35 @@ export const promptsSlice = createSlice({
       state.selectedPromptId = payload.promptId;
       state.isPromptLoading = !!payload.promptId;
     },
-    uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
-      state.isPromptLoading = true;
+    clearPromptInfo: (
+      state,
+      { payload }: PayloadAction<{ promptId: string }>,
+    ) => {
+      state.prompts = state.prompts.map((prompt) => {
+        if (prompt.id === payload.promptId) {
+          const {
+            content: __content,
+            description: __description,
+            isShared: __isShared,
+            isPublished: __isPublished,
+            ...cleanPrompt
+          } = prompt as Prompt;
+          return cleanPrompt;
+        }
+
+        return prompt;
+      });
+    },
+    uploadPrompt: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptId: string;
+        noLoader?: boolean;
+      }>,
+    ) => {
+      state.isPromptLoading = !payload.noLoader;
     },
     uploadPromptSuccess: (
       state,

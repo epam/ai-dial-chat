@@ -119,6 +119,73 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
+const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.reloadConversationsState.match),
+    switchMap(() =>
+      ConversationService.getConversations(undefined, true).pipe(
+        switchMap((conversations) => {
+          const folderIds = uniq(conversations.map((c) => c.folderId));
+          const paths = uniq(
+            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          );
+          const selectedConversationIds =
+            ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+          const existingSelectedConversations = conversations.filter((conv) =>
+            selectedConversationIds.includes(conv.id),
+          );
+
+          return concat(
+            of(
+              ConversationsActions.uploadConversationsWithFoldersRecursive({
+                noLoader: true,
+              }),
+            ),
+            of(
+              ConversationsActions.reloadConversationsStateSuccess({
+                paths: new Set(),
+                conversations,
+              }),
+            ),
+            of(
+              ConversationsActions.reloadConversationFoldersStateSuccess({
+                paths: new Set(),
+                folders: getFoldersFromIds(
+                  paths,
+                  FolderType.Chat,
+                  UploadStatus.LOADED,
+                ),
+              }),
+            ),
+            iif(
+              () => !!existingSelectedConversations.length,
+              of(
+                ConversationsActions.uploadConversationsByIds({
+                  conversationIds: selectedConversationIds,
+                }),
+              ),
+              of(
+                ConversationsActions.selectConversations({
+                  conversationIds: [conversations[0].id],
+                }),
+              ),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error('Error during reload conversations and folders: ', err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while reloading conversations and folders. Please try to refresh the page.',
+              ),
+            ),
+          );
+        }),
+      ),
+    ),
+  );
+
 const initSelectedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
@@ -2109,16 +2176,35 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       return forkJoin({
         uploadedConversations: zip(
-          payload.conversationIds.map((id) =>
-            ConversationService.getConversation(
-              ConversationsSelectors.selectConversation(state$.value, id)!,
-            ).pipe(
-              catchError((err) => {
-                console.error('The selected conversation was not found:', err);
-                return of(null);
-              }),
-            ),
-          ),
+          payload.conversationIds
+            .filter((id) => {
+              const conversation = ConversationsSelectors.selectConversation(
+                state$.value,
+                id,
+              );
+
+              return !!conversation;
+            })
+            .map((id) => {
+              // remove messages to avoid overwriting with old data at mergeGetResult
+              const { messages: __messages, ...selectedConversation } =
+                ConversationsSelectors.selectConversation(
+                  state$.value,
+                  id,
+                ) as Conversation;
+
+              return ConversationService.getConversation(
+                selectedConversation,
+              ).pipe(
+                catchError((err) => {
+                  console.error(
+                    'The selected conversation was not found:',
+                    err,
+                  );
+                  return of(null);
+                }),
+              );
+            }),
         ),
         setIds: of(new Set(payload.conversationIds as string[])),
         showLoader: of(payload.showLoader),
@@ -2498,4 +2584,7 @@ export const ConversationsEpics = combineEpics(
   toggleFolderEpic,
   openFolderEpic,
   compareConversationsEpic,
+
+  // reload
+  reloadConversationsStateEpic,
 );

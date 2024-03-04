@@ -57,7 +57,7 @@ import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { Prompt } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
@@ -73,6 +73,89 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
 import uniq from 'lodash-es/uniq';
+
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.init.match),
+    switchMap(() => of(PromptsActions.uploadPromptsWithFoldersRecursive())),
+  );
+
+const reloadPromptsStateEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.reloadPromptsState.match),
+    switchMap(() =>
+      PromptService.getPrompts(undefined, true).pipe(
+        switchMap((prompts) => {
+          const actions: Observable<AnyAction>[] = [];
+          const selectedPromptId = PromptsSelectors.selectSelectedPromptId(
+            state$.value,
+          );
+          const isSelectedPromptExists = prompts.some(
+            (prompt) => selectedPromptId === prompt.id,
+          );
+
+          if (selectedPromptId) {
+            if (!isSelectedPromptExists) {
+              actions.push(
+                of(PromptsActions.setSelectedPrompt({ promptId: undefined })),
+              );
+              actions.push(
+                of(
+                  UIActions.showToast({
+                    message: translate('Selected prompt was removed'),
+                  }),
+                ),
+              );
+            } else {
+              actions.push(
+                of(
+                  PromptsActions.uploadPrompt({
+                    promptId: selectedPromptId,
+                    noLoader: true,
+                  }),
+                ),
+              );
+            }
+          }
+
+          return concat(
+            ...actions,
+            of(
+              PromptsActions.setReloadedPrompts({
+                prompts,
+              }),
+            ),
+            of(
+              PromptsActions.setFolders({
+                folders: uniq(
+                  prompts.flatMap((p) =>
+                    getParentFolderIdsFromFolderId(p.folderId),
+                  ),
+                ).map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            of(PromptsActions.reloadPromptsStateSuccess()),
+          );
+        }),
+        catchError((err) => {
+          console.error(
+            'An error occurred while reloading prompts and folders: ',
+            err,
+          );
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while reloading prompts and folders. Please try to refresh the page.',
+              ),
+            ),
+          );
+        }),
+      ),
+    ),
+  );
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -1005,22 +1088,18 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
     ),
   );
 
-const initEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter((action) => PromptsActions.init.match(action)),
-    switchMap(() =>
-      concat(of(PromptsActions.uploadPromptsWithFoldersRecursive())),
-    ),
-  );
-
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPrompt.match),
     switchMap(({ payload }) => {
-      const originalPrompt = PromptsSelectors.selectPrompt(
+      const {
+        description: __description,
+        content: __content,
+        ...originalPrompt
+      } = PromptsSelectors.selectPrompt(
         state$.value,
         payload.promptId,
-      ) as PromptInfo;
+      ) as Prompt;
 
       return PromptService.getPrompt(originalPrompt).pipe(
         map((servicePrompt) => ({ originalPrompt, servicePrompt })),
@@ -1067,4 +1146,7 @@ export const PromptsEpics = combineEpics(
   duplicatePromptEpic,
   uploadPromptEpic,
   // importPromptsSuccessEpic,
+
+  // reload
+  reloadPromptsStateEpic,
 );
