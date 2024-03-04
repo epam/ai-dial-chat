@@ -230,6 +230,18 @@ export const ChatView = memo(() => {
   }, []);
 
   useEffect(() => {
+    if (mergedMessages && mergedMessages.length > 0) {
+      mergedMessages.forEach((mergedStr: [Conversation, Message, number][]) => {
+        const lastMergedStrTuple = mergedStr[mergedStr.length - 1];
+        const [__conv, message] = lastMergedStrTuple;
+        if (message.errorMessage) {
+          setIsLastMesssageError(true);
+        }
+      });
+    }
+  }, [mergedMessages]);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setAutoScrollEnabled(entry.isIntersecting);
@@ -736,50 +748,41 @@ export const ChatView = memo(() => {
                               Conversation,
                               Message,
                               number,
-                            ]) => {
-                              if (
-                                index === conv.messages.length - 1 &&
-                                isLastMesssageError !== !!message.errorMessage
-                              ) {
-                                setIsLastMesssageError(!!message.errorMessage);
-                              }
-
-                              return (
-                                <div
-                                  key={conv.id}
-                                  className={classNames(
-                                    isCompareMode &&
-                                      selectedConversations.length > 1
-                                      ? 'w-[50%]'
-                                      : 'w-full',
-                                  )}
-                                >
-                                  <div className="size-full">
-                                    <MemoizedChatMessage
-                                      key={conv.id}
-                                      message={message}
-                                      messageIndex={index}
-                                      conversation={conv}
-                                      isLikesEnabled={enabledFeatures.has(
-                                        Feature.Likes,
-                                      )}
-                                      editDisabled={!!notAllowedType}
-                                      onEdit={onEditMessage}
-                                      onLike={onLikeHandler(index, conv)}
-                                      onDelete={() => {
-                                        handleDeleteMessage(index);
-                                      }}
-                                      onRegenerate={
-                                        index === conv.messages.length - 1 &&
-                                        showLastMessageRegenerate
-                                          ? onRegenerateMessage
-                                          : undefined
-                                      }
-                                    />
-                                  </div>
+                            ]) => (
+                              <div
+                                key={conv.id}
+                                className={classNames(
+                                  isCompareMode &&
+                                    selectedConversations.length > 1
+                                    ? 'w-[50%]'
+                                    : 'w-full',
+                                )}
+                              >
+                                <div className="size-full">
+                                  <MemoizedChatMessage
+                                    key={conv.id}
+                                    message={message}
+                                    messageIndex={index}
+                                    conversation={conv}
+                                    isLikesEnabled={enabledFeatures.has(
+                                      Feature.Likes,
+                                    )}
+                                    editDisabled={!!notAllowedType}
+                                    onEdit={onEditMessage}
+                                    onLike={onLikeHandler(index, conv)}
+                                    onDelete={() => {
+                                      handleDeleteMessage(index);
+                                    }}
+                                    onRegenerate={
+                                      index === conv.messages.length - 1 &&
+                                      showLastMessageRegenerate
+                                        ? onRegenerateMessage
+                                        : undefined
+                                    }
+                                  />
                                 </div>
-                              );
-                            },
+                              </div>
+                            ),
                           )}
                         </div>
                       ),
