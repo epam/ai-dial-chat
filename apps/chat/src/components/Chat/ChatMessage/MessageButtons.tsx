@@ -115,7 +115,7 @@ export const MessageAssistantButtons = ({
     >
       {onRegenerate && (
         <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
-          <Button onClick={onRegenerate}>
+          <Button onClick={onRegenerate} data-qa="regenerate">
             <IconRefresh size={18} className="text-secondary" />
           </Button>
         </Tooltip>
