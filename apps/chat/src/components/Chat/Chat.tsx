@@ -230,7 +230,7 @@ export const ChatView = memo(() => {
   }, []);
 
   useEffect(() => {
-    const lastMergedMessages = [...mergedMessages].pop();
+    const lastMergedMessages = mergedMessages[mergedMessages.length - 1];
 
     if (lastMergedMessages) {
       const isErrorInSomeLastMessage = lastMergedMessages.some(
