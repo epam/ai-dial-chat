@@ -13,7 +13,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -67,7 +67,7 @@ export const ChatHeader = ({
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
-  const [model, setModel] = useState<OpenAIEntityModel | undefined>(() => {
+  const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =

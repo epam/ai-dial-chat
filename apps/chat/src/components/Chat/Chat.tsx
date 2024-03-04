@@ -4,7 +4,6 @@ import { useTranslation } from 'next-i18next';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 
-import { OpenAIEntityModelID } from '../../types/openai';
 import {
   Conversation,
   ConversationsTemporarySettings,
@@ -34,7 +33,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -64,7 +63,6 @@ export const ChatView = memo(() => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
-  const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
@@ -343,7 +341,7 @@ export const ChatView = memo(() => {
         model: { id: modelId },
         assistantModelId:
           newAiEntity.type === EntityType.Assistant
-            ? DEFAULT_ASSISTANT_SUBMODEL.id
+            ? DEFAULT_ASSISTANT_SUBMODEL_ID
             : undefined,
         replay: updatedReplay,
         selectedAddons: updatedAddons,
@@ -607,9 +605,6 @@ export const ChatView = memo(() => {
                               conversation={conv}
                               isModels={models.length !== 0}
                               prompts={prompts}
-                              defaultModelId={
-                                defaultModelId || OpenAIEntityModelID.GPT_3_5
-                              }
                               isShowSettings={enabledFeatures.has(
                                 Feature.EmptyChatSettings,
                               )}
@@ -778,9 +773,6 @@ export const ChatView = memo(() => {
                     <div className="relative h-full" key={conv.id}>
                       <ChatSettings
                         conversation={conv}
-                        defaultModelId={
-                          defaultModelId || OpenAIEntityModelID.GPT_3_5
-                        }
                         modelId={conv.model.id}
                         prompts={prompts}
                         addons={addons}

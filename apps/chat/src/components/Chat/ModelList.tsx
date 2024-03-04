@@ -10,7 +10,7 @@ import {
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
-import { OpenAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -21,7 +21,7 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
 
 interface ModelGroupProps {
-  entities: OpenAIEntity[];
+  entities: DialAIEntity[];
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
   notAllowExpandDescription?: boolean;
@@ -156,14 +156,14 @@ const ModelGroup = ({
 };
 
 interface ModelListProps {
-  entities: OpenAIEntity[];
+  entities: DialAIEntity[];
   heading?: string;
   selectedModelId: string | undefined;
   onSelect: (entityId: string) => void;
   notAllowExpandDescription?: boolean;
   displayCountLimit?: number;
   showInOneColumn?: boolean;
-  allEntities: OpenAIEntity[];
+  allEntities: DialAIEntity[];
   searchTerm?: string;
   disabled?: boolean;
 }

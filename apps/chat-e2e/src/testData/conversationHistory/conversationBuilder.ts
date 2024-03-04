@@ -2,7 +2,7 @@ import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-} from '@/chat/constants/default-settings';
+} from '@/chat/constants/default-ui-settings';
 import { defaultReplay } from '@/chat/constants/replay';
 import {
   Conversation,

@@ -2,7 +2,7 @@ import { MouseEvent, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { OpenAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/models';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -12,8 +12,8 @@ import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import orderBy from 'lodash-es/orderBy';
 
 interface ModelVersionSelectProps {
-  entities: OpenAIEntity[];
-  currentEntity: OpenAIEntity;
+  entities: DialAIEntity[];
+  currentEntity: DialAIEntity;
   onSelect: (id: string) => void;
 }
 

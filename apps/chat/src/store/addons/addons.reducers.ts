@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { translate } from '@/src/utils/app/translation';
 
 import { ErrorMessage } from '@/src/types/error';
-import { OpenAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/models';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -12,8 +12,8 @@ import { RootState } from '../index';
 export interface AddonsState {
   isLoading: boolean;
   error: ErrorMessage | undefined;
-  addons: OpenAIEntityAddon[];
-  addonsMap: Partial<Record<string, OpenAIEntityAddon>>;
+  addons: DialAIEntityAddon[];
+  addonsMap: Partial<Record<string, DialAIEntityAddon>>;
   recentAddonsIds: string[];
 }
 
@@ -35,18 +35,18 @@ export const addonsSlice = createSlice({
     },
     getAddonsSuccess: (
       state,
-      { payload }: PayloadAction<{ addons: OpenAIEntityAddon[] }>,
+      { payload }: PayloadAction<{ addons: DialAIEntityAddon[] }>,
     ) => {
       state.isLoading = false;
       state.error = undefined;
       state.addons = payload.addons;
-      state.addonsMap = (payload.addons as OpenAIEntityAddon[]).reduce(
+      state.addonsMap = (payload.addons as DialAIEntityAddon[]).reduce(
         (acc, model) => {
           acc[model.id] = model;
 
           return acc;
         },
-        {} as Record<string, OpenAIEntityAddon>,
+        {} as Record<string, DialAIEntityAddon>,
       );
     },
     getAddonsFail: (
