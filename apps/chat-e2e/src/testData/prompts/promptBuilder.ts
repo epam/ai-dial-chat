@@ -1,5 +1,6 @@
 import { Prompt } from '@/chat/types/prompt';
 import { ExpectedConstants } from '@/src/testData';
+import { GeneratorUtil } from '@/src/utils';
 
 export interface TestPrompt extends Omit<Prompt, 'folderId'> {
   folderId?: string | undefined;
@@ -10,7 +11,7 @@ export class PromptBuilder {
 
   constructor() {
     this.prompt = {
-      id: '',
+      id: GeneratorUtil.randomString(10),
       name: ExpectedConstants.newPromptTitle(1),
       description: '',
       content: '',
