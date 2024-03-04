@@ -127,7 +127,7 @@ export default function Home({ initialState }: HomeProps) {
     };
 
     const handleFocus = () => {
-      if (lastBlurTime && Date.now() - lastBlurTime > 60 * 1000) {
+      if (lastBlurTime && Date.now() - lastBlurTime > 1000) {
         dispatch(ConversationsActions.reloadConversationsState());
         dispatch(PromptsActions.reloadPromptsState());
       }

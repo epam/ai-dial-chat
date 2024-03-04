@@ -22,6 +22,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
+import { isEqual } from 'lodash-es';
+
 export { PromptsSelectors };
 
 const initialState: PromptsState = {
@@ -509,14 +511,18 @@ export const promptsSlice = createSlice({
       );
 
       if (foundPromptIdx !== -1) {
-        state.prompts[foundPromptIdx] = payload.prompt as Prompt;
+        if (
+          payload.prompt &&
+          !isEqual(state.prompts[foundPromptIdx], payload.prompt)
+        ) {
+          state.prompts[foundPromptIdx] = payload.prompt;
+        }
       } else {
         state.prompts = state.prompts.filter(
           (prompt) => prompt.id !== payload.originalPromptId,
         );
       }
     },
-
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
     uploadChildPromptsWithFolders: (
       state,
