@@ -232,7 +232,7 @@ export const ChatView = memo(() => {
   useEffect(() => {
     mergedMessages.forEach((mergedStr: [Conversation, Message, number][]) => {
       const lastMergedStrTuple = mergedStr[mergedStr.length - 1];
-      const [__conv, message] = lastMergedStrTuple;
+      const message = lastMergedStrTuple[1];
       if (message.errorMessage) {
         setIsLastMesssageError(true);
       } else {
