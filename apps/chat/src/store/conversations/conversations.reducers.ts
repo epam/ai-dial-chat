@@ -377,6 +377,19 @@ export const conversationsSlice = createSlice({
         : combineEntities(state.conversations, payload.conversations);
       state.conversationsLoaded = true;
     },
+    addSharedConversations: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        conversations: ConversationInfo[];
+      }>,
+    ) => {
+      state.conversations = combineEntities(
+        payload.conversations,
+        state.conversations.filter((conv) => !conv.sharedWithMe),
+      );
+    },
     addConversations: (
       state,
       {
@@ -533,6 +546,15 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
       state.folders = payload.folders;
+    },
+    addSharedFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = combineEntities(
+        payload.folders,
+        state.folders.filter((folder) => !folder.sharedWithMe),
+      );
     },
     addFolders: (
       state,

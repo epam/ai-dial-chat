@@ -141,8 +141,6 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
 
-          console.log(existingSelectedConversations);
-
           return concat(
             of(
               ConversationsActions.uploadConversationsWithFoldersRecursive({
@@ -1836,6 +1834,7 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.addFolders.match(action) ||
+        ConversationsActions.addSharedFolders.match(action) ||
         ConversationsActions.unpublishFolder.match(action) ||
         ConversationsActions.setFolders.match(action),
     ),
@@ -1876,6 +1875,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
         ConversationsActions.addConversations.match(action) ||
+        ConversationsActions.addSharedConversations.match(action) ||
         ConversationsActions.duplicateConversation.match(action),
     ),
     map(() =>

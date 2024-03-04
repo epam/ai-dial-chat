@@ -285,6 +285,15 @@ export const promptsSlice = createSlice({
         : combineEntities(state.prompts, payload.prompts);
       state.promptsLoaded = true;
     },
+    addSharedPrompts: (
+      state,
+      { payload }: PayloadAction<{ prompts: Prompt[] }>,
+    ) => {
+      state.prompts = combineEntities(
+        payload.prompts,
+        state.prompts.filter((prompt) => !prompt.sharedWithMe),
+      );
+    },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = combineEntities(payload.prompts, state.prompts);
     },
@@ -453,6 +462,15 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
       state.folders = payload.folders;
+    },
+    addSharedFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = combineEntities(
+        payload.folders,
+        state.folders.filter((folder) => !folder.sharedWithMe),
+      );
     },
     addFolders: (
       state,

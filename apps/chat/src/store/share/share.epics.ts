@@ -472,24 +472,23 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             );
           }
 
-          payload.resources.entities.length &&
-            actions.push(
-              ConversationsActions.addConversations({
-                conversations: payload.resources.entities.map((res) => ({
-                  ...(res.id === selectedConv?.id ? selectedConv : res),
-                  sharedWithMe: true,
-                })) as Conversation[],
-              }),
-            );
-          payload.resources.folders.length &&
-            actions.push(
-              ConversationsActions.addFolders({
-                folders: payload.resources.folders.map((res) => ({
-                  ...res,
-                  sharedWithMe: true,
-                })) as FolderInterface[],
-              }),
-            );
+          actions.push(
+            ConversationsActions.addSharedConversations({
+              conversations: payload.resources.entities.map((res) => ({
+                ...(res.id === selectedConv?.id ? selectedConv : res),
+                sharedWithMe: true,
+              })) as Conversation[],
+            }),
+          );
+
+          actions.push(
+            ConversationsActions.addSharedFolders({
+              folders: payload.resources.folders.map((res) => ({
+                ...res,
+                sharedWithMe: true,
+              })) as FolderInterface[],
+            }),
+          );
         }
       }
       if (payload.featureType === FeatureType.Prompt) {
@@ -536,24 +535,22 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
 
-          payload.resources.entities.length &&
-            actions.push(
-              PromptsActions.addPrompts({
-                prompts: payload.resources.entities.map((res) => ({
-                  ...(res.id === selectedPrompt?.id ? selectedPrompt : res),
-                  sharedWithMe: true,
-                })) as Prompt[],
-              }),
-            );
-          payload.resources.folders.length &&
-            actions.push(
-              PromptsActions.addFolders({
-                folders: payload.resources.folders.map((res) => ({
-                  ...res,
-                  sharedWithMe: true,
-                })) as FolderInterface[],
-              }),
-            );
+          actions.push(
+            PromptsActions.addSharedPrompts({
+              prompts: payload.resources.entities.map((res) => ({
+                ...(res.id === selectedPrompt?.id ? selectedPrompt : res),
+                sharedWithMe: true,
+              })) as Prompt[],
+            }),
+          );
+          actions.push(
+            PromptsActions.addSharedFolders({
+              folders: payload.resources.folders.map((res) => ({
+                ...res,
+                sharedWithMe: true,
+              })) as FolderInterface[],
+            }),
+          );
         }
       }
 
@@ -567,7 +564,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 noLoader: true,
               }),
             );
-            actions.push(ShareActions.resetShareId());
           } else {
             actions.push(
               ConversationsActions.selectConversations({
@@ -583,7 +579,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 selectFirst: true,
               }),
             );
-            actions.push(ShareActions.resetShareId());
           } else {
             actions.push(
               PromptsActions.setSelectedPrompt({
@@ -603,6 +598,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             }),
           );
         }
+        actions.push(ShareActions.resetShareId());
       }
 
       return concat(actions);
