@@ -100,6 +100,7 @@ import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { OverlaySelectors } from '../overlay/overlay.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   ConversationsActions,
@@ -1113,76 +1114,97 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
+      overlayContext: OverlaySelectors.selectOverlayContext(state$.value),
     })),
-    map(({ payload, modelsMap, conversations, selectedConversationIds }) => {
-      const messageModel: Message[EntityType.Model] = {
-        id: payload.conversation.model.id,
-      };
-      const messageSettings: Message['settings'] = {
-        prompt: payload.conversation.prompt,
-        temperature: payload.conversation.temperature,
-        selectedAddons: payload.conversation.selectedAddons,
-        assistantModelId: payload.conversation.assistantModelId,
-      };
-
-      const assistantMessage: Message = {
-        content: '',
-        model: messageModel,
-        settings: messageSettings,
-        role: Role.Assistant,
-      };
-
-      const userMessage: Message = {
-        ...payload.message,
-        model: messageModel,
-        settings: messageSettings,
-      };
-
-      const updatedMessages: Message[] = (
-        payload.deleteCount > 0
-          ? payload.conversation.messages.slice(
-              0,
-              payload.deleteCount * -1 || undefined,
-            )
-          : payload.conversation.messages
-      ).concat(userMessage, assistantMessage);
-
-      const newConversationName = getNextDefaultName(
-        getNewConversationName(
-          payload.conversation,
-          payload.message,
-          updatedMessages,
-        ),
-        conversations.filter(
-          (conv) =>
-            conv.folderId === payload.conversation.folderId &&
-            conv.id !== payload.conversation.id,
-        ),
-        Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
-        true,
-      );
-
-      const updatedConversation: Conversation = regenerateConversationId({
-        ...payload.conversation,
-        lastActivityDate: Date.now(),
-        replay: payload.conversation.replay
-          ? {
-              ...payload.conversation.replay,
-              activeReplayIndex: payload.activeReplayIndex,
-            }
-          : undefined,
-        messages: updatedMessages,
-        name: newConversationName,
-        isMessageStreaming: true,
-      });
-
-      return {
-        oldConversationId: payload.conversation.id,
-        updatedConversation,
+    map(
+      ({
+        payload,
         modelsMap,
-        assistantMessage,
-      };
-    }),
+        conversations,
+        selectedConversationIds,
+        overlayContext,
+      }) => {
+        const messageModel: Message[EntityType.Model] = {
+          id: payload.conversation.model.id,
+        };
+        const messageSettings: Message['settings'] = {
+          prompt: payload.conversation.prompt,
+          temperature: payload.conversation.temperature,
+          selectedAddons: payload.conversation.selectedAddons,
+          assistantModelId: payload.conversation.assistantModelId,
+        };
+
+        const assistantMessage: Message = {
+          content: '',
+          model: messageModel,
+          settings: messageSettings,
+          role: Role.Assistant,
+        };
+
+        const userMessage: Message = {
+          ...payload.message,
+          model: messageModel,
+          settings: messageSettings,
+        };
+
+        const newAddedMessages = [assistantMessage, userMessage];
+
+        // overlay needs to share information about host application, it's saving it in message with role: Role.System
+        if (overlayContext) {
+          const overlayContextMessage: Message = {
+            content: overlayContext,
+            role: Role.System,
+          };
+
+          newAddedMessages.push(overlayContextMessage);
+        }
+
+        const updatedMessages: Message[] = (
+          payload.deleteCount > 0
+            ? payload.conversation.messages.slice(
+                0,
+                payload.deleteCount * -1 || undefined,
+              )
+            : payload.conversation.messages
+        ).concat(newAddedMessages);
+
+        const newConversationName = getNextDefaultName(
+          getNewConversationName(
+            payload.conversation,
+            payload.message,
+            updatedMessages,
+          ),
+          conversations.filter(
+            (conv) =>
+              conv.folderId === payload.conversation.folderId &&
+              conv.id !== payload.conversation.id,
+          ),
+          Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
+          true,
+        );
+
+        const updatedConversation: Conversation = regenerateConversationId({
+          ...payload.conversation,
+          lastActivityDate: Date.now(),
+          replay: payload.conversation.replay
+            ? {
+                ...payload.conversation.replay,
+                activeReplayIndex: payload.activeReplayIndex,
+              }
+            : undefined,
+          messages: updatedMessages,
+          name: newConversationName,
+          isMessageStreaming: true,
+        });
+
+        return {
+          oldConversationId: payload.conversation.id,
+          updatedConversation,
+          modelsMap,
+          assistantMessage,
+        };
+      },
+    ),
     switchMap(
       ({
         oldConversationId,
