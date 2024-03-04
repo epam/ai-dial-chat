@@ -1156,7 +1156,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         conversations.filter(
           (conv) =>
             conv.folderId === payload.conversation.folderId &&
-            conv.id !== payload.conversation.id,
+            !selectedConversationIds.includes(conv.id),
         ),
         Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
         true,
