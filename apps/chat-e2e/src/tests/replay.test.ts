@@ -90,7 +90,7 @@ dialTest(
         await conversations.openConversationDropdownMenu(
           replayConversation!.name,
         );
-        await conversations.selectReplayMenuOption();
+        await conversations.selectMenuOption(MenuOptions.replay);
       },
     );
 

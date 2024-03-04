@@ -39,6 +39,7 @@ import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu'
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/src/ui/webElements/entitySettings';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
+import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
@@ -140,6 +141,7 @@ const dialTest = test.extend<
     browserStorageInjector: BrowserStorageInjector;
     apiInjector: ApiInjector;
     dataInjector: DataInjectorInterface;
+    errorToast: ErrorToast;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -455,6 +457,10 @@ const dialTest = test.extend<
       ? apiInjector
       : browserStorageInjector;
     await use(dataInjector);
+  },
+  errorToast: async ({ appContainer }, use) => {
+    const errorToast = appContainer.getErrorToast();
+    await use(errorToast);
   },
 });
 

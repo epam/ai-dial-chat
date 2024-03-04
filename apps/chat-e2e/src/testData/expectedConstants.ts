@@ -1,3 +1,5 @@
+import config from '../../config/playwright.config';
+
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -44,6 +46,15 @@ export const ExpectedConstants = {
   regenerateResponseTooltip:
     'Please regenerate response to continue working with chat',
   sharedConversationTooltip: 'Shared',
+  sharedConversationName: (name: string) => `Share: ${name}`,
+  sharedConversationPath: (invitationLink: string) => {
+    const invitationPath = '/v1/invitations/';
+    const startIndex =
+      invitationLink.indexOf(invitationPath) + invitationPath.length;
+    return `${config.use!.baseURL}/share/${invitationLink.slice(startIndex)}`;
+  },
+  shareInviteAcceptanceFailureMessage:
+    'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
   copyUrlTooltip: 'Copy URL',
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,

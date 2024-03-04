@@ -82,4 +82,5 @@ export const ChatSelectors = {
   chatLoader: '[data-qa="chat-loader"]',
   importExportLoader: '[data-qa="import-export-loader"]',
   stopLoading: '[data-qa="stop-loading"]',
+  errorToast: 'div > .text-error',
 };
