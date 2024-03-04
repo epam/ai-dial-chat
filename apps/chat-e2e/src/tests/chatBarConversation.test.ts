@@ -370,15 +370,12 @@ dialTest(
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    expect
-      .soft(
-        await folderConversations.isFolderEntityVisible(
-          conversationInFolder.folders.name,
-          conversationInFolder.conversations[0].name,
-        ),
-        ExpectedMessages.folderConversationDeleted,
+    await folderConversations
+      .getFolderEntity(
+        conversationInFolder.folders.name,
+        conversationInFolder.conversations[0].name,
       )
-      .toBeFalsy();
+      .waitFor({ state: 'hidden' });
   },
 );
 
