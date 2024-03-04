@@ -1,7 +1,6 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Groups } from '@/src/testData';
 import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { RecentEntities } from '@/src/ui/webElements/recentEntities';
@@ -44,15 +43,7 @@ export class EntitySelector extends BaseElement {
     await this.selectEntity(application, Groups.applications);
   }
 
-  public async selectModel(model: string, iconHost?: string) {
-    if (isApiStorageType && iconHost) {
-      const resp = this.page.waitForResponse(
-        (response) =>
-          response.url().includes(iconHost!) && response.status() === 200,
-      );
-      await this.selectEntity(model, Groups.models);
-      return resp;
-    }
+  public async selectModel(model: string) {
     await this.selectEntity(model, Groups.models);
   }
 

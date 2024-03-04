@@ -23,7 +23,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -434,17 +434,18 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
 
           actions.push(
-            ...(payload.resources.entities
+            ...((payload.resources.entities as ConversationInfo[])
               .map((conv) => {
-                const isSharedConv = conversations.find(
+                const sharedConv = conversations.find(
                   (res) => res.id === conv.id,
                 );
 
-                if (isSharedConv) {
+                if (sharedConv) {
                   return ConversationsActions.updateConversationSuccess({
                     id: conv.id,
                     conversation: {
                       isShared: true,
+                      lastActivityDate: sharedConv.lastActivityDate,
                     },
                   });
                 }
@@ -496,9 +497,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           actions.push(
             ...(payload.resources.entities
               .map((item) => {
-                const isShared = prompts.find((res) => res.id === item.id);
+                const sharedPrompt = prompts.find((res) => res.id === item.id);
 
-                if (isShared) {
+                if (sharedPrompt) {
                   return PromptsActions.updatePromptSuccess({
                     id: item.id,
                     prompt: {

@@ -12,6 +12,6 @@ export class Banner extends BaseElement {
   public bannerMessageLink = this.bannerMessage.getChildElementBySelector(
     Tags.a,
   );
-  public bannerIcon = this.getElementIconHtml(this.rootLocator);
+  public bannerIcon = this.getChildElementBySelector(Tags.svg).getNthElement(1);
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 }

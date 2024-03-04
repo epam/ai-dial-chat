@@ -1,5 +1,5 @@
 import { IconCheck } from '@tabler/icons-react';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,7 +14,6 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Combobox } from '../Common/Combobox';
@@ -26,24 +25,14 @@ interface OptionProps {
 }
 
 const Option = ({ item }: OptionProps) => {
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
-
-  const model = useMemo(
-    () =>
-      modelsMap[item.model?.id] ||
-      (defaultModelId && modelsMap[defaultModelId]),
-    [defaultModelId, item.model?.id, modelsMap],
+  const model = useAppSelector((state) =>
+    ModelsSelectors.selectModel(state, item.model.id),
   );
-
-  if (!model) {
-    return null;
-  }
 
   return (
     <div className="group flex items-center gap-3 pl-1">
       <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
-        <ModelIcon entity={model} entityId={model.id} size={18} />
+        <ModelIcon entity={model} entityId={item.model.id} size={18} />
       </ShareIcon>
       <span className="truncate">{item.name}</span>
     </div>

@@ -22,10 +22,16 @@ dialTest(
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1036', 'EPMRTC-1038', 'EPMRTC-378');
+
+    const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities();
+    const randomEntity = GeneratorUtil.randomArrayElement(allExpectedEntities);
+
     await dialTest.step(
       'Open initial screen and click "See full list" to view all available entities',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
@@ -34,7 +40,6 @@ dialTest(
     );
 
     await dialTest.step('Verify all entities have valid icons', async () => {
-      const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities();
       const actualModelsIcons =
         await talkToModelsGroupEntities.getEntitiesIcons();
       const actualAssistantsIcons =
@@ -49,8 +54,6 @@ dialTest(
         .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)
         .toBe(allExpectedEntities.length);
 
-      const randomEntity =
-        GeneratorUtil.randomArrayElement(allExpectedEntities);
       const actualEntity = actualIcons.find((e) =>
         e.entityName.includes(randomEntity.name),
       )!;
@@ -143,7 +146,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(model.name, model.iconUrl);
+        await talkToSelector.selectModel(model.name);
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },
     );

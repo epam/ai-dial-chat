@@ -94,7 +94,7 @@ import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-settings';
+} from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
@@ -1244,7 +1244,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
       if (conversationModelType === EntityType.Model) {
         modelAdditionalSettings = {
-          prompt: payload.conversation.prompt,
+          prompt: lastModel?.features?.systemPrompt
+            ? payload.conversation.prompt
+            : undefined,
           temperature: payload.conversation.temperature,
           selectedAddons,
         };

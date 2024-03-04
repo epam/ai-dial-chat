@@ -14,7 +14,7 @@ import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
 

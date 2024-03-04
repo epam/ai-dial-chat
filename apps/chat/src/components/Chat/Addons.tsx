@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { OpenAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -91,7 +91,7 @@ const filterRecentAddons = (
   recentAddonsIds: string[],
   selectedAddonsIds: string[],
   preselectedAddonsIds: string[],
-  addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
+  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
 ) => {
   return recentAddonsIds.filter(
     (id) =>
@@ -111,6 +111,7 @@ export const Addons = ({
   const { t } = useTranslation(Translation.Chat);
   const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
+  const addons = useAppSelector(AddonsSelectors.selectAddons);
 
   const [filteredRecentAddons, setFilteredRecentAddons] = useState<string[]>(
     filterRecentAddons(
@@ -132,6 +133,10 @@ export const Addons = ({
       ),
     );
   }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds, addonsMap]);
+
+  if (!addons.length) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-3" data-qa="addons">

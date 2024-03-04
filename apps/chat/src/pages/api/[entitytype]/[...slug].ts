@@ -4,12 +4,12 @@ import { JWT, getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
-import { OpenAIError } from '@/src/utils/server';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApiKeys } from '@/src/types/common';
+import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -28,7 +28,7 @@ const getEntityUrlFromSlugs = (
     : [req.query.slug];
 
   if (!slugs || slugs.length === 0) {
-    throw new OpenAIError(`No ${entityType} path provided`, '', '', '400');
+    throw new DialAIError(`No ${entityType} path provided`, '', '', '400');
   }
 
   return constructPath(
@@ -69,7 +69,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error: unknown) {
     logger.error(error);
-    if (error instanceof OpenAIError) {
+    if (error instanceof DialAIError) {
       return res
         .status(parseInt(error.code, 10) || 500)
         .send(error.message || errorsMessages.generalServer);
@@ -119,7 +119,7 @@ async function handlePutRequest(
   }
 
   if (!proxyRes.ok) {
-    throw new OpenAIError(
+    throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
       '',
       '',
@@ -141,14 +141,21 @@ async function handleGetRequest(
   });
 
   if (!proxyRes.ok) {
-    throw new OpenAIError(proxyRes.statusText, '', '', proxyRes.status + '');
+    throw new DialAIError(
+      `Requesting entity failed - '${url}'` + proxyRes.statusText,
+      '',
+      '',
+      proxyRes.status + '',
+    );
   }
 
   res.status(proxyRes.status);
   res.setHeader('transfer-encoding', 'chunked');
   res.setHeader(
     'Content-Type',
-    proxyRes.headers.get('Content-Type') || 'text/plain',
+    proxyRes.headers.get('Content-Type') ??
+      req.headers['content-type'] ??
+      'application/json',
   );
 
   proxyRes.body?.pipe(res);
@@ -172,7 +179,7 @@ async function handleDeleteRequest(
     } catch {
       json = undefined;
     }
-    throw new OpenAIError(
+    throw new DialAIError(
       (typeof json === 'string' && json) || proxyRes.statusText,
       '',
       '',

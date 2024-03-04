@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { DialAIEntityModel } from '../types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -16,19 +17,24 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 
+import { useTokenizer } from './useTokenizer';
+
 /**
  * Custom hook for managing prompt selection in a chat interface.
- * @param maxLength The maximum length of the prompt.
+ * @param maxTokensLength The maximum tokens length of the prompt.
+ * @param tokenizer: tokenizer object which used for tokens calculations.
  * @param prompt Default prompt value.
  * @param onChangePrompt A function to call if prompt selected.
  * @returns An object containing control functions and states.
  */
 
 export const usePromptSelection = (
-  maxLength: number,
+  maxTokensLength: number,
+  tokenizer: DialAIEntityModel['tokenizer'],
   prompt: string,
   onChangePrompt?: (prompt: string) => void,
 ) => {
+  const { getTokensLength } = useTokenizer(tokenizer);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const dispatch = useDispatch();
@@ -126,7 +132,9 @@ export const usePromptSelection = (
       return;
     }
 
-    if (selectedPrompt.content.length > maxLength) {
+    const tokenLength = getTokensLength(selectedPrompt.content);
+    const contentLength = getTokensLength(content);
+    if (tokenLength + contentLength > maxTokensLength) {
       setIsPromptLimitModalOpen(true);
       return;
     }
@@ -139,7 +147,13 @@ export const usePromptSelection = (
       onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content!));
     }
     setShowPromptList(false);
-  }, [content, handlePromptSelect, maxLength, onChangePrompt]);
+  }, [
+    content,
+    getTokensLength,
+    handlePromptSelect,
+    maxTokensLength,
+    onChangePrompt,
+  ]);
 
   /**
    * Resets the request sending state and update the currently selected prompt,

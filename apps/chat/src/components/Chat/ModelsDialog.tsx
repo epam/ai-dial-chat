@@ -14,7 +14,7 @@ import classNames from 'classnames';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntity, OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -31,7 +31,7 @@ interface ModelsDialogProps {
 }
 
 const getFilteredEntities = (
-  models: OpenAIEntityModel[],
+  models: DialAIEntityModel[],
   entityTypes: string[],
   searchTerm: string,
 ) => {
@@ -57,13 +57,13 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     EntityType.Application,
   ]);
   const [filteredModelsEntities, setFilteredModelsEntities] = useState<
-    OpenAIEntity[]
+    DialAIEntity[]
   >([]);
   const [filteredAssistantsEntities, setFilteredAssistantsEntities] = useState<
-    OpenAIEntity[]
+    DialAIEntity[]
   >([]);
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
-    useState<OpenAIEntity[]>([]);
+    useState<DialAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   const { refs, context } = useFloating({

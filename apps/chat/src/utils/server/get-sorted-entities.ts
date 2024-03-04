@@ -2,31 +2,51 @@ import { JWT } from 'next-auth/jwt';
 
 import { EntityType } from '@/src/types/common';
 import {
-  OpenAIEntityModel,
-  OpenAIEntityModels,
-  ProxyOpenAIEntity,
-  defaultModelLimits,
-  fallbackModelID,
-} from '@/src/types/openai';
+  CoreAIEntity,
+  DialAIEntityModel,
+  TokenizerModel,
+} from '@/src/types/models';
+
+import {
+  MAX_PROMPT_TOKENS_DEFAULT_PERCENT,
+  MAX_PROMPT_TOKENS_DEFAULT_VALUE,
+} from '@/src/constants/default-server-settings';
 
 import { getEntities } from './get-entities';
 import { logger } from './logger';
 
-function setDefaultModel(models: OpenAIEntityModel[]) {
-  const defaultModelId = process.env.DEFAULT_MODEL || fallbackModelID;
-  const defaultModel =
-    models.filter((model) => model.id === defaultModelId).pop() || models[0];
-  models = models.map((model) =>
-    model.id === defaultModel.id ? { ...model, isDefault: true } : model,
-  );
-  return models;
-}
+import { TiktokenEncoding } from '@dqbd/tiktoken';
+
+const getTiktokenEncoding = (
+  tokenizerModel: TokenizerModel,
+): TiktokenEncoding | undefined => {
+  switch (tokenizerModel) {
+    case TokenizerModel.GPT_35_TURBO_0301:
+    case TokenizerModel.GPT_4_0314:
+      return 'cl100k_base';
+    default:
+      return undefined;
+  }
+};
+
+const getTokensPerMessage = (
+  tokenizerModel: TokenizerModel,
+): number | undefined => {
+  switch (tokenizerModel) {
+    case TokenizerModel.GPT_35_TURBO_0301:
+      return 4;
+    case TokenizerModel.GPT_4_0314:
+      return 3;
+    default:
+      return undefined;
+  }
+};
 
 export const getSortedEntities = async (token: JWT | null) => {
-  let entities: OpenAIEntityModel[] = [];
+  const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const models = await getEntities<ProxyOpenAIEntity<EntityType.Model>[]>(
+  const models = await getEntities<CoreAIEntity<EntityType.Model>[]>(
     EntityType.Model,
     accessToken,
     jobTitle,
@@ -36,17 +56,24 @@ export const getSortedEntities = async (token: JWT | null) => {
   });
 
   const applications = await getEntities<
-    ProxyOpenAIEntity<EntityType.Application>[]
+    CoreAIEntity<EntityType.Application>[]
   >(EntityType.Application, accessToken, jobTitle).catch((error) => {
     logger.error(error.message);
     return [];
   });
-  const assistants = await getEntities<
-    ProxyOpenAIEntity<EntityType.Assistant>[]
-  >(EntityType.Assistant, accessToken, jobTitle).catch((error) => {
+  const assistants = await getEntities<CoreAIEntity<EntityType.Assistant>[]>(
+    EntityType.Assistant,
+    accessToken,
+    jobTitle,
+  ).catch((error) => {
     logger.error(error.message);
     return [];
   });
+
+  const preProcessedEntities = [...models, ...applications, ...assistants];
+  const defaultModelId =
+    preProcessedEntities.find((model) => model.id === process.env.DEFAULT_MODEL)
+      ?.id || preProcessedEntities[0].id;
 
   for (const entity of [...models, ...applications, ...assistants]) {
     if (
@@ -57,38 +84,70 @@ export const getSortedEntities = async (token: JWT | null) => {
       continue;
     }
 
-    const existingModelMapping: OpenAIEntityModel | undefined =
-      OpenAIEntityModels[entity.id];
+    let maxRequestTokens;
+    let maxResponseTokens;
+    let maxTotalTokens;
 
-    const maxLength = existingModelMapping
-      ? existingModelMapping.maxLength
-      : defaultModelLimits.maxLength;
+    if (entity.object === EntityType.Model) {
+      const resTotalTokens = entity.limits?.max_total_tokens;
+      const resPromptTokens = entity.limits?.max_prompt_tokens;
+      const resCompletionTokens = entity.limits?.max_completion_tokens;
 
-    // applications must handle the limit themselves, because they can have complex logic to handle it
-    const fallbackRequestLimit =
-      entity.object === EntityType.Application
-        ? Infinity
-        : defaultModelLimits.requestLimit;
+      maxTotalTokens =
+        resTotalTokens ??
+        (resPromptTokens && resCompletionTokens
+          ? resPromptTokens + resCompletionTokens
+          : undefined);
 
-    const requestLimit = existingModelMapping
-      ? existingModelMapping.requestLimit
-      : fallbackRequestLimit;
+      maxRequestTokens =
+        resPromptTokens ??
+        (maxTotalTokens
+          ? Math.min(
+              MAX_PROMPT_TOKENS_DEFAULT_VALUE,
+              Math.floor(
+                (MAX_PROMPT_TOKENS_DEFAULT_PERCENT * maxTotalTokens) / 100,
+              ),
+            )
+          : undefined);
+
+      maxResponseTokens =
+        resCompletionTokens ??
+        (maxTotalTokens && maxRequestTokens
+          ? maxTotalTokens - maxRequestTokens
+          : undefined);
+    }
 
     entities.push({
       id: entity.id,
-      name: entity.display_name ?? existingModelMapping?.name ?? entity.id,
+      name: entity.display_name ?? entity.id,
+      isDefault: defaultModelId === entity.id,
       version: entity.display_version,
       description: entity.description,
       iconUrl: entity.icon_url,
       type: entity.object,
       selectedAddons: entity.addons,
-      maxLength,
-      requestLimit,
+      limits:
+        maxRequestTokens && maxResponseTokens && maxTotalTokens
+          ? {
+              maxRequestTokens,
+              maxResponseTokens,
+              maxTotalTokens,
+              isMaxRequestTokensCustom:
+                typeof entity.limits?.max_prompt_tokens === 'undefined',
+            }
+          : undefined,
+      features: entity.features && {
+        systemPrompt: entity.features?.system_prompt || false,
+        truncatePrompt: entity.features?.truncate_prompt || false,
+      },
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
+      tokenizer: entity.tokenizer_model && {
+        encoding: getTiktokenEncoding(entity.tokenizer_model),
+        tokensPerMessage: getTokensPerMessage(entity.tokenizer_model),
+      },
     });
   }
 
-  entities = setDefaultModel(entities);
   return entities;
 };

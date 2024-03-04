@@ -9,7 +9,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
 
-import { DIAL_API_HOST } from '@/src/constants/default-settings';
+import { DIAL_API_HOST } from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';

@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { Tags } from '@/src/ui/domData';
@@ -9,7 +9,7 @@ export class IconApiHelper extends BaseApiHelper {
     return this.formatIconResponse(response.text());
   }
 
-  public async getEntityIcon(entity: OpenAIEntityModel) {
+  public async getEntityIcon(entity: DialAIEntityModel) {
     let icon;
     if (entity.iconUrl && entity.iconUrl.includes(Tags.svg)) {
       const response = await this.request.get(entity.iconUrl);
