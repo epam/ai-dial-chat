@@ -4,7 +4,10 @@ import { getFoldersFromIds } from '@/src/utils/app/folders';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  MAX_ENTITY_LENGTH,
+} from '@/src/constants/default-ui-settings';
 
 import uniq from 'lodash-es/uniq';
 
@@ -83,9 +86,14 @@ export const updateEntitiesFoldersAndIds = (
 };
 
 export const prepareEntityName = (name: string, forRenaming = false) => {
-  const clearName = name
-    .replace(notAllowedSymbolsRegex, forRenaming ? '' : ' ')
-    .trim();
+  const clearName =
+    (forRenaming
+      ? name.replace(notAllowedSymbolsRegex, '')
+      : name
+          .replace(/\r\n|\r/gm, '\n')
+          .split('\n')
+          .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
+          .filter(Boolean)[0]) || DEFAULT_CONVERSATION_NAME;
 
   if (clearName.length > MAX_ENTITY_LENGTH) {
     return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';
