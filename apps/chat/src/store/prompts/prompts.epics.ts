@@ -93,6 +93,12 @@ const reloadPromptsStateEpic: AppEpic = (action$, state$) =>
           const isSelectedPromptExists = prompts.some(
             (prompt) => selectedPromptId === prompt.id,
           );
+          const externalPrompts = PromptsSelectors.selectExternalPrompts(
+            state$.value,
+          );
+          const externalFolders = PromptsSelectors.selectExternalFolders(
+            state$.value,
+          );
 
           if (selectedPromptId) {
             if (!isSelectedPromptExists) {
@@ -123,10 +129,11 @@ const reloadPromptsStateEpic: AppEpic = (action$, state$) =>
             of(
               PromptsActions.setReloadedPrompts({
                 prompts,
+                externalPrompts,
               }),
             ),
             of(
-              PromptsActions.setFolders({
+              PromptsActions.setReloadedFolders({
                 folders: uniq(
                   prompts.flatMap((p) =>
                     getParentFolderIdsFromFolderId(p.folderId),
@@ -135,6 +142,7 @@ const reloadPromptsStateEpic: AppEpic = (action$, state$) =>
                   ...getFolderFromId(path, FolderType.Prompt),
                   status: UploadStatus.LOADED,
                 })),
+                externalFolders,
               }),
             ),
             of(PromptsActions.reloadPromptsStateSuccess()),

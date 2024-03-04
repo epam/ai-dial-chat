@@ -254,11 +254,23 @@ export const promptsSlice = createSlice({
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setReloadedPrompts: (
       state,
-      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
+      {
+        payload,
+      }: PayloadAction<{
+        prompts: PromptInfo[];
+        externalPrompts: PromptInfo[];
+      }>,
     ) => {
       state.prompts = combineEntities(
-        state.prompts.filter((prompt) => prompt.id === state.selectedPromptId),
-        payload.prompts,
+        [
+          ...state.prompts.filter(
+            (prompt) => prompt.id === state.selectedPromptId,
+          ),
+          ...payload.prompts.filter(
+            (prompt) => prompt.id !== state.selectedPromptId,
+          ),
+        ],
+        payload.externalPrompts,
       );
       state.promptsLoaded = true;
     },
@@ -425,6 +437,17 @@ export const promptsSlice = createSlice({
       state.folders = payload.folders;
       state.prompts = payload.prompts;
     },
+    setReloadedFolders: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folders: FolderInterface[];
+        externalFolders: FolderInterface[];
+      }>,
+    ) => {
+      state.folders = combineEntities(payload.folders, payload.externalFolders);
+    },
     setFolders: (
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
@@ -435,7 +458,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = state.folders.concat(payload.folders);
+      state.folders = combineEntities(payload.folders, state.folders);
     },
     setSearchTerm: (
       state,

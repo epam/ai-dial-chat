@@ -16,7 +16,7 @@ import {
   LikeState,
   Message,
 } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -696,13 +696,14 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         paths: Set<string | undefined>;
         folders: FolderInterface[];
+        externalFolders: FolderInterface[];
       }>,
     ) => {
       state.loadingFolderIds = state.loadingFolderIds.filter(
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.LOADED;
-      state.folders = payload.folders;
+      state.folders = combineEntities(payload.folders, payload.externalFolders);
       state.conversationsLoaded = true;
       state.foldersStatus = UploadStatus.ALL_LOADED;
     },
@@ -767,6 +768,7 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         paths: Set<string | undefined>;
         conversations: ConversationInfo[];
+        externalConversations: ConversationInfo[];
       }>,
     ) => {
       const conversationMap = state.conversations.reduce((map, conv) => {
@@ -776,13 +778,16 @@ export const conversationsSlice = createSlice({
 
       const ids = new Set(payload.conversations.map((c) => c.id));
 
-      state.conversations = payload.conversations.map((conv) =>
-        ids.has(conv.id)
-          ? {
-              ...conversationMap.get(conv.id),
-              ...conv,
-            }
-          : conv,
+      state.conversations = combineEntities(
+        payload.conversations.map((conv) =>
+          ids.has(conv.id)
+            ? {
+                ...conversationMap.get(conv.id),
+                ...conv,
+              }
+            : conv,
+        ),
+        payload.externalConversations,
       );
       state.conversationsStatus = UploadStatus.LOADED;
     },

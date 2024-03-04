@@ -134,6 +134,11 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
           const existingSelectedConversations = conversations.filter((conv) =>
             selectedConversationIds.includes(conv.id),
           );
+          const externalConversations =
+            ConversationsSelectors.selectExternalConversations(state$.value);
+          const externalFolders = ConversationsSelectors.selectExternalFolders(
+            state$.value,
+          );
 
           return concat(
             of(
@@ -145,6 +150,7 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
               ConversationsActions.reloadConversationsStateSuccess({
                 paths: new Set(),
                 conversations,
+                externalConversations,
               }),
             ),
             of(
@@ -155,6 +161,7 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
                   FolderType.Chat,
                   UploadStatus.LOADED,
                 ),
+                externalFolders,
               }),
             ),
             iif(
