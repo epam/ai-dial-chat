@@ -47,6 +47,7 @@ interface Props {
     folderPath: string | undefined,
   ) => void;
   uploadFolderId?: string;
+  customUploadButtonLabel?: string;
 }
 
 const bytesInMb = 1_048_576;
@@ -59,6 +60,7 @@ export const PreUploadDialog = ({
   onClose,
   onUploadFiles,
   uploadFolderId,
+  customUploadButtonLabel,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -401,7 +403,9 @@ export const PreUploadDialog = ({
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
         >
-          {t('Upload and attach files')}
+          {customUploadButtonLabel
+            ? customUploadButtonLabel
+            : t('Upload and attach files')}
         </button>
       </div>
 

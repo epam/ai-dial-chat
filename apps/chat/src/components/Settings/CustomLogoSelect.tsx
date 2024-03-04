@@ -1,37 +1,31 @@
+import { IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { FileManagerModal } from '../Files/FileManagerModal';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
-  setLocalLogoFile: (file: DialFile | undefined) => void;
-  files: DialFile[];
+  onLogoSelect: (filesIds: string[]) => void;
+  onRemoveLocalLogoHandler: () => void;
 }
 
 export const CustomLogoSelect = ({
   localLogo,
-  setLocalLogoFile,
-  files,
+  onLogoSelect,
+  onRemoveLocalLogoHandler,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
 
-  const onLogoSelect = (filesIds: string[]) => {
-    const selectedFileId = filesIds[0];
-    const newFile = files.find((file) => file.id === selectedFileId);
-    setLocalLogoFile(newFile);
-  };
-
-  const onClickHandler = () => {
+  const onClickAddHandler = () => {
     setIsSelectFilesDialogOpened(true);
   };
 
@@ -47,9 +41,19 @@ export const CustomLogoSelect = ({
         >
           {localLogo ? localLogo : t('No custom logo')}
         </div>
-        <button onClick={onClickHandler} className="text-accent-primary">
-          {localLogo ? t('Change') : t('Add')}
-        </button>
+        <div className="flex gap-3">
+          <button onClick={onClickAddHandler} className="text-accent-primary">
+            {localLogo ? t('Change') : t('Add')}
+          </button>
+          {localLogo && (
+            <button
+              onClick={onRemoveLocalLogoHandler}
+              className="text-accent-primary"
+            >
+              <IconTrash className="text-secondary" size={18} />
+            </button>
+          )}
+        </div>
       </div>
       {isSelectFilesDialogOpened && (
         <FileManagerModal
@@ -62,6 +66,7 @@ export const CustomLogoSelect = ({
           }}
           headerLabel={t('Select custom logo')}
           customButtonLabel={t('Select file') as string}
+          customUploadButtonLabel={t('Upload files') as string}
         />
       )}
     </div>
