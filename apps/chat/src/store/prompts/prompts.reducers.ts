@@ -22,7 +22,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 export { PromptsSelectors };
 
