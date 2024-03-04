@@ -102,6 +102,9 @@ export const uiSlice = createSlice({
     setCustomLogo: (state, { payload }: PayloadAction<{ logo: string }>) => {
       state.customLogo = payload.logo;
     },
+    removeCustomLogo: (state) => {
+      state.customLogo = undefined;
+    },
     showToast: (
       state,
       _action: PayloadAction<{
