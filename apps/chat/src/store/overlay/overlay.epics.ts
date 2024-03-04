@@ -44,7 +44,7 @@ import {
   OverlayOptions,
   OverlaySelectors,
   SendMessageOptions,
-  SetOverlayContextOptions,
+  SetSystemPromptOptions,
 } from './overlay.reducers';
 
 import {
@@ -87,8 +87,8 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
 
               return of(OverlayActions.sendMessage({ content, requestId }));
             }
-            case OverlayRequests.setOverlayContext: {
-              const { overlayContext } = payload as SetOverlayContextOptions;
+            case OverlayRequests.setSystemPrompt: {
+              const { systemPrompt } = payload as SetSystemPromptOptions;
 
               const hostDomain = OverlaySelectors.selectHostDomain(
                 state$.value,
@@ -100,8 +100,8 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
               });
 
               return of(
-                OverlayActions.setOverlayContext({
-                  overlayContext,
+                OverlayActions.setSystemPrompt({
+                  systemPrompt,
                   requestId,
                 }),
               );

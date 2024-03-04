@@ -2,7 +2,7 @@
 export enum OverlayRequests {
   getMessages = 'GET_MESSAGES',
   setOverlayOptions = 'SET_OVERLAY_OPTIONS',
-  setOverlayContext = 'SET_OVERLAY_CONTEXT',
+  setSystemPrompt = 'SET_SYSTEM_PROMPT',
   sendMessage = 'SEND_MESSAGE',
 }
 

@@ -1114,7 +1114,9 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
-      overlayContext: OverlaySelectors.selectOverlayContext(state$.value),
+      overlaySystemPrompt: OverlaySelectors.selectOverlaySystemPrompt(
+        state$.value,
+      ),
     })),
     map(
       ({
@@ -1122,7 +1124,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         modelsMap,
         conversations,
         selectedConversationIds,
-        overlayContext,
+        overlaySystemPrompt,
       }) => {
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
@@ -1149,10 +1151,13 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         const newAddedMessages = [assistantMessage, userMessage];
 
-        // overlay needs to share information about host application, it's saving it in message with role: Role.System
-        if (overlayContext) {
+        /*
+          Overlay needs to share host application state information
+          We storing state information in systemPrompt (message with role: Role.System)
+        */
+        if (overlaySystemPrompt) {
           const overlayContextMessage: Message = {
-            content: overlayContext,
+            content: overlaySystemPrompt,
             role: Role.System,
           };
 
