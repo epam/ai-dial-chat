@@ -45,12 +45,14 @@ export const ConversationSettingsModel = ({
 
   const enitities = useMemo(() => {
     return getValidEntitiesFromIds(
-      modelId && !recentModelsIds.includes(modelId)
+      modelId &&
+        modelId !== unavailableModelId &&
+        !recentModelsIds.includes(modelId)
         ? [modelId, ...recentModelsIds]
         : recentModelsIds,
       modelsMap,
     );
-  }, [modelId, modelsMap, recentModelsIds]);
+  }, [modelId, modelsMap, recentModelsIds, unavailableModelId]);
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
