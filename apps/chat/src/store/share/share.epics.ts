@@ -476,7 +476,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             actions.push(
               ConversationsActions.addConversations({
                 conversations: payload.resources.entities.map((res) => ({
-                  ...res,
+                  ...(res.id === selectedConv?.id ? selectedConv : res),
                   sharedWithMe: true,
                 })) as Conversation[],
               }),
@@ -532,11 +532,15 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .filter(Boolean) as AnyAction[]),
             );
         } else {
+          const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
+            state$.value,
+          );
+
           payload.resources.entities.length &&
             actions.push(
               PromptsActions.addPrompts({
                 prompts: payload.resources.entities.map((res) => ({
-                  ...res,
+                  ...(res.id === selectedPrompt?.id ? selectedPrompt : res),
                   sharedWithMe: true,
                 })) as Prompt[],
               }),

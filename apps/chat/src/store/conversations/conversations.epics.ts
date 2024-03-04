@@ -131,14 +131,17 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
           );
           const selectedConversationIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
-          const existingSelectedConversations = conversations.filter((conv) =>
-            selectedConversationIds.includes(conv.id),
-          );
           const externalConversations =
             ConversationsSelectors.selectExternalConversations(state$.value);
+          const existingSelectedConversations = [
+            ...externalConversations,
+            ...conversations,
+          ].filter((conv) => selectedConversationIds.includes(conv.id));
           const externalFolders = ConversationsSelectors.selectExternalFolders(
             state$.value,
           );
+
+          console.log(existingSelectedConversations);
 
           return concat(
             of(

@@ -90,11 +90,11 @@ const reloadPromptsStateEpic: AppEpic = (action$, state$) =>
           const selectedPromptId = PromptsSelectors.selectSelectedPromptId(
             state$.value,
           );
-          const isSelectedPromptExists = prompts.some(
-            (prompt) => selectedPromptId === prompt.id,
-          );
           const externalPrompts = PromptsSelectors.selectExternalPrompts(
             state$.value,
+          );
+          const isSelectedPromptExists = [...prompts, ...externalPrompts].some(
+            (prompt) => selectedPromptId === prompt.id,
           );
           const externalFolders = PromptsSelectors.selectExternalFolders(
             state$.value,

@@ -16,7 +16,7 @@ import {
   LikeState,
   Message,
 } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
