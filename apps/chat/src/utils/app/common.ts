@@ -88,7 +88,7 @@ export const updateEntitiesFoldersAndIds = (
 export const prepareEntityName = (name: string, forRenaming = false) => {
   const clearName =
     (forRenaming
-      ? name.replace(notAllowedSymbolsRegex, '')
+      ? name.replace(notAllowedSymbolsRegex, '').trim()
       : name
           .replace(/\r\n|\r/gm, '\n')
           .split('\n')
