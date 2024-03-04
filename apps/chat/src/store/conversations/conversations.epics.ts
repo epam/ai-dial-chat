@@ -1149,7 +1149,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           settings: messageSettings,
         };
 
-        const newAddedMessages = [assistantMessage, userMessage];
+        const newAddedMessages = [userMessage, assistantMessage];
 
         /*
           Overlay needs to share host application state information
@@ -1161,7 +1161,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
             role: Role.System,
           };
 
-          newAddedMessages.push(overlayContextMessage);
+          newAddedMessages.unshift(overlayContextMessage);
         }
 
         const updatedMessages: Message[] = (
