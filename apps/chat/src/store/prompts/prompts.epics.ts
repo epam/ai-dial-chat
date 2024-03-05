@@ -142,7 +142,8 @@ const reloadStateEpic: AppEpic = (action$, state$) =>
             of(
               PromptsActions.setReloadedPrompts({
                 prompts: selectedPrompt
-                  ? combineEntities([selectedPrompt], prompts)
+                  ? // to avoid opened modal jumping
+                    combineEntities([selectedPrompt], prompts)
                   : prompts,
                 externalPrompts,
               }),
@@ -1174,6 +1175,7 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.uploadPrompt.match),
     switchMap(({ payload }) => {
       const {
+        // remove description and content to avoid overwriting with old data at mergeGetResult
         description: __description,
         content: __content,
         ...originalPrompt

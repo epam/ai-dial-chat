@@ -105,10 +105,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
     ) => state,
-    initSelectedConversations: (
-      state,
-      _action: PayloadAction<{ noLoader: boolean } | undefined>,
-    ) => state,
+    initSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
     initFoldersAndConversationsSuccess: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
@@ -185,9 +182,7 @@ export const conversationsSlice = createSlice({
     },
     selectConversations: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ conversationIds: string[]; noLoader?: boolean }>,
+      { payload }: PayloadAction<{ conversationIds: string[] }>,
     ) => {
       const newSelectedIds = uniq(payload.conversationIds);
 

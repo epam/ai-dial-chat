@@ -520,25 +520,6 @@ export const promptsSlice = createSlice({
       state.selectedPromptId = payload.promptId;
       state.isPromptLoading = !!payload.promptId;
     },
-    clearPromptInfo: (
-      state,
-      { payload }: PayloadAction<{ promptId: string }>,
-    ) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.promptId) {
-          const {
-            content: __content,
-            description: __description,
-            isShared: __isShared,
-            isPublished: __isPublished,
-            ...cleanPrompt
-          } = prompt as Prompt;
-          return cleanPrompt;
-        }
-
-        return prompt;
-      });
-    },
     uploadPrompt: (
       state,
       {

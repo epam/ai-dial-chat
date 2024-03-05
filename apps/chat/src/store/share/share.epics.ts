@@ -398,6 +398,7 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
   );
 
 // TODO: refactor it to something better
+// TODO: separate EPIC for reloading?
 const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.getSharedListingSuccess.match),
@@ -470,6 +471,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           }
 
           actions.push(
+            // TODO: rename or think how to do it better
             ConversationsActions.addSharedConversations({
               conversations: payload.resources.entities.map((res) => ({
                 ...(res.id === selectedConv?.id ? selectedConv : res),
