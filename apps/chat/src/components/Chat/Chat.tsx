@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   Conversation,
@@ -209,7 +210,7 @@ export const ChatView = memo(() => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         chatContainerRef.current;
-      const bottomTolerance = 25;
+      const bottomTolerance = 5;
 
       if (lastScrollTop.current > scrollTop) {
         setAutoScrollEnabled(false);
@@ -790,7 +791,9 @@ export const ChatView = memo(() => {
                     <div
                       className="shrink-0"
                       style={{
-                        height: inputHeight + (showBigRegenerate ? 56 : 0),
+                        height:
+                          inputHeight +
+                          (showBigRegenerate ? 56 : isSmallScreen() ? 0 : 16),
                       }}
                       ref={messagesEndRef}
                     />
