@@ -295,15 +295,11 @@ export const ChatView = memo(() => {
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
       if (conversation) {
-        const { messages } = conversation;
-
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              messages: messages.filter(
-                (message) => message.role === Role.System,
-              ),
+              messages: [],
             },
           }),
         );
