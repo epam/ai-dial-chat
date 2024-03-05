@@ -4,7 +4,7 @@ import { fromFetch } from 'rxjs/fetch';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
 
-import { EMPTY_MODEL_ID } from '@/src/constants/default-settings';
+import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { constructPath } from '../app/file';
 

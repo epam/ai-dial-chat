@@ -1,7 +1,6 @@
 import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { Page } from '@playwright/test';
@@ -59,15 +58,7 @@ export class ChatHeader extends BaseElement {
     await addonsResponsePromise;
   }
 
-  public async hoverOverChatModel(iconHost?: string) {
-    if (isApiStorageType && iconHost) {
-      const resp = this.page.waitForResponse(
-        (response) =>
-          response.url().includes(iconHost!) && response.status() === 200,
-      );
-      await this.chatModel.hoverOver();
-      return resp;
-    }
+  public async hoverOverChatModel() {
     await this.chatModel.hoverOver();
   }
 }

@@ -9,10 +9,10 @@ import {
 } from '@/src/types/chat';
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
 import {
-  OpenAIEntity,
-  OpenAIEntityAddon,
-  OpenAIEntityModel,
-} from '@/src/types/openai';
+  DialAIEntity,
+  DialAIEntityAddon,
+  DialAIEntityModel,
+} from '@/src/types/models';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -42,8 +42,8 @@ export const getValidEntitiesFromIds = <T>(
 
 export const getSelectedAddons = (
   selectedAddons: string[],
-  addonsMap: Partial<Record<string, OpenAIEntityAddon>>,
-  model?: OpenAIEntityModel,
+  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
+  model?: DialAIEntityModel,
 ) => {
   if (model && model.type !== EntityType.Application) {
     const preselectedAddons = model.selectedAddons ?? [];
@@ -209,16 +209,16 @@ export const isChosenConversationValidForCompare = (
   return true;
 };
 
-export const getOpenAIEntityFullName = (model: OpenAIEntity) =>
+export const getOpenAIEntityFullName = (model: DialAIEntity) =>
   [model.name, model.version].filter(Boolean).join(' ') || model.id;
 
 interface ModelGroup {
   groupName: string;
-  entities: OpenAIEntity[];
+  entities: DialAIEntity[];
 }
 
 export const groupModelsAndSaveOrder = (
-  models: OpenAIEntity[],
+  models: DialAIEntity[],
 ): ModelGroup[] => {
   const uniqModels = uniqBy(models, 'id');
   const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);

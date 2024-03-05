@@ -8,14 +8,14 @@ import { isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Addons } from './Addons';
@@ -27,7 +27,7 @@ import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
 interface ModelSelectRowProps {
-  item: OpenAIEntityModel;
+  item: DialAIEntityModel;
 }
 
 interface SettingContainerProps {
@@ -62,9 +62,13 @@ export const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
   );
 };
 
-export const SettingContainer = ({ children }: SettingContainerProps) => (
-  <div className="grow px-3 py-4 md:px-5">{children}</div>
-);
+export const SettingContainer = ({ children }: SettingContainerProps) => {
+  if (!children) {
+    return null;
+  }
+
+  return <div className="px-3 py-4 md:px-5">{children}</div>;
+};
 
 export const ConversationSettings = ({
   modelId,
@@ -136,19 +140,22 @@ export const ConversationSettings = ({
                 <SettingContainer>
                   <AssistantSubModelSelector
                     assistantModelId={
-                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id
+                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL_ID
                     }
                     onSelectAssistantSubModel={onSelectAssistantSubModel}
                     disabled={isPlayback}
                   />
                 </SettingContainer>
               )}
-              {(!model || model.type === EntityType.Model) && (
+              {(!model ||
+                (model.type === EntityType.Model &&
+                  model?.features?.systemPrompt)) && (
                 <SettingContainer>
                   <SystemPrompt
-                    maxLength={
-                      model ? model.maxLength : Number.MAX_SAFE_INTEGER
+                    maxTokensLength={
+                      model?.limits?.maxRequestTokens ?? Infinity
                     }
+                    tokenizer={model?.tokenizer}
                     prompt={prompt}
                     prompts={prompts}
                     onChangePrompt={onChangePrompt}

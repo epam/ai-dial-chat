@@ -4,16 +4,24 @@ export interface ErrorMessage {
   messageLines: string[];
 }
 
-export class OpenAIError extends Error {
+export class DialAIError extends Error {
   type: string;
   param: string;
   code: string;
+  displayMessage: string | undefined;
 
-  constructor(message: string, type: string, param: string, code: string) {
+  constructor(
+    message: string,
+    type: string,
+    param: string,
+    code: string,
+    displayMessage?: string,
+  ) {
     super(message);
-    this.name = 'OpenAIError';
+    this.name = 'DialAIError';
     this.type = type;
     this.param = param;
     this.code = code;
+    this.displayMessage = displayMessage;
   }
 }

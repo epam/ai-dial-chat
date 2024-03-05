@@ -17,7 +17,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { isRootId } from './id';
 

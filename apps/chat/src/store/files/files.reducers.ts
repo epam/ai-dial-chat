@@ -1,5 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { combineEntities } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -13,7 +14,7 @@ import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
 
@@ -183,22 +184,31 @@ export const filesSlice = createSlice({
         payload,
       }: PayloadAction<{
         folders: FileFolderInterface[];
+        folderId?: string;
       }>,
     ) => {
       state.loadingFolderId = undefined;
       state.foldersStatus = UploadStatus.LOADED;
-      state.folders = payload.folders.concat(
-        state.folders.filter(
-          (folder) =>
-            !payload.folders.some(
-              (payloadFolder) => payloadFolder.id === folder.id,
-            ),
+      state.folders = combineEntities(
+        payload.folders,
+        state.folders.map((f) =>
+          f.id === payload.folderId ? { ...f, status: UploadStatus.LOADED } : f,
         ),
       );
     },
-    getFoldersFail: (state) => {
+    getFoldersFail: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderId?: string;
+      }>,
+    ) => {
       state.loadingFolderId = undefined;
       state.foldersStatus = UploadStatus.FAILED;
+      state.folders = state.folders.map((f) =>
+        f.id === payload.folderId ? { ...f, status: UploadStatus.FAILED } : f,
+      );
     },
     getFilesWithFolders: (
       state,
@@ -214,9 +224,12 @@ export const filesSlice = createSlice({
         parentId?: string;
       }>,
     ) => {
+      const rootFileId = getRootId();
       const folderName = getNextDefaultName(
         DEFAULT_FOLDER_NAME,
-        state.folders,
+        state.folders.filter(
+          (folder) => folder.folderId === (payload.parentId ?? rootFileId), // only folders on the same level
+        ),
         0,
         false,
         false,
@@ -229,6 +242,7 @@ export const filesSlice = createSlice({
           name: folderName,
           type: FolderType.File,
           folderId: payload.parentId || getRootId(),
+          status: UploadStatus.LOADED,
         }),
       );
       state.newAddedFolderId = newAddedFolderId;

@@ -20,12 +20,13 @@ import {
   ExportFormatV4,
   PromptsHistory,
 } from '@/src/types/import-export';
-import { OpenAIEntityModelID } from '@/src/types/openai';
 
 import {
+  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-settings';
+  FALLBACK_MODEL_ID,
+} from '@/src/constants/default-ui-settings';
 
 import { BucketService } from '../data/bucket-service';
 import { getConversationRootId } from '../id';
@@ -86,7 +87,7 @@ describe('Export Format Functions', () => {
 });
 
 describe('cleanData Functions', () => {
-  const expectedModel = { id: OpenAIEntityModelID.GPT_3_5_AZ };
+  const expectedModel = { id: FALLBACK_MODEL_ID };
 
   const messages: Message[] = [
     {
@@ -258,32 +259,32 @@ describe('Export helpers functions', () => {
   describe('getAssitantModelId', () => {
     it('should return default assistant model id', () => {
       expect(
-        getAssitantModelId(EntityType.Assistant, OpenAIEntityModelID.GPT_4),
-      ).toEqual(OpenAIEntityModelID.GPT_4);
+        getAssitantModelId(EntityType.Assistant, DEFAULT_ASSISTANT_SUBMODEL_ID),
+      ).toEqual(DEFAULT_ASSISTANT_SUBMODEL_ID);
     });
   });
   it('should return assistant model id', () => {
     expect(
       getAssitantModelId(
         EntityType.Assistant,
-        OpenAIEntityModelID.GPT_4,
-        OpenAIEntityModelID.GPT_3_5_AZ,
+        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_MODEL_ID,
       ),
-    ).toEqual(OpenAIEntityModelID.GPT_3_5_AZ);
+    ).toEqual(FALLBACK_MODEL_ID);
   });
   it('should return undefined', () => {
     expect(
       getAssitantModelId(
         EntityType.Model,
-        OpenAIEntityModelID.GPT_4,
-        OpenAIEntityModelID.GPT_3_5_AZ,
+        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();
     expect(
       getAssitantModelId(
         EntityType.Application,
-        OpenAIEntityModelID.GPT_4,
-        OpenAIEntityModelID.GPT_3_5_AZ,
+        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();
   });

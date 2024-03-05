@@ -285,7 +285,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    newName && onRenameFolder(newName, currentFolder.id);
+    if (newName && newName !== currentFolder.name) {
+      onRenameFolder(newName, currentFolder.id);
+    }
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);

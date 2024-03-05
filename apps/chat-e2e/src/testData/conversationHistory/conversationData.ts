@@ -1,7 +1,7 @@
 import { defaultReplay } from '@/chat/constants/replay';
-import { Message, Role, Stage } from '@/chat/types/chat';
+import { Message, MessageSettings, Role, Stage } from '@/chat/types/chat';
 import { FolderType } from '@/chat/types/folder';
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import {
   ConversationBuilder,
   ExpectedConstants,
@@ -12,9 +12,9 @@ import {
 } from '@/src/testData';
 import { FileApiHelper } from '@/src/testData/api';
 import { FolderData } from '@/src/testData/folders/folderData';
+import { ItemUtil } from '@/src/utils';
 import { DateUtil } from '@/src/utils/dateUtil';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {
   conversations: TestConversation[];
@@ -35,7 +35,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultConversation(
-    model?: OpenAIEntityModel | string,
+    model?: DialAIEntityModel | string,
     name?: string,
   ) {
     const modelToUse = model
@@ -63,9 +63,17 @@ export class ConversationData extends FolderData {
     temp: number,
     sysPrompt: string,
     addons: string[],
-    model?: OpenAIEntityModel | string,
+    model?: DialAIEntityModel | string,
   ) {
     const basicConversation = this.prepareDefaultConversation(model);
+    const messageSettings: MessageSettings = {
+      prompt: sysPrompt,
+      temperature: temp,
+      selectedAddons: addons,
+    };
+    basicConversation.messages.forEach(
+      (message) => (message.settings = messageSettings),
+    );
     this.conversationBuilder.setConversation(basicConversation);
     return this.conversationBuilder
       .withTemperature(temp)
@@ -75,7 +83,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareModelConversationBasedOnRequests(
-    model: OpenAIEntityModel | string,
+    model: DialAIEntityModel | string,
     requests: string[],
     name?: string,
   ) {
@@ -96,7 +104,7 @@ export class ConversationData extends FolderData {
     return this.conversationBuilder.build();
   }
 
-  public prepareConversationWithDifferentModels(models: OpenAIEntityModel[]) {
+  public prepareConversationWithDifferentModels(models: DialAIEntityModel[]) {
     const requests: string[] = new Array(models.length);
     for (let i = 0; i < requests.length; i++) {
       requests[i] = `${i} + ${i + 1} =`;
@@ -115,7 +123,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareEmptyConversation(
-    model?: OpenAIEntityModel | string,
+    model?: DialAIEntityModel | string,
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -124,7 +132,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareErrorResponseConversation(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ) {
     const defaultConversation = this.prepareDefaultConversation(model, name);
@@ -173,16 +181,23 @@ export class ConversationData extends FolderData {
   }
 
   public prepareAddonsConversation(
-    model: OpenAIEntityModel,
+    model: DialAIEntityModel,
     addons: string[],
     request?: string,
   ) {
     const conversation = this.conversationBuilder.getConversation();
     conversation.model = { id: model.id };
     conversation.selectedAddons = addons;
+    const messageSettings: MessageSettings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: addons,
+    };
     const userMessage: Message = {
       role: Role.User,
       content: request ?? 'what is epam? what is epam revenue in 2020?',
+      model: { id: conversation.model.id },
+      settings: messageSettings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
@@ -208,20 +223,25 @@ export class ConversationData extends FolderData {
           invocations: [{ index: 0, request: 'request', response: 'response' }],
         },
       },
+      settings: messageSettings,
     };
     conversation.messages.push(userMessage, assistantMessage);
     return this.conversationBuilder.build();
   }
 
   public prepareAssistantConversation(
-    assistant: OpenAIEntityModel,
+    assistant: DialAIEntityModel,
     addons: string[],
-    assistantModel?: OpenAIEntityModel,
+    assistantModel?: DialAIEntityModel,
   ) {
     const conversation = this.prepareAddonsConversation(assistant, addons);
     conversation.assistantModelId = assistantModel
       ? assistantModel.id
       : ModelIds.GPT_4;
+    conversation.messages.forEach(
+      (message) =>
+        (message.settings!.assistantModelId = conversation.assistantModelId),
+    );
     return conversation;
   }
 
@@ -255,7 +275,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultConversationInFolder(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ): FolderConversation {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -265,7 +285,7 @@ export class ConversationData extends FolderData {
   }
 
   public prepareYesterdayConversation(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -273,14 +293,14 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareLastWeekConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareLastWeekConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getLastWeekDate();
     return conversation;
   }
 
   public prepareLastMonthConversation(
-    model?: OpenAIEntityModel,
+    model?: DialAIEntityModel,
     name?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model, name);
@@ -288,7 +308,7 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareOlderConversation(model?: OpenAIEntityModel, name?: string) {
+  public prepareOlderConversation(model?: DialAIEntityModel, name?: string) {
     const conversation = this.prepareDefaultConversation(model, name);
     conversation.lastActivityDate = DateUtil.getOlderDate();
     return conversation;
@@ -300,7 +320,7 @@ export class ConversationData extends FolderData {
   ) {
     const messages = conversation.messages;
     const playbackConversation = JSON.parse(JSON.stringify(conversation));
-    playbackConversation.id = uuidv4();
+    playbackConversation.id = `playback${ItemUtil.conversationIdSeparator}${conversation.name}`;
     playbackConversation.name = `[${MenuOptions.playback}] ${conversation.name}`;
     playbackConversation.messages = [];
     if (playbackIndex) {
@@ -324,7 +344,7 @@ export class ConversationData extends FolderData {
 
   public prepareConversationWithAttachmentInRequest(
     attachmentUrl: string,
-    model: OpenAIEntityModel | string,
+    model: DialAIEntityModel | string,
     hasRequest?: boolean,
   ) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
@@ -341,6 +361,7 @@ export class ConversationData extends FolderData {
           },
         ],
       },
+      model: modelToUse,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
@@ -357,7 +378,7 @@ export class ConversationData extends FolderData {
 
   public prepareConversationWithAttachmentInResponse(
     attachmentUrl: string,
-    model: OpenAIEntityModel | string,
+    model: DialAIEntityModel | string,
   ) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
@@ -403,7 +424,7 @@ export class ConversationData extends FolderData {
     userMessages: Message[],
   ): TestConversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
-    replayConversation.id = uuidv4();
+    replayConversation.id = `replay${conversation.id}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
     if (!replayConversation.replay) {

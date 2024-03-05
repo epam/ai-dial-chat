@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -15,9 +15,9 @@ import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 
-let gpt35Model: OpenAIEntityModel;
-let gpt4Model: OpenAIEntityModel;
-let bisonModel: OpenAIEntityModel;
+let gpt35Model: DialAIEntityModel;
+let gpt4Model: DialAIEntityModel;
+let bisonModel: DialAIEntityModel;
 
 const request = 'What is epam official name';
 const notMatchingSearchTerm = 'abc';
@@ -370,15 +370,12 @@ dialTest(
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    expect
-      .soft(
-        await folderConversations.isFolderEntityVisible(
-          conversationInFolder.folders.name,
-          conversationInFolder.conversations[0].name,
-        ),
-        ExpectedMessages.folderConversationDeleted,
+    await folderConversations
+      .getFolderEntity(
+        conversationInFolder.folders.name,
+        conversationInFolder.conversations[0].name,
       )
-      .toBeFalsy();
+      .waitFor({ state: 'hidden' });
   },
 );
 
@@ -404,14 +401,9 @@ dialTest(
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    expect
-      .soft(
-        await conversations
-          .getConversationByName(conversation.name)
-          .isVisible(),
-        ExpectedMessages.conversationDeleted,
-      )
-      .toBeFalsy();
+    await conversations
+      .getConversationByName(conversation.name)
+      .waitFor({ state: 'hidden' });
   },
 );
 

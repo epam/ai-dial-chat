@@ -2,6 +2,7 @@ import {
   IconCheck,
   IconCopy,
   IconEdit,
+  IconRefresh,
   IconThumbDown,
   IconThumbUp,
   IconTrash,
@@ -90,6 +91,7 @@ interface MessageAssistantButtonsProps {
   isLikesEnabled: boolean;
   message: Message;
   onLike: (likeStatus: LikeState) => void;
+  onRegenerate?: () => void;
 }
 
 export const MessageAssistantButtons = ({
@@ -98,6 +100,7 @@ export const MessageAssistantButtons = ({
   message,
   isLikesEnabled,
   onLike,
+  onRegenerate,
 }: MessageAssistantButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -110,6 +113,13 @@ export const MessageAssistantButtons = ({
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
+      {onRegenerate && (
+        <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
+          <Button onClick={onRegenerate} data-qa="regenerate">
+            <IconRefresh size={18} className="text-secondary" />
+          </Button>
+        </Tooltip>
+      )}
       {messageCopied ? (
         <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
           <IconCheck size={18} className="text-secondary" />
@@ -199,6 +209,7 @@ interface MessageMobileButtonsProps {
   onDelete: () => void;
   isEditing: boolean;
   toggleEditing: (value: boolean) => void;
+  onRegenerate?: () => void;
 }
 
 export const MessageMobileButtons = ({
@@ -210,6 +221,7 @@ export const MessageMobileButtons = ({
   onDelete,
   isEditing,
   toggleEditing,
+  onRegenerate,
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -232,10 +244,22 @@ export const MessageMobileButtons = ({
           item={
             <div className="flex items-center gap-3">
               <IconCopy className="text-secondary" size={18} />
-              <p>{t('Copy')}</p>
+              {t('Copy')}
             </div>
           }
           onClick={onCopy}
+        />
+      )}
+      {onRegenerate && (
+        <MenuItem
+          item={
+            <div className="flex items-center gap-3">
+              <IconRefresh className="text-secondary" size={18} />
+              {t('Regenerate')}
+            </div>
+          }
+          data-qa="regenerate"
+          onClick={onRegenerate}
         />
       )}
       {message.like !== LikeState.Disliked && (

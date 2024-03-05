@@ -39,7 +39,9 @@ interface Props {
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
   maximumAttachmentsAmount?: number;
-  isInConversation?: boolean;
+  headerLabel: string;
+  customButtonLabel?: string;
+  customUploadButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
 }
 
@@ -47,7 +49,9 @@ export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
   initialSelectedFilesIds = [],
-  isInConversation = false,
+  headerLabel,
+  customButtonLabel,
+  customUploadButtonLabel,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
@@ -280,7 +284,7 @@ export const FileManagerModal = ({
       <div className="flex flex-col gap-2 overflow-auto p-6">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
-            {isInConversation ? t('Attach files') : t('Manage attachments')}
+            {headerLabel}
           </h2>
         </div>
         <p id={descriptionId}>
@@ -420,18 +424,18 @@ export const FileManagerModal = ({
             onClick={handleStartUploadFiles}
             className={classNames(
               'button',
-              isInConversation ? 'button-secondary' : 'button-primary',
+              customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
           >
             {t('Upload from device')}
           </button>
-          {isInConversation && (
+          {customButtonLabel && (
             <button
               onClick={handleAttachFiles}
               className="button button-primary"
               disabled={selectedFilesIds.length === 0}
             >
-              {t('Attach files')}
+              {customButtonLabel}
             </button>
           )}
         </div>
@@ -445,7 +449,8 @@ export const FileManagerModal = ({
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
-          maximumAttachmentsAmount={maximumAttachmentsAmount}
+          maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+          customUploadButtonLabel={customUploadButtonLabel}
         />
       )}
 

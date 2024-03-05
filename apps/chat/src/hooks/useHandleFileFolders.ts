@@ -8,6 +8,7 @@ import {
 } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 
+import { UploadStatus } from '../types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
@@ -97,7 +98,10 @@ export const useHandleFileFolders = (
         );
       } else {
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-        dispatch(FilesActions.getFilesWithFolders({ id: folderId }));
+        const folder = folders.find((f) => f.id === folderId);
+        if (folder?.status !== UploadStatus.LOADED) {
+          dispatch(FilesActions.getFilesWithFolders({ id: folderId }));
+        }
       }
     },
     [

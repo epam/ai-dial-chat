@@ -3,11 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
-import { OpenAIEntityAddon } from '@/src/types/openai';
+import { DialAIEntityAddon } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -15,10 +15,9 @@ import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
-  modelId: string | undefined;
+  modelId: string;
   prompts: Prompt[];
-  defaultModelId: string;
-  addons: OpenAIEntityAddon[];
+  addons: DialAIEntityAddon[];
   onClose: () => void;
   onChangeSettings: (args: {
     modelId: string | undefined;
@@ -33,7 +32,6 @@ interface Props {
 
 export const ChatSettings = ({
   modelId,
-  defaultModelId,
   conversation,
   prompts,
   onClose,
@@ -42,15 +40,13 @@ export const ChatSettings = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [currentModelId, setCurrentModelId] = useState<string>(
-    modelId ?? defaultModelId,
-  );
+  const [currentModelId, setCurrentModelId] = useState<string>(modelId);
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
   const [currentAssistentModelId, setCurrentAssistentModelId] = useState(
-    conversation.assistantModelId || DEFAULT_ASSISTANT_SUBMODEL?.id,
+    conversation.assistantModelId || DEFAULT_ASSISTANT_SUBMODEL_ID,
   );
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],

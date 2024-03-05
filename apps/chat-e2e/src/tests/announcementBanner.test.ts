@@ -53,7 +53,7 @@ dialTest(
           );
         const bannerIcon = await banner.bannerIcon;
         expect
-          .soft(bannerIcon.length > 0, ExpectedMessages.entityIconIsValid)
+          .soft(bannerIcon.isVisible(), ExpectedMessages.entityIconIsValid)
           .toBeTruthy();
 
         chatBarBounding = await chatBar.getElementBoundingBox();

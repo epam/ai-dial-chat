@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -17,7 +17,6 @@ import { GeneratorUtil } from '@/src/utils';
 import { FileUtil } from '@/src/utils/fileUtil';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
 
 const levelsCount = 3;
 let folderConversationData: UploadDownloadData;
@@ -26,8 +25,8 @@ let newFolderConversationData: UploadDownloadData;
 let threeConversationsData: UploadDownloadData;
 const exportedConversations: UploadDownloadData[] = [];
 const updatedExportedConversations: UploadDownloadData[] = [];
-let gpt35Model: OpenAIEntityModel;
-let gpt4Model: OpenAIEntityModel;
+let gpt35Model: DialAIEntityModel;
+let gpt4Model: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
@@ -803,7 +802,7 @@ dialTest(
         for (const exportedData of exportedConversations) {
           const exportedContent = FileUtil.readFileData(exportedData.path);
           const conversation = exportedContent.history[0];
-          conversation.id = uuidv4();
+          conversation.id = GeneratorUtil.randomString(10);
           conversation.name = GeneratorUtil.randomString(10);
           const updatedExportedConversation = {
             path: FileUtil.writeDataToFile(exportedContent),

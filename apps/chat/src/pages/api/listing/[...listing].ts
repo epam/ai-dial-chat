@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth/next';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
-import { OpenAIError } from '@/src/utils/server';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils } from '@/src/utils/server/server';
@@ -14,6 +13,7 @@ import {
   BackendChatFolder,
   BackendDataNodeType,
 } from '@/src/types/common';
+import { DialAIError } from '@/src/types/error';
 import { BackendFile, BackendFileFolder } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -45,7 +45,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       : [req.query.listing];
 
     if (!slugs || slugs.length === 0) {
-      throw new OpenAIError(`No path provided`, '', '', '400');
+      throw new DialAIError(`No path provided`, '', '', '400');
     }
 
     const url = `${constructPath(
@@ -62,7 +62,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(200).send([]);
     } else if (!response.ok) {
       const serverErrorMessage = await response.text();
-      throw new OpenAIError(serverErrorMessage, '', '', response.status + '');
+      throw new DialAIError(serverErrorMessage, '', '', response.status + '');
     }
 
     const json = (await response.json()) as
