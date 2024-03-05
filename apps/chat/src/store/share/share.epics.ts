@@ -364,13 +364,13 @@ const initReloadSharedConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(() =>
       concat(
         of(
-          ShareActions.triggerReloadSharedItems({
+          ShareActions.reloadSharedItems({
             sharedWith: ShareRelations.me,
             featureType: FeatureType.Chat,
           }),
         ),
         of(
-          ShareActions.triggerReloadSharedItems({
+          ShareActions.reloadSharedItems({
             sharedWith: ShareRelations.others,
             featureType: FeatureType.Chat,
           }),
@@ -388,13 +388,13 @@ const initReloadSharedPromptsEpic: AppEpic = (action$, state$) =>
     switchMap(() =>
       concat(
         of(
-          ShareActions.triggerReloadSharedItems({
+          ShareActions.reloadSharedItems({
             sharedWith: ShareRelations.me,
             featureType: FeatureType.Prompt,
           }),
         ),
         of(
-          ShareActions.triggerReloadSharedItems({
+          ShareActions.reloadSharedItems({
             sharedWith: ShareRelations.others,
             featureType: FeatureType.Prompt,
           }),
@@ -403,9 +403,9 @@ const initReloadSharedPromptsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const triggerReloadSharedItemsEpic: AppEpic = (action$, state$) =>
+const reloadSharedItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ShareActions.triggerReloadSharedItems.match),
+    filter(ShareActions.reloadSharedItems.match),
     filter(({ payload }) =>
       SettingsSelectors.isSharingEnabled(state$.value, payload.featureType),
     ),
@@ -1053,7 +1053,7 @@ export const ShareEpics = combineEpics(
   // reload
   initReloadSharedConversationsEpic,
   initReloadSharedPromptsEpic,
-  triggerReloadSharedItemsEpic,
+  reloadSharedItemsEpic,
   reloadSharedListingFailEpic,
   reloadSharedListingSuccessEpic,
 );

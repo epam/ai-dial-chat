@@ -40,7 +40,7 @@ export const shareSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    triggerReloadSharedItems: (
+    reloadSharedItems: (
       state,
       _action: PayloadAction<{
         sharedWith: ShareRelations;
