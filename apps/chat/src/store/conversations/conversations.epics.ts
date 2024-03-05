@@ -1136,6 +1136,14 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           assistantModelId: payload.conversation.assistantModelId,
         };
 
+        let currentMessages =
+          payload.deleteCount > 0
+            ? payload.conversation.messages.slice(
+                0,
+                payload.deleteCount * -1 || undefined,
+              )
+            : payload.conversation.messages;
+
         const assistantMessage: Message = {
           content: '',
           model: messageModel,
@@ -1149,29 +1157,28 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           settings: messageSettings,
         };
 
-        const newAddedMessages = [userMessage, assistantMessage];
-
         /*
           Overlay needs to share host application state information
           We storing state information in systemPrompt (message with role: Role.System)
         */
         if (overlaySystemPrompt) {
-          const overlayContextMessage: Message = {
+          const overlaySystemPromptMessage: Message = {
             content: overlaySystemPrompt,
             role: Role.System,
           };
 
-          newAddedMessages.unshift(overlayContextMessage);
+          // removing previous system message
+          currentMessages = currentMessages.filter(
+            (message) => message.role !== Role.System,
+          );
+
+          currentMessages.push(overlaySystemPromptMessage);
         }
 
-        const updatedMessages: Message[] = (
-          payload.deleteCount > 0
-            ? payload.conversation.messages.slice(
-                0,
-                payload.deleteCount * -1 || undefined,
-              )
-            : payload.conversation.messages
-        ).concat(newAddedMessages);
+        const updatedMessages = currentMessages.concat(
+          userMessage,
+          assistantMessage,
+        );
 
         const newConversationName = getNextDefaultName(
           getNewConversationName(
