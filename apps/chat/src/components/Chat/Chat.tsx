@@ -102,7 +102,7 @@ export const ChatView = memo(() => {
     useState<boolean>(false);
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
-  const [isLastMesssageError, setIsLastMesssageError] = useState(false);
+  const [isLastMessageError, setIsLastMessageError] = useState(false);
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -237,7 +237,7 @@ export const ChatView = memo(() => {
         (mergedStr: [Conversation, Message, number]) =>
           !!mergedStr[1].errorMessage,
       );
-      setIsLastMesssageError(isErrorInSomeLastMessage);
+      setIsLastMessageError(isErrorInSomeLastMessage);
     }
   }, [mergedMessages]);
 
@@ -564,13 +564,7 @@ export const ChatView = memo(() => {
   }, []);
 
   const showLastMessageRegenerate =
-    !isPlayback &&
-    !isExternal &&
-    !messageIsStreaming &&
-    !isLastMesssageError &&
-    selectedConversationsIds.length === 1;
-  const showBigRegenerate =
-    isLastMesssageError || selectedConversationsIds.length > 1;
+    !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
 
   return (
     <div
@@ -847,7 +841,7 @@ export const ChatView = memo(() => {
                     onSend={onSendMessage}
                     onScrollDownClick={handleScrollDown}
                     onRegenerate={
-                      showBigRegenerate ? onRegenerateMessage : undefined
+                      isLastMessageError ? onRegenerateMessage : undefined
                     }
                     onStopConversation={() => {
                       dispatch(ConversationsActions.stopStreamMessage());
