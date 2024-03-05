@@ -44,6 +44,7 @@ const initEpic: AppEpic = (action$, state$) =>
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
         isChatFullWidth: DataService.getIsChatFullWidth(),
+        customLogo: DataService.getCustomLogo(),
       });
     }),
     switchMap(
@@ -56,6 +57,7 @@ const initEpic: AppEpic = (action$, state$) =>
         chatbarWidth,
         promptbarWidth,
         isChatFullWidth,
+        customLogo,
       }) => {
         const actions = [];
 
@@ -64,6 +66,11 @@ const initEpic: AppEpic = (action$, state$) =>
         } else if (typeof availableThemes[0] !== 'undefined') {
           actions.push(UIActions.setTheme(availableThemes[0]?.id));
         }
+
+        if (customLogo) {
+          actions.push(UIActions.setCustomLogo({ logo: customLogo }));
+        }
+
         actions.push(UIActions.setAvailableThemes(availableThemes));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
@@ -232,6 +239,20 @@ const resizeEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const setCustomLogoEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.setCustomLogo.match),
+    switchMap(({ payload }) => DataService.setCustomLogo(payload.logo)),
+    ignoreElements(),
+  );
+
+const removeCustomLogoEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.removeCustomLogo.match),
+    switchMap(() => DataService.setCustomLogo()),
+    ignoreElements(),
+  );
+
 const UIEpics = combineEpics(
   initEpic,
   saveThemeEpic,
@@ -245,6 +266,8 @@ const UIEpics = combineEpics(
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
   saveIsChatFullWidthEpic,
+  setCustomLogoEpic,
+  removeCustomLogoEpic,
   resizeEpic,
 );
 

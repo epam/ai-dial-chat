@@ -1,12 +1,12 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 
 export class ModelsUtil {
   public static getOpenAIEntities() {
-    return JSON.parse(process.env.MODELS!) as OpenAIEntityModel[];
+    return JSON.parse(process.env.MODELS!) as DialAIEntityModel[];
   }
 
   public static getLatestOpenAIEntities() {
-    const latestOpenAIEntities: OpenAIEntityModel[] = [];
+    const latestOpenAIEntities: DialAIEntityModel[] = [];
     const allOpenAIEntities = ModelsUtil.getOpenAIEntities();
     const recentModels = ModelsUtil.getRecentModelIds();
     let groupedOpenAIEntities = allOpenAIEntities.map((object) => ({
@@ -33,7 +33,7 @@ export class ModelsUtil {
   }
 
   public static getAddons() {
-    return JSON.parse(process.env.ADDONS!) as OpenAIEntityModel[];
+    return JSON.parse(process.env.ADDONS!) as DialAIEntityModel[];
   }
 
   public static getLatestModels() {
@@ -89,7 +89,7 @@ export class ModelsUtil {
     return ModelsUtil.getApplications().find((a) => a.id === appId);
   }
 
-  public static getApplicationDescription(application: OpenAIEntityModel) {
+  public static getApplicationDescription(application: DialAIEntityModel) {
     const description = application.description;
     return description
       ? description
@@ -102,7 +102,7 @@ export class ModelsUtil {
   }
 
   public static getApplicationDescriptionLinkAnchors(
-    application: OpenAIEntityModel,
+    application: DialAIEntityModel,
   ) {
     const description = application!.description;
     const linkAnchorRegex = /\[(.*?)\]/g;
@@ -114,7 +114,7 @@ export class ModelsUtil {
   }
 
   public static getApplicationDescriptionLink(
-    application: OpenAIEntityModel,
+    application: DialAIEntityModel,
     linkAnchor: string,
   ) {
     const description = application!.description;
@@ -132,7 +132,7 @@ export class ModelsUtil {
   public static getOpenAIEntitySelectedAddons(entityId: string) {
     const allEntities = ModelsUtil.getOpenAIEntities();
     const entityObject = allEntities.find((e) => e.id === entityId);
-    const selectedAddons: OpenAIEntityModel[] = [];
+    const selectedAddons: DialAIEntityModel[] = [];
     const entityAddonObjects = entityObject!.selectedAddons;
     if (entityAddonObjects) {
       const allAddons = ModelsUtil.getAddons();

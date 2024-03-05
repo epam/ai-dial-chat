@@ -1,4 +1,4 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -13,7 +13,7 @@ import { Colors } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let gpt35Model: OpenAIEntityModel;
+let gpt35Model: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
 });

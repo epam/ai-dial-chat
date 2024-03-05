@@ -21,7 +21,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
@@ -151,8 +151,8 @@ export const conversationsSlice = createSlice({
         if (conv.id === payload.id) {
           return {
             ...conv,
-            ...payload.conversation,
             lastActivityDate: Date.now(),
+            ...payload.conversation,
           };
         }
 

@@ -24,10 +24,10 @@ import {
 
 import { Message, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import { overlayAppName } from '@/src/constants/overlay';
 
 import { AuthSelectors } from '../auth/auth.reducers';
@@ -243,7 +243,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             const models = ModelsSelectors.selectModels(state$.value);
 
             const newAiEntity = models.find(({ id }) => id === finalModelId) as
-              | OpenAIEntityModel
+              | DialAIEntityModel
               | undefined;
 
             actions.push(
@@ -265,7 +265,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
                     values: {
                       assistantModelId:
                         newAiEntity.type === EntityType.Assistant
-                          ? DEFAULT_ASSISTANT_SUBMODEL.id
+                          ? DEFAULT_ASSISTANT_SUBMODEL_ID
                           : undefined,
                     },
                   }),

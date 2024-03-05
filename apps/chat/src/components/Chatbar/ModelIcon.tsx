@@ -6,13 +6,13 @@ import classNames from 'classnames';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
 import { EntityType } from '@/src/types/common';
-import { OpenAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/models';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 
 interface Props {
   entityId: string;
-  entity: OpenAIEntity | undefined;
+  entity: DialAIEntity | undefined;
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
@@ -41,15 +41,6 @@ const ModelIconTemplate = memo(
           width={size}
           height={size}
           description={description}
-          cacheRequests={false}
-          loader={
-            <SVG
-              src={fallbackUrl}
-              width={size}
-              height={size}
-              description={description}
-            />
-          }
         >
           <SVG
             src={fallbackUrl}

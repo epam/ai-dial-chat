@@ -2,9 +2,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 
-import { OpenAIEntityModelID } from '../../types/openai';
 import {
   Conversation,
   ConversationsTemporarySettings,
@@ -34,7 +35,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_ASSISTANT_SUBMODEL } from '@/src/constants/default-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -64,7 +65,6 @@ export const ChatView = memo(() => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
-  const defaultModelId = useAppSelector(SettingsSelectors.selectDefaultModelId);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
@@ -102,10 +102,11 @@ export const ChatView = memo(() => {
     useState<boolean>(false);
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
+  const [isLastMesssageError, setIsLastMesssageError] = useState(false);
+
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
   >({});
-
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -229,6 +230,18 @@ export const ChatView = memo(() => {
   }, []);
 
   useEffect(() => {
+    const lastMergedMessages = mergedMessages[mergedMessages.length - 1];
+
+    if (lastMergedMessages) {
+      const isErrorInSomeLastMessage = lastMergedMessages.some(
+        (mergedStr: [Conversation, Message, number]) =>
+          !!mergedStr[1].errorMessage,
+      );
+      setIsLastMesssageError(isErrorInSomeLastMessage);
+    }
+  }, [mergedMessages]);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setAutoScrollEnabled(entry.isIntersecting);
@@ -343,7 +356,7 @@ export const ChatView = memo(() => {
         model: { id: modelId },
         assistantModelId:
           newAiEntity.type === EntityType.Assistant
-            ? DEFAULT_ASSISTANT_SUBMODEL.id
+            ? DEFAULT_ASSISTANT_SUBMODEL_ID
             : undefined,
         replay: updatedReplay,
         selectedAddons: updatedAddons,
@@ -554,6 +567,15 @@ export const ChatView = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
+  const showLastMessageRegenerate =
+    !isPlayback &&
+    !isExternal &&
+    !messageIsStreaming &&
+    !isLastMesssageError &&
+    selectedConversationsIds.length === 1;
+  const showBigRegenerate =
+    isLastMesssageError || selectedConversationsIds.length > 1;
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -565,24 +587,27 @@ export const ChatView = memo(() => {
       ) : (
         <>
           <div
-            className={`flex size-full ${
-              isCompareMode ? 'landscape:hidden' : 'hidden'
-            }`}
+            className={classNames(
+              'flex size-full',
+              isCompareMode ? 'landscape:hidden' : 'hidden',
+            )}
           >
             <ChatCompareRotate />
           </div>
           <div
-            className={`relative size-full ${
-              isCompareMode ? 'portrait:hidden' : ''
-            }`}
+            className={classNames(
+              'relative size-full',
+              isCompareMode && 'portrait:hidden',
+            )}
           >
             <div className="flex h-full">
               <div
-                className={`flex h-full flex-col ${
+                className={classNames(
+                  'flex h-full flex-col',
                   isCompareMode && selectedConversations.length < 2
                     ? 'w-[50%]'
-                    : 'w-full'
-                }`}
+                    : 'w-full',
+                )}
                 data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
               >
                 <div className="flex max-h-full w-full">
@@ -591,11 +616,12 @@ export const ChatView = memo(() => {
                       conv.messages.length === 0 && (
                         <div
                           key={conv.id}
-                          className={`flex h-full flex-col justify-between ${
+                          className={classNames(
+                            'flex h-full flex-col justify-between',
                             selectedConversations.length > 1
                               ? 'w-[50%]'
-                              : 'w-full'
-                          }`}
+                              : 'w-full',
+                          )}
                         >
                           <div
                             className="shrink-0"
@@ -607,9 +633,6 @@ export const ChatView = memo(() => {
                               conversation={conv}
                               isModels={models.length !== 0}
                               prompts={prompts}
-                              defaultModelId={
-                                defaultModelId || OpenAIEntityModelID.GPT_3_5
-                              }
                               isShowSettings={enabledFeatures.has(
                                 Feature.EmptyChatSettings,
                               )}
@@ -728,12 +751,12 @@ export const ChatView = memo(() => {
                             ]) => (
                               <div
                                 key={conv.id}
-                                className={`${
+                                className={classNames(
                                   isCompareMode &&
-                                  selectedConversations.length > 1
+                                    selectedConversations.length > 1
                                     ? 'w-[50%]'
-                                    : 'w-full'
-                                }`}
+                                    : 'w-full',
+                                )}
                               >
                                 <div className="size-full">
                                   <MemoizedChatMessage
@@ -750,6 +773,12 @@ export const ChatView = memo(() => {
                                     onDelete={() => {
                                       handleDeleteMessage(index);
                                     }}
+                                    onRegenerate={
+                                      index === conv.messages.length - 1 &&
+                                      showLastMessageRegenerate
+                                        ? onRegenerateMessage
+                                        : undefined
+                                    }
                                   />
                                 </div>
                               </div>
@@ -768,19 +797,17 @@ export const ChatView = memo(() => {
               </div>
               {isShowChatSettings && (
                 <div
-                  className={`absolute left-0 top-0 grid size-full ${
+                  className={classNames(
+                    'absolute left-0 top-0 grid size-full',
                     selectedConversations.length === 1
                       ? 'grid-cols-1'
-                      : 'grid-cols-2'
-                  }`}
+                      : 'grid-cols-2',
+                  )}
                 >
                   {selectedConversations.map((conv) => (
                     <div className="relative h-full" key={conv.id}>
                       <ChatSettings
                         conversation={conv}
-                        defaultModelId={
-                          defaultModelId || OpenAIEntityModelID.GPT_3_5
-                        }
                         modelId={conv.model.id}
                         prompts={prompts}
                         addons={addons}
@@ -823,7 +850,9 @@ export const ChatView = memo(() => {
                     showScrollDownButton={showScrollDownButton}
                     onSend={onSendMessage}
                     onScrollDownClick={handleScrollDown}
-                    onRegenerate={onRegenerateMessage}
+                    onRegenerate={
+                      showBigRegenerate ? onRegenerateMessage : undefined
+                    }
                     onStopConversation={() => {
                       dispatch(ConversationsActions.stopStreamMessage());
                     }}

@@ -3,9 +3,10 @@ import { getServerSession } from 'next-auth';
 import { getToken } from 'next-auth/jwt';
 
 import { validateServerSession } from '@/src/utils/auth/session';
-import { OpenAIError } from '@/src/utils/server';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+
+import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -39,7 +40,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         json = undefined;
       }
 
-      throw new OpenAIError(
+      throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
         '',
         '',
@@ -50,7 +51,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).send(JSON.stringify({}));
   } catch (error: unknown) {
     logger.error(error);
-    if (error instanceof OpenAIError) {
+    if (error instanceof DialAIError) {
       return res
         .status(parseInt(error.code, 10) || 500)
         .send(error.message || errorsMessages.generalServer);

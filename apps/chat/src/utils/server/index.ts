@@ -1,39 +1,43 @@
-import { Message, Role } from '@/src/types/chat';
+import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { OpenAIError } from '@/src/types/error';
-import {
-  OpenAIEntityAddonID,
-  OpenAIEntityModel,
-  OpenAIEntityModelID,
-} from '@/src/types/openai';
+import { DialAIError } from '@/src/types/error';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL,
   DIAL_API_HOST,
   DIAL_API_VERSION,
-} from '../../constants/default-settings';
+} from '../../constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { hardLimitMessages } from './chat';
 import { getApiHeaders } from './get-headers';
+import { logger } from './logger';
 
 import {
   ParsedEvent,
   ReconnectInterval,
   createParser,
 } from 'eventsource-parser';
-import fetch from 'node-fetch';
+import fetch, { Response } from 'node-fetch';
 
-export { OpenAIError };
+interface DialAIErrorResponse extends Response {
+  error?: {
+    message: string;
+    type: string;
+    param: string;
+    code: string;
 
-interface OpenAIErrorResponse extends Response {
-  error?: OpenAIError;
+    // Message for end user
+    display_message: string | undefined;
+  };
 }
 
 function getUrl(
   modelId: string,
   modelType: EntityType,
-  isAddonsAdded: boolean,
+  selectedAddonsIds: string[] | undefined,
 ): string {
+  const isAddonsAdded: boolean = Array.isArray(selectedAddonsIds);
   if (modelType === EntityType.Model && isAddonsAdded) {
     return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
   }
@@ -56,88 +60,96 @@ const appendChunk = <T extends object>(
 
 export const OpenAIStream = async ({
   model,
-  systemPrompt,
   temperature,
   messages,
-  selectedAddons,
+  selectedAddonsIds,
   assistantModelId,
   chatId,
   userJWT,
   jobTitle,
+  maxRequestTokens,
 }: {
-  model: OpenAIEntityModel;
-  systemPrompt: string | undefined;
+  model: DialAIEntityModel;
   temperature: number | undefined;
   messages: Message[];
-  selectedAddons: OpenAIEntityAddonID[] | undefined;
-  assistantModelId: OpenAIEntityModelID | undefined;
+  selectedAddonsIds: string[] | undefined;
+  assistantModelId: string | undefined;
   userJWT: string;
   chatId: string;
   jobTitle: string | undefined;
+  maxRequestTokens: number | undefined;
 }) => {
-  const isAddonsAdded: boolean =
-    Array.isArray(selectedAddons) && selectedAddons?.length > 0;
+  let messagesToSend = messages;
+  const url = getUrl(model.id, model.type, selectedAddonsIds);
 
-  const url = getUrl(model.id, model.type, isAddonsAdded);
   const requestHeaders = getApiHeaders({
     chatId,
     jwt: userJWT,
     jobTitle,
   });
 
-  const body = JSON.stringify({
-    messages:
-      !systemPrompt || systemPrompt.trim().length === 0
-        ? messages
-        : [
-            {
-              role: Role.System,
-              content: systemPrompt,
-            },
-            ...messages,
-          ],
-    temperature,
-    stream: true,
-    model:
-      model.type !== EntityType.Assistant
-        ? model.id
-        : assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id,
-    ...(selectedAddons?.length && {
-      addons: selectedAddons?.map((addon) => ({ name: addon })),
-    }),
-  });
+  let retries = 0;
+  let body;
+  let res: Response;
+  do {
+    body = JSON.stringify({
+      messages: messagesToSend,
+      temperature,
+      stream: true,
+      model: assistantModelId ?? model.id,
+      addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
+      max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
+    });
 
-  const res = await fetch(url, {
-    headers: requestHeaders,
-    method: 'POST',
-    body,
-  });
+    res = await fetch(url, {
+      headers: requestHeaders,
+      method: 'POST',
+      body,
+    });
 
-  if (res.status !== 200) {
-    let result: OpenAIErrorResponse;
-    try {
-      result = (await res.json()) as OpenAIErrorResponse;
-    } catch (e) {
-      throw new OpenAIError(
-        `Server error: ${res.statusText}`,
-        '',
-        '',
-        res.status + '',
+    if (
+      res.status === 400 &&
+      retries === 0 &&
+      model.limits?.isMaxRequestTokensCustom
+    ) {
+      retries += 1;
+      logger.info(
+        `Getting 400 error and retrying chat request to ${model.id} model`,
       );
+      messagesToSend = hardLimitMessages(messagesToSend);
+      continue;
+    } else if (res.status !== 200) {
+      let result: DialAIErrorResponse;
+      try {
+        result = (await res.json()) as DialAIErrorResponse;
+      } catch (e) {
+        throw new DialAIError(
+          `Chat Server error: ${res.statusText}`,
+          '',
+          '',
+          res.status + '',
+        );
+      }
+
+      if (result.error) {
+        throw new DialAIError(
+          result.error.message ?? '',
+          result.error.type ?? '',
+          result.error.param ?? '',
+          result.error.code ?? res.status.toString(10),
+          result.error.display_message,
+        );
+      } else {
+        throw new Error(
+          `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
+        );
+      }
     }
-    if (result.error) {
-      throw new OpenAIError(
-        result.error.message ?? '',
-        result.error.type ?? '',
-        result.error.param ?? '',
-        result.error.code ?? res.status.toString(10),
-      );
-    } else {
-      throw new Error(
-        `OpenAI API returned an error: ${JSON.stringify(result, null, 2)}`,
-      );
-    }
-  }
+
+    break;
+    // eslint-disable-next-line no-constant-condition
+  } while (true);
+
   let idSend = false;
   let isFinished = false;
   const stream = new ReadableStream({
@@ -157,11 +169,12 @@ export const OpenAIStream = async ({
             const data = event.data;
             const json = JSON.parse(data);
             if (json.error) {
-              throw new OpenAIError(
+              throw new DialAIError(
                 json.error.message,
                 json.error.type,
                 json.error.param,
                 json.error.code,
+                json.error.display_message,
               );
             }
             if (!idSend) {
@@ -171,7 +184,7 @@ export const OpenAIStream = async ({
 
             if (json.choices?.[0].delta) {
               if (json.choices[0].finish_reason === 'content_filter') {
-                throw new OpenAIError(
+                throw new DialAIError(
                   errorsMessages.contentFiltering,
                   '',
                   '',

@@ -13,7 +13,7 @@ import classNames from 'classnames';
 
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
-import { OpenAIEntity } from '@/src/types/openai';
+import { DialAIEntity } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -24,10 +24,10 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
 interface AddonProps {
-  addon: OpenAIEntity;
+  addon: DialAIEntity;
   preselectedAddonsIds: string[];
-  selectedAddons: OpenAIEntity[];
-  onSelectAddons: (addon: OpenAIEntity, isSelected: boolean) => void;
+  selectedAddons: DialAIEntity[];
+  onSelectAddons: (addon: DialAIEntity, isSelected: boolean) => void;
 }
 
 const Addon = ({
@@ -76,10 +76,10 @@ const Addon = ({
 };
 
 interface SelectedAddonProps {
-  addon: OpenAIEntity;
+  addon: DialAIEntity;
   preselectedAddonsIds: string[];
-  selectedAddons: OpenAIEntity[];
-  onSelectAddons: (addon: OpenAIEntity, isSelected: boolean) => void;
+  selectedAddons: DialAIEntity[];
+  onSelectAddons: (addon: DialAIEntity, isSelected: boolean) => void;
 }
 
 const SelectedAddon = ({
@@ -127,10 +127,10 @@ export const AddonsDialog: FC<Props> = ({
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAddons, setSelectedAddons] = useState<OpenAIEntity[]>(() => {
+  const [selectedAddons, setSelectedAddons] = useState<DialAIEntity[]>(() => {
     return selectedAddonsIds
       .map((id) => addonsMap[id])
-      .filter(Boolean) as OpenAIEntity[];
+      .filter(Boolean) as DialAIEntity[];
   });
   const [displayedAddons, setDisplayedAddons] = useState(() => {
     return addons.filter((addon) =>
@@ -165,13 +165,13 @@ export const AddonsDialog: FC<Props> = ({
       (
         selectedAddonsIds
           .map((id) => addonsMap[id])
-          .filter(Boolean) as OpenAIEntity[]
+          .filter(Boolean) as DialAIEntity[]
       ).filter((addon) => !preselectedAddonsIds.includes(addon.id)),
     );
   }, [addonsMap, isOpen, preselectedAddonsIds, selectedAddonsIds]);
 
   const handleSelectAddon = useCallback(
-    (addon: OpenAIEntity, isSelected: boolean) => {
+    (addon: DialAIEntity, isSelected: boolean) => {
       setSelectedAddons((addons) => {
         if (isSelected) {
           return addons.filter((el) => el.id !== addon.id);

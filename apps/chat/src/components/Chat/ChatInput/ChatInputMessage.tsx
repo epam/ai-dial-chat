@@ -12,6 +12,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
+import { useTokenizer } from '@/src/hooks/useTokenizer';
 
 import { getUserCustomContent } from '@/src/utils/app/file';
 import { isMobile } from '@/src/utils/app/mobile';
@@ -19,7 +20,6 @@ import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
-import { OpenAIEntityModels, defaultModelLimits } from '@/src/types/openai';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -57,7 +57,6 @@ export const ChatInputMessage = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
-
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
 
@@ -65,10 +64,6 @@ export const ChatInputMessage = ({
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
-  );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
@@ -93,16 +88,16 @@ export const ChatInputMessage = ({
 
   const isError = isLastAssistantMessageEmpty || isMessageError;
 
-  const maxLength = useMemo(() => {
-    const maxLengthArray = selectedConversations.map(
-      ({ model }) =>
-        modelsMap[model.id]?.maxLength ??
-        OpenAIEntityModels[model.id]?.maxLength ??
-        defaultModelLimits.maxLength,
-    );
-
-    return Math.min(...maxLengthArray);
-  }, [modelsMap, selectedConversations]);
+  const selectedModels = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsModels,
+  );
+  const modelTokenizer =
+    selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
+  const maxTokensLength =
+    selectedModels.length === 1
+      ? selectedModels[0]?.limits?.maxRequestTokens ?? Infinity
+      : Infinity;
+  const { getTokensLength } = useTokenizer(modelTokenizer);
 
   const {
     content,
@@ -121,7 +116,7 @@ export const ChatInputMessage = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
-  } = usePromptSelection(maxLength, '');
+  } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
   const isInputEmpty = useMemo(() => {
     return content.trim().length === 0 && selectedFiles.length === 0;
@@ -136,8 +131,9 @@ export const ChatInputMessage = ({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
+      const valueTokensLength = getTokensLength(value);
 
-      if (maxLength && value.length > maxLength) {
+      if (maxTokensLength && valueTokensLength > maxTokensLength) {
         setIsPromptLimitModalOpen(true);
         return;
       }
@@ -146,7 +142,8 @@ export const ChatInputMessage = ({
       updatePromptListVisibility(value);
     },
     [
-      maxLength,
+      getTokensLength,
+      maxTokensLength,
       setContent,
       setIsPromptLimitModalOpen,
       updatePromptListVisibility,
@@ -212,12 +209,19 @@ export const ChatInputMessage = ({
     ],
   );
 
-  const handleSubmit = useCallback(
+  const handlePromptApply = useCallback(
     (updatedVariables: string[]) => {
       const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
         const index = variables.indexOf(variable);
         return updatedVariables[index];
       });
+
+      const valueTokensLength = getTokensLength(newContent);
+
+      if (valueTokensLength > maxTokensLength) {
+        setIsPromptLimitModalOpen(true);
+        return;
+      }
 
       setContent(newContent);
 
@@ -225,7 +229,15 @@ export const ChatInputMessage = ({
         textareaRef.current.focus();
       }
     },
-    [content, setContent, textareaRef, variables],
+    [
+      content,
+      getTokensLength,
+      maxTokensLength,
+      setContent,
+      setIsPromptLimitModalOpen,
+      textareaRef,
+      variables,
+    ],
   );
 
   useEffect(() => {
@@ -405,7 +417,7 @@ export const ChatInputMessage = ({
           <PromptDialog
             prompt={filteredPrompts[activePromptIndex]}
             variables={variables}
-            onSubmit={handleSubmit}
+            onSubmit={handlePromptApply}
             onClose={() => setIsModalVisible(false)}
           />
         )}
@@ -416,8 +428,8 @@ export const ChatInputMessage = ({
         heading={t('Prompt limit exceeded')}
         description={
           t(
-            `Prompt limit is ${maxLength} characters.
-            ${getPromptLimitDescription(content, maxLength)}`,
+            `Prompt limit is ${maxTokensLength} tokens.
+            ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
           ) || ''
         }
         confirmLabel={t('Confirm')}

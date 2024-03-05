@@ -2,7 +2,7 @@ import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-} from '@/chat/constants/default-settings';
+} from '@/chat/constants/default-ui-settings';
 import { defaultReplay } from '@/chat/constants/replay';
 import {
   Conversation,
@@ -10,8 +10,7 @@ import {
   Message,
   Replay,
 } from '@/chat/types/chat';
-import { ModelsUtil } from '@/src/utils';
-import { v4 as uuidv4 } from 'uuid';
+import { ItemUtil, ModelsUtil } from '@/src/utils';
 
 export interface TestConversation extends Omit<Conversation, 'folderId'> {
   folderId?: string | undefined;
@@ -21,15 +20,16 @@ export class ConversationBuilder {
   private conversation: TestConversation;
 
   constructor() {
+    const model = ModelsUtil.getDefaultModel()!;
     this.conversation = {
-      id: uuidv4(),
+      id: `${model}${ItemUtil.conversationIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
-      model: { id: ModelsUtil.getDefaultModel()!.id },
+      model: { id: model.id },
       prompt: DEFAULT_SYSTEM_PROMPT,
       temperature: DEFAULT_TEMPERATURE,
       replay: defaultReplay,
-      selectedAddons: ModelsUtil.getDefaultModel()!.selectedAddons ?? [],
+      selectedAddons: model.selectedAddons ?? [],
       lastActivityDate: Date.now(),
       isMessageStreaming: false,
     };

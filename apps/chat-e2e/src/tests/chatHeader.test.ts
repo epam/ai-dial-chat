@@ -1,12 +1,12 @@
-import { OpenAIEntityModel } from '@/chat/types/openai';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages, TestConversation } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let allAddons: OpenAIEntityModel[];
+let allAddons: DialAIEntityModel[];
 let addonIds: string[];
-let defaultModel: OpenAIEntityModel;
+let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   allAddons = ModelsUtil.getAddons();
@@ -116,7 +116,7 @@ dialTest(
       'Hover over chat header and verify chat settings are correct on tooltip',
       async () => {
         await errorPopup.cancelPopup();
-        await chatHeader.hoverOverChatModel(defaultModel.iconUrl);
+        await chatHeader.hoverOverChatModel();
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)

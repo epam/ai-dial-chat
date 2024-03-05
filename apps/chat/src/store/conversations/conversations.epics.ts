@@ -94,7 +94,7 @@ import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-settings';
+} from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
@@ -1156,7 +1156,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         conversations.filter(
           (conv) =>
             conv.folderId === payload.conversation.folderId &&
-            conv.id !== payload.conversation.id,
+            !selectedConversationIds.includes(conv.id),
         ),
         Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
         true,
@@ -1244,7 +1244,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
       if (conversationModelType === EntityType.Model) {
         modelAdditionalSettings = {
-          prompt: payload.conversation.prompt,
+          prompt: lastModel?.features?.systemPrompt
+            ? payload.conversation.prompt
+            : undefined,
           temperature: payload.conversation.temperature,
           selectedAddons,
         };
@@ -1785,6 +1787,20 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
+const hideChatbarEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ConversationsActions.uploadConversationsByIdsSuccess.match(action) ||
+        ConversationsActions.saveNewConversationSuccess.match(action) ||
+        (ConversationsActions.addConversations.match(action) &&
+          !!action.payload.selectAdded),
+    ),
+    switchMap(() =>
+      isSmallScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
+    ),
+  );
+
 const selectConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
@@ -1796,8 +1812,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.saveNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
-        ConversationsActions.addConversations.match(action) ||
-        ConversationsActions.duplicateConversation.match(action),
+        ConversationsActions.addConversations.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
@@ -1811,10 +1826,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
       }),
     ),
     switchMap(({ selectedConversationsIds }) =>
-      concat(
-        of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
-        iif(() => isSmallScreen(), of(UIActions.setShowChatbar(false)), EMPTY),
-      ),
+      of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
     ),
   );
 
@@ -2496,4 +2508,5 @@ export const ConversationsEpics = combineEpics(
   toggleFolderEpic,
   openFolderEpic,
   compareConversationsEpic,
+  hideChatbarEpic,
 );

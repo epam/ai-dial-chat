@@ -3,7 +3,7 @@ import { EntityType } from '@/src/types/common';
 import {
   DIAL_API_HOST,
   DIAL_API_VERSION,
-} from '../../constants/default-settings';
+} from '../../constants/default-server-settings';
 
 import { getApiHeaders } from './get-headers';
 

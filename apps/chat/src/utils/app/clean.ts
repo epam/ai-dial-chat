@@ -5,15 +5,15 @@ import {
   Message,
   Stage,
 } from '@/src/types/chat';
-import { OpenAIEntityModelID } from '@/src/types/openai';
 import { Prompt } from '@/src/types/prompt';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL,
+  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
-} from '../../constants/default-settings';
+  FALLBACK_MODEL_ID,
+} from '@/src/constants/default-ui-settings';
 
 import { constructPath } from './file';
 import { getConversationRootId } from './id';
@@ -68,10 +68,10 @@ export const cleanConversation = (
     ? {
         id: conversation.model.id,
       }
-    : { id: OpenAIEntityModelID.GPT_3_5_AZ };
+    : { id: FALLBACK_MODEL_ID };
 
   const assistantModelId =
-    conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL.id;
+    conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL_ID;
 
   const cleanConversation: Conversation = {
     id:

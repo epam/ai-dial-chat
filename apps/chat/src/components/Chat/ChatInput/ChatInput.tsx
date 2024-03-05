@@ -1,3 +1,4 @@
+import { IconRefresh } from '@tabler/icons-react';
 import {
   Children,
   MutableRefObject,
@@ -14,13 +15,11 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import RefreshCWAlt from '../../../../public/images/icons/refresh-cw-alt.svg';
 import { ChatInputFooter } from './ChatInputFooter';
 import { ChatInputMessage } from './ChatInputMessage';
 
 interface Props {
   onSend: (message: Message) => void;
-  onRegenerate: () => void;
   onScrollDownClick: () => void;
   onStopConversation: () => void;
   onResize: (height: number) => void;
@@ -28,6 +27,7 @@ interface Props {
   showScrollDownButton: boolean;
   isMessagesPresented: boolean;
   isShowInput: boolean;
+  onRegenerate?: () => void;
   children?: ReactNode;
 }
 
@@ -73,6 +73,7 @@ export const ChatInput = ({
     >
       <div className="relative">
         {!Children.toArray(children).length &&
+          onRegenerate &&
           !messageIsStreaming &&
           isMessagesPresented && (
             <button
@@ -81,7 +82,7 @@ export const ChatInput = ({
               data-qa="regenerate"
             >
               <span className="text-secondary">
-                <RefreshCWAlt width={18} height={18} />
+                <IconRefresh width={20} height={20} />
               </span>
               {t('Regenerate response')}
             </button>

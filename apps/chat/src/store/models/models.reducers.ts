@@ -4,8 +4,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { EntityType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
-import { ModelsMap } from '@/src/types/models';
-import { OpenAIEntityModel } from '@/src/types/openai';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -17,7 +16,7 @@ import uniq from 'lodash-es/uniq';
 export interface ModelsState {
   status: UploadStatus;
   error: ErrorMessage | undefined;
-  models: OpenAIEntityModel[];
+  models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
 }
@@ -40,18 +39,18 @@ export const modelsSlice = createSlice({
     },
     getModelsSuccess: (
       state,
-      { payload }: PayloadAction<{ models: OpenAIEntityModel[] }>,
+      { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
     ) => {
       state.status = UploadStatus.LOADED;
       state.error = undefined;
       state.models = payload.models;
-      state.modelsMap = (payload.models as OpenAIEntityModel[]).reduce(
+      state.modelsMap = (payload.models as DialAIEntityModel[]).reduce(
         (acc, model) => {
           acc[model.id] = model;
 
           return acc;
         },
-        {} as Record<string, OpenAIEntityModel>,
+        {} as Record<string, DialAIEntityModel>,
       );
     },
     getModelsFail: (

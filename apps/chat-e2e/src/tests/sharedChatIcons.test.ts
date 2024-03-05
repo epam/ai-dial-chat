@@ -307,11 +307,8 @@ dialTest.skip(
         const updatedModel = ModelsUtil.getModel(ModelIds.GPT_4)!;
         await chatHeader.openConversationSettingsPopup();
         await talkToSelector.waitForState();
-        await talkToSelector.selectModel(
-          updatedModel.name,
-          updatedModel.iconUrl,
-        );
-        await chat.applyNewEntity(updatedModel.iconUrl);
+        await talkToSelector.selectModel(updatedModel.name);
+        await chat.applyNewEntity();
         await conversationSettings.waitForState({ state: 'hidden' });
         await chat.sendRequestWithButton('1+2', false);
         await conversations

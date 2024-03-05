@@ -22,6 +22,7 @@ export interface UIState {
   isChatFullWidth: boolean;
   chatbarWidth?: number;
   promptbarWidth?: number;
+  customLogo?: string;
 }
 
 export const openFoldersInitialState = {
@@ -97,6 +98,12 @@ export const uiSlice = createSlice({
     },
     setIsChatFullWidth: (state, { payload }: PayloadAction<boolean>) => {
       state.isChatFullWidth = payload;
+    },
+    setCustomLogo: (state, { payload }: PayloadAction<{ logo: string }>) => {
+      state.customLogo = payload.logo;
+    },
+    removeCustomLogo: (state) => {
+      state.customLogo = undefined;
     },
     showToast: (
       state,
@@ -240,6 +247,10 @@ const selectIsChatFullWidth = createSelector([rootSelector], (state) => {
   return state.isChatFullWidth;
 });
 
+const selectCustomLogo = createSelector([rootSelector], (state) => {
+  return state.customLogo;
+});
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -257,4 +268,5 @@ export const UISelectors = {
   selectChatbarWidth,
   selectPromptbarWidth,
   selectIsChatFullWidth,
+  selectCustomLogo,
 };

@@ -37,7 +37,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';

@@ -18,7 +18,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-settings';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 

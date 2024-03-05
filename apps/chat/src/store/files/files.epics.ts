@@ -110,10 +110,13 @@ const getFileFoldersEpic: AppEpic = (action$) =>
       FileService.getFileFolders(payload?.id).pipe(
         map((folders) =>
           FilesActions.getFoldersSuccess({
+            folderId: payload.id,
             folders,
           }),
         ),
-        catchError(() => of(FilesActions.getFoldersFail())),
+        catchError(() =>
+          of(FilesActions.getFoldersFail({ folderId: payload.id })),
+        ),
       ),
     ),
   );
