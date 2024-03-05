@@ -25,6 +25,7 @@ export interface ChatOverlayOptions {
 
 interface OverlaySignInOptions {
   autoSignIn: boolean;
+  signInProvider?: string;
 }
 
 export type Styles = { [property in keyof CSSStyleDeclaration]?: string };

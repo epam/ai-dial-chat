@@ -1,4 +1,4 @@
-import { getProviders, signIn } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 
 import {
   EMPTY,
@@ -276,7 +276,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         }
 
         if (signInOptions?.autoSignIn) {
-          signIn();
+          signIn(signInOptions?.signInProvider);
         }
 
         // after all actions will send notify that settings are set
