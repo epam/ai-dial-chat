@@ -52,9 +52,10 @@ export interface Props {
   isLikesEnabled: boolean;
   onEdit: (editedMessage: Message, index: number) => void;
   isEditing: boolean;
+  toggleEditing: (value: boolean) => void;
   messageCopied?: boolean;
   editDisabled?: boolean;
-  toggleEditing: (value: boolean) => void;
+  onRegenerate?: () => void;
   onCopy?: () => void;
   onLike?: (likeStatus: LikeState) => void;
   onDelete?: () => void;
@@ -84,6 +85,7 @@ export const ChatMessageContent = ({
   isEditing,
   toggleEditing,
   withButtons,
+  onRegenerate,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -463,6 +465,7 @@ export const ChatMessageContent = ({
                   message={message}
                   messageCopied={messageCopied}
                   onLike={(likeStatus) => onLike?.(likeStatus)}
+                  onRegenerate={onRegenerate}
                 />
               )}
             </>

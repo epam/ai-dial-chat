@@ -27,6 +27,9 @@ interface Props {
   onClose: () => void;
 }
 
+const getCustomLogoLocalStoreName = (customLogoId: string | undefined) =>
+  customLogoId && splitEntityId(customLogoId).name;
+
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -37,9 +40,10 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   );
 
   const customLogoLocalStoreName = useMemo(() => {
-    return customLogoId && splitEntityId(customLogoId).name;
+    return getCustomLogoLocalStoreName(customLogoId);
   }, [customLogoId]);
 
+  const [removeLogo, setRemoveLogo] = useState<boolean>(false);
   const [localTheme, setLocalTheme] = useState(theme);
   const [isChatFullWidthLocal, setIsChatFullWidthLocal] =
     useState(isChatFullWidth);
@@ -60,6 +64,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const handleClose = useCallback(() => {
     setLocalTheme(theme);
     setIsChatFullWidthLocal(isChatFullWidth);
+    setLocalLogoFile(undefined);
+    setRemoveLogo(false);
     onClose();
   }, [onClose, isChatFullWidth, theme]);
 
@@ -79,15 +85,36 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setIsChatFullWidthLocal((prev) => !prev);
   }, []);
 
+  const onLogoSelect = (filesIds: string[]) => {
+    setRemoveLogo(false);
+    const selectedFileId = filesIds[0];
+    const newFile = files.find((file) => file.id === selectedFileId);
+    setLocalLogoFile(newFile);
+  };
+  const onRemoveLocalLogoHandler = () => {
+    setLocalLogoFile(undefined);
+    setRemoveLogo(true);
+  };
+
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
     dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
-    if (localLogoFile) {
+    if (localLogoFile && !removeLogo) {
       dispatch(UIActions.setCustomLogo({ logo: localLogoFile?.id }));
+    }
+    if (removeLogo) {
+      dispatch(UIActions.removeCustomLogo());
     }
 
     onClose();
-  }, [dispatch, localTheme, onClose, isChatFullWidthLocal, localLogoFile]);
+  }, [
+    dispatch,
+    localTheme,
+    onClose,
+    isChatFullWidthLocal,
+    localLogoFile,
+    removeLogo,
+  ]);
 
   if (!open) {
     return <></>;
@@ -99,7 +126,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       containerClassName="inline-block w-[500px] overflow-y-auto p-4 align-bottom transition-all md:max-h-[400px]"
       dataQa="settings-modal"
       state={open ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={onClose}
+      onClose={handleClose}
       initialFocus={saveBtnRef}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
@@ -117,10 +144,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         />
         {isCustomLogoFeatureEnabled && (
           <CustomLogoSelect
-            files={files}
-            setLocalLogoFile={setLocalLogoFile}
+            onLogoSelect={onLogoSelect}
+            onRemoveLocalLogoHandler={onRemoveLocalLogoHandler}
             localLogo={
-              (localLogoFile && localLogoFile.name) ?? customLogoLocalStoreName
+              removeLogo
+                ? undefined
+                : (localLogoFile && localLogoFile.name) ??
+                  customLogoLocalStoreName
             }
           />
         )}

@@ -41,6 +41,7 @@ interface Props {
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
+  customUploadButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
 }
 
@@ -50,6 +51,7 @@ export const FileManagerModal = ({
   initialSelectedFilesIds = [],
   headerLabel,
   customButtonLabel,
+  customUploadButtonLabel,
   maximumAttachmentsAmount = 0,
   onClose,
 }: Props) => {
@@ -448,6 +450,7 @@ export const FileManagerModal = ({
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
           maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+          customUploadButtonLabel={customUploadButtonLabel}
         />
       )}
 
