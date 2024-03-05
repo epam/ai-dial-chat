@@ -58,7 +58,8 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    reloadConversationsState: (state) => state,
+    reloadState: (state) => state,
+    reloadStateSuccess: (state) => state,
     migrateConversationsIfRequired: (state) => state,
     initConversationsMigration: (
       state,
@@ -553,7 +554,7 @@ export const conversationsSlice = createSlice({
     ) => {
       state.folders = combineEntities(
         payload.folders,
-        state.folders.filter((folder) => !folder.sharedWithMe),
+        state.folders.filter((folder) => !folder.sharedWithMe), // select not external
       );
     },
     addFolders: (
@@ -701,7 +702,6 @@ export const conversationsSlice = createSlice({
     playbackCancel: (state) => {
       state.isPlaybackPaused = true;
     },
-
     uploadConversationsWithFolders: (
       state,
       { payload }: PayloadAction<{ paths: (string | undefined)[] }>,
@@ -716,18 +716,19 @@ export const conversationsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        paths: Set<string | undefined>;
         folders: FolderInterface[];
         externalFolders: FolderInterface[];
       }>,
     ) => {
-      state.loadingFolderIds = state.loadingFolderIds.filter(
-        (id) => !payload.paths.has(id),
+      const ids = payload.folders.map((f) => f.id);
+
+      state.folders = combineEntities(
+        combineEntities(
+          state.folders.filter((f) => ids.includes(f.id)),
+          payload.folders,
+        ),
+        payload.externalFolders,
       );
-      state.foldersStatus = UploadStatus.LOADED;
-      state.folders = combineEntities(payload.folders, payload.externalFolders);
-      state.conversationsLoaded = true;
-      state.foldersStatus = UploadStatus.ALL_LOADED;
     },
     uploadFoldersSuccess: (
       state,
@@ -772,6 +773,10 @@ export const conversationsSlice = createSlice({
       );
       state.foldersStatus = UploadStatus.FAILED;
     },
+    reloadExternalItemsRecursive: (
+      state,
+      _action: PayloadAction<{ ids: string[] }>,
+    ) => state,
     uploadConversationsWithFoldersRecursive: (
       state,
       {
@@ -788,7 +793,6 @@ export const conversationsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        paths: Set<string | undefined>;
         conversations: ConversationInfo[];
         externalConversations: ConversationInfo[];
       }>,
@@ -801,17 +805,19 @@ export const conversationsSlice = createSlice({
       const ids = new Set(payload.conversations.map((c) => c.id));
 
       state.conversations = combineEntities(
-        payload.conversations.map((conv) =>
-          ids.has(conv.id)
-            ? {
-                ...conversationMap.get(conv.id),
-                ...conv,
-              }
-            : conv,
+        combineEntities(
+          state.conversations.filter((c) => ids.has(c.id)),
+          payload.conversations.map((conv) =>
+            ids.has(conv.id)
+              ? {
+                  ...conversationMap.get(conv.id),
+                  ...conv,
+                }
+              : conv,
+          ),
         ),
         payload.externalConversations,
       );
-      state.conversationsStatus = UploadStatus.LOADED;
     },
     uploadConversationsSuccess: (
       state,

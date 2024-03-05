@@ -64,7 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -119,9 +119,9 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
+const reloadStateEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.reloadConversationsState.match),
+    filter(ConversationsActions.reloadState.match),
     switchMap(() =>
       ConversationService.getConversations(undefined, true).pipe(
         switchMap((conversations) => {
@@ -143,20 +143,25 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
 
           return concat(
             of(
-              ConversationsActions.uploadConversationsWithFoldersRecursive({
-                noLoader: true,
+              ConversationsActions.reloadExternalItemsRecursive({
+                // reload only loaded root folders
+                ids: externalFolders
+                  .filter(
+                    (folder) =>
+                      folder.status === UploadStatus.LOADED &&
+                      isRootId(folder.folderId),
+                  )
+                  .map((folder) => folder.id),
               }),
             ),
             of(
               ConversationsActions.reloadConversationsStateSuccess({
-                paths: new Set(),
                 conversations,
                 externalConversations,
               }),
             ),
             of(
               ConversationsActions.reloadConversationFoldersStateSuccess({
-                paths: new Set(),
                 folders: getFoldersFromIds(
                   paths,
                   FolderType.Chat,
@@ -178,6 +183,7 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             ),
+            of(ConversationsActions.reloadStateSuccess()),
           );
         }),
         catchError((err) => {
@@ -192,6 +198,65 @@ const reloadConversationsStateEpic: AppEpic = (action$, state$) =>
         }),
       ),
     ),
+  );
+
+const reloadExternalItemsRecursiveEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.reloadExternalItemsRecursive.match),
+    switchMap(({ payload }) => {
+      const allFolders = ConversationsSelectors.selectFolders(state$.value);
+      const allConversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+
+      return from(payload.ids).pipe(
+        mergeMap((id) =>
+          ConversationService.getConversations(id, true).pipe(
+            mergeMap((conversations) => {
+              const folderIds = uniq(conversations.map((c) => c.folderId));
+              const paths = uniq(
+                folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+              );
+              const oldFolders = allFolders.filter(
+                (f) => !f.folderId.startsWith(id),
+              );
+              const oldConversations = allConversations.filter(
+                (c) => !c.folderId.startsWith(id),
+              );
+
+              return concat(
+                of(
+                  ConversationsActions.reloadConversationsStateSuccess({
+                    conversations: oldConversations,
+                    externalConversations: conversations,
+                  }),
+                ),
+                of(
+                  ConversationsActions.reloadConversationFoldersStateSuccess({
+                    folders: oldFolders,
+                    externalFolders: getFoldersFromIds(
+                      paths,
+                      FolderType.Chat,
+                      UploadStatus.LOADED,
+                    ).map((newFolder) => ({
+                      ...newFolder,
+                      sharedWithMe: isRootId(newFolder.folderId),
+                    })),
+                  }),
+                ),
+              );
+            }),
+            catchError((err) => {
+              console.error(
+                'Error during reload external conversations and folders',
+                err,
+              );
+              return of(ConversationsActions.uploadConversationsFail());
+            }),
+          ),
+        ),
+      );
+    }),
   );
 
 const initSelectedConversationsEpic: AppEpic = (action$) =>
@@ -2596,5 +2661,6 @@ export const ConversationsEpics = combineEpics(
   compareConversationsEpic,
 
   // reload
-  reloadConversationsStateEpic,
+  reloadStateEpic,
+  reloadExternalItemsRecursiveEpic,
 );

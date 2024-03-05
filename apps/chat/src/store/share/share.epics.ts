@@ -23,7 +23,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
+import { Conversation, Message } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -304,6 +304,7 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
     filter(
       (action) =>
         ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
+        ConversationsActions.reloadStateSuccess.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>
@@ -332,7 +333,7 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.initPromptsSuccess.match(action) ||
-        PromptsActions.reloadPromptsStateSuccess.match(action) ||
+        PromptsActions.reloadStateSuccess.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>
@@ -417,40 +418,36 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           const folders = ConversationsSelectors.selectFolders(state$.value);
 
           actions.push(
-            ...(payload.resources.folders
+            ...(folders
               .map((item) => {
-                const isShared = folders.find((res) => res.id === item.id);
+                const isShared = payload.resources.folders.find(
+                  (res) => res.id === item.id,
+                );
 
-                if (isShared) {
-                  return ConversationsActions.updateFolder({
-                    folderId: item.id,
-                    values: {
-                      isShared: true,
-                    },
-                  });
-                }
-                return undefined;
+                return ConversationsActions.updateFolder({
+                  folderId: item.id,
+                  values: {
+                    isShared: !!isShared,
+                  },
+                });
               })
               .filter(Boolean) as AnyAction[]),
           );
 
           actions.push(
-            ...((payload.resources.entities as ConversationInfo[])
+            ...(conversations
               .map((conv) => {
-                const sharedConv = conversations.find(
+                const sharedConv = payload.resources.entities.find(
                   (res) => res.id === conv.id,
                 );
 
-                if (sharedConv) {
-                  return ConversationsActions.updateConversationSuccess({
-                    id: conv.id,
-                    conversation: {
-                      isShared: true,
-                      lastActivityDate: sharedConv.lastActivityDate,
-                    },
-                  });
-                }
-                return undefined;
+                return ConversationsActions.updateConversationSuccess({
+                  id: conv.id,
+                  conversation: {
+                    isShared: !!sharedConv,
+                    lastActivityDate: conv.lastActivityDate,
+                  },
+                });
               })
               .filter(Boolean) as AnyAction[]),
           );
@@ -495,41 +492,38 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         if (payload.sharedWith === ShareRelations.others) {
           const prompts = PromptsSelectors.selectPrompts(state$.value);
           actions.push(
-            ...(payload.resources.entities
+            ...(prompts
               .map((item) => {
-                const sharedPrompt = prompts.find((res) => res.id === item.id);
+                const sharedPrompt = payload.resources.entities.find(
+                  (res) => res.id === item.id,
+                );
 
-                if (sharedPrompt) {
-                  return PromptsActions.updatePromptSuccess({
-                    id: item.id,
-                    prompt: {
-                      isShared: true,
-                    },
-                  });
-                }
-                return undefined;
+                return PromptsActions.updatePromptSuccess({
+                  id: item.id,
+                  prompt: {
+                    isShared: !!sharedPrompt,
+                  },
+                });
               })
               .filter(Boolean) as AnyAction[]),
           );
           const folders = PromptsSelectors.selectFolders(state$.value);
-          payload.resources.folders.length &&
-            actions.push(
-              ...(payload.resources.folders
-                .map((item) => {
-                  const isShared = folders.find((res) => res.id === item.id);
+          actions.push(
+            ...(folders
+              .map((item) => {
+                const isShared = payload.resources.folders.find(
+                  (res) => res.id === item.id,
+                );
 
-                  if (isShared) {
-                    return PromptsActions.updateFolder({
-                      folderId: item.id,
-                      values: {
-                        isShared: true,
-                      },
-                    });
-                  }
-                  return undefined;
-                })
-                .filter(Boolean) as AnyAction[]),
-            );
+                return PromptsActions.updateFolder({
+                  folderId: item.id,
+                  values: {
+                    isShared: !!isShared,
+                  },
+                });
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
         } else {
           const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
             state$.value,

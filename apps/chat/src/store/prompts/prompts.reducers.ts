@@ -51,7 +51,8 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    reloadPromptsState: (state) => state,
+    reloadState: (state) => state,
+    reloadStateSuccess: (state) => state,
     reloadPromptsStateSuccess: (state) => state,
     uploadPromptsWithFoldersRecursive: (
       state,
@@ -261,18 +262,15 @@ export const promptsSlice = createSlice({
         externalPrompts: PromptInfo[];
       }>,
     ) => {
+      const ids = payload.prompts.map((p) => p.id);
+
       state.prompts = combineEntities(
-        [
-          ...state.prompts.filter(
-            (prompt) => prompt.id === state.selectedPromptId,
-          ),
-          ...payload.prompts.filter(
-            (prompt) => prompt.id !== state.selectedPromptId,
-          ),
-        ],
+        combineEntities(
+          state.prompts.filter((c) => ids.includes(c.id)),
+          payload.prompts,
+        ),
         payload.externalPrompts,
       );
-      state.promptsLoaded = true;
     },
     setPrompts: (
       state,
@@ -446,6 +444,10 @@ export const promptsSlice = createSlice({
       state.folders = payload.folders;
       state.prompts = payload.prompts;
     },
+    reloadExternalItemsRecursive: (
+      state,
+      _action: PayloadAction<{ ids: string[] }>,
+    ) => state,
     setReloadedFolders: (
       state,
       {
@@ -455,7 +457,15 @@ export const promptsSlice = createSlice({
         externalFolders: FolderInterface[];
       }>,
     ) => {
-      state.folders = combineEntities(payload.folders, payload.externalFolders);
+      const ids = payload.folders.map((f) => f.id);
+
+      state.folders = combineEntities(
+        combineEntities(
+          state.folders.filter((c) => ids.includes(c.id)),
+          payload.folders,
+        ),
+        payload.externalFolders,
+      );
     },
     setFolders: (
       state,
@@ -590,14 +600,14 @@ export const promptsSlice = createSlice({
       state.loadingFolderIds = state.loadingFolderIds.filter(
         (id) => !payload.parentIds.includes(id),
       );
-      state.folders = combineEntities(
-        state.folders,
-        payload.folders.map((folder) => ({
-          ...folder,
-          status: payload.parentIds.includes(folder.id)
-            ? UploadStatus.LOADED
-            : undefined,
-        })),
+      state.folders = combineEntities(state.folders, payload.folders).map(
+        (folder) =>
+          payload.parentIds.includes(folder.id)
+            ? {
+                ...folder,
+                status: UploadStatus.LOADED,
+              }
+            : folder,
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
     },
