@@ -788,8 +788,10 @@ export const ChatView = memo(() => {
                       ),
                     )}
                     <div
-                      className="shrink-0 "
-                      style={{ height: inputHeight + 56 }}
+                      className="shrink-0"
+                      style={{
+                        height: inputHeight + (showBigRegenerate ? 56 : 0),
+                      }}
                       ref={messagesEndRef}
                     />
                   </div>
