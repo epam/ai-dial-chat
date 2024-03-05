@@ -111,6 +111,16 @@ export function getMessageCustomContent(
   );
 }
 
+const getResponseBody = (
+  fieldName: string,
+  displayMessage: string | undefined,
+  fallbackMessage: string,
+) => {
+  return {
+    [fieldName]: displayMessage ? displayMessage : fallbackMessage,
+  };
+};
+
 export const chatErrorHandler = ({
   error,
   res,
@@ -119,33 +129,29 @@ export const chatErrorHandler = ({
 }: {
   error: DialAIError | unknown;
   res: NextApiResponse;
-  msg?: string;
+  msg: string;
   isStreamingError?: boolean;
 }): void => {
   const postfix = isStreamingError ? '\0' : '';
   const fieldName = isStreamingError ? 'errorMessage' : 'message';
+  let fallbackErrorMessage = errorsMessages.generalServer;
 
   logger.error(error, msg);
+
   if (error instanceof DialAIError) {
     // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
     if (['429', '504'].includes(error.code)) {
-      return res
-        .status(500)
-        .send(JSON.stringify({ [fieldName]: errorsMessages[429] }) + postfix);
-    }
-    if (error.code === 'content_filter') {
-      return res
-        .status(500)
-        .send(
-          JSON.stringify({ [fieldName]: errorsMessages.contentFiltering }) +
-            postfix,
-        );
+      fallbackErrorMessage = errorsMessages[429];
+    } else if (error.code === 'content_filter') {
+      fallbackErrorMessage = errorsMessages.contentFiltering;
     }
   }
 
-  return res
-    .status(500)
-    .send(
-      JSON.stringify({ [fieldName]: errorsMessages.generalServer }) + postfix,
-    );
+  const responseBody = getResponseBody(
+    fieldName,
+    error instanceof DialAIError ? error.displayMessage : undefined,
+    fallbackErrorMessage,
+  );
+
+  return res.status(500).send(JSON.stringify(responseBody) + postfix);
 };
