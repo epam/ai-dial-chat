@@ -529,7 +529,7 @@ export const promptsSlice = createSlice({
         noLoader?: boolean;
       }>,
     ) => {
-      state.isPromptLoading = !payload.noLoader;
+      state.isPromptLoading = !!payload.noLoader;
     },
     uploadPromptSuccess: (
       state,
