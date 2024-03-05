@@ -568,13 +568,7 @@ export const ChatView = memo(() => {
   }, []);
 
   const showLastMessageRegenerate =
-    !isPlayback &&
-    !isExternal &&
-    !messageIsStreaming &&
-    !isLastMesssageError &&
-    selectedConversationsIds.length === 1;
-  const showBigRegenerate =
-    isLastMesssageError || selectedConversationsIds.length > 1;
+    !isPlayback && !isExternal && !messageIsStreaming && !isLastMesssageError;
 
   return (
     <div
@@ -851,7 +845,7 @@ export const ChatView = memo(() => {
                     onSend={onSendMessage}
                     onScrollDownClick={handleScrollDown}
                     onRegenerate={
-                      showBigRegenerate ? onRegenerateMessage : undefined
+                      isLastMesssageError ? onRegenerateMessage : undefined
                     }
                     onStopConversation={() => {
                       dispatch(ConversationsActions.stopStreamMessage());
