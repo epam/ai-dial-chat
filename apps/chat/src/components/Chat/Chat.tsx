@@ -210,7 +210,7 @@ export const ChatView = memo(() => {
     if (chatContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         chatContainerRef.current;
-      const bottomTolerance = 5;
+      const bottomTolerance = 25;
 
       if (lastScrollTop.current > scrollTop) {
         setAutoScrollEnabled(false);
