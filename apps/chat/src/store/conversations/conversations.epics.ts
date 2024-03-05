@@ -1952,8 +1952,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.saveNewConversationSuccess.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
-        ConversationsActions.addConversations.match(action) ||
-        ConversationsActions.duplicateConversation.match(action),
+        ConversationsActions.addConversations.match(action),
     ),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
