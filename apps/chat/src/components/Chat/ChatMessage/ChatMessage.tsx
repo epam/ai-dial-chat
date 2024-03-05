@@ -24,12 +24,22 @@ export interface Props {
   onEdit: (editedMessage: Message, index: number) => void;
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
+  onRegenerate?: () => void;
 }
 
 const CONTEXT_MENU_OFFSET = 100;
+const CONTEXT_MENU_REGENERATE_OFFSET = 130;
 
 export const ChatMessage: FC<Props> = memo(
-  ({ message, conversation, onLike, onDelete, editDisabled, ...props }) => {
+  ({
+    message,
+    conversation,
+    onLike,
+    onDelete,
+    editDisabled,
+    onRegenerate,
+    ...props
+  }) => {
     const { t } = useTranslation(Translation.Chat);
 
     const [messageCopied, setMessageCopied] = useState(false);
@@ -102,6 +112,7 @@ export const ChatMessage: FC<Props> = memo(
             onLike={handleLike}
             onCopy={handleCopy}
             message={message}
+            onRegenerate={onRegenerate}
             withButtons
             {...props}
           />
@@ -114,19 +125,17 @@ export const ChatMessage: FC<Props> = memo(
       <>
         <Menu
           placement="top-start"
-          listClassName="z-0 context-menu-chat"
+          listClassName="context-menu-chat bg-layer-3"
           shouldFlip={false}
           shouldApplySize={false}
           style={{
             top: `${clientY}px`,
-            left: `${
-              clientX > window.innerWidth / 2
-                ? clientX - CONTEXT_MENU_OFFSET
-                : clientX
-            }px`,
+            left: `${clientX}px`,
           }}
           type="contextMenu"
           className="w-full text-start"
+          dismissIfScroll
+          noFocusReturn
           trigger={
             <ChatMessageContent
               conversation={conversation}
@@ -135,8 +144,16 @@ export const ChatMessage: FC<Props> = memo(
               message={message}
               onClick={(e, messageRef) => {
                 const rect = messageRef.current!.getBoundingClientRect();
-                setClientY(e.clientY - rect.top);
-                setClientX(e.clientX);
+                setClientY(e.clientY - rect.y);
+                setClientX(
+                  e.clientX -
+                    rect.x -
+                    (e.pageX > window.innerWidth / 2
+                      ? onRegenerate
+                        ? CONTEXT_MENU_REGENERATE_OFFSET
+                        : CONTEXT_MENU_OFFSET
+                      : 0),
+                );
               }}
               {...props}
             />
@@ -151,6 +168,7 @@ export const ChatMessage: FC<Props> = memo(
             onDelete={() => setIsRemoveConfirmationOpened(true)}
             isEditing={isEditing}
             toggleEditing={toggleEditing}
+            onRegenerate={onRegenerate}
           />
         </Menu>
         {confirmationDialog}
