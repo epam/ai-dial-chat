@@ -460,11 +460,11 @@ export const promptsSlice = createSlice({
       const ids = payload.folders.map((f) => f.id);
 
       state.folders = combineEntities(
+        payload.externalFolders,
         combineEntities(
           state.folders.filter((c) => ids.includes(c.id)),
           payload.folders,
         ),
-        payload.externalFolders,
       );
     },
     setFolders: (

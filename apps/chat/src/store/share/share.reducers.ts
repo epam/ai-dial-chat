@@ -40,6 +40,13 @@ export const shareSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    triggerReloadSharedItems: (
+      state,
+      _action: PayloadAction<{
+        sharedWith: ShareRelations;
+        featureType: FeatureType;
+      }>,
+    ) => state,
     share: (
       state,
       {
@@ -185,7 +192,19 @@ export const shareSlice = createSlice({
         };
       }>,
     ) => state,
+    reloadSharedListingSuccess: (
+      state,
+      _action: PayloadAction<{
+        featureType: FeatureType;
+        sharedWith: ShareRelations;
+        resources: {
+          entities: (ConversationInfo | Prompt)[];
+          folders: FolderInterface[];
+        };
+      }>,
+    ) => state,
     getSharedListingFail: (state) => state,
+    reloadSharedListingFail: (state) => state,
   },
 });
 

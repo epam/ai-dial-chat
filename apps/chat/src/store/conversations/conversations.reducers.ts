@@ -718,11 +718,11 @@ export const conversationsSlice = createSlice({
       const ids = payload.folders.map((f) => f.id);
 
       state.folders = combineEntities(
+        payload.externalFolders,
         combineEntities(
           state.folders.filter((f) => ids.includes(f.id)),
           payload.folders,
         ),
-        payload.externalFolders,
       );
     },
     uploadFoldersSuccess: (

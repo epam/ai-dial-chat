@@ -34,6 +34,8 @@ export const errorsMessages = {
     'Discarding shared with you resource failed. Please try again later.',
   shareByMeListingFailed:
     'Getting shared by you resources failed. Please reload the page to get them again.',
+  shareByMeReloadListingFailed:
+    'Getting shared by you resources failed. Please reload the page to get them again.',
   shareWithMeListingFailed:
     'Getting shared with you resources failed. Please reload the page to get them again.',
   notValidEntityType:

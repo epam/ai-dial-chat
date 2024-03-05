@@ -23,7 +23,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -304,7 +304,6 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
     filter(
       (action) =>
         ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
-        ConversationsActions.reloadStateSuccess.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>
@@ -333,7 +332,6 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.initPromptsSuccess.match(action) ||
-        PromptsActions.reloadStateSuccess.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>
@@ -353,6 +351,85 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
             sharedWith: ShareRelations.others,
           }),
         ),
+      );
+    }),
+  );
+
+const initReloadSharedConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.reloadStateSuccess.match),
+    filter(() =>
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
+    ),
+    switchMap(() =>
+      concat(
+        of(
+          ShareActions.triggerReloadSharedItems({
+            sharedWith: ShareRelations.me,
+            featureType: FeatureType.Chat,
+          }),
+        ),
+        of(
+          ShareActions.triggerReloadSharedItems({
+            sharedWith: ShareRelations.others,
+            featureType: FeatureType.Chat,
+          }),
+        ),
+      ),
+    ),
+  );
+
+const initReloadSharedPromptsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.reloadStateSuccess.match),
+    filter(() =>
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
+    ),
+    switchMap(() =>
+      concat(
+        of(
+          ShareActions.triggerReloadSharedItems({
+            sharedWith: ShareRelations.me,
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+        of(
+          ShareActions.triggerReloadSharedItems({
+            sharedWith: ShareRelations.others,
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+      ),
+    ),
+  );
+
+const triggerReloadSharedItemsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ShareActions.triggerReloadSharedItems.match),
+    filter(({ payload }) =>
+      SettingsSelectors.isSharingEnabled(state$.value, payload.featureType),
+    ),
+    mergeMap(({ payload }) => {
+      return ShareService.getSharedListing({
+        order: 'popular_asc',
+        resourceTypes: [
+          EnumMapper.getBackendResourceTypeByFeatureType(payload.featureType),
+        ],
+        with: payload.sharedWith,
+      }).pipe(
+        switchMap((entities) => {
+          return of(
+            ShareActions.reloadSharedListingSuccess({
+              featureType: payload.featureType,
+              sharedWith: payload.sharedWith,
+              resources: entities,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ShareActions.reloadSharedListingFail());
+        }),
       );
     }),
   );
@@ -385,6 +462,18 @@ const getSharedListingEpic: AppEpic = (action$) =>
     }),
   );
 
+const reloadSharedListingFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.reloadSharedListingFail.match),
+    switchMap(() => {
+      return of(
+        UIActions.showErrorToast(
+          translate(errorsMessages.shareByMeReloadListingFailed),
+        ),
+      );
+    }),
+  );
+
 const getSharedListingFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.getSharedListingFail.match),
@@ -398,7 +487,6 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
   );
 
 // TODO: refactor it to something better
-// TODO: separate EPIC for reloading?
 const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.getSharedListingSuccess.match),
@@ -410,6 +498,208 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         ...payload.resources.entities,
         ...payload.resources.folders,
       ].some((item) => item.id === decodedAcceptedId);
+
+      if (payload.featureType === FeatureType.Chat) {
+        if (payload.sharedWith === ShareRelations.others) {
+          const conversations = ConversationsSelectors.selectConversations(
+            state$.value,
+          );
+          const folders = ConversationsSelectors.selectFolders(state$.value);
+
+          actions.push(
+            ...(payload.resources.folders
+              .map((item) => {
+                const isShared = folders.find((res) => res.id === item.id);
+
+                if (isShared) {
+                  return ConversationsActions.updateFolder({
+                    folderId: item.id,
+                    values: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+
+          actions.push(
+            ...((payload.resources.entities as ConversationInfo[])
+              .map((conv) => {
+                const sharedConv = conversations.find(
+                  (res) => res.id === conv.id,
+                );
+
+                if (sharedConv) {
+                  return ConversationsActions.updateConversationSuccess({
+                    id: conv.id,
+                    conversation: {
+                      isShared: true,
+                      lastActivityDate: sharedConv.lastActivityDate,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+        } else {
+          const [selectedConv] =
+            ConversationsSelectors.selectSelectedConversations(state$.value);
+
+          if (
+            selectedConv &&
+            !isNewResource &&
+            payload.resources.entities.some(
+              (conv) => conv.id === selectedConv.id,
+            )
+          ) {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [selectedConv.id],
+              }),
+            );
+          }
+
+          payload.resources.entities.length &&
+            actions.push(
+              ConversationsActions.addConversations({
+                conversations: payload.resources.entities.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as Conversation[],
+              }),
+            );
+          payload.resources.folders.length &&
+            actions.push(
+              ConversationsActions.addFolders({
+                folders: payload.resources.folders.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as FolderInterface[],
+              }),
+            );
+        }
+      }
+      if (payload.featureType === FeatureType.Prompt) {
+        if (payload.sharedWith === ShareRelations.others) {
+          const prompts = PromptsSelectors.selectPrompts(state$.value);
+          actions.push(
+            ...(payload.resources.entities
+              .map((item) => {
+                const sharedPrompt = prompts.find((res) => res.id === item.id);
+
+                if (sharedPrompt) {
+                  return PromptsActions.updatePromptSuccess({
+                    id: item.id,
+                    prompt: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+          const folders = PromptsSelectors.selectFolders(state$.value);
+          payload.resources.folders.length &&
+            actions.push(
+              ...(payload.resources.folders
+                .map((item) => {
+                  const isShared = folders.find((res) => res.id === item.id);
+
+                  if (isShared) {
+                    return PromptsActions.updateFolder({
+                      folderId: item.id,
+                      values: {
+                        isShared: true,
+                      },
+                    });
+                  }
+                  return undefined;
+                })
+                .filter(Boolean) as AnyAction[]),
+            );
+        } else {
+          payload.resources.entities.length &&
+            actions.push(
+              PromptsActions.addPrompts({
+                prompts: payload.resources.entities.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as Prompt[],
+              }),
+            );
+          payload.resources.folders.length &&
+            actions.push(
+              PromptsActions.addFolders({
+                folders: payload.resources.folders.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as FolderInterface[],
+              }),
+            );
+        }
+      }
+
+      if (decodedAcceptedId && isNewResource) {
+        if (isConversationId(acceptedId)) {
+          if (isFolderId(acceptedId)) {
+            actions.push(
+              ConversationsActions.uploadConversationsWithFoldersRecursive({
+                path: decodedAcceptedId,
+                selectFirst: true,
+                noLoader: true,
+              }),
+            );
+            actions.push(ShareActions.resetShareId());
+          } else {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [decodedAcceptedId],
+              }),
+            );
+          }
+        } else if (isPromptId(acceptedId)) {
+          if (isFolderId(acceptedId)) {
+            actions.push(
+              PromptsActions.uploadPromptsWithFoldersRecursive({
+                path: decodedAcceptedId,
+                selectFirst: true,
+              }),
+            );
+            actions.push(ShareActions.resetShareId());
+          } else {
+            actions.push(
+              PromptsActions.setSelectedPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+            actions.push(
+              PromptsActions.uploadPrompt({
+                promptId: decodedAcceptedId,
+              }),
+            );
+          }
+          actions.push(
+            PromptsActions.setIsEditModalOpen({
+              isOpen: true,
+              isPreview: true,
+            }),
+          );
+        }
+      }
+
+      return concat(actions);
+    }),
+  );
+
+const reloadSharedListingSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ShareActions.reloadSharedListingSuccess.match),
+    switchMap(({ payload }) => {
+      const actions = [];
 
       if (payload.featureType === FeatureType.Chat) {
         if (payload.sharedWith === ShareRelations.others) {
@@ -458,7 +748,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
           if (
             selectedConv &&
-            !isNewResource &&
             payload.resources.entities.some(
               (conv) => conv.id === selectedConv.id,
             )
@@ -471,7 +760,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           }
 
           actions.push(
-            // TODO: rename or think how to do it better
             ConversationsActions.addSharedConversations({
               conversations: payload.resources.entities.map((res) => ({
                 ...(res.id === selectedConv?.id ? selectedConv : res),
@@ -548,53 +836,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             }),
           );
         }
-      }
-
-      if (decodedAcceptedId && isNewResource) {
-        if (isConversationId(acceptedId)) {
-          if (isFolderId(acceptedId)) {
-            actions.push(
-              ConversationsActions.uploadConversationsWithFoldersRecursive({
-                path: decodedAcceptedId,
-                selectFirst: true,
-                noLoader: true,
-              }),
-            );
-          } else {
-            actions.push(
-              ConversationsActions.selectConversations({
-                conversationIds: [decodedAcceptedId],
-              }),
-            );
-          }
-        } else if (isPromptId(acceptedId)) {
-          if (isFolderId(acceptedId)) {
-            actions.push(
-              PromptsActions.uploadPromptsWithFoldersRecursive({
-                path: decodedAcceptedId,
-                selectFirst: true,
-              }),
-            );
-          } else {
-            actions.push(
-              PromptsActions.setSelectedPrompt({
-                promptId: decodedAcceptedId,
-              }),
-            );
-            actions.push(
-              PromptsActions.uploadPrompt({
-                promptId: decodedAcceptedId,
-              }),
-            );
-          }
-          actions.push(
-            PromptsActions.setIsEditModalOpen({
-              isOpen: true,
-              isPreview: true,
-            }),
-          );
-        }
-        actions.push(ShareActions.resetShareId());
       }
 
       return concat(actions);
@@ -808,4 +1049,11 @@ export const ShareEpics = combineEpics(
   triggerGettingSharedListingsPromptsEpic,
 
   deleteOrRenameSharedFolderEpic,
+
+  // reload
+  initReloadSharedConversationsEpic,
+  initReloadSharedPromptsEpic,
+  triggerReloadSharedItemsEpic,
+  reloadSharedListingFailEpic,
+  reloadSharedListingSuccessEpic,
 );
