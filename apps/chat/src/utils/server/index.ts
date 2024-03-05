@@ -21,7 +21,15 @@ import {
 import fetch, { Response } from 'node-fetch';
 
 interface DialAIErrorResponse extends Response {
-  error?: DialAIError;
+  error?: {
+    message: string;
+    type: string;
+    param: string;
+    code: string;
+
+    // Message for end user
+    display_message: string | undefined;
+  };
 }
 
 function getUrl(
@@ -129,6 +137,7 @@ export const OpenAIStream = async ({
           result.error.type ?? '',
           result.error.param ?? '',
           result.error.code ?? res.status.toString(10),
+          result.error.display_message,
         );
       } else {
         throw new Error(
@@ -165,6 +174,7 @@ export const OpenAIStream = async ({
                 json.error.type,
                 json.error.param,
                 json.error.code,
+                json.error.display_message,
               );
             }
             if (!idSend) {

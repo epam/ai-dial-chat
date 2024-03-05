@@ -74,6 +74,8 @@ interface MenuProps {
   placement?: Placement;
   shouldFlip?: boolean;
   shouldApplySize?: boolean;
+  dismissIfScroll?: boolean;
+  noFocusReturn?: boolean;
 }
 
 export const MenuComponent = forwardRef<
@@ -93,6 +95,8 @@ export const MenuComponent = forwardRef<
     onOpenChange,
     shouldFlip = true,
     shouldApplySize = true,
+    noFocusReturn = false,
+    dismissIfScroll = false,
     ...props
   },
   forwardedRef,
@@ -170,7 +174,10 @@ export const MenuComponent = forwardRef<
     ignoreMouse: isNested,
   });
   const role = useRole(context, { role: 'menu' });
-  const dismiss = useDismiss(context, { bubbles: true });
+  const dismiss = useDismiss(context, {
+    bubbles: true,
+    ancestorScroll: dismissIfScroll,
+  });
   const listNavigation = useListNavigation(context, {
     listRef: elementsRef,
     activeIndex,
@@ -230,7 +237,7 @@ export const MenuComponent = forwardRef<
         data-nested={isNested ? '' : undefined}
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
-          isNested ? menuItemClassNames : '',
+          isNested && menuItemClassNames,
           isNested ? 'h-[34px] w-full px-3' : 'h-full px-0',
           className,
         )}
@@ -247,7 +254,7 @@ export const MenuComponent = forwardRef<
       >
         {trigger}
         {!trigger && label && (
-          <span className={`inline-block truncate`}>{label}</span>
+          <span className="inline-block truncate">{label}</span>
         )}
       </button>
       <MenuContext.Provider
@@ -266,7 +273,7 @@ export const MenuComponent = forwardRef<
                 context={context}
                 modal={false}
                 initialFocus={isNested ? -1 : 0}
-                returnFocus={!isNested}
+                returnFocus={noFocusReturn ? false : !isNested}
               >
                 <div
                   className={classNames(
