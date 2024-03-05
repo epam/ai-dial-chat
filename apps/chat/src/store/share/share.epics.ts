@@ -760,7 +760,7 @@ const reloadSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           }
 
           actions.push(
-            ConversationsActions.addSharedConversations({
+            ConversationsActions.addReloadedSharedConversations({
               conversations: payload.resources.entities.map((res) => ({
                 ...(res.id === selectedConv?.id ? selectedConv : res),
                 sharedWithMe: true,
@@ -769,7 +769,7 @@ const reloadSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
 
           actions.push(
-            ConversationsActions.addSharedFolders({
+            ConversationsActions.addReloadedSharedFolders({
               folders: payload.resources.folders.map((res) => ({
                 ...res,
                 sharedWithMe: true,
@@ -820,7 +820,7 @@ const reloadSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           );
 
           actions.push(
-            PromptsActions.addSharedPrompts({
+            PromptsActions.addReloadedSharedPrompts({
               prompts: payload.resources.entities.map((res) => ({
                 ...(res.id === selectedPrompt?.id ? selectedPrompt : res),
                 sharedWithMe: true,
@@ -828,7 +828,7 @@ const reloadSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             }),
           );
           actions.push(
-            PromptsActions.addSharedFolders({
+            PromptsActions.addReloadedSharedFolders({
               folders: payload.resources.folders.map((res) => ({
                 ...res,
                 sharedWithMe: true,

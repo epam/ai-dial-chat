@@ -283,7 +283,7 @@ export const promptsSlice = createSlice({
         : combineEntities(state.prompts, payload.prompts);
       state.promptsLoaded = true;
     },
-    addSharedPrompts: (
+    addReloadedSharedPrompts: (
       state,
       { payload }: PayloadAction<{ prompts: Prompt[] }>,
     ) => {
@@ -473,7 +473,7 @@ export const promptsSlice = createSlice({
     ) => {
       state.folders = payload.folders;
     },
-    addSharedFolders: (
+    addReloadedSharedFolders: (
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
