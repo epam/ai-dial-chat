@@ -12,9 +12,9 @@ import {
 } from '@/src/testData';
 import { FileApiHelper } from '@/src/testData/api';
 import { FolderData } from '@/src/testData/folders/folderData';
+import { ItemUtil } from '@/src/utils';
 import { DateUtil } from '@/src/utils/dateUtil';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface FolderConversation {
   conversations: TestConversation[];
@@ -320,7 +320,7 @@ export class ConversationData extends FolderData {
   ) {
     const messages = conversation.messages;
     const playbackConversation = JSON.parse(JSON.stringify(conversation));
-    playbackConversation.id = uuidv4();
+    playbackConversation.id = `playback${ItemUtil.conversationIdSeparator}${conversation.name}`;
     playbackConversation.name = `[${MenuOptions.playback}] ${conversation.name}`;
     playbackConversation.messages = [];
     if (playbackIndex) {
@@ -424,7 +424,7 @@ export class ConversationData extends FolderData {
     userMessages: Message[],
   ): TestConversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
-    replayConversation.id = uuidv4();
+    replayConversation.id = `replay${conversation.id}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
     if (!replayConversation.replay) {
