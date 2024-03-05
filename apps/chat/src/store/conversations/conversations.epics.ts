@@ -70,6 +70,7 @@ import {
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
@@ -1117,6 +1118,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       overlaySystemPrompt: OverlaySelectors.selectOverlaySystemPrompt(
         state$.value,
       ),
+      isOverlay: SettingsSelectors.selectIsOverlay(state$.value),
     })),
     map(
       ({
@@ -1125,6 +1127,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         conversations,
         selectedConversationIds,
         overlaySystemPrompt,
+        isOverlay,
       }) => {
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
@@ -1161,18 +1164,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           Overlay needs to share host application state information
           We storing state information in systemPrompt (message with role: Role.System)
         */
-        if (overlaySystemPrompt) {
-          const overlaySystemPromptMessage: Message = {
-            content: overlaySystemPrompt,
-            role: Role.System,
-          };
-
-          // removing previous system message
-          currentMessages = currentMessages.filter(
-            (message) => message.role !== Role.System,
+        if (isOverlay && overlaySystemPrompt) {
+          currentMessages = updateSystemPromptInMessages(
+            currentMessages,
+            overlaySystemPrompt,
           );
-
-          currentMessages.push(overlaySystemPromptMessage);
         }
 
         const updatedMessages = currentMessages.concat(
