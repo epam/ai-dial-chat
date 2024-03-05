@@ -12,7 +12,6 @@ import { ImportPrompt } from '@/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { FileUtil, GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
 
 let folderPromptData: UploadDownloadData;
 let rootPromptData: UploadDownloadData;
@@ -727,7 +726,7 @@ dialTest(
         for (const exportedData of exportedPrompts) {
           const exportedContent = FileUtil.readFileData(exportedData.path);
           const prompt = exportedContent.prompts[0];
-          prompt.id = uuidv4();
+          prompt.id = GeneratorUtil.randomString(10);
           prompt.name = GeneratorUtil.randomString(10);
           const updatedExportedPrompt = {
             path: FileUtil.writeDataToFile(exportedContent),

@@ -17,7 +17,6 @@ import { GeneratorUtil } from '@/src/utils';
 import { FileUtil } from '@/src/utils/fileUtil';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
-import { v4 as uuidv4 } from 'uuid';
 
 const levelsCount = 3;
 let folderConversationData: UploadDownloadData;
@@ -803,7 +802,7 @@ dialTest(
         for (const exportedData of exportedConversations) {
           const exportedContent = FileUtil.readFileData(exportedData.path);
           const conversation = exportedContent.history[0];
-          conversation.id = uuidv4();
+          conversation.id = GeneratorUtil.randomString(10);
           conversation.name = GeneratorUtil.randomString(10);
           const updatedExportedConversation = {
             path: FileUtil.writeDataToFile(exportedContent),
