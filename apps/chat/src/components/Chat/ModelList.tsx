@@ -27,6 +27,7 @@ interface ModelGroupProps {
   notAllowExpandDescription?: boolean;
   searchTerm?: string;
   disabled?: boolean;
+  isReplayAsIs?: boolean;
 }
 
 const ModelGroup = ({
@@ -36,6 +37,7 @@ const ModelGroup = ({
   notAllowExpandDescription,
   searchTerm,
   disabled,
+  isReplayAsIs,
 }: ModelGroupProps) => {
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
@@ -73,7 +75,7 @@ const ModelGroup = ({
     <div
       className={classNames(
         'relative rounded border hover:border-hover',
-        !disabled && selectedModelId === currentEntity.id
+        !disabled && !isReplayAsIs && selectedModelId === currentEntity.id
           ? 'border-accent-primary'
           : 'border-primary',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
@@ -166,6 +168,7 @@ interface ModelListProps {
   allEntities: DialAIEntity[];
   searchTerm?: string;
   disabled?: boolean;
+  isReplayAsIs?: boolean;
 }
 
 export const ModelList = ({
@@ -179,6 +182,7 @@ export const ModelList = ({
   allEntities,
   searchTerm,
   disabled,
+  isReplayAsIs,
 }: ModelListProps) => {
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
@@ -206,6 +210,7 @@ export const ModelList = ({
             notAllowExpandDescription={notAllowExpandDescription}
             disabled={disabled}
             searchTerm={searchTerm}
+            isReplayAsIs={isReplayAsIs}
           />
         ))}
       </div>
