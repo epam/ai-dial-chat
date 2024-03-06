@@ -43,6 +43,8 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
+import { AdjustedTextarea } from './AdjustedTextarea';
+
 import uniq from 'lodash-es/uniq';
 
 export interface Props {
@@ -103,8 +105,6 @@ export const ChatMessageContent = ({
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isLastMessage =
     messageIndex == (conversation?.messages.length ?? 0) - 1;
@@ -217,12 +217,6 @@ export const ChatMessageContent = ({
   useEffect(() => {
     setMessageContent(message.content);
   }, [message.content]);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [isEditing, messageContent]);
 
   const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
@@ -341,8 +335,7 @@ export const ChatMessageContent = ({
                     !isOverlay && 'text-base',
                   )}
                 >
-                  <textarea
-                    ref={textareaRef}
+                  <AdjustedTextarea
                     className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
                     value={messageContent}
                     onChange={handleInputChange}
