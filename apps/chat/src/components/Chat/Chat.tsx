@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   Conversation,
@@ -192,7 +193,6 @@ export const ChatView = memo(() => {
 
   useEffect(() => {
     scrollDown();
-    textareaRef.current?.focus();
   }, [scrollDown]);
 
   const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
@@ -781,8 +781,12 @@ export const ChatView = memo(() => {
                       ),
                     )}
                     <div
-                      className="shrink-0 "
-                      style={{ height: inputHeight + 56 }}
+                      className="shrink-0"
+                      style={{
+                        height:
+                          inputHeight +
+                          (isLastMessageError ? 56 : isSmallScreen() ? 0 : 16),
+                      }}
                       ref={messagesEndRef}
                     />
                   </div>
