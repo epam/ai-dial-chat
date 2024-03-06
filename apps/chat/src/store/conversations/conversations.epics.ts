@@ -1176,20 +1176,26 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           assistantMessage,
         );
 
-        const newConversationName = getNextDefaultName(
-          getNewConversationName(
-            payload.conversation,
-            payload.message,
-            updatedMessages,
-          ),
-          conversations.filter(
-            (conv) =>
-              conv.folderId === payload.conversation.folderId &&
-              !selectedConversationIds.includes(conv.id),
-          ),
-          Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
-          true,
-        );
+        const newConversationName =
+          updatedMessages.length > 2
+            ? payload.conversation.name
+            : getNextDefaultName(
+                getNewConversationName(
+                  payload.conversation,
+                  payload.message,
+                  updatedMessages,
+                ),
+                conversations.filter(
+                  (conv) =>
+                    conv.folderId === payload.conversation.folderId &&
+                    !selectedConversationIds.includes(conv.id),
+                ),
+                Math.max(
+                  selectedConversationIds.indexOf(payload.conversation.id),
+                  0,
+                ),
+                true,
+              );
 
         const updatedConversation: Conversation = regenerateConversationId({
           ...payload.conversation,
