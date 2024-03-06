@@ -160,7 +160,7 @@ export class Chat extends BaseElement {
     const leftRequestPromise = this.waitForRequestSent(
       comparedEntities.leftEntity,
     );
-    await this.regenerate.clickFirst();
+    await this.regenerate.getNthElement(1).click();
     const rightRequest = await rightRequestPromise;
     const leftRequest = await leftRequestPromise;
     await this.waitForResponse(waitForAnswer);

@@ -670,7 +670,7 @@ dialTest(
     await dialTest.step(
       'Click "Regenerate" button and verify last response is regenerated for both chats',
       async () => {
-        await chat.regenerate.waitFirstForState();
+        await chat.regenerate.getNthElement(1).waitFor();
 
         const requestsData = await chat.regenerateResponseInCompareMode({
           rightEntity: firstConversation.model.id,

@@ -77,18 +77,6 @@ export class BaseElement {
     await this.rootLocator.click(options);
   }
 
-  async clickFirst(options?: {
-    button?: 'left' | 'right' | 'middle';
-    clickCount?: number;
-    delay?: number;
-    force?: boolean;
-    noWaitAfter?: boolean;
-    position?: { x: number; y: number };
-    timeout?: number;
-  }) {
-    await this.rootLocator.first().click(options);
-  }
-
   async hoverOver(options?: { force?: boolean }) {
     await this.rootLocator.hover(options);
   }
@@ -114,13 +102,6 @@ export class BaseElement {
     timeout?: number;
   }) {
     await this.rootLocator.waitFor(options);
-  }
-
-  async waitFirstForState(options?: {
-    state?: 'attached' | 'detached' | 'visible' | 'hidden';
-    timeout?: number;
-  }) {
-    await this.rootLocator.first().waitFor(options);
   }
 
   async getElementsCount() {
