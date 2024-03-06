@@ -8,7 +8,7 @@ import {
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
-import { addGeneratedPromptId } from '@/src/utils/app/prompts';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
@@ -358,7 +358,7 @@ export const selectIsPromptsBackedUp = createSelector(
 
 export const getNewPrompt = createSelector([selectPrompts], (prompts) => {
   const promptRootId = getPromptRootId();
-  return addGeneratedPromptId({
+  return regeneratePromptId({
     name: getNextDefaultName(
       DEFAULT_PROMPT_NAME,
       prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts

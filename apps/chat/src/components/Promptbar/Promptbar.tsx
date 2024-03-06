@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 
 import { FeatureType } from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -41,7 +42,7 @@ const PromptActionsBlock = () => {
   const handleUpdate = useCallback(
     (prompt: Prompt) => {
       isNewPromptCreating
-        ? dispatch(PromptsActions.createNewPrompt(prompt))
+        ? dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)))
         : dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,

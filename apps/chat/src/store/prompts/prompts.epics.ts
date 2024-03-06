@@ -50,7 +50,7 @@ import {
   exportPrompts,
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
-import { addGeneratedPromptId } from '@/src/utils/app/prompts';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
 
@@ -171,7 +171,7 @@ const getOrUploadPrompt = (
 
   if (prompt?.status !== UploadStatus.LOADED) {
     const { apiKey, bucket, name, parentPath } = splitEntityId(payload.id);
-    const prompt = addGeneratedPromptId({
+    const prompt = regeneratePromptId({
       name,
       folderId: constructPath(apiKey, bucket, parentPath),
     });
@@ -400,13 +400,13 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           const updatedPrompts = combineEntities(
             allPrompts.map((prompt) =>
-              addGeneratedPromptId({
+              regeneratePromptId({
                 ...prompt,
                 folderId: updateFolderId(prompt.folderId),
               }),
             ),
             prompts.map((prompt) =>
-              addGeneratedPromptId({
+              regeneratePromptId({
                 ...prompt,
                 folderId: updateFolderId(prompt.folderId),
               }),
@@ -561,7 +561,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
       const promptRootId = getPromptRootId();
-      const newPrompt = addGeneratedPromptId({
+      const newPrompt = regeneratePromptId({
         ...prompt,
         ...resetShareEntity,
         folderId: promptRootId,
