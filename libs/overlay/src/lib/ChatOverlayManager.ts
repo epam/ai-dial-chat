@@ -1,5 +1,7 @@
-import { ChatOverlay, ChatOverlayOptions } from './ChatOverlay';
+import { ChatOverlay } from './ChatOverlay';
 import { setStyles } from './utils/styleUtils';
+
+import { ChatOverlayOptions } from '@epam/ai-dial-shared';
 
 export type OverlayPosition =
   | 'left-bottom'

@@ -1,3 +1,5 @@
+import { signIn } from 'next-auth/react';
+
 import {
   EMPTY,
   distinctUntilChanged,
@@ -41,13 +43,13 @@ import {
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   OverlayActions,
-  OverlayOptions,
   OverlaySelectors,
   SendMessageOptions,
   SetSystemPromptOptions,
 } from './overlay.reducers';
 
 import {
+  ChatOverlayOptions,
   Feature,
   OverlayEvents,
   OverlayRequest,
@@ -73,7 +75,7 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
               return of(OverlayActions.getMessages({ requestId }));
             }
             case OverlayRequests.setOverlayOptions: {
-              const options = payload as OverlayOptions;
+              const options = payload as ChatOverlayOptions;
 
               return of(
                 OverlayActions.setOverlayOptions({
@@ -183,6 +185,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         modelId,
         requestId,
         enabledFeatures,
+        signInOptions,
       }) => {
         const actions = [];
 
@@ -282,6 +285,10 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
               );
             }
           }
+        }
+
+        if (signInOptions?.autoSignIn) {
+          signIn(signInOptions?.signInProvider);
         }
 
         // after all actions will send notify that settings are set
