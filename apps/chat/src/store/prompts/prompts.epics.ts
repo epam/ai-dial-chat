@@ -39,7 +39,6 @@ import {
   generateNextName,
   getFolderFromId,
   getFoldersFromIds,
-  getNextDefaultName,
   getParentFolderIdsFromFolderId,
   splitEntityId,
   updateMovedFolderId,
@@ -74,21 +73,10 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 import { RootState } from '@/src/store';
 import uniq from 'lodash-es/uniq';
 
-const createNewPromptEpic: AppEpic = (action$, state$) =>
+const createNewPromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.createNewPrompt.match),
-    switchMap(() => {
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const promptRootId = getPromptRootId();
-      const newPrompt: Prompt = addGeneratedPromptId({
-        name: getNextDefaultName(
-          DEFAULT_PROMPT_NAME,
-          prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
-        ),
-        description: '',
-        content: '',
-        folderId: promptRootId,
-      });
+    switchMap(({ payload: newPrompt }) => {
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
           return concat(

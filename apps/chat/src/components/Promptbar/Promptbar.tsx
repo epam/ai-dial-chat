@@ -21,7 +21,6 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { PromptFolders } from './components/PromptFolders';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
-import { Spinner } from '@/src/components/Common/Spinner';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
@@ -30,8 +29,8 @@ const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 
-  const isPromptRequestSent = useAppSelector(
-    PromptsSelectors.selectIsActiveNewPromptRequest,
+  const isNewPromptCreating = useAppSelector(
+    PromptsSelectors.selectIsNewPromptCreating,
   );
 
   return (
@@ -39,18 +38,14 @@ const PromptActionsBlock = () => {
       <button
         className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
         onClick={() => {
-          dispatch(PromptsActions.createNewPrompt());
+          dispatch(PromptsActions.setIsActiveNewPromptRequest(true));
           dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
         }}
-        disabled={isPromptRequestSent}
+        disabled={isNewPromptCreating}
         data-qa="new-entity"
       >
-        {isPromptRequestSent ? (
-          <Spinner size={18} className="text-secondary" />
-        ) : (
-          <PlusIcon className="text-secondary" width={18} height={18} />
-        )}
+        <PlusIcon className="text-secondary" width={18} height={18} />
         {t('New prompt')}
       </button>
     </div>

@@ -8,6 +8,7 @@ import {
   getParentAndCurrentFoldersById,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
+import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
   doesPromptOrConversationContainSearchTerm,
@@ -19,7 +20,10 @@ import { translate } from '@/src/utils/app/translation';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_FOLDER_NAME,
+  DEFAULT_PROMPT_NAME,
+} from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
@@ -342,12 +346,34 @@ export const selectFailedMigratedPrompts = createSelector(
   (state) => state.failedMigratedPrompts,
 );
 
-export const selectIsActiveNewPromptRequest = createSelector(
+export const selectIsNewPromptCreating = createSelector(
   [rootSelector],
-  (state) => state.isActiveNewPromptRequest,
+  (state) => state.isNewPromptCreating,
 );
 
 export const selectIsPromptsBackedUp = createSelector(
   [rootSelector],
   (state) => state.isPromptsBackedUp,
+);
+
+export const getNewPrompt = createSelector([selectPrompts], (prompts) => {
+  const promptRootId = getPromptRootId();
+  return addGeneratedPromptId({
+    name: getNextDefaultName(
+      DEFAULT_PROMPT_NAME,
+      prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
+    ),
+    description: '',
+    content: '',
+    folderId: promptRootId,
+  });
+});
+
+export const selectSelectedOrNewPrompt = createSelector(
+  [selectIsNewPromptCreating, (state: RootState) => state],
+  (isActiveNewPromptRequest: boolean, state: RootState) => {
+    return isActiveNewPromptRequest
+      ? getNewPrompt(state)
+      : selectSelectedPrompt(state);
+  },
 );

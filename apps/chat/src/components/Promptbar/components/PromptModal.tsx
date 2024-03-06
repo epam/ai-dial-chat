@@ -42,8 +42,9 @@ interface Props {
 
 export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   const dispatch = useAppDispatch();
-
-  const selectedPrompt = useAppSelector(PromptsSelectors.selectSelectedPrompt);
+  const selectedPrompt = useAppSelector(
+    PromptsSelectors.selectSelectedOrNewPrompt,
+  );
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
@@ -235,6 +236,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               htmlFor="content"
             >
               {t('Prompt')}
+              <span className="ml-1 inline text-accent-primary">*</span>
             </label>
             <textarea
               ref={contentInputRef}
@@ -248,9 +250,12 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               }
               value={content}
               onChange={contentOnChangeHandler}
+              onBlur={onBlur}
               rows={10}
               data-qa="prompt-value"
+              required
             />
+            <EmptyRequiredInputMessage />
           </div>
           <div className="flex justify-end">
             <button
@@ -258,6 +263,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               className="button button-primary"
               data-qa="save-prompt"
               onClick={(e) => handleSubmit(e, selectedPrompt)}
+              disabled={!name || !content}
             >
               {t('Save')}
             </button>

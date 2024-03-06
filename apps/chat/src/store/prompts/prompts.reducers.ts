@@ -41,7 +41,7 @@ const initialState: PromptsState = {
   promptsLoaded: false,
   isPromptLoading: false,
   loadingFolderIds: [],
-  isActiveNewPromptRequest: false,
+  isNewPromptCreating: false,
 };
 
 export const promptsSlice = createSlice({
@@ -105,22 +105,20 @@ export const promptsSlice = createSlice({
     ) => {
       state.isPromptsBackedUp = payload.isPromptsBackedUp;
     },
-    createNewPrompt: (state) => {
-      state.isActiveNewPromptRequest = true;
-    },
+    createNewPrompt: (state, _action: PayloadAction<Prompt>) => state,
     createNewPromptSuccess: (
       state,
       { payload }: PayloadAction<{ newPrompt: Prompt }>,
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
       state.selectedPromptId = payload.newPrompt.id;
-      state.isActiveNewPromptRequest = false;
+      state.isNewPromptCreating = false;
     },
     setIsActiveNewPromptRequest: (
       state,
       { payload }: PayloadAction<boolean>,
     ) => {
-      state.isActiveNewPromptRequest = payload;
+      state.isNewPromptCreating = payload;
     },
     saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
       state,
@@ -447,6 +445,9 @@ export const promptsSlice = createSlice({
     ) => {
       state.isEditModalOpen = isOpen;
       state.isModalPreviewMode = isPreview;
+      if (!isOpen) {
+        state.isNewPromptCreating = false;
+      }
     },
     setSelectedPrompt: (
       state,
