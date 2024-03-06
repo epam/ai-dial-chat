@@ -2,19 +2,9 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { RootState } from '../index';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { ChatOverlayOptions } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
-
-// TODO: Move OverlayOptions to npm package as (OverlayEvents and OverlayRequest)
-export interface OverlayOptions {
-  hostDomain: string;
-
-  theme?: string;
-  modelId?: string;
-
-  enabledFeatures?: Feature[] | string;
-}
 
 export interface SendMessageOptions {
   content: string;
@@ -44,7 +34,7 @@ export const overlaySlice = createSlice({
       state,
     setOverlayOptions: (
       state,
-      { payload }: PayloadAction<WithRequestId<OverlayOptions>>,
+      { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
       state.hostDomain = payload.hostDomain;
     },
