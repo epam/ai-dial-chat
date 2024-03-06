@@ -192,7 +192,6 @@ export const ChatView = memo(() => {
 
   useEffect(() => {
     scrollDown();
-    textareaRef.current?.focus();
   }, [scrollDown]);
 
   const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
