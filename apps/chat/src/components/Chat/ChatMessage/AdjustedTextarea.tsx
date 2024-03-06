@@ -28,7 +28,7 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
         name="hidden"
         className={classNames(
           className,
-          'absolute left-[-1000px] top-[-1000px]',
+          'absolute left-[-10000px] top-[-10000px]',
         )}
       />
       <textarea {...props} ref={mainTextareaRef} name="main" />
