@@ -1,6 +1,7 @@
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   KeyboardEvent,
   MouseEvent,
   useCallback,
@@ -70,12 +71,22 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setName(e.target.value.replaceAll(notAllowedSymbolsRegex, ''));
   };
 
+  const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
+    setName(e.target.value.trim());
+    onBlur(e);
+  };
+
   const descriptionOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setDescription(e.target.value);
   };
 
   const contentOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
+  };
+
+  const contentOnBlurHandler = (e: FocusEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value.trim());
+    onBlur(e);
   };
 
   const updatePrompt = useCallback(
@@ -204,7 +215,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               value={name}
               required
               type="text"
-              onBlur={onBlur}
+              onBlur={nameOnBlurHandler}
               onChange={nameOnChangeHandler}
               data-qa="prompt-name"
             />
@@ -250,7 +261,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               }
               value={content}
               onChange={contentOnChangeHandler}
-              onBlur={onBlur}
+              onBlur={contentOnBlurHandler}
               rows={10}
               data-qa="prompt-value"
               required
