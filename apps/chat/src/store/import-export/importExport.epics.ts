@@ -211,7 +211,7 @@ const exportLocalStorageChatsEpic: AppEpic = (action$, state$) => {
           .getConversations()
           .pipe(map(filterOnlyMyEntities)),
         conversationFolders: browserStorage.getConversationsFolders(),
-        appName: SettingsSelectors.selectAppName(state$.value),
+        appName: of(SettingsSelectors.selectAppName(state$.value)),
       }),
     ),
     tap(({ conversations, conversationFolders, appName }) => {
@@ -232,7 +232,7 @@ const exportLocalStoragePromptsEpic: AppEpic = (action$, state$) => {
       forkJoin({
         prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
         promptFolders: browserStorage.getPromptsFolders(),
-        appName: SettingsSelectors.selectAppName(state$.value),
+        appName: of(SettingsSelectors.selectAppName(state$.value)),
       }),
     ),
     tap(({ prompts, promptFolders, appName }) => {
