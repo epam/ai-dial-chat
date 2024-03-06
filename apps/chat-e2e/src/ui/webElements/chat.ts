@@ -160,7 +160,7 @@ export class Chat extends BaseElement {
     const leftRequestPromise = this.waitForRequestSent(
       comparedEntities.leftEntity,
     );
-    await this.regenerate.click();
+    await this.regenerate.getNthElement(1).click();
     const rightRequest = await rightRequestPromise;
     const leftRequest = await leftRequestPromise;
     await this.waitForResponse(waitForAnswer);
@@ -209,6 +209,7 @@ export class Chat extends BaseElement {
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
   }
+
   public async sendRequestWithButton(message: string, waitForAnswer = true) {
     return this.sendRequest(
       message,
