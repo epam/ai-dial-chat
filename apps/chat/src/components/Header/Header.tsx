@@ -22,6 +22,7 @@ import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
+import cssEscape from 'css.escape';
 
 const DEFAULT_HEADER_ICON_SIZE = 24;
 const OVERLAY_HEADER_ICON_SIZE = 18;
@@ -116,7 +117,7 @@ const Header = () => {
           )}
           style={{
             backgroundImage: customLogoUrl
-              ? `url(${customLogoUrl})`
+              ? `url(${cssEscape(customLogoUrl)})`
               : `var(--app-logo)`,
           }}
         ></span>
