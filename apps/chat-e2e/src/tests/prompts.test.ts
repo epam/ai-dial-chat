@@ -190,7 +190,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-955', 'EPMRTC-1278');
-    const nameWithSpecialSymbols = '!@$^()_{}[]"\'.<>-`~';
+    const nameWithSpecialSymbols = '!@$^()_[]"\'.<>-`~';
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
 
@@ -663,7 +663,7 @@ dialTest(
       fourthPrompt = promptData.prepareDefaultPrompt();
       promptData.resetData();
       fifthPrompt = promptData.prepareDefaultPrompt(
-        'Prompt_!@$^&()_{}[]"\'.<>-`~',
+        'Prompt_!@$^&()_[]"\'.<>-`~',
       );
 
       await dataInjector.createPrompts([
