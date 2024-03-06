@@ -69,6 +69,7 @@ export const ConversationSettingsModel = ({
 
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
+  const isReplayAsIs = conversation.replay?.replayAsIs;
 
   return (
     <div className="w-full" data-qa="entity-selector">
@@ -83,7 +84,7 @@ export const ConversationSettingsModel = ({
               conversationId={conversation.id}
             />
           )}
-          {unavailableModelId && (
+          {!isPlayback && !isReplay && unavailableModelId && (
             <button className="flex items-center gap-3 rounded border border-accent-primary p-3 text-left text-xs">
               <ModelIcon entityId="" entity={undefined} size={24} />
               <div className="flex flex-col gap-1">
@@ -113,6 +114,7 @@ export const ConversationSettingsModel = ({
             disabled={isPlayback}
             notAllowExpandDescription
             allEntities={models}
+            isReplayAsIs={isReplayAsIs}
           />
         </div>
       </div>
