@@ -1175,7 +1175,9 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         );
 
         const newConversationName =
-          updatedMessages.length > 2
+          payload.conversation.replay?.isReplay ||
+          updatedMessages.length > 2 ||
+          payload.conversation.isNameChanged
             ? payload.conversation.name
             : getNextDefaultName(
                 getNewConversationName(
