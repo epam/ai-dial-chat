@@ -7,7 +7,7 @@ import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
-import { PromptInfo } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -19,6 +19,7 @@ import {
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { PromptFolders } from './components/PromptFolders';
+import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
@@ -32,6 +33,35 @@ const PromptActionsBlock = () => {
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
   );
+
+  const { showModal, isModalPreviewMode } = useAppSelector(
+    PromptsSelectors.selectIsEditModalOpen,
+  );
+
+  const handleUpdate = useCallback(
+    (prompt: Prompt) => {
+      isNewPromptCreating
+        ? dispatch(PromptsActions.createNewPrompt(prompt))
+        : dispatch(
+            PromptsActions.updatePrompt({
+              id: prompt.id,
+              values: {
+                name: prompt.name,
+                description: prompt.description,
+                content: prompt.content,
+                isShared: prompt.isShared,
+              },
+            }),
+          );
+      dispatch(PromptsActions.resetSearch());
+    },
+    [dispatch, isNewPromptCreating],
+  );
+
+  const handleClose = useCallback(() => {
+    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+  }, [dispatch]);
 
   return (
     <div className="flex px-2 py-1">
@@ -48,6 +78,13 @@ const PromptActionsBlock = () => {
         <PlusIcon className="text-secondary" width={18} height={18} />
         {t('New prompt')}
       </button>
+      {showModal && !isModalPreviewMode && (
+        <PromptModal
+          isOpen
+          onClose={handleClose}
+          onUpdatePrompt={handleUpdate}
+        />
+      )}
     </div>
   );
 };

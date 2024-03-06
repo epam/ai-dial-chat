@@ -34,6 +34,7 @@ import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Modal from '../../Common/Modal';
+import Tooltip from '../../Common/Tooltip';
 
 interface Props {
   isOpen: boolean;
@@ -178,6 +179,8 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setName(selectedPrompt?.name || '');
   }, [selectedPrompt?.name]);
 
+  const saveDisabled = !name.trim() || !content.trim();
+
   return (
     <Modal
       portalId="theme-main"
@@ -269,15 +272,21 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             <EmptyRequiredInputMessage />
           </div>
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="button button-primary"
-              data-qa="save-prompt"
-              onClick={(e) => handleSubmit(e, selectedPrompt)}
-              disabled={!name || !content}
+            <Tooltip
+              isTriggerClickable
+              tooltip={t('Please fill in all required fields')}
+              hideTooltip={!saveDisabled}
             >
-              {t('Save')}
-            </button>
+              <button
+                type="submit"
+                className="button button-primary"
+                data-qa="save-prompt"
+                onClick={(e) => handleSubmit(e, selectedPrompt)}
+                disabled={saveDisabled}
+              >
+                {t('Save')}
+              </button>
+            </Tooltip>
           </div>
           <ConfirmDialog
             isOpen={isConfirmDialog}
