@@ -220,8 +220,7 @@ export const ChatMessageContent = ({
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = '';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.rows = messageContent.split('\n').length;
     }
   }, [isEditing, messageContent]);
 
