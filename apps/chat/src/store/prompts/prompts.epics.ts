@@ -90,7 +90,7 @@ const createNewPromptEpic: AppEpic = (action$) =>
                 }),
               ),
             ),
-            of(PromptsActions.setIsActiveNewPromptRequest(false)),
+            of(PromptsActions.setIsNewPromptCreating(false)),
           );
         }),
         catchError((err) => {
@@ -103,7 +103,7 @@ const createNewPromptEpic: AppEpic = (action$) =>
                 ),
               ),
             ),
-            of(PromptsActions.setIsActiveNewPromptRequest(false)),
+            of(PromptsActions.setIsNewPromptCreating(false)),
           );
         }),
       );

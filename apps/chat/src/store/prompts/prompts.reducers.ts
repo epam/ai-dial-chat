@@ -114,7 +114,7 @@ export const promptsSlice = createSlice({
       state.selectedPromptId = payload.newPrompt.id;
       state.isNewPromptCreating = false;
     },
-    setIsActiveNewPromptRequest: (
+    setIsNewPromptCreating: (
       state,
       { payload }: PayloadAction<boolean>,
     ) => {
