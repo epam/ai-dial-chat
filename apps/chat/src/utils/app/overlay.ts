@@ -1,3 +1,5 @@
+import { Message, Role } from '@/src/types/chat';
+
 import { overlayAppName } from '@/src/constants/overlay';
 
 import { OverlayEvents, OverlayRequests } from '@epam/ai-dial-shared';
@@ -45,4 +47,28 @@ export function sendPMEvent(
     },
     hostDomain,
   );
+}
+
+export function updateSystemPromptInMessages(
+  messages: Message[],
+  overlaySystemPrompt: string,
+) {
+  const overlaySystemPromptMessage: Message = {
+    content: overlaySystemPrompt,
+    role: Role.System,
+  };
+
+  const systemMessageIndex = messages.findIndex(
+    (message) => message.role === Role.System,
+  );
+
+  if (systemMessageIndex === -1) {
+    return [overlaySystemPromptMessage, ...messages];
+  }
+
+  const resultMessages = [...messages];
+
+  resultMessages[systemMessageIndex] = overlaySystemPromptMessage;
+
+  return resultMessages;
 }
