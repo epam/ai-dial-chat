@@ -411,11 +411,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
         },
         isReplay: true,
         isPlayback: false,
-        playback: {
-          isPlayback: false,
-          activePlaybackIndex: 0,
-          messagesStack: [],
-        },
+        playback: undefined,
       });
 
       return of(
@@ -471,7 +467,9 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
 
         playback: {
-          messagesStack: conversation.messages,
+          messagesStack: conversation.messages.filter(
+            (m) => m.role !== Role.System,
+          ),
           activePlaybackIndex: 0,
           isPlayback: true,
         },
@@ -2099,12 +2097,7 @@ const playbackCancelEpic: AppEpic = (action$, state$) =>
                 messages: updatedMessages,
                 isMessageStreaming: false,
                 isPlayback: false,
-                playback: {
-                  ...(conv.playback as Playback),
-                  messagesStack: [],
-                  activePlaybackIndex: 0,
-                  isPlayback: false,
-                },
+                playback: undefined,
               },
             }),
           );
