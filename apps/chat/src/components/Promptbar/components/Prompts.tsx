@@ -17,7 +17,6 @@ interface Props {
 
 export const Prompts: FC<Props> = ({ prompts }) => {
   const { t } = useTranslation(Translation.PromptBar);
-
   const promptsToDisplay = useMemo(() => {
     const promptRootId = getPromptRootId();
     return prompts

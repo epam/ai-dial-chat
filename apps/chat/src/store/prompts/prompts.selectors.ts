@@ -371,8 +371,8 @@ export const getNewPrompt = createSelector([selectPrompts], (prompts) => {
 
 export const selectSelectedOrNewPrompt = createSelector(
   [selectIsNewPromptCreating, (state: RootState) => state],
-  (isActiveNewPromptRequest: boolean, state: RootState) => {
-    return isActiveNewPromptRequest
+  (isNewPromptCreating: boolean, state: RootState) => {
+    return isNewPromptCreating
       ? getNewPrompt(state)
       : selectSelectedPrompt(state);
   },
