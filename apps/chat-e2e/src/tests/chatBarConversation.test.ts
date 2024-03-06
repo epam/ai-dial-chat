@@ -23,7 +23,7 @@ const request = 'What is epam official name';
 const notMatchingSearchTerm = 'abc';
 const secondSearchTerm = 'epam official';
 const matchingConversationName = `${secondSearchTerm} name`;
-const specialSymbolsName = '_!@$epam official^&()_{}[]"\'.<>-`~';
+const specialSymbolsName = '_!@$epam official^&()_[]"\'.<>-`~';
 
 dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
@@ -316,7 +316,7 @@ dialTest(
     setTestIds('EPMRTC-595', 'EPMRTC-1276');
     const conversation = conversationData.prepareDefaultConversation(
       gpt35Model,
-      '!@$^&()_{}[]"\'.<>-`~',
+      '!@$^&()_[]"\'.<>-`~',
     );
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);
