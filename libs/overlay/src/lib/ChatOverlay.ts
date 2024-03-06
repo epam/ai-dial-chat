@@ -1,23 +1,12 @@
 import { DeferredRequest } from './utils/DeferredRequest';
 import { Task } from './utils/Task';
-import { Styles, setStyles } from './utils/styleUtils';
+import { setStyles } from './utils/styleUtils';
 
-import { Feature, OverlayRequest } from '@epam/ai-dial-shared';
-
-export interface ChatOverlayOptions {
-  domain: string;
-  hostDomain: string;
-
-  theme?: string;
-  modelId?: string;
-
-  enabledFeatures?: Feature[];
-
-  requestTimeout?: number;
-
-  loaderStyles?: Styles;
-  loaderClass?: string;
-}
+import {
+  ChatOverlayOptions,
+  OverlayRequest,
+  Styles,
+} from '@epam/ai-dial-shared';
 
 interface Subscription {
   eventType: string;
