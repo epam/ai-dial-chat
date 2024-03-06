@@ -70,6 +70,7 @@ import {
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
@@ -100,6 +101,7 @@ import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { OverlaySelectors } from '../overlay/overlay.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   ConversationsActions,
@@ -1113,76 +1115,104 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
+      overlaySystemPrompt: OverlaySelectors.selectOverlaySystemPrompt(
+        state$.value,
+      ),
+      isOverlay: SettingsSelectors.selectIsOverlay(state$.value),
     })),
-    map(({ payload, modelsMap, conversations, selectedConversationIds }) => {
-      const messageModel: Message[EntityType.Model] = {
-        id: payload.conversation.model.id,
-      };
-      const messageSettings: Message['settings'] = {
-        prompt: payload.conversation.prompt,
-        temperature: payload.conversation.temperature,
-        selectedAddons: payload.conversation.selectedAddons,
-        assistantModelId: payload.conversation.assistantModelId,
-      };
-
-      const assistantMessage: Message = {
-        content: '',
-        model: messageModel,
-        settings: messageSettings,
-        role: Role.Assistant,
-      };
-
-      const userMessage: Message = {
-        ...payload.message,
-        model: messageModel,
-        settings: messageSettings,
-      };
-
-      const updatedMessages: Message[] = (
-        payload.deleteCount > 0
-          ? payload.conversation.messages.slice(
-              0,
-              payload.deleteCount * -1 || undefined,
-            )
-          : payload.conversation.messages
-      ).concat(userMessage, assistantMessage);
-
-      const newConversationName = getNextDefaultName(
-        getNewConversationName(
-          payload.conversation,
-          payload.message,
-          updatedMessages,
-        ),
-        conversations.filter(
-          (conv) =>
-            conv.folderId === payload.conversation.folderId &&
-            !selectedConversationIds.includes(conv.id),
-        ),
-        Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
-        true,
-      );
-
-      const updatedConversation: Conversation = regenerateConversationId({
-        ...payload.conversation,
-        lastActivityDate: Date.now(),
-        replay: payload.conversation.replay
-          ? {
-              ...payload.conversation.replay,
-              activeReplayIndex: payload.activeReplayIndex,
-            }
-          : undefined,
-        messages: updatedMessages,
-        name: newConversationName,
-        isMessageStreaming: true,
-      });
-
-      return {
-        oldConversationId: payload.conversation.id,
-        updatedConversation,
+    map(
+      ({
+        payload,
         modelsMap,
-        assistantMessage,
-      };
-    }),
+        conversations,
+        selectedConversationIds,
+        overlaySystemPrompt,
+        isOverlay,
+      }) => {
+        const messageModel: Message[EntityType.Model] = {
+          id: payload.conversation.model.id,
+        };
+        const messageSettings: Message['settings'] = {
+          prompt: payload.conversation.prompt,
+          temperature: payload.conversation.temperature,
+          selectedAddons: payload.conversation.selectedAddons,
+          assistantModelId: payload.conversation.assistantModelId,
+        };
+
+        const assistantMessage: Message = {
+          content: '',
+          model: messageModel,
+          settings: messageSettings,
+          role: Role.Assistant,
+        };
+
+        const userMessage: Message = {
+          ...payload.message,
+          model: messageModel,
+          settings: messageSettings,
+        };
+
+        let currentMessages =
+          payload.deleteCount > 0
+            ? payload.conversation.messages.slice(
+                0,
+                payload.deleteCount * -1 || undefined,
+              )
+            : payload.conversation.messages;
+
+        /*
+          Overlay needs to share host application state information
+          We storing state information in systemPrompt (message with role: Role.System)
+        */
+        if (isOverlay && overlaySystemPrompt) {
+          currentMessages = updateSystemPromptInMessages(
+            currentMessages,
+            overlaySystemPrompt,
+          );
+        }
+
+        const updatedMessages = currentMessages.concat(
+          userMessage,
+          assistantMessage,
+        );
+
+        const newConversationName = getNextDefaultName(
+          getNewConversationName(
+            payload.conversation,
+            payload.message,
+            updatedMessages,
+          ),
+          conversations.filter(
+            (conv) =>
+              conv.folderId === payload.conversation.folderId &&
+              !selectedConversationIds.includes(conv.id),
+          ),
+          Math.max(selectedConversationIds.indexOf(payload.conversation.id), 0),
+          true,
+        );
+
+        const updatedConversation: Conversation = regenerateConversationId({
+          ...payload.conversation,
+          lastActivityDate: Date.now(),
+          replay: payload.conversation.replay
+            ? {
+                ...payload.conversation.replay,
+                activeReplayIndex: payload.activeReplayIndex,
+              }
+            : undefined,
+          messages: updatedMessages,
+          name: newConversationName,
+          isMessageStreaming: true,
+        });
+
+        return {
+          oldConversationId: payload.conversation.id,
+          updatedConversation,
+          modelsMap,
+          assistantMessage,
+        };
+      },
+    ),
     switchMap(
       ({
         oldConversationId,
