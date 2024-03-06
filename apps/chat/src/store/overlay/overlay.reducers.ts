@@ -26,10 +26,14 @@ export interface SetSystemPromptOptions {
 
 interface OverlayState {
   hostDomain: string;
+
+  systemPrompt: string | null;
 }
 
 const initialState: OverlayState = {
   hostDomain: '*',
+
+  systemPrompt: null,
 };
 
 export const overlaySlice = createSlice({
@@ -50,8 +54,10 @@ export const overlaySlice = createSlice({
     ) => state,
     setSystemPrompt: (
       state,
-      _action: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
-    ) => state,
+      { payload }: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
+    ) => {
+      state.systemPrompt = payload.systemPrompt;
+    },
     sendMessage: (
       state,
       _action: PayloadAction<WithRequestId<SendMessageOptions>>,
@@ -65,8 +71,13 @@ const selectHostDomain = createSelector([rootSelector], (state) => {
   return state.hostDomain;
 });
 
+const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
+  return state.systemPrompt;
+});
+
 export const OverlaySelectors = {
   selectHostDomain,
+  selectOverlaySystemPrompt,
 };
 
 export const OverlayActions = overlaySlice.actions;
