@@ -1324,7 +1324,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         chatBody,
       };
     }),
-    mergeMap(({ payload, chatBody }) => {
+    switchMap(({ payload, chatBody }) => {
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
       const decoder = new TextDecoder();
