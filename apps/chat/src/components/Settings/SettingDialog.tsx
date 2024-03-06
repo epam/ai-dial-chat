@@ -4,6 +4,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { splitEntityId } from '@/src/utils/app/folders';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -154,14 +155,16 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             }
           />
         )}
-        <ToggleSwitchLabeled
-          isOn={isChatFullWidthLocal}
-          labelText={t('Full width chat')}
-          labelClassName="basis-1/3 md:basis-1/4"
-          handleSwitch={onChangeHandlerFullWidth}
-          switchOnText={t('ON')}
-          switchOFFText={t('OFF')}
-        />
+        {!isSmallScreen() && (
+          <ToggleSwitchLabeled
+            isOn={isChatFullWidthLocal}
+            labelText={t('Full width chat')}
+            labelClassName="basis-1/3 md:basis-1/4"
+            handleSwitch={onChangeHandlerFullWidth}
+            switchOnText={t('ON')}
+            switchOFFText={t('OFF')}
+          />
+        )}
       </div>
 
       <div className="flex justify-end">
