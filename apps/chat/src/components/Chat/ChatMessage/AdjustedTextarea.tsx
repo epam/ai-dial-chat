@@ -30,6 +30,7 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
           className,
           'absolute left-[-10000px] top-[-10000px]',
         )}
+        data-qa="hidden-textarea"
       />
       <textarea {...props} ref={mainTextareaRef} name="main" />
     </>
