@@ -218,7 +218,7 @@ export const ChatMessageContent = ({
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.rows = messageContent.split('\n').length;
+      textareaRef.current.rows = messageContent.split(/\r\n|\r|\n/).length;
     }
   }, [isEditing, messageContent]);
 
