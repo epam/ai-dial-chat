@@ -16,8 +16,8 @@ export const NonModelButton = ({
   onClickHandler,
 }: Props) => {
   const asIsButtonClassName = classNames(
-    'flex items-center gap-3 rounded border p-3 text-left text-xs',
-    isSelected ? 'border-accent-primary' : 'border-primary hover:border-hover',
+    'flex items-center gap-3 rounded border p-3 text-left text-xs hover:border-hover',
+    isSelected ? 'border-accent-primary' : 'border-primary',
   );
 
   return (
