@@ -5,15 +5,15 @@ import { BucketUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 export class ItemApiHelper extends BaseApiHelper {
-  public async deleteAllData() {
-    const conversations = await this.listItems(API.conversationsHost());
-    const prompts = await this.listItems(API.promptsHost());
+  public async deleteAllData(bucket?: string) {
+    const conversations = await this.listItems(API.conversationsHost(), bucket);
+    const prompts = await this.listItems(API.promptsHost(), bucket);
     await this.deleteBackendItem(...conversations, ...prompts);
   }
 
-  public async listItems(url: string) {
+  public async listItems(url: string, bucket?: string) {
     const response = await this.request.get(
-      `${url}/${BucketUtil.getBucket()}`,
+      `${url}/${bucket ?? BucketUtil.getBucket()}`,
       {
         params: {
           filter: BackendDataNodeType.ITEM,
@@ -38,6 +38,15 @@ export class ItemApiHelper extends BaseApiHelper {
         `Backend item with id: ${item.name} was successfully deleted`,
       ).toBe(200);
     }
+  }
+
+  public async deleteConversation(conversation: TestConversation) {
+    const url = `/api/${conversation.id}`;
+    const response = await this.request.delete(url);
+    expect(
+      response.status(),
+      `Conversation with id: ${conversation.name} was successfully deleted`,
+    ).toBe(200);
   }
 
   public async createConversations(
@@ -78,7 +87,7 @@ export class ItemApiHelper extends BaseApiHelper {
   ) {
     let path = '';
     const itemFolderId = item.folderId;
-    if (itemFolderId) {
+    if (itemFolderId && folders.length > 0) {
       let itemFolder = folders.find((f) => f.id === itemFolderId);
       path = itemFolder!.name;
       while (itemFolder!.folderId) {

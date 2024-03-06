@@ -1,3 +1,4 @@
+import config from '../../config/playwright.config';
 import { DialHomePage } from '../ui/pages';
 import {
   Chat,
@@ -20,6 +21,7 @@ import {
   ChatApiHelper,
   FileApiHelper,
   IconApiHelper,
+  ShareApiHelper,
 } from '@/src/testData/api';
 import { ItemApiHelper } from '@/src/testData/api/itemApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
@@ -61,6 +63,7 @@ import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { allure } from 'allure-playwright';
 import path from 'path';
+import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
 
 export const stateFilePath = (index: number) =>
@@ -142,6 +145,10 @@ const dialTest = test.extend<
     apiInjector: ApiInjector;
     dataInjector: DataInjectorInterface;
     errorToast: ErrorToast;
+    additionalShareUserRequestContext: APIRequestContext;
+    mainUserShareApiHelper: ShareApiHelper;
+    additionalUserShareApiHelper: ShareApiHelper;
+    additionalUserItemApiHelper: ItemApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -461,6 +468,35 @@ const dialTest = test.extend<
   errorToast: async ({ appContainer }, use) => {
     const errorToast = appContainer.getErrorToast();
     await use(errorToast);
+  },
+  mainUserShareApiHelper: async ({ request }, use) => {
+    const mainUserShareApiHelper = new ShareApiHelper(request);
+    await use(mainUserShareApiHelper);
+  },
+  additionalShareUserRequestContext: async ({ playwright }, use) => {
+    const additionalShareUserRequestContext =
+      await playwright.request.newContext({
+        storageState: stateFilePath(+config.workers!),
+      });
+    await use(additionalShareUserRequestContext);
+  },
+  additionalUserShareApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserShareApiHelper = new ShareApiHelper(
+      additionalShareUserRequestContext,
+    );
+    await use(additionalUserShareApiHelper);
+  },
+  additionalUserItemApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserItemApiHelper = new ItemApiHelper(
+      additionalShareUserRequestContext,
+    );
+    await use(additionalUserItemApiHelper);
   },
 });
 

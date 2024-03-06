@@ -47,11 +47,14 @@ export const ExpectedConstants = {
     'Please regenerate response to continue working with chat',
   sharedConversationTooltip: 'Shared',
   sharedConversationName: (name: string) => `Share: ${name}`,
-  sharedConversationPath: (invitationLink: string) => {
+  sharedLink: (invitationLink: string) => {
     const invitationPath = '/v1/invitations/';
     const startIndex =
       invitationLink.indexOf(invitationPath) + invitationPath.length;
-    return `${config.use!.baseURL}/share/${invitationLink.slice(startIndex)}`;
+    return invitationLink.slice(startIndex);
+  },
+  sharedConversationUrl: (invitationLink: string) => {
+    return `${config.use!.baseURL}/share/${ExpectedConstants.sharedLink(invitationLink)}`;
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
@@ -123,6 +126,8 @@ export const API = {
   fileHost: '/api/files',
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
   importFilePath: (bucket: string) => `files/${bucket}/imports`,
+  shareInviteAcceptanceHost: '/api/share/accept',
+  shareConversationHost: '/api/share/create',
 };
 
 export const Import = {

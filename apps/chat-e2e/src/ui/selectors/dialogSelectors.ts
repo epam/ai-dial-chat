@@ -42,6 +42,7 @@ export const AddonDialog = {
   addonSearchResults: '[data-qa="addon-search-results"]',
   addonName: '[data-qa="addon-name"]',
   closeDialog: '[data-qa="close-addons-dialog"]',
+  applyAddons: '[data-qa="apply-addons"]',
 };
 
 export const InfoTooltip = {
