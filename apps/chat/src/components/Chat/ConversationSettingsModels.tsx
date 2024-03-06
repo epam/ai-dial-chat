@@ -67,13 +67,6 @@ export const ConversationSettingsModel = ({
     [dispatch, onModelSelect],
   );
 
-  const playbackModelID =
-    conversation.playback?.messagesStack[
-      conversation.playback.activePlaybackIndex
-    ]?.model?.id ?? conversation.model.id;
-
-  const playbackModelName = modelsMap[playbackModelID]?.name || playbackModelID;
-
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
 
@@ -83,7 +76,7 @@ export const ConversationSettingsModel = ({
 
       <div className="flex flex-col gap-3" data-qa="recent">
         <div className="grid grid-cols-1 gap-3">
-          {isPlayback && <PlaybackModelButton modelName={playbackModelName} />}
+          {isPlayback && <PlaybackModelButton />}
           {isReplay && conversation.replay && (
             <ReplayAsIsButton
               replay={conversation.replay}
