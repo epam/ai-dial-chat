@@ -193,7 +193,6 @@ export const ChatView = memo(() => {
 
   useEffect(() => {
     scrollDown();
-    textareaRef.current?.focus();
   }, [scrollDown]);
 
   const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
@@ -271,13 +270,16 @@ export const ChatView = memo(() => {
 
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
-      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
-        if (selectedConversations[0].messages[i].role === Role.System) continue;
-
+      const firstConversationMessages =
+        selectedConversations[0].messages.filter((m) => m.role !== Role.System);
+      for (let i = 0; i < firstConversationMessages.length; i++) {
         mergedMessages.push(
           selectedConversations.map((conv) => [
             conv,
-            conv.messages[i] || { role: Role.Assistant, content: '' },
+            conv.messages.filter((m) => m.role !== Role.System)[i] || {
+              role: Role.Assistant,
+              content: '',
+            },
             i,
           ]),
         );
