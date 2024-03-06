@@ -1,4 +1,4 @@
-export type Styles = { [property in keyof CSSStyleDeclaration]?: string };
+import { Styles } from '@epam/ai-dial-shared';
 
 /**
  * Add styles to the html element
