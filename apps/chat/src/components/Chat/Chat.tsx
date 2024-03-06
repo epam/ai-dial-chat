@@ -783,7 +783,7 @@ export const ChatView = memo(() => {
                       style={{
                         height:
                           inputHeight +
-                          (showBigRegenerate ? 56 : isSmallScreen() ? 0 : 16),
+                          (isLastMessageError ? 56 : isSmallScreen() ? 0 : 16),
                       }}
                       ref={messagesEndRef}
                     />
