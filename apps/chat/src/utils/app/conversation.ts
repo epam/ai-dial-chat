@@ -95,7 +95,7 @@ export const getNewConversationName = (
 
   if (
     conversation.replay?.isReplay ||
-    updatedMessages.length !== 2 ||
+    updatedMessages.length > 2 ||
     conversation.isNameChanged
   ) {
     return convName;
