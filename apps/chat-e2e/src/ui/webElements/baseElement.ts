@@ -104,6 +104,13 @@ export class BaseElement {
     await this.rootLocator.waitFor(options);
   }
 
+  async waitFirstForState(options?: {
+    state?: 'attached' | 'detached' | 'visible' | 'hidden';
+    timeout?: number;
+  }) {
+    await this.rootLocator.first().waitFor(options);
+  }
+
   async getElementsCount() {
     return this.rootLocator.all().then((items) => items.length);
   }
