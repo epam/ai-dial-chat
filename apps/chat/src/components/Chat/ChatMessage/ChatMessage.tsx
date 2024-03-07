@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useState } from 'react';
+import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -21,9 +21,9 @@ export interface Props {
   conversation: Conversation;
   isLikesEnabled: boolean;
   editDisabled: boolean;
-  onEdit: (editedMessage: Message, index: number) => void;
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
+  onEdit?: (editedMessage: Message, index: number) => void;
   onRegenerate?: () => void;
 }
 
@@ -38,6 +38,7 @@ export const ChatMessage: FC<Props> = memo(
     onDelete,
     editDisabled,
     onRegenerate,
+    onEdit,
     ...props
   }) => {
     const { t } = useTranslation(Translation.Chat);
@@ -79,6 +80,12 @@ export const ChatMessage: FC<Props> = memo(
       onDelete();
     }, [onDelete]);
 
+    useEffect(() => {
+      if (!onEdit) {
+        setIsEditing(false);
+      }
+    }, [onEdit]);
+
     const confirmationDialog = (
       <ConfirmDialog
         isOpen={isRemoveConfirmationOpened}
@@ -102,6 +109,7 @@ export const ChatMessage: FC<Props> = memo(
       return (
         <>
           <ChatMessageContent
+            onEdit={onEdit}
             onDelete={() => {
               setIsRemoveConfirmationOpened(true);
             }}
@@ -160,6 +168,7 @@ export const ChatMessage: FC<Props> = memo(
           }
         >
           <MessageMobileButtons
+            isEditAvailable={!!onEdit}
             message={message}
             onCopy={handleCopy}
             messageCopied={messageCopied}
