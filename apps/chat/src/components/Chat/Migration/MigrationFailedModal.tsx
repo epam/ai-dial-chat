@@ -337,27 +337,34 @@ export const MigrationFailedWindow = ({
           </div>
         </div>
         <footer className="flex flex-col items-center justify-end px-6 pt-4">
-          <div className="flex items-center gap-4">
-            <div className="relative flex size-[18px] group-hover/file-item:flex">
-              <input
-                className="checkbox peer size-[18px] bg-transparent"
-                type="checkbox"
-                onClick={() => setDontWantBackup((prev) => !prev)}
-                readOnly
-                checked={dontWantBackup}
-              />
-              {dontWantBackup && (
-                <IconCheck
-                  size={18}
-                  className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          {!!(
+            (!isChatsBackedUp && failedMigratedConversations.length) ||
+            (!isPromptsBackedUp && failedMigratedPrompts.length)
+          ) && (
+            <div className="flex items-center gap-4">
+              <div className="relative flex size-[18px] group-hover/file-item:flex">
+                <input
+                  className="checkbox peer size-[18px] bg-transparent"
+                  type="checkbox"
+                  onClick={() => setDontWantBackup((prev) => !prev)}
+                  readOnly
+                  checked={dontWantBackup}
                 />
-              )}
+                {dontWantBackup && (
+                  <IconCheck
+                    size={18}
+                    className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                  />
+                )}
+              </div>
+              <p className="text-secondary">
+                {t(
+                  "I don't want to backup conversations/prompts and I’m ready ",
+                )}
+                <span className="font-semibold">{t('TO LOSE DATA')}</span>
+              </p>
             </div>
-            <p className="text-secondary">
-              {t("I don't want to backup conversations/prompts and I’m ready ")}
-              <span className="font-semibold">{t('TO LOSE DATA')}</span>
-            </p>
-          </div>
+          )}
           <div className="mt-3 flex w-full justify-end">
             {!!failedMigratedPrompts.length && (
               <button
