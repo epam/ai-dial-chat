@@ -42,6 +42,12 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<{ hostDomain: string }>>,
     ) => state,
+    signInOptionsSet: (
+      state,
+      _action: PayloadAction<{
+        signInOptions: ChatOverlayOptions['signInOptions'];
+      }>,
+    ) => state,
     setSystemPrompt: (
       state,
       { payload }: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
