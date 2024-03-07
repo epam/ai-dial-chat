@@ -35,7 +35,7 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
         name="hidden"
         className={classNames(
           className,
-          'absolute left-[-10000px] top-[-10000px]', // hidden, but exists
+          'invisible absolute', // hidden, but exists
         )}
         data-qa="hidden-textarea"
       />
