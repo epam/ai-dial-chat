@@ -10,6 +10,7 @@
   ::-webkit-scrollbar-thumb {
     @apply cursor-pointer rounded bg-layer-4;
   }
+
   :not(:hover)::-webkit-scrollbar-thumb {
     @apply bg-transparent;
   }
@@ -17,6 +18,7 @@
   ::-webkit-scrollbar-track:hover {
     @apply bg-transparent;
   }
+
   ::-webkit-scrollbar-corner {
     @apply bg-transparent;
   }
@@ -97,6 +99,7 @@ pre:has(div.codeblock) {
   .button.button-primary {
     @apply text-controls-permanent;
   }
+
   .button.button-primary:not(:disabled) {
     @apply bg-controls-accent hover:bg-controls-accent-hover;
   }
@@ -108,6 +111,7 @@ pre:has(div.codeblock) {
   .button.button-secondary:not(:disabled) {
     @apply bg-transparent hover:bg-layer-4;
   }
+
   .button.button-secondary:disabled {
     @apply text-controls-disable;
   }
@@ -123,7 +127,7 @@ pre:has(div.codeblock) {
   }
 
   .gradient-top-bottom {
-    @apply border-transparent bg-gradient-to-b from-transparent via-layer-1 via-[25px] to-layer-1;
+    @apply border-transparent bg-gradient-to-b from-transparent via-layer-1 via-[8px] to-layer-1 md:via-[25px];
   }
 }
 
@@ -135,6 +139,7 @@ pre:has(div.codeblock) {
     --bg-accent-primary-alpha: var(--bg-accent-secondary-alpha, #37babc26);
     --bg-accent-primary: var(--bg-accent-secondary, #37babc);
   }
+
   .sidebar-right,
   .context-menu-prompt {
     --text-accent-primary: var(--text-accent-tertiary, #a972ff);

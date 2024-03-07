@@ -1,3 +1,5 @@
+import { signIn } from 'next-auth/react';
+
 import {
   EMPTY,
   distinctUntilChanged,
@@ -20,7 +22,7 @@ import {
   sendPMResponse,
 } from '@/src/utils/app/overlay';
 
-import { Message, Role } from '@/src/types/chat';
+import { Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
@@ -41,13 +43,13 @@ import {
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   OverlayActions,
-  OverlayOptions,
   OverlaySelectors,
   SendMessageOptions,
   SetSystemPromptOptions,
 } from './overlay.reducers';
 
 import {
+  ChatOverlayOptions,
   Feature,
   OverlayEvents,
   OverlayRequest,
@@ -55,7 +57,7 @@ import {
   validateFeature,
 } from '@epam/ai-dial-shared';
 
-export const postMessageMapperEpic: AppEpic = () =>
+export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
     ? fromEvent<MessageEvent>(window, 'message').pipe(
         filter(isPostMessageOverlayRequest),
@@ -73,7 +75,7 @@ export const postMessageMapperEpic: AppEpic = () =>
               return of(OverlayActions.getMessages({ requestId }));
             }
             case OverlayRequests.setOverlayOptions: {
-              const options = payload as OverlayOptions;
+              const options = payload as ChatOverlayOptions;
 
               return of(
                 OverlayActions.setOverlayOptions({
@@ -90,8 +92,20 @@ export const postMessageMapperEpic: AppEpic = () =>
             case OverlayRequests.setSystemPrompt: {
               const { systemPrompt } = payload as SetSystemPromptOptions;
 
+              const hostDomain = OverlaySelectors.selectHostDomain(
+                state$.value,
+              );
+
+              sendPMResponse(OverlayRequests.setSystemPrompt, {
+                requestId,
+                hostDomain,
+              });
+
               return of(
-                OverlayActions.setSystemPrompt({ systemPrompt, requestId }),
+                OverlayActions.setSystemPrompt({
+                  systemPrompt,
+                  requestId,
+                }),
               );
             }
             default: {
@@ -171,6 +185,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         modelId,
         requestId,
         enabledFeatures,
+        signInOptions,
       }) => {
         const actions = [];
 
@@ -276,12 +291,25 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             OverlayActions.setOverlayOptionsSuccess({ hostDomain, requestId }),
+            OverlayActions.signInOptionsSet({ signInOptions }),
           ),
         );
 
         return merge(...actions);
       },
     ),
+  );
+
+const signInOptionsSet: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(OverlayActions.signInOptionsSet.match),
+    filter(() => AuthSelectors.selectIsShouldLogin(state$.value)),
+    tap(({ payload: { signInOptions } }) => {
+      if (signInOptions?.autoSignIn) {
+        signIn(signInOptions?.signInProvider);
+      }
+    }),
+    ignoreElements(),
   );
 
 const setOverlayOptionsSuccessEpic: AppEpic = (action$) =>
@@ -294,51 +322,6 @@ const setOverlayOptionsSuccessEpic: AppEpic = (action$) =>
       });
     }),
     ignoreElements(),
-  );
-
-const setSystemPromptEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(OverlayActions.setSystemPrompt.match),
-    map(({ payload: { requestId, systemPrompt } }) => {
-      const currentConversation =
-        ConversationsSelectors.selectFirstSelectedConversation(state$.value);
-
-      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
-
-      return { requestId, systemPrompt, currentConversation, hostDomain };
-    }),
-    switchMap(
-      ({ requestId, systemPrompt, currentConversation, hostDomain }) => {
-        if (!currentConversation) return EMPTY;
-
-        sendPMResponse(OverlayRequests.setSystemPrompt, {
-          requestId,
-          hostDomain,
-        });
-
-        const { messages } = currentConversation;
-
-        const systemMessage: Message = {
-          role: Role.System,
-          content: systemPrompt,
-        };
-
-        // add system prompt
-        const newMessages = [
-          systemMessage,
-          ...messages.filter(({ role }) => role !== Role.System),
-        ];
-
-        return of(
-          ConversationsActions.updateConversation({
-            id: currentConversation.id,
-            values: {
-              messages: newMessages,
-            },
-          }),
-        );
-      },
-    ),
   );
 
 const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
@@ -392,7 +375,7 @@ export const OverlayEpics = combineEpics(
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,
-  setSystemPromptEpic,
   notifyHostGPTMessageStatus,
   setOverlayOptionsSuccessEpic,
+  signInOptionsSet,
 );

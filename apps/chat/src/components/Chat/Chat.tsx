@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   Conversation,
@@ -102,7 +103,7 @@ export const ChatView = memo(() => {
     useState<boolean>(false);
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
-  const [isLastMesssageError, setIsLastMesssageError] = useState(false);
+  const [isLastMessageError, setIsLastMessageError] = useState(false);
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -192,7 +193,6 @@ export const ChatView = memo(() => {
 
   useEffect(() => {
     scrollDown();
-    textareaRef.current?.focus();
   }, [scrollDown]);
 
   const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
@@ -237,7 +237,7 @@ export const ChatView = memo(() => {
         (mergedStr: [Conversation, Message, number]) =>
           !!mergedStr[1].errorMessage,
       );
-      setIsLastMesssageError(isErrorInSomeLastMessage);
+      setIsLastMessageError(isErrorInSomeLastMessage);
     }
   }, [mergedMessages]);
 
@@ -270,13 +270,16 @@ export const ChatView = memo(() => {
 
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
-      for (let i = 0; i < selectedConversations[0].messages.length; i++) {
-        if (selectedConversations[0].messages[i].role === Role.System) continue;
-
+      const firstConversationMessages =
+        selectedConversations[0].messages.filter((m) => m.role !== Role.System);
+      for (let i = 0; i < firstConversationMessages.length; i++) {
         mergedMessages.push(
           selectedConversations.map((conv) => [
             conv,
-            conv.messages[i] || { role: Role.Assistant, content: '' },
+            conv.messages.filter((m) => m.role !== Role.System)[i] || {
+              role: Role.Assistant,
+              content: '',
+            },
             i,
           ]),
         );
@@ -294,15 +297,11 @@ export const ChatView = memo(() => {
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
       if (conversation) {
-        const { messages } = conversation;
-
         dispatch(
           ConversationsActions.updateConversation({
             id: conversation.id,
             values: {
-              messages: messages.filter(
-                (message) => message.role === Role.System,
-              ),
+              messages: [],
             },
           }),
         );
@@ -568,13 +567,7 @@ export const ChatView = memo(() => {
   }, []);
 
   const showLastMessageRegenerate =
-    !isPlayback &&
-    !isExternal &&
-    !messageIsStreaming &&
-    !isLastMesssageError &&
-    selectedConversationsIds.length === 1;
-  const showBigRegenerate =
-    isLastMesssageError || selectedConversationsIds.length > 1;
+    !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
 
   return (
     <div
@@ -788,8 +781,12 @@ export const ChatView = memo(() => {
                       ),
                     )}
                     <div
-                      className="shrink-0 "
-                      style={{ height: inputHeight + 56 }}
+                      className="shrink-0"
+                      style={{
+                        height:
+                          inputHeight +
+                          (isLastMessageError ? 56 : isSmallScreen() ? 0 : 16),
+                      }}
                       ref={messagesEndRef}
                     />
                   </div>
@@ -851,7 +848,7 @@ export const ChatView = memo(() => {
                     onSend={onSendMessage}
                     onScrollDownClick={handleScrollDown}
                     onRegenerate={
-                      showBigRegenerate ? onRegenerateMessage : undefined
+                      isLastMessageError ? onRegenerateMessage : undefined
                     }
                     onStopConversation={() => {
                       dispatch(ConversationsActions.stopStreamMessage());

@@ -2,19 +2,9 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { RootState } from '../index';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { ChatOverlayOptions } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
-
-// TODO: Move OverlayOptions to npm package as (OverlayEvents and OverlayRequest)
-export interface OverlayOptions {
-  hostDomain: string;
-
-  theme?: string;
-  modelId?: string;
-
-  enabledFeatures?: Feature[] | string;
-}
 
 export interface SendMessageOptions {
   content: string;
@@ -26,10 +16,14 @@ export interface SetSystemPromptOptions {
 
 interface OverlayState {
   hostDomain: string;
+
+  systemPrompt: string | null;
 }
 
 const initialState: OverlayState = {
   hostDomain: '*',
+
+  systemPrompt: null,
 };
 
 export const overlaySlice = createSlice({
@@ -40,7 +34,7 @@ export const overlaySlice = createSlice({
       state,
     setOverlayOptions: (
       state,
-      { payload }: PayloadAction<WithRequestId<OverlayOptions>>,
+      { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
     ) => {
       state.hostDomain = payload.hostDomain;
     },
@@ -48,10 +42,18 @@ export const overlaySlice = createSlice({
       state,
       _action: PayloadAction<WithRequestId<{ hostDomain: string }>>,
     ) => state,
+    signInOptionsSet: (
+      state,
+      _action: PayloadAction<{
+        signInOptions: ChatOverlayOptions['signInOptions'];
+      }>,
+    ) => state,
     setSystemPrompt: (
       state,
-      _action: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
-    ) => state,
+      { payload }: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
+    ) => {
+      state.systemPrompt = payload.systemPrompt;
+    },
     sendMessage: (
       state,
       _action: PayloadAction<WithRequestId<SendMessageOptions>>,
@@ -65,8 +67,13 @@ const selectHostDomain = createSelector([rootSelector], (state) => {
   return state.hostDomain;
 });
 
+const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
+  return state.systemPrompt;
+});
+
 export const OverlaySelectors = {
   selectHostDomain,
+  selectOverlaySystemPrompt,
 };
 
 export const OverlayActions = overlaySlice.actions;

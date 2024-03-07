@@ -220,7 +220,6 @@ export const ChatMessageContent = ({
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'inherit';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [isEditing, messageContent]);
