@@ -39,7 +39,6 @@ import {
   generateNextName,
   getFolderFromId,
   getFoldersFromIds,
-  getNextDefaultName,
   getParentFolderIdsFromFolderId,
   splitEntityId,
   updateMovedFolderId,
@@ -51,7 +50,7 @@ import {
   exportPrompts,
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
-import { addGeneratedPromptId } from '@/src/utils/app/prompts';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
 
@@ -74,21 +73,10 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 import { RootState } from '@/src/store';
 import uniq from 'lodash-es/uniq';
 
-const createNewPromptEpic: AppEpic = (action$, state$) =>
+const createNewPromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.createNewPrompt.match),
-    switchMap(() => {
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const promptRootId = getPromptRootId();
-      const newPrompt: Prompt = addGeneratedPromptId({
-        name: getNextDefaultName(
-          DEFAULT_PROMPT_NAME,
-          prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
-        ),
-        description: '',
-        content: '',
-        folderId: promptRootId,
-      });
+    switchMap(({ payload: newPrompt }) => {
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
           return concat(
@@ -102,7 +90,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
                 }),
               ),
             ),
-            of(PromptsActions.setIsActiveNewPromptRequest(false)),
+            of(PromptsActions.setIsNewPromptCreating(false)),
           );
         }),
         catchError((err) => {
@@ -115,7 +103,7 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
                 ),
               ),
             ),
-            of(PromptsActions.setIsActiveNewPromptRequest(false)),
+            of(PromptsActions.setIsNewPromptCreating(false)),
           );
         }),
       );
@@ -183,7 +171,7 @@ const getOrUploadPrompt = (
 
   if (prompt?.status !== UploadStatus.LOADED) {
     const { apiKey, bucket, name, parentPath } = splitEntityId(payload.id);
-    const prompt = addGeneratedPromptId({
+    const prompt = regeneratePromptId({
       name,
       folderId: constructPath(apiKey, bucket, parentPath),
     });
@@ -412,13 +400,13 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           const updatedPrompts = combineEntities(
             allPrompts.map((prompt) =>
-              addGeneratedPromptId({
+              regeneratePromptId({
                 ...prompt,
                 folderId: updateFolderId(prompt.folderId),
               }),
             ),
             prompts.map((prompt) =>
-              addGeneratedPromptId({
+              regeneratePromptId({
                 ...prompt,
                 folderId: updateFolderId(prompt.folderId),
               }),
@@ -573,7 +561,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
       const promptRootId = getPromptRootId();
-      const newPrompt = addGeneratedPromptId({
+      const newPrompt = regeneratePromptId({
         ...prompt,
         ...resetShareEntity,
         folderId: promptRootId,

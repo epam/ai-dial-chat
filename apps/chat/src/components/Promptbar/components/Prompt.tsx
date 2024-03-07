@@ -5,6 +5,7 @@ import {
   MouseEvent,
   MouseEventHandler,
   useCallback,
+  useEffect,
   useState,
 } from 'react';
 
@@ -41,13 +42,12 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
-import { PreviewPromptModal } from '@/src/components/Promptbar/components/PreviewPromptModal';
 
 import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
-import { PromptModal } from './PromptModal';
+import { PreviewPromptModal } from './PreviewPromptModal';
 
 interface Props {
   item: PromptInfo;
@@ -71,14 +71,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     PromptsSelectors.selectSelectedPromptId,
   );
   const isSelected = selectedPromptId === prompt.id;
-  const { showModal, isModalPreviewMode } = useAppSelector(
-    PromptsSelectors.selectIsEditModalOpen,
-  );
+
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-
+  const { showModal, isModalPreviewMode } = useAppSelector(
+    PromptsSelectors.selectIsEditModalOpen,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
@@ -94,6 +94,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
+
+  useEffect(() => {
+    if (!showModal) {
+      setIsRenaming(false);
+    }
+  }, [showModal]);
 
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -126,25 +132,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const handleCloseUnpublishModal = useCallback(() => {
     setIsUnpublishing(false);
   }, []);
-
-  const handleUpdate = useCallback(
-    (prompt: Prompt) => {
-      dispatch(
-        PromptsActions.updatePrompt({
-          id: prompt.id,
-          values: {
-            name: prompt.name,
-            description: prompt.description,
-            content: prompt.content,
-            isShared: prompt.isShared,
-          },
-        }),
-      );
-      dispatch(PromptsActions.resetSearch());
-      setIsRenaming(false);
-    },
-    [dispatch],
-  );
 
   const handleDelete = useCallback(() => {
     if (isDeleting) {
@@ -271,7 +258,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const handleClose = useCallback(() => {
     dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
     dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
-    setIsRenaming(false);
   }, [dispatch]);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
@@ -376,26 +362,17 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             />
           )}
         </div>
-
-        {showModal &&
-          isSelected &&
-          (isModalPreviewMode ? (
-            <PreviewPromptModal
-              isOpen
-              onDuplicate={(e) => {
-                handleDuplicate(e);
-                handleClose();
-              }}
-              onClose={handleClose}
-              onDelete={() => setIsDeleting(true)}
-            />
-          ) : (
-            <PromptModal
-              isOpen
-              onClose={handleClose}
-              onUpdatePrompt={handleUpdate}
-            />
-          ))}
+        {showModal && isSelected && isModalPreviewMode && (
+          <PreviewPromptModal
+            isOpen
+            onDuplicate={(e) => {
+              handleDuplicate(e);
+              handleClose();
+            }}
+            onClose={handleClose}
+            onDelete={() => setIsDeleting(true)}
+          />
+        )}
       </div>
 
       {isPublishing && (
