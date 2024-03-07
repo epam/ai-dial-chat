@@ -321,7 +321,7 @@ export class ChatMessages extends BaseElement {
   }
 
   public getChatMessageTextarea(message: string) {
-    return this.getChatMessage(message).locator(Tags.textarea);
+    return this.getChatMessage(message).locator(ChatSelectors.textarea);
   }
 
   public messageEditIcon = (messageLocator: Locator) =>
