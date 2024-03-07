@@ -115,6 +115,7 @@ export const ChatMessageContent = ({
     !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
   const messageRef = useRef<HTMLDivElement>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
 
   const codeRegEx =
     /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
@@ -173,6 +174,21 @@ export const ChatMessageContent = ({
     [],
   );
 
+  useEffect(() => {
+    if (shouldScroll) {
+      anchorRef.current?.scrollIntoView({ block: 'end' });
+      setShouldScroll(false);
+    }
+  }, [shouldScroll]);
+
+  const handleToggleEditing = useCallback(
+    (value?: boolean) => {
+      toggleEditing(value ?? !isEditing);
+      setShouldScroll(true);
+    },
+    [isEditing, toggleEditing],
+  );
+
   const handleEditMessage = useCallback(() => {
     if (isSubmitAllowed) {
       return;
@@ -202,14 +218,14 @@ export const ChatMessageContent = ({
         );
       }
     }
-    toggleEditing(false);
+    handleToggleEditing(false);
   }, [
     isSubmitAllowed,
     newEditableAttachmentsIds,
     mappedUserEditableAttachmentsIds,
     message,
     messageContent,
-    toggleEditing,
+    handleToggleEditing,
     conversation,
     onEdit,
     newEditableAttachments,
@@ -219,10 +235,6 @@ export const ChatMessageContent = ({
   useEffect(() => {
     setMessageContent(message.content);
   }, [message.content]);
-
-  useEffect(() => {
-    anchorRef.current?.scrollIntoView({ block: 'end' });
-  }, [isEditing]);
 
   const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
@@ -384,7 +396,7 @@ export const ChatMessageContent = ({
                         setNewEditableAttachmentsIds(
                           mappedUserEditableAttachmentsIds,
                         );
-                        toggleEditing(false);
+                        handleToggleEditing(false);
                       }}
                       data-qa="cancel"
                     >
@@ -400,7 +412,7 @@ export const ChatMessageContent = ({
                     </button>
                     <div
                       ref={anchorRef}
-                      className="absolute bottom-[-90px]"
+                      className="absolute bottom-[-120px]"
                     ></div>
                   </div>
                 </div>
@@ -434,7 +446,7 @@ export const ChatMessageContent = ({
                   <MessageUserButtons
                     editDisabled={editDisabled}
                     onDelete={() => onDelete?.()}
-                    toggleEditing={() => toggleEditing(!isEditing)}
+                    toggleEditing={handleToggleEditing}
                   />
                 )}
               </>
