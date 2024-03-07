@@ -167,7 +167,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         >
           <span
             className={classNames(
-              'shrink text-left text-sm',
+              'shrink whitespace-pre text-left text-sm',
               isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate',
             )}
             title={attachment.title}

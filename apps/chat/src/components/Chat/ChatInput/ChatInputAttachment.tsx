@@ -37,7 +37,7 @@ export const ChatInputAttachment = ({
         <div className="flex grow flex-col overflow-hidden">
           <span
             className={classNames(
-              'block max-w-full truncate',
+              'block max-w-full truncate whitespace-pre',
               file.status === UploadStatus.FAILED && 'text-error',
             )}
           >
