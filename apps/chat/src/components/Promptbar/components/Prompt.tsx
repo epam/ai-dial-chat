@@ -387,7 +387,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 handleClose();
               }}
               onClose={handleClose}
-              onUnshare={handleOpenUnsharing}
+              onDelete={() => setIsDeleting(true)}
             />
           ) : (
             <PromptModal
