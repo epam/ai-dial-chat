@@ -5,9 +5,10 @@ import { useTranslation } from 'next-i18next';
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 
 import { FeatureType } from '@/src/types/common';
-import { PromptInfo } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
 
@@ -19,9 +20,9 @@ import {
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { PromptFolders } from './components/PromptFolders';
+import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
-import { Spinner } from '@/src/components/Common/Spinner';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
@@ -30,29 +31,61 @@ const PromptActionsBlock = () => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 
-  const isPromptRequestSent = useAppSelector(
-    PromptsSelectors.selectIsActiveNewPromptRequest,
+  const isNewPromptCreating = useAppSelector(
+    PromptsSelectors.selectIsNewPromptCreating,
   );
+
+  const { showModal, isModalPreviewMode } = useAppSelector(
+    PromptsSelectors.selectIsEditModalOpen,
+  );
+
+  const handleUpdate = useCallback(
+    (prompt: Prompt) => {
+      isNewPromptCreating
+        ? dispatch(PromptsActions.createNewPrompt(regeneratePromptId(prompt)))
+        : dispatch(
+            PromptsActions.updatePrompt({
+              id: prompt.id,
+              values: {
+                name: prompt.name,
+                description: prompt.description,
+                content: prompt.content,
+                isShared: prompt.isShared,
+              },
+            }),
+          );
+      dispatch(PromptsActions.resetSearch());
+    },
+    [dispatch, isNewPromptCreating],
+  );
+
+  const handleClose = useCallback(() => {
+    dispatch(PromptsActions.setIsEditModalOpen({ isOpen: false }));
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
+  }, [dispatch]);
 
   return (
     <div className="flex px-2 py-1">
       <button
         className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
         onClick={() => {
-          dispatch(PromptsActions.createNewPrompt());
+          dispatch(PromptsActions.setIsNewPromptCreating(true));
           dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
         }}
-        disabled={isPromptRequestSent}
+        disabled={isNewPromptCreating}
         data-qa="new-entity"
       >
-        {isPromptRequestSent ? (
-          <Spinner size={18} className="text-secondary" />
-        ) : (
-          <PlusIcon className="text-secondary" width={18} height={18} />
-        )}
+        <PlusIcon className="text-secondary" width={18} height={18} />
         {t('New prompt')}
       </button>
+      {showModal && !isModalPreviewMode && (
+        <PromptModal
+          isOpen
+          onClose={handleClose}
+          onUpdatePrompt={handleUpdate}
+        />
+      )}
     </div>
   );
 };

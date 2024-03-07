@@ -140,15 +140,18 @@ export class Conversations extends SideBarEntities {
     return this.openEditEntityNameMode(this.entitySelector, name, newName);
   }
 
-  public async selectReplayMenuOption() {
+  public async selectMenuOption(option: MenuOptions) {
+    const menu = this.getDropdownMenu();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'POST',
       );
-      await this.getDropdownMenu().selectMenuOption(MenuOptions.replay);
-      return respPromise;
+      await menu.selectMenuOption(option);
+      const response = await respPromise;
+      const responseText = await response.text();
+      return JSON.parse(responseText);
     }
-    await this.getDropdownMenu().selectMenuOption(MenuOptions.replay);
+    await menu.selectMenuOption(option);
   }
 
   public async getConversationIcon(name: string, index?: number) {

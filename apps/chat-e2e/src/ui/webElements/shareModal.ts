@@ -1,6 +1,7 @@
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
+import { ChatSelectors } from '@/src/ui/selectors';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { ModalSelectors } from '@/src/ui/selectors/modalSelectors';
 import { Page } from '@playwright/test';
@@ -18,4 +19,8 @@ export class ShareModal extends BaseElement {
     ModalSelectors.shareLink,
   );
   public chatName = this.getChildElementBySelector(ModalSelectors.chatName);
+
+  public linkInputLoader = this.getChildElementBySelector(
+    ChatSelectors.messageSpinner,
+  );
 }
