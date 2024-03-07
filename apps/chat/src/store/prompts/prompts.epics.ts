@@ -44,7 +44,7 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isRootId } from '@/src/utils/app/id';
 import {
   cleanPromptsFolders,
   exportPrompt,
@@ -57,10 +57,11 @@ import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { Prompt } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -73,6 +74,170 @@ import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
 import uniq from 'lodash-es/uniq';
+
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.init.match),
+    switchMap(() => of(PromptsActions.uploadPromptsWithFoldersRecursive())),
+  );
+
+const reloadStateEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.reloadState.match),
+    switchMap(() =>
+      PromptService.getPrompts(undefined, true).pipe(
+        switchMap((prompts) => {
+          const actions: Observable<AnyAction>[] = [];
+          const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
+            state$.value,
+          );
+          const externalPrompts = PromptsSelectors.selectExternalPrompts(
+            state$.value,
+          );
+          const isSelectedPromptExists = [...prompts, ...externalPrompts].some(
+            (prompt) => selectedPrompt?.id === prompt.id,
+          );
+          const externalFolders = PromptsSelectors.selectExternalFolders(
+            state$.value,
+          );
+
+          if (selectedPrompt) {
+            if (!isSelectedPromptExists) {
+              actions.push(
+                of(PromptsActions.setSelectedPrompt({ promptId: undefined })),
+              );
+              actions.push(
+                of(
+                  UIActions.showToast({
+                    message: translate('Selected prompt was removed'),
+                  }),
+                ),
+              );
+            } else {
+              actions.push(
+                of(
+                  PromptsActions.uploadPrompt({
+                    promptId: selectedPrompt.id,
+                    noLoader: true,
+                  }),
+                ),
+              );
+            }
+          }
+
+          return concat(
+            ...actions,
+            of(
+              PromptsActions.reloadExternalItemsRecursive({
+                // reload only loaded root folders
+                ids: externalFolders
+                  .filter(
+                    (folder) =>
+                      folder.status === UploadStatus.LOADED &&
+                      isRootId(folder.folderId),
+                  )
+                  .map((folder) => folder.id),
+              }),
+            ),
+            of(
+              PromptsActions.setReloadedPrompts({
+                prompts: selectedPrompt
+                  ? // to avoid opened modal jumping
+                    combineEntities([selectedPrompt], prompts)
+                  : prompts,
+                externalPrompts,
+              }),
+            ),
+            of(
+              PromptsActions.setReloadedFolders({
+                folders: uniq(
+                  prompts.flatMap((p) =>
+                    getParentFolderIdsFromFolderId(p.folderId),
+                  ),
+                ).map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
+                externalFolders,
+              }),
+            ),
+            of(PromptsActions.reloadStateSuccess()),
+          );
+        }),
+        catchError((err) => {
+          console.error(
+            'An error occurred while reloading prompts and folders: ',
+            err,
+          );
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while reloading prompts and folders. Please try to refresh the page.',
+              ),
+            ),
+          );
+        }),
+      ),
+    ),
+  );
+
+const reloadExternalItemsRecursiveEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.reloadExternalItemsRecursive.match),
+    switchMap(({ payload }) => {
+      const allFolders = PromptsSelectors.selectFolders(state$.value);
+      const allPrompts = PromptsSelectors.selectPrompts(state$.value);
+
+      return from(payload.ids).pipe(
+        mergeMap((id) =>
+          PromptService.getPrompts(id, true).pipe(
+            mergeMap((prompts) => {
+              const folderIds = uniq(prompts.map((c) => c.folderId));
+              const paths = uniq(
+                folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+              );
+
+              const oldFolders = allFolders.filter(
+                (f) => !f.folderId.startsWith(id),
+              );
+              const oldPrompts = allPrompts.filter(
+                (p) => !p.folderId.startsWith(id),
+              );
+
+              return concat(
+                of(
+                  PromptsActions.setReloadedPrompts({
+                    prompts: oldPrompts,
+                    externalPrompts: prompts,
+                  }),
+                ),
+                of(
+                  PromptsActions.setReloadedFolders({
+                    folders: oldFolders,
+                    externalFolders: getFoldersFromIds(
+                      paths,
+                      FolderType.Prompt,
+                      UploadStatus.LOADED,
+                    ).map((newFolder) => ({
+                      ...newFolder,
+                      sharedWithMe: isRootId(newFolder.folderId),
+                    })),
+                  }),
+                ),
+              );
+            }),
+            catchError((err) => {
+              console.error(
+                'Error during reload external prompts and folders',
+                err,
+              );
+              return of(ConversationsActions.uploadConversationsFail());
+            }),
+          ),
+        ),
+      );
+    }),
+  );
 
 const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
@@ -1005,22 +1170,19 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
     ),
   );
 
-const initEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter((action) => PromptsActions.init.match(action)),
-    switchMap(() =>
-      concat(of(PromptsActions.uploadPromptsWithFoldersRecursive())),
-    ),
-  );
-
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPrompt.match),
     switchMap(({ payload }) => {
-      const originalPrompt = PromptsSelectors.selectPrompt(
+      const {
+        // remove description and content to avoid overwriting with old data at mergeGetResult
+        description: __description,
+        content: __content,
+        ...originalPrompt
+      } = PromptsSelectors.selectPrompt(
         state$.value,
         payload.promptId,
-      ) as PromptInfo;
+      ) as Prompt;
 
       return PromptService.getPrompt(originalPrompt).pipe(
         map((servicePrompt) => ({ originalPrompt, servicePrompt })),
@@ -1067,4 +1229,8 @@ export const PromptsEpics = combineEpics(
   duplicatePromptEpic,
   uploadPromptEpic,
   // importPromptsSuccessEpic,
+
+  // reload
+  reloadStateEpic,
+  reloadExternalItemsRecursiveEpic,
 );

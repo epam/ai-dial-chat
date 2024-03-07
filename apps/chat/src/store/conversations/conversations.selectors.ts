@@ -136,6 +136,20 @@ export const selectSelectedConversationsIds = createSelector(
     return state.selectedConversationsIds;
   },
 );
+export const selectExternalConversations = createSelector(
+  [(state: RootState) => state, selectConversations],
+  (state, conversations) =>
+    conversations.filter((conv) =>
+      isEntityOrParentsExternal(state, conv, FeatureType.Chat),
+    ),
+);
+export const selectExternalFolders = createSelector(
+  [(state: RootState) => state, selectFolders],
+  (state, folders) =>
+    folders.filter((folder) =>
+      isEntityOrParentsExternal(state, folder, FeatureType.Chat),
+    ),
+);
 export const selectConversationSignal = createSelector(
   [rootSelector],
   (state) => {

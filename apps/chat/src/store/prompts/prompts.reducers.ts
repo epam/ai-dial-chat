@@ -22,6 +22,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
+import isEqual from 'lodash-es/isEqual';
+
 export { PromptsSelectors };
 
 const initialState: PromptsState = {
@@ -49,6 +51,9 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    reloadState: (state) => state,
+    reloadStateSuccess: (state) => state,
+    reloadPromptsStateSuccess: (state) => state,
     uploadPromptsWithFoldersRecursive: (
       state,
       {
@@ -57,7 +62,7 @@ export const promptsSlice = createSlice({
         { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
       >,
     ) => {
-      state.promptsLoaded = !payload?.noLoader;
+      state.promptsLoaded = !!payload?.noLoader;
     },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
@@ -248,6 +253,25 @@ export const promptsSlice = createSlice({
       });
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
+    setReloadedPrompts: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        prompts: PromptInfo[];
+        externalPrompts: PromptInfo[];
+      }>,
+    ) => {
+      const ids = payload.prompts.map((p) => p.id);
+
+      state.prompts = combineEntities(
+        combineEntities(
+          state.prompts.filter((c) => ids.includes(c.id)),
+          payload.prompts,
+        ),
+        payload.externalPrompts,
+      );
+    },
     setPrompts: (
       state,
       {
@@ -258,6 +282,15 @@ export const promptsSlice = createSlice({
         ? payload.prompts
         : combineEntities(state.prompts, payload.prompts);
       state.promptsLoaded = true;
+    },
+    addReloadedSharedPrompts: (
+      state,
+      { payload }: PayloadAction<{ prompts: Prompt[] }>,
+    ) => {
+      state.prompts = combineEntities(
+        payload.prompts,
+        state.prompts.filter((prompt) => !prompt.sharedWithMe),
+      );
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
       state.prompts = combineEntities(payload.prompts, state.prompts);
@@ -411,17 +444,49 @@ export const promptsSlice = createSlice({
       state.folders = payload.folders;
       state.prompts = payload.prompts;
     },
+    reloadExternalItemsRecursive: (
+      state,
+      _action: PayloadAction<{ ids: string[] }>,
+    ) => state,
+    setReloadedFolders: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folders: FolderInterface[];
+        externalFolders: FolderInterface[];
+      }>,
+    ) => {
+      const ids = payload.folders.map((f) => f.id);
+
+      state.folders = combineEntities(
+        payload.externalFolders,
+        combineEntities(
+          state.folders.filter((c) => ids.includes(c.id)),
+          payload.folders,
+        ),
+      );
+    },
     setFolders: (
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
       state.folders = payload.folders;
     },
+    addReloadedSharedFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = combineEntities(
+        payload.folders,
+        state.folders.filter((folder) => !folder.sharedWithMe),
+      );
+    },
     addFolders: (
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = state.folders.concat(payload.folders);
+      state.folders = combineEntities(payload.folders, state.folders);
     },
     setSearchTerm: (
       state,
@@ -455,8 +520,16 @@ export const promptsSlice = createSlice({
       state.selectedPromptId = payload.promptId;
       state.isPromptLoading = !!payload.promptId;
     },
-    uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
-      state.isPromptLoading = true;
+    uploadPrompt: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptId: string;
+        noLoader?: boolean;
+      }>,
+    ) => {
+      state.isPromptLoading = !!payload.noLoader;
     },
     uploadPromptSuccess: (
       state,
@@ -470,14 +543,18 @@ export const promptsSlice = createSlice({
       );
 
       if (foundPromptIdx !== -1) {
-        state.prompts[foundPromptIdx] = payload.prompt as Prompt;
+        if (
+          payload.prompt &&
+          !isEqual(state.prompts[foundPromptIdx], payload.prompt)
+        ) {
+          state.prompts[foundPromptIdx] = payload.prompt;
+        }
       } else {
         state.prompts = state.prompts.filter(
           (prompt) => prompt.id !== payload.originalPromptId,
         );
       }
     },
-
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
     uploadChildPromptsWithFolders: (
       state,
@@ -504,14 +581,14 @@ export const promptsSlice = createSlice({
       state.loadingFolderIds = state.loadingFolderIds.filter(
         (id) => !payload.parentIds.includes(id),
       );
-      state.folders = combineEntities(
-        state.folders,
-        payload.folders.map((folder) => ({
-          ...folder,
-          status: payload.parentIds.includes(folder.id)
-            ? UploadStatus.LOADED
-            : undefined,
-        })),
+      state.folders = combineEntities(state.folders, payload.folders).map(
+        (folder) =>
+          payload.parentIds.includes(folder.id)
+            ? {
+                ...folder,
+                status: UploadStatus.LOADED,
+              }
+            : folder,
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
     },

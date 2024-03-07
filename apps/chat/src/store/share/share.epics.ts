@@ -357,6 +357,85 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const initReloadSharedConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.reloadStateSuccess.match),
+    filter(() =>
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
+    ),
+    switchMap(() =>
+      concat(
+        of(
+          ShareActions.reloadSharedItems({
+            sharedWith: ShareRelations.me,
+            featureType: FeatureType.Chat,
+          }),
+        ),
+        of(
+          ShareActions.reloadSharedItems({
+            sharedWith: ShareRelations.others,
+            featureType: FeatureType.Chat,
+          }),
+        ),
+      ),
+    ),
+  );
+
+const initReloadSharedPromptsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.reloadStateSuccess.match),
+    filter(() =>
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
+    ),
+    switchMap(() =>
+      concat(
+        of(
+          ShareActions.reloadSharedItems({
+            sharedWith: ShareRelations.me,
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+        of(
+          ShareActions.reloadSharedItems({
+            sharedWith: ShareRelations.others,
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+      ),
+    ),
+  );
+
+const reloadSharedItemsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ShareActions.reloadSharedItems.match),
+    filter(({ payload }) =>
+      SettingsSelectors.isSharingEnabled(state$.value, payload.featureType),
+    ),
+    mergeMap(({ payload }) => {
+      return ShareService.getSharedListing({
+        order: 'popular_asc',
+        resourceTypes: [
+          EnumMapper.getBackendResourceTypeByFeatureType(payload.featureType),
+        ],
+        with: payload.sharedWith,
+      }).pipe(
+        switchMap((entities) => {
+          return of(
+            ShareActions.reloadSharedListingSuccess({
+              featureType: payload.featureType,
+              sharedWith: payload.sharedWith,
+              resources: entities,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ShareActions.reloadSharedListingFail());
+        }),
+      );
+    }),
+  );
+
 const getSharedListingEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.getSharedListing.match),
@@ -381,6 +460,18 @@ const getSharedListingEpic: AppEpic = (action$) =>
           console.error(err);
           return of(ShareActions.getSharedListingFail());
         }),
+      );
+    }),
+  );
+
+const reloadSharedListingFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.reloadSharedListingFail.match),
+    switchMap(() => {
+      return of(
+        UIActions.showErrorToast(
+          translate(errorsMessages.shareByMeReloadListingFailed),
+        ),
       );
     }),
   );
@@ -597,6 +688,153 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             PromptsActions.setIsEditModalOpen({
               isOpen: true,
               isPreview: true,
+            }),
+          );
+        }
+      }
+
+      return concat(actions);
+    }),
+  );
+
+const reloadSharedListingSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ShareActions.reloadSharedListingSuccess.match),
+    switchMap(({ payload }) => {
+      const actions = [];
+
+      if (payload.featureType === FeatureType.Chat) {
+        if (payload.sharedWith === ShareRelations.others) {
+          const conversations = ConversationsSelectors.selectConversations(
+            state$.value,
+          );
+          const folders = ConversationsSelectors.selectFolders(state$.value);
+
+          actions.push(
+            ...(folders
+              .map((item) => {
+                const isShared = payload.resources.folders.find(
+                  (res) => res.id === item.id,
+                );
+
+                return ConversationsActions.updateFolder({
+                  folderId: item.id,
+                  values: {
+                    isShared: !!isShared,
+                  },
+                });
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+
+          actions.push(
+            ...(conversations
+              .map((conv) => {
+                const sharedConv = payload.resources.entities.find(
+                  (res) => res.id === conv.id,
+                );
+
+                return ConversationsActions.updateConversationSuccess({
+                  id: conv.id,
+                  conversation: {
+                    isShared: !!sharedConv,
+                    lastActivityDate: conv.lastActivityDate,
+                  },
+                });
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+        } else {
+          const [selectedConv] =
+            ConversationsSelectors.selectSelectedConversations(state$.value);
+
+          if (
+            selectedConv &&
+            payload.resources.entities.some(
+              (conv) => conv.id === selectedConv.id,
+            )
+          ) {
+            actions.push(
+              ConversationsActions.selectConversations({
+                conversationIds: [selectedConv.id],
+              }),
+            );
+          }
+
+          actions.push(
+            ConversationsActions.addReloadedSharedConversations({
+              conversations: payload.resources.entities.map((res) => ({
+                ...(res.id === selectedConv?.id ? selectedConv : res),
+                sharedWithMe: true,
+              })) as Conversation[],
+            }),
+          );
+
+          actions.push(
+            ConversationsActions.addReloadedSharedFolders({
+              folders: payload.resources.folders.map((res) => ({
+                ...res,
+                sharedWithMe: true,
+              })) as FolderInterface[],
+            }),
+          );
+        }
+      }
+      if (payload.featureType === FeatureType.Prompt) {
+        if (payload.sharedWith === ShareRelations.others) {
+          const prompts = PromptsSelectors.selectPrompts(state$.value);
+          actions.push(
+            ...(prompts
+              .map((item) => {
+                const sharedPrompt = payload.resources.entities.find(
+                  (res) => res.id === item.id,
+                );
+
+                return PromptsActions.updatePromptSuccess({
+                  id: item.id,
+                  prompt: {
+                    isShared: !!sharedPrompt,
+                  },
+                });
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+          const folders = PromptsSelectors.selectFolders(state$.value);
+          actions.push(
+            ...(folders
+              .map((item) => {
+                const isShared = payload.resources.folders.find(
+                  (res) => res.id === item.id,
+                );
+
+                return PromptsActions.updateFolder({
+                  folderId: item.id,
+                  values: {
+                    isShared: !!isShared,
+                  },
+                });
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+        } else {
+          const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
+            state$.value,
+          );
+
+          actions.push(
+            PromptsActions.addReloadedSharedPrompts({
+              prompts: payload.resources.entities.map((res) => ({
+                ...(res.id === selectedPrompt?.id ? selectedPrompt : res),
+                sharedWithMe: true,
+              })) as Prompt[],
+            }),
+          );
+          actions.push(
+            PromptsActions.addReloadedSharedFolders({
+              folders: payload.resources.folders.map((res) => ({
+                ...res,
+                sharedWithMe: true,
+              })) as FolderInterface[],
             }),
           );
         }
@@ -853,4 +1091,11 @@ export const ShareEpics = combineEpics(
   triggerGettingSharedListingsPromptsEpic,
 
   deleteOrRenameSharedFolderEpic,
+
+  // reload
+  initReloadSharedConversationsEpic,
+  initReloadSharedPromptsEpic,
+  reloadSharedItemsEpic,
+  reloadSharedListingFailEpic,
+  reloadSharedListingSuccessEpic,
 );
