@@ -45,12 +45,14 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
 interface MessageUserButtonsProps {
   toggleEditing: () => void;
   onDelete: () => void;
+  isEditAvailable: boolean;
   editDisabled?: boolean;
 }
 
 export const MessageUserButtons = ({
   onDelete,
   toggleEditing,
+  isEditAvailable,
   editDisabled,
 }: MessageUserButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -64,15 +66,17 @@ export const MessageUserButtons = ({
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
-      <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-        <button
-          className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
-          onClick={toggleEditing}
-          disabled={editDisabled}
-        >
-          <IconEdit size={18} />
-        </button>
-      </Tooltip>
+      {isEditAvailable && (
+        <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+          <button
+            className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+            onClick={toggleEditing}
+            disabled={editDisabled}
+          >
+            <IconEdit size={18} />
+          </button>
+        </Tooltip>
+      )}
       <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
         <button
           className="text-secondary hover:text-accent-primary"
@@ -209,6 +213,7 @@ interface MessageMobileButtonsProps {
   onDelete: () => void;
   isEditing: boolean;
   toggleEditing: (value: boolean) => void;
+  isEditAvailable: boolean;
   onRegenerate?: () => void;
 }
 
@@ -221,6 +226,7 @@ export const MessageMobileButtons = ({
   onDelete,
   isEditing,
   toggleEditing,
+  isEditAvailable,
   onRegenerate,
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -320,17 +326,19 @@ export const MessageMobileButtons = ({
     </>
   ) : (
     <>
-      <MenuItem
-        className="hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
-        onClick={() => toggleEditing(!isEditing)}
-        disabled={editDisabled}
-        item={
-          <div className="flex items-center gap-3">
-            <IconEdit className="text-secondary" size={18} />
-            <p>{t('Edit')}</p>
-          </div>
-        }
-      />
+      {isEditAvailable && (
+        <MenuItem
+          className="hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
+          onClick={() => toggleEditing(!isEditing)}
+          disabled={editDisabled}
+          item={
+            <div className="flex items-center gap-3">
+              <IconEdit className="text-secondary" size={18} />
+              <p>{t('Edit')}</p>
+            </div>
+          }
+        />
+      )}
       <MenuItem
         className="hover:text-accent-primary focus:visible group-hover:visible"
         onClick={onDelete}
