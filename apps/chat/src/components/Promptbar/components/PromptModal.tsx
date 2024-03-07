@@ -73,7 +73,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   };
 
   const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
-    setName(e.target.value.trim());
+    setName(prepareEntityName(e.target.value, true));
     onBlur(e);
   };
 
@@ -179,7 +179,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setName(selectedPrompt?.name || '');
   }, [selectedPrompt?.name]);
 
-  const saveDisabled = !name.trim() || !content.trim();
+  const saveDisabled = !prepareEntityName(name, true) || !content.trim();
 
   return (
     <Modal
