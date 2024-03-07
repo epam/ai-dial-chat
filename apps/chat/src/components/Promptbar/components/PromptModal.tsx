@@ -1,6 +1,7 @@
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   KeyboardEvent,
   MouseEvent,
   useCallback,
@@ -33,6 +34,7 @@ import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Modal from '../../Common/Modal';
+import Tooltip from '../../Common/Tooltip';
 
 interface Props {
   isOpen: boolean;
@@ -42,8 +44,9 @@ interface Props {
 
 export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   const dispatch = useAppDispatch();
-
-  const selectedPrompt = useAppSelector(PromptsSelectors.selectSelectedPrompt);
+  const selectedPrompt = useAppSelector(
+    PromptsSelectors.selectSelectedOrNewPrompt,
+  );
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
@@ -69,12 +72,22 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setName(e.target.value.replaceAll(notAllowedSymbolsRegex, ''));
   };
 
+  const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
+    setName(prepareEntityName(e.target.value, true));
+    onBlur(e);
+  };
+
   const descriptionOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setDescription(e.target.value);
   };
 
   const contentOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setContent(e.target.value);
+  };
+
+  const contentOnBlurHandler = (e: FocusEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value.trim());
+    onBlur(e);
   };
 
   const updatePrompt = useCallback(
@@ -166,6 +179,8 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setName(selectedPrompt?.name || '');
   }, [selectedPrompt?.name]);
 
+  const saveDisabled = !prepareEntityName(name, true) || !content.trim();
+
   return (
     <Modal
       portalId="theme-main"
@@ -203,7 +218,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               value={name}
               required
               type="text"
-              onBlur={onBlur}
+              onBlur={nameOnBlurHandler}
               onChange={nameOnChangeHandler}
               data-qa="prompt-name"
             />
@@ -235,6 +250,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               htmlFor="content"
             >
               {t('Prompt')}
+              <span className="ml-1 inline text-accent-primary">*</span>
             </label>
             <textarea
               ref={contentInputRef}
@@ -248,19 +264,29 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               }
               value={content}
               onChange={contentOnChangeHandler}
+              onBlur={contentOnBlurHandler}
               rows={10}
               data-qa="prompt-value"
+              required
             />
+            <EmptyRequiredInputMessage />
           </div>
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="button button-primary"
-              data-qa="save-prompt"
-              onClick={(e) => handleSubmit(e, selectedPrompt)}
+            <Tooltip
+              isTriggerClickable
+              tooltip={t('Please fill in all required fields')}
+              hideTooltip={!saveDisabled}
             >
-              {t('Save')}
-            </button>
+              <button
+                type="submit"
+                className="button button-primary"
+                data-qa="save-prompt"
+                onClick={(e) => handleSubmit(e, selectedPrompt)}
+                disabled={saveDisabled}
+              >
+                {t('Save')}
+              </button>
+            </Tooltip>
           </div>
           <ConfirmDialog
             isOpen={isConfirmDialog}

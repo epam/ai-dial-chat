@@ -39,12 +39,11 @@ dialTest(
       .toBe(Colors.backgroundAccentTertiary);
 
     await promptBar.createNewPrompt();
+    await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
     await promptModalDialog.saveButton.click();
     expect
       .soft(
-        await prompts
-          .getPromptByName(ExpectedConstants.newPromptTitle(1))
-          .isVisible(),
+        await prompts.getPromptByName(newName).isVisible(),
         ExpectedMessages.newPromptCreated,
       )
       .toBeTruthy();
