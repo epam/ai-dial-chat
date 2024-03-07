@@ -87,7 +87,15 @@ export const parsePromptApiKey = (
 
 export class ApiUtils {
   static encodeApiUrl = (path: string): string =>
-    constructPath(...path.split('/').map((part) => encodeURIComponent(part)));
+    constructPath(
+      ...path
+        .split('/')
+        .map((part) =>
+          part.replace(/[^\uD800-\uDBFF \uDC00-\uDFFF]+/gm, (match) =>
+            encodeURIComponent(match),
+          ),
+        ),
+    );
 
   static decodeApiUrl = (path: string): string =>
     constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
