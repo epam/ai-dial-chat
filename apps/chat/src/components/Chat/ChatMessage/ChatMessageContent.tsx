@@ -50,12 +50,12 @@ export interface Props {
   messageIndex: number;
   conversation: Conversation;
   isLikesEnabled: boolean;
-  onEdit: (editedMessage: Message, index: number) => void;
   isEditing: boolean;
   toggleEditing: (value: boolean) => void;
   messageCopied?: boolean;
   editDisabled?: boolean;
   onRegenerate?: () => void;
+  onEdit?: (editedMessage: Message, index: number) => void;
   onCopy?: () => void;
   onLike?: (likeStatus: LikeState) => void;
   onDelete?: () => void;
@@ -220,7 +220,7 @@ export const ChatMessageContent = ({
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.rows = messageContent.split(/\r\n|\r|\n/).length;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [isEditing, messageContent]);
 
@@ -281,9 +281,9 @@ export const ChatMessageContent = ({
     : isSmallScreen()
       ? MOBILE_ICON_SIZE
       : DEFAULT_ICON_SIZE;
-
   const showUserButtons =
     !isPlayback && !isEditing && !isExternal && withButtons;
+  const isMobileOrOverlay = isSmallScreen() || isOverlay;
 
   return (
     <div
@@ -302,14 +302,14 @@ export const ChatMessageContent = ({
         className={classNames(
           'm-auto flex h-full md:gap-6 md:py-6 lg:px-0',
           !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
-          isSmallScreen() || isOverlay ? 'p-3' : 'p-4',
+          isMobileOrOverlay ? 'p-3' : 'p-4',
         )}
       >
         <div className="font-bold" data-qa="message-icon">
           <div
             className={classNames(
               'flex justify-center',
-              isSmallScreen() || isOverlay ? 'mr-2.5' : 'mx-2.5',
+              isMobileOrOverlay ? 'mr-2.5' : 'mx-2.5',
             )}
           >
             {isAssistant ? (
@@ -412,7 +412,7 @@ export const ChatMessageContent = ({
                         {
                           'max-w-none': isChatFullWidth,
                           'text-sm': isOverlay,
-                          'leading-[150%]': isSmallScreen() || isOverlay,
+                          'leading-[150%]': isMobileOrOverlay,
                         },
                       )}
                     >
@@ -425,6 +425,7 @@ export const ChatMessageContent = ({
                 </div>
                 {showUserButtons && (
                   <MessageUserButtons
+                    isEditAvailable={!!onEdit}
                     editDisabled={editDisabled}
                     onDelete={() => onDelete?.()}
                     toggleEditing={() => toggleEditing(!isEditing)}
