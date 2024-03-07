@@ -3,6 +3,7 @@ import {
   catchError,
   concat,
   filter,
+  iif,
   map,
   mergeMap,
   of,
@@ -34,6 +35,7 @@ import {
 } from '@/src/types/share';
 import { AppEpic } from '@/src/types/store';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import {
@@ -698,42 +700,82 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.discardSharedWithMeSuccess.match),
     switchMap(({ payload }) => {
-      if (!payload.isFolder && payload.featureType === FeatureType.Chat) {
+      if (payload.featureType === FeatureType.Chat) {
         const conversations = ConversationsSelectors.selectConversations(
           state$.value,
         );
-        return of(
-          ConversationsActions.setConversations({
-            conversations: conversations.filter(
-              (conv) => conv.id !== payload.resourceId,
-            ),
-            ignoreCombining: true,
-          }),
-        );
-      }
-      if (payload.isFolder && payload.featureType === FeatureType.Chat) {
+
+        if (!payload.isFolder) {
+          return of(
+            ConversationsActions.setConversations({
+              conversations: conversations.filter(
+                (conv) => conv.id !== payload.resourceId,
+              ),
+              ignoreCombining: true,
+            }),
+          );
+        }
+
+        const availableConvId = conversations.find(
+          (conv) => !conv.id.startsWith(payload.resourceId),
+        )?.id;
+
         const folders = ConversationsSelectors.selectFolders(state$.value);
-        return of(
-          ConversationsActions.setFolders({
-            folders: folders.filter((item) => item.id !== payload.resourceId),
-          }),
+        return concat(
+          of(
+            ConversationsActions.setFolders({
+              folders: folders.filter((item) => item.id !== payload.resourceId),
+            }),
+          ),
+          of(
+            ConversationsActions.setConversations({
+              conversations: conversations.filter(
+                (c) => !c.id.startsWith(payload.resourceId),
+              ),
+              ignoreCombining: true,
+            }),
+          ),
+          iif(
+            () => !!availableConvId,
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: [availableConvId!],
+              }),
+            ),
+            of(
+              ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+              }),
+            ),
+          ),
         );
       }
-      if (!payload.isFolder && payload.featureType === FeatureType.Prompt) {
+
+      if (payload.featureType === FeatureType.Prompt) {
         const prompts = PromptsSelectors.selectPrompts(state$.value);
-        return of(
-          PromptsActions.setPrompts({
-            prompts: prompts.filter((item) => item.id !== payload.resourceId),
-            ignoreCombining: true,
-          }),
-        );
-      }
-      if (payload.isFolder && payload.featureType === FeatureType.Prompt) {
+
+        if (!payload.isFolder) {
+          return of(
+            PromptsActions.setPrompts({
+              prompts: prompts.filter((item) => item.id !== payload.resourceId),
+              ignoreCombining: true,
+            }),
+          );
+        }
+
         const folders = PromptsSelectors.selectFolders(state$.value);
-        return of(
-          PromptsActions.setFolders({
-            folders: folders.filter((item) => item.id !== payload.resourceId),
-          }),
+        return concat(
+          of(
+            PromptsActions.setFolders({
+              folders: folders.filter((item) => item.id !== payload.resourceId),
+            }),
+            PromptsActions.setPrompts({
+              prompts: prompts.filter(
+                (p) => !p.id.startsWith(payload.resourceId),
+              ),
+              ignoreCombining: true,
+            }),
+          ),
         );
       }
 
