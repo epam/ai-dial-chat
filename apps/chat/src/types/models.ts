@@ -33,6 +33,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
   features?: {
     truncate_prompt?: boolean;
     system_prompt?: boolean;
+    url_attachments?: boolean;
   };
   tokenizer_model?: TokenizerModel;
 }
@@ -50,6 +51,7 @@ export interface DialAIEntity {
   features?: {
     truncatePrompt?: boolean;
     systemPrompt?: boolean;
+    urlAttachments?: boolean;
   };
   tokenizer?: {
     encoding?: TiktokenEncoding;

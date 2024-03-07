@@ -1,4 +1,9 @@
 import { RefObject } from 'react';
+import { FieldErrors, FieldValues } from 'react-hook-form';
+
+import classNames from 'classnames';
+
+import { formErrors } from '@/src/constants/forms';
 
 export type InputElement = HTMLInputElement | HTMLTextAreaElement;
 export const checkValidity = (
@@ -29,4 +34,38 @@ export const checkValidity = (
   focusableElement?.focus();
 
   return isValid;
+};
+
+export const getFieldClassnames = <T extends FieldValues>(
+  fieldName: keyof T,
+  fieldType: 'input',
+  formState: {
+    errors: FieldErrors<T>;
+    dirtyFields: Partial<Record<keyof T, unknown>>;
+    touchedFields: Partial<Record<keyof T, unknown>>;
+  },
+) => {
+  return classNames(fieldType, {
+    invalid: formState.errors[fieldName],
+    dirty: formState.dirtyFields[fieldName],
+    touched: formState.touchedFields[fieldName],
+  });
+};
+
+export const FormValidations = {
+  checkUrl: (v: string | undefined): boolean | string => {
+    if (!v) {
+      return formErrors.notValidUrl;
+    }
+
+    try {
+      new URL(v);
+      return true;
+    } catch (e) {
+      return formErrors.notValidUrl;
+    }
+  },
+  notEmpty: (v: string | undefined): boolean | string => {
+    return !!v && v.length ? true : formErrors.required;
+  },
 };

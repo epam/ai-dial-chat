@@ -200,6 +200,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               download={attachment.title}
               href={mappedAttachmentUrl}
               onClick={stopBubbling}
+              target="_blank"
               className="text-secondary hover:text-accent-primary"
             >
               <IconDownload size={18} />

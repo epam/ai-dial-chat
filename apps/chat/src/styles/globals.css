@@ -71,7 +71,7 @@ pre:has(div.codeblock) {
   }
 
   .input-form {
-    @apply m-0.5 w-full rounded border border-primary bg-transparent p-3 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
+    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
 
   .submitted {
@@ -79,6 +79,15 @@ pre:has(div.codeblock) {
 
   .input-invalid {
     @apply invalid:border-error;
+  }
+}
+@layer components {
+  .input {
+    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
+  }
+  .input.touched.invalid,
+  .input.dirty.invalid {
+    @apply border-error;
   }
 }
 

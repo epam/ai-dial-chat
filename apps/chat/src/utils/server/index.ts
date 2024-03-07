@@ -101,6 +101,9 @@ export const OpenAIStream = async ({
       max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
     });
 
+    console.log(url);
+    console.log(body);
+
     res = await fetch(url, {
       headers: requestHeaders,
       method: 'POST',
