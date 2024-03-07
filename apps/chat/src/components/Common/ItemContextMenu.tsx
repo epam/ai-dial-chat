@@ -24,7 +24,7 @@ import classNames from 'classnames';
 import { getRootId } from '@/src/utils/app/id';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -322,7 +322,7 @@ export default function ItemContextMenu({
       isLoading={isLoading}
       TriggerIcon={IconDots}
       triggerIconSize={18}
-      className={classNames(className)}
+      className={className}
       featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}

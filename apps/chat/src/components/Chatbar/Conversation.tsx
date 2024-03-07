@@ -569,7 +569,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'invisible absolute right-3 z-50 flex justify-end group-hover:visible',
+            'absolute right-3 z-50 flex justify-end group-hover:visible',
+            (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
+              'invisible',
           )}
           data-qa="dots-menu"
         >
@@ -578,9 +580,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
-            onOpenMoveToModal={() => {
-              setIsShowMoveToModal(true);
-            }}
+            onOpenMoveToModal={() => setIsShowMoveToModal(true)}
             onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
             onRename={handleStartRename}
