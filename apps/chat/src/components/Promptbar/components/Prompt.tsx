@@ -312,7 +312,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
           <div
             className={classNames(
-              'relative max-h-5 flex-1 truncate break-all text-left',
+              'relative max-h-5 flex-1 truncate whitespace-pre break-all text-left',
             )}
           >
             {prompt.name}
