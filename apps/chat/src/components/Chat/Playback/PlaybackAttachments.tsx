@@ -1,4 +1,7 @@
-import { getDialFilesFromAttachments, getDialLinksFromAttachments } from '@/src/utils/app/file';
+import {
+  getDialFilesFromAttachments,
+  getDialLinksFromAttachments,
+} from '@/src/utils/app/file';
 
 import { Attachment } from '@/src/types/chat';
 
@@ -15,7 +18,7 @@ export function PlaybackAttachments({ attachments }: PlaybackAttachmentsProps) {
   return (
     <div className="relative rounded">
       <div className="flex max-h-[100px] flex-col gap-1 overflow-auto pt-3 md:grid md:grid-cols-3">
-        <ChatInputAttachments files={files} links={links}/>
+        <ChatInputAttachments files={files} links={links} />
       </div>
     </div>
   );
