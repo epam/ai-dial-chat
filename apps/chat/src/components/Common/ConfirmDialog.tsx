@@ -37,7 +37,7 @@ export const ConfirmDialog = ({
       hideClose
     >
       <div className="flex w-full flex-col gap-2 text-start">
-        <h2 id={headingId} className="text-base font-semibold">
+        <h2 id={headingId} className="whitespace-pre text-base font-semibold">
           {heading}
         </h2>
         <div>

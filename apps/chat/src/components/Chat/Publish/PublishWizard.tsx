@@ -230,7 +230,7 @@ export default function PublishWizard({
     >
       <div className="flex h-full flex-col divide-y divide-tertiary">
         <h4 className="p-4 pr-10 text-base font-semibold">
-          <span className="line-clamp-2 break-words">
+          <span className="line-clamp-2 whitespace-pre break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
