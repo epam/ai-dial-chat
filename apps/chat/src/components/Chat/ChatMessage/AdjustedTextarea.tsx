@@ -40,11 +40,11 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
         data-qa="hidden-textarea"
       />
       <textarea
+        data-qa="chat-textarea"
         {...props}
         ref={mainTextareaRef}
         name="main"
         style={{ maxHeight: `${maxHeight}px` }}
-        data-qa="chat-textarea"
       />
     </>
   );
