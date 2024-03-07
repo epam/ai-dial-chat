@@ -5,6 +5,7 @@ import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { ConversationSettings } from '@/src/ui/webElements/conversationSettings';
+import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
@@ -23,6 +24,7 @@ export class AppContainer extends BaseElement {
   private conversationSettings!: ConversationSettings;
   private chatLoader!: ChatLoader;
   private importExportLoader!: ImportExportLoader;
+  private errorToast!: ErrorToast;
 
   getHeader(): Header {
     if (!this.header) {
@@ -81,5 +83,12 @@ export class AppContainer extends BaseElement {
       );
     }
     return this.importExportLoader;
+  }
+
+  getErrorToast(): ErrorToast {
+    if (!this.errorToast) {
+      this.errorToast = new ErrorToast(this.page);
+    }
+    return this.errorToast;
   }
 }

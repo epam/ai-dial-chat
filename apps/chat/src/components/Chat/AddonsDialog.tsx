@@ -298,6 +298,7 @@ export const AddonsDialog: FC<Props> = ({
               disabled={
                 selectedAddons.length + preselectedAddonsIds.length > 10
               }
+              data-qa="apply-addons"
             >
               {t('Apply addons')}
             </button>
