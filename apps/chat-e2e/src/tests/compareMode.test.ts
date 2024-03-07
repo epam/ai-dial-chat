@@ -593,6 +593,7 @@ dialTest(
     conversationData,
     localStorageManager,
     dataInjector,
+    conversations,
     page,
   }) => {
     setTestIds('EPMRTC-553', 'EPMRTC-555');
@@ -689,6 +690,15 @@ dialTest(
             ExpectedMessages.requestModeIdIsValid,
           )
           .toBe(secondConversation.model.id);
+
+        for (let conversation of [firstConversation, secondConversation]) {
+          const isConversationVisible = await conversations
+            .getConversationByName(conversation.name)
+            .isVisible();
+          expect
+            .soft(isConversationVisible, ExpectedMessages.conversationIsVisible)
+            .toBeTruthy();
+        }
       },
     );
   },

@@ -100,7 +100,7 @@ export const getShareType = (
   featureType?: FeatureType,
   isFolder?: boolean,
 ): SharingType | undefined => {
-  if (!featureType || !isFolder) {
+  if (!featureType) {
     return undefined;
   }
 

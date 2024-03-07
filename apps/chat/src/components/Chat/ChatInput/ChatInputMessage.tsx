@@ -2,7 +2,6 @@ import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -33,6 +32,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
+import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
@@ -246,17 +246,6 @@ export const ChatInputMessage = ({
     ],
   );
 
-  useEffect(() => {
-    if (textareaRef && textareaRef.current) {
-      textareaRef.current.style.height = 'inherit'; // reset height
-      const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
-      textareaRef.current.style.height = `${scrollHeight}px`;
-      textareaRef.current.style.overflow = `${
-        scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
-      }`;
-    }
-  }, [content, textareaRef]);
-
   const handleUnselectFile = useCallback(
     (fileId: string) => {
       dispatch(FilesActions.unselectFiles({ ids: [fileId] }));
@@ -359,14 +348,14 @@ export const ChatInputMessage = ({
         className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
         data-qa="message"
       >
-        <textarea
+        <AdjustedTextarea
           ref={textareaRef}
           className={classNames(
             'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
             isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-3',
             paddingLeftClass,
           )}
-          style={{ maxHeight: `${MAX_HEIGHT}px` }}
+          maxHeight={MAX_HEIGHT}
           placeholder={
             isOverlay
               ? t('Type a message') || ''

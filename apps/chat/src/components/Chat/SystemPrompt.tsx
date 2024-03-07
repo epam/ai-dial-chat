@@ -27,6 +27,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { PromptDialog } from './ChatInput/PromptDialog';
 import { PromptList } from './ChatInput/PromptList';
+import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
 
 import debounce from 'lodash-es/debounce';
 
@@ -150,13 +151,6 @@ export const SystemPrompt: FC<Props> = ({
   );
 
   useEffect(() => {
-    if (textareaRef && textareaRef.current) {
-      textareaRef.current.style.height = 'inherit';
-      textareaRef.current.style.height = `${textareaRef.current?.scrollHeight}px`;
-    }
-  }, [content]);
-
-  useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (
         promptListRef.current &&
@@ -173,27 +167,16 @@ export const SystemPrompt: FC<Props> = ({
     };
   }, [setShowPromptList]);
 
-  useEffect(() => {
-    if (textareaRef && textareaRef.current) {
-      textareaRef.current.style.height = 'inherit'; // reset height
-      const scrollHeight = textareaRef.current.scrollHeight; // then check scroll height
-      textareaRef.current.style.height = `${scrollHeight}px`;
-      textareaRef.current.style.overflow = `${
-        scrollHeight > MAX_HEIGHT ? 'auto' : 'hidden'
-      }`;
-    }
-  }, [content, textareaRef]);
-
   return (
     <div className="flex flex-col">
       <label className="mb-4 text-left">{t('System prompt')}</label>
       <div className="relative flex flex-col">
         {disabled && <DisableOverlay />}
-        <textarea
+        <AdjustedTextarea
           ref={textareaRef}
           className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
           placeholder={t('Type a text or «/» to use a prompt...') || ''}
-          style={{ maxHeight: `${MAX_HEIGHT}px` }}
+          maxHeight={MAX_HEIGHT}
           value={content}
           rows={1}
           disabled={isLoading}

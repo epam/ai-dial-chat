@@ -42,3 +42,4 @@ export * from './groupEntity';
 export * from './modelsDialog';
 export * from './recentEntities';
 export * from './talkToGroup';
+export * from './errorToast';

@@ -11,7 +11,7 @@ import {
 import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
-import { addGeneratedPromptId } from '@/src/utils/app/prompts';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { BackendResourceType, Entity } from '@/src/types/common';
@@ -67,7 +67,7 @@ export class ApiStorage implements DialStorage {
             const updatedEntityWithRegeneratedId =
               entityType === BackendResourceType.CONVERSATION
                 ? regenerateConversationId(updatedEntity as Conversation)
-                : addGeneratedPromptId(updatedEntity as Prompt);
+                : regeneratePromptId(updatedEntity as Prompt);
 
             return retry(updatedEntityWithRegeneratedId as T, apiStorage);
           }
@@ -188,7 +188,7 @@ export class ApiStorage implements DialStorage {
             };
 
             return this._promptApiStorage.createEntity(
-              addGeneratedPromptId(updatedPrompt),
+              regeneratePromptId(updatedPrompt),
             );
           }),
           switchMap((prompt) => this.getPrompt(prompt)),

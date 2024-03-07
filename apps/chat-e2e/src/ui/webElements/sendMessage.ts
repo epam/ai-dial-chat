@@ -20,7 +20,7 @@ export class SendMessage extends BaseElement {
     return this.promptList;
   }
 
-  public messageInput = this.getChildElementBySelector(Tags.textarea);
+  public messageInput = this.getChildElementBySelector(ChatSelectors.textarea);
   public sendMessageButton = this.getChildElementBySelector(
     ChatSelectors.sendMessage,
   );
@@ -44,6 +44,12 @@ export class SendMessage extends BaseElement {
 
   public async waitForMessageInputLoaded() {
     await this.messageInputSpinner.waitForState({ state: 'detached' });
+  }
+
+  public async pasteDataIntoMessageInput() {
+    await this.messageInput.waitForState();
+    await this.messageInput.click();
+    await this.page.keyboard.press(keys.ctrlPlusV);
   }
 
   private async fillRequestData(message: string) {
