@@ -106,6 +106,8 @@ export const ChatMessageContent = ({
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
 
+  const anchorRef = useRef<HTMLDivElement>(null);
+
   const isLastMessage =
     messageIndex == (conversation?.messages.length ?? 0) - 1;
   const isAssistant = message.role === Role.Assistant;
@@ -217,6 +219,10 @@ export const ChatMessageContent = ({
   useEffect(() => {
     setMessageContent(message.content);
   }, [message.content]);
+
+  useEffect(() => {
+    anchorRef.current?.scrollIntoView({ block: 'end' });
+  }, [isEditing]);
 
   const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
@@ -370,7 +376,7 @@ export const ChatMessageContent = ({
                       onUploadFromDevice={handleUploadFromDevice}
                     />
                   </div>
-                  <div className="flex gap-3">
+                  <div className="relative flex gap-3">
                     <button
                       className="button button-secondary"
                       onClick={() => {
@@ -392,12 +398,16 @@ export const ChatMessageContent = ({
                     >
                       {t('Save & Submit')}
                     </button>
+                    <div
+                      ref={anchorRef}
+                      className="absolute bottom-[-90px]"
+                    ></div>
                   </div>
                 </div>
               </div>
             ) : (
               <>
-                <div className="mr-2 flex w-full flex-col gap-5">
+                <div className="relative mr-2 flex w-full flex-col gap-5">
                   {message.content && (
                     <div
                       className={classNames(
@@ -415,6 +425,10 @@ export const ChatMessageContent = ({
                   <MessageAttachments
                     attachments={message.custom_content?.attachments}
                   />
+                  <div
+                    ref={anchorRef}
+                    className="absolute bottom-[-160px]"
+                  ></div>
                 </div>
                 {showUserButtons && (
                   <MessageUserButtons
