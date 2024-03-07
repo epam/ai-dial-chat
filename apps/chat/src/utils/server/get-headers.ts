@@ -1,5 +1,4 @@
 import { isAuthDisabled } from '../auth/auth-providers';
-import { ApiUtils } from './api';
 
 export const getApiHeaders = ({
   chatId,
@@ -16,7 +15,9 @@ export const getApiHeaders = ({
     'Content-Type': 'application/json',
   };
   if (chatId) {
-    headers['X-CONVERSATION-ID'] = ApiUtils.safeEncodeURIComponent(chatId);
+    headers['X-CONVERSATION-ID'] = encodeURIComponent(
+      chatId.replace(/[\uD800-\uDBFF \uDC00-\uDFFF]+/gm, ''),
+    );
   }
 
   if (jwt) {
