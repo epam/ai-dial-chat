@@ -24,6 +24,11 @@ export class BasePage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
+  async navigateToUrl(url: string) {
+    await this.page.goto(url);
+    await this.page.waitForLoadState('domcontentloaded');
+  }
+
   async openHomePage(options?: {
     iconsToBeLoaded?: (string | undefined)[];
     setEntitiesEnvVars?: boolean;

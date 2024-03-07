@@ -1,3 +1,4 @@
+import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
@@ -8,49 +9,82 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest.skip(
-  'Shared icon appears in chat model icon if to click on copy icon.\n' +
+dialTest.beforeEach(async ({ additionalUserItemApiHelper }) => {
+  await additionalUserItemApiHelper.deleteAllData(
+    BucketUtil.getAdditionalShareUserBucket(),
+  );
+});
+
+dialTest(
+  'Shared icon does not appear in chat model icon if to click on copy button.\n' +
+    'Shared URL is copied using Ctrl+A, Ctrl+C\n' +
+    'Share chat: tooltip for long chat name.\n' +
+    'Share chat: tooltip for URL.\n' +
     'Share chat: copy button changes.\n' +
-    'Shared icon does not appear in chat model icon if to close the pop-up on X button.\n' +
-    'Shared icon does not appear in chat model icon if to close the pop-up on click out of it.\n' +
-    'Shared icon appears only once if to click on copy several times',
+    'Shared URL is copied if to click on copy button.\n' +
+    'Shared chat link is always different.\n' +
+    'Error appears if shared chat link is opened by its owner.\n' +
+    'Shared icon appears in chat model icon if another user clicks on the link.\n' +
+    'Shared icon in chat header and response does not appear',
   async ({
     dialHomePage,
     conversations,
-    chatBar,
-    conversationDropdownMenu,
+    conversationData,
+    dataInjector,
     shareModal,
+    localStorageManager,
     tooltip,
+    page,
+    sendMessage,
+    errorToast,
+    additionalUserShareApiHelper,
+    chatHeader,
+    chatMessages,
     setTestIds,
   }) => {
     setTestIds(
       'EPMRTC-1502',
+      'EPMRTC-1503',
+      'EPMRTC-1508',
+      'EPMRTC-1509',
       'EPMRTC-1512',
+      'EPMRTC-2745',
+      'EPMRTC-1820',
+      'EPMRTC-2747',
       'EPMRTC-1505',
-      'EPMRTC-1507',
-      'EPMRTC-1506',
+      'EPMRTC-1601',
     );
+    let conversation: TestConversation;
+    let firstShareLinkResponse: ShareByLinkResponseModel;
+    let secondShareLinkResponse: ShareByLinkResponseModel;
+
+    await dialTest.step('Prepare default conversation', async () => {
+      conversation = await conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+      await localStorageManager.setSelectedConversation(conversation);
+    });
 
     await dialTest.step(
       'Open conversation dropdown menu and choose "Share" option',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await conversations.openConversationDropdownMenu(
-          ExpectedConstants.newConversationTitle,
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openConversationDropdownMenu(conversation.name);
+        const firstShareLinkResponseText = await conversations.selectMenuOption(
+          MenuOptions.share,
         );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
+        firstShareLinkResponse =
+          firstShareLinkResponseText as ShareByLinkResponseModel;
       },
     );
 
     await dialTest.step(
-      'Hover over "Cancel" and copy buttons and verify they are highlighted with blue color',
+      'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
+        await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         await shareModal.closeButton.hoverOver();
         const closeButtonColor =
           await shareModal.closeButton.getComputedStyleProperty(Styles.color);
@@ -75,135 +109,6 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Click on "Cancel" button in modal window and verify no shared icon appears on model icon',
-      async () => {
-        await shareModal.closeButton.click();
-        const isArrowIconVisible = await conversations
-          .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
-          .isVisible();
-        expect
-          .soft(isArrowIconVisible, ExpectedMessages.conversationIsNotShared)
-          .toBeFalsy();
-      },
-    );
-
-    await dialTest.step(
-      'Open Share modal again, click outside modal window area and verify no shared icon appears on model icon',
-      async () => {
-        await conversations.openConversationDropdownMenu(
-          ExpectedConstants.newConversationTitle,
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
-        await chatBar.draggableArea.click({ force: true });
-        const isModalVisible = await shareModal.isVisible();
-        expect
-          .soft(isModalVisible, ExpectedMessages.modalWindowIsClosed)
-          .toBeFalsy();
-
-        const isArrowIconVisible = await conversations
-          .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
-          .isVisible();
-        expect
-          .soft(isArrowIconVisible, ExpectedMessages.conversationIsNotShared)
-          .toBeFalsy();
-      },
-    );
-
-    await dialTest.step(
-      'Open Share modal again, click on "Copy" button in modal window, close it and verify green shared icon appears on model icon',
-      async () => {
-        await conversations.openConversationDropdownMenu(
-          ExpectedConstants.newConversationTitle,
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.copyLinkButton.click();
-        await shareModal.closeButton.click();
-        await conversations
-          .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
-          .waitFor();
-        const arrowIconColor =
-          await conversations.getConversationArrowIconColor(
-            ExpectedConstants.newConversationTitle,
-          );
-        expect
-          .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
-          .toBe(Colors.textAccentSecondary);
-      },
-    );
-
-    await dialTest.step(
-      'Open Share modal again, click on "Copy" button in modal window and verify only one green shared icon is shown on model icon',
-      async () => {
-        await conversations.openConversationDropdownMenu(
-          ExpectedConstants.newConversationTitle,
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
-        await shareModal.copyLinkButton.click();
-        await shareModal.closeButton.click();
-        const arrowIconsCount = await conversations
-          .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
-          .count();
-        expect
-          .soft(arrowIconsCount, ExpectedMessages.entitiesIconsCountIsValid)
-          .toBe(1);
-      },
-    );
-  },
-);
-
-dialTest.skip(
-  'Shared icon appears in chat model icon if to copy using Ctrl+A, Ctrl+C.\n' +
-    'Shared icon in chat header and response does not appear.\n' +
-    'Shared icon stays in chat name if to continue the conversation.\n' +
-    'Share chat: tooltip for long chat name.\n' +
-    'Share chat: tooltip for URL',
-  async ({
-    dialHomePage,
-    conversations,
-    chatHeader,
-    conversationDropdownMenu,
-    shareModal,
-    page,
-    conversationData,
-    localStorageManager,
-    dataInjector,
-    chatMessages,
-    talkToSelector,
-    chat,
-    tooltip,
-    conversationSettings,
-    setTestIds,
-  }) => {
-    setTestIds(
-      'EPMRTC-1503',
-      'EPMRTC-1601',
-      'EPMRTC-1514',
-      'EPMRTC-1508',
-      'EPMRTC-1509',
-    );
-    let conversation: TestConversation;
-    const conversationName = GeneratorUtil.randomString(60);
-
-    await dialTest.step('Prepare default conversation', async () => {
-      conversation = await conversationData.prepareDefaultConversation(
-        ModelsUtil.getDefaultModel(),
-        conversationName,
-      );
-      await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
-    });
-
-    await dialTest.step(
-      'Open conversation dropdown menu and choose "Share" option',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(conversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
-      },
-    );
-
-    await dialTest.step(
       'Verify chat name is truncated with dots and full name is shown on hover',
       async () => {
         const chatNameOverflowProp =
@@ -218,7 +123,7 @@ dialTest.skip(
         const tooltipChatName = await tooltip.getContent();
         expect
           .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
-          .toBe(conversation.name);
+          .toBe(ExpectedConstants.sharedConversationName(conversation.name));
 
         const isTooltipChatNameTruncated =
           await tooltip.isElementWidthTruncated();
@@ -255,18 +160,74 @@ dialTest.skip(
     );
 
     await dialTest.step(
-      'Set cursor in URL input and press Ctrl+A/Ctrl+C',
+      'Set cursor in URL input, press Ctrl+A/Ctrl+C and verify url is copied to buffer',
       async () => {
         await shareModal.shareLinkInput.click();
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusC);
+        await shareModal.closeButton.click();
+        await sendMessage.pasteDataIntoMessageInput();
+        const actualCopiedLink = await sendMessage.getMessage();
+        expect
+          .soft(actualCopiedLink, ExpectedMessages.shareConversationLinkIsValid)
+          .toBe(
+            ExpectedConstants.sharedConversationUrl(
+              firstShareLinkResponse.invitationLink,
+            ),
+          );
       },
     );
 
     await dialTest.step(
-      'Close modal window and verify green shared icon appears on model icon',
+      'Open Share modal again, click "Copy" button and verify the link is different from the previous, no shared icon appears on conversation',
       async () => {
-        await shareModal.closeButton.click();
+        await conversations.openConversationDropdownMenu(conversation.name);
+        secondShareLinkResponse = (await conversations.selectMenuOption(
+          MenuOptions.share,
+        )) as ShareByLinkResponseModel;
+        await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
+        expect
+          .soft(
+            firstShareLinkResponse.invitationLink !==
+              secondShareLinkResponse.invitationLink,
+            ExpectedMessages.sharedInvitationLinkIsUnique,
+          )
+          .toBeTruthy();
+
+        const isArrowIconVisible = await conversations
+          .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
+          .isVisible();
+        expect
+          .soft(
+            isArrowIconVisible,
+            ExpectedMessages.sharedConversationIconIsNotVisible,
+          )
+          .toBeFalsy();
+      },
+    );
+
+    await dialTest.step(
+      'Open shared link by current user and verify error is shown',
+      async () => {
+        await dialHomePage.navigateToUrl(
+          ExpectedConstants.sharedConversationUrl(
+            secondShareLinkResponse.invitationLink,
+          ),
+        );
+        const errorMessage = await errorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
+          .toBe(ExpectedConstants.shareInviteAcceptanceFailureMessage);
+      },
+    );
+
+    await dialTest.step(
+      'Accept invitation link by another user and verify arrow icon appears on conversation icon of the current user',
+      async () => {
+        await additionalUserShareApiHelper.acceptInvite(
+          secondShareLinkResponse,
+        );
+        await dialHomePage.reloadPage();
         await conversations
           .getConversationArrowIcon(conversation.name)
           .waitFor();
@@ -300,64 +261,99 @@ dialTest.skip(
           .toBeFalsy();
       },
     );
-
-    await dialTest.step(
-      'Change chat model, send a new request and verify share icon is preserved on chat bar',
-      async () => {
-        const updatedModel = ModelsUtil.getModel(ModelIds.GPT_4)!;
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.waitForState();
-        await talkToSelector.selectModel(updatedModel.name);
-        await chat.applyNewEntity();
-        await conversationSettings.waitForState({ state: 'hidden' });
-        await chat.sendRequestWithButton('1+2', false);
-        await conversations
-          .getConversationArrowIcon(conversation.name)
-          .waitFor();
-      },
-    );
   },
 );
 
-dialTest.skip(
-  'Shared icon does not appear in chat model icon if to create replay or playback',
+dialTest(
+  'Shared icon stays in chat if to continue the conversation.\n' +
+    'Shared icon disappears from chat if to rename conversation.\n' +
+    'Shared icon disappears from chat if to change model',
   async ({
     dialHomePage,
     conversations,
     conversationData,
-    conversationDropdownMenu,
     localStorageManager,
     dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1510');
-    let conversation: TestConversation;
-
-    await dialTest.step('Prepare shared conversation', async () => {
-      conversation = conversationData.prepareDefaultSharedConversation();
-      await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
-    });
+    setTestIds('EPMRTC-1514', 'EPMRTC-2750', 'EPMRTC-2751');
+    let firstConversationToShare: TestConversation;
+    let secondConversationToShare: TestConversation;
+    let thirdConversationToShare: TestConversation;
 
     await dialTest.step(
-      'Create replay and playback conversations based on shared one and verify no arrow icon is shown for them',
+      'Prepare default conversation and share it with another user.\n' +
+        'Shared icon disappears from chat if to rename conversation.\n' +
+        'Shared icon disappears from chat if to change model',
+      async () => {
+        firstConversationToShare =
+          await conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        secondConversationToShare =
+          await conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        thirdConversationToShare =
+          await conversationData.prepareDefaultConversation();
+        const conversationsToShare = [
+          firstConversationToShare,
+          secondConversationToShare,
+          thirdConversationToShare,
+        ];
+
+        await dataInjector.createConversations(conversationsToShare);
+        await localStorageManager.setSelectedConversation(
+          firstConversationToShare,
+        );
+
+        for (const conversation of conversationsToShare) {
+          const shareByLinkResponse =
+            await mainUserShareApiHelper.shareConversationByLink(conversation);
+          await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Update conversation settings for the 1st shared conversation, conversation name for the 2nd conversation and model for the 3rd conversation',
+      async () => {
+        const addons = ModelsUtil.getAddons();
+        firstConversationToShare.prompt = 'repeat the same';
+        firstConversationToShare.temperature = 0.5;
+        firstConversationToShare.selectedAddons = addons ? [addons[0].id] : [];
+
+        secondConversationToShare.name = GeneratorUtil.randomString(7);
+
+        thirdConversationToShare.model.id = ModelIds.GPT_4;
+        await dataInjector.updateConversations([
+          firstConversationToShare,
+          secondConversationToShare,
+          thirdConversationToShare,
+        ]);
+      },
+    );
+
+    await dialTest.step(
+      'Open app and verify arrow icon is preserved only for the 1st conversation with updated settings',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(conversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
-        await conversations.openConversationDropdownMenu(conversation.name, 2);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
-
-        for (const chatName of [
-          `${ExpectedConstants.replayConversation}${conversation.name}`,
-          `${ExpectedConstants.playbackConversation}${conversation.name}`,
+        await conversations
+          .getConversationArrowIcon(firstConversationToShare.name)
+          .waitFor();
+        for (const conversation of [
+          secondConversationToShare,
+          thirdConversationToShare,
         ]) {
           const isArrowIconVisible = await conversations
-            .getConversationArrowIcon(chatName)
+            .getConversationArrowIcon(conversation.name)
             .isVisible();
           expect
-            .soft(isArrowIconVisible, ExpectedMessages.conversationIsNotShared)
+            .soft(
+              isArrowIconVisible,
+              ExpectedMessages.sharedConversationIconIsNotVisible,
+            )
             .toBeFalsy();
         }
       },
@@ -365,7 +361,110 @@ dialTest.skip(
   },
 );
 
-dialTest.skip(
+dialTest(
+  'Shared icon does not appear in chat model icon if to create replay or playback.\n' +
+    'Shared icon does not appear in chat if previously shared chat was deleted and new one with the same name and model created',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    itemApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1510', 'EPMRTC-2002');
+    let conversation: TestConversation;
+    let replayConversation: TestConversation;
+    let playbackConversation: TestConversation;
+    let conversationToDelete: TestConversation;
+
+    await dialTest.step(
+      'Prepare shared conversation and replay and playback conversations based on it',
+      async () => {
+        conversation = await conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+
+        replayConversation =
+          await conversationData.prepareDefaultReplayConversation(conversation);
+        conversationData.resetData();
+
+        playbackConversation =
+          await conversationData.prepareDefaultPlaybackConversation(
+            conversation,
+          );
+        conversationData.resetData();
+
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setSelectedConversation(conversation);
+
+        const shareByLinkResponse =
+          await mainUserShareApiHelper.shareConversationByLink(conversation);
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+
+        await dataInjector.createConversations([
+          replayConversation,
+          playbackConversation,
+        ]);
+      },
+    );
+
+    await dialTest.step(
+      'Prepare one more conversation, delete it and recreate with the same data',
+      async () => {
+        const conversationToDeleteName = GeneratorUtil.randomString(7);
+        conversationToDelete =
+          await conversationData.prepareDefaultConversation(
+            ModelIds.GPT_4,
+            conversationToDeleteName,
+          );
+        conversationData.resetData();
+        await dataInjector.createConversations([conversationToDelete]);
+
+        const shareByLinkResponse =
+          await mainUserShareApiHelper.shareConversationByLink(
+            conversationToDelete,
+          );
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await itemApiHelper.deleteConversation(conversationToDelete);
+
+        conversationToDelete =
+          await conversationData.prepareDefaultConversation(
+            ModelIds.GPT_4,
+            conversationToDeleteName,
+          );
+        await dataInjector.createConversations([conversationToDelete]);
+      },
+    );
+
+    await dialTest.step(
+      'Open app and verify no arrow icon is shown for conversations',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        for (const conversation of [
+          replayConversation,
+          playbackConversation,
+          conversationToDelete,
+        ]) {
+          const isArrowIconVisible = await conversations
+            .getConversationArrowIcon(conversation.name)
+            .isVisible();
+          expect
+            .soft(
+              isArrowIconVisible,
+              ExpectedMessages.sharedConversationIconIsNotVisible,
+            )
+            .toBeFalsy();
+        }
+      },
+    );
+  },
+);
+
+dialTest(
   'Shared icon is blue in Select conversation to compare.\n' +
     'Share chat: tooltip on shared model icon',
   async ({
@@ -378,46 +477,55 @@ dialTest.skip(
     compareConversationSelector,
     tooltip,
     compareConversation,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1600', 'EPMRTC-1511');
-    let notSharedConversation: TestConversation;
-    let sharedConversation: TestConversation;
+    let firstSharedConversation: TestConversation;
+    let secondSharedConversation: TestConversation;
+
+    await dialTest.step('Prepare two shared conversations', async () => {
+      firstSharedConversation =
+        await conversationData.prepareDefaultConversation();
+      conversationData.resetData();
+      secondSharedConversation =
+        await conversationData.prepareDefaultConversation();
+
+      const conversationsToShare = [
+        firstSharedConversation,
+        secondSharedConversation,
+      ];
+
+      await dataInjector.createConversations(conversationsToShare);
+      await localStorageManager.setSelectedConversation(
+        firstSharedConversation,
+      );
+
+      for (const conversation of conversationsToShare) {
+        const shareByLinkResponse =
+          await mainUserShareApiHelper.shareConversationByLink(conversation);
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      }
+    });
 
     await dialTest.step(
-      'Prepare one shared and one not shared conversations',
-      async () => {
-        notSharedConversation = conversationData.prepareDefaultConversation();
-        conversationData.resetData();
-        sharedConversation =
-          conversationData.prepareDefaultSharedConversation();
-        await dataInjector.createConversations([
-          notSharedConversation,
-          sharedConversation,
-        ]);
-        await localStorageManager.setSelectedConversation(
-          notSharedConversation,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Open Compare mode for not shared conversation and verify shared conversation has blue arrow in Compare dropdown list',
+      'Open Compare mode for shared conversation and verify shared conversation has blue arrow in Compare dropdown list',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
-          notSharedConversation.name,
+          firstSharedConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
         await compareConversationSelector.click();
         await compareConversationSelector
-          .getOptionAdditionalIcon(sharedConversation.name)
+          .getOptionAdditionalIcon(secondSharedConversation.name)
           .waitFor();
         const arrowIconColor =
           await compareConversationSelector.getOptionArrowIconColor(
-            sharedConversation.name,
+            secondSharedConversation.name,
           );
         expect
           .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
@@ -429,11 +537,24 @@ dialTest.skip(
       'Hover over arrow in the dropdown list option and verify tooltip shown',
       async () => {
         await compareConversationSelector
-          .getOptionAdditionalIcon(sharedConversation.name)
+          .getOptionAdditionalIcon(secondSharedConversation.name)
           .hover();
-        const tooltipChatName = await tooltip.getContent();
+        const sharedTooltip = await tooltip.getContent();
         expect
-          .soft(tooltipChatName, ExpectedMessages.tooltipContentIsValid)
+          .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
+          .toBe(ExpectedConstants.sharedConversationTooltip);
+      },
+    );
+
+    await dialTest.step(
+      'Hover over arrow icon in the side bar conversation and verify tooltip shown',
+      async () => {
+        await conversations
+          .getConversationArrowIcon(firstSharedConversation.name)
+          .hover();
+        const sharedTooltip = await tooltip.getContent();
+        expect
+          .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
           .toBe(ExpectedConstants.sharedConversationTooltip);
       },
     );

@@ -46,6 +46,12 @@ export class SendMessage extends BaseElement {
     await this.messageInputSpinner.waitForState({ state: 'detached' });
   }
 
+  public async pasteDataIntoMessageInput() {
+    await this.messageInput.waitForState();
+    await this.messageInput.click();
+    await this.page.keyboard.press(keys.ctrlPlusV);
+  }
+
   private async fillRequestData(message: string) {
     await this.messageInput.waitForState();
     await this.sendMessageButton.waitForState();
