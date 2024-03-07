@@ -287,20 +287,29 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           }
         }
 
-        if (signInOptions?.autoSignIn) {
-          signIn(signInOptions?.signInProvider);
-        }
-
         // after all actions will send notify that settings are set
         actions.push(
           of(
             OverlayActions.setOverlayOptionsSuccess({ hostDomain, requestId }),
+            OverlayActions.signInOptionsSet({ signInOptions }),
           ),
         );
 
         return merge(...actions);
       },
     ),
+  );
+
+const signInOptionsSet: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(OverlayActions.signInOptionsSet.match),
+    filter(() => AuthSelectors.selectIsShouldLogin(state$.value)),
+    tap(({ payload: { signInOptions } }) => {
+      if (signInOptions?.autoSignIn) {
+        signIn(signInOptions?.signInProvider);
+      }
+    }),
+    ignoreElements(),
   );
 
 const setOverlayOptionsSuccessEpic: AppEpic = (action$) =>
@@ -368,4 +377,5 @@ export const OverlayEpics = combineEpics(
   sendMessageEpic,
   notifyHostGPTMessageStatus,
   setOverlayOptionsSuccessEpic,
+  signInOptionsSet,
 );

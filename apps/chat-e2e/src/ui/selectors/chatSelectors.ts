@@ -16,6 +16,7 @@ export const ChatSelectors = {
   expandGroupEntity: '[data-qa="expand-group-entity"]',
   systemPrompt: '[data-qa="system-prompt"]',
   message: '[data-qa="message"]',
+  textarea: '[data-qa="chat-textarea"]',
   messageSpinner: '[data-qa="message-input-spinner"]',
   chatMessages: '[data-qa="chat-messages"]',
   chatMessage: '[data-qa="chat-message"]',

@@ -20,7 +20,7 @@ export class SendMessage extends BaseElement {
     return this.promptList;
   }
 
-  public messageInput = this.getChildElementBySelector(Tags.textarea);
+  public messageInput = this.getChildElementBySelector(ChatSelectors.textarea);
   public sendMessageButton = this.getChildElementBySelector(
     ChatSelectors.sendMessage,
   );
