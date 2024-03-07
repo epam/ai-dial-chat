@@ -43,6 +43,8 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
+import { AdjustedTextarea } from './AdjustedTextarea';
+
 import uniq from 'lodash-es/uniq';
 
 export interface Props {
@@ -104,7 +106,7 @@ export const ChatMessageContent = ({
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   const isLastMessage =
     messageIndex == (conversation?.messages.length ?? 0) - 1;
@@ -113,6 +115,7 @@ export const ChatMessageContent = ({
     !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
   const messageRef = useRef<HTMLDivElement>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
 
   const codeRegEx =
     /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
@@ -171,6 +174,21 @@ export const ChatMessageContent = ({
     [],
   );
 
+  useEffect(() => {
+    if (shouldScroll) {
+      anchorRef.current?.scrollIntoView({ block: 'end' });
+      setShouldScroll(false);
+    }
+  }, [shouldScroll]);
+
+  const handleToggleEditing = useCallback(
+    (value?: boolean) => {
+      toggleEditing(value ?? !isEditing);
+      setShouldScroll(true);
+    },
+    [isEditing, toggleEditing],
+  );
+
   const handleEditMessage = useCallback(() => {
     if (isSubmitAllowed) {
       return;
@@ -200,14 +218,14 @@ export const ChatMessageContent = ({
         );
       }
     }
-    toggleEditing(false);
+    handleToggleEditing(false);
   }, [
     isSubmitAllowed,
     newEditableAttachmentsIds,
     mappedUserEditableAttachmentsIds,
     message,
     messageContent,
-    toggleEditing,
+    handleToggleEditing,
     conversation,
     onEdit,
     newEditableAttachments,
@@ -217,12 +235,6 @@ export const ChatMessageContent = ({
   useEffect(() => {
     setMessageContent(message.content);
   }, [message.content]);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [isEditing, messageContent]);
 
   const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
@@ -341,8 +353,7 @@ export const ChatMessageContent = ({
                     !isOverlay && 'text-base',
                   )}
                 >
-                  <textarea
-                    ref={textareaRef}
+                  <AdjustedTextarea
                     className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
                     value={messageContent}
                     onChange={handleInputChange}
@@ -377,7 +388,7 @@ export const ChatMessageContent = ({
                       onUploadFromDevice={handleUploadFromDevice}
                     />
                   </div>
-                  <div className="flex gap-3">
+                  <div className="relative flex gap-3">
                     <button
                       className="button button-secondary"
                       onClick={() => {
@@ -385,7 +396,7 @@ export const ChatMessageContent = ({
                         setNewEditableAttachmentsIds(
                           mappedUserEditableAttachmentsIds,
                         );
-                        toggleEditing(false);
+                        handleToggleEditing(false);
                       }}
                       data-qa="cancel"
                     >
@@ -399,12 +410,16 @@ export const ChatMessageContent = ({
                     >
                       {t('Save & Submit')}
                     </button>
+                    <div
+                      ref={anchorRef}
+                      className="absolute bottom-[-120px]"
+                    ></div>
                   </div>
                 </div>
               </div>
             ) : (
               <>
-                <div className="mr-2 flex w-full flex-col gap-5">
+                <div className="relative mr-2 flex w-full flex-col gap-5">
                   {message.content && (
                     <div
                       className={classNames(
@@ -422,13 +437,17 @@ export const ChatMessageContent = ({
                   <MessageAttachments
                     attachments={message.custom_content?.attachments}
                   />
+                  <div
+                    ref={anchorRef}
+                    className="absolute bottom-[-160px]"
+                  ></div>
                 </div>
                 {showUserButtons && (
                   <MessageUserButtons
                     isEditAvailable={!!onEdit}
                     editDisabled={editDisabled}
                     onDelete={() => onDelete?.()}
-                    toggleEditing={() => toggleEditing(!isEditing)}
+                    toggleEditing={handleToggleEditing}
                   />
                 )}
               </>
