@@ -20,6 +20,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
@@ -263,18 +264,25 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       )
     ) {
       dispatch(
-        UIActions.showToast({
-          message: t(
+        UIActions.showErrorToast(
+          t(
             'Folder with name "{{folderName}}" already exists in this folder.',
             {
               ns: 'folder',
               folderName: newName,
             },
           ),
-          type: 'error',
-        }),
+        ),
       );
+      return;
+    }
 
+    if (isEntityNameInvalid(newName)) {
+      dispatch(
+        UIActions.showErrorToast(
+          t('Using a dot at the end of a name is not permitted.'),
+        ),
+      );
       return;
     }
 
