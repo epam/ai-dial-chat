@@ -16,7 +16,7 @@ export const ChatInputLinkAttachment = ({ link, onUnselect }: Props) => {
       <div className="flex grow justify-between gap-3 overflow-hidden">
         <div className="flex grow flex-col overflow-hidden text-sm">
           <span className="block max-w-full truncate">
-            {link.title ?? link.href}
+            {link.title || link.href}
           </span>
         </div>
         {onUnselect && (
