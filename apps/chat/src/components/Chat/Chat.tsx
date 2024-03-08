@@ -285,12 +285,13 @@ export const ChatView = memo(() => {
         );
       }
 
-      handleScroll();
       setMergedMessages([...mergedMessages]);
     }
 
-    if (selectedConversations.some((conv) => conv.messages.length === 0)) {
+    if (selectedConversations.every((conv) => conv.messages.length === 0)) {
       setShowScrollDownButton(false);
+    } else {
+      handleScroll();
     }
   }, [handleScroll, selectedConversations]);
 
