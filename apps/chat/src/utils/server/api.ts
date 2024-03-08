@@ -87,7 +87,8 @@ export const parsePromptApiKey = (
 
 export class ApiUtils {
   static safeEncodeURIComponent = (urlComponent: string) =>
-    urlComponent.replace(/[^\uD800-\uDBFF \uDC00-\uDFFF]+/gm, (match) =>
+    // eslint-disable-next-line no-misleading-character-class
+    urlComponent.replace(/[^\uD800-\uDBFF\uDC00-\uDFFF]+/gm, (match) =>
       encodeURIComponent(match),
     );
 
