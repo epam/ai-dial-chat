@@ -295,7 +295,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             cancelLabel={t('Cancel')}
             description={
               t(
-                'Renaming will stop sharing and other users will no longer see this conversation.',
+                'Renaming will stop sharing and other users will no longer see this prompt.',
               ) || ''
             }
             onClose={(result) => {

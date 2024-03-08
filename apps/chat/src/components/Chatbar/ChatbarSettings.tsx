@@ -110,7 +110,6 @@ export const ChatbarSettings = () => {
             zipImportHandler(typedArgs.content as File);
           }
         },
-        display: isMyItemsExist,
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
@@ -120,6 +119,7 @@ export const ChatbarSettings = () => {
         dataQa: 'export',
         className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
+        display: isMyItemsExist,
         onClick: () => {
           dispatch(ImportExportActions.exportConversations());
         },
