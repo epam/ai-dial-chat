@@ -25,7 +25,7 @@ export const ChatInputAttachment = ({
   return (
     <div
       key={file.id}
-      className="flex gap-3 rounded border border-primary bg-layer-1 p-3"
+      className="flex items-center gap-3 rounded border border-primary bg-layer-1 px-3 py-2"
     >
       {file.status !== UploadStatus.FAILED ? (
         <IconFile className="shrink-0 text-secondary" size={18} />
@@ -37,7 +37,7 @@ export const ChatInputAttachment = ({
         <div className="flex grow flex-col overflow-hidden">
           <span
             className={classNames(
-              'block max-w-full truncate',
+              'block max-w-full truncate text-sm',
               file.status === UploadStatus.FAILED && 'text-error',
             )}
           >
