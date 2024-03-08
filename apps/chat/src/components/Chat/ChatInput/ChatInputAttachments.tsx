@@ -18,16 +18,12 @@ export const ChatInputAttachments = ({
     return null;
   }
 
-  return (
-    <>
-      {files.map((file) => (
-        <ChatInputAttachment
-          key={file.id}
-          file={file}
-          onUnselectFile={onUnselectFile}
-          onRetryFile={onRetryFile}
-        />
-      ))}
-    </>
-  );
+  return files.map((file) => (
+    <ChatInputAttachment
+      key={file.id}
+      file={file}
+      onUnselectFile={onUnselectFile}
+      onRetryFile={onRetryFile}
+    />
+  ));
 };

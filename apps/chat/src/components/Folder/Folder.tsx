@@ -922,7 +922,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         cancelLabel={t('Cancel')}
         description={
           t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
+            'Renaming will stop sharing and other users will no longer see this folder.',
           ) || ''
         }
         onClose={(result) => {
