@@ -15,13 +15,14 @@ import classNames from 'classnames';
 
 import {
   getDialFilesFromAttachments,
+  getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { DialFile, DialLink } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -45,6 +46,7 @@ import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { AdjustedTextarea } from './AdjustedTextarea';
 
+import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
 export interface Props {
@@ -131,9 +133,26 @@ export const ChatMessageContent = ({
 
   const files = useAppSelector(FilesSelectors.selectFiles);
 
+  const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
   const [newEditableAttachmentsIds, setNewEditableAttachmentsIds] = useState<
     string[]
   >(mappedUserEditableAttachmentsIds);
+
+  const handleAddLinkToMessage = useCallback((link: DialLink) => {
+    setSelectedDialLinks((links) => links.concat([link]));
+  }, []);
+  const handleUnselectLink = useCallback((unselectedIndex: number) => {
+    setSelectedDialLinks((links) =>
+      links.filter((_link, index) => unselectedIndex !== index),
+    );
+  }, []);
+
+  useEffect(() => {
+    const links = getDialLinksFromAttachments(
+      message.custom_content?.attachments,
+    );
+    setSelectedDialLinks(links);
+  }, [message.custom_content?.attachments]);
 
   useEffect(() => {
     setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
@@ -194,17 +213,17 @@ export const ChatMessageContent = ({
       return;
     }
 
-    const isFinalAttachmentIdsSame =
-      newEditableAttachmentsIds.length ===
-        mappedUserEditableAttachmentsIds.length &&
-      newEditableAttachmentsIds.every((id) =>
-        mappedUserEditableAttachmentsIds.includes(id),
-      );
+    const attachments = getUserCustomContent(
+      newEditableAttachments,
+      selectedDialLinks,
+    );
+    const isAttachmentsSame = isEqual(
+      message.custom_content?.attachments,
+      attachments?.attachments,
+    );
 
-    if (message.content != messageContent || !isFinalAttachmentIdsSame) {
+    if (message.content != messageContent || !isAttachmentsSame) {
       if (conversation && onEdit) {
-        const attachments = getUserCustomContent(newEditableAttachments);
-
         onEdit(
           {
             ...message,
@@ -216,19 +235,19 @@ export const ChatMessageContent = ({
           },
           messageIndex,
         );
+        setSelectedDialLinks([]);
       }
     }
     handleToggleEditing(false);
   }, [
     isSubmitAllowed,
-    newEditableAttachmentsIds,
-    mappedUserEditableAttachmentsIds,
     message,
     messageContent,
     handleToggleEditing,
     conversation,
     onEdit,
     newEditableAttachments,
+    selectedDialLinks,
     messageIndex,
   ]);
 
@@ -369,12 +388,15 @@ export const ChatMessageContent = ({
                     }}
                   />
 
-                  {newEditableAttachments.length > 0 && (
+                  {(newEditableAttachments.length > 0 ||
+                    selectedDialLinks.length > 0) && (
                     <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
                       <ChatInputAttachments
                         files={newEditableAttachments}
+                        links={selectedDialLinks}
                         onUnselectFile={handleUnselectFile}
                         onRetryFile={handleRetry}
+                        onUnselectLink={handleUnselectLink}
                       />
                     </div>
                   )}
@@ -386,6 +408,7 @@ export const ChatMessageContent = ({
                       selectedFilesIds={newEditableAttachmentsIds}
                       onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                       onUploadFromDevice={handleUploadFromDevice}
+                      onAddLinkToMessage={handleAddLinkToMessage}
                     />
                   </div>
                   <div className="relative flex gap-3">
