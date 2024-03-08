@@ -39,7 +39,7 @@ export const isEntityNameOnSameLevelUnique = (
 };
 
 export const isEntityNameInvalid = (name: string) => {
-  return name.endsWith('.');
+  return name.trim().endsWith('.');
 };
 
 export const filterOnlyMyEntities = <T extends ShareEntity>(
