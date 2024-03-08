@@ -38,6 +38,10 @@ export const isEntityNameOnSameLevelUnique = (
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
+export const isEntityNameInvalid = (name: string) => {
+  return name.endsWith('.');
+};
+
 export const filterOnlyMyEntities = <T extends ShareEntity>(
   entities: T[],
 ): T[] =>
@@ -92,7 +96,7 @@ export const prepareEntityName = (name: string, forRenaming = false) => {
         .filter(Boolean)[0] ?? '';
 
   if (clearName.length > MAX_ENTITY_LENGTH) {
-    return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';
+    return clearName.substring(0, MAX_ENTITY_LENGTH);
   }
 
   return clearName;
