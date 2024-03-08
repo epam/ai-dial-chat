@@ -38,3 +38,8 @@ export type FileFolderInterface = FolderInterface & {
 };
 
 export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
+
+export interface DialLink {
+  title?: string;
+  href: string;
+}
