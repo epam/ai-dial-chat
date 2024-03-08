@@ -55,6 +55,18 @@ export class GroupEntity extends BaseElement {
     await this.groupEntity(entity).click();
   }
 
+  public async waitForGroupEntitySelected(entity: string) {
+    await this.groupEntity(entity)
+      .getElementLocator()
+      .and(
+        new BaseElement(
+          this.page,
+          ChatSelectors.selectedGroupEntity,
+        ).getElementLocator(),
+      )
+      .waitFor({ state: 'attached' });
+  }
+
   public async getGroupEntityNames() {
     return this.recentEntityNames.getElementsInnerContent();
   }

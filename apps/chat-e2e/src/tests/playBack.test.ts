@@ -795,12 +795,9 @@ dialTest(
       'Click Play Next message button and verify Play Next is not visible and cursor is blinking while response is loading, content auto-scrolled to the end of response',
       async () => {
         await chat.playNextChatMessage(false);
-        const isPlaybackNextBtnVisible =
-          await playbackControl.playbackNextButton.isVisible();
-        expect(
-          isPlaybackNextBtnVisible,
-          ExpectedMessages.playbackNextMessageIsHidden,
-        ).toBeFalsy();
+        await playbackControl.playbackNextButton.waitForState({
+          state: 'hidden',
+        });
 
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect

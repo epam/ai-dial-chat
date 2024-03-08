@@ -82,7 +82,7 @@ export class ModelsUtil {
   }
 
   public static getDefaultModel() {
-    return ModelsUtil.getModels().find((a) => a.isDefault === true);
+    return ModelsUtil.getModels().find((a) => a.isDefault);
   }
 
   public static getApplication(appId: string) {
