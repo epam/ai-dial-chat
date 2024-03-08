@@ -15,7 +15,7 @@ let allEntities: DialAIEntityModel[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
-  bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  bison = ModelsUtil.getModel(ModelIds.CHAT_BISON)!;
   recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();

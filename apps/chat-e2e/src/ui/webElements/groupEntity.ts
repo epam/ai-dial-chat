@@ -15,7 +15,7 @@ export class GroupEntity extends BaseElement {
   public groupEntity = (entity: string) => {
     const entityName = new BaseElement(
       this.page,
-      `${ChatSelectors.groupEntityName}:has-text('${entity}')`,
+      `${ChatSelectors.groupEntityName}:text-is('${entity}')`,
     ).getElementLocator();
     return this.createElementFromLocator(
       this.rootLocator.filter({ has: entityName }),
