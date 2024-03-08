@@ -1,6 +1,7 @@
 import { NextApiRequest } from 'next';
 
 import { constructPath } from '../app/file';
+import { ApiUtils } from './api';
 
 export class ServerUtils {
   public static getEntityTypeFromPath = (
@@ -13,6 +14,6 @@ export class ServerUtils {
     constructPath(
       ...slugs
         .filter(Boolean)
-        .map((part) => encodeURIComponent(part as string)),
+        .map((part) => ApiUtils.safeEncodeURIComponent(part as string)),
     );
 }
