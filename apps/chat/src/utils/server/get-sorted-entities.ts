@@ -8,6 +8,7 @@ import {
 } from '@/src/types/models';
 
 import {
+  DEFAULT_MODEL_ID,
   MAX_PROMPT_TOKENS_DEFAULT_PERCENT,
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
@@ -71,9 +72,9 @@ export const getSortedEntities = async (token: JWT | null) => {
   });
 
   const preProcessedEntities = [...models, ...applications, ...assistants];
-  const defaultModelId =
-    preProcessedEntities.find((model) => model.id === process.env.DEFAULT_MODEL)
-      ?.id || preProcessedEntities[0].id;
+  let defaultModelId = preProcessedEntities.find(
+    (model) => model.id === DEFAULT_MODEL_ID,
+  )?.id;
 
   for (const entity of [...models, ...applications, ...assistants]) {
     if (
@@ -82,6 +83,14 @@ export const getSortedEntities = async (token: JWT | null) => {
         entity.capabilities?.chat_completion !== true)
     ) {
       continue;
+    }
+
+    if (!defaultModelId) {
+      logger.warn(
+        undefined,
+        `Cannot find default model id("${DEFAULT_MODEL_ID}") in models listing. Recheck config for models in Core or change default model id to existing model.`,
+      );
+      defaultModelId = entity.id;
     }
 
     let maxRequestTokens;
@@ -137,8 +146,9 @@ export const getSortedEntities = async (token: JWT | null) => {
             }
           : undefined,
       features: entity.features && {
-        systemPrompt: entity.features?.system_prompt || false,
-        truncatePrompt: entity.features?.truncate_prompt || false,
+        systemPrompt: entity.features.system_prompt || false,
+        truncatePrompt: entity.features.truncate_prompt || false,
+        urlAttachments: entity.features.url_attachments || false,
       },
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,

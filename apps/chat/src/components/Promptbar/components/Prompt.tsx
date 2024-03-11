@@ -284,7 +284,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     <>
       <div
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:pr-9',
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',

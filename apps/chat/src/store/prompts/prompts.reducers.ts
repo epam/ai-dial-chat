@@ -111,7 +111,6 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ newPrompt: Prompt }>,
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
-      state.selectedPromptId = payload.newPrompt.id;
       state.isNewPromptCreating = false;
     },
     setIsNewPromptCreating: (state, { payload }: PayloadAction<boolean>) => {

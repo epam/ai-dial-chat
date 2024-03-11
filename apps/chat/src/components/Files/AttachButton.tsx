@@ -1,5 +1,6 @@
 import {
   IconFileDescription,
+  IconLink,
   IconPaperclip,
   IconUpload,
 } from '@tabler/icons-react';
@@ -8,7 +9,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { DialFile, DialLink } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -17,6 +18,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import ContextMenu from '../Common/ContextMenu';
+import { AttachLinkDialog } from './AttachLinkDialog';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
 
@@ -27,12 +29,14 @@ interface Props {
     selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
     folderPath: string | undefined,
   ) => void;
+  onAddLinkToMessage: (link: DialLink) => void;
 }
 
 export const AttachButton = ({
   selectedFilesIds,
   onSelectAlreadyUploaded,
   onUploadFromDevice,
+  onAddLinkToMessage,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
@@ -45,9 +49,16 @@ export const AttachButton = ({
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
-  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttach);
+  const canAttachFiles = useAppSelector(
+    ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachLinks = useAppSelector(
+    ConversationsSelectors.selectCanAttachLink,
+  );
   const [isPreUploadDialogOpened, setIsPreUploadDialogOpened] = useState(false);
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
+    useState(false);
+  const [isAttachLinkDialogOpened, setIsAttachLinkDialogOpened] =
     useState(false);
 
   const handleOpenAttachmentsModal = useCallback(() => {
@@ -56,26 +67,46 @@ export const AttachButton = ({
   const handleAttachFromComputer = useCallback(() => {
     setIsPreUploadDialogOpened(true);
   }, []);
+  const handleAttachLink = useCallback(() => {
+    setIsAttachLinkDialogOpened(true);
+  }, []);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
-    () => [
-      {
-        name: t('Attach uploaded files'),
-        dataQa: 'attach_uploaded',
-        Icon: IconFileDescription,
-        onClick: handleOpenAttachmentsModal,
-      },
-      {
-        name: t('Upload from device'),
-        dataQa: 'upload_from_device',
-        Icon: IconUpload,
-        onClick: handleAttachFromComputer,
-      },
+    () =>
+      [
+        {
+          name: t('Attach uploaded files'),
+          dataQa: 'attach_uploaded',
+          display: canAttachFiles,
+          Icon: IconFileDescription,
+          onClick: handleOpenAttachmentsModal,
+        },
+        {
+          name: t('Upload from device'),
+          dataQa: 'upload_from_device',
+          display: canAttachFiles,
+          Icon: IconUpload,
+          onClick: handleAttachFromComputer,
+        },
+        {
+          name: t('Attach link'),
+          dataQa: 'attach_link',
+          display: canAttachLinks,
+          Icon: IconLink,
+          onClick: handleAttachLink,
+        },
+      ] as DisplayMenuItemProps[],
+    [
+      canAttachFiles,
+      canAttachLinks,
+      handleAttachFromComputer,
+      handleAttachLink,
+      handleOpenAttachmentsModal,
+      t,
     ],
-    [handleAttachFromComputer, handleOpenAttachmentsModal, t],
   );
 
-  if (!canAttach) return null;
+  if (!canAttachFiles && !canAttachLinks) return null;
 
   return (
     <>
@@ -111,6 +142,16 @@ export const AttachButton = ({
           onUploadFiles={onUploadFromDevice}
           onClose={() => {
             setIsPreUploadDialogOpened(false);
+          }}
+        />
+      )}
+      {isAttachLinkDialogOpened && (
+        <AttachLinkDialog
+          onClose={(link?: DialLink) => {
+            if (link) {
+              onAddLinkToMessage(link);
+            }
+            setIsAttachLinkDialogOpened(false);
           }}
         />
       )}
