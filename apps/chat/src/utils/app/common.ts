@@ -6,6 +6,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 
+import trimEnd from 'lodash-es/trimEnd';
 import uniq from 'lodash-es/uniq';
 
 /**
@@ -36,6 +37,10 @@ export const isEntityNameOnSameLevelUnique = (
   );
 
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
+};
+
+export const doesHaveDotsInTheEnd = (name: string) => {
+  return name.trim().endsWith('.');
 };
 
 export const filterOnlyMyEntities = <T extends ShareEntity>(
@@ -82,6 +87,8 @@ export const updateEntitiesFoldersAndIds = (
   return { updatedFolders, updatedOpenedFoldersIds };
 };
 
+const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
+
 export const prepareEntityName = (name: string, forRenaming = false) => {
   const clearName = forRenaming
     ? name.replace(notAllowedSymbolsRegex, '').trim()
@@ -92,8 +99,8 @@ export const prepareEntityName = (name: string, forRenaming = false) => {
         .filter(Boolean)[0] ?? '';
 
   if (clearName.length > MAX_ENTITY_LENGTH) {
-    return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';
+    return trimEndDots(clearName.substring(0, MAX_ENTITY_LENGTH));
   }
 
-  return clearName;
+  return trimEndDots(clearName);
 };

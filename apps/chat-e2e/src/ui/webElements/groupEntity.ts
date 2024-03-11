@@ -15,10 +15,10 @@ export class GroupEntity extends BaseElement {
   public groupEntity = (entity: string) => {
     const entityName = new BaseElement(
       this.page,
-      `${ChatSelectors.groupEntityName}:has-text('${entity}')`,
+      `${ChatSelectors.groupEntityName}:text('${entity}')`,
     ).getElementLocator();
     return this.createElementFromLocator(
-      this.rootLocator.filter({ has: entityName }),
+      this.rootLocator.filter({ has: entityName }).first(),
     );
   };
 
@@ -53,6 +53,18 @@ export class GroupEntity extends BaseElement {
 
   public async selectGroupEntity(entity: string) {
     await this.groupEntity(entity).click();
+  }
+
+  public async waitForGroupEntitySelected(entity: string) {
+    await this.groupEntity(entity)
+      .getElementLocator()
+      .and(
+        new BaseElement(
+          this.page,
+          ChatSelectors.selectedGroupEntity,
+        ).getElementLocator(),
+      )
+      .waitFor({ state: 'attached' });
   }
 
   public async getGroupEntityNames() {

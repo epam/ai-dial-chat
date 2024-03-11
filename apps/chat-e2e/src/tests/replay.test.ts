@@ -23,7 +23,7 @@ dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
   gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
-  bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  bison = ModelsUtil.getModel(ModelIds.CHAT_BISON)!;
 });
 
 dialTest(
@@ -1004,7 +1004,7 @@ dialTest(
           { isHttpMethodTriggered: true },
         );
 
-        const newModels = [ModelIds.BISON_001, ModelIds.GPT_4];
+        const newModels = [ModelIds.CHAT_BISON, ModelIds.GPT_4];
         for (let i = 1; i <= newModels.length; i++) {
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
@@ -1058,7 +1058,7 @@ dialTest(
       async () => {
         const requests = await chat.startReplayForDifferentModels();
         for (let i = 0; i < requests.length; i++) {
-          const modelId = i === 1 ? ModelIds.BISON_001 : ModelIds.GPT_4;
+          const modelId = i === 1 ? ModelIds.CHAT_BISON : ModelIds.GPT_4;
           expect
             .soft(requests[i].modelId, ExpectedMessages.chatRequestModelIsValid)
             .toBe(modelId);

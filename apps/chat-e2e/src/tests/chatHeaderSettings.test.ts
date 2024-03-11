@@ -26,7 +26,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-449');
     let conversation: TestConversation;
-    const allModels = ModelsUtil.getModels();
+    const allModels = ModelsUtil.getLatestModels();
     const randomModel = GeneratorUtil.randomArrayElement(
       allModels.filter((m) => m.id !== defaultModel.id),
     );
