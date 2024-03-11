@@ -15,10 +15,10 @@ export class GroupEntity extends BaseElement {
   public groupEntity = (entity: string) => {
     const entityName = new BaseElement(
       this.page,
-      `${ChatSelectors.groupEntityName}:text-is('${entity}')`,
+      `${ChatSelectors.groupEntityName}:text('${entity}')`,
     ).getElementLocator();
     return this.createElementFromLocator(
-      this.rootLocator.filter({ has: entityName }),
+      this.rootLocator.filter({ has: entityName }).first(),
     );
   };
 
