@@ -36,7 +36,7 @@ import Folder from '@/src/components/Folder/Folder';
 
 import CollapsableSection from '../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
-import { ConversationComponent } from './Conversation';
+import { ConversationComponentWithContextMenu } from './Conversation';
 
 interface ChatFolderProps {
   folder: FolderInterface;
@@ -182,7 +182,7 @@ const ChatFolderTemplate = ({
         readonly={readonly}
         searchTerm={searchTerm}
         currentFolder={folder}
-        itemComponent={ConversationComponent}
+        itemComponent={ConversationComponentWithContextMenu}
         allItems={conversations}
         allItemsWithoutFilters={allConversations}
         allFolders={conversationFolders}
@@ -318,7 +318,7 @@ export const ChatSection = ({
       {displayRootFiles && (
         <div className="flex flex-col gap-1">
           {sortedRootConversations.map((item) => (
-            <ConversationComponent key={item.id} item={item} />
+            <ConversationComponentWithContextMenu key={item.id} item={item} />
           ))}
         </div>
       )}

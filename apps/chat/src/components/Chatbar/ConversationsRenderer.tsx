@@ -6,7 +6,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 
 import CollapsableSection from '../Common/CollapsableSection';
-import { ConversationComponent } from './Conversation';
+import { ConversationComponentWithContextMenu } from './Conversation';
 
 interface ConversationsRendererProps {
   conversations: Conversation[];
@@ -39,7 +39,7 @@ export const ConversationsRenderer = ({
         >
           <div className="flex flex-col gap-1 py-1">
             {conversations.map((conversation) => (
-              <ConversationComponent
+              <ConversationComponentWithContextMenu
                 key={conversation.id}
                 item={conversation}
               />
