@@ -16,6 +16,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
@@ -210,18 +211,26 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
     ) {
       dispatch(
-        UIActions.showToast({
-          message: t(
+        UIActions.showErrorToast(
+          t(
             'Conversation with name "{{newName}}" already exists in this folder.',
             {
               ns: 'chat',
               newName,
             },
           ),
-          type: 'error',
-        }),
+        ),
       );
 
+      return;
+    }
+
+    if (doesHaveDotsInTheEnd(newName)) {
+      dispatch(
+        UIActions.showErrorToast(
+          t('Using a dot at the end of a name is not permitted.'),
+        ),
+      );
       return;
     }
 
