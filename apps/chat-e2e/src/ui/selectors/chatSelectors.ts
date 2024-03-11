@@ -14,6 +14,7 @@ export const ChatSelectors = {
   groupEntityName: '[data-qa="group-entity-name"]',
   groupEntityDescr: '[data-qa="group-entity-descr"]',
   expandGroupEntity: '[data-qa="expand-group-entity"]',
+  selectedGroupEntity: '.border-accent-primary',
   systemPrompt: '[data-qa="system-prompt"]',
   message: '[data-qa="message"]',
   textarea: '[data-qa="chat-textarea"]',
