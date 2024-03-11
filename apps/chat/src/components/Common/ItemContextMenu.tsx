@@ -60,6 +60,7 @@ interface ItemContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
+  isLoading?: boolean;
 }
 
 export default function ItemContextMenu({
@@ -86,6 +87,7 @@ export default function ItemContextMenu({
   onOpenChange,
   onDuplicate,
   onView,
+  isLoading,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -317,9 +319,10 @@ export default function ItemContextMenu({
   return (
     <ContextMenu
       menuItems={menuItems}
+      isLoading={isLoading}
       TriggerIcon={IconDots}
       triggerIconSize={18}
-      className={classNames(className)}
+      className={className}
       featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
