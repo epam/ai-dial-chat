@@ -53,7 +53,6 @@ import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
-import { withContextMenu } from '@/src/components/Sidebar/withContextMenu';
 
 import PublishModal from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
@@ -111,7 +110,7 @@ interface Props {
   level?: number;
 }
 
-const ConversationComponent = ({ item: conversation, level }: Props) => {
+export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -727,7 +726,3 @@ const ConversationComponent = ({ item: conversation, level }: Props) => {
     </div>
   );
 };
-
-export const ConversationComponentWithContextMenu = withContextMenu(
-  ConversationComponent,
-);
