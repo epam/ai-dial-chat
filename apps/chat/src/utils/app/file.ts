@@ -4,7 +4,7 @@ import { DialFile, DialLink } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { ApiUtils } from '../server/api';
-import { isEntityNameInvalid } from './common';
+import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -131,7 +131,7 @@ export const getFilesWithInvalidFileName = <T extends { name: string }>(
 ): T[] => {
   return files.filter(
     ({ name }) =>
-      name.match(notAllowedSymbolsRegex) || isEntityNameInvalid(name),
+      name.match(notAllowedSymbolsRegex) || doesHaveDotsInTheEnd(name),
   );
 };
 
