@@ -2230,32 +2230,35 @@ const recreateConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.recreateConversation.match),
     mergeMap(({ payload }) => {
-      return zip(
-        ConversationService.createConversation(payload.new),
-        ConversationService.deleteConversation(
-          getConversationInfoFromId(payload.old.id),
-        ),
-      ).pipe(
-        switchMap(() => EMPTY),
-        catchError((err) => {
-          console.error(err);
-          return concat(
-            of(
-              ConversationsActions.recreateConversationFail({
-                newId: payload.new.id,
-                oldConversation: payload.old,
-              }),
+      return ConversationService.createConversation(payload.new)
+        .pipe(
+          switchMap(() =>
+            ConversationService.deleteConversation(
+              getConversationInfoFromId(payload.old.id),
             ),
-            of(
-              UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the conversation. Please refresh the page.',
+          ),
+        )
+        .pipe(
+          switchMap(() => EMPTY),
+          catchError((err) => {
+            console.error(err);
+            return concat(
+              of(
+                ConversationsActions.recreateConversationFail({
+                  newId: payload.new.id,
+                  oldConversation: payload.old,
+                }),
+              ),
+              of(
+                UIActions.showErrorToast(
+                  translate(
+                    'An error occurred while saving the conversation. Please refresh the page.',
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
-      );
+            );
+          }),
+        );
     }),
   );
 
