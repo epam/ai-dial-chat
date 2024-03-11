@@ -30,7 +30,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, isNotLoaded } from '@/src/types/common';
+import { FeatureType, UploadStatus, isNotLoaded } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -578,7 +578,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'invisible absolute right-3 z-50 flex justify-end group-hover:visible',
+            'absolute right-3 z-50 flex justify-end group-hover:visible',
+            (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
+              'invisible',
           )}
           data-qa="dots-menu"
         >
@@ -587,9 +589,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
-            onOpenMoveToModal={() => {
-              setIsShowMoveToModal(true);
-            }}
+            onOpenMoveToModal={() => setIsShowMoveToModal(true)}
             onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
             onRename={handleStartRename}
@@ -606,6 +606,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onUnpublish={handleOpenUnpublishing}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
+            isLoading={conversation.status !== UploadStatus.LOADED}
           />
         </div>
       )}
