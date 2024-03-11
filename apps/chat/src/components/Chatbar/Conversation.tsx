@@ -5,6 +5,7 @@ import {
   KeyboardEvent,
   MouseEvent,
   MouseEventHandler,
+  TouchEvent,
   useCallback,
   useEffect,
   useRef,
@@ -64,6 +65,8 @@ interface ViewProps {
   conversation: ConversationInfo;
   isHighlited: boolean;
 }
+
+const CONTEXT_MENU_HOLD_TIMEOUT = 650;
 
 export function ConversationView({ conversation, isHighlited }: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -479,6 +482,23 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [conversation.id, dispatch, handleCloseExportModal],
   );
 
+  let longPressCountdown: NodeJS.Timeout;
+
+  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    longPressCountdown = setTimeout(() => {
+      if (hasParentWithFloatingOverlay(e.target as Element)) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      setIsContextMenu(true);
+    }, CONTEXT_MENU_HOLD_TIMEOUT);
+  };
+
+  const handleTouchCancel = () => {
+    clearTimeout(longPressCountdown);
+  };
+
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
@@ -503,6 +523,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
       onContextMenu={handleContextMenuOpen}
+      onTouchCancel={handleTouchCancel}
+      onTouchStart={handleTouchStart}
       data-qa="conversation"
     >
       {isRenaming ? (

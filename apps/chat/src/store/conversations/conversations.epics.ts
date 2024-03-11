@@ -1827,7 +1827,10 @@ const hideChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.uploadConversationsByIdsSuccess.match(action) ||
+        ConversationsActions.createNewConversations.match(action) ||
+        ConversationsActions.selectConversations.match(action) ||
+        ConversationsActions.createNewPlaybackConversation.match(action) ||
+        ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
         (ConversationsActions.addConversations.match(action) &&
           !!action.payload.selectAdded),
