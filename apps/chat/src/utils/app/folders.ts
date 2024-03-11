@@ -19,6 +19,7 @@ import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
+import { doesHaveDotsInTheEnd } from './common';
 import { isRootId } from './id';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -363,6 +364,10 @@ export const validateFolderRenaming = (
 
   if (newName.match(notAllowedSymbolsRegex)) {
     return `The symbols ${notAllowedSymbols} are not allowed in folder name`;
+  }
+
+  if (doesHaveDotsInTheEnd(newName)) {
+    return 'Using a dot at the end of a name is not permitted.';
   }
 };
 
