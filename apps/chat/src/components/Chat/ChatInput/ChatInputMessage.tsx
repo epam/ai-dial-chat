@@ -18,7 +18,7 @@ import { isMobile } from '@/src/utils/app/mobile';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
-import { DialFile } from '@/src/types/files';
+import { DialFile, DialLink } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -59,7 +59,7 @@ export const ChatInputMessage = ({
   const dispatch = useAppDispatch();
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
-
+  const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -67,7 +67,7 @@ export const ChatInputMessage = ({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttach);
+  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttachFile);
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
@@ -119,8 +119,12 @@ export const ChatInputMessage = ({
   } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
   const isInputEmpty = useMemo(() => {
-    return content.trim().length === 0 && selectedFiles.length === 0;
-  }, [content, selectedFiles.length]);
+    return (
+      content.trim().length === 0 &&
+      selectedFiles.length === 0 &&
+      !selectedDialLinks.length
+    );
+  }, [content, selectedDialLinks.length, selectedFiles.length]);
   const isSendDisabled =
     isReplay ||
     isError ||
@@ -163,8 +167,9 @@ export const ChatInputMessage = ({
     onSend({
       role: Role.User,
       content,
-      custom_content: getUserCustomContent(selectedFiles),
+      custom_content: getUserCustomContent(selectedFiles, selectedDialLinks),
     });
+    setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
     setContent('');
 
@@ -172,11 +177,12 @@ export const ChatInputMessage = ({
       textareaRef.current.blur();
     }
   }, [
-    isSendDisabled,
     messageIsStreaming,
+    isSendDisabled,
     onSend,
     content,
     selectedFiles,
+    selectedDialLinks,
     dispatch,
     setContent,
     textareaRef,
@@ -293,6 +299,15 @@ export const ChatInputMessage = ({
     [dispatch],
   );
 
+  const handleAddLinkToMessage = useCallback((link: DialLink) => {
+    setSelectedDialLinks((links) => links.concat([link]));
+  }, []);
+  const handleUnselectLink = useCallback((unselectedIndex: number) => {
+    setSelectedDialLinks((links) =>
+      links.filter((_link, index) => unselectedIndex !== index),
+    );
+  }, []);
+
   const tooltipContent = (): string => {
     if (messageIsStreaming) {
       return t('Stop generating');
@@ -368,14 +383,17 @@ export const ChatInputMessage = ({
                 selectedFilesIds={attachedFilesIds}
                 onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                 onUploadFromDevice={handleUploadFromDevice}
+                onAddLinkToMessage={handleAddLinkToMessage}
               />
             </div>
-            {selectedFiles.length > 0 && (
+            {(selectedFiles.length > 0 || selectedDialLinks.length > 0) && (
               <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
                 <ChatInputAttachments
                   files={selectedFiles}
+                  links={selectedDialLinks}
                   onUnselectFile={handleUnselectFile}
                   onRetryFile={handleRetry}
+                  onUnselectLink={handleUnselectLink}
                 />
               </div>
             )}

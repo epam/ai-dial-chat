@@ -1,4 +1,4 @@
-import { Observable, map } from 'rxjs';
+import { Observable, map, throwError } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -130,46 +130,62 @@ export abstract class ApiEntityStorage<
   }
 
   getEntity(info: TEntityInfo): Observable<TEntity | null> {
-    return ApiUtils.request(this.getEntityUrl(info)).pipe(
-      map((entity: TEntity) => {
-        return {
-          ...this.mergeGetResult(info, {
-            ...entity,
-            ...resetShareEntity,
-          }),
-          status: UploadStatus.LOADED,
-        };
-      }),
-    );
+    try {
+      return ApiUtils.request(this.getEntityUrl(info)).pipe(
+        map((entity: TEntity) => {
+          return {
+            ...this.mergeGetResult(info, {
+              ...entity,
+              ...resetShareEntity,
+            }),
+            status: UploadStatus.LOADED,
+          };
+        }),
+      );
+    } catch (error) {
+      return throwError(() => error);
+    }
   }
 
   createEntity(entity: TEntity): Observable<TEntityInfo> {
-    return ApiUtils.request(this.getEntityUrl(entity), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(this.cleanUpEntity(entity)),
-    }).pipe(map((entity) => this.mapEntity(entity)));
+    try {
+      return ApiUtils.request(this.getEntityUrl(entity), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(this.cleanUpEntity(entity)),
+      }).pipe(map((entity) => this.mapEntity(entity)));
+    } catch (error) {
+      return throwError(() => error);
+    }
   }
 
   updateEntity(entity: TEntity): Observable<void> {
-    return ApiUtils.request(this.getEntityUrl(entity), {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(this.cleanUpEntity(entity)),
-    });
+    try {
+      return ApiUtils.request(this.getEntityUrl(entity), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(this.cleanUpEntity(entity)),
+      });
+    } catch (error) {
+      return throwError(() => error);
+    }
   }
 
   deleteEntity(info: TEntityInfo): Observable<void> {
-    return ApiUtils.request(this.getEntityUrl(info), {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      return ApiUtils.request(this.getEntityUrl(info), {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (error) {
+      return throwError(() => error);
+    }
   }
 
   abstract getEntityKey(info: TEntityInfo): string;

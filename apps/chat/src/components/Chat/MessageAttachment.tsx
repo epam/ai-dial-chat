@@ -170,9 +170,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               'shrink text-left text-sm',
               isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate',
             )}
-            title={attachment.title}
+            title={attachment.title || attachment.url || t('Attachment') || ''}
           >
-            {attachment.title || t('Attachment')}
+            {attachment.title || attachment.url || t('Attachment')}
           </span>
           {isOpenable ? (
             <div className="flex gap-2">
@@ -200,6 +200,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               download={attachment.title}
               href={mappedAttachmentUrl}
               onClick={stopBubbling}
+              target="_blank"
               className="text-secondary hover:text-accent-primary"
             >
               <IconDownload size={18} />
