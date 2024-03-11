@@ -8,11 +8,10 @@ const modelsForArithmeticRequest: {
   isSysPromptAllowed: boolean;
 }[] = Array.of(
   { modelId: ModelIds.GPT_3_5_TURBO_0301, isSysPromptAllowed: true },
-  { modelId: ModelIds.GPT_3_5_TURBO_0613, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_3_5_TURBO, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_3_5_TURBO_1106, isSysPromptAllowed: true },
-  { modelId: ModelIds.GPT_3_5_TURBO_16K, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_0314, isSysPromptAllowed: true },
-  { modelId: ModelIds.GPT_4_0613, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_1106_PREVIEW, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_0125_PREVIEW, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0314, isSysPromptAllowed: true },
