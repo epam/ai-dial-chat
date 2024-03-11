@@ -16,7 +16,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
-  isEntityNameInvalid,
+  doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
@@ -225,7 +225,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       return;
     }
 
-    if (isEntityNameInvalid(newName)) {
+    if (doesHaveDotsInTheEnd(newName)) {
       dispatch(
         UIActions.showErrorToast(
           t('Using a dot at the end of a name is not permitted.'),

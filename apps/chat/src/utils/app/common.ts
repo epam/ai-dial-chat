@@ -39,7 +39,7 @@ export const isEntityNameOnSameLevelUnique = (
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
-export const isEntityNameInvalid = (name: string) => {
+export const doesHaveDotsInTheEnd = (name: string) => {
   return name.trim().endsWith('.');
 };
 
