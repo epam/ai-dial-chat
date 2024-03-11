@@ -15,6 +15,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
 } from '@/src/utils/app/common';
@@ -99,18 +100,23 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
       if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
         dispatch(
-          UIActions.showToast({
-            message: t(
-              'Prompt with name "{{newName}}" already exists in this folder.',
-              {
-                ns: 'prompt',
-                newName,
-              },
-            ),
-            type: 'error',
-          }),
+          UIActions.showErrorToast(
+            t('Prompt with name "{{newName}}" already exists in this folder.', {
+              ns: 'prompt',
+              newName,
+            }),
+          ),
         );
 
+        return;
+      }
+
+      if (doesHaveDotsInTheEnd(newName)) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the end of a name is not permitted.'),
+          ),
+        );
         return;
       }
 

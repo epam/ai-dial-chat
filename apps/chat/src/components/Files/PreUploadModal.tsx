@@ -184,7 +184,7 @@ export const PreUploadDialog = ({
     if (incorrectFileNames.length > 0) {
       errors.push(
         t(
-          `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or remove them from uploading files list: {{fileNames}}`,
+          `The symbols {{notAllowedSymbols}} are not allowed in file name. Also using a dot at the end of a name is not permitted. Please rename or remove them from uploading files list: {{fileNames}}`,
           {
             notAllowedSymbols,
             fileNames: incorrectFileNames.join(', '),
