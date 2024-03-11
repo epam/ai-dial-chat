@@ -21,12 +21,14 @@ let defaultModel: DialAIEntityModel;
 let gpt4Model: DialAIEntityModel;
 let bisonModel: DialAIEntityModel;
 let recentModels: string[];
+let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
   recentModels = ModelsUtil.getRecentModelIds();
+  modelsWithoutSystemPrompt = ModelsUtil.getModelsWithoutSystemPrompt();
 });
 
 dialTest(
@@ -731,8 +733,14 @@ dialTest(
     const modelsForUpdate = models.filter((m) => m !== initRandomModel);
     const firstUpdatedRandomModel =
       GeneratorUtil.randomArrayElement(modelsForUpdate);
+    const isFirstSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
+      firstUpdatedRandomModel.id,
+    );
     const secondUpdatedRandomModel = GeneratorUtil.randomArrayElement(
       modelsForUpdate.filter((m) => m !== firstUpdatedRandomModel),
+    );
+    const isSecondSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
+      firstUpdatedRandomModel.id,
     );
     const firstUpdatedPrompt = 'first prompt';
     const secondUpdatedPrompt = 'second prompt';
@@ -774,21 +782,13 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
-        const firstUpdatedRandomModelIcon = recentModels.includes(
-          firstUpdatedRandomModel.id,
-        )
-          ? undefined
-          : firstUpdatedRandomModel.iconUrl;
-        const secondUpdatedRandomModelIcon = recentModels.includes(
-          secondUpdatedRandomModel.id,
-        )
-          ? undefined
-          : secondUpdatedRandomModel.iconUrl;
         await leftConversationSettings
           .getTalkToSelector()
           .selectModel(firstUpdatedRandomModel.name);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
-        await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
+        if (isFirstSysPromptAllowed) {
+          await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
+        }
         await leftEntitySettings
           .getTemperatureSlider()
           .setTemperature(firstUpdatedTemp);
@@ -798,7 +798,9 @@ dialTest(
           .selectModel(secondUpdatedRandomModel.name);
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
-        await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
+        if (isSecondSysPromptAllowed) {
+          await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
+        }
         await rightEntitySettings
           .getTemperatureSlider()
           .setTemperature(secondUpdatedTemp);
@@ -856,10 +858,12 @@ dialTest(
           .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
           .toBe(expectedSecondUpdatedRandomModelIcon);
 
-        const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
-        expect
-          .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-          .toBe(secondUpdatedPrompt);
+        if (isSecondSysPromptAllowed) {
+          const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
+          expect
+            .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
+            .toBe(secondUpdatedPrompt);
+        }
 
         const rightTempInfo = await chatInfoTooltip.getTemperatureInfo();
         expect
@@ -878,10 +882,12 @@ dialTest(
           .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
           .toBe(expectedFirstUpdatedRandomModelIcon);
 
-        const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
-        expect
-          .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-          .toBe(firstUpdatedPrompt);
+        if (isFirstSysPromptAllowed) {
+          const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
+          expect
+            .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
+            .toBe(firstUpdatedPrompt);
+        }
 
         const leftTempInfo = await chatInfoTooltip.getTemperatureInfo();
         expect

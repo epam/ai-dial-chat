@@ -316,7 +316,7 @@ dialTest(
     setTestIds('EPMRTC-595', 'EPMRTC-1276');
     const conversation = conversationData.prepareDefaultConversation(
       gpt35Model,
-      '!@$^&()_[]"\'.<>-`~',
+      '!@$^&()_[] "\'.<>-`~',
     );
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);

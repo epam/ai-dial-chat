@@ -41,12 +41,7 @@ dialTest(
     await promptBar.createNewPrompt();
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
     await promptModalDialog.saveButton.click();
-    expect
-      .soft(
-        await prompts.getPromptByName(newName).isVisible(),
-        ExpectedMessages.newPromptCreated,
-      )
-      .toBeTruthy();
+    await prompts.getPromptByName(newName).waitFor();
   },
 );
 
