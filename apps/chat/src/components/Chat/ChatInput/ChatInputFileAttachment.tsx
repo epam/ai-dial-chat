@@ -17,7 +17,7 @@ interface Props {
   onRetryFile?: (fileId: string) => void;
 }
 
-export const ChatInputAttachment = ({
+export const ChatInputFileAttachment = ({
   file,
   onUnselectFile,
   onRetryFile,
@@ -34,7 +34,7 @@ export const ChatInputAttachment = ({
       )}
 
       <div className="flex grow justify-between gap-3 overflow-hidden">
-        <div className="flex grow flex-col overflow-hidden">
+        <div className="flex grow flex-col overflow-hidden text-sm">
           <span
             className={classNames(
               'block max-w-full truncate text-sm',
