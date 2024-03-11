@@ -12,6 +12,7 @@ let bison: DialAIEntityModel;
 let recentAddonIds: string[];
 let recentModelIds: string[];
 let allEntities: DialAIEntityModel[];
+let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
@@ -19,6 +20,7 @@ dialTest.beforeAll(async () => {
   recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
+  modelsWithoutSystemPrompt = ModelsUtil.getModelsWithoutSystemPrompt();
 });
 
 dialTest(
@@ -338,7 +340,12 @@ dialTest(
     await talkToSelector.selectModel(randomModel.name);
     const sysPrompt = 'test prompt';
     const temp = 0;
-    await entitySettings.setSystemPrompt(sysPrompt);
+    const isSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
+      randomModel.id,
+    );
+    if (isSysPromptAllowed) {
+      await entitySettings.setSystemPrompt(sysPrompt);
+    }
     await temperatureSlider.setTemperature(temp);
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
@@ -355,10 +362,13 @@ dialTest(
       });
     });
 
-    const systemPrompt = await entitySettings.systemPrompt.getElementContent();
-    expect
-      .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-      .toBe(sysPrompt);
+    if (isSysPromptAllowed) {
+      const systemPrompt =
+        await entitySettings.systemPrompt.getElementContent();
+      expect
+        .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
+        .toBe(sysPrompt);
+    }
 
     const temperature = await temperatureSlider.getTemperature();
     expect

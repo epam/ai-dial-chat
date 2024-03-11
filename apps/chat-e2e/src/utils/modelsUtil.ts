@@ -1,4 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import { ModelIds } from '@/src/testData';
 
 export class ModelsUtil {
   public static getOpenAIEntities() {
@@ -83,6 +84,10 @@ export class ModelsUtil {
 
   public static getDefaultModel() {
     return ModelsUtil.getModels().find((a) => a.isDefault);
+  }
+
+  public static getModelsWithoutSystemPrompt() {
+    return [ModelIds.CODE_BISON_001, ModelIds.CODE_BISON_32K_002];
   }
 
   public static getApplication(appId: string) {
