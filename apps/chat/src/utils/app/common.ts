@@ -8,6 +8,7 @@ import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 
 import trimEnd from 'lodash-es/trimEnd';
 import uniq from 'lodash-es/uniq';
+import { substring } from 'stringz';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -99,7 +100,7 @@ export const prepareEntityName = (name: string, forRenaming = false) => {
         .filter(Boolean)[0] ?? '';
 
   if (clearName.length > MAX_ENTITY_LENGTH) {
-    return trimEndDots(clearName.substring(0, MAX_ENTITY_LENGTH));
+    return trimEndDots(substring(clearName, 0, MAX_ENTITY_LENGTH));
   }
 
   return trimEndDots(clearName);
