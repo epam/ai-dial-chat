@@ -25,7 +25,7 @@ class ContextMenuHandler {
         this.contextMenuPossible = false;
         this.callback(
           touch as unknown as React.MouseEvent<HTMLElement, MouseEvent>,
-        ); // Приведение типа для симуляции MouseEvent
+        );
       }
     }, longPressDuration);
   };
