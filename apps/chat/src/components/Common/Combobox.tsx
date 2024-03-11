@@ -11,6 +11,7 @@ import {
   createElement,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -50,8 +51,11 @@ export const Combobox = <T,>({
   onSelectItem,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Common);
+
   const [displayedItems, setDisplayedItems] = useState(items);
   const [floatingWidth, setFloatingWidth] = useState(0);
+
+  const selectedItemRef = useRef<HTMLDivElement>(null);
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -135,13 +139,21 @@ export const Combobox = <T,>({
           <input
             disabled={disabled}
             placeholder={!selectedItem ? placeholder || '' : ''}
-            className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
+            className="box-content w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
+            style={{
+              ...(selectedItemRef.current && {
+                height: `${selectedItemRef.current.clientHeight}px`,
+              }),
+            }}
             {...getInputProps({
               ref: refs.reference as RefObject<HTMLInputElement>,
             })}
           />
           {!inputValue && itemRow && !!selectedItem && (
-            <div className="pointer-events-none absolute left-3 top-2.5 flex items-center">
+            <div
+              ref={selectedItemRef}
+              className="pointer-events-none absolute left-3 top-2.5 flex w-5/6 items-center"
+            >
               {createElement(itemRow, { item: selectedItem })}
             </div>
           )}

@@ -145,7 +145,11 @@ export const ChatView = memo(() => {
                 !modelIds.includes(message.model.id),
             );
           }
-          return !modelIds.includes(conv.model.id);
+
+          return (
+            !modelIds.includes(conv.model.id) ||
+            (conv.assistantModelId && !modelIds.includes(conv.assistantModelId))
+          );
         }));
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);

@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
+import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -40,12 +41,24 @@ export const AssistantSubModelSelector = ({
         {disabled && <DisableOverlay />}
         <Combobox
           items={onlyModels}
-          initialSelectedItem={assistantSubModel}
+          initialSelectedItem={
+            assistantSubModel || {
+              name: assistantModelId,
+              isDefault: false,
+              type: EntityType.Model,
+              id: assistantModelId,
+            }
+          }
           getItemLabel={(model: DialAIEntityModel) =>
             getOpenAIEntityFullName(model)
           }
           getItemValue={(model: DialAIEntityModel) => model.id}
-          itemRow={ModelSelectRow}
+          itemRow={({ item }) => (
+            <ModelSelectRow
+              item={item}
+              isNotAllowed={item.id === assistantModelId && !assistantSubModel}
+            />
+          )}
           onSelectItem={(itemID: string) => {
             onSelectAssistantSubModel(itemID);
           }}
