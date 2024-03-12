@@ -181,7 +181,9 @@ export default function Home({ initialState }: HomeProps) {
   return (
     <>
       <Head>
-        <title>{initialState.settings.appName}</title>
+        <title className="whitespace-pre">
+          {initialState.settings.appName}
+        </title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"

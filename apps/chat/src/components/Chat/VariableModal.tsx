@@ -120,7 +120,7 @@ export const VariableModal: FC<Props> = ({
         onSubmit={handleSubmit}
       >
         <div
-          className="mb-4 text-base font-bold"
+          className="mb-4 whitespace-pre text-base font-bold"
           data-qa="variable-prompt-name"
         >
           {prompt.name}

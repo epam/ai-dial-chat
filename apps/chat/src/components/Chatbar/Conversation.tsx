@@ -415,16 +415,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         )
       ) {
         dispatch(
-          UIActions.showToast({
-            message: t(
+          UIActions.showErrorToast(
+            t(
               'Conversation with name "{{name}}" already exists in this folder.',
               {
                 ns: 'chat',
                 name: conversation.name,
               },
             ),
-            type: 'error',
-          }),
+          ),
         );
 
         return;

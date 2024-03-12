@@ -163,10 +163,9 @@ export const ChangePathDialog = ({
 
     if (pathDepth + (depth ? depth : 0) > MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
-        UIActions.showToast({
-          message: t("It's not allowed to have more nested folders"),
-          type: 'error',
-        }),
+        UIActions.showErrorToast(
+          t("It's not allowed to have more nested folders"),
+        ),
       );
       return;
     }

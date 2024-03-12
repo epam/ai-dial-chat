@@ -54,7 +54,7 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
       {!!addon && <ModelIcon entity={addon} entityId={addon.id} size={18} />}
       <span
         className={classNames(
-          'block text-start',
+          'block whitespace-pre text-start',
           isOpened ? 'max-w-full' : 'truncate',
         )}
       >

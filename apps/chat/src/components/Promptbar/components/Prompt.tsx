@@ -217,16 +217,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         )
       ) {
         dispatch(
-          UIActions.showToast({
-            message: t(
-              'Prompt with name "{{name}}" already exists in this folder.',
-              {
-                ns: 'prompt',
-                name: prompt.name,
-              },
-            ),
-            type: 'error',
-          }),
+          UIActions.showErrorToast(
+            t('Prompt with name "{{name}}" already exists in this folder.', {
+              ns: 'prompt',
+              name: prompt.name,
+            }),
+          ),
         );
 
         return;
