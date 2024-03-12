@@ -23,6 +23,7 @@ import {
   doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
+  trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -294,7 +295,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
 
     if (newName && newName !== currentFolder.name) {
-      onRenameFolder(newName, currentFolder.id);
+      onRenameFolder(trimEndDots(newName), currentFolder.id);
     }
     setRenameValue('');
     setIsRenaming(false);
@@ -936,7 +937,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {
-            const newName = prepareEntityName(renameValue, true);
+            const newName = prepareEntityName(renameValue);
 
             if (newName) {
               onRenameFolder!(newName, currentFolder.id);
