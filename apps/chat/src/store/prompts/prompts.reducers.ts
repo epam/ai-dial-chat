@@ -111,7 +111,6 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ newPrompt: Prompt }>,
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
-      state.selectedPromptId = payload.newPrompt.id;
       state.isNewPromptCreating = false;
     },
     setIsNewPromptCreating: (state, { payload }: PayloadAction<boolean>) => {
@@ -416,7 +415,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = state.folders.concat(payload.folders);
+      state.folders = combineEntities(state.folders, payload.folders);
     },
     setSearchTerm: (
       state,

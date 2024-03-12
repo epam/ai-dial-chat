@@ -96,7 +96,10 @@ function ModalView({
           data-floating-overlay
           onKeyDown={onKeyDownOverlay}
         >
-          <FloatingFocusManager context={context} initialFocus={initialFocus}>
+          <FloatingFocusManager
+            context={context}
+            {...(initialFocus && { initialFocus: initialFocus })}
+          >
             <Tag
               className={classNames(
                 'relative max-h-full rounded bg-layer-3 text-left',

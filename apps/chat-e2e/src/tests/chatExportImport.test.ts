@@ -538,7 +538,9 @@ dialTest(
           .getConversationByName(Import.v14AppBisonChatName)
           .waitFor();
 
-        const defaultIcon = await iconApiHelper.getDefaultEntityIcon();
+        const defaultIcon = await iconApiHelper.getEntityIcon(
+          ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
+        );
         const bisonConversationIcon = await conversations.getConversationIcon(
           Import.v14AppBisonChatName,
         );

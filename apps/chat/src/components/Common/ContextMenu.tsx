@@ -6,6 +6,8 @@ import classNames from 'classnames';
 import { FeatureType } from '@/src/types/common';
 import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
+import { Spinner } from '@/src/components/Common/Spinner';
+
 import { Menu, MenuItem } from './DropdownMenu';
 import Tooltip from './Tooltip';
 
@@ -78,6 +80,7 @@ export default function ContextMenu({
   disabled,
   isOpen,
   onOpenChange,
+  isLoading,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -97,6 +100,8 @@ export default function ContextMenu({
       }}
     />
   );
+
+  if (isLoading && isOpen) return <Spinner size={18} />;
 
   return (
     <Menu
@@ -128,18 +133,19 @@ export default function ContextMenu({
         </div>
       }
     >
-      {displayedMenuItems.map(({ CustomTriggerRenderer, ...props }) => {
-        const Renderer = CustomTriggerRenderer ? (
-          <CustomTriggerRenderer
-            {...props}
-            Renderer={ContextMenuItemRenderer}
-            featureType={featureType}
-          />
-        ) : (
-          <ContextMenuItemRenderer {...props} featureType={featureType} />
-        );
-        return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
-      })}
+      {!isLoading &&
+        displayedMenuItems.map(({ CustomTriggerRenderer, ...props }) => {
+          const Renderer = CustomTriggerRenderer ? (
+            <CustomTriggerRenderer
+              {...props}
+              Renderer={ContextMenuItemRenderer}
+              featureType={featureType}
+            />
+          ) : (
+            <ContextMenuItemRenderer {...props} featureType={featureType} />
+          );
+          return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
+        })}
     </Menu>
   );
 }

@@ -145,7 +145,11 @@ export const ChatView = memo(() => {
                 !modelIds.includes(message.model.id),
             );
           }
-          return !modelIds.includes(conv.model.id);
+
+          return (
+            !modelIds.includes(conv.model.id) ||
+            (conv.assistantModelId && !modelIds.includes(conv.assistantModelId))
+          );
         }));
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
@@ -513,12 +517,12 @@ export const ChatView = memo(() => {
         ConversationsActions.sendMessages({
           conversations: selectedConversations,
           message: editedMessage,
-          deleteCount: selectedConversations[0]?.messages.length - index,
+          deleteCount: mergedMessages.length - index,
           activeReplayIndex: 0,
         }),
       );
     },
-    [dispatch, selectedConversations],
+    [dispatch, mergedMessages.length, selectedConversations],
   );
 
   const handleApplyChatSettings = useCallback(() => {

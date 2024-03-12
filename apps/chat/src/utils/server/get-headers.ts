@@ -16,7 +16,8 @@ export const getApiHeaders = ({
   };
   if (chatId) {
     headers['X-CONVERSATION-ID'] = encodeURIComponent(
-      chatId.replace(/[\uD800-\uDBFF \uDC00-\uDFFF]+/gm, ''),
+      // eslint-disable-next-line no-misleading-character-class
+      chatId.replace(/[\uD800-\uDBFF\uDC00-\uDFFF]+/gm, ''),
     );
   }
 
