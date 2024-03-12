@@ -24,6 +24,13 @@ const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
   'image/jpeg',
   'image/png',
   'image/gif',
+  'image/apng',
+  'image/webp',
+  'image/avif',
+  'image/svg+xml',
+  'image/bmp',
+  'image/vnd.microsoft.icon',
+  'image/x-icon',
 ]);
 
 interface AttachmentDataRendererProps {
