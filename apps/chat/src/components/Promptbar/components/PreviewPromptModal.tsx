@@ -21,13 +21,13 @@ interface Props {
   isOpen: boolean;
   onDuplicate: MouseEventHandler<HTMLButtonElement>;
   onClose: () => void;
-  onUnshare: MouseEventHandler<HTMLButtonElement>;
+  onDelete: MouseEventHandler<HTMLButtonElement>;
 }
 
 export const PreviewPromptModal = ({
   isOpen,
   onDuplicate,
-  onUnshare,
+  onDelete,
   onClose,
 }: Props) => {
   const { t } = useTranslation(Translation.PromptBar);
@@ -98,10 +98,10 @@ export const PreviewPromptModal = ({
               <Tooltip
                 placement="top"
                 isTriggerClickable
-                tooltip={t('Unshare prompt')}
+                tooltip={t('Delete prompt')}
               >
                 <button
-                  onClick={onUnshare}
+                  onClick={onDelete}
                   className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
                 >
                   <IconTrashX size={24} strokeWidth="1.5" />
