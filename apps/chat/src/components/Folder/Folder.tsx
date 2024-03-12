@@ -349,12 +349,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
           if (childIds.has(currentFolder.id)) {
             dispatch(
-              UIActions.showToast({
-                message: t(
-                  "It's not allowed to move parent folder in child folder",
-                ),
-                type: 'error',
-              }),
+              UIActions.showErrorToast(
+                t("It's not allowed to move parent folder in child folder"),
+              ),
             );
             return;
           }
@@ -363,10 +360,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
           if (maxDepth && level + foldersDepth > maxDepth) {
             dispatch(
-              UIActions.showToast({
-                message: t("It's not allowed to have more nested folders"),
-                type: 'error',
-              }),
+              UIActions.showErrorToast(
+                t("It's not allowed to have more nested folders"),
+              ),
             );
             return;
           }
@@ -379,16 +375,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )
           ) {
             dispatch(
-              UIActions.showToast({
-                message: t(
+              UIActions.showErrorToast(
+                t(
                   'Folder with name "{{folderName}}" already exists in this folder.',
                   {
                     ns: 'folder',
                     folderName: draggedFolder.name,
                   },
                 ),
-                type: 'error',
-              }),
+              ),
             );
 
             return;
@@ -409,8 +404,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )
           ) {
             dispatch(
-              UIActions.showToast({
-                message: t(
+              UIActions.showErrorToast(
+                t(
                   '{{entityType}} with name "{{entityName}}" already exists in this folder.',
                   {
                     ns: 'common',
@@ -421,8 +416,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     entityName: draggedEntity.name,
                   },
                 ),
-                type: 'error',
-              }),
+              ),
             );
 
             return;
@@ -551,10 +545,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (maxDepth && level + 1 > maxDepth) {
         dispatch(
-          UIActions.showToast({
-            message: t("It's not allowed to have more nested folders"),
-            type: 'error',
-          }),
+          UIActions.showErrorToast(
+            t("It's not allowed to have more nested folders"),
+          ),
         );
         return;
       }

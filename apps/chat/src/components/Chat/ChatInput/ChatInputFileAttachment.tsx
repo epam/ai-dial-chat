@@ -37,7 +37,7 @@ export const ChatInputFileAttachment = ({
         <div className="flex grow flex-col overflow-hidden text-sm">
           <span
             className={classNames(
-              'block max-w-full truncate text-sm',
+              'block max-w-full truncate whitespace-pre text-sm',
               file.status === UploadStatus.FAILED && 'text-error',
             )}
           >

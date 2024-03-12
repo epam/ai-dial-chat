@@ -115,16 +115,15 @@ export const Chatbar = () => {
             )
           ) {
             dispatch(
-              UIActions.showToast({
-                message: t(
+              UIActions.showErrorToast(
+                t(
                   'Conversation with name "{{name}}" already exists at the root.',
                   {
                     ns: 'chat',
                     name: conversation.name,
                   },
                 ),
-                type: 'error',
-              }),
+              ),
             );
 
             return;

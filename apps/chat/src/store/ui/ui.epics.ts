@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { ToastOptions, toast } from 'react-hot-toast';
 
 import {
   Observable,
@@ -159,18 +159,23 @@ const showToastEpic: AppEpic = (action$) =>
         message = responseMessage;
       }
 
+      const toastConfig: ToastOptions = {
+        id: 'toast',
+        className: 'chat-toast',
+      };
+
       switch (payload.type) {
         case 'error':
-          toast.error(message, { id: 'toast' });
+          toast.error(message, toastConfig);
           break;
         case 'loading':
-          toast.loading(message, { id: 'toast' });
+          toast.loading(message, toastConfig);
           break;
         case 'success':
-          toast.success(message, { id: 'toast' });
+          toast.success(message, toastConfig);
           break;
         default:
-          toast(message, { id: 'toast' });
+          toast(message, toastConfig);
           break;
       }
     }),

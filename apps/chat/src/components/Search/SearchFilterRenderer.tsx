@@ -37,7 +37,7 @@ export default function SearchFilterRenderer({
           'text-accent-primary',
         )}
       />
-      <label className=" cursor-pointer" htmlFor={dataQa}>
+      <label className="cursor-pointer whitespace-pre" htmlFor={dataQa}>
         {props.name}
       </label>
     </div>
