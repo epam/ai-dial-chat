@@ -3,6 +3,8 @@ import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { isPseudoModel } from '@/src/utils/server/api';
 
@@ -17,6 +19,8 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { Addons } from './Addons';
 import { AssistantSubModelSelector } from './AssistantSubModelSelector';
@@ -28,6 +32,7 @@ import { TemperatureSlider } from './Temperature';
 
 interface ModelSelectRowProps {
   item: DialAIEntityModel;
+  isNotAllowed: boolean;
 }
 
 interface SettingContainerProps {
@@ -53,11 +58,29 @@ interface Props {
   debounceSystemPromptChanges?: boolean;
 }
 
-export const ModelSelectRow = ({ item }: ModelSelectRowProps) => {
+export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className={classNames(
+        'flex items-center gap-2',
+        isNotAllowed && 'text-secondary',
+      )}
+    >
       <ModelIcon entity={item} entityId={item.id} size={18} />
-      <span>{getOpenAIEntityFullName(item)}</span>
+      <div>
+        <span>{getOpenAIEntityFullName(item)}</span>
+        {isNotAllowed && (
+          <span className="text-error" data-qa="group-entity-descr">
+            <EntityMarkdownDescription isShortDescription>
+              {t('chat.error.incorrect-selected', {
+                context: EntityType.Model,
+              })}
+            </EntityMarkdownDescription>
+          </span>
+        )}
+      </div>
     </div>
   );
 };
