@@ -415,7 +415,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = state.folders.concat(payload.folders);
+      state.folders = combineEntities(state.folders, payload.folders);
     },
     setSearchTerm: (
       state,
