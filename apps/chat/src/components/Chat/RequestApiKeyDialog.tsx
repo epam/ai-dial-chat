@@ -168,10 +168,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       ];
       if (checkValidity(inputs)) {
         dispatch(
-          UIActions.showToast({
-            message: t('Requesting API key in progress...'),
-            type: 'loading',
-          }),
+          UIActions.showLoadingToast(t('Requesting API key in progress...')),
         );
         handleClose();
 
@@ -195,19 +192,15 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
           setCost('');
 
           dispatch(
-            UIActions.showToast({
-              message: t('API Key requested succesfully'),
-              type: 'success',
-            }),
+            UIActions.showSuccessToast(t('API Key requested succesfully')),
           );
         } else {
           dispatch(
-            UIActions.showToast({
-              message: t(errorsMessages.generalServer, {
+            UIActions.showErrorToast(
+              t(errorsMessages.generalServer, {
                 ns: 'common',
               }),
-              type: 'error',
-            }),
+            ),
           );
         }
       }
