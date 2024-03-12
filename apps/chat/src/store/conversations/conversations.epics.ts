@@ -525,6 +525,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       return of(
         ConversationsActions.saveNewConversation({
           newConversation,
+          idToReplaceWithNewOne: conversation.id,
         }),
       );
     }),
@@ -540,8 +541,8 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
 
 const saveNewConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.saveNewConversation.match(action)),
-    switchMap(({ payload }) =>
+    filter(ConversationsActions.saveNewConversation.match),
+    mergeMap(({ payload }) =>
       ConversationService.createConversation(payload.newConversation).pipe(
         switchMap(() =>
           of(ConversationsActions.saveNewConversationSuccess(payload)),

@@ -19,7 +19,9 @@ export default function ChatExternalControls({ conversations }: Props) {
 
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
-      dispatch(ConversationsActions.duplicateConversation(conv));
+      if (conv.sharedWithMe) {
+        dispatch(ConversationsActions.duplicateConversation(conv));
+      }
     });
   }, [conversations, dispatch]);
 

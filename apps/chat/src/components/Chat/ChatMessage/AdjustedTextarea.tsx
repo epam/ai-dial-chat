@@ -14,7 +14,7 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
   const mainTextareaRef = useRef<HTMLTextAreaElement>(null);
   useImperativeHandle(ref, () => mainTextareaRef.current); // proxy ref
 
-  const { value, className, maxHeight = 100000 } = props;
+  const { value, maxHeight = 10000, className, ...restProps } = props;
 
   useEffect(() => {
     if (hiddenTextareaRef.current && mainTextareaRef.current) {
@@ -30,7 +30,7 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
   return (
     <>
       <textarea
-        {...props}
+        {...restProps}
         ref={hiddenTextareaRef}
         name="hidden"
         className={classNames(
@@ -38,10 +38,13 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
           'invisible absolute', // hidden, but exists
         )}
         data-qa="hidden-textarea"
+        value={value}
       />
       <textarea
         data-qa="chat-textarea"
-        {...props}
+        className={className}
+        value={value}
+        {...restProps}
         ref={mainTextareaRef}
         name="main"
         style={{ maxHeight: `${maxHeight}px` }}
