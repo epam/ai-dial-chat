@@ -1,18 +1,19 @@
+import { Conversation } from '@/chat/types/chat';
 import {
   ShareAcceptRequestModel,
   ShareByLinkResponseModel,
   ShareRequestModel,
   ShareRequestType,
 } from '@/chat/types/share';
-import { API, ExpectedConstants, TestConversation } from '@/src/testData';
+import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { expect } from '@playwright/test';
 
 export class ShareApiHelper extends BaseApiHelper {
-  public async shareConversationByLink(conversation: TestConversation) {
+  public async shareEntityByLink(entity: Conversation, isFolder = false) {
     const requestData: ShareRequestModel = {
       invitationType: ShareRequestType.link,
-      resources: [{ url: conversation.id }],
+      resources: [{ url: isFolder ? `${entity.folderId!}/` : entity.id! }],
     };
     const response = await this.request.post(API.shareConversationHost, {
       data: requestData,

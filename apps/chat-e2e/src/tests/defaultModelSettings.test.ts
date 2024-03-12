@@ -432,17 +432,17 @@ dialTest(
       ModelsUtil.getOpenAIEntities().filter((m) => m.name.length >= 3),
     );
     const searchTerm = randomEntity.name.substring(0, 3);
-    const matchedModels = ModelsUtil.getLatestModels().filter(
+    const matchedModels = ModelsUtil.getModels().filter(
       (m) =>
         m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedApplications = ModelsUtil.getLatestApplications().filter(
+    const matchedApplications = ModelsUtil.getApplications().filter(
       (a) =>
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedAssistants = ModelsUtil.getLatestAssistants().filter(
+    const matchedAssistants = ModelsUtil.getAssistants().filter(
       (a) =>
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.version?.toLowerCase().includes(searchTerm.toLowerCase()),

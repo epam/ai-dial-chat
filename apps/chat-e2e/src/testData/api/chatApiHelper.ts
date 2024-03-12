@@ -1,8 +1,9 @@
-import { API, TestConversation } from '@/src/testData';
+import { Conversation } from '@/chat/types/chat';
+import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 
 export class ChatApiHelper extends BaseApiHelper {
-  public async postRequest(conversation: TestConversation) {
+  public async postRequest(conversation: Conversation) {
     const requestData = {
       ...conversation,
       messages: [conversation.messages[0]],

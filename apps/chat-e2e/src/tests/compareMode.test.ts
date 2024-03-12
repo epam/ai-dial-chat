@@ -1,3 +1,4 @@
+import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -10,7 +11,6 @@ import {
   ModelIds,
   Rate,
   Side,
-  TestConversation,
 } from '@/src/testData';
 import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -78,10 +78,10 @@ dialTest(
     iconApiHelper,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
-    let firstModelConversation: TestConversation;
-    let secondModelConversation: TestConversation;
+    let firstModelConversation: Conversation;
+    let secondModelConversation: Conversation;
     let modelConversationInFolder: FolderConversation;
-    let thirdModelConversation: TestConversation;
+    let thirdModelConversation: Conversation;
     const conversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step('Prepare three conversations to compare', async () => {
@@ -102,6 +102,7 @@ dialTest(
       conversationData.resetData();
       modelConversationInFolder =
         conversationData.prepareDefaultConversationInFolder(
+          undefined,
           bisonModel,
           conversationName,
         );
@@ -206,10 +207,10 @@ dialTest(
     compare,
   }) => {
     setTestIds('EPMRTC-1133', 'EPMRTC-541');
-    let modelConversation: TestConversation;
-    let replayConversation: TestConversation;
-    let firstEmptyConversation: TestConversation;
-    let secondEmptyConversation: TestConversation;
+    let modelConversation: Conversation;
+    let replayConversation: Conversation;
+    let firstEmptyConversation: Conversation;
+    let secondEmptyConversation: Conversation;
     const conversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(
@@ -296,8 +297,8 @@ dialTest(
     leftChatHeader,
   }) => {
     setTestIds('EPMRTC-544', 'EPMRTC-545');
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
 
     await dialTest.step(
       'Prepare two conversations in compare mode',
@@ -364,11 +365,11 @@ dialTest(
     const firstRequest = 'What is EPAM official name?';
     const secondRequest = 'What is DIAL?';
     const thirdRequest = 'Who is EPAM founder?';
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
-    let thirdConversation: TestConversation;
-    let forthConversation: TestConversation;
-    let fifthConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
+    let thirdConversation: Conversation;
+    let forthConversation: Conversation;
+    let fifthConversation: Conversation;
 
     await dialTest.step(
       'Prepare five conversations with requests combination',
@@ -465,8 +466,8 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-552', 'EPMRTC-558');
 
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
 
     const firstPrompt = 'repeat the same text';
     const firstTemp = 1;
@@ -600,8 +601,8 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-553', 'EPMRTC-555');
     const request = ['beautiful'];
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
 
     await dialTest.step('Prepare two conversations for comparing', async () => {
       firstConversation =
@@ -726,8 +727,8 @@ dialTest(
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1021');
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
     const models = ModelsUtil.getLatestModels();
     const initRandomModel = GeneratorUtil.randomArrayElement(models);
     const modelsForUpdate = models.filter((m) => m !== initRandomModel);
@@ -914,8 +915,8 @@ dialTest(
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
     const sides = Object.values(Side);
 
     await dialTest.step('Prepare two conversations for comparing', async () => {
@@ -1006,10 +1007,10 @@ dialTest(
     const underscoreSearchTerm = '_';
     const noResultSearchTerm = 'epaQ';
 
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
-    let thirdConversation: TestConversation;
-    let fourthConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
+    let thirdConversation: Conversation;
+    let fourthConversation: Conversation;
     const matchedConversations: string[] = [];
 
     await dialTest.step(
@@ -1212,8 +1213,8 @@ dialTest(
     leftChatHeader,
   }) => {
     setTestIds('EPMRTC-542', 'EPMRTC-543', 'EPMRTC-548', 'EPMRTC-828');
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
 
     await dialTest.step(
       'Prepare two conversations for compare mode',
@@ -1331,12 +1332,14 @@ dialTest(
     await dialTest.step('Prepare two conversations in folders', async () => {
       firstFolderConversation =
         conversationData.prepareDefaultConversationInFolder(
+          undefined,
           defaultModel,
           `${conversationName} 1`,
         );
       conversationData.resetData();
       secondFolderConversation =
         conversationData.prepareDefaultConversationInFolder(
+          undefined,
           bisonModel,
           `${conversationName} 2`,
         );
@@ -1435,8 +1438,8 @@ dialTest(
       'EPMRTC-563',
       'EPMRTC-564',
     );
-    let firstConversation: TestConversation;
-    let secondConversation: TestConversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
     const firstConversationRequests = ['1+2', '2+3', '3+4'];
     const secondConversationRequests = ['1+2', '4+5', '5+6'];
     let updatedRequestContent: string;

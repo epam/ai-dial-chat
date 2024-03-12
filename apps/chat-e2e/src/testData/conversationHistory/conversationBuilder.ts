@@ -12,17 +12,13 @@ import {
 } from '@/chat/types/chat';
 import { ItemUtil, ModelsUtil } from '@/src/utils';
 
-export interface TestConversation extends Omit<Conversation, 'folderId'> {
-  folderId?: string | undefined;
-}
-
 export class ConversationBuilder {
-  private conversation: TestConversation;
+  private conversation: Conversation;
 
   constructor() {
     const model = ModelsUtil.getDefaultModel()!;
     this.conversation = {
-      id: `${model}${ItemUtil.conversationIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
+      id: `${model.id}${ItemUtil.conversationIdSeparator}${DEFAULT_CONVERSATION_NAME}`,
       name: DEFAULT_CONVERSATION_NAME,
       messages: [],
       model: { id: model.id },
@@ -32,6 +28,7 @@ export class ConversationBuilder {
       selectedAddons: model.selectedAddons ?? [],
       lastActivityDate: Date.now(),
       isMessageStreaming: false,
+      folderId: '',
     };
   }
 
@@ -39,7 +36,7 @@ export class ConversationBuilder {
     return this.conversation;
   }
 
-  setConversation(conversation: TestConversation): TestConversation {
+  setConversation(conversation: Conversation): Conversation {
     this.conversation = conversation;
     return conversation;
   }
@@ -74,7 +71,7 @@ export class ConversationBuilder {
     return this;
   }
 
-  withFolderId(folderId: undefined | string): ConversationBuilder {
+  withFolderId(folderId: string): ConversationBuilder {
     this.conversation.folderId = folderId;
     return this;
   }
@@ -94,7 +91,7 @@ export class ConversationBuilder {
     return this;
   }
 
-  build(): TestConversation {
+  build(): Conversation {
     return this.conversation;
   }
 }

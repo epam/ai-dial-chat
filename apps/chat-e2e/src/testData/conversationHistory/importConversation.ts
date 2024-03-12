@@ -1,24 +1,22 @@
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
+import { Prompt } from '@/chat/types/prompt';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import {
-  FolderConversation,
-  TestConversation,
-  TestFolder,
-  TestPrompt,
-} from '@/src/testData';
+import { FolderConversation } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { ItemUtil } from '@/src/utils';
 import { FileUtil } from '@/src/utils/fileUtil';
 
 export interface TestImportFormat {
-  history: TestConversation[];
-  folders: TestFolder[];
-  prompts: TestPrompt[];
+  history: Conversation[];
+  folders: FolderInterface[];
+  prompts: Prompt[];
   version?: number;
 }
 
 export class ImportConversation {
   public static prepareConversationFile(
-    importedConversation: TestConversation,
+    importedConversation: Conversation,
     importedFolder?: FolderConversation,
   ): UploadDownloadData {
     ImportConversation.setImportedItemAttributes(
@@ -40,27 +38,25 @@ export class ImportConversation {
   }
 
   private static setImportedItemAttributes(
-    importedConversation: TestConversation,
+    importedConversation: Conversation,
     importedFolder?: FolderConversation,
   ) {
-    if (isApiStorageType) {
-      if (importedFolder) {
-        importedFolder.folders.id = ItemUtil.getApiConversationFolderId(
-          importedFolder.folders.name,
-        );
-        importedConversation.folderId = importedFolder.folders.id;
-        importedConversation.id = ItemUtil.getApiConversationId(
-          importedConversation,
-          importedFolder.folders.name,
-        );
-      } else {
-        importedConversation.id =
-          ItemUtil.getApiConversationId(importedConversation);
+    if (importedFolder) {
+      importedConversation.folderId = importedFolder.folders.name;
+      importedConversation.folderId =
+        ItemUtil.getApiConversationFolderId(importedConversation);
+
+      if (!importedConversation.id.includes(importedFolder.folders.name)) {
+        importedConversation.id = `${importedConversation.folderId}/${importedConversation.id}`;
       }
+
+      importedFolder.folders.id = importedConversation.folderId;
+      importedFolder.folders.folderId = ItemUtil.getConversationBucketPath();
     } else {
-      importedConversation.folderId = importedFolder
-        ? importedFolder.folders.id
-        : undefined;
+      importedConversation.folderId =
+        ItemUtil.getApiConversationFolderId(importedConversation);
+      importedConversation.id =
+        ItemUtil.getApiConversationId(importedConversation);
     }
   }
 }
