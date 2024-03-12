@@ -61,7 +61,7 @@ function App({
                     </span>
                     <div
                       className={classNames(
-                        'mx-0.5 whitespace-pre text-sm leading-[21px]',
+                        'mx-0.5 whitespace-pre-wrap text-sm leading-[21px] *:!whitespace-pre-wrap',
                         t.type === 'error' ? 'text-error' : 'text-primary',
                       )}
                     >
