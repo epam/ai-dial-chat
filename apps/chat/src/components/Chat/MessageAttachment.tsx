@@ -14,11 +14,14 @@ import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
 
+import PlotlyComponent from '@/src/components/Plotly/Plotly';
+
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 
 import { sanitize } from 'isomorphic-dompurify';
+import { Layout, PlotData } from 'plotly.js';
 
 const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
   'image/jpeg',
@@ -76,6 +79,19 @@ const AttachmentDataRenderer = ({
         isShowResponseLoader={false}
         content={attachment.data}
         isInner={isInner}
+      />
+    );
+  }
+  if (attachment.type === 'application/vnd.plotly.v1+json') {
+    return (
+      <PlotlyComponent
+        plotlyData={
+          attachment.data as unknown as {
+            // TBD: could be url or need to parse
+            data: Partial<PlotData>[];
+            layout: Partial<Layout>;
+          }
+        }
       />
     );
   }
