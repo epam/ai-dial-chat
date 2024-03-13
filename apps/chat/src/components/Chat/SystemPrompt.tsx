@@ -44,7 +44,6 @@ interface Props {
 const MAX_HEIGHT = 300;
 
 export const SystemPrompt: FC<Props> = ({
-  prompts,
   tokenizer,
   maxTokensLength,
   prompt,
@@ -79,7 +78,6 @@ export const SystemPrompt: FC<Props> = ({
     setIsPromptLimitModalOpen,
     updatePromptListVisibility,
     filteredPrompts,
-    variables,
     showPromptList,
     setShowPromptList,
     handleKeyDownIfShown,
@@ -125,12 +123,7 @@ export const SystemPrompt: FC<Props> = ({
   );
 
   const handleSubmit = useCallback(
-    (updatedVariables: string[]) => {
-      const newContent = content?.replace(/{{(.*?)}}/g, (match, variable) => {
-        const index = variables.indexOf(variable);
-        return updatedVariables[index];
-      });
-
+    (newContent: string) => {
       setContent(newContent);
       onChangePrompt(newContent);
 
@@ -138,7 +131,7 @@ export const SystemPrompt: FC<Props> = ({
         textareaRef.current.focus();
       }
     },
-    [content, setContent, onChangePrompt, variables],
+    [setContent, onChangePrompt],
   );
 
   const handleKeyDown = useCallback(
@@ -220,8 +213,7 @@ export const SystemPrompt: FC<Props> = ({
 
       {isModalVisible && (
         <PromptVariablesDialog
-          prompt={prompts[activePromptIndex]}
-          variables={variables}
+          prompt={filteredPrompts[activePromptIndex]}
           onSubmit={handleSubmit}
           onClose={() => setIsModalVisible(false)}
         />

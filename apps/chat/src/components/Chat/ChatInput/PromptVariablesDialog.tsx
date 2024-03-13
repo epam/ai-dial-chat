@@ -6,6 +6,7 @@ import {
   KeyboardEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -14,6 +15,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
@@ -23,17 +25,19 @@ import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 
 interface Props {
   prompt: Prompt;
-  variables: string[];
-  onSubmit: (updatedVariables: string[]) => void;
+  onSubmit: (updatedContent: string) => void;
   onClose: () => void;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
   prompt,
-  variables,
   onSubmit,
   onClose,
 }) => {
+  const variables = useMemo(
+    () => parseVariablesFromContent(prompt.content),
+    [prompt.content],
+  );
   const [updatedVariables, setUpdatedVariables] = useState<
     { key: string; value: string }[]
   >(
@@ -68,11 +72,16 @@ export const PromptVariablesDialog: FC<Props> = ({
       if (inputsRefs.current.some((el) => !el?.validity.valid)) {
         return;
       }
+      const content = prompt.content as string;
 
-      onSubmit(updatedVariables.map((variable) => variable.value));
+      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
+        return updatedVariables.find((v) => v.key === variable)?.value ?? '';
+      });
+
+      onSubmit(newContent);
       onClose();
     },
-    [onClose, onSubmit, updatedVariables],
+    [onClose, onSubmit, prompt.content, updatedVariables],
   );
 
   const handleKeyDown = useCallback(
