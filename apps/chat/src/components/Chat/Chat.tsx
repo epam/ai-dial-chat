@@ -766,11 +766,7 @@ export const ChatView = memo(() => {
                                       Feature.Likes,
                                     )}
                                     editDisabled={!!notAllowedType}
-                                    onEdit={
-                                      !messageIsStreaming
-                                        ? onEditMessage
-                                        : undefined
-                                    }
+                                    onEdit={onEditMessage}
                                     onLike={onLikeHandler(index, conv)}
                                     onDelete={() => {
                                       handleDeleteMessage(index);

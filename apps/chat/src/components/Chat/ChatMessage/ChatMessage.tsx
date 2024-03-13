@@ -39,6 +39,7 @@ export const ChatMessage: FC<Props> = memo(
     editDisabled,
     onRegenerate,
     onEdit,
+    messageIndex,
     ...props
   }) => {
     const { t } = useTranslation(Translation.Chat);
@@ -109,6 +110,7 @@ export const ChatMessage: FC<Props> = memo(
       return (
         <>
           <ChatMessageContent
+            messageIndex={messageIndex}
             onEdit={onEdit}
             onDelete={() => {
               setIsRemoveConfirmationOpened(true);
@@ -146,6 +148,7 @@ export const ChatMessage: FC<Props> = memo(
           noFocusReturn
           trigger={
             <ChatMessageContent
+              messageIndex={messageIndex}
               conversation={conversation}
               isEditing={isEditing}
               toggleEditing={toggleEditing}
@@ -168,7 +171,10 @@ export const ChatMessage: FC<Props> = memo(
           }
         >
           <MessageMobileButtons
-            isEditAvailable={!!onEdit}
+            isMessageStreaming={!!conversation.isMessageStreaming}
+            isLastMessage={
+              messageIndex === (conversation?.messages.length ?? 0) - 1
+            }
             message={message}
             onCopy={handleCopy}
             messageCopied={messageCopied}
