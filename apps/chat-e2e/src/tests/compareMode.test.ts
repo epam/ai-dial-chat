@@ -1,7 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   API,
   ExpectedConstants,
@@ -20,14 +19,12 @@ import { expect } from '@playwright/test';
 let defaultModel: DialAIEntityModel;
 let gpt4Model: DialAIEntityModel;
 let bisonModel: DialAIEntityModel;
-let recentModels: string[];
 let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
-  recentModels = ModelsUtil.getRecentModelIds();
   modelsWithoutSystemPrompt = ModelsUtil.getModelsWithoutSystemPrompt();
 });
 
@@ -193,7 +190,7 @@ dialTest(
 );
 
 dialTest(
-  'Check replay chats are not included in Select conversation drop down list.\n' +
+  'Check chat replay, playback modes are not included in Select conversation drop down list.\n' +
     'Compare mode is closed if to switch to another chat',
   async ({
     dialHomePage,
@@ -201,20 +198,24 @@ dialTest(
     conversationDropdownMenu,
     conversations,
     conversationData,
-    localStorageManager,
+    compareConversation,
     dataInjector,
     compareConversationSelector,
     compare,
+    localStorageManager,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1133', 'EPMRTC-541');
+    setIssueIds('1038');
     let modelConversation: Conversation;
     let replayConversation: Conversation;
+    let playbackonversation: Conversation;
     let firstEmptyConversation: Conversation;
     let secondEmptyConversation: Conversation;
     const conversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(
-      'Prepare one conversation with replay conversation and two empty conversations',
+      'Prepare new conversation and replay, playback conversations based on it',
       async () => {
         modelConversation = conversationData.prepareDefaultConversation(
           defaultModel,
@@ -223,24 +224,17 @@ dialTest(
         replayConversation =
           conversationData.prepareDefaultReplayConversation(modelConversation);
         conversationData.resetData();
-        firstEmptyConversation = conversationData.prepareEmptyConversation(
-          defaultModel,
-          `${conversationName} 1`,
-        );
-        conversationData.resetData();
-        secondEmptyConversation = conversationData.prepareEmptyConversation(
-          defaultModel,
-          `${conversationName} 2`,
-        );
+        playbackonversation =
+          conversationData.prepareDefaultPlaybackConversation(
+            modelConversation,
+          );
+
         await dataInjector.createConversations([
           modelConversation,
           replayConversation,
-          firstEmptyConversation,
-          secondEmptyConversation,
+          playbackonversation,
         ]);
-        await localStorageManager.setSelectedConversation(
-          firstEmptyConversation,
-        );
+        await localStorageManager.setSelectedConversation(modelConversation);
       },
     );
 
@@ -252,28 +246,33 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
-          firstEmptyConversation.name,
+          modelConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await compareConversation.checkShowAllConversations();
         await compareConversationSelector.click();
+
+        const selectorPlaceholder =
+          await compareConversationSelector.getSelectorPlaceholder();
+        expect
+          .soft(selectorPlaceholder, ExpectedMessages.noConversationsAvailable)
+          .toBe(ExpectedConstants.noConversationsAvailable);
+
         const conversationsList =
           await compareConversationSelector.getListOptions();
-        const expectedCompareConversations = isApiStorageType
-          ? [modelConversation.name, secondEmptyConversation.name]
-          : [secondEmptyConversation.name];
         expect
           .soft(
             conversationsList,
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
-          .toEqual(expectedCompareConversations);
+          .toEqual([]);
       },
     );
 
     await dialTest.step(
       'Open another conversation and verify compare mode is closed',
       async () => {
-        await conversations.selectConversation(modelConversation.name);
+        await conversations.selectConversation(replayConversation.name);
         const isCompareModeOn = await compare.isVisible();
         expect
           .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
@@ -694,7 +693,7 @@ dialTest(
           )
           .toBe(secondConversation.model.id);
 
-        for (let conversation of [firstConversation, secondConversation]) {
+        for (const conversation of [firstConversation, secondConversation]) {
           const isConversationVisible = await conversations
             .getConversationByName(conversation.name)
             .isVisible();
