@@ -137,16 +137,12 @@ const ChatFolderTemplate = ({
         )
       ) {
         dispatch(
-          UIActions.showToast({
-            message: t(
-              'Folder with name "{{name}}" already exists at the root.',
-              {
-                ns: 'folder',
-                name: folder.name,
-              },
-            ),
-            type: 'error',
-          }),
+          UIActions.showErrorToast(
+            t('Folder with name "{{name}}" already exists at the root.', {
+              ns: 'folder',
+              name: folder.name,
+            }),
+          ),
         );
 
         return;

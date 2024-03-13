@@ -128,16 +128,12 @@ const Promptbar = () => {
             )
           ) {
             dispatch(
-              UIActions.showToast({
-                message: t(
-                  'Prompt with name "{{name}}" already exists at the root.',
-                  {
-                    ns: 'prompt',
-                    name: prompt.name,
-                  },
-                ),
-                type: 'error',
-              }),
+              UIActions.showErrorToast(
+                t('Prompt with name "{{name}}" already exists at the root.', {
+                  ns: 'prompt',
+                  name: prompt.name,
+                }),
+              ),
             );
 
             return;

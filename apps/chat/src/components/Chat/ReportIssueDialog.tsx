@@ -80,10 +80,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       if (checkValidity(inputs)) {
         dispatch(
-          UIActions.showToast({
-            message: t('Reporting an issue in progress...'),
-            type: 'loading',
-          }),
+          UIActions.showLoadingToast(t('Reporting an issue in progress...')),
         );
         handleClose();
 
@@ -94,21 +91,17 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
         if (response.ok) {
           dispatch(
-            UIActions.showToast({
-              message: t('Issue reported successfully'),
-              type: 'success',
-            }),
+            UIActions.showSuccessToast(t('Issue reported successfully')),
           );
           setTitle('');
           setDescription('');
         } else {
           dispatch(
-            UIActions.showToast({
-              message: t(errorsMessages.generalServer, {
+            UIActions.showErrorToast(
+              t(errorsMessages.generalServer, {
                 ns: 'common',
               }),
-              type: 'error',
-            }),
+            ),
           );
         }
       }
