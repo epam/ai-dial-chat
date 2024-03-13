@@ -17,3 +17,22 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
   }
   return prompt as Prompt;
 };
+
+/**
+ * Parses a string for variables in the {{variable}} format and extracts them.
+ * @param content The string to be parsed.
+ * @returns An array of found variables.
+ */
+export const parseVariablesFromContent = (content?: string) => {
+  const regex = /{{(.*?)}}/g;
+  const foundVariables = [];
+  let match;
+
+  if (!content) return [];
+
+  while ((match = regex.exec(content)) !== null) {
+    foundVariables.push(match[1]);
+  }
+
+  return foundVariables;
+};
