@@ -8,6 +8,8 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { parseVariablesFromContent } from '../utils/app/prompts';
+
 import { DialAIEntityModel } from '../types/models';
 import { Prompt } from '@/src/types/prompt';
 
@@ -46,7 +48,6 @@ export const usePromptSelection = (
   const [content, setContent] = useState<string>(prompt);
   const [isPromptLimitModalOpen, setIsPromptLimitModalOpen] = useState(false);
   const [showPromptList, setShowPromptList] = useState(false);
-  const [variables, setVariables] = useState<string[]>([]);
   const [isRequestSent, setIsRequestSent] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -79,23 +80,6 @@ export const usePromptSelection = (
   }, []);
 
   /**
-   * Parses a string for variables in the {{variable}} format and extracts them.
-   * @param content The string to be parsed.
-   * @returns An array of found variables.
-   */
-  const parseVariables = useCallback((content: string) => {
-    const regex = /{{(.*?)}}/g;
-    const foundVariables = [];
-    let match;
-
-    while ((match = regex.exec(content)) !== null) {
-      foundVariables.push(match[1]);
-    }
-
-    return foundVariables;
-  }, []);
-
-  /**
    * Handles the selection of a prompt by the user.
    * @param prompt The selected prompt.
    */
@@ -105,8 +89,7 @@ export const usePromptSelection = (
         return;
       }
 
-      const parsedVariables = parseVariables(prompt.content);
-      setVariables(parsedVariables);
+      const parsedVariables = parseVariablesFromContent(prompt.content);
 
       if (parsedVariables.length > 0) {
         setIsModalVisible(true);
@@ -117,7 +100,7 @@ export const usePromptSelection = (
         updatePromptListVisibility(prompt.content);
       }
     },
-    [parseVariables, updatePromptListVisibility],
+    [updatePromptListVisibility],
   );
 
   /**
@@ -241,7 +224,6 @@ export const usePromptSelection = (
     content,
     updatePromptListVisibility,
     filteredPrompts,
-    variables,
     handleKeyDownIfShown,
     isRequestSent,
     getPrompt,
