@@ -104,20 +104,21 @@ export const ChatMessageContent = ({
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const files = useAppSelector(FilesSelectors.selectFiles);
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
+  const [shouldScroll, setShouldScroll] = useState(false);
 
   const anchorRef = useRef<HTMLDivElement>(null);
+  const messageRef = useRef<HTMLDivElement>(null);
 
   const isLastMessage =
-    messageIndex == (conversation?.messages.length ?? 0) - 1;
+    messageIndex === (conversation?.messages.length ?? 0) - 1;
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
     !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
-  const messageRef = useRef<HTMLDivElement>(null);
-  const [shouldScroll, setShouldScroll] = useState(false);
 
   const codeRegEx =
     /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
@@ -130,11 +131,6 @@ export const ChatMessageContent = ({
   const mappedUserEditableAttachmentsIds = useMemo(() => {
     return mappedUserEditableAttachments.map(({ id }) => id);
   }, [mappedUserEditableAttachments]);
-
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
 
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
   const [newEditableAttachmentsIds, setNewEditableAttachmentsIds] = useState<
@@ -329,7 +325,7 @@ export const ChatMessageContent = ({
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
-        if (!messageIsStreaming) {
+        if (!conversation.isMessageStreaming) {
           onClick?.(e, messageRef);
         }
       }}
@@ -470,8 +466,9 @@ export const ChatMessageContent = ({
                     className="absolute bottom-[-160px]"
                   ></div>
                 </div>
-                {showUserButtons && !messageIsStreaming && (
+                {showUserButtons && (
                   <MessageUserButtons
+                    isMessageStreaming={!!conversation.isMessageStreaming}
                     isEditAvailable={!!onEdit}
                     editDisabled={editDisabled}
                     onDelete={() => onDelete?.()}
@@ -505,16 +502,17 @@ export const ChatMessageContent = ({
                 />
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
-              {withButtons && !messageIsStreaming && (
-                <MessageAssistantButtons
-                  copyOnClick={() => onCopy?.()}
-                  isLikesEnabled={isLikesEnabled}
-                  message={message}
-                  messageCopied={messageCopied}
-                  onLike={(likeStatus) => onLike?.(likeStatus)}
-                  onRegenerate={onRegenerate}
-                />
-              )}
+              {withButtons &&
+                !(conversation.isMessageStreaming && isLastMessage) && (
+                  <MessageAssistantButtons
+                    copyOnClick={() => onCopy?.()}
+                    isLikesEnabled={isLikesEnabled}
+                    message={message}
+                    messageCopied={messageCopied}
+                    onLike={(likeStatus) => onLike?.(likeStatus)}
+                    onRegenerate={onRegenerate}
+                  />
+                )}
             </>
           )}
         </div>

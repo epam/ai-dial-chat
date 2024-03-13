@@ -7,7 +7,6 @@ import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation, LikeState, Message } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -40,6 +39,7 @@ export const ChatMessage: FC<Props> = memo(
     editDisabled,
     onRegenerate,
     onEdit,
+    messageIndex,
     ...props
   }) => {
     const { t } = useTranslation(Translation.Chat);
@@ -52,9 +52,6 @@ export const ChatMessage: FC<Props> = memo(
       useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-    const messageIsStreaming = useAppSelector(
-      ConversationsSelectors.selectIsConversationsStreaming,
-    );
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
@@ -113,6 +110,7 @@ export const ChatMessage: FC<Props> = memo(
       return (
         <>
           <ChatMessageContent
+            messageIndex={messageIndex}
             onEdit={onEdit}
             onDelete={() => {
               setIsRemoveConfirmationOpened(true);
@@ -150,6 +148,7 @@ export const ChatMessage: FC<Props> = memo(
           noFocusReturn
           trigger={
             <ChatMessageContent
+              messageIndex={messageIndex}
               conversation={conversation}
               isEditing={isEditing}
               toggleEditing={toggleEditing}
@@ -171,20 +170,21 @@ export const ChatMessage: FC<Props> = memo(
             />
           }
         >
-          {!messageIsStreaming && (
-            <MessageMobileButtons
-              isEditAvailable={!!onEdit}
-              message={message}
-              onCopy={handleCopy}
-              messageCopied={messageCopied}
-              editDisabled={editDisabled}
-              onLike={onLike}
-              onDelete={() => setIsRemoveConfirmationOpened(true)}
-              isEditing={isEditing}
-              toggleEditing={toggleEditing}
-              onRegenerate={onRegenerate}
-            />
-          )}
+          <MessageMobileButtons
+            isMessageStreaming={!!conversation.isMessageStreaming}
+            isLastMessage={
+              messageIndex === (conversation?.messages.length ?? 0) - 1
+            }
+            message={message}
+            onCopy={handleCopy}
+            messageCopied={messageCopied}
+            editDisabled={editDisabled}
+            onLike={onLike}
+            onDelete={() => setIsRemoveConfirmationOpened(true)}
+            isEditing={isEditing}
+            toggleEditing={toggleEditing}
+            onRegenerate={onRegenerate}
+          />
         </Menu>
         {confirmationDialog}
       </>
