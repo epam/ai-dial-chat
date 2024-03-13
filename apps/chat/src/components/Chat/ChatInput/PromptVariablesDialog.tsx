@@ -28,7 +28,7 @@ interface Props {
   onClose: () => void;
 }
 
-export const PromptDialog: FC<Props> = ({
+export const PromptVariablesDialog: FC<Props> = ({
   prompt,
   variables,
   onSubmit,
@@ -108,19 +108,19 @@ export const PromptDialog: FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-blackout p-3 md:p-5"
+      className="fixed inset-0 z-50 flex max-h-full items-center justify-center overflow-hidden bg-blackout p-3 md:p-5"
       onKeyDown={handleKeyDown}
     >
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
       >
         <div
-          className="mb-4 text-base font-bold"
+          className="mb-4 whitespace-pre text-base font-bold"
           data-qa="variable-prompt-name"
         >
           {prompt.name}

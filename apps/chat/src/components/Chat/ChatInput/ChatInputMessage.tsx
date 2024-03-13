@@ -34,8 +34,8 @@ import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
 import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
-import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
+import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
@@ -421,7 +421,7 @@ export const ChatInputMessage = ({
         )}
 
         {isModalVisible && (
-          <PromptDialog
+          <PromptVariablesDialog
             prompt={filteredPrompts[activePromptIndex]}
             variables={variables}
             onSubmit={handlePromptApply}

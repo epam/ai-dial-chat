@@ -25,8 +25,8 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { DisableOverlay } from '../Common/DisableOverlay';
-import { PromptDialog } from './ChatInput/PromptDialog';
 import { PromptList } from './ChatInput/PromptList';
+import { PromptVariablesDialog } from './ChatInput/PromptVariablesDialog';
 import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
 
 import debounce from 'lodash-es/debounce';
@@ -219,7 +219,7 @@ export const SystemPrompt: FC<Props> = ({
       />
 
       {isModalVisible && (
-        <PromptDialog
+        <PromptVariablesDialog
           prompt={prompts[activePromptIndex]}
           variables={variables}
           onSubmit={handleSubmit}
