@@ -47,29 +47,37 @@ export const getSortedEntities = async (token: JWT | null) => {
   const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const models = await getEntities<CoreAIEntity<EntityType.Model>[]>(
-    EntityType.Model,
-    accessToken,
-    jobTitle,
-  ).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
+  const [modelsResult, applicationsResult, assistantsResult] =
+    await Promise.allSettled([
+      getEntities<CoreAIEntity<EntityType.Model>[]>(
+        EntityType.Model,
+        accessToken,
+        jobTitle,
+      ),
+      getEntities<CoreAIEntity<EntityType.Application>[]>(
+        EntityType.Application,
+        accessToken,
+        jobTitle,
+      ),
+      getEntities<CoreAIEntity<EntityType.Assistant>[]>(
+        EntityType.Assistant,
+        accessToken,
+        jobTitle,
+      ),
+    ]);
 
-  const applications = await getEntities<
-    CoreAIEntity<EntityType.Application>[]
-  >(EntityType.Application, accessToken, jobTitle).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
-  const assistants = await getEntities<CoreAIEntity<EntityType.Assistant>[]>(
-    EntityType.Assistant,
-    accessToken,
-    jobTitle,
-  ).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
+  const models =
+    modelsResult.status === 'fulfilled'
+      ? modelsResult.value
+      : (logger.error(modelsResult.reason), []);
+  const applications =
+    applicationsResult.status === 'fulfilled'
+      ? applicationsResult.value
+      : (logger.error(applicationsResult.reason), []);
+  const assistants =
+    assistantsResult.status === 'fulfilled'
+      ? assistantsResult.value
+      : (logger.error(assistantsResult.reason), []);
 
   const preProcessedEntities = [...models, ...applications, ...assistants];
   let defaultModelId = preProcessedEntities.find(
