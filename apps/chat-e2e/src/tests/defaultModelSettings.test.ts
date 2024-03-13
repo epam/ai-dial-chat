@@ -447,6 +447,12 @@ dialTest(
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
+    const expectedMatchedModelsCount =
+      ModelsUtil.groupEntitiesByName(matchedModels).size;
+    const expectedMatchedAppsCount =
+      ModelsUtil.groupEntitiesByName(matchedApplications).size;
+    const expectedMatchedAssistantsCount =
+      ModelsUtil.groupEntitiesByName(matchedAssistants).size;
 
     await dialTest.step(
       'Create new conversation and click "See full list.." link',
@@ -474,9 +480,9 @@ dialTest(
             ExpectedMessages.searchResultCountIsValid,
           )
           .toBe(
-            matchedModels.length +
-              matchedApplications.length +
-              matchedAssistants.length,
+            expectedMatchedModelsCount +
+              expectedMatchedAppsCount +
+              expectedMatchedAssistantsCount,
           );
       },
     );
@@ -493,13 +499,13 @@ dialTest(
             assistantsCount + appsCount,
             ExpectedMessages.searchResultCountIsValid,
           )
-          .toBe(matchedApplications.length + matchedAssistants.length);
+          .toBe(expectedMatchedAppsCount + expectedMatchedAssistantsCount);
 
         await modelsDialog.assistantsTab.click();
         appsCount = await talkToApplicationGroupEntities.getElementsCount();
         expect
           .soft(appsCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(matchedApplications.length);
+          .toBe(expectedMatchedAppsCount);
 
         await modelsDialog.applicationsTab.click();
         const noResult =
