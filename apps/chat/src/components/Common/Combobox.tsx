@@ -135,7 +135,7 @@ export const Combobox = <T,>({
             {label}
           </label>
         )}
-        <div className="relative flex rounded border border-primary py-2.5 focus-within:border-accent-primary">
+        <div className="flex rounded border border-primary py-2.5 focus-within:border-accent-primary">
           <div className="relative w-full">
             <input
               disabled={disabled}
