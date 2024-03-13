@@ -116,7 +116,7 @@ export const ChatHeader = ({
             )}
           >
             <span
-              className={classNames('truncate text-center', {
+              className={classNames('truncate whitespace-pre text-center', {
                 'block max-w-full md:max-w-[330px] lg:max-w-[425px]':
                   !isChatFullWidth,
               })}

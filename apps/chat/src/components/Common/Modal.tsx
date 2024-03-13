@@ -124,7 +124,7 @@ function ModalView({
               {heading && typeof heading === 'string' ? (
                 <h4
                   className={classNames(
-                    'mb-2 max-h-[50px] text-left text-base font-semibold',
+                    'mb-2 max-h-[50px] whitespace-pre text-left text-base font-semibold',
                     headingClassName,
                   )}
                 >

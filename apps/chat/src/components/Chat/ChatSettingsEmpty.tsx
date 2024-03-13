@@ -52,7 +52,7 @@ export const ChatSettingsEmpty = ({
             ) : (
               <h4
                 data-qa="app-name"
-                className="w-full text-center text-xl font-semibold"
+                className="w-full whitespace-pre text-center text-xl font-semibold"
               >
                 {appName}
               </h4>

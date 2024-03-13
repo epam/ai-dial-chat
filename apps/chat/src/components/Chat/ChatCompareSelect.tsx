@@ -34,7 +34,7 @@ const Option = ({ item }: OptionProps) => {
       <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
         <ModelIcon entity={model} entityId={item.model.id} size={18} />
       </ShareIcon>
-      <span className="truncate">{item.name}</span>
+      <span className="truncate whitespace-pre">{item.name}</span>
     </div>
   );
 };
