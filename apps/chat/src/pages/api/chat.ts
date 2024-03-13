@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
@@ -23,6 +24,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { authOptions } from './auth/[...nextauth]';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  console.time('chat');
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -83,7 +85,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         ? assistantModel!.tokenizer
         : model.tokenizer;
 
-    let messagesToSend: Message[] = limitMessagesByTokens({
+    let messagesToSend: Message[] = await limitMessagesByTokens({
       promptToSend,
       messages,
       limits,
@@ -142,12 +144,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           isStreamingError: true,
         });
       } finally {
+        console.timeEnd('chat');
         res.end();
       }
     };
 
     await processStream();
   } catch (error) {
+    console.timeEnd('chat');
+
     return chatErrorHandler({
       error,
       res,

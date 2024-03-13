@@ -9,7 +9,11 @@ import { errorsMessages } from '@/src/constants/errors';
 import { logger } from './logger';
 
 import { Tiktoken, TiktokenEncoding, get_encoding } from '@dqbd/tiktoken';
+// import { init } from '@dqbd/tiktoken/lite/init';
 import { Blob } from 'buffer';
+
+// import { readFileSync } from 'fs';
+// import path from 'path';
 
 // This is very conservative calculations of tokens (1 token = 1 byte)
 export const getBytesTokensSize = (str: string): number => {
@@ -17,8 +21,18 @@ export const getBytesTokensSize = (str: string): number => {
 };
 
 const encodings: Partial<Record<TiktokenEncoding, Tiktoken | undefined>> = {};
+// const wasm = readFileSync(
+//   path.resolve(
+//     __dirname,
+//     // node modules placed in different place with monorepo, but normal when deploy
+//     process.env.NODE_ENV === 'development'
+//       ? '../../../../../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm'
+//       : '../../../../node_modules/@dqbd/tiktoken/lite/tiktoken_bg.wasm',
+//   ),
+// );
+// let wasmInit = false;
 
-export function limitMessagesByTokens({
+export async function limitMessagesByTokens({
   promptToSend,
   messages,
   limits,
@@ -30,10 +44,15 @@ export function limitMessagesByTokens({
   limits: DialAIEntityModel['limits'];
   features: DialAIEntityModel['features'];
   tokenizer: DialAIEntityModel['tokenizer'];
-}): Message[] {
+}): Promise<Message[]> {
   if (!limits || !limits.maxRequestTokens || features?.truncatePrompt) {
     return messages;
   }
+
+  // if (!wasmInit) {
+  //   await init((imports) => WebAssembly.instantiate(wasm, imports));
+  //   wasmInit = true;
+  // }
 
   let calculateTokensSize: (str: string) => number = getBytesTokensSize;
   let tokensPerMessage = 0;
