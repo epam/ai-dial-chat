@@ -1237,6 +1237,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           of(
             ModelsActions.updateRecentModels({
               modelId: updatedConversation.model.id,
+              rearrange: true,
             }),
           ),
           iif(
