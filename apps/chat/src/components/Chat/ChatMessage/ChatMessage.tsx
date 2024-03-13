@@ -7,6 +7,7 @@ import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation, LikeState, Message } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -51,6 +52,9 @@ export const ChatMessage: FC<Props> = memo(
       useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+    const messageIsStreaming = useAppSelector(
+      ConversationsSelectors.selectIsConversationsStreaming,
+    );
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
@@ -103,8 +107,9 @@ export const ChatMessage: FC<Props> = memo(
     );
 
     if (
-      (!isSmallScreen() || isEditing || isOverlay) &&
-      !(isMobile() && isOverlay) // skip if overlay on mobile
+      messageIsStreaming ||
+      ((!isSmallScreen() || isEditing || isOverlay) &&
+        !(isMobile() && isOverlay)) // skip if overlay on mobile
     ) {
       return (
         <>

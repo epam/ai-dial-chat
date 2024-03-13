@@ -132,6 +132,9 @@ export const ChatMessageContent = ({
   }, [mappedUserEditableAttachments]);
 
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
 
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
   const [newEditableAttachmentsIds, setNewEditableAttachmentsIds] = useState<
@@ -465,7 +468,7 @@ export const ChatMessageContent = ({
                     className="absolute bottom-[-160px]"
                   ></div>
                 </div>
-                {showUserButtons && (
+                {showUserButtons && !messageIsStreaming && (
                   <MessageUserButtons
                     isEditAvailable={!!onEdit}
                     editDisabled={editDisabled}
@@ -500,7 +503,7 @@ export const ChatMessageContent = ({
                 />
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
-              {withButtons && (
+              {withButtons && !messageIsStreaming && (
                 <MessageAssistantButtons
                   copyOnClick={() => onCopy?.()}
                   isLikesEnabled={isLikesEnabled}
