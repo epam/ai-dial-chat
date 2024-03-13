@@ -88,7 +88,7 @@ export const updateEntitiesFoldersAndIds = (
   return { updatedFolders, updatedOpenedFoldersIds };
 };
 
-const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
+export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
 export const prepareEntityName = (name: string, forRenaming = false) => {
   const clearName = forRenaming
@@ -99,9 +99,10 @@ export const prepareEntityName = (name: string, forRenaming = false) => {
         .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
         .filter(Boolean)[0] ?? '';
 
-  if (clearName.length > MAX_ENTITY_LENGTH) {
-    return trimEndDots(substring(clearName, 0, MAX_ENTITY_LENGTH));
-  }
+  const result =
+    clearName.length > MAX_ENTITY_LENGTH
+      ? substring(clearName, 0, MAX_ENTITY_LENGTH)
+      : clearName;
 
-  return trimEndDots(clearName);
+  return !forRenaming ? trimEndDots(result) : result.trim();
 };
