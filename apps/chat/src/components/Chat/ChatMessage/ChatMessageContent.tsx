@@ -329,7 +329,9 @@ export const ChatMessageContent = ({
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
-        onClick?.(e, messageRef);
+        if (!messageIsStreaming) {
+          onClick?.(e, messageRef);
+        }
       }}
     >
       <div

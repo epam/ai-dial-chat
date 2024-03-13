@@ -107,9 +107,8 @@ export const ChatMessage: FC<Props> = memo(
     );
 
     if (
-      messageIsStreaming ||
-      ((!isSmallScreen() || isEditing || isOverlay) &&
-        !(isMobile() && isOverlay)) // skip if overlay on mobile
+      (!isSmallScreen() || isEditing || isOverlay) &&
+      !(isMobile() && isOverlay) // skip if overlay on mobile
     ) {
       return (
         <>
@@ -172,18 +171,20 @@ export const ChatMessage: FC<Props> = memo(
             />
           }
         >
-          <MessageMobileButtons
-            isEditAvailable={!!onEdit}
-            message={message}
-            onCopy={handleCopy}
-            messageCopied={messageCopied}
-            editDisabled={editDisabled}
-            onLike={onLike}
-            onDelete={() => setIsRemoveConfirmationOpened(true)}
-            isEditing={isEditing}
-            toggleEditing={toggleEditing}
-            onRegenerate={onRegenerate}
-          />
+          {!messageIsStreaming && (
+            <MessageMobileButtons
+              isEditAvailable={!!onEdit}
+              message={message}
+              onCopy={handleCopy}
+              messageCopied={messageCopied}
+              editDisabled={editDisabled}
+              onLike={onLike}
+              onDelete={() => setIsRemoveConfirmationOpened(true)}
+              isEditing={isEditing}
+              toggleEditing={toggleEditing}
+              onRegenerate={onRegenerate}
+            />
+          )}
         </Menu>
         {confirmationDialog}
       </>
