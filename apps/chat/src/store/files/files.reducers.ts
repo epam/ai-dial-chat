@@ -312,6 +312,21 @@ export const filesSlice = createSlice({
         fileIds: string[];
       }>,
     ) => state,
+    updateFileInfo: (
+      state,
+      { payload }: PayloadAction<{ file: Partial<DialFile>; id: string }>,
+    ) => {
+      state.files = state.files.map((file) => {
+        if (file.id === payload.id) {
+          return {
+            ...file,
+            ...payload.file,
+          };
+        }
+
+        return file;
+      });
+    },
   },
 });
 

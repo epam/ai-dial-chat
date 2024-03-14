@@ -900,7 +900,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to {{folderName}}', {
+          heading={t('Confirm revoking access to: {{folderName}}', {
             folderName: currentFolder.name,
           })}
           description={

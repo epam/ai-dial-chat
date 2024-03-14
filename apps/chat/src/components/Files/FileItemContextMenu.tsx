@@ -1,4 +1,9 @@
-import { IconDots, IconDownload, IconTrashX } from '@tabler/icons-react';
+import {
+  IconDots,
+  IconDownload,
+  IconTrashX,
+  IconUserX,
+} from '@tabler/icons-react';
 import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -7,6 +12,9 @@ import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 
@@ -18,6 +26,7 @@ interface ContextMenuProps {
   className: string;
   onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
+  onUnshare?: MouseEventHandler<unknown>;
 }
 
 export function FileItemContextMenu({
@@ -25,8 +34,14 @@ export function FileItemContextMenu({
   className,
   onDelete,
   onOpenChange,
+  onUnshare,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
+
+  const isSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isSharingEnabled(state, FeatureType.File),
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -45,13 +60,20 @@ export function FileItemContextMenu({
         CustomTriggerRenderer: DownloadRenderer,
       },
       {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display: isSharingEnabled && !!onUnshare && !!file.isShared,
+        Icon: IconUserX,
+        onClick: onUnshare,
+      },
+      {
         name: t('Delete'),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
       },
     ],
-    [file, onDelete, onOpenChange, t],
+    [file, onDelete, onOpenChange, onUnshare, isSharingEnabled, t],
   );
 
   return (
