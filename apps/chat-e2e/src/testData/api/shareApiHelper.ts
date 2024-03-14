@@ -1,7 +1,10 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
 import {
   ShareAcceptRequestModel,
   ShareByLinkResponseModel,
+  ShareListingRequestModel,
+  ShareRelations,
   ShareRequestModel,
   ShareRequestType,
 } from '@/chat/types/share';
@@ -26,7 +29,10 @@ export class ShareApiHelper extends BaseApiHelper {
     return JSON.parse(responseText) as ShareByLinkResponseModel;
   }
 
-  public async acceptInvite(shareLinkResponse: ShareByLinkResponseModel) {
+  public async acceptInvite(
+    shareLinkResponse: ShareByLinkResponseModel,
+    expectedHttpCode = 200,
+  ) {
     const requestData: ShareAcceptRequestModel = {
       invitationId: ExpectedConstants.sharedLink(
         shareLinkResponse.invitationLink,
@@ -38,6 +44,25 @@ export class ShareApiHelper extends BaseApiHelper {
     expect(
       response.status(),
       `Successfully accepted share invitation link`,
+    ).toBe(expectedHttpCode);
+  }
+
+  public async listSharedWithMeConversations() {
+    const requestData: ShareListingRequestModel = {
+      resourceTypes: [BackendResourceType.CONVERSATION],
+      with: ShareRelations.me,
+      order: 'popular_asc',
+    };
+    const response = await this.request.post(API.shareWithMeListing, {
+      data: requestData,
+    });
+    const entities = (await response.json()) as {
+      resources: BackendChatEntity[];
+    };
+    expect(
+      response.status(),
+      `Received shared items: ${JSON.stringify(entities)}`,
     ).toBe(200);
+    return entities;
   }
 }

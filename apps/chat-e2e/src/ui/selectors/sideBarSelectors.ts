@@ -28,7 +28,6 @@ export const SideBarSelectors = {
 };
 
 export const ChatBarSelectors = {
-  newFolder: '[data-qa="create-folder"]',
   deleteConversations: '[data-qa="delete-conversations"]',
   compare: '[data-qa="compare"]',
   attachments: '[data-qa="attachments"]',

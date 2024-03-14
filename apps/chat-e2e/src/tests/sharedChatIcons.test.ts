@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendDataEntity } from '@/chat/types/common';
 import { FolderInterface } from '@/chat/types/folder';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
@@ -30,7 +31,7 @@ dialTest(
     'Shared chat link is always different.\n' +
     'Error appears if shared chat link is opened by its owner.\n' +
     'Shared icon appears in chat model icon if another user clicks on the link.\n' +
-    'Shared icon in chat header and response does not appear',
+    'Share form text differs for chat and folder',
   async ({
     dialHomePage,
     conversations,
@@ -58,6 +59,7 @@ dialTest(
       'EPMRTC-2747',
       'EPMRTC-1505',
       'EPMRTC-1601',
+      'EPMRTC-1811',
     );
     let conversation: Conversation;
     let firstShareLinkResponse: ShareByLinkResponseModel;
@@ -70,7 +72,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open conversation dropdown menu and choose "Share" option',
+      'Open conversation dropdown menu and choose "Share" option and verify modal window text',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -80,13 +82,19 @@ dialTest(
         );
         firstShareLinkResponse =
           firstShareLinkResponseText as ShareByLinkResponseModel;
+        await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
+        expect
+          .soft(
+            await shareModal.getShareTextContent(),
+            ExpectedMessages.sharedModalTextIsValid,
+          )
+          .toBe(ExpectedConstants.shareConversationText);
       },
     );
 
     await dialTest.step(
       'Hover over "Cancel" and "Copy" buttons and verify they are highlighted with blue color',
       async () => {
-        await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         await shareModal.closeButton.hoverOver();
         const closeButtonColor =
           await shareModal.closeButton.getComputedStyleProperty(Styles.color);
@@ -706,7 +714,9 @@ dialTest(
 dialTest(
   `Share option appears in context menu for chat folder if there is any chat inside.\n` +
     'Share form text differs for chat and folder.\n' +
-    'Confirmation message if to delete shared chat folder',
+    'Confirmation message if to delete shared chat folder.\n' +
+    'Shared icon disappears from the folder if to use Unshare.\n' +
+    'Share form text differs for chat and folder',
   async ({
     dialHomePage,
     conversationData,
@@ -719,7 +729,13 @@ dialTest(
     shareModal,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2729', 'EPMRTC-1811', 'EPMRTC-2811');
+    setTestIds(
+      'EPMRTC-2729',
+      'EPMRTC-1811',
+      'EPMRTC-2811',
+      'EPMRTC-2757',
+      'EPMRTC-1811',
+    );
     let folderConversation: FolderConversation;
     let shareLinkResponse: ShareByLinkResponseModel;
 
@@ -749,11 +765,9 @@ dialTest(
         expect
           .soft(
             await shareModal.getShareTextContent(),
-            ExpectedMessages.sharedInvitationLinkIsUnique,
+            ExpectedMessages.sharedModalTextIsValid,
           )
-          .toBe(
-            'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
-          );
+          .toBe(ExpectedConstants.shareFolderText);
       },
     );
 
@@ -775,6 +789,168 @@ dialTest(
             ExpectedMessages.confirmationMessageIsValid,
           )
           .toBe(ExpectedConstants.deleteSharedFolderMessage);
+
+        await confirmationDialog.cancelDialog();
+      },
+    );
+
+    await dialTest.step(
+      'Select Unshare option from menu for shared folder, click Cancel and verify arrow icon is displayed',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          folderConversation.folders.name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await confirmationDialog.cancelDialog();
+        await folderConversations
+          .getFolderArrowIcon(folderConversation.folders.name)
+          .waitFor();
+      },
+    );
+
+    await dialTest.step(
+      'Select Unshare option from menu for shared folder, click Revoke and verify arrow icon disappears',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          folderConversation.folders.name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await folderConversations
+          .getFolderArrowIcon(folderConversation.folders.name)
+          .waitFor({ state: 'hidden' });
+      },
+    );
+  },
+);
+
+dialTest(
+  'Shared icon in chat header and response does not appear.\n' +
+    'Shared icon stays in chat if to cancel unshare.\n' +
+    'Unshare item appears for shared chats only.\n' +
+    'Shared icon disappears in chat if to unshare.\n' +
+    'Error appears if chat was unshared, but user clicks on shared link',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    conversationDropdownMenu,
+    confirmationDialog,
+    chatBar,
+    chat,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2748', 'EPMRTC-2746', 'EPMRTC-2749', 'EPMRTC-2765');
+    let conversation: Conversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialTest.step('Prepare shared conversation', async () => {
+      conversation = await conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+
+      shareByLinkResponse =
+        await mainUserShareApiHelper.shareEntityByLink(conversation);
+      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+    });
+
+    await dialTest.step(
+      'Verify Share and Unshare options are displayed in dropdown menu for shared conversation',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations
+          .getConversationArrowIcon(conversation.name)
+          .waitFor();
+        await conversations.openConversationDropdownMenu(conversation.name);
+        const actualMenuOptions =
+          await conversationDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
+          .toEqual(
+            expect.arrayContaining([MenuOptions.share, MenuOptions.unshare]),
+          );
+      },
+    );
+
+    await dialTest.step(
+      'Select Unshare option for shared conversation, click cancel and verify arrow icon is still displayed',
+      async () => {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await confirmationDialog.cancelDialog();
+        await conversations
+          .getConversationArrowIcon(conversation.name)
+          .waitFor();
+      },
+    );
+
+    await dialTest.step(
+      'Select Unshare option for shared conversation, click Revoke and verify arrow icon disappears',
+      async () => {
+        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await conversations
+          .getConversationArrowIcon(conversation.name)
+          .waitFor({ state: 'hidden' });
+      },
+    );
+
+    await dialTest.step(
+      'Open conversation dropdown menu and verify only Share option is available',
+      async () => {
+        await conversations.openConversationDropdownMenu(conversation.name);
+        const actualMenuOptions =
+          await conversationDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
+          .toEqual(expect.arrayContaining([MenuOptions.share]));
+        expect
+          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
+          .not.toEqual(expect.arrayContaining([MenuOptions.unshare]));
+      },
+    );
+
+    await dialTest.step(
+      'Get the list of shared with me conversation by another user and verify there is no unshared one',
+      async () => {
+        const sharedWithAnotherUserConversations =
+          await additionalUserShareApiHelper.listSharedWithMeConversations();
+        expect
+          .soft(
+            sharedWithAnotherUserConversations.resources.find(
+              (c) => c.name === conversation.name,
+            ),
+            ExpectedMessages.conversationIsNotShared,
+          )
+          .toBeUndefined();
+      },
+    );
+
+    await dialTest.step(
+      'Try to open share link by another user and verify error received',
+      async () => {
+        await additionalUserShareApiHelper.acceptInvite(
+          shareByLinkResponse,
+          404,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create new conversation, send any request and verify Unshare option is not available i  context menu',
+      async () => {
+        const newChatRequest = '1+2';
+        await chatBar.createNewConversation();
+        await chat.sendRequestWithButton(newChatRequest);
+        await conversations.openConversationDropdownMenu(newChatRequest);
+        const actualMenuOptions =
+          await conversationDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
+          .not.toEqual(expect.arrayContaining([MenuOptions.unshare]));
       },
     );
   },

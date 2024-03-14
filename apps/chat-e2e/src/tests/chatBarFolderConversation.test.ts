@@ -12,9 +12,16 @@ import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
-  'Create new chat folder',
-  async ({ dialHomePage, chatBar, folderConversations, setTestIds }) => {
-    setTestIds('EPMRTC-569');
+  'Create new chat folder.\n' +
+    'Share option is unavailable in chat folder if there is no any chat inside',
+  async ({
+    dialHomePage,
+    chatBar,
+    folderConversations,
+    folderDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-569', 'EPMRTC-2005');
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await chatBar.createNewFolder();
@@ -26,6 +33,14 @@ dialTest(
         ExpectedMessages.newFolderCreated,
       )
       .toBeTruthy();
+
+    await folderConversations.openFolderDropdownMenu(
+      ExpectedConstants.newFolderWithIndexTitle(1),
+    );
+    const actualMenuOptions = await folderDropdownMenu.getAllMenuOptions();
+    expect
+      .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
+      .toEqual([MenuOptions.rename, MenuOptions.delete]);
   },
 );
 
