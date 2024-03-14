@@ -99,8 +99,8 @@ export const getSortedEntities = async (token: JWT | null) => {
           ? resPromptTokens + resCompletionTokens
           : undefined);
 
-      maxRequestTokens =
-        resPromptTokens ??
+      maxResponseTokens =
+        resCompletionTokens ??
         (maxTotalTokens
           ? Math.min(
               MAX_PROMPT_TOKENS_DEFAULT_VALUE,
@@ -110,10 +110,10 @@ export const getSortedEntities = async (token: JWT | null) => {
             )
           : undefined);
 
-      maxResponseTokens =
-        resCompletionTokens ??
-        (maxTotalTokens && maxRequestTokens
-          ? maxTotalTokens - maxRequestTokens
+      maxRequestTokens =
+        resPromptTokens ??
+        (maxTotalTokens && maxResponseTokens
+          ? maxTotalTokens - maxResponseTokens
           : undefined);
     }
 
