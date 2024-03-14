@@ -772,7 +772,7 @@ export const ChatView = memo(() => {
                                       handleDeleteMessage(index);
                                     }}
                                     onRegenerate={
-                                      index === conv.messages.length - 1 &&
+                                      index === mergedMessages.length - 1 &&
                                       showLastMessageRegenerate
                                         ? onRegenerateMessage
                                         : undefined
