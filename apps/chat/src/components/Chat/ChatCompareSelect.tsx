@@ -30,7 +30,7 @@ const Option = ({ item }: OptionProps) => {
   );
 
   return (
-    <div className="group flex items-center gap-3 pl-1">
+    <div className="group flex items-center gap-3 truncate pl-1">
       <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
         <ModelIcon entity={model} entityId={item.model.id} size={18} />
       </ShareIcon>
