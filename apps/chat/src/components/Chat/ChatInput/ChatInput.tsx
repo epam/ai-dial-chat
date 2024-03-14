@@ -67,10 +67,7 @@ export const ChatInput = ({
   }, [inputRef, onResize]);
 
   return (
-    <div
-      ref={inputRef}
-      className="gradient-top-bottom absolute bottom-0 left-0 w-full pt-2"
-    >
+    <div ref={inputRef} className="w-full pt-3 md:pt-5">
       <div className="relative">
         {!Children.toArray(children).length &&
           onRegenerate &&
