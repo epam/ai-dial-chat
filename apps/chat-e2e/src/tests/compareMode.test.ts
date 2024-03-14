@@ -655,7 +655,9 @@ dialTest(
         await chatMessages.waitForCompareMessageJumpingIconDisappears(
           Side.left,
         );
-        const isRegenerateButtonVisible = await chat.regenerate.isVisible();
+        const isRegenerateButtonVisible = await chat.regenerate
+          .getNthElement(1)
+          .isVisible();
         expect
           .soft(
             isRegenerateButtonVisible,

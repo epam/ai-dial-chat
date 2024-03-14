@@ -218,13 +218,12 @@ dialTest(
     await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
 
     await folderPrompts.expandFolder(ExpectedConstants.newFolderTitle);
-    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-      ExpectedConstants.newFolderTitle,
-      prompt.name,
-    );
-    expect
-      .soft(isFolderPromptVisible, ExpectedMessages.promptMovedToFolder)
-      .toBeTruthy();
+    await folderPrompts
+      .getFolderEntity(
+        ExpectedConstants.newFolderWithIndexTitle(1),
+        prompt.name,
+      )
+      .waitFor();
   },
 );
 

@@ -794,6 +794,7 @@ dialTest(
     await dialTest.step(
       'Click Play Next message button and verify Play Next is not visible and cursor is blinking while response is loading, content auto-scrolled to the end of response',
       async () => {
+        await dialHomePage.throttleAPIResponse('**/*');
         await chat.playNextChatMessage(false);
         await playbackControl.playbackNextButton.waitForState({
           state: 'hidden',
@@ -814,6 +815,8 @@ dialTest(
           playedBackResponse,
           ExpectedMessages.playbackMessageIsInViewport,
         ).toBeInViewport();
+
+        await dialHomePage.unRouteAllResponses();
       },
     );
 
