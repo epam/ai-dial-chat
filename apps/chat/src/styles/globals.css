@@ -33,8 +33,7 @@
   }
 
   :hover {
-    scrollbar-color: theme('backgroundColor.layer-4')
-      theme('colors.transparent');
+    scrollbar-color: theme('backgroundColor.layer-4') theme('colors.transparent');
   }
 
   /* TODO: fix calendar color for different themes */
@@ -81,10 +80,12 @@ pre:has(div.codeblock) {
     @apply invalid:border-error;
   }
 }
+
 @layer components {
   .input {
     @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
+
   .input.touched.invalid,
   .input.dirty.invalid {
     @apply border-error;
@@ -133,10 +134,6 @@ pre:has(div.codeblock) {
 @layer components {
   .checkbox {
     @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
-  }
-
-  .gradient-top-bottom {
-    @apply border-transparent bg-gradient-to-b from-transparent via-layer-1 via-[10px] to-layer-1;
   }
 }
 
