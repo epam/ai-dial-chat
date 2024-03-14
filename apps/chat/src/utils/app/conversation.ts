@@ -89,17 +89,8 @@ export const isSettingsChanged = (
 export const getNewConversationName = (
   conversation: Conversation,
   message: Message,
-  updatedMessages: Message[],
 ): string => {
   const convName = prepareEntityName(conversation.name);
-
-  if (
-    conversation.replay?.isReplay ||
-    updatedMessages.length > 2 ||
-    conversation.isNameChanged
-  ) {
-    return convName;
-  }
   const content = prepareEntityName(message.content);
   if (content.length > 0) {
     return content;
