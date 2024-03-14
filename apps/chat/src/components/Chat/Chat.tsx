@@ -5,7 +5,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   Conversation,
