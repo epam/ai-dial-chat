@@ -27,7 +27,6 @@ export class ConversationBuilder {
       replay: defaultReplay,
       selectedAddons: model.selectedAddons ?? [],
       lastActivityDate: Date.now(),
-      isMessageStreaming: false,
       folderId: '',
     };
   }

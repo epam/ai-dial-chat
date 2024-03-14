@@ -274,7 +274,6 @@ dialTest(
     dialHomePage,
     conversations,
     conversationData,
-    localStorageManager,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
@@ -303,9 +302,6 @@ dialTest(
         ];
 
         await dataInjector.createConversations(conversationsToShare);
-        await localStorageManager.setSelectedConversation(
-          firstConversationToShare,
-        );
 
         for (const conversation of conversationsToShare) {
           const shareByLinkResponse =
