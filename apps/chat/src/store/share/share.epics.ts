@@ -369,7 +369,7 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>
-      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.File),
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
     ),
     switchMap(() => {
       return concat(

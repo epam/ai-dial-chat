@@ -118,7 +118,7 @@ export const FileItem = ({
           {!isSelected && item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
-              featureType={FeatureType.File}
+              featureType={FeatureType.Chat}
               isHighlighted={isSelected}
             >
               <IconFile

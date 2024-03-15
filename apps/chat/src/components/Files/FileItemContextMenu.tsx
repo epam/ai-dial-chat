@@ -42,12 +42,12 @@ export function FileItemContextMenu({
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
-  const isSharingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isSharingEnabled(state, FeatureType.File),
+  const isSharingConversationEnabled = useAppSelector((state) =>
+    SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
 
-  const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, FeatureType.File),
+  const isPublishingConversationEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -70,14 +70,17 @@ export function FileItemContextMenu({
       {
         name: t('Unshare'),
         dataQa: 'unshare',
-        display: isSharingEnabled && !!onUnshare && !!file.isShared,
+        display: isSharingConversationEnabled && !!onUnshare && !!file.isShared,
         Icon: IconUserX,
         onClick: onUnshare,
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishingEnabled && !!file.isPublished && !!onUnpublish,
+        display:
+          isPublishingConversationEnabled &&
+          !!file.isPublished &&
+          !!onUnpublish,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
       },
@@ -94,8 +97,8 @@ export function FileItemContextMenu({
       onOpenChange,
       onUnshare,
       onUnpublish,
-      isSharingEnabled,
-      isPublishingEnabled,
+      isSharingConversationEnabled,
+      isPublishingConversationEnabled,
       t,
     ],
   );

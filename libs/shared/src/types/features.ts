@@ -13,13 +13,11 @@ export enum Feature {
   Likes = 'likes', // Display likes
   ConversationsSharing = 'conversations-sharing', // Display conversation sharing
   PromptsSharing = 'prompts-sharing', // Display prompts sharing
-  FilesSharing = 'files-sharing', // Display files sharing
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation sidebar
   ConversationsPublishing = 'conversations-publishing',
   PromptsPublishing = 'prompts-publishing',
-  FilesPublishing = 'files-publishing',
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
 }
 
@@ -38,12 +36,10 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.Likes]: true,
   [Feature.ConversationsSharing]: true,
   [Feature.PromptsSharing]: true,
-  [Feature.FilesSharing]: true,
   [Feature.InputFiles]: true,
   [Feature.InputLinks]: true,
   [Feature.AttachmentsManager]: true,
   [Feature.ConversationsPublishing]: true,
   [Feature.PromptsPublishing]: true,
-  [Feature.FilesPublishing]: true,
   [Feature.CustomLogo]: true,
 };

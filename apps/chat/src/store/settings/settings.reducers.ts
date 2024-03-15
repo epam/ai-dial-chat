@@ -145,8 +145,6 @@ const isPublishingEnabled = createSelector(
         return enabledFeatures.has(Feature.ConversationsPublishing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsPublishing);
-      case FeatureType.File:
-        return enabledFeatures.has(Feature.FilesPublishing);
       default:
         return false;
     }
@@ -161,8 +159,7 @@ const isSharingEnabled = createSelector(
         return enabledFeatures.has(Feature.ConversationsSharing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsSharing);
-      case FeatureType.File:
-        return enabledFeatures.has(Feature.FilesSharing);
+
       default:
         return false;
     }
