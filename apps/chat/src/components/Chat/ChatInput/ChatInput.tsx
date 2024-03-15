@@ -15,7 +15,6 @@ interface Props {
   onResize: (height: number) => void;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
-  isMessagesPresented: boolean;
   isShowInput: boolean;
   isLastMessageError: boolean;
   onRegenerate: () => void;
@@ -27,7 +26,6 @@ export const ChatInput = ({
   onSend,
   onRegenerate,
   isLastMessageError,
-  isMessagesPresented,
   onScrollDownClick,
   onStopConversation,
   onResize,
@@ -63,7 +61,6 @@ export const ChatInput = ({
       <div className="relative">{!messageIsStreaming && children}</div>
       {isShowInput && (
         <ChatInputMessage
-          isMessagesPresented={isMessagesPresented}
           isLastMessageError={isLastMessageError}
           onRegenerate={onRegenerate}
           textareaRef={textareaRef}

@@ -784,7 +784,6 @@ export const ChatView = memo(() => {
                         <ChatInput
                           showReplayControls={showReplayControls}
                           textareaRef={textareaRef}
-                          isMessagesPresented={isNotEmptyConversations}
                           showScrollDownButton={showScrollDownButton}
                           onSend={onSendMessage}
                           onScrollDownClick={handleScrollDown}

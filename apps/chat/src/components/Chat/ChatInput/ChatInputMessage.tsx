@@ -49,7 +49,6 @@ interface Props {
   isLastMessageError: boolean;
   onRegenerate: () => void;
   showReplayControls: boolean;
-  isMessagesPresented: boolean;
 }
 
 const MAX_HEIGHT = 320;
@@ -63,7 +62,6 @@ export const ChatInputMessage = ({
   onRegenerate,
   isLastMessageError,
   showReplayControls,
-  isMessagesPresented,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
