@@ -154,8 +154,6 @@ const ChartAttachmentUrlRenderer = ({
       )?.data
     : undefined;
 
-  console.log(123);
-
   useEffect(() => {
     if (attachmentUrl && !chart) {
       dispatch(
