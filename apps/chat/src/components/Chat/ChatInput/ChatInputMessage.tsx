@@ -34,8 +34,8 @@ import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
 import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
-import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
+import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
@@ -112,7 +112,6 @@ export const ChatInputMessage = ({
     setShowPromptList,
     updatePromptListVisibility,
     filteredPrompts,
-    variables,
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
@@ -216,12 +215,7 @@ export const ChatInputMessage = ({
   );
 
   const handlePromptApply = useCallback(
-    (updatedVariables: string[]) => {
-      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
-        const index = variables.indexOf(variable);
-        return updatedVariables[index];
-      });
-
+    (newContent: string) => {
       const valueTokensLength = getTokensLength(newContent);
 
       if (valueTokensLength > maxTokensLength) {
@@ -236,13 +230,11 @@ export const ChatInputMessage = ({
       }
     },
     [
-      content,
       getTokensLength,
       maxTokensLength,
       setContent,
       setIsPromptLimitModalOpen,
       textareaRef,
-      variables,
     ],
   );
 
@@ -421,9 +413,8 @@ export const ChatInputMessage = ({
         )}
 
         {isModalVisible && (
-          <PromptDialog
+          <PromptVariablesDialog
             prompt={filteredPrompts[activePromptIndex]}
-            variables={variables}
             onSubmit={handlePromptApply}
             onClose={() => setIsModalVisible(false)}
           />

@@ -1177,15 +1177,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         const newConversationName =
           payload.conversation.replay?.isReplay ||
-          updatedMessages.length > 2 ||
+          updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
           payload.conversation.isNameChanged
             ? payload.conversation.name
             : getNextDefaultName(
-                getNewConversationName(
-                  payload.conversation,
-                  payload.message,
-                  updatedMessages,
-                ),
+                getNewConversationName(payload.conversation, payload.message),
                 conversations.filter(
                   (conv) =>
                     conv.folderId === payload.conversation.folderId &&
@@ -1237,6 +1233,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           of(
             ModelsActions.updateRecentModels({
               modelId: updatedConversation.model.id,
+              rearrange: true,
             }),
           ),
           iif(

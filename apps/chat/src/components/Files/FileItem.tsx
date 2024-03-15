@@ -165,7 +165,7 @@ export const FileItem = ({
         </div>
         <span
           className={classNames(
-            'block max-w-full truncate',
+            'block max-w-full truncate whitespace-pre',
             item.status === UploadStatus.FAILED && 'text-error',
             isSelected && 'text-accent-primary',
           )}
