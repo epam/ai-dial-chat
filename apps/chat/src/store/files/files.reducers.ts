@@ -327,6 +327,19 @@ export const filesSlice = createSlice({
         return file;
       });
     },
+    unpublishFile: (state, { payload }: PayloadAction<{ id: string }>) => {
+      state.files = state.files.map((file) => {
+        if (file.id === payload.id) {
+          return {
+            ...file,
+            //TODO: unpublish file by API
+            isPublished: false,
+          };
+        }
+
+        return file;
+      });
+    },
   },
 });
 

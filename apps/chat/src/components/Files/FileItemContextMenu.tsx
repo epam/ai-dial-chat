@@ -21,12 +21,15 @@ import { stopBubbling } from '@/src/constants/chat';
 import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
 
+import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+
 interface ContextMenuProps {
   file: DialFile;
   className: string;
   onDelete: (props?: unknown) => void | MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onUnshare?: MouseEventHandler<unknown>;
+  onUnpublish?: MouseEventHandler<unknown>;
 }
 
 export function FileItemContextMenu({
@@ -35,11 +38,16 @@ export function FileItemContextMenu({
   onDelete,
   onOpenChange,
   onUnshare,
+  onUnpublish,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.File),
+  );
+
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isPublishingEnabled(state, FeatureType.File),
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -67,13 +75,29 @@ export function FileItemContextMenu({
         onClick: onUnshare,
       },
       {
+        name: t('Unpublish'),
+        dataQa: 'unpublish',
+        display: isPublishingEnabled && !!file.isPublished && !!onUnpublish,
+        Icon: UnpublishIcon,
+        onClick: onUnpublish,
+      },
+      {
         name: t('Delete'),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
       },
     ],
-    [file, onDelete, onOpenChange, onUnshare, isSharingEnabled, t],
+    [
+      file,
+      onDelete,
+      onOpenChange,
+      onUnshare,
+      onUnpublish,
+      isSharingEnabled,
+      isPublishingEnabled,
+      t,
+    ],
   );
 
   return (

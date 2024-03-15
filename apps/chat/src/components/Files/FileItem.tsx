@@ -13,11 +13,13 @@ import classNames from 'classnames';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
+import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
@@ -57,6 +59,7 @@ export const FileItem = ({
 
   const [isSelected, setIsSelected] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -81,6 +84,16 @@ export const FileItem = ({
       setIsUnshareConfirmOpened(true);
       setIsContextMenu(false);
     }, []);
+
+  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnpublishing(true);
+      setIsContextMenu(false);
+    }, []);
+
+  const handleCloseUnpublishModal = useCallback(() => {
+    setIsUnpublishing(false);
+  }, []);
 
   useEffect(() => {
     setIsSelected(
@@ -191,10 +204,19 @@ export const FileItem = ({
             onDelete={handleRemove}
             onOpenChange={setIsContextMenu}
             onUnshare={handleUnshare}
+            onUnpublish={handleOpenUnpublishing}
             className="invisible group-hover/file-item:visible"
           />
         )}
       </div>
+      {isUnpublishing && (
+        <UnpublishModal
+          entity={item}
+          type={SharingType.File}
+          isOpen
+          onClose={handleCloseUnpublishModal}
+        />
+      )}
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}

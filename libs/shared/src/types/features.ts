@@ -19,6 +19,7 @@ export enum Feature {
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation sidebar
   ConversationsPublishing = 'conversations-publishing',
   PromptsPublishing = 'prompts-publishing',
+  FilesPublishing = 'files-publishing',
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
 }
 
@@ -43,5 +44,6 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.AttachmentsManager]: true,
   [Feature.ConversationsPublishing]: true,
   [Feature.PromptsPublishing]: true,
+  [Feature.FilesPublishing]: true,
   [Feature.CustomLogo]: true,
 };

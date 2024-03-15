@@ -145,6 +145,8 @@ const isPublishingEnabled = createSelector(
         return enabledFeatures.has(Feature.ConversationsPublishing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsPublishing);
+      case FeatureType.File:
+        return enabledFeatures.has(Feature.FilesPublishing);
       default:
         return false;
     }
