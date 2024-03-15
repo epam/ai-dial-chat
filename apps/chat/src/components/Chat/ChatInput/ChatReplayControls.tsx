@@ -42,6 +42,8 @@ export const ChatReplayControls: FC = () => {
     );
   }, [dispatch, selectedConversationsIds]);
 
+  const Icon = isError ? RefreshCW : IconPlayerPlay;
+
   return (
     <button
       className={classNames(
@@ -55,18 +57,11 @@ export const ChatReplayControls: FC = () => {
         tooltip={isError ? t('Try again') : t('Continue replay')}
         isTriggerClickable
       >
-        {isError ? (
-          <RefreshCW
-            height={24}
-            width={24}
-            className="shrink-0 text-secondary hover:text-accent-primary"
-          />
-        ) : (
-          <IconPlayerPlay
-            size={24}
-            className="shrink-0 text-secondary hover:text-accent-primary"
-          />
-        )}
+        <Icon
+          height={24}
+          width={24}
+          className="shrink-0 text-secondary hover:text-accent-primary"
+        />
       </Tooltip>
     </button>
   );
