@@ -205,6 +205,7 @@ export enum ModelIds {
   LLAMA2_13B_CHAT_V1 = 'meta.llama2-13b-chat-v1',
   LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
   COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
+  MISTRAL_LARGE = 'mistral-large-azure',
 }
 
 export enum AddonIds {
