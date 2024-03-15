@@ -44,7 +44,7 @@ import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
-import ChatReplayControls from './ChatReplayControls';
+import { StartReplayButton } from './ChatInput/ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
@@ -313,23 +313,6 @@ export const ChatView = memo(() => {
     },
     [dispatch],
   );
-
-  const handleReplayStart = useCallback(() => {
-    dispatch(
-      ConversationsActions.replayConversations({
-        conversationsIds: selectedConversationsIds,
-      }),
-    );
-  }, [selectedConversationsIds, dispatch]);
-
-  const handleReplayReStart = useCallback(() => {
-    dispatch(
-      ConversationsActions.replayConversations({
-        conversationsIds: selectedConversationsIds,
-        isRestart: true,
-      }),
-    );
-  }, [dispatch, selectedConversationsIds]);
 
   const applySelectedModel = useCallback(
     (
@@ -799,14 +782,14 @@ export const ChatView = memo(() => {
                     <>
                       {!isPlayback && (
                         <ChatInput
+                          showReplayControls={showReplayControls}
                           textareaRef={textareaRef}
                           isMessagesPresented={isNotEmptyConversations}
                           showScrollDownButton={showScrollDownButton}
                           onSend={onSendMessage}
                           onScrollDownClick={handleScrollDown}
-                          onRegenerate={
-                            isLastMessageError ? onRegenerateMessage : undefined
-                          }
+                          onRegenerate={onRegenerateMessage}
+                          isLastMessageError={isLastMessageError}
                           onStopConversation={() => {
                             dispatch(ConversationsActions.stopStreamMessage());
                           }}
@@ -816,12 +799,8 @@ export const ChatView = memo(() => {
                             !isExternal
                           }
                         >
-                          {showReplayControls && (
-                            <ChatReplayControls
-                              onClickReplayStart={handleReplayStart}
-                              onClickReplayReStart={handleReplayReStart}
-                              showReplayStart={!isNotEmptyConversations}
-                            />
+                          {showReplayControls && !isNotEmptyConversations && (
+                            <StartReplayButton />
                           )}
                           {isExternal && (
                             <ChatExternalControls

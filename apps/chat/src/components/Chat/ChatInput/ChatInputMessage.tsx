@@ -28,6 +28,8 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { ChatReplayControls } from '@/src/components/Chat/ChatInput/ChatReplayControls';
+import { RegenerateMessageButton } from '@/src/components/Chat/ChatInput/RegenerateMessageButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
@@ -44,6 +46,10 @@ interface Props {
   onScrollDownClick: () => void;
   onSend: (message: Message) => void;
   onStopConversation: () => void;
+  isLastMessageError: boolean;
+  onRegenerate: () => void;
+  showReplayControls: boolean;
+  isMessagesPresented: boolean;
 }
 
 const MAX_HEIGHT = 320;
@@ -54,6 +60,10 @@ export const ChatInputMessage = ({
   onScrollDownClick,
   onSend,
   onStopConversation,
+  onRegenerate,
+  isLastMessageError,
+  showReplayControls,
+  isMessagesPresented,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -313,7 +323,7 @@ export const ChatInputMessage = ({
       return t('Please continue replay to continue working with chat');
     }
     if (isError) {
-      return t('Please regenerate response to continue working with chat');
+      return t('Regenerate response');
     }
     if (isUploadingFilePresent) {
       return t('Please wait for the attachment to load');
@@ -362,12 +372,22 @@ export const ChatInputMessage = ({
           onKeyDown={handleKeyDown}
         />
 
-        <SendMessageButton
-          handleSend={handleSend}
-          isDisabled={isSendDisabled}
-          tooltip={tooltipContent()}
-          isLoading={isLoading}
-        />
+        {showReplayControls ? (
+          <ChatReplayControls />
+        ) : isLastMessageError ? (
+          <RegenerateMessageButton
+            onRegenerate={onRegenerate}
+            tooltip={tooltipContent()}
+            isErrorButton={isLastMessageError}
+          />
+        ) : (
+          <SendMessageButton
+            handleSend={handleSend}
+            isDisabled={isSendDisabled}
+            tooltip={tooltipContent()}
+            isLoading={isLoading}
+          />
+        )}
         {canAttach && (
           <>
             <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
