@@ -1,12 +1,12 @@
+import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
-  TestConversation,
-  TestPrompt,
   Theme,
 } from '@/src/testData';
 import { Cursors, Styles } from '@/src/ui/domData';
@@ -39,7 +39,7 @@ dialTest(
     chatMessages,
   }) => {
     setTestIds('EPMRTC-476');
-    let conversation: TestConversation;
+    let conversation: Conversation;
     const userRequests = [
       'first request',
       'second request',
@@ -236,7 +236,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
     const editData = 'updated message';
-    let conversation: TestConversation;
+    let conversation: Conversation;
     const userRequests = ['1+2=', '2+3=', '3+4='];
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(
@@ -634,7 +634,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1010', 'EPMRTC-1945');
-    let prompt: TestPrompt;
+    let prompt: Prompt;
 
     await dialTest.step('Prepare prompt with content', async () => {
       prompt = promptData.preparePrompt(promptContent);

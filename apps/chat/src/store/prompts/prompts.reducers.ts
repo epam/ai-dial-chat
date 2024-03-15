@@ -309,6 +309,7 @@ export const promptsSlice = createSlice({
             payload.parentId,
           ),
         type: FolderType.Prompt,
+        status: UploadStatus.LOADED,
       });
 
       state.folders = state.folders.concat(newFolder);

@@ -1,3 +1,4 @@
+import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -6,7 +7,6 @@ import {
   Import,
   MenuOptions,
   ModelIds,
-  TestConversation,
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { BucketUtil, FileUtil, ModelsUtil } from '@/src/utils';
@@ -31,7 +31,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1980');
-    let cancelExportConversation: TestConversation;
+    let cancelExportConversation: Conversation;
 
     await dialTest.step(
       'Upload image to root folder and prepare conversation containing this image',
@@ -147,9 +147,9 @@ dialTest(
       'EPMRTC-1983',
       'EPMRTC-1988',
     );
-    let dalleConversation: TestConversation;
-    let gptProVisionConversation: TestConversation;
-    let historyConversation: TestConversation;
+    let dalleConversation: Conversation;
+    let gptProVisionConversation: Conversation;
+    let historyConversation: Conversation;
     let exportedData: UploadDownloadData;
     let conversationPath: string;
     let anotherUserConversationPath: string;
