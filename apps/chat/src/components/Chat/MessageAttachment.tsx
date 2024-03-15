@@ -164,7 +164,6 @@ const ChartAttachmentUrlRenderer = ({
 
 interface Props {
   attachment: Attachment;
-  messageIdx?: number;
   isInner?: boolean;
 }
 

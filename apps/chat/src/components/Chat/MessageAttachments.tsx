@@ -67,15 +67,6 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
           isInner={isInner}
         />
       ))}
-      {/*<MessageAttachment*/}
-      {/*  attachment={{*/}
-      {/*    type: 'application/vnd.plotly.v1+json',*/}
-      {/*    title: 'chart',*/}
-      {/*    url: 'files/3j9XdSPJ3PCDaPUhPsD7rosRZSTeoNjuyFq7wJfrvBvR6fw57uJu2bLMTZwRxyLYXE/0.json',*/}
-      {/*  }}*/}
-      {/*  messageIdx={messageIdx}*/}
-      {/*  isInner={false}*/}
-      {/*/>*/}
     </div>
   );
 };
