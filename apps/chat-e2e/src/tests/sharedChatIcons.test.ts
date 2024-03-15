@@ -1,11 +1,13 @@
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
+  FolderConversation,
   MenuOptions,
   ModelIds,
-  TestConversation,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -57,7 +59,7 @@ dialTest(
       'EPMRTC-1505',
       'EPMRTC-1601',
     );
-    let conversation: TestConversation;
+    let conversation: Conversation;
     let firstShareLinkResponse: ShareByLinkResponseModel;
     let secondShareLinkResponse: ShareByLinkResponseModel;
 
@@ -272,21 +274,18 @@ dialTest(
     dialHomePage,
     conversations,
     conversationData,
-    localStorageManager,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1514', 'EPMRTC-2750', 'EPMRTC-2751');
-    let firstConversationToShare: TestConversation;
-    let secondConversationToShare: TestConversation;
-    let thirdConversationToShare: TestConversation;
+    let firstConversationToShare: Conversation;
+    let secondConversationToShare: Conversation;
+    let thirdConversationToShare: Conversation;
 
     await dialTest.step(
-      'Prepare default conversation and share it with another user.\n' +
-        'Shared icon disappears from chat if to rename conversation.\n' +
-        'Shared icon disappears from chat if to change model',
+      'Prepare three conversations and share them with another user',
       async () => {
         firstConversationToShare =
           await conversationData.prepareDefaultConversation();
@@ -303,13 +302,10 @@ dialTest(
         ];
 
         await dataInjector.createConversations(conversationsToShare);
-        await localStorageManager.setSelectedConversation(
-          firstConversationToShare,
-        );
 
         for (const conversation of conversationsToShare) {
           const shareByLinkResponse =
-            await mainUserShareApiHelper.shareConversationByLink(conversation);
+            await mainUserShareApiHelper.shareEntityByLink(conversation);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
       },
@@ -323,9 +319,28 @@ dialTest(
         firstConversationToShare.temperature = 0.5;
         firstConversationToShare.selectedAddons = addons ? [addons[0].id] : [];
 
-        secondConversationToShare.name = GeneratorUtil.randomString(7);
+        const secondUpdatedName = GeneratorUtil.randomString(7);
+        secondConversationToShare.id = secondConversationToShare.id.replace(
+          secondConversationToShare.name,
+          secondUpdatedName,
+        );
+        secondConversationToShare.name = secondConversationToShare.name.replace(
+          secondConversationToShare.name,
+          secondUpdatedName,
+        );
+        secondConversationToShare.isNameChanged = true;
 
-        thirdConversationToShare.model.id = ModelIds.GPT_4;
+        thirdConversationToShare.id = thirdConversationToShare.id.replace(
+          thirdConversationToShare.model.id,
+          ModelIds.GPT_4,
+        );
+
+        thirdConversationToShare.model.id =
+          thirdConversationToShare.model.id.replace(
+            thirdConversationToShare.model.id,
+            ModelIds.GPT_4,
+          );
+
         await dataInjector.updateConversations([
           firstConversationToShare,
           secondConversationToShare,
@@ -376,10 +391,10 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
-    let conversation: TestConversation;
-    let replayConversation: TestConversation;
-    let playbackConversation: TestConversation;
-    let conversationToDelete: TestConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
+    let playbackConversation: Conversation;
+    let conversationToDelete: Conversation;
 
     await dialTest.step(
       'Prepare shared conversation and replay and playback conversations based on it',
@@ -401,7 +416,7 @@ dialTest(
         await localStorageManager.setSelectedConversation(conversation);
 
         const shareByLinkResponse =
-          await mainUserShareApiHelper.shareConversationByLink(conversation);
+          await mainUserShareApiHelper.shareEntityByLink(conversation);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
 
         await dataInjector.createConversations([
@@ -424,9 +439,7 @@ dialTest(
         await dataInjector.createConversations([conversationToDelete]);
 
         const shareByLinkResponse =
-          await mainUserShareApiHelper.shareConversationByLink(
-            conversationToDelete,
-          );
+          await mainUserShareApiHelper.shareEntityByLink(conversationToDelete);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         await itemApiHelper.deleteConversation(conversationToDelete);
 
@@ -482,8 +495,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1600', 'EPMRTC-1511');
-    let firstSharedConversation: TestConversation;
-    let secondSharedConversation: TestConversation;
+    let firstSharedConversation: Conversation;
+    let secondSharedConversation: Conversation;
 
     await dialTest.step('Prepare two shared conversations', async () => {
       firstSharedConversation =
@@ -504,7 +517,7 @@ dialTest(
 
       for (const conversation of conversationsToShare) {
         const shareByLinkResponse =
-          await mainUserShareApiHelper.shareConversationByLink(conversation);
+          await mainUserShareApiHelper.shareEntityByLink(conversation);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
       }
     });
@@ -556,6 +569,212 @@ dialTest(
         expect
           .soft(sharedTooltip, ExpectedMessages.tooltipContentIsValid)
           .toBe(ExpectedConstants.sharedConversationTooltip);
+      },
+    );
+  },
+);
+
+dialTest(
+  'Shared icon appears in chat folder and does not for other items in the structure.\n' +
+    `Shared icon appears in chat if it's located in shared folder.\n` +
+    'Shared icon appears in chat in not shared folder.\n' +
+    'Shared icon disappears from the folder if it was renamed.\n' +
+    'Confirmation message if to rename shared chat folder',
+  async ({
+    dialHomePage,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    folderConversations,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    folderDropdownMenu,
+    confirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds(
+      'EPMRTC-1810',
+      'EPMRTC-2754',
+      'EPMRTC-2752',
+      'EPMRTC-2756',
+      'EPMRTC-2815',
+    );
+    let nestedFolders: FolderInterface[];
+    let nestedConversations: Conversation[] = [];
+
+    await dialTest.step(
+      'Prepare conversations inside nested folders, share middle level folder and low level conversation',
+      async () => {
+        nestedFolders = conversationData.prepareNestedFolder(2);
+        nestedConversations =
+          conversationData.prepareConversationsForNestedFolders(nestedFolders);
+        await dataInjector.createConversations(nestedConversations);
+        await localStorageManager.setSelectedConversation(
+          nestedConversations[2],
+        );
+
+        const shareFolderByLinkResponse =
+          await mainUserShareApiHelper.shareEntityByLink(
+            nestedConversations[1],
+            true,
+          );
+        await additionalUserShareApiHelper.acceptInvite(
+          shareFolderByLinkResponse,
+        );
+        const shareConversationByLinkResponse =
+          await mainUserShareApiHelper.shareEntityByLink(
+            nestedConversations[2],
+          );
+        await additionalUserShareApiHelper.acceptInvite(
+          shareConversationByLinkResponse,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open Compare mode for shared conversation and verify shared folder and conversation have blue arrow in Compare dropdown list',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+        });
+        await dialHomePage.waitForPageLoaded();
+        await folderConversations
+          .getFolderArrowIcon(nestedFolders[1].name)
+          .waitFor();
+        await folderConversations
+          .getFolderEntityArrowIcon(
+            nestedFolders[2].name,
+            nestedConversations[2].name,
+          )
+          .waitFor();
+
+        for (let i = 0; i < nestedFolders.length; i = i + 2) {
+          const isFolderHasArrowIcon = await folderConversations
+            .getFolderArrowIcon(nestedFolders[i].name)
+            .isVisible();
+          expect
+            .soft(
+              isFolderHasArrowIcon,
+              ExpectedMessages.sharedFolderIconIsNotVisible,
+            )
+            .toBeFalsy();
+        }
+
+        for (let i = 0; i < nestedFolders.length - 1; i++) {
+          const isConversationHasArrowIcon = await folderConversations
+            .getFolderEntityArrowIcon(
+              nestedFolders[i].name,
+              nestedConversations[i].name,
+            )
+            .isVisible();
+          expect
+            .soft(
+              isConversationHasArrowIcon,
+              ExpectedMessages.sharedConversationIconIsNotVisible,
+            )
+            .toBeFalsy();
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Rename shared folder and verify no arrow icon is displayed for it',
+      async () => {
+        const newFolderName = GeneratorUtil.randomString(7);
+        await folderConversations.openFolderDropdownMenu(nestedFolders[1].name);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await folderConversations.editFolderNameWithEnter(
+          nestedFolders[1].name,
+          newFolderName,
+        );
+
+        expect
+          .soft(
+            await confirmationDialog.getConfirmationMessage(),
+            ExpectedMessages.confirmationMessageIsValid,
+          )
+          .toBe(ExpectedConstants.renameSharedFolderMessage);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+        await folderConversations
+          .getFolderArrowIcon(newFolderName)
+          .waitFor({ state: 'hidden' });
+      },
+    );
+  },
+);
+
+dialTest(
+  `Share option appears in context menu for chat folder if there is any chat inside.\n` +
+    'Share form text differs for chat and folder.\n' +
+    'Confirmation message if to delete shared chat folder',
+  async ({
+    dialHomePage,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    folderConversations,
+    additionalUserShareApiHelper,
+    folderDropdownMenu,
+    confirmationDialog,
+    shareModal,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2729', 'EPMRTC-1811', 'EPMRTC-2811');
+    let folderConversation: FolderConversation;
+    let shareLinkResponse: ShareByLinkResponseModel;
+
+    await dialTest.step('Prepare conversation inside folder', async () => {
+      folderConversation =
+        conversationData.prepareDefaultConversationInFolder();
+      await dataInjector.createConversations(folderConversation.conversations);
+      await localStorageManager.setSelectedConversation(
+        folderConversation.conversations[0],
+      );
+    });
+
+    await dialTest.step(
+      'Open app, select "Share" menu option for folder with conversation inside and verify modal window text',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+        });
+        await dialHomePage.waitForPageLoaded();
+        await folderConversations.openFolderDropdownMenu(
+          folderConversation.folders.name,
+        );
+
+        shareLinkResponse =
+          (await folderConversations.selectShareMenuOption()) as ShareByLinkResponseModel;
+        await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
+        expect
+          .soft(
+            await shareModal.getShareTextContent(),
+            ExpectedMessages.sharedInvitationLinkIsUnique,
+          )
+          .toBe(
+            'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+          );
+      },
+    );
+
+    await dialTest.step(
+      'Accept folder sharing by another user, try to delete shared folder and verify confirmation message is shown',
+      async () => {
+        await additionalUserShareApiHelper.acceptInvite(shareLinkResponse);
+        await dialHomePage.reloadPage();
+        await folderConversations
+          .getFolderArrowIcon(folderConversation.folders.name)
+          .waitFor();
+        await folderConversations.openFolderDropdownMenu(
+          folderConversation.folders.name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        expect
+          .soft(
+            await confirmationDialog.getConfirmationMessage(),
+            ExpectedMessages.confirmationMessageIsValid,
+          )
+          .toBe(ExpectedConstants.deleteSharedFolderMessage);
       },
     );
   },
