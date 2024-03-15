@@ -804,13 +804,17 @@ export const conversationsSlice = createSlice({
         pathToChart: string;
       }>,
     ) => {
-      state.loadedCharts = [
-        ...state.loadedCharts,
-        {
-          url: payload.pathToChart,
-          data: payload.params,
-        },
-      ];
+      state.loadedCharts = state.loadedCharts.find(
+        (chart) => chart.url === payload.pathToChart,
+      )
+        ? state.loadedCharts
+        : [
+            ...state.loadedCharts,
+            {
+              url: payload.pathToChart,
+              data: payload.params,
+            },
+          ];
     },
   },
 });
