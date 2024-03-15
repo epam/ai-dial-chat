@@ -4,9 +4,25 @@ import { setStyles } from './utils/styleUtils';
 
 import {
   ChatOverlayOptions,
+  OverlayEvents,
   OverlayRequest,
+  OverlayRequests,
   Styles,
+  overlayAppName,
 } from '@epam/ai-dial-shared';
+
+const defaultLoaderSVG = `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M24 39V46.5" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.4" d="M9 24H1.5" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.5" d="M8.0918 8.0918L13.3994 13.3994" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.6" d="M24 1.5V9" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.7" d="M39.9121 8.08594L37.2607 10.7373L34.6094 13.3887" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.8" d="M46.5 24H39" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.9" d="M34.6055 34.6055L39.9082 39.9082" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.3" d="M13.3936 34.6055L8.08594 39.9131" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 0 0" to="360 0 0" dur="1s" repeatCount="indefinite" />
+</svg>
+`;
 
 interface Subscription {
   eventType: string;
@@ -19,6 +35,7 @@ export class ChatOverlay {
   protected root: HTMLElement;
   protected iframe: HTMLIFrameElement;
   protected loader: HTMLElement;
+  protected loaderDisplayCss = 'flex';
 
   protected iframeInteraction: Task;
 
@@ -46,6 +63,7 @@ export class ChatOverlay {
     this.loader = this.initLoader(
       options?.loaderStyles || {},
       options?.loaderClass,
+      options?.loaderInnerHTML,
     );
 
     this.root.appendChild(this.loader);
@@ -53,11 +71,7 @@ export class ChatOverlay {
 
     setStyles(this.root, { position: 'relative' });
 
-    /*
-      After iframeInteraction is ready, that will send initial settings to application (incl. hostDomain, theme, etc.)
-      send() depends of iframeInteraction, that wouldn't executed until iframeInteraction is ready
-    */
-    this.setOverlayOptions(options);
+    this.showLoader();
 
     window.addEventListener('message', this.process);
   }
@@ -91,18 +105,29 @@ export class ChatOverlay {
    * Creates loader and add styles
    * @returns {HTMLElement} reference to loader element
    */
-  protected initLoader(styles: Styles, className?: string): HTMLElement {
+  protected initLoader(
+    styles: Styles,
+    className?: string,
+    loaderInnerHTML?: string,
+  ): HTMLElement {
     const loader = document.createElement('div');
 
-    loader.innerHTML = 'Loading...';
+    loader.innerHTML = loaderInnerHTML ?? defaultLoaderSVG;
 
     if (className) {
       loader.className = className;
     }
 
+    if (styles?.display) {
+      this.loaderDisplayCss = styles.display;
+    }
+
     setStyles(loader, {
       position: 'absolute',
       background: 'white',
+      display: this.loaderDisplayCss,
+      alignItems: 'center',
+      justifyContent: 'center',
       left: '0',
       right: '0',
       top: '0',
@@ -118,7 +143,7 @@ export class ChatOverlay {
    */
   private showLoader() {
     setStyles(this.loader, {
-      display: 'block',
+      display: this.loaderDisplayCss,
     });
   }
   /**
@@ -185,7 +210,18 @@ export class ChatOverlay {
    * @param event {MessageEvent} post message event
    */
   protected process = (event: MessageEvent<OverlayRequest>): void => {
-    if (event.data.type === '@DIAL_OVERLAY/READY') {
+    if (event.data.type === `${overlayAppName}/${OverlayEvents.initReady}`) {
+      this.showLoader();
+      return;
+    }
+    if (event.data.type === `${overlayAppName}/${OverlayEvents.ready}`) {
+      this.setOverlayOptions(this.options);
+      this.hideLoader();
+      return;
+    }
+    if (
+      event.data.type === `${overlayAppName}/${OverlayEvents.readyToInteract}`
+    ) {
       this.iframeInteraction.complete();
       return;
     }
@@ -228,13 +264,17 @@ export class ChatOverlay {
    * We don't put something into the this.requests until `this.ready()`
    * @param type Request name
    * @param payload Request payload
+   * @param waitForReady Is this request should wait for overlay ready (default: true)
    * @returns {Promise<unknown>} Return promise with response payload when resolved
    */
-  public async send(type: string, payload?: unknown): Promise<unknown> {
-    // TODO: Add typo to type when this logic will be at npm package
-
-    // wait until iframe is ready to receive messages
-    await this.iframeInteraction.ready();
+  public async send(
+    type: OverlayRequests,
+    payload?: unknown,
+    waitForReady = true,
+  ): Promise<unknown> {
+    if (waitForReady) {
+      await this.iframeInteraction.ready();
+    }
 
     if (!this.iframe.contentWindow) {
       throw new Error(
@@ -242,7 +282,7 @@ export class ChatOverlay {
       );
     }
 
-    const request = new DeferredRequest(type, {
+    const request = new DeferredRequest(`${overlayAppName}/${type}`, {
       payload,
       timeout: this.options?.requestTimeout,
     });
@@ -276,7 +316,7 @@ export class ChatOverlay {
    * Get messages from first selected conversation
    */
   public async getMessages() {
-    const messages = await this.send('@DIAL_OVERLAY/GET_MESSAGES');
+    const messages = await this.send(OverlayRequests.getMessages);
 
     return messages;
   }
@@ -286,7 +326,9 @@ export class ChatOverlay {
    * @param content {string} text of message that should be sent to the chat
    */
   public async sendMessage(content: string) {
-    await this.send('@DIAL_OVERLAY/SEND_MESSAGE', { content });
+    await this.send(OverlayRequests.sendMessage, {
+      content,
+    });
   }
 
   /**
@@ -294,7 +336,9 @@ export class ChatOverlay {
    * @param systemPrompt {string} text content of system prompt
    */
   public async setSystemPrompt(systemPrompt: string) {
-    await this.send('@DIAL_OVERLAY/SET_SYSTEM_PROMPT', { systemPrompt });
+    await this.send(OverlayRequests.setSystemPrompt, {
+      systemPrompt,
+    });
   }
 
   /**
@@ -302,13 +346,7 @@ export class ChatOverlay {
    * @param options {ChatOverlayOptions} Options that should be set into the DIAL
    */
   public async setOverlayOptions(options: ChatOverlayOptions) {
-    // while settings are updating showing loader
-    this.showLoader();
-
-    await this.send('@DIAL_OVERLAY/SET_OVERLAY_OPTIONS', options);
-
-    // when settings are updated hiding loader
-    this.hideLoader();
+    await this.send(OverlayRequests.setOverlayOptions, options, false);
   }
 
   /**
