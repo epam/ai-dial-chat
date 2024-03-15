@@ -27,5 +27,6 @@ export interface ConversationsState {
   loadingFolderIds: string[];
   isActiveNewConversationRequest: boolean;
   loadedCharts: { url: string; data: PlotParams }[];
+  chartLoading: boolean;
   compareLoading?: boolean;
 }

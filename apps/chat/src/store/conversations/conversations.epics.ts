@@ -2513,7 +2513,7 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
         catchError(() =>
           of(
             UIActions.showErrorToast(
-              translate('Error while getting chart data'),
+              translate('Error while uploading chart data'),
             ),
           ),
         ),

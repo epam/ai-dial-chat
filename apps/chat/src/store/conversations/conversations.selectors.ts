@@ -157,6 +157,9 @@ export const selectLoadedCharts = createSelector([rootSelector], (state) => {
   // PlotReactState had some additional "state" properties that were never declared or updated.
   return cloneDeep(state.loadedCharts);
 });
+export const selectChartLoading = createSelector([rootSelector], (state) => {
+  return state.chartLoading;
+});
 
 export const selectParentFolders = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],

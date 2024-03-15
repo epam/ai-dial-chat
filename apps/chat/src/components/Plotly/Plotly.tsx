@@ -4,6 +4,7 @@ import { PlotParams } from 'react-plotly.js';
 import dynamic from 'next/dynamic';
 
 import isEqual from 'lodash-es/isEqual';
+import { Layout, PlotRelayoutEvent } from 'plotly.js';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -15,7 +16,7 @@ export const PlotlyComponent = memo(
   ({ plotlyData: { layout, ...data } }: Props) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(0);
-    const [height, setHeight] = useState(0);
+    const [currentLayout, setCurrentLayout] = useState<Partial<Layout>>(layout);
 
     useEffect(() => {
       if (!containerRef.current) {
@@ -23,19 +24,23 @@ export const PlotlyComponent = memo(
       }
 
       setWidth(containerRef.current.scrollWidth);
-      setHeight(containerRef.current.scrollHeight);
     }, []);
+
+    const handleRelayout = (newLayout: PlotRelayoutEvent) => {
+      // save layout if changed
+      setCurrentLayout({ ...currentLayout, ...newLayout });
+    };
 
     return (
       <div ref={containerRef} className="size-full">
         <Plot
-          useResizeHandler
           {...data}
-          layout={{ ...layout, width, height }}
+          layout={{ ...currentLayout, width }}
+          onRelayout={handleRelayout}
         />
       </div>
     );
   },
   (prevProps, nextProps) => isEqual(prevProps, nextProps),
 );
-PlotlyComponent.displayName = 'PlotlyComponentTemplate';
+PlotlyComponent.displayName = 'PlotlyComponent';

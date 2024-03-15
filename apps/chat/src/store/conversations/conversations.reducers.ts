@@ -53,6 +53,7 @@ const initialState: ConversationsState = {
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
   loadedCharts: [],
+  chartLoading: false,
   isActiveNewConversationRequest: false,
 };
 
@@ -794,7 +795,9 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         pathToChart: string;
       }>,
-    ) => state,
+    ) => {
+      state.chartLoading = true;
+    },
     getChartAttachmentSuccess: (
       state,
       {
@@ -815,6 +818,7 @@ export const conversationsSlice = createSlice({
               data: payload.params,
             },
           ];
+      state.chartLoading = false;
     },
   },
 });

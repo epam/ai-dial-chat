@@ -21,6 +21,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { stopBubbling } from '@/src/constants/chat';
 
+import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
@@ -136,6 +137,9 @@ const ChartAttachmentUrlRenderer = ({
   const loadedCharts = useAppSelector(
     ConversationsSelectors.selectLoadedCharts,
   );
+  const chartLoading = useAppSelector(
+    ConversationsSelectors.selectChartLoading,
+  );
 
   useEffect(() => {
     if (attachmentUrl) {
@@ -149,6 +153,10 @@ const ChartAttachmentUrlRenderer = ({
 
   if (!attachmentUrl) {
     return null;
+  }
+
+  if (chartLoading) {
+    return <Spinner className="mx-auto" size={30} />;
   }
 
   const chart = loadedCharts.find((loadedChart) =>
