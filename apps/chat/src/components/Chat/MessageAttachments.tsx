@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Attachment } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
@@ -38,9 +40,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         <ChevronDown
           height={18}
           width={18}
-          className={`shrink-0 text-secondary transition ${
-            isSectionOpened ? 'rotate-180' : ''
-          }`}
+          className={classNames(
+            'shrink-0 text-secondary transition',
+            isSectionOpened && 'rotate-180',
+          )}
         />
       </button>
       {isSectionOpened && (
@@ -64,6 +67,15 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
           isInner={isInner}
         />
       ))}
+      {/*<MessageAttachment*/}
+      {/*  attachment={{*/}
+      {/*    type: 'application/vnd.plotly.v1+json',*/}
+      {/*    title: 'chart',*/}
+      {/*    url: 'files/3j9XdSPJ3PCDaPUhPsD7rosRZSTeoNjuyFq7wJfrvBvR6fw57uJu2bLMTZwRxyLYXE/0.json',*/}
+      {/*  }}*/}
+      {/*  messageIdx={messageIdx}*/}
+      {/*  isInner={false}*/}
+      {/*/>*/}
     </div>
   );
 };

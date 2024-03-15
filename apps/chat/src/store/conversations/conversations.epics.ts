@@ -1,3 +1,5 @@
+import { PlotParams } from 'react-plotly.js';
+
 import {
   EMPTY,
   Observable,
@@ -48,6 +50,7 @@ import {
   sortByDateAndName,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import {
   getOrUploadConversation,
   getPreparedConversations,
@@ -73,6 +76,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -2491,6 +2495,32 @@ const openFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const getChartAttachmentEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.getChartAttachment.match),
+    switchMap(({ payload }) =>
+      FileService.getFileContent<PlotParams>(
+        ApiUtils.encodeApiUrl(payload.pathToChart),
+      ).pipe(
+        switchMap((params) => {
+          return of(
+            ConversationsActions.getChartAttachmentSuccess({
+              params,
+              pathToChart: payload.pathToChart,
+            }),
+          );
+        }),
+        catchError(() =>
+          of(
+            UIActions.showErrorToast(
+              translate('Error while getting chart data'),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
 export const ConversationsEpics = combineEpics(
   migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
@@ -2544,4 +2574,6 @@ export const ConversationsEpics = combineEpics(
   openFolderEpic,
   compareConversationsEpic,
   hideChatbarEpic,
+
+  getChartAttachmentEpic,
 );

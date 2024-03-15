@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { IconDownload, IconPaperclip } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { PlotParams } from 'react-plotly.js';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,22 +13,28 @@ import { Attachment } from '@/src/types/chat';
 import { ImageMIMEType, MIMEType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+
 import { stopBubbling } from '@/src/constants/chat';
 
-import PlotlyComponent from '@/src/components/Plotly/Plotly';
+import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 
 import { sanitize } from 'isomorphic-dompurify';
-import { Layout, PlotData } from 'plotly.js';
 
 const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
   'image/jpeg',
   'image/png',
   'image/gif',
 ]);
+const chartType = 'application/vnd.plotly.v1+json';
 
 interface AttachmentDataRendererProps {
   attachment: Attachment;
@@ -82,17 +89,9 @@ const AttachmentDataRenderer = ({
       />
     );
   }
-  if (attachment.type === 'application/vnd.plotly.v1+json') {
+  if (attachment.type === chartType) {
     return (
-      <PlotlyComponent
-        plotlyData={
-          attachment.data as unknown as {
-            // TBD: could be url or need to parse
-            data: Partial<PlotData>[];
-            layout: Partial<Layout>;
-          }
-        }
-      />
+      <PlotlyComponent plotlyData={attachment.data as unknown as PlotParams} />
     );
   }
 
@@ -125,8 +124,47 @@ const AttachmentUrlRenderer = ({
   return null;
 };
 
+interface ChartAttachmentUrlRendererProps {
+  attachmentUrl: string | undefined;
+}
+
+const ChartAttachmentUrlRenderer = ({
+  attachmentUrl,
+}: ChartAttachmentUrlRendererProps) => {
+  const dispatch = useAppDispatch();
+
+  const loadedCharts = useAppSelector(
+    ConversationsSelectors.selectLoadedCharts,
+  );
+
+  useEffect(() => {
+    if (attachmentUrl) {
+      dispatch(
+        ConversationsActions.getChartAttachment({
+          pathToChart: attachmentUrl,
+        }),
+      );
+    }
+  }, [attachmentUrl, dispatch]);
+
+  if (!attachmentUrl) {
+    return null;
+  }
+
+  const chart = loadedCharts.find((loadedChart) =>
+    loadedChart.url.endsWith(attachmentUrl),
+  )?.data;
+
+  if (chart) {
+    return <PlotlyComponent plotlyData={chart} />;
+  }
+
+  return null;
+};
+
 interface Props {
   attachment: Attachment;
+  messageIdx?: number;
   isInner?: boolean;
 }
 
@@ -135,7 +173,9 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [isOpened, setIsOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const isOpenable =
-    attachment.data || (attachment.url && imageTypes.has(attachment.type));
+    attachment.data ||
+    (attachment.url && imageTypes.has(attachment.type)) ||
+    attachment.type === chartType;
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
     [attachment.url],
@@ -229,12 +269,15 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           {attachment.data && (
             <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}
-          {mappedAttachmentUrl && (
-            <AttachmentUrlRenderer
-              attachmentUrl={mappedAttachmentUrl}
-              attachmentType={attachment.type}
-            />
-          )}
+          {mappedAttachmentUrl &&
+            (attachment.type === chartType ? (
+              <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />
+            ) : (
+              <AttachmentUrlRenderer
+                attachmentUrl={mappedAttachmentUrl}
+                attachmentType={attachment.type}
+              />
+            ))}
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}

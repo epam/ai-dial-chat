@@ -1,3 +1,5 @@
+import { PlotParams } from 'react-plotly.js';
+
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
@@ -50,6 +52,7 @@ const initialState: ConversationsState = {
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
+  loadedCharts: [],
   isActiveNewConversationRequest: false,
 };
 
@@ -786,6 +789,29 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
+    getChartAttachment: (
+      state,
+      _action: PayloadAction<{
+        pathToChart: string;
+      }>,
+    ) => state,
+    getChartAttachmentSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        params: PlotParams;
+        pathToChart: string;
+      }>,
+    ) => {
+      state.loadedCharts = [
+        ...state.loadedCharts,
+        {
+          url: payload.pathToChart,
+          data: payload.params,
+        },
+      ];
+    },
   },
 });
 
