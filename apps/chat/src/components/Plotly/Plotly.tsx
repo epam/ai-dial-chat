@@ -31,11 +31,7 @@ export const PlotlyComponent = memo(
         <Plot
           useResizeHandler
           {...data}
-          layout={{
-            ...layout,
-            width: width,
-            height: height,
-          }}
+          layout={{ ...layout, width, height }}
         />
       </div>
     );
