@@ -8,6 +8,7 @@ import {
   first,
   fromEvent,
   ignoreElements,
+  iif,
   map,
   merge,
   of,
@@ -313,7 +314,19 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             OverlayActions.setOverlayOptionsSuccess({ hostDomain, requestId }),
-            OverlayActions.signInOptionsSet({ signInOptions }),
+          ),
+          of(OverlayActions.signInOptionsSet({ signInOptions })),
+
+          // Send ready to Interact when options set and not needed to login
+          iif(
+            () => !AuthSelectors.selectIsShouldLogin(state$.value),
+            of(
+              OverlayActions.sendPMEvent({
+                type: OverlayEvents.readyToInteract,
+                eventParams: { hostDomain },
+              }),
+            ),
+            EMPTY,
           ),
         );
 
@@ -350,6 +363,7 @@ const setOverlayOptionsSuccessEpic: AppEpic = (action$) =>
 
 const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
   state$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
     // we shouldn't proceed if we are not overlay
     filter((state) => SettingsSelectors.selectIsOverlay(state)),
     map((state) =>
@@ -380,6 +394,7 @@ const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
 // models are loading after conversations, if models loaded that means that we can work with application. Maybe there is better condition.
 const notifyHostAboutReadyEpic: AppEpic = (_action$, state$) =>
   state$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
     map((state) => {
       return {
         isShouldLogin: AuthSelectors.selectIsShouldLogin(state),
@@ -401,6 +416,7 @@ const notifyHostAboutReadyEpic: AppEpic = (_action$, state$) =>
 
 const initOverlayEpic: AppEpic = (_action$, state$) =>
   state$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
     first(),
     map(() => {
       return OverlayActions.sendPMEvent({
@@ -410,8 +426,8 @@ const initOverlayEpic: AppEpic = (_action$, state$) =>
     }),
   );
 
-const sendPMEventEpic: AppEpic = (_action$) =>
-  _action$.pipe(
+const sendPMEventEpic: AppEpic = (action$) =>
+  action$.pipe(
     filter(OverlayActions.sendPMEvent.match),
     tap(({ payload }) => {
       sendPMEvent(payload.type, payload.eventParams);
@@ -419,8 +435,8 @@ const sendPMEventEpic: AppEpic = (_action$) =>
     ignoreElements(),
   );
 
-const sendPMResponseEpic: AppEpic = (_action$) =>
-  _action$.pipe(
+const sendPMResponseEpic: AppEpic = (action$) =>
+  action$.pipe(
     filter(OverlayActions.sendPMResponse.match),
     tap(({ payload }) => {
       sendPMResponse(payload.type, payload.requestParams);
