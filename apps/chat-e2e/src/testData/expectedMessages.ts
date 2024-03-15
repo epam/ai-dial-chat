@@ -170,6 +170,7 @@ export enum ExpectedMessages {
   sharedIconColorIsValid = 'Shared arrow icon color is valid',
   sharedConversationIconIsNotVisible = 'Shared conversation arrow icon is not visible',
   sharedFolderIconIsNotVisible = 'Shared folder arrow icon is not visible',
+  sharedModalTextIsValid = 'Shared models dialog text is valid',
   sharedInvitationLinkIsUnique = 'Shared invitation link is unique',
   shareConversationLinkIsValid = 'Share conversation link is valid',
   shareInviteAcceptanceErrorShown = 'Share invite acceptance error toast is shown',
