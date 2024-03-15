@@ -23,4 +23,11 @@ export class ShareModal extends BaseElement {
   public linkInputLoader = this.getChildElementBySelector(
     ChatSelectors.messageSpinner,
   );
+
+  public shareText = this.getChildElementBySelector(ModalSelectors.shareText);
+
+  public async getShareTextContent() {
+    const allContent = await this.shareText.getElementsInnerContent();
+    return allContent.join(' ').replaceAll(/\u00a0/g, ' ');
+  }
 }

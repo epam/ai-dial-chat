@@ -1,14 +1,17 @@
 import { defaultReplay } from '@/chat/constants/replay';
-import { Message, MessageSettings, Role, Stage } from '@/chat/types/chat';
-import { FolderType } from '@/chat/types/folder';
+import {
+  Conversation,
+  Message,
+  MessageSettings,
+  Role,
+  Stage,
+} from '@/chat/types/chat';
+import { FolderInterface, FolderType } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import {
   ConversationBuilder,
   ExpectedConstants,
-  MenuOptions,
   ModelIds,
-  TestConversation,
-  TestFolder,
 } from '@/src/testData';
 import { FileApiHelper } from '@/src/testData/api';
 import { FolderData } from '@/src/testData/folders/folderData';
@@ -17,8 +20,8 @@ import { DateUtil } from '@/src/utils/dateUtil';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
 
 export interface FolderConversation {
-  conversations: TestConversation[];
-  folders: TestFolder;
+  conversations: Conversation[];
+  folders: FolderInterface;
 }
 
 export class ConversationData extends FolderData {
@@ -51,11 +54,21 @@ export class ConversationData extends FolderData {
       content: 'test response',
       model: { id: modelToUse.id },
     };
+    let conversationName;
+    let conversationId;
+    if (name !== undefined) {
+      conversationName = name;
+      conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
+    } else {
+      conversationName = GeneratorUtil.randomString(10);
+      conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${conversationName}`;
+    }
     return this.conversationBuilder
       .withMessage(userMessage)
       .withMessage(assistantMessage)
       .withModel(modelToUse)
-      .withName(name ?? GeneratorUtil.randomString(10))
+      .withName(conversationName)
+      .withId(conversationId)
       .build();
   }
 
@@ -142,13 +155,13 @@ export class ConversationData extends FolderData {
     return defaultConversation;
   }
 
-  public prepareDefaultReplayConversation(conversation: TestConversation) {
+  public prepareDefaultReplayConversation(conversation: Conversation) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     return this.fillReplayData(conversation, userMessages!);
   }
 
   public preparePartiallyReplayedStagedConversation(
-    conversation: TestConversation,
+    conversation: Conversation,
   ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
     const assistantMessage = conversation.messages.filter(
@@ -169,7 +182,7 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyReplayedConversation(conversation: TestConversation) {
+  public preparePartiallyReplayedConversation(conversation: Conversation) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
     const assistantMessages = conversation.messages.find(
@@ -249,12 +262,15 @@ export class ConversationData extends FolderData {
     return super.prepareNestedFolder(nestedLevel, FolderType.Chat);
   }
 
-  public prepareConversationsForNestedFolders(nestedFolders: TestFolder[]) {
-    const nestedConversations: TestConversation[] = [];
+  public prepareConversationsForNestedFolders(
+    nestedFolders: FolderInterface[],
+  ) {
+    const nestedConversations: Conversation[] = [];
     for (const item of nestedFolders) {
       const nestedConversation = this.prepareDefaultConversation();
       nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = item.id;
+      nestedConversation.folderId = item.folderId;
+      nestedConversation.id = `${item.folderId}/${nestedConversation.id}`;
       this.resetData();
     }
     return nestedConversations;
@@ -264,10 +280,11 @@ export class ConversationData extends FolderData {
     conversationsCount: number,
   ): FolderConversation {
     const folder = this.prepareFolder();
-    const conversations: TestConversation[] = [];
+    const conversations: Conversation[] = [];
     for (let i = 1; i <= conversationsCount; i++) {
       const conversation = this.prepareDefaultConversation();
-      conversation.folderId = folder.id;
+      conversation.folderId = folder.folderId;
+      conversation.id = `${folder.folderId}/${conversation.id}`;
       conversations.push(conversation);
       this.resetData();
     }
@@ -275,12 +292,17 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultConversationInFolder(
+    folderName?: string,
     model?: DialAIEntityModel,
-    name?: string,
+    conversationName?: string,
   ): FolderConversation {
-    const conversation = this.prepareDefaultConversation(model, name);
-    const folder = this.prepareFolder();
-    conversation.folderId = folder.id;
+    const conversation = this.prepareDefaultConversation(
+      model,
+      conversationName,
+    );
+    const folder = this.prepareFolder(folderName);
+    conversation.folderId = folder.folderId;
+    conversation.id = `${folder.folderId}/${conversation.id}`;
     return { conversations: [conversation], folders: folder };
   }
 
@@ -315,13 +337,13 @@ export class ConversationData extends FolderData {
   }
 
   public prepareDefaultPlaybackConversation(
-    conversation: TestConversation,
+    conversation: Conversation,
     playbackIndex?: number,
   ) {
     const messages = conversation.messages;
     const playbackConversation = JSON.parse(JSON.stringify(conversation));
-    playbackConversation.id = `playback${ItemUtil.conversationIdSeparator}${conversation.name}`;
-    playbackConversation.name = `[${MenuOptions.playback}] ${conversation.name}`;
+    playbackConversation.name = `${ExpectedConstants.playbackConversation}${conversation.name}`;
+    playbackConversation.id = `playback${ItemUtil.conversationIdSeparator}${playbackConversation.name}`;
     playbackConversation.messages = [];
     if (playbackIndex) {
       for (let i = 0; i < playbackIndex; i++) {
@@ -368,8 +390,10 @@ export class ConversationData extends FolderData {
       content: 'Heart',
       model: modelToUse,
     };
+    const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withName(GeneratorUtil.randomString(10))
+      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
       .withModel(modelToUse)
@@ -401,15 +425,17 @@ export class ConversationData extends FolderData {
         ],
       },
     };
+    const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
-      .withName(GeneratorUtil.randomString(10))
+      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
       .withModel(modelToUse)
       .build();
   }
 
-  public prepareHistoryConversation(...conversations: TestConversation[]) {
+  public prepareHistoryConversation(...conversations: Conversation[]) {
     const historyMessages: Message[] = [];
     for (const conversation of conversations) {
       historyMessages.push(...conversation.messages);
@@ -420,11 +446,11 @@ export class ConversationData extends FolderData {
   }
 
   private fillReplayData(
-    conversation: TestConversation,
+    conversation: Conversation,
     userMessages: Message[],
-  ): TestConversation {
+  ): Conversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
-    replayConversation.id = `replay${conversation.id}`;
+    replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
     if (!replayConversation.replay) {

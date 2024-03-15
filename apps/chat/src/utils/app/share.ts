@@ -5,6 +5,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
+import { FilesActions } from '@/src/store/files/files.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -37,6 +38,8 @@ export const getUnpublishActionByType = (type: SharingType) => {
       return PromptsActions.unpublishPrompt;
     case SharingType.PromptFolder:
       return PromptsActions.unpublishFolder;
+    case SharingType.File:
+      return FilesActions.unpublishFile;
     default:
       throw new Error('unknown type');
   }
