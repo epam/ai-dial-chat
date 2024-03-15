@@ -148,15 +148,23 @@ const ChartAttachmentUrlRenderer = ({
     ConversationsSelectors.selectChartLoading,
   );
 
+  const chart = attachmentUrl
+    ? loadedCharts.find((loadedChart) =>
+        loadedChart.url.endsWith(attachmentUrl),
+      )?.data
+    : undefined;
+
+  console.log(123);
+
   useEffect(() => {
-    if (attachmentUrl) {
+    if (attachmentUrl && !chart) {
       dispatch(
         ConversationsActions.getChartAttachment({
           pathToChart: attachmentUrl,
         }),
       );
     }
-  }, [attachmentUrl, dispatch]);
+  }, [attachmentUrl, chart, dispatch]);
 
   if (!attachmentUrl) {
     return null;
@@ -165,10 +173,6 @@ const ChartAttachmentUrlRenderer = ({
   if (chartLoading) {
     return <Spinner className="mx-auto" size={30} />;
   }
-
-  const chart = loadedCharts.find((loadedChart) =>
-    loadedChart.url.endsWith(attachmentUrl),
-  )?.data;
 
   if (chart) {
     return <PlotlyComponent plotlyData={chart} />;
