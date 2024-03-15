@@ -167,4 +167,15 @@ export class ModelsUtil {
       ? JSON.parse(process.env.RECENT_ADDONS!)
       : [];
   }
+
+  public static groupEntitiesByName(entities: DialAIEntityModel[]) {
+    return entities.reduce((groupMap, entity) => {
+      if (!groupMap.has(entity.name)) {
+        groupMap.set(entity.name, []);
+      }
+      const group = groupMap.get(entity.name);
+      group?.push(entity);
+      return groupMap;
+    }, new Map<string, DialAIEntityModel[]>());
+  }
 }

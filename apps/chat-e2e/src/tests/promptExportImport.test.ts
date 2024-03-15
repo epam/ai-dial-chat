@@ -1,3 +1,5 @@
+import { FolderInterface } from '@/chat/types/folder';
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
@@ -5,8 +7,6 @@ import {
   FolderPrompt,
   Import,
   MenuOptions,
-  TestFolder,
-  TestPrompt,
 } from '@/src/testData';
 import { ImportPrompt } from '@/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -39,9 +39,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-883', 'EPMRTC-895');
     let promptsInsideFolder: FolderPrompt;
-    let promptOutsideFolder: TestPrompt;
-    let nestedFolders: TestFolder[];
-    let nestedPrompts: TestPrompt[];
+    let promptOutsideFolder: Prompt;
+    let nestedFolders: FolderInterface[];
+    let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
     const promptContent = 'test';
 
@@ -151,7 +151,7 @@ dialTest(
   async ({
     dialHomePage,
     setTestIds,
-    localStorageManager,
+    dataInjector,
     prompts,
     folderPrompts,
     promptBar,
@@ -162,7 +162,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-884', 'EPMRTC-885', 'EPMRTC-896');
     let promptInsideFolder: FolderPrompt;
-    let promptOutsideFolder: TestPrompt;
+    let promptOutsideFolder: Prompt;
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -172,12 +172,10 @@ dialTest(
         promptData.resetData();
 
         promptOutsideFolder = promptData.prepareDefaultPrompt();
-
-        await localStorageManager.setFolders(promptInsideFolder.folders);
-        await localStorageManager.setPrompts(
-          ...promptInsideFolder.prompts,
+        await dataInjector.createPrompts([
           promptOutsideFolder,
-        );
+          ...promptInsideFolder.prompts,
+        ]);
       },
     );
 
@@ -289,7 +287,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-886');
     let promptInsideFolder: FolderPrompt;
-    let promptOutsideFolder: TestPrompt;
+    let promptOutsideFolder: Prompt;
     let exportedData: UploadDownloadData;
     const promptContent = 'test prompt';
 
@@ -353,9 +351,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-889');
     let promptsInsideFolder: FolderPrompt;
-    let promptOutsideFolder: TestPrompt;
-    let importedFolderPrompt: TestPrompt;
-    let importedRootPrompt: TestPrompt;
+    let promptOutsideFolder: Prompt;
+    let importedFolderPrompt: Prompt;
+    let importedRootPrompt: Prompt;
     let importedNewFolderPrompt: FolderPrompt;
 
     await dialTest.step(
@@ -552,8 +550,8 @@ dialTest(
     folderDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1375', 'EPMRTC-1376', 'EPMRTC-1377');
-    let nestedFolders: TestFolder[];
-    let nestedPrompts: TestPrompt[];
+    let nestedFolders: FolderInterface[];
+    let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -686,8 +684,8 @@ dialTest(
     promptDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1378');
-    let nestedFolders: TestFolder[];
-    let nestedPrompts: TestPrompt[];
+    let nestedFolders: FolderInterface[];
+    let nestedPrompts: Prompt[];
     const updatedPromptNames: string[] = [];
 
     await dialTest.step(
@@ -800,8 +798,8 @@ dialTest(
     promptDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1388');
-    let nestedFolders: TestFolder[];
-    let thirdLevelFolderPrompt: TestPrompt;
+    let nestedFolders: FolderInterface[];
+    let thirdLevelFolderPrompt: Prompt;
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -809,7 +807,8 @@ dialTest(
       async () => {
         nestedFolders = promptData.prepareNestedFolder(levelsCount);
         thirdLevelFolderPrompt = promptData.prepareDefaultPrompt();
-        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].id;
+        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].folderId;
+        thirdLevelFolderPrompt.id = `${thirdLevelFolderPrompt.folderId}/${thirdLevelFolderPrompt.name}`;
 
         await dataInjector.createPrompts(
           [thirdLevelFolderPrompt],

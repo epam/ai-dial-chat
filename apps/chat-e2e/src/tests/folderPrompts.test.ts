@@ -1,3 +1,5 @@
+import { FolderInterface } from '@/chat/types/folder';
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -5,8 +7,6 @@ import {
   ExpectedMessages,
   FolderPrompt,
   MenuOptions,
-  TestFolder,
-  TestPrompt,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -218,13 +218,12 @@ dialTest(
     await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
 
     await folderPrompts.expandFolder(ExpectedConstants.newFolderTitle);
-    const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-      ExpectedConstants.newFolderTitle,
-      prompt.name,
-    );
-    expect
-      .soft(isFolderPromptVisible, ExpectedMessages.promptMovedToFolder)
-      .toBeTruthy();
+    await folderPrompts
+      .getFolderEntity(
+        ExpectedConstants.newFolderWithIndexTitle(1),
+        prompt.name,
+      )
+      .waitFor();
   },
 );
 
@@ -430,8 +429,8 @@ dialTest(
     setTestIds('EPMRTC-1384');
     const levelsCount = 3;
     const levelToDelete = 2;
-    let nestedFolders: TestFolder[];
-    const nestedPrompts: TestPrompt[] = [];
+    let nestedFolders: FolderInterface[];
+    const nestedPrompts: Prompt[] = [];
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one',
@@ -440,7 +439,8 @@ dialTest(
         for (let i = 0; i <= levelsCount; i++) {
           const nestedPrompt = promptData.prepareDefaultPrompt();
           nestedPrompts.push(nestedPrompt);
-          nestedPrompt.folderId = nestedFolders[i].id;
+          nestedPrompt.folderId = nestedFolders[i].folderId;
+          nestedPrompt.id = `${nestedFolders[i].folderId}/${nestedPrompt.id}`;
           promptData.resetData();
         }
         await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
@@ -521,8 +521,8 @@ dialTest(
     await dialTest.step(
       'Prepare prompts in folders with different content',
       async () => {
-        firstFolderPrompt = promptData.prepareDefaultPromptInFolder();
-        firstFolderPrompt.prompts[0].name = promptContent;
+        firstFolderPrompt =
+          promptData.prepareDefaultPromptInFolder(promptContent);
         promptData.resetData();
 
         secondFolderPrompts = promptData.preparePromptsInFolder(3);

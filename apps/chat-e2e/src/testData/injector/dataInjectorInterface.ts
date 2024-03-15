@@ -1,15 +1,23 @@
-import { TestConversation, TestFolder, TestPrompt } from '@/src/testData';
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
+import { Prompt } from '@/chat/types/prompt';
 
 export interface DataInjectorInterface {
   createConversations(
-    conversations: TestConversation[],
-    ...folders: TestFolder[]
+    conversations: Conversation[],
+    ...folders: FolderInterface[]
   ): Promise<void>;
   updateConversations(
-    conversations: TestConversation[],
-    ...folders: TestFolder[]
+    conversations: Conversation[],
+    ...folders: FolderInterface[]
   ): Promise<void>;
-  createPrompts(prompts: TestPrompt[], ...folders: TestFolder[]): Promise<void>;
-  updatePrompts(prompts: TestPrompt[], ...folders: TestFolder[]): Promise<void>;
+  createPrompts(
+    prompts: Prompt[],
+    ...folders: FolderInterface[]
+  ): Promise<void>;
+  updatePrompts(
+    prompts: Prompt[],
+    ...folders: FolderInterface[]
+  ): Promise<void>;
   deleteAllData(): Promise<void>;
 }

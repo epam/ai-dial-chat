@@ -209,4 +209,20 @@ export class Folders extends BaseElement {
     await this.folderEntityDotsMenu(folderName, entityName).click();
     await this.getDropdownMenu().waitForState();
   }
+
+  public getFolderArrowIcon(name: string, index?: number) {
+    return this.getFolderByName(name, index).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
+  }
+
+  public getFolderEntityArrowIcon(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.getFolderEntity(folderName, entityName, index).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
+  }
 }

@@ -2,18 +2,15 @@ import { FolderInterface, FolderType } from '@/chat/types/folder';
 import { ExpectedConstants } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 
-export interface TestFolder extends Omit<FolderInterface, 'folderId'> {
-  folderId?: string | undefined;
-}
-
 export class FolderBuilder {
-  private folder: TestFolder;
+  private folder: FolderInterface;
 
   constructor() {
     this.folder = {
       id: GeneratorUtil.randomString(10),
       name: ExpectedConstants.newFolderTitle,
       type: FolderType.Chat,
+      folderId: ExpectedConstants.newFolderTitle,
     };
   }
 
@@ -41,7 +38,7 @@ export class FolderBuilder {
     return this;
   }
 
-  build(): TestFolder {
+  build(): FolderInterface {
     return this.folder;
   }
 }

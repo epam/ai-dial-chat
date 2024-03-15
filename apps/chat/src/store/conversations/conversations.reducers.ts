@@ -438,6 +438,7 @@ export const conversationsSlice = createSlice({
             payload?.parentId,
           ),
         type: FolderType.Chat,
+        status: UploadStatus.LOADED,
       });
 
       state.folders = state.folders.concat(newFolder);
