@@ -1,4 +1,5 @@
-// TODO: use this actively in overlay
+export const overlayAppName = '@DIAL_OVERLAY';
+
 export enum OverlayRequests {
   getMessages = 'GET_MESSAGES',
   setOverlayOptions = 'SET_OVERLAY_OPTIONS',
@@ -7,7 +8,9 @@ export enum OverlayRequests {
 }
 
 export enum OverlayEvents {
+  initReady = 'INIT_READY',
   ready = 'READY',
+  readyToInteract = 'READY_TO_INTERACT',
   gptStartGenerating = 'GPT_START_GENERATING',
   gptEndGenerating = 'GPT_END_GENERATING',
 }

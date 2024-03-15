@@ -2,11 +2,13 @@ import { signIn } from 'next-auth/react';
 
 import {
   EMPTY,
+  concat,
   distinctUntilChanged,
   filter,
   first,
   fromEvent,
   ignoreElements,
+  iif,
   map,
   merge,
   of,
@@ -28,7 +30,6 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
-import { overlayAppName } from '@/src/constants/overlay';
 
 import { AuthSelectors } from '../auth/auth.reducers';
 import {
@@ -54,6 +55,7 @@ import {
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  overlayAppName,
   validateFeature,
 } from '@epam/ai-dial-shared';
 
@@ -96,20 +98,26 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
                 state$.value,
               );
 
-              sendPMResponse(OverlayRequests.setSystemPrompt, {
-                requestId,
-                hostDomain,
-              });
-
-              return of(
-                OverlayActions.setSystemPrompt({
-                  systemPrompt,
-                  requestId,
-                }),
+              return concat(
+                of(
+                  OverlayActions.sendPMResponse({
+                    type: OverlayRequests.setSystemPrompt,
+                    requestParams: {
+                      requestId,
+                      hostDomain,
+                    },
+                  }),
+                ),
+                of(
+                  OverlayActions.setSystemPrompt({
+                    systemPrompt,
+                    requestId,
+                  }),
+                ),
               );
             }
             default: {
-              // it's not supported overlay request
+              console.warn(`[Overlay] ${requestName} event not supported.`);
               return EMPTY;
             }
           }
@@ -128,16 +136,18 @@ const getMessagesEpic: AppEpic = (action$, state$) =>
 
       return { requestId, currentConversation, hostDomain };
     }),
-    tap(({ requestId, currentConversation, hostDomain }) => {
+    map(({ requestId, currentConversation, hostDomain }) => {
       const messages = currentConversation?.messages || [];
 
-      sendPMResponse(OverlayRequests.getMessages, {
-        requestId,
-        hostDomain,
-        payload: { messages },
+      return OverlayActions.sendPMResponse({
+        type: OverlayRequests.getMessages,
+        requestParams: {
+          requestId,
+          hostDomain,
+          payload: { messages },
+        },
       });
     }),
-    ignoreElements(),
   );
 
 const sendMessageEpic: AppEpic = (action$, state$) =>
@@ -150,18 +160,24 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
       const currentConversation = selectedConversations[0];
 
-      sendPMResponse(OverlayRequests.sendMessage, { requestId, hostDomain });
-
-      return of(
-        ConversationsActions.sendMessage({
-          conversation: currentConversation,
-          deleteCount: 0,
-          message: {
-            role: Role.User,
-            content,
-          },
-          activeReplayIndex: 0,
-        }),
+      return concat(
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.sendMessage,
+            requestParams: { requestId, hostDomain },
+          }),
+        ),
+        of(
+          ConversationsActions.sendMessage({
+            conversation: currentConversation,
+            deleteCount: 0,
+            message: {
+              role: Role.User,
+              content,
+            },
+            activeReplayIndex: 0,
+          }),
+        ),
       );
     }),
   );
@@ -189,10 +205,17 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       }) => {
         const actions = [];
 
-        sendPMResponse(OverlayRequests.setOverlayOptions, {
-          requestId,
-          hostDomain,
-        });
+        actions.push(
+          of(
+            OverlayActions.sendPMResponse({
+              type: OverlayRequests.setOverlayOptions,
+              requestParams: {
+                requestId,
+                hostDomain,
+              },
+            }),
+          ),
+        );
 
         if (theme) {
           if (availableThemes.some(({ id }) => id === theme)) {
@@ -291,7 +314,19 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(
             OverlayActions.setOverlayOptionsSuccess({ hostDomain, requestId }),
-            OverlayActions.signInOptionsSet({ signInOptions }),
+          ),
+          of(OverlayActions.signInOptionsSet({ signInOptions })),
+
+          // Send ready to Interact when options set and not needed to login
+          iif(
+            () => !AuthSelectors.selectIsShouldLogin(state$.value),
+            of(
+              OverlayActions.sendPMEvent({
+                type: OverlayEvents.readyToInteract,
+                eventParams: { hostDomain },
+              }),
+            ),
+            EMPTY,
           ),
         );
 
@@ -315,17 +350,20 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
 const setOverlayOptionsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(OverlayActions.setOverlayOptionsSuccess.match),
-    tap(({ payload: { hostDomain, requestId } }) => {
-      sendPMResponse(OverlayRequests.setOverlayOptions, {
-        requestId,
-        hostDomain,
+    map(({ payload: { hostDomain, requestId } }) => {
+      return OverlayActions.sendPMResponse({
+        type: OverlayRequests.setOverlayOptions,
+        requestParams: {
+          requestId,
+          hostDomain,
+        },
       });
     }),
-    ignoreElements(),
   );
 
 const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
   state$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
     // we shouldn't proceed if we are not overlay
     filter((state) => SettingsSelectors.selectIsOverlay(state)),
     map((state) =>
@@ -337,39 +375,79 @@ const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
 
       return { isMessageStreaming, hostDomain };
     }),
-    tap(({ isMessageStreaming, hostDomain }) => {
+    map(({ isMessageStreaming, hostDomain }) => {
       if (isMessageStreaming) {
         // That's mean gpt end generating message (maybe that's because it's answered)
-        sendPMEvent(OverlayEvents.gptStartGenerating, { hostDomain });
-        return;
+        return OverlayActions.sendPMEvent({
+          type: OverlayEvents.gptStartGenerating,
+          eventParams: { hostDomain },
+        });
       }
 
-      sendPMEvent(OverlayEvents.gptEndGenerating, { hostDomain });
+      return OverlayActions.sendPMEvent({
+        type: OverlayEvents.gptEndGenerating,
+        eventParams: { hostDomain },
+      });
     }),
-    ignoreElements(),
   );
 
 // models are loading after conversations, if models loaded that means that we can work with application. Maybe there is better condition.
 const notifyHostAboutReadyEpic: AppEpic = (_action$, state$) =>
   state$.pipe(
-    filter((state) => {
-      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state);
-
-      if (isShouldLogin) {
-        return true;
-      }
-
-      return ModelsSelectors.selectIsModelsLoaded(state);
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    map((state) => {
+      return {
+        isShouldLogin: AuthSelectors.selectIsShouldLogin(state),
+        isModelLoaded: ModelsSelectors.selectIsModelsLoaded(state),
+      };
+    }),
+    filter(({ isModelLoaded, isShouldLogin }) => {
+      return isShouldLogin || isModelLoaded;
     }),
     first(),
-    tap(() => {
-      // broadcast about ready, after ready emitted, overlay should send initial settings (incl. hostDomain, theme, etc.)
-      sendPMEvent(OverlayEvents.ready, { hostDomain: '*' });
+    map(() => {
+      // broadcast about ready, after ready emitted, overlay can send options
+      return OverlayActions.sendPMEvent({
+        type: OverlayEvents.ready,
+        eventParams: { hostDomain: '*' },
+      });
+    }),
+  );
+
+const initOverlayEpic: AppEpic = (_action$, state$) =>
+  state$.pipe(
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    first(),
+    map(() => {
+      return OverlayActions.sendPMEvent({
+        type: OverlayEvents.initReady,
+        eventParams: { hostDomain: '*' },
+      });
+    }),
+  );
+
+const sendPMEventEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(OverlayActions.sendPMEvent.match),
+    tap(({ payload }) => {
+      sendPMEvent(payload.type, payload.eventParams);
+    }),
+    ignoreElements(),
+  );
+
+const sendPMResponseEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(OverlayActions.sendPMResponse.match),
+    tap(({ payload }) => {
+      sendPMResponse(payload.type, payload.requestParams);
     }),
     ignoreElements(),
   );
 
 export const OverlayEpics = combineEpics(
+  initOverlayEpic,
+  sendPMEventEpic,
+  sendPMResponseEpic,
   postMessageMapperEpic,
   getMessagesEpic,
   notifyHostAboutReadyEpic,
