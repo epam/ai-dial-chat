@@ -1,4 +1,5 @@
-import { TestConversation, TestFolder, TestPrompt } from '@/src/testData';
+import { Conversation } from '@/chat/types/chat';
+import { Prompt } from '@/chat/types/prompt';
 import { ItemApiHelper } from '@/src/testData/api';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 
@@ -9,32 +10,22 @@ export class ApiInjector implements DataInjectorInterface {
     this.itemApiHelper = conversationApiHelper;
   }
 
-  async createPrompts(
-    prompts: TestPrompt[],
-    ...folders: TestFolder[]
-  ): Promise<void> {
-    await this.itemApiHelper.createPrompts(prompts, ...folders);
+  async createPrompts(prompts: Prompt[]): Promise<void> {
+    await this.itemApiHelper.createPrompts(prompts);
   }
 
-  async updateConversations(
-    conversations: TestConversation[],
-    ...folders: TestFolder[]
-  ): Promise<void> {
-    await this.itemApiHelper.createConversations(conversations, ...folders);
+  async updateConversations(conversations: Conversation[]): Promise<void> {
+    for (const conversation of conversations) {
+      await this.itemApiHelper.createItem(conversation);
+    }
   }
 
-  async updatePrompts(
-    prompts: TestPrompt[],
-    ...folders: TestFolder[]
-  ): Promise<void> {
-    await this.itemApiHelper.createPrompts(prompts, ...folders);
+  async updatePrompts(prompts: Prompt[]): Promise<void> {
+    await this.itemApiHelper.createPrompts(prompts);
   }
 
-  async createConversations(
-    conversations: TestConversation[],
-    ...folders: TestFolder[]
-  ) {
-    await this.itemApiHelper.createConversations(conversations, ...folders);
+  async createConversations(conversations: Conversation[]) {
+    await this.itemApiHelper.createConversations(conversations);
   }
 
   async deleteAllData() {

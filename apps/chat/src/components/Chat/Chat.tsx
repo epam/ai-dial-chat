@@ -145,7 +145,11 @@ export const ChatView = memo(() => {
                 !modelIds.includes(message.model.id),
             );
           }
-          return !modelIds.includes(conv.model.id);
+
+          return (
+            !modelIds.includes(conv.model.id) ||
+            (conv.assistantModelId && !modelIds.includes(conv.assistantModelId))
+          );
         }));
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
@@ -464,8 +468,12 @@ export const ChatView = memo(() => {
   );
 
   const handleDeleteMessage = useCallback(
-    (index: number) => {
-      dispatch(ConversationsActions.deleteMessage({ index }));
+    (index: number, conv: Conversation) => {
+      let finalIndex = index;
+      if (conv.messages.at(0)?.role === Role.System) {
+        finalIndex += 1;
+      }
+      dispatch(ConversationsActions.deleteMessage({ index: finalIndex }));
     },
     [dispatch],
   );
@@ -762,17 +770,13 @@ export const ChatView = memo(() => {
                                       Feature.Likes,
                                     )}
                                     editDisabled={!!notAllowedType}
-                                    onEdit={
-                                      !messageIsStreaming
-                                        ? onEditMessage
-                                        : undefined
-                                    }
+                                    onEdit={onEditMessage}
                                     onLike={onLikeHandler(index, conv)}
                                     onDelete={() => {
-                                      handleDeleteMessage(index);
+                                      handleDeleteMessage(index, conv);
                                     }}
                                     onRegenerate={
-                                      index === conv.messages.length - 1 &&
+                                      index === mergedMessages.length - 1 &&
                                       showLastMessageRegenerate
                                         ? onRegenerateMessage
                                         : undefined

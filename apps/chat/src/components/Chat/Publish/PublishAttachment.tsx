@@ -170,14 +170,14 @@ export const PublishAttachment = ({
             <Tooltip
               isTriggerClickable
               tooltip={fileName}
-              triggerClassName="block truncate max-w-full"
+              triggerClassName="block truncate max-w-full whitespace-pre"
               hideTooltip={isContextMenu}
             >
               {fileName}
             </Tooltip>
             <Tooltip
               tooltip={fullPath}
-              triggerClassName="block max-w-full truncate text-secondary"
+              triggerClassName="block max-w-full truncate text-secondary whitespace-pre"
               hideTooltip={isContextMenu}
             >
               {fullPath}

@@ -19,6 +19,7 @@ import {
   doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
+  trimEndDots,
 } from '@/src/utils/app/common';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
@@ -241,7 +242,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       return;
     }
 
-    performRename(newName);
+    performRename(trimEndDots(newName));
   }, [allConversations, conversation, dispatch, performRename, renameValue, t]);
 
   const handleEnterDown = useCallback(
@@ -414,16 +415,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         )
       ) {
         dispatch(
-          UIActions.showToast({
-            message: t(
+          UIActions.showErrorToast(
+            t(
               'Conversation with name "{{name}}" already exists in this folder.',
               {
                 ns: 'chat',
                 name: conversation.name,
               },
             ),
-            type: 'error',
-          }),
+          ),
         );
 
         return;
@@ -716,7 +716,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           setIsConfirmRenaming(false);
 
           if (result) {
-            performRename(prepareEntityName(renameValue, true), true);
+            performRename(prepareEntityName(renameValue, true));
           }
 
           setIsContextMenu(false);

@@ -43,33 +43,52 @@ const getTokensPerMessage = (
   }
 };
 
+async function getAllEntities(accessToken: string, jobTitle: string) {
+  const [modelsResult, applicationsResult, assistantsResult] =
+    await Promise.allSettled([
+      getEntities<CoreAIEntity<EntityType.Model>[]>(
+        EntityType.Model,
+        accessToken,
+        jobTitle,
+      ),
+      getEntities<CoreAIEntity<EntityType.Application>[]>(
+        EntityType.Application,
+        accessToken,
+        jobTitle,
+      ),
+      getEntities<CoreAIEntity<EntityType.Assistant>[]>(
+        EntityType.Assistant,
+        accessToken,
+        jobTitle,
+      ),
+    ]);
+
+  const models: CoreAIEntity<EntityType.Model>[] =
+    modelsResult.status === 'fulfilled'
+      ? modelsResult.value
+      : (logger.error(modelsResult.reason), []);
+
+  const applications: CoreAIEntity<EntityType.Application>[] =
+    applicationsResult.status === 'fulfilled'
+      ? applicationsResult.value
+      : (logger.error(applicationsResult.reason), []);
+
+  const assistants: CoreAIEntity<EntityType.Assistant>[] =
+    assistantsResult.status === 'fulfilled'
+      ? assistantsResult.value
+      : (logger.error(assistantsResult.reason), []);
+
+  return { models, applications, assistants };
+}
+
 export const getSortedEntities = async (token: JWT | null) => {
   const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const models = await getEntities<CoreAIEntity<EntityType.Model>[]>(
-    EntityType.Model,
+  const { models, applications, assistants } = await getAllEntities(
     accessToken,
     jobTitle,
-  ).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
-
-  const applications = await getEntities<
-    CoreAIEntity<EntityType.Application>[]
-  >(EntityType.Application, accessToken, jobTitle).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
-  const assistants = await getEntities<CoreAIEntity<EntityType.Assistant>[]>(
-    EntityType.Assistant,
-    accessToken,
-    jobTitle,
-  ).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
+  );
 
   const preProcessedEntities = [...models, ...applications, ...assistants];
   let defaultModelId = preProcessedEntities.find(
@@ -108,8 +127,8 @@ export const getSortedEntities = async (token: JWT | null) => {
           ? resPromptTokens + resCompletionTokens
           : undefined);
 
-      maxRequestTokens =
-        resPromptTokens ??
+      maxResponseTokens =
+        resCompletionTokens ??
         (maxTotalTokens
           ? Math.min(
               MAX_PROMPT_TOKENS_DEFAULT_VALUE,
@@ -119,10 +138,10 @@ export const getSortedEntities = async (token: JWT | null) => {
             )
           : undefined);
 
-      maxResponseTokens =
-        resCompletionTokens ??
-        (maxTotalTokens && maxRequestTokens
-          ? maxTotalTokens - maxRequestTokens
+      maxRequestTokens =
+        resPromptTokens ??
+        (maxTotalTokens && maxResponseTokens
+          ? maxTotalTokens - maxResponseTokens
           : undefined);
     }
 

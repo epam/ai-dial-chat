@@ -18,6 +18,7 @@ import {
   doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
+  trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { onBlur } from '@/src/utils/app/style-helpers';
@@ -93,6 +94,22 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
   const updatePrompt = useCallback(
     (selectedPrompt: Prompt) => {
+      onUpdatePrompt({
+        ...selectedPrompt,
+        name: trimEndDots(name),
+        description: description?.trim(),
+        content: content.trim(),
+      });
+      setSubmitted(false);
+      onClose();
+    },
+    [content, description, name, onClose, onUpdatePrompt],
+  );
+
+  const handleRename = useCallback(
+    (selectedPrompt: Prompt) => {
+      setSubmitted(true);
+
       const newName = prepareEntityName(name, true);
       setName(newName);
 
@@ -107,7 +124,6 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             }),
           ),
         );
-
         return;
       }
 
@@ -120,25 +136,14 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
         return;
       }
 
-      onUpdatePrompt({
-        ...selectedPrompt,
-        name: newName,
-        description: description?.trim(),
-        content: content.trim(),
-      });
-      setSubmitted(false);
-      onClose();
+      if (selectedPrompt.isShared && selectedPrompt.name !== newName) {
+        setIsConfirmDialog(true);
+        return;
+      }
+
+      updatePrompt(selectedPrompt);
     },
-    [
-      allPrompts,
-      content,
-      description,
-      dispatch,
-      name,
-      onClose,
-      onUpdatePrompt,
-      t,
-    ],
+    [allPrompts, dispatch, name, t, updatePrompt],
   );
 
   const handleSubmit = useCallback(
@@ -146,25 +151,20 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       e.preventDefault();
       e.stopPropagation();
 
-      setSubmitted(true);
-
-      if (selectedPrompt.isShared && selectedPrompt.name !== name) {
-        setIsConfirmDialog(true);
-        return;
-      }
-
-      updatePrompt(selectedPrompt);
+      handleRename(selectedPrompt);
     },
-    [name, updatePrompt],
+    [handleRename],
   );
 
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLDivElement>, selectedPrompt: Prompt) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        updatePrompt(selectedPrompt);
+        e.preventDefault();
+        e.stopPropagation();
+        handleRename(selectedPrompt);
       }
     },
-    [updatePrompt],
+    [handleRename],
   );
 
   useEffect(() => {

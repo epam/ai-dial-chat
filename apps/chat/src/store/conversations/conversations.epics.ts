@@ -1181,15 +1181,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         const newConversationName =
           payload.conversation.replay?.isReplay ||
-          updatedMessages.length > 2 ||
+          updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
           payload.conversation.isNameChanged
             ? payload.conversation.name
             : getNextDefaultName(
-                getNewConversationName(
-                  payload.conversation,
-                  payload.message,
-                  updatedMessages,
-                ),
+                getNewConversationName(payload.conversation, payload.message),
                 conversations.filter(
                   (conv) =>
                     conv.folderId === payload.conversation.folderId &&
@@ -1241,6 +1237,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           of(
             ModelsActions.updateRecentModels({
               modelId: updatedConversation.model.id,
+              rearrange: true,
             }),
           ),
           iif(
@@ -1832,7 +1829,10 @@ const hideChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.uploadConversationsByIdsSuccess.match(action) ||
+        ConversationsActions.createNewConversations.match(action) ||
+        ConversationsActions.selectConversations.match(action) ||
+        ConversationsActions.createNewPlaybackConversation.match(action) ||
+        ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
         (ConversationsActions.addConversations.match(action) &&
           !!action.payload.selectAdded),

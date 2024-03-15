@@ -8,13 +8,15 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { logger } from './logger';
 
-import { Tiktoken, get_encoding } from '@dqbd/tiktoken';
+import { Tiktoken, TiktokenEncoding, get_encoding } from '@dqbd/tiktoken';
 import { Blob } from 'buffer';
 
 // This is very conservative calculations of tokens (1 token = 1 byte)
 export const getBytesTokensSize = (str: string): number => {
   return new Blob([str]).size;
 };
+
+const encodings: Partial<Record<TiktokenEncoding, Tiktoken | undefined>> = {};
 
 export function limitMessagesByTokens({
   promptToSend,
@@ -36,11 +38,14 @@ export function limitMessagesByTokens({
   let calculateTokensSize: (str: string) => number = getBytesTokensSize;
   let tokensPerMessage = 0;
 
-  let encoding: Tiktoken | undefined;
   if (tokenizer && tokenizer.encoding && tokenizer.tokensPerMessage) {
-    encoding = get_encoding(tokenizer.encoding);
+    if (!encodings[tokenizer.encoding]) {
+      encodings[tokenizer.encoding] = get_encoding(tokenizer.encoding);
+    }
     calculateTokensSize = (str) =>
-      encoding ? encoding.encode(str).length : getBytesTokensSize(str);
+      tokenizer.encoding && encodings[tokenizer.encoding]
+        ? encodings[tokenizer.encoding]!.encode(str).length
+        : getBytesTokensSize(str);
     tokensPerMessage = tokenizer.tokensPerMessage;
   }
 
@@ -76,7 +81,6 @@ export function limitMessagesByTokens({
     );
   }
 
-  encoding?.free();
   return messagesToSend;
 }
 

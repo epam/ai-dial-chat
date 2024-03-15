@@ -712,7 +712,7 @@ export const conversationsSlice = createSlice({
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.LOADED;
-      state.folders = combineEntities(payload.folders, state.folders).map(
+      state.folders = combineEntities(state.folders, payload.folders).map(
         (f) =>
           payload.paths.has(f.id)
             ? {
@@ -769,6 +769,7 @@ export const conversationsSlice = createSlice({
       const ids = new Set(payload.conversations.map((c) => c.id));
 
       state.conversations = combineEntities(
+        state.conversations,
         payload.conversations.map((conv) =>
           ids.has(conv.id)
             ? {
@@ -777,7 +778,6 @@ export const conversationsSlice = createSlice({
               }
             : conv,
         ),
-        state.conversations,
       );
       state.conversationsStatus = UploadStatus.LOADED;
     },

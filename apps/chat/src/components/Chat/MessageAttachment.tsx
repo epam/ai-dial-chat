@@ -34,6 +34,13 @@ const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
   'image/jpeg',
   'image/png',
   'image/gif',
+  'image/apng',
+  'image/webp',
+  'image/avif',
+  'image/svg+xml',
+  'image/bmp',
+  'image/vnd.microsoft.icon',
+  'image/x-icon',
 ]);
 const chartType = 'application/vnd.plotly.v1+json';
 
@@ -230,7 +237,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         >
           <span
             className={classNames(
-              'shrink text-left text-sm',
+              'shrink whitespace-pre text-left text-sm',
               isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate',
             )}
             title={attachment.title || attachment.url || t('Attachment') || ''}

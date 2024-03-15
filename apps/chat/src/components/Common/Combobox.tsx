@@ -11,6 +11,7 @@ import {
   createElement,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -50,8 +51,11 @@ export const Combobox = <T,>({
   onSelectItem,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Common);
+
   const [displayedItems, setDisplayedItems] = useState(items);
   const [floatingWidth, setFloatingWidth] = useState(0);
+
+  const selectedItemRef = useRef<HTMLDivElement>(null);
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -131,20 +135,30 @@ export const Combobox = <T,>({
             {label}
           </label>
         )}
-        <div className="relative flex rounded border border-primary focus-within:border-accent-primary ">
-          <input
-            disabled={disabled}
-            placeholder={!selectedItem ? placeholder || '' : ''}
-            className="w-full bg-transparent px-3 py-2.5 outline-none placeholder:text-secondary"
-            {...getInputProps({
-              ref: refs.reference as RefObject<HTMLInputElement>,
-            })}
-          />
-          {!inputValue && itemRow && !!selectedItem && (
-            <div className="pointer-events-none absolute left-3 top-2.5 flex items-center">
-              {createElement(itemRow, { item: selectedItem })}
-            </div>
-          )}
+        <div className="flex rounded border border-primary py-2.5 focus-within:border-accent-primary">
+          <div className="relative w-full">
+            <input
+              disabled={disabled}
+              placeholder={!selectedItem ? placeholder || '' : ''}
+              className="w-full bg-transparent px-3 outline-none placeholder:text-secondary"
+              style={{
+                ...(selectedItemRef.current && {
+                  height: `${selectedItemRef.current.clientHeight}px`,
+                }),
+              }}
+              {...getInputProps({
+                ref: refs.reference as RefObject<HTMLInputElement>,
+              })}
+            />
+            {!inputValue && itemRow && !!selectedItem && (
+              <div
+                ref={selectedItemRef}
+                className="pointer-events-none absolute left-3 top-0 flex w-full items-center"
+              >
+                {createElement(itemRow, { item: selectedItem })}
+              </div>
+            )}
+          </div>
           <button
             aria-label="toggle menu"
             className={classNames(
