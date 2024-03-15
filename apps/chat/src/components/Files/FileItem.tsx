@@ -5,16 +5,23 @@ import {
   IconReload,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { useAppDispatch } from '@/src/store/hooks';
+import { ShareActions } from '@/src/store/share/share.reducers';
+
+import UnpublishModal from '../Chat/UnpublishModal';
+import { ConfirmDialog } from '../Common/ConfirmDialog';
+import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
 
@@ -46,9 +53,14 @@ export const FileItem = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Files);
 
+  const dispatch = useAppDispatch();
+
   const [isContextMenu, setIsContextMenu] = useState(false);
 
   const [isSelected, setIsSelected] = useState(false);
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
   }, [item.id, onEvent]);
@@ -66,6 +78,22 @@ export const FileItem = ({
     setIsContextMenu(false);
     onEvent?.(FileItemEventIds.Remove, item.id);
   }, [item.id, onEvent]);
+
+  const handleUnshare: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnshareConfirmOpened(true);
+      setIsContextMenu(false);
+    }, []);
+
+  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      setIsUnpublishing(true);
+      setIsContextMenu(false);
+    }, []);
+
+  const handleCloseUnpublishModal = useCallback(() => {
+    setIsUnpublishing(false);
+  }, []);
 
   useEffect(() => {
     setIsSelected(
@@ -88,13 +116,19 @@ export const FileItem = ({
       <div className="flex items-center gap-2 overflow-hidden">
         <div className="text-secondary">
           {!isSelected && item.status !== UploadStatus.FAILED ? (
-            <IconFile
-              className={classNames(
-                item.status !== UploadStatus.LOADING &&
-                  'group-hover/file-item:hidden',
-              )}
-              size={18}
-            />
+            <ShareIcon
+              {...item}
+              featureType={FeatureType.Chat}
+              isHighlighted={isSelected}
+            >
+              <IconFile
+                className={classNames(
+                  item.status !== UploadStatus.LOADING &&
+                    'group-hover/file-item:hidden',
+                )}
+                size={18}
+              />
+            </ShareIcon>
           ) : (
             item.status === UploadStatus.FAILED && (
               <Tooltip
@@ -169,10 +203,44 @@ export const FileItem = ({
             file={item}
             onDelete={handleRemove}
             onOpenChange={setIsContextMenu}
+            onUnshare={handleUnshare}
+            onUnpublish={handleOpenUnpublishing}
             className="invisible group-hover/file-item:visible"
           />
         )}
       </div>
+      {isUnpublishing && (
+        <UnpublishModal
+          entity={item}
+          type={SharingType.File}
+          isOpen
+          onClose={handleCloseUnpublishModal}
+        />
+      )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen={isUnshareConfirmOpened}
+          heading={t('Confirm revoking access to: {{fileName}}', {
+            fileName: item.name,
+          })}
+          description={
+            t('Are you sure that you want to revoke access to this file?') || ''
+          }
+          confirmLabel={t('Revoke access')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            if (result) {
+              dispatch(
+                ShareActions.revokeAccess({
+                  resourceId: item.id,
+                  featureType: FeatureType.File,
+                }),
+              );
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

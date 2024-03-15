@@ -405,7 +405,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to {{promptName}}', {
+          heading={t('Confirm revoking access to: {{promptName}}', {
             promptName: prompt.name,
           })}
           description={

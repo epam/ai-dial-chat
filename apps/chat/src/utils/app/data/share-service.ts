@@ -7,6 +7,7 @@ import {
   BackendChatFolder,
   BackendDataEntity,
   BackendDataNodeType,
+  BackendEntity,
   BackendResourceType,
 } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -149,6 +150,20 @@ export class ShareService {
                 name: folder.name,
                 folderId: constructPath(apiKey, bucket, parentPath),
                 type: EnumMapper.getFolderTypeByApiKey(ApiKeys.Prompts),
+              });
+            }
+          }
+
+          if (entity.resourceType === BackendResourceType.FILE) {
+            if (entity.nodeType === BackendDataNodeType.ITEM) {
+              const file = entity as BackendEntity;
+              const id = ApiUtils.decodeApiUrl(file.url);
+              const { apiKey, bucket, parentPath } = splitEntityId(id);
+
+              entities.push({
+                name: file.name,
+                id,
+                folderId: constructPath(apiKey, bucket, parentPath),
               });
             }
           }

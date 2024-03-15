@@ -42,6 +42,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
+import { FilesActions, FilesSelectors } from '../files/files.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -357,6 +358,37 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        FilesActions.getFilesSuccess.match(action) ||
+        ShareActions.acceptShareInvitationSuccess.match(action),
+    ),
+    filter(() =>
+      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
+    ),
+    switchMap(() => {
+      return concat(
+        of(
+          ShareActions.getSharedListing({
+            featureType: FeatureType.File,
+            sharedWith: ShareRelations.me,
+          }),
+        ),
+        of(
+          ShareActions.getSharedListing({
+            featureType: FeatureType.File,
+            sharedWith: ShareRelations.others,
+          }),
+        ),
+      );
+    }),
+  );
+
 const getSharedListingEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.getSharedListing.match),
@@ -554,6 +586,29 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         }
       }
 
+      if (payload.featureType === FeatureType.File) {
+        if (payload.sharedWith === ShareRelations.others) {
+          const files = FilesSelectors.selectFiles(state$.value);
+
+          actions.push(
+            ...(payload.resources.entities
+              .map((item) => {
+                const sharedFile = files.find((res) => res.id === item.id);
+                if (sharedFile) {
+                  return FilesActions.updateFileInfo({
+                    id: item.id,
+                    file: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+        }
+      }
+
       if (decodedAcceptedId && isNewResource) {
         if (isConversationId(acceptedId)) {
           if (isFolderId(acceptedId)) {
@@ -660,6 +715,17 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
           PromptsActions.updateFolder({
             folderId: payload.resourceId,
             values: {
+              isShared: false,
+            },
+          }),
+        );
+      }
+
+      if (payload.featureType === FeatureType.File) {
+        return of(
+          FilesActions.updateFileInfo({
+            id: payload.resourceId,
+            file: {
               isShared: false,
             },
           }),
@@ -851,6 +917,7 @@ export const ShareEpics = combineEpics(
 
   triggerGettingSharedListingsConversationsEpic,
   triggerGettingSharedListingsPromptsEpic,
+  triggerGettingSharedListingsAttachmentsEpic,
 
   deleteOrRenameSharedFolderEpic,
 );
