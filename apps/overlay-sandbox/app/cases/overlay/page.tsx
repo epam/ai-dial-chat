@@ -24,7 +24,7 @@ const overlayOptions: Omit<ChatOverlayOptions, 'hostDomain'> = {
   ],
   requestTimeout: 20000,
   loaderStyles: {
-    background: 'green',
+    background: 'white',
     fontSize: '24px',
   },
 };
