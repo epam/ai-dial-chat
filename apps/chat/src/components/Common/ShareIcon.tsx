@@ -16,7 +16,7 @@ import Tooltip from './Tooltip';
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
 import World from '@/public/images/icons/world.svg';
 
-interface ShareIсonProps extends ShareInterface {
+interface ShareIconProps extends ShareInterface {
   isHighlighted: boolean;
   size?: number;
   children: ReactNode | ReactNode[];
@@ -30,7 +30,7 @@ export default function ShareIcon({
   size = 12,
   children,
   featureType,
-}: ShareIсonProps) {
+}: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),

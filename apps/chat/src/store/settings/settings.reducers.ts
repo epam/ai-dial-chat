@@ -159,6 +159,7 @@ const isSharingEnabled = createSelector(
         return enabledFeatures.has(Feature.ConversationsSharing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsSharing);
+
       default:
         return false;
     }
