@@ -1,5 +1,7 @@
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
+import { Prompt } from '@/chat/types/prompt';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
-import { TestConversation, TestFolder, TestPrompt } from '@/src/testData';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 
 export class BrowserStorageInjector implements DataInjectorInterface {
@@ -10,27 +12,27 @@ export class BrowserStorageInjector implements DataInjectorInterface {
   }
 
   async createConversations(
-    conversations: TestConversation[],
-    ...folders: TestFolder[]
+    conversations: Conversation[],
+    ...folders: FolderInterface[]
   ): Promise<void> {
     await this.localStorageManager.setFolders(...folders);
     await this.localStorageManager.setConversationHistory(...conversations);
   }
 
   async updateConversations(
-    conversations: TestConversation[],
-    ...folders: TestFolder[]
+    conversations: Conversation[],
+    ...folders: FolderInterface[]
   ) {
     await this.localStorageManager.updateConversationHistory(...conversations);
     await this.localStorageManager.updateFolders(...folders);
   }
 
-  async createPrompts(prompts: TestPrompt[], ...folders: TestFolder[]) {
+  async createPrompts(prompts: Prompt[], ...folders: FolderInterface[]) {
     await this.localStorageManager.setFolders(...folders);
     await this.localStorageManager.setPrompts(...prompts);
   }
 
-  async updatePrompts(prompts: TestPrompt[], ...folders: TestFolder[]) {
+  async updatePrompts(prompts: Prompt[], ...folders: FolderInterface[]) {
     await this.localStorageManager.updatePrompts(...prompts);
     await this.localStorageManager.updateFolders(...folders);
   }

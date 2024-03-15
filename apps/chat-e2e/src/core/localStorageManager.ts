@@ -1,5 +1,7 @@
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
+import { Prompt } from '@/chat/types/prompt';
 import { Settings } from '@/chat/types/settings';
-import { TestConversation, TestFolder, TestPrompt } from '@/src/testData';
 import { Page } from '@playwright/test';
 
 export class LocalStorageManager {
@@ -29,50 +31,50 @@ export class LocalStorageManager {
     window.localStorage.setItem('settings', settings);
   };
 
-  async setConversationHistory(...conversation: TestConversation[]) {
+  async setConversationHistory(...conversation: Conversation[]) {
     await this.page.addInitScript(
       this.setConversationHistoryKey(),
       JSON.stringify(conversation),
     );
   }
 
-  async updateConversationHistory(...conversation: TestConversation[]) {
+  async updateConversationHistory(...conversation: Conversation[]) {
     await this.page.evaluate(
       this.setConversationHistoryKey(),
       JSON.stringify(conversation),
     );
   }
 
-  async setSelectedConversation(...conversation: TestConversation[]) {
+  async setSelectedConversation(...conversation: Conversation[]) {
     await this.page.addInitScript(
       this.setSelectedConversationKey(),
       JSON.stringify(conversation.map((c) => c.id)),
     );
   }
 
-  async updateSelectedConversation(...conversation: TestConversation[]) {
+  async updateSelectedConversation(...conversation: Conversation[]) {
     await this.page.evaluate(
       this.setSelectedConversationKey(),
       JSON.stringify(conversation.map((c) => c.id)),
     );
   }
 
-  async setFolders(...folders: TestFolder[]) {
+  async setFolders(...folders: FolderInterface[]) {
     await this.page.addInitScript(
       this.setFoldersKey(),
       JSON.stringify(folders),
     );
   }
 
-  async updateFolders(...folders: TestFolder[]) {
+  async updateFolders(...folders: FolderInterface[]) {
     await this.page.evaluate(this.setFoldersKey(), JSON.stringify(folders));
   }
 
-  async setPrompts(...prompt: TestPrompt[]) {
+  async setPrompts(...prompt: Prompt[]) {
     await this.page.addInitScript(this.setPromptsKey(), JSON.stringify(prompt));
   }
 
-  async updatePrompts(...prompt: TestPrompt[]) {
+  async updatePrompts(...prompt: Prompt[]) {
     await this.page.evaluate(this.setPromptsKey(), JSON.stringify(prompt));
   }
 

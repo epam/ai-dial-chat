@@ -19,8 +19,10 @@ export class FolderData {
   }
 
   public prepareFolder(name?: string) {
+    const folderName = name ?? GeneratorUtil.randomString(7);
     return this.folderBuilder
-      .withName(name ?? GeneratorUtil.randomString(7))
+      .withName(folderName)
+      .withFolderId(folderName)
       .build();
   }
 
@@ -29,10 +31,11 @@ export class FolderData {
     this.resetFolderData();
     const foldersHierarchy = [rootFolder];
     for (let i = 1; i <= nestedLevel; i++) {
+      const nestedFolderName = GeneratorUtil.randomString(7);
       const nestedFolder = this.folderBuilder
-        .withName(GeneratorUtil.randomString(7))
+        .withName(nestedFolderName)
         .withType(type)
-        .withFolderId(foldersHierarchy[foldersHierarchy.length - 1].id)
+        .withFolderId(`${foldersHierarchy[i - 1].folderId}/${nestedFolderName}`)
         .build();
       foldersHierarchy.push(nestedFolder);
       this.resetFolderData();

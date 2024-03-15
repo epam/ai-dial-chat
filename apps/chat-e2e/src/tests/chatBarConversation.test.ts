@@ -1,3 +1,5 @@
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -7,8 +9,6 @@ import {
   ExpectedMessages,
   MenuOptions,
   ModelIds,
-  TestConversation,
-  TestFolder,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -69,7 +69,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
     const newName = 'new name to cancel';
-    let conversation: TestConversation;
+    let conversation: Conversation;
     const conversationName = GeneratorUtil.randomString(70);
 
     await dialTest.step('Prepare conversation with long name', async () => {
@@ -574,7 +574,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-863', 'EPMRTC-942');
     const folderName = GeneratorUtil.randomString(70);
-    let conversation: TestConversation;
+    let conversation: Conversation;
 
     await dialTest.step(
       'Prepare conversation and folder with long name to move conversation in',
@@ -725,14 +725,25 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await dataInjector.updateConversations(
-      [singleConversation, ...conversationInFolder.conversations],
-      conversationInFolder.folders,
-    );
-    await dataInjector.updatePrompts(
-      [singlePrompt, ...promptInFolder.prompts],
-      promptInFolder.folders,
-    );
+    if (isApiStorageType) {
+      await dataInjector.createConversations([
+        singleConversation,
+        ...conversationInFolder.conversations,
+      ]);
+      await dataInjector.createPrompts([
+        singlePrompt,
+        ...promptInFolder.prompts,
+      ]);
+    } else {
+      await dataInjector.updateConversations(
+        [singleConversation, ...conversationInFolder.conversations],
+        conversationInFolder.folders,
+      );
+      await dataInjector.updatePrompts(
+        [singlePrompt, ...promptInFolder.prompts],
+        promptInFolder.folders,
+      );
+    }
 
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
@@ -1010,8 +1021,8 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1201');
 
-    let firstFolder: TestFolder;
-    let secondFolder: TestFolder;
+    let firstFolder: FolderInterface;
+    let secondFolder: FolderInterface;
 
     await dialTest.step(
       'Prepare conversations in folders with different content',
@@ -1023,14 +1034,16 @@ dialTest(
           conversationData.prepareModelConversationBasedOnRequests(gpt35Model, [
             request,
           ]);
-        firstConversation.folderId = firstFolder.id;
+        firstConversation.folderId = firstFolder.folderId;
+        firstConversation.id = `${firstConversation.folderId}/${firstConversation.id}`;
         conversationData.resetData();
 
         const secondConversation = conversationData.prepareDefaultConversation(
           gpt4Model,
           matchingConversationName,
         );
-        secondConversation.folderId = firstFolder.id;
+        secondConversation.folderId = firstFolder.folderId;
+        secondConversation.id = `${secondConversation.folderId}/${secondConversation.id}`;
         conversationData.resetData();
 
         secondFolder = conversationData.prepareFolder();
@@ -1042,12 +1055,14 @@ dialTest(
             [request],
             specialSymbolsName,
           );
-        thirdConversation.folderId = secondFolder.id;
+        thirdConversation.folderId = secondFolder.folderId;
+        thirdConversation.id = `${thirdConversation.folderId}/${thirdConversation.id}`;
         conversationData.resetData();
 
         const fourthConversation =
           conversationData.prepareDefaultConversation(gpt35Model);
-        fourthConversation.folderId = secondFolder.id;
+        fourthConversation.folderId = secondFolder.folderId;
+        fourthConversation.id = `${fourthConversation.folderId}/${fourthConversation.id}`;
         conversationData.resetData();
 
         await dataInjector.createConversations(

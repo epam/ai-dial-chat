@@ -31,6 +31,11 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to remove a folder with all nested elements?',
+  deleteSharedFolderMessage:
+    'Are you sure that you want to remove a folder with all nested elements?\n' +
+    'Removing will stop sharing and other users will no longer see this folder.',
+  renameSharedFolderMessage:
+    'Renaming will stop sharing and other users will no longer see this folder.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
@@ -66,6 +71,10 @@ export const ExpectedConstants = {
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
+  shareConversationText:
+    'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
+  shareFolderText:
+    'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
 };
 
 export enum Groups {
@@ -128,6 +137,7 @@ export const API = {
   importFilePath: (bucket: string) => `files/${bucket}/imports`,
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
+  shareWithMeListing: '/api/share/listing',
 };
 
 export const Import = {
