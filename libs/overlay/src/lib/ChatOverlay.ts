@@ -276,7 +276,6 @@ export class ChatOverlay {
       await this.iframeInteraction.ready();
     }
 
-    console.log('asdas');
     if (!this.iframe.contentWindow) {
       throw new Error(
         '[ChatOverlay] There is no content window to send requests',
