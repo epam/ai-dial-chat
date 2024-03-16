@@ -17,7 +17,10 @@ import classNames from 'classnames';
 
 import {
   doesHaveDotsInTheEnd,
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
+  isEntityNameOrPathInvalid,
   prepareEntityName,
   trimEndDots,
 } from '@/src/utils/app/common';
@@ -58,16 +61,24 @@ import ShareIcon from '@/src/components/Common/ShareIcon';
 import PublishModal from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
+import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
 interface ViewProps {
   conversation: ConversationInfo;
   isHighlited: boolean;
+  isInvalid: boolean;
 }
 
-export function ConversationView({ conversation, isHighlited }: ViewProps) {
+export function ConversationView({
+  conversation,
+  isHighlited,
+  isInvalid,
+}: ViewProps) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const isNameInvalid = isEntityNameInvalid(conversation.name);
+  const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
 
   return (
     <>
@@ -75,6 +86,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
         {...conversation}
         isHighlighted={isHighlited}
         featureType={FeatureType.Chat}
+        isInvalid={isInvalid}
       >
         {conversation.isReplay && (
           <span className="flex shrink-0">
@@ -93,14 +105,22 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
             size={18}
             entityId={conversation.model.id}
             entity={modelsMap[conversation.model.id]}
+            isInvalid={isInvalid}
           />
         )}
       </ShareIcon>
-      <div
-        className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-        data-qa="chat-name"
-      >
-        {conversation.name}
+      <div className="relative" data-qa="chat-name">
+        <Tooltip
+          tooltip={
+            isNameInvalid
+              ? 'The name is invalid. Please, rename it'
+              : 'The parent folder name is invalid. Please, rename it'
+          }
+          hideTooltip={!isNameInvalid && !isInvalidPath}
+          triggerClassName=" max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+        >
+          {conversation.name}
+        </Tooltip>
       </div>
     </>
   );
@@ -489,6 +509,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   };
 
   const isHighlighted = isSelected || isRenaming || isDeleting;
+  const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
 
   return (
     <div
@@ -498,6 +519,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ? 'border-l-accent-primary bg-accent-primary-alpha'
           : 'border-l-transparent',
         { 'bg-accent-primary-alpha': isContextMenu },
+        isNameOrPathInvalid && !isRenaming && 'text-secondary',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -562,13 +584,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             );
           }}
           disabled={messageIsStreaming}
-          draggable={!isExternal}
+          draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
         >
           <ConversationView
             conversation={conversation}
             isHighlited={isHighlighted || isContextMenu}
+            isInvalid={isNameOrPathInvalid}
           />
         </button>
       )}

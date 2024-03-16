@@ -26,7 +26,7 @@ function ContextMenuItemRenderer({
     <div
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
-        !!childMenuItems && 'text-primary',
+        !!childMenuItems && !disabled && 'text-primary',
         !!childMenuItems && className,
       )}
     >
@@ -41,7 +41,7 @@ function ContextMenuItemRenderer({
       <span className="truncate break-words">{name}</span>
     </div>
   );
-  if (childMenuItems) {
+  if (childMenuItems && !disabled) {
     return (
       <ContextMenu
         menuItems={childMenuItems}
@@ -58,7 +58,10 @@ function ContextMenuItemRenderer({
   }
   return (
     <MenuItem
-      className={classNames('hover:bg-accent-primary-alpha', className)}
+      className={classNames(
+        disabled ? 'text-secondary' : 'hover:bg-accent-primary-alpha',
+        className,
+      )}
       item={item}
       onClick={onClick}
       data-qa={dataQa}

@@ -13,6 +13,10 @@ import { MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import {
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
+} from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
@@ -72,6 +76,10 @@ export const FolderContextMenu = ({
     isEntityOrParentsExternal(state, folder, featureType),
   );
 
+  const isNameInvalid = isEntityNameInvalid(folder.name);
+  const isInvalidPath = hasInvalidNameInPath(folder.folderId);
+  const disableAll = isNameInvalid || isInvalidPath;
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -80,6 +88,7 @@ export const FolderContextMenu = ({
         dataQa: 'upload',
         Icon: IconUpload,
         onClick: onUpload,
+        disabled: disableAll,
       },
       {
         name: t('Rename'),
@@ -87,6 +96,7 @@ export const FolderContextMenu = ({
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
+        disabled: disableAll && !isNameInvalid,
       },
       {
         name: t('Share'),
@@ -94,6 +104,7 @@ export const FolderContextMenu = ({
         dataQa: 'share',
         Icon: IconUserShare,
         onClick: onShare,
+        disabled: disableAll,
       },
       {
         name: t('Unshare'),
@@ -102,6 +113,7 @@ export const FolderContextMenu = ({
         dataQa: 'unshare',
         Icon: IconUserX,
         onClick: onUnshare,
+        disabled: disableAll,
       },
       {
         name: t('Publish'),
@@ -114,6 +126,7 @@ export const FolderContextMenu = ({
           !isExternal,
         Icon: IconWorldShare,
         onClick: onPublish,
+        disabled: disableAll,
       },
       {
         name: t('Update'),
@@ -125,6 +138,7 @@ export const FolderContextMenu = ({
           !!onPublishUpdate,
         Icon: IconClockShare,
         onClick: onPublishUpdate,
+        disabled: disableAll,
       },
       {
         name: t('Unpublish'),
@@ -136,6 +150,7 @@ export const FolderContextMenu = ({
           !!onUnpublish,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
+        disabled: disableAll,
       },
       {
         name: t('Delete'),
@@ -163,18 +178,24 @@ export const FolderContextMenu = ({
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
+        disabled: disableAll,
       },
     ],
     [
       t,
       onUpload,
       isExternal,
+      disableAll,
       onRename,
+      isNameInvalid,
       isEmpty,
       isSharingEnabled,
       onShare,
       onUnshare,
-      folder,
+      folder.isShared,
+      folder.isPublished,
+      folder.id,
+      folder.sharedWithMe,
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,

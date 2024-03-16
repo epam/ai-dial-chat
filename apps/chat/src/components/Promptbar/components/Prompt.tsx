@@ -13,7 +13,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import {
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
+  isEntityNameOnSameLevelUnique,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
@@ -47,6 +51,7 @@ import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
+import Tooltip from '../../Common/Tooltip';
 import { PreviewPromptModal } from './PreviewPromptModal';
 
 interface Props {
@@ -75,6 +80,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
+  const isNameInvalid = isEntityNameInvalid(prompt.name);
+  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -295,7 +302,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           className={classNames('flex size-full items-center gap-2', {
             'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
           })}
-          draggable={!isExternal}
+          draggable={!isExternal && !isNameInvalid && !isInvalidPath}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <ShareIcon
@@ -306,12 +313,21 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
-          <div
-            className={classNames(
-              'relative max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-            )}
-          >
-            {prompt.name}
+          <div className="relative">
+            <Tooltip
+              tooltip={
+                isNameInvalid
+                  ? 'The name is invalid. Please, rename it'
+                  : 'The parent folder name is invalid. Please, rename it'
+              }
+              hideTooltip={!isNameInvalid && !isInvalidPath}
+              triggerClassName={classNames(
+                'max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                (isNameInvalid || isInvalidPath) && 'text-secondary',
+              )}
+            >
+              {prompt.name}
+            </Tooltip>
           </div>
         </div>
         {!isDeleting && !isRenaming && (
