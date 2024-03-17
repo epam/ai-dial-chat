@@ -315,11 +315,11 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
           <div className="relative">
             <Tooltip
-              tooltip={
+              tooltip={t(
                 isNameInvalid
                   ? 'The name is invalid. Please, rename it'
-                  : 'The parent folder name is invalid. Please, rename it'
-              }
+                  : 'The parent folder name is invalid. Please, rename it',
+              )}
               hideTooltip={!isNameInvalid && !isInvalidPath}
               triggerClassName={classNames(
                 'max-h-5 flex-1 truncate whitespace-pre break-all text-left',

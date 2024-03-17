@@ -717,11 +717,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
             <div className="relative" data-qa="folder-name">
               <Tooltip
-                tooltip={
+                tooltip={t(
                   isNameInvalid
                     ? 'The name is invalid. Please, rename it'
-                    : 'The parent folder name is invalid. Please, rename it'
-                }
+                    : 'The parent folder name is invalid. Please, rename it',
+                )}
                 hideTooltip={!isNameInvalid && !isInvalidPath}
                 triggerClassName={classNames(
                   'max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',

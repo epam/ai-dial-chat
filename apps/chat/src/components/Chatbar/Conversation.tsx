@@ -76,6 +76,7 @@ export function ConversationView({
   isHighlited,
   isInvalid,
 }: ViewProps) {
+  const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isNameInvalid = isEntityNameInvalid(conversation.name);
   const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
@@ -111,11 +112,11 @@ export function ConversationView({
       </ShareIcon>
       <div className="relative" data-qa="chat-name">
         <Tooltip
-          tooltip={
+          tooltip={t(
             isNameInvalid
               ? 'The name is invalid. Please, rename it'
-              : 'The parent folder name is invalid. Please, rename it'
-          }
+              : 'The parent folder name is invalid. Please, rename it',
+          )}
           hideTooltip={!isNameInvalid && !isInvalidPath}
           triggerClassName=" max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         >
