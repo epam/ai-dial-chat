@@ -19,6 +19,7 @@ export interface ChatOverlayOptions {
 
   loaderStyles?: Styles;
   loaderClass?: string;
+  loaderInnerHTML?: string;
 
   signInOptions?: OverlaySignInOptions;
 }
