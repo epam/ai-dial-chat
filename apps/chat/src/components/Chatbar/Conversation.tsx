@@ -664,7 +664,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to {{conversationName}}', {
+          heading={t('Confirm revoking access to: {{conversationName}}', {
             conversationName: conversation.name,
           })}
           description={

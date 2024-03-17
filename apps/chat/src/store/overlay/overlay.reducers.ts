@@ -1,8 +1,17 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import {
+  PostMessageEventParams,
+  PostMessageRequestParams,
+} from '@/src/utils/app/overlay';
+
 import { RootState } from '../index';
 
-import { ChatOverlayOptions } from '@epam/ai-dial-shared';
+import {
+  ChatOverlayOptions,
+  OverlayEvents,
+  OverlayRequests,
+} from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
 
@@ -57,6 +66,20 @@ export const overlaySlice = createSlice({
     sendMessage: (
       state,
       _action: PayloadAction<WithRequestId<SendMessageOptions>>,
+    ) => state,
+    sendPMEvent: (
+      state,
+      _action: PayloadAction<{
+        type: OverlayEvents;
+        eventParams: PostMessageEventParams;
+      }>,
+    ) => state,
+    sendPMResponse: (
+      state,
+      _action: PayloadAction<{
+        type: OverlayRequests;
+        requestParams: PostMessageRequestParams;
+      }>,
     ) => state,
   },
 });

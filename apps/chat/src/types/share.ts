@@ -15,6 +15,7 @@ export enum SharingType {
   ConversationFolder = 'conversations_folder',
   Prompt = 'prompt',
   PromptFolder = 'prompts_folder',
+  File = 'file',
 }
 
 export interface UserGroup {
