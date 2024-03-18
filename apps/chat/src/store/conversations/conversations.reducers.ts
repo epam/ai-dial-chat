@@ -51,6 +51,7 @@ const initialState: ConversationsState = {
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
   isActiveNewConversationRequest: false,
+  messageSending: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -111,6 +112,23 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ new: Conversation; old: Conversation }>,
     ) => state,
+    saveConversationSuccess: (state) => {
+      if (state.messageSending) {
+        state.messageSending = false;
+      }
+    },
+    saveConversationFail: (state, { payload }: PayloadAction<Conversation>) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            isMessageStreaming: false,
+          };
+        }
+
+        return conv;
+      });
+    },
     recreateConversationFail: (
       state,
       {
@@ -125,7 +143,7 @@ export const conversationsSlice = createSlice({
           return {
             ...conv,
             ...payload.oldConversation,
-            lastActivityDate: Date.now(),
+            isMessageStreaming: false,
           };
         }
 
@@ -787,6 +805,9 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
+    setMessageSending: (state, { payload }: PayloadAction<boolean>) => {
+      state.messageSending = payload;
+    },
   },
 });
 

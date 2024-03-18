@@ -25,4 +25,5 @@ export interface ConversationsState {
   loadingFolderIds: string[];
   compareLoading?: boolean;
   isActiveNewConversationRequest: boolean;
+  messageSending: boolean;
 }
