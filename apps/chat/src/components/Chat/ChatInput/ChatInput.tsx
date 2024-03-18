@@ -1,16 +1,6 @@
-import { IconRefresh } from '@tabler/icons-react';
-import {
-  Children,
-  MutableRefObject,
-  ReactNode,
-  useEffect,
-  useRef,
-} from 'react';
-
-import { useTranslation } from 'next-i18next';
+import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
 
 import { Message } from '@/src/types/chat';
-import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -25,26 +15,26 @@ interface Props {
   onResize: (height: number) => void;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
-  isMessagesPresented: boolean;
   isShowInput: boolean;
-  onRegenerate?: () => void;
+  isLastMessageError: boolean;
+  onRegenerate: () => void;
+  showReplayControls: boolean;
   children?: ReactNode;
 }
 
 export const ChatInput = ({
   onSend,
   onRegenerate,
+  isLastMessageError,
   onScrollDownClick,
   onStopConversation,
   onResize,
   textareaRef,
   showScrollDownButton,
-  isMessagesPresented,
   isShowInput,
+  showReplayControls,
   children,
 }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -67,35 +57,18 @@ export const ChatInput = ({
   }, [inputRef, onResize]);
 
   return (
-    <div
-      ref={inputRef}
-      className="gradient-top-bottom absolute bottom-0 left-0 w-full pt-2"
-    >
-      <div className="relative">
-        {!Children.toArray(children).length &&
-          onRegenerate &&
-          !messageIsStreaming &&
-          isMessagesPresented && (
-            <button
-              className="button button-chat"
-              onClick={onRegenerate}
-              data-qa="regenerate"
-            >
-              <span className="text-secondary">
-                <IconRefresh width={20} height={20} />
-              </span>
-              {t('Regenerate response')}
-            </button>
-          )}
-        {!messageIsStreaming && children}
-      </div>
+    <div ref={inputRef} className="w-full pt-3 md:pt-5">
+      <div className="relative">{!messageIsStreaming && children}</div>
       {isShowInput && (
         <ChatInputMessage
+          isLastMessageError={isLastMessageError}
+          onRegenerate={onRegenerate}
           textareaRef={textareaRef}
           showScrollDownButton={showScrollDownButton}
           onScrollDownClick={onScrollDownClick}
           onSend={onSend}
           onStopConversation={onStopConversation}
+          showReplayControls={showReplayControls}
         />
       )}
       <ChatInputFooter />

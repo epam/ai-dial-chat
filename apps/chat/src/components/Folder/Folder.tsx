@@ -21,6 +21,8 @@ import classNames from 'classnames';
 
 import {
   doesHaveDotsInTheEnd,
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
   trimEndDots,
@@ -54,6 +56,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
@@ -64,6 +68,7 @@ import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
+import Tooltip from '../Common/Tooltip';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -156,6 +161,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
+  const isNameInvalid = isEntityNameInvalid(currentFolder.name);
+  const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -685,7 +692,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
               setIsSelected(true);
             }}
-            draggable={!!handleDrop && !isExternal}
+            draggable={!!handleDrop && !isExternal && !isNameInvalid}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
               if (!isExternal && hasDragEventAnyData(e, featureType)) {
@@ -711,17 +718,32 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               </ShareIcon>
             )}
             <div
-              className={classNames(
-                'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
-                highlightTemporaryFolders &&
-                  (currentFolder.temporary ? 'text-primary' : 'text-secondary'),
-                highlightedFolders?.includes(currentFolder.id) && featureType
-                  ? 'text-accent-primary'
-                  : 'text-primary',
-              )}
+              className="relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5"
               data-qa="folder-name"
             >
-              {currentFolder.name}
+              <Tooltip
+                tooltip={t(
+                  isNameInvalid
+                    ? errorsMessages.entityNameInvalid
+                    : errorsMessages.entityPathInvalid,
+                )}
+                hideTooltip={!isNameInvalid && !isInvalidPath}
+                triggerClassName={classNames(
+                  'block max-h-5 flex-1 truncate break-all text-left',
+                  highlightTemporaryFolders &&
+                    (currentFolder.temporary
+                      ? 'text-primary'
+                      : 'text-secondary'),
+                  isNameInvalid
+                    ? 'text-secondary'
+                    : highlightedFolders?.includes(currentFolder.id) &&
+                        featureType
+                      ? 'text-accent-primary'
+                      : 'text-primary',
+                )}
+              >
+                {currentFolder.name}
+              </Tooltip>
             </div>
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
               !readonly &&
