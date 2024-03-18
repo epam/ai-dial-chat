@@ -44,13 +44,13 @@ import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
-import { StartReplayButton } from './ChatInput/ChatReplayControls';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
+import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
 import throttle from 'lodash/throttle';
@@ -595,6 +595,66 @@ export const ChatView = memo(() => {
                 data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
               >
                 <div className="flex h-full flex-col justify-between">
+                  <div className="flex w-full">
+                    {selectedConversations.map((conv) => (
+                      <div
+                        key={conv.id}
+                        className={classNames(
+                          isCompareMode && selectedConversations.length > 1
+                            ? 'w-[50%]'
+                            : 'w-full',
+                        )}
+                      >
+                        {conv.messages.length !== 0 &&
+                          enabledFeatures.has(Feature.TopSettings) && (
+                            <div className="z-10 flex flex-col">
+                              <ChatHeader
+                                conversation={conv}
+                                isCompareMode={isCompareMode}
+                                isShowChatInfo={enabledFeatures.has(
+                                  Feature.TopChatInfo,
+                                )}
+                                isShowClearConversation={
+                                  enabledFeatures.has(
+                                    Feature.TopClearConversation,
+                                  ) &&
+                                  !isPlayback &&
+                                  !isExternal
+                                }
+                                isShowModelSelect={
+                                  enabledFeatures.has(
+                                    Feature.TopChatModelSettings,
+                                  ) &&
+                                  !isPlayback &&
+                                  !isExternal
+                                }
+                                isShowSettings={isShowChatSettings}
+                                setShowSettings={(isShow) => {
+                                  if (isShow) {
+                                    dispatch(ModelsActions.getModels());
+                                    dispatch(AddonsActions.getAddons());
+                                  }
+                                  setIsShowChatSettings(isShow);
+                                }}
+                                selectedConversationIds={
+                                  selectedConversationsIds
+                                }
+                                onClearConversation={() =>
+                                  handleClearConversation(conv)
+                                }
+                                onUnselectConversation={(id) => {
+                                  dispatch(
+                                    ConversationsActions.unselectConversations({
+                                      conversationIds: [id],
+                                    }),
+                                  );
+                                }}
+                              />
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                  </div>
                   <div
                     onScroll={handleScroll}
                     ref={setChatContainerRef}
@@ -650,68 +710,6 @@ export const ChatView = memo(() => {
                             </div>
                           ),
                       )}
-                    </div>
-                    <div className="flex w-full">
-                      {selectedConversations.map((conv) => (
-                        <div
-                          key={conv.id}
-                          className={`${
-                            isCompareMode && selectedConversations.length > 1
-                              ? 'w-[50%]'
-                              : 'w-full'
-                          }`}
-                        >
-                          {conv.messages.length !== 0 &&
-                            enabledFeatures.has(Feature.TopSettings) && (
-                              <div className="z-10 flex flex-col">
-                                <ChatHeader
-                                  conversation={conv}
-                                  isCompareMode={isCompareMode}
-                                  isShowChatInfo={enabledFeatures.has(
-                                    Feature.TopChatInfo,
-                                  )}
-                                  isShowClearConversation={
-                                    enabledFeatures.has(
-                                      Feature.TopClearConversation,
-                                    ) &&
-                                    !isPlayback &&
-                                    !isExternal
-                                  }
-                                  isShowModelSelect={
-                                    enabledFeatures.has(
-                                      Feature.TopChatModelSettings,
-                                    ) &&
-                                    !isPlayback &&
-                                    !isExternal
-                                  }
-                                  isShowSettings={isShowChatSettings}
-                                  setShowSettings={(isShow) => {
-                                    if (isShow) {
-                                      dispatch(ModelsActions.getModels());
-                                      dispatch(AddonsActions.getAddons());
-                                    }
-                                    setIsShowChatSettings(isShow);
-                                  }}
-                                  selectedConversationIds={
-                                    selectedConversationsIds
-                                  }
-                                  onClearConversation={() =>
-                                    handleClearConversation(conv)
-                                  }
-                                  onUnselectConversation={(id) => {
-                                    dispatch(
-                                      ConversationsActions.unselectConversations(
-                                        {
-                                          conversationIds: [id],
-                                        },
-                                      ),
-                                    );
-                                  }}
-                                />
-                              </div>
-                            )}
-                        </div>
-                      ))}
                     </div>
                     {mergedMessages?.length > 0 && (
                       <div className="flex flex-col" data-qa="chat-messages">
