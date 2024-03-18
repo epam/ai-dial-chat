@@ -1,4 +1,4 @@
-import { IconPlayerPlay } from '@tabler/icons-react';
+import { IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
 import { FC, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -19,7 +19,19 @@ import Tooltip from '@/src/components/Common/Tooltip';
 import Play from '../../../../public/images/icons/play.svg';
 import RefreshCW from '../../../../public/images/icons/refresh-cw.svg';
 
-export const ChatReplayControls: FC = () => {
+interface Props {
+  showReplayControls: boolean;
+  tooltip: string;
+  onRegenerate: () => void;
+  isErrorButton: boolean;
+}
+
+export const ChatReplayControls: FC<Props> = ({
+  showReplayControls,
+  isErrorButton,
+  onRegenerate,
+  tooltip,
+}) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -41,6 +53,24 @@ export const ChatReplayControls: FC = () => {
       }),
     );
   }, [dispatch, selectedConversationsIds]);
+
+  if (!showReplayControls) {
+    return (
+      <button
+        className={classNames(
+          'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary',
+          isOverlay ? 'right-3' : 'right-4',
+          isErrorButton && 'text-error',
+        )}
+        onClick={onRegenerate}
+        data-qa="regenerate"
+      >
+        <Tooltip tooltip={tooltip} isTriggerClickable>
+          <IconRefresh size={24} stroke="1.5" />
+        </Tooltip>
+      </button>
+    );
+  }
 
   const Icon = isError ? RefreshCW : IconPlayerPlay;
 

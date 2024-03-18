@@ -29,7 +29,6 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ChatReplayControls } from '@/src/components/Chat/ChatInput/ChatReplayControls';
-import { RegenerateMessageButton } from '@/src/components/Chat/ChatInput/RegenerateMessageButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
@@ -371,9 +370,8 @@ export const ChatInputMessage = ({
         />
 
         {showReplayControls ? (
-          <ChatReplayControls />
-        ) : isLastMessageError ? (
-          <RegenerateMessageButton
+          <ChatReplayControls
+            showReplayControls={showReplayControls}
             onRegenerate={onRegenerate}
             tooltip={tooltipContent()}
             isErrorButton={isLastMessageError}
