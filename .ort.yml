@@ -23,7 +23,7 @@ resolutions:
         'NPM::stack-trace:0\\.0\\.9'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
-    - message: "No license information is available for dependency \
+    - message: "for dependency \
         'NPM:@mapbox:jsonlint-lines-primitives:2\\.0\\.2'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
