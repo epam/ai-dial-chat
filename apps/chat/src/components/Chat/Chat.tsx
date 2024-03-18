@@ -763,6 +763,7 @@ export const ChatView = memo(() => {
                                             ? onRegenerateMessage
                                             : undefined
                                         }
+                                        messagesLength={mergedMessages.length}
                                       />
                                     </div>
                                   </div>

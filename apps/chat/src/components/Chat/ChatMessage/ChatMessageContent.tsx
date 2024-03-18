@@ -56,6 +56,7 @@ export interface Props {
   conversation: Conversation;
   isLikesEnabled: boolean;
   isEditing: boolean;
+  isLastMessage: boolean;
   toggleEditing: (value: boolean) => void;
   messageCopied?: boolean;
   editDisabled?: boolean;
@@ -77,6 +78,7 @@ const DEFAULT_ICON_SIZE = 28;
 
 export const ChatMessageContent = ({
   messageIndex,
+  isLastMessage,
   message,
   conversation,
   onEdit,
@@ -115,8 +117,6 @@ export const ChatMessageContent = ({
   const anchorRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
 
-  const isLastMessage =
-    messageIndex === (conversation?.messages.length ?? 0) - 1;
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
     !!conversation.isMessageStreaming && isLastMessage;
