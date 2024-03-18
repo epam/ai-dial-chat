@@ -744,11 +744,10 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        await sendMessage.sendMessageButton.hoverOver();
-        const tooltipContent = await tooltip.getContent();
+        const isVisible = await sendMessage.sendMessageButton.isVisible();
         expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.proceedReplayTooltip);
+          .soft(isVisible, ExpectedMessages.sendMessageButtonIsNotVisible)
+          .toBeFalsy();
 
         await chat.footer.waitForState({ state: 'attached' });
       },
