@@ -28,8 +28,9 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { ChatReplayControls } from '@/src/components/Chat/ChatInput/ChatReplayControls';
 import { errorsMessages } from '@/src/constants/errors';
+
+import { ChatReplayControls } from '@/src/components/Chat/ChatInput/ChatReplayControls';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
