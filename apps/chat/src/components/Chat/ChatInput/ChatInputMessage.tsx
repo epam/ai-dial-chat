@@ -30,7 +30,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { ChatReplayControls } from '@/src/components/Chat/ChatInput/ChatReplayControls';
+import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
@@ -39,7 +39,6 @@ import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
-import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -384,22 +383,14 @@ export const ChatInputMessage = ({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
-
-        {showReplayControls ? (
-          <ChatReplayControls
-            showReplayControls={showReplayControls}
-            onRegenerate={onRegenerate}
-            tooltip={tooltipContent()}
-            isErrorButton={isLastMessageError}
-          />
-        ) : (
-          <SendMessageButton
-            handleSend={handleSend}
-            isDisabled={isSendDisabled}
-            tooltip={tooltipContent()}
-            isLoading={isLoading}
-          />
-        )}
+        <ChatControls
+          showReplayControls={showReplayControls}
+          onSend={isLastMessageError ? onRegenerate : handleSend}
+          tooltip={tooltipContent()}
+          isLastMessageError={isLastMessageError}
+          isLoading={isLoading}
+          isSendDisabled={isSendDisabled}
+        />
         {canAttach && (
           <>
             <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
