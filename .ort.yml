@@ -13,9 +13,20 @@ license_choices:
       choice: 'MIT'
     - given: 'GPL-3.0-or-later OR MIT'
       choice: 'MIT'
+curations:
+  packages:
+    - id: "NPM:@plotly:mapbox-gl:1.13.4"
+      curations:
+        concluded_license: "BSD-3-Clause"
+        reason: "PACKAGE_SCAN_RESULT"
+        comment: "The dependency has BSD-3-Clause license in github repo"
 resolutions:
   rule_violations:
     - message: "No license information is available for dependency \
         'NPM::union:0\\.5\\.0'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM::stack-trace:0\\.\\0\\.9'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
