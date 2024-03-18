@@ -38,6 +38,7 @@ interface Props {
   isOpen: boolean;
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
+  allowedTypesLabel?: string;
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
@@ -48,6 +49,7 @@ interface Props {
 export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
+  allowedTypesLabel,
   initialSelectedFilesIds = [],
   headerLabel,
   customButtonLabel,
@@ -207,9 +209,8 @@ export const FileManagerModal = ({
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
         t(
-          `Supported types: {{allowedExtensions}}. You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
           {
-            allowedExtensions: allowedExtensions.join(', '),
             incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
           },
         ) as string,
@@ -219,7 +220,6 @@ export const FileManagerModal = ({
 
     onClose(selectedFilesIds);
   }, [
-    allowedExtensions,
     allowedTypes,
     files,
     maximumAttachmentsAmount,
@@ -292,7 +292,9 @@ export const FileManagerModal = ({
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
               allowedExtensions:
-                allowedExtensions.join(', ') || 'no available extensions',
+                allowedTypesLabel ||
+                allowedExtensions.join(', ') ||
+                'no available extensions',
             },
           )}
           &nbsp;
@@ -446,6 +448,7 @@ export const FileManagerModal = ({
           uploadFolderId={uploadFolderId}
           isOpen
           allowedTypes={allowedTypes}
+          allowedTypesLabel={allowedTypesLabel}
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
