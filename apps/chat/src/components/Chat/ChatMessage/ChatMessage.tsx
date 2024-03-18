@@ -23,6 +23,7 @@ export interface Props {
   editDisabled: boolean;
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
+  messagesLength: number;
   onEdit?: (editedMessage: Message, index: number) => void;
   onRegenerate?: () => void;
 }
@@ -40,6 +41,7 @@ export const ChatMessage: FC<Props> = memo(
     onRegenerate,
     onEdit,
     messageIndex,
+    messagesLength,
     ...props
   }) => {
     const { t } = useTranslation(Translation.Chat);
@@ -52,6 +54,8 @@ export const ChatMessage: FC<Props> = memo(
       useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+
+    const isLastMessage = messageIndex === (messagesLength ?? 0) - 1;
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
@@ -110,6 +114,7 @@ export const ChatMessage: FC<Props> = memo(
       return (
         <>
           <ChatMessageContent
+            isLastMessage={isLastMessage}
             messageIndex={messageIndex}
             onEdit={onEdit}
             onDelete={() => {
@@ -148,6 +153,7 @@ export const ChatMessage: FC<Props> = memo(
           noFocusReturn
           trigger={
             <ChatMessageContent
+              isLastMessage={isLastMessage}
               messageIndex={messageIndex}
               conversation={conversation}
               isEditing={isEditing}
@@ -172,9 +178,7 @@ export const ChatMessage: FC<Props> = memo(
         >
           <MessageMobileButtons
             isMessageStreaming={!!conversation.isMessageStreaming}
-            isLastMessage={
-              messageIndex === (conversation?.messages.length ?? 0) - 1
-            }
+            isLastMessage={isLastMessage}
             message={message}
             onCopy={handleCopy}
             messageCopied={messageCopied}
