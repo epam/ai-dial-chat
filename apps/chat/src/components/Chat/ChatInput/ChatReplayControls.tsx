@@ -1,4 +1,4 @@
-import { IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
+import { IconPlayerPlay } from '@tabler/icons-react';
 import { FC, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -14,22 +14,26 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { SendMessageButton } from '@/src/components/Chat/ChatInput/SendMessageButton';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import Play from '../../../../public/images/icons/play.svg';
 import RefreshCW from '../../../../public/images/icons/refresh-cw.svg';
 
 interface Props {
   showReplayControls: boolean;
   tooltip: string;
-  onRegenerate: () => void;
-  isErrorButton: boolean;
+  onSend: () => void;
+  isLastMessageError: boolean;
+  isSendDisabled: boolean;
+  isLoading: boolean;
 }
 
-export const ChatReplayControls: FC<Props> = ({
+export const ChatControls: FC<Props> = ({
   showReplayControls,
-  isErrorButton,
-  onRegenerate,
+  isLastMessageError,
+  onSend,
+  isSendDisabled,
+  isLoading,
   tooltip,
 }) => {
   const { t } = useTranslation(Translation.Chat);
@@ -56,19 +60,13 @@ export const ChatReplayControls: FC<Props> = ({
 
   if (!showReplayControls) {
     return (
-      <button
-        className={classNames(
-          'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary',
-          isOverlay ? 'right-3' : 'right-4',
-          isErrorButton && 'text-error',
-        )}
-        onClick={onRegenerate}
-        data-qa="regenerate"
-      >
-        <Tooltip tooltip={tooltip} isTriggerClickable>
-          <IconRefresh size={24} stroke="1.5" />
-        </Tooltip>
-      </button>
+      <SendMessageButton
+        isLastMessageError={isLastMessageError}
+        onSend={onSend}
+        isDisabled={isSendDisabled}
+        tooltip={tooltip}
+        isLoading={isLoading}
+      />
     );
   }
 
@@ -90,38 +88,12 @@ export const ChatReplayControls: FC<Props> = ({
         <Icon
           height={24}
           width={24}
-          className="shrink-0 text-secondary hover:text-accent-primary"
+          className={classNames(
+            'shrink-0 hover:text-accent-primary',
+            isError ? 'text-error' : 'text-secondary',
+          )}
         />
       </Tooltip>
-    </button>
-  );
-};
-
-export const StartReplayButton = () => {
-  const { t } = useTranslation(Translation.Chat);
-
-  const dispatch = useAppDispatch();
-
-  const selectedConversationsIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-
-  const handleReplayStart = useCallback(() => {
-    dispatch(
-      ConversationsActions.replayConversations({
-        conversationsIds: selectedConversationsIds,
-      }),
-    );
-  }, [selectedConversationsIds, dispatch]);
-
-  return (
-    <button
-      className="button button-chat"
-      onClick={handleReplayStart}
-      data-qa="start-replay"
-    >
-      <Play height={18} width={18} className="shrink-0 text-secondary" />
-      <span>{t('Start replay')}</span>
     </button>
   );
 };
