@@ -41,6 +41,7 @@ interface Props {
   initialFilesSelect?: boolean;
   maximumAttachmentsAmount?: number;
   allowedTypes?: string[];
+  allowedTypesLabel?: string;
   onClose: (result: boolean) => void;
   onUploadFiles: (
     selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
@@ -57,6 +58,7 @@ export const PreUploadDialog = ({
   initialFilesSelect,
   maximumAttachmentsAmount = 0,
   allowedTypes = [],
+  allowedTypesLabel,
   onClose,
   onUploadFiles,
   uploadFolderId,
@@ -133,9 +135,8 @@ export const PreUploadDialog = ({
       if (incorrectTypeFiles.length > 0) {
         errors.push(
           t(
-            `Supported types: {{allowedExtensions}}. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
+            `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
             {
-              allowedExtensions: allowedExtensions.join(', '),
               incorrectTypeFileNames: incorrectTypeFiles.join(', '),
             },
           ),
@@ -160,7 +161,7 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedExtensions, allowedTypes, folderPath, t],
+    [allowedTypes, folderPath, t],
   );
 
   const handleUpload = useCallback(() => {
@@ -324,7 +325,9 @@ export const PreUploadDialog = ({
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
               allowedExtensions:
-                allowedExtensions.join(', ') || 'no available extensions',
+                allowedTypesLabel ||
+                allowedExtensions.join(', ') ||
+                'no available extensions',
             },
           )}
         </p>
