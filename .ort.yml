@@ -18,7 +18,6 @@ curations:
     - id: "NPM:@plotly:mapbox-gl:1.13.4"
       curations:
         concluded_license: "BSD-3-Clause"
-        reason: "PACKAGE_SCAN_RESULT"
         comment: "The dependency has BSD-3-Clause license in github repo"
 resolutions:
   rule_violations:
