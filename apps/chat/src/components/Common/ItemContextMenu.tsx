@@ -21,6 +21,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
+} from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
@@ -100,6 +104,10 @@ export default function ItemContextMenu({
     isEntityOrParentsExternal(state, entity, featureType),
   );
 
+  const isNameInvalid = isEntityNameInvalid(entity.name);
+  const isInvalidPath = hasInvalidNameInPath(entity.folderId);
+  const disableAll = isNameInvalid || isInvalidPath;
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -108,6 +116,7 @@ export default function ItemContextMenu({
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
+        disabled: disableAll && !isNameInvalid,
       },
       {
         name: t('Compare'),
@@ -115,6 +124,7 @@ export default function ItemContextMenu({
         dataQa: 'compare',
         Icon: IconScale,
         onClick: onCompare,
+        disabled: disableAll,
       },
       {
         name: t('Duplicate'),
@@ -122,6 +132,7 @@ export default function ItemContextMenu({
         dataQa: 'duplicate',
         Icon: IconCopy,
         onClick: onDuplicate,
+        disabled: disableAll,
       },
       {
         name: t('View'),
@@ -136,6 +147,7 @@ export default function ItemContextMenu({
         dataQa: 'replay',
         Icon: IconRefreshDot,
         onClick: onReplay,
+        disabled: disableAll,
       },
       {
         name: t('Playback'),
@@ -143,6 +155,7 @@ export default function ItemContextMenu({
         dataQa: 'playback',
         Icon: IconPlayerPlay,
         onClick: onPlayback,
+        disabled: disableAll,
       },
       {
         name: t('Export'),
@@ -191,6 +204,7 @@ export default function ItemContextMenu({
         Icon: IconFolderShare,
         onClick: onOpenMoveToModal,
         className: 'md:hidden',
+        disabled: disableAll,
       },
       {
         name: t('Move to'),
@@ -198,6 +212,7 @@ export default function ItemContextMenu({
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
+        disabled: disableAll,
         childMenuItems: [
           {
             name: t('New folder'),
@@ -226,6 +241,7 @@ export default function ItemContextMenu({
           !isEmptyConversation && isSharingEnabled && !!onShare && !isExternal,
         Icon: IconUserShare,
         onClick: onShare,
+        disabled: disableAll,
       },
       {
         name: t('Unshare'),
@@ -237,6 +253,7 @@ export default function ItemContextMenu({
           !!entity.isShared,
         Icon: IconUserX,
         onClick: onUnshare,
+        disabled: disableAll,
       },
       {
         name: t('Publish'),
@@ -249,6 +266,7 @@ export default function ItemContextMenu({
           !isExternal,
         Icon: IconWorldShare,
         onClick: onPublish,
+        disabled: disableAll,
       },
       {
         name: t('Update'),
@@ -260,6 +278,7 @@ export default function ItemContextMenu({
           !!onPublishUpdate,
         Icon: IconClockShare,
         onClick: onPublishUpdate,
+        disabled: disableAll,
       },
       {
         name: t('Unpublish'),
@@ -271,6 +290,7 @@ export default function ItemContextMenu({
           !!onUnpublish,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
+        disabled: disableAll,
       },
       {
         name: t('Delete'),
@@ -286,6 +306,7 @@ export default function ItemContextMenu({
       },
     ],
     [
+      disableAll,
       entity.id,
       entity.isPublished,
       entity.isShared,
@@ -294,6 +315,7 @@ export default function ItemContextMenu({
       folders,
       isEmptyConversation,
       isExternal,
+      isNameInvalid,
       isPublishingEnabled,
       isSharingEnabled,
       onCompare,

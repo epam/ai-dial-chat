@@ -1,5 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import {
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
+  isEntityNameOrPathInvalid,
+} from '@/src/utils/app/common';
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
@@ -194,6 +199,28 @@ export const selectIsConversationsStreaming = createSelector(
     return conversations.some((conv) => !!conv.isMessageStreaming);
   },
 );
+
+export const selectIsConversationNameInvalid = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isEntityNameInvalid(conv.name));
+  },
+);
+
+export const selectIsConversationPathInvalid = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => hasInvalidNameInPath(conv.folderId));
+  },
+);
+
+export const selectIsConversationNameOrPathInvalid = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isEntityNameOrPathInvalid(conv));
+  },
+);
+
 export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
