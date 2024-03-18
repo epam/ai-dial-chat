@@ -718,10 +718,14 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        const isVisible = await sendMessage.sendMessageButton.isVisible();
+        const isSendButtonVisible =
+          await sendMessage.sendMessageButton.isVisible();
 
         expect
-          .soft(isVisible, ExpectedMessages.sendMessageButtonIsNotVisible)
+          .soft(
+            isSendButtonVisible,
+            ExpectedMessages.sendMessageButtonIsNotVisible,
+          )
           .toBeFalsy();
 
         await chat.footer.waitForState({ state: 'attached' });
@@ -744,9 +748,13 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        const isVisible = await sendMessage.sendMessageButton.isVisible();
+        const isSendButtonVisible =
+          await sendMessage.sendMessageButton.isVisible();
         expect
-          .soft(isVisible, ExpectedMessages.sendMessageButtonIsNotVisible)
+          .soft(
+            isSendButtonVisible,
+            ExpectedMessages.sendMessageButtonIsNotVisible,
+          )
           .toBeFalsy();
 
         await chat.footer.waitForState({ state: 'attached' });
