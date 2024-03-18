@@ -59,6 +59,7 @@ export const CustomLogoSelect = ({
         <FileManagerModal
           isOpen
           allowedTypes={['image/*']}
+          allowedTypesLabel="images"
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={(files: unknown) => {
             onLogoSelect(files as string[]);
