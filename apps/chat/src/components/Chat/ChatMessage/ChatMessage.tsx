@@ -8,7 +8,6 @@ import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation, LikeState, Message } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
