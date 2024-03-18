@@ -330,6 +330,7 @@ export const MenuItem = forwardRef<
         className={classNames(
           menuItemClassNames,
           'h-[34px] w-full px-3',
+          disabled && '!cursor-not-allowed',
           className,
         )}
         tabIndex={isActive ? 0 : -1}

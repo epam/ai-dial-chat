@@ -40,9 +40,16 @@ export const isEntityNameOnSameLevelUnique = (
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
-export const doesHaveDotsInTheEnd = (name: string) => {
-  return name.trim().endsWith('.');
-};
+export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
+
+export const isEntityNameInvalid = (name: string) =>
+  doesHaveDotsInTheEnd(name) || notAllowedSymbolsRegex.test(name);
+
+export const hasInvalidNameInPath = (path: string) =>
+  path.split('/').some((part) => isEntityNameInvalid(part));
+
+export const isEntityNameOrPathInvalid = (entity: Entity) =>
+  isEntityNameInvalid(entity.name) || hasInvalidNameInPath(entity.folderId);
 
 export const filterOnlyMyEntities = <T extends ShareEntity>(
   entities: T[],

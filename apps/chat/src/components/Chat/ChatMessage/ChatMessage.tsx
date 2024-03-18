@@ -2,6 +2,7 @@ import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, LikeState, Message } from '@/src/types/chat';
@@ -52,6 +53,7 @@ export const ChatMessage: FC<Props> = memo(
       useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+    const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
@@ -175,6 +177,7 @@ export const ChatMessage: FC<Props> = memo(
             isLastMessage={
               messageIndex === (conversation?.messages.length ?? 0) - 1
             }
+            isConversationInvalid={isConversationInvalid}
             message={message}
             onCopy={handleCopy}
             messageCopied={messageCopied}
