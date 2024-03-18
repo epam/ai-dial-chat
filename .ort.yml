@@ -31,7 +31,7 @@ resolutions:
         'NPM:@plotly:mapbox-gl:1\\.13\\.4'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has BSD-3-Clause license in github repo'
-    - message: 'NOASSERTION (DECLARED) - The license NOASSERTION is currently not covered by policy rules. \
+    - message: 'NOASSERTION (DECLARED) - The license NOASSERTION is currently not covered by policy rules\\. \
         The license was declared in package NPM:@plotly:mapbox-gl:1\\.13\\.4'
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has BSD-3-Clause license in github repo'
