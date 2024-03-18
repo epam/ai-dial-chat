@@ -190,6 +190,7 @@ export const ChatMessage: FC<Props> = memo(
             isEditing={isEditing}
             toggleEditing={toggleEditing}
             onRegenerate={onRegenerate}
+            isConversationInvalid={isConversationInvalid}
           />
         </Menu>
         {confirmationDialog}
