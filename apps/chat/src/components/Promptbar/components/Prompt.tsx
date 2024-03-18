@@ -13,7 +13,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import {
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
+  isEntityNameOnSameLevelUnique,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
@@ -39,6 +43,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
@@ -47,6 +52,7 @@ import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
+import Tooltip from '../../Common/Tooltip';
 import { PreviewPromptModal } from './PreviewPromptModal';
 
 interface Props {
@@ -75,6 +81,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
+  const isNameInvalid = isEntityNameInvalid(prompt.name);
+  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -295,7 +303,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           className={classNames('flex size-full items-center gap-2', {
             'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
           })}
-          draggable={!isExternal}
+          draggable={!isExternal && !isNameInvalid && !isInvalidPath}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <ShareIcon
@@ -306,12 +314,21 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
-          <div
-            className={classNames(
-              'relative max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-            )}
-          >
-            {prompt.name}
+          <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
+            <Tooltip
+              tooltip={t(
+                isNameInvalid
+                  ? errorsMessages.entityNameInvalid
+                  : errorsMessages.entityPathInvalid,
+              )}
+              hideTooltip={!isNameInvalid && !isInvalidPath}
+              triggerClassName={classNames(
+                'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                (isNameInvalid || isInvalidPath) && 'text-secondary',
+              )}
+            >
+              {prompt.name}
+            </Tooltip>
           </div>
         </div>
         {!isDeleting && !isRenaming && (

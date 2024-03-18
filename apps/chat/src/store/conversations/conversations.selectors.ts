@@ -1,5 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import {
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
+  isEntityNameOrPathInvalid,
+} from '@/src/utils/app/common';
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
@@ -36,6 +41,7 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { cloneDeep } from 'lodash-es';
 import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState): ConversationsState =>
@@ -150,6 +156,16 @@ export const selectSelectedConversations = createSelector(
       .filter(Boolean) as Conversation[];
   },
 );
+
+export const selectLoadedCharts = createSelector([rootSelector], (state) => {
+  // cloneDeep because of Plot component doesn't work with redux-toolkit maintained state slices which disallow, or guard, against state mutations.
+  // PlotReactState had some additional "state" properties that were never declared or updated.
+  return cloneDeep(state.loadedCharts);
+});
+export const selectChartLoading = createSelector([rootSelector], (state) => {
+  return state.chartLoading;
+});
+
 export const selectParentFolders = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
@@ -194,6 +210,28 @@ export const selectIsConversationsStreaming = createSelector(
     return conversations.some((conv) => !!conv.isMessageStreaming);
   },
 );
+
+export const selectIsConversationNameInvalid = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isEntityNameInvalid(conv.name));
+  },
+);
+
+export const selectIsConversationPathInvalid = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => hasInvalidNameInPath(conv.folderId));
+  },
+);
+
+export const selectIsConversationNameOrPathInvalid = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isEntityNameOrPathInvalid(conv));
+  },
+);
+
 export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });

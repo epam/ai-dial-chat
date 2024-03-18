@@ -205,10 +205,7 @@ export const PlaybackControls = ({
   }, [controlsContainerRef, onResize]);
 
   return (
-    <div
-      ref={controlsContainerRef}
-      className="gradient-top-bottom absolute bottom-0 left-0 w-full pt-2"
-    >
+    <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
       <div
         className={classNames(
           'relative mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
@@ -270,7 +267,7 @@ export const PlaybackControls = ({
         </div>
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
+            className="-top-16 right-0 md:-right-14 md:top-[50%] md:-translate-y-1/2"
             onScrollDownClick={onScrollDownClick}
           />
         )}

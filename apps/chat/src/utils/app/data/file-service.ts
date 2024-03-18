@@ -182,4 +182,8 @@ export class FileService {
       }),
     );
   }
+
+  public static getFileContent<T>(path: string): Observable<T> {
+    return ApiUtils.request(path);
+  }
 }

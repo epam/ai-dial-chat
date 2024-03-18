@@ -231,7 +231,7 @@ const Sidebar = <T,>({
                 <div
                   ref={dragDropElement}
                   className={classNames(
-                    'min-h-[100px] min-w-[42px] grow',
+                    'min-h-min min-w-[42px] grow',
                     isDraggingOver && 'bg-accent-primary-alpha',
                   )}
                   onDrop={(e) => {

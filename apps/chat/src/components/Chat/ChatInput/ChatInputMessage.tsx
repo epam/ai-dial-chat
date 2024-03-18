@@ -28,6 +28,9 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { errorsMessages } from '@/src/constants/errors';
+
+import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
@@ -36,7 +39,6 @@ import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
-import { SendMessageButton } from './SendMessageButton';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -44,6 +46,9 @@ interface Props {
   onScrollDownClick: () => void;
   onSend: (message: Message) => void;
   onStopConversation: () => void;
+  isLastMessageError: boolean;
+  onRegenerate: () => void;
+  showReplayControls: boolean;
 }
 
 const MAX_HEIGHT = 320;
@@ -54,6 +59,9 @@ export const ChatInputMessage = ({
   onScrollDownClick,
   onSend,
   onStopConversation,
+  onRegenerate,
+  isLastMessageError,
+  showReplayControls,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -63,6 +71,12 @@ export const ChatInputMessage = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const isConversationNameInvalid = useAppSelector(
+    ConversationsSelectors.selectIsConversationNameInvalid,
+  );
+  const isConversationPathInvalid = useAppSelector(
+    ConversationsSelectors.selectIsConversationPathInvalid,
   );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
@@ -129,7 +143,9 @@ export const ChatInputMessage = ({
     isError ||
     isInputEmpty ||
     !isModelsLoaded ||
-    isUploadingFilePresent;
+    isUploadingFilePresent ||
+    isConversationNameInvalid ||
+    isConversationPathInvalid;
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -313,10 +329,16 @@ export const ChatInputMessage = ({
       return t('Please continue replay to continue working with chat');
     }
     if (isError) {
-      return t('Please regenerate response to continue working with chat');
+      return t('Regenerate response');
     }
     if (isUploadingFilePresent) {
       return t('Please wait for the attachment to load');
+    }
+    if (isConversationNameInvalid) {
+      return t(errorsMessages.entityNameInvalid);
+    }
+    if (isConversationPathInvalid) {
+      return t(errorsMessages.entityPathInvalid);
     }
     return t('Please type a message');
   };
@@ -332,7 +354,7 @@ export const ChatInputMessage = ({
   return (
     <div
       className={classNames(
-        'mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6',
+        'mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
         isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
       )}
     >
@@ -361,12 +383,13 @@ export const ChatInputMessage = ({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
-
-        <SendMessageButton
-          handleSend={handleSend}
-          isDisabled={isSendDisabled}
+        <ChatControls
+          showReplayControls={showReplayControls}
+          onSend={isLastMessageError ? onRegenerate : handleSend}
           tooltip={tooltipContent()}
+          isLastMessageError={isLastMessageError}
           isLoading={isLoading}
+          isSendDisabled={isSendDisabled}
         />
         {canAttach && (
           <>
@@ -394,7 +417,7 @@ export const ChatInputMessage = ({
 
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
+            className="-top-16 right-0 md:-right-14 md:top-[50%] md:-translate-y-1/2"
             onScrollDownClick={onScrollDownClick}
           />
         )}

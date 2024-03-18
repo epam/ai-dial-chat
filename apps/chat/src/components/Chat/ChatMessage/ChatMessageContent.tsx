@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
   getDialFilesFromAttachments,
   getDialLinksFromAttachments,
@@ -105,6 +106,7 @@ export const ChatMessageContent = ({
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
+  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const files = useAppSelector(FilesSelectors.selectFiles);
 
@@ -466,7 +468,7 @@ export const ChatMessageContent = ({
                     className="absolute bottom-[-160px]"
                   ></div>
                 </div>
-                {showUserButtons && (
+                {showUserButtons && !isConversationInvalid && (
                   <MessageUserButtons
                     isMessageStreaming={!!conversation.isMessageStreaming}
                     isEditAvailable={!!onEdit}
@@ -503,7 +505,8 @@ export const ChatMessageContent = ({
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
               {withButtons &&
-                !(conversation.isMessageStreaming && isLastMessage) && (
+                !(conversation.isMessageStreaming && isLastMessage) &&
+                !isConversationInvalid && (
                   <MessageAssistantButtons
                     copyOnClick={() => onCopy?.()}
                     isLikesEnabled={isLikesEnabled}

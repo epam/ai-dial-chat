@@ -20,8 +20,7 @@ export const ExpectedConstants = {
   emptyPlaybackMessage: 'Type a message',
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
-  continueReplayAfterErrorLabel:
-    'Looks like something went wrong. Do you want to continue replay?',
+  continueReplayAfterErrorLabel: 'Try again',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
@@ -48,8 +47,9 @@ export const ExpectedConstants = {
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
     'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
-  regenerateResponseTooltip:
+  regenerateResponseToContinueTooltip:
     'Please regenerate response to continue working with chat',
+  regenerateResponseTooltip: 'Regenerate response',
   sharedConversationTooltip: 'Shared',
   sharedConversationName: (name: string) => `Share: ${name}`,
   sharedLink: (invitationLink: string) => {

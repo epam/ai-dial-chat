@@ -2,6 +2,7 @@ import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, LikeState, Message } from '@/src/types/chat';
@@ -54,6 +55,7 @@ export const ChatMessage: FC<Props> = memo(
       useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+    const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const isLastMessage = messageIndex === (messagesLength ?? 0) - 1;
 

@@ -73,9 +73,7 @@ export const ChatCompareSelect = ({
       const selectedConversation = selectedConversations[0];
 
       const comparableConversations = conversations.filter((conv) =>
-        showAll
-          ? conv.id !== selectedConversation.id
-          : isValidConversationForCompare(selectedConversation, conv),
+        isValidConversationForCompare(selectedConversation, conv, showAll),
       );
       setComparableConversations(sortByName(comparableConversations));
     }
