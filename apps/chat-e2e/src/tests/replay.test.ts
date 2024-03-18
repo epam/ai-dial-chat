@@ -338,8 +338,8 @@ dialTest(
     chat,
     localStorageManager,
     dataInjector,
-    tooltip,
     setTestIds,
+    tooltip,
     chatMessages,
   }) => {
     setTestIds('EPMRTC-512');
@@ -366,11 +366,12 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+
+        await chat.proceedGenerating.hoverOver();
+        const tooltipContent = await tooltip.getContent();
+
         expect
-          .soft(
-            await chat.proceedGenerating.getElementInnerContent(),
-            ExpectedMessages.proceedReplayIsVisible,
-          )
+          .soft(tooltipContent, ExpectedMessages.proceedReplayIsVisible)
           .toBe(ExpectedConstants.continueReplayLabel);
       },
     );
@@ -409,6 +410,7 @@ dialTest(
     dataInjector,
     setTestIds,
     chatMessages,
+    tooltip,
     context,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
@@ -437,14 +439,15 @@ dialTest(
 
     await dialTest.step('Verify error message is displayed', async () => {
       const generatedContent = await chatMessages.getLastMessageContent();
+
+      await chat.proceedGenerating.hoverOver();
+      const tooltipContent = await tooltip.getContent();
+
       expect
         .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
         .toBe(ExpectedConstants.answerError);
       expect
-        .soft(
-          await chat.proceedGenerating.getElementInnerContent(),
-          ExpectedMessages.proceedReplayIsVisible,
-        )
+        .soft(tooltipContent, ExpectedMessages.proceedReplayIsVisible)
         .toBe(ExpectedConstants.continueReplayAfterErrorLabel);
     });
 
@@ -715,7 +718,7 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        const isVisible = sendMessage.sendMessageButton.isVisible();
+        const isVisible = await sendMessage.sendMessageButton.isVisible();
 
         expect
           .soft(isVisible, ExpectedMessages.sendMessageButtonIsNotVisible)
