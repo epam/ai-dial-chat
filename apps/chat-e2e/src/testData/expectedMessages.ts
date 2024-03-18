@@ -9,6 +9,7 @@ export enum ExpectedMessages {
   contextMenuOptionsValid = 'Context menu options are valid',
   conversationIsVisible = 'Conversation is visible in chat bar',
   conversationIsNotVisible = 'Conversation is not visible in chat bar',
+  sendMessageButtonIsNotVisible = 'Send message button is not visible in chat input',
   conversationsCountIsValid = 'Conversations count is valid',
   folderIsNotVisible = 'Folder is not visible in chat bar',
   newFolderCreated = 'New folder is created',

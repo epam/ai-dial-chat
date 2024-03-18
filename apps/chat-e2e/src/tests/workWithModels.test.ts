@@ -175,7 +175,7 @@ dialTest(
           const tooltipContent = await tooltip.getContent();
           expect
             .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.regenerateResponseTooltip);
+            .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
         }
       },
     );
@@ -204,7 +204,7 @@ dialTest(
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.regenerateResponseTooltip);
+          .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
       },
     );
 
