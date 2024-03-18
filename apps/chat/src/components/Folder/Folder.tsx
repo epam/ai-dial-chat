@@ -717,7 +717,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 <IconFolder size={18} className="mr-1 text-secondary" />
               </ShareIcon>
             )}
-            <div className="relative" data-qa="folder-name">
+            <div
+              className="relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5"
+              data-qa="folder-name"
+            >
               <Tooltip
                 tooltip={t(
                   isNameInvalid
@@ -726,7 +729,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 )}
                 hideTooltip={!isNameInvalid && !isInvalidPath}
                 triggerClassName={classNames(
-                  'max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
+                  'block max-h-5 flex-1 truncate break-all text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
                       ? 'text-primary'

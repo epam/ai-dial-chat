@@ -111,7 +111,10 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div className="relative" data-qa="chat-name">
+      <div
+        className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+        data-qa="chat-name"
+      >
         <Tooltip
           tooltip={t(
             isNameInvalid
@@ -119,7 +122,7 @@ export function ConversationView({
               : errorsMessages.entityPathInvalid,
           )}
           hideTooltip={!isNameInvalid && !isInvalidPath}
-          triggerClassName=" max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         >
           {conversation.name}
         </Tooltip>

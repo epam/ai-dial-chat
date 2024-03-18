@@ -314,7 +314,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
-          <div className="relative">
+          <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
             <Tooltip
               tooltip={t(
                 isNameInvalid
@@ -323,7 +323,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               )}
               hideTooltip={!isNameInvalid && !isInvalidPath}
               triggerClassName={classNames(
-                'max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                 (isNameInvalid || isInvalidPath) && 'text-secondary',
               )}
             >
