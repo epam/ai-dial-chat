@@ -30,7 +30,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { ChatControls } from '@/src/components/Chat/ChatInput/ChatReplayControls';
+import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
