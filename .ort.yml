@@ -13,11 +13,6 @@ license_choices:
       choice: 'MIT'
     - given: 'GPL-3.0-or-later OR MIT'
       choice: 'MIT'
-curations:
-  packages:
-    - id: "@plotly:mapbox-gl:1.13.4"
-      curations:
-        comment: "The dependency has BSD-3-Clause license in github repo"
 resolutions:
   rule_violations:
     - message: "No license information is available for dependency \
@@ -34,5 +29,8 @@ resolutions:
       comment: 'The dependency has MIT license in github repo'
     - message: "No license information is available for dependency \
         'NPM:@plotly:mapbox-gl:1\\.13\\.4'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has BSD-3-Clause license in github repo'
+    - message: 'The license was declared in package NPM:@plotly:mapbox-gl:1\\.13\\.4'
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has BSD-3-Clause license in github repo'
