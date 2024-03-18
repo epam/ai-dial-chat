@@ -21,6 +21,7 @@ interface ShareIconProps extends ShareInterface {
   size?: number;
   children: ReactNode | ReactNode[];
   featureType: FeatureType;
+  isInvalid?: boolean;
 }
 
 export default function ShareIcon({
@@ -30,6 +31,7 @@ export default function ShareIcon({
   size = 12,
   children,
   featureType,
+  isInvalid,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isSharingEnabled = useAppSelector((state) =>
@@ -38,19 +40,20 @@ export default function ShareIcon({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+  const containerClass = classNames('relative', isInvalid && 'text-secondary');
 
   if (
     (!isSharingEnabled || !isShared) &&
     (!isPublishingEnabled || !isPublished)
   ) {
-    return <>{children}</>;
+    return <div className={containerClass}>{children}</div>;
   }
 
   const AdditionalIcon =
     isPublished && isPublishingEnabled ? World : ArrowUpRight;
 
   return (
-    <div className="relative">
+    <div className={containerClass}>
       {children}
       <div
         className={classNames(

@@ -29,6 +29,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ChatReplayControls } from '@/src/components/Chat/ChatInput/ChatReplayControls';
+import { errorsMessages } from '@/src/constants/errors';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
@@ -70,6 +71,12 @@ export const ChatInputMessage = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const isConversationNameInvalid = useAppSelector(
+    ConversationsSelectors.selectIsConversationNameInvalid,
+  );
+  const isConversationPathInvalid = useAppSelector(
+    ConversationsSelectors.selectIsConversationPathInvalid,
   );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
@@ -136,7 +143,9 @@ export const ChatInputMessage = ({
     isError ||
     isInputEmpty ||
     !isModelsLoaded ||
-    isUploadingFilePresent;
+    isUploadingFilePresent ||
+    isConversationNameInvalid ||
+    isConversationPathInvalid;
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -324,6 +333,12 @@ export const ChatInputMessage = ({
     }
     if (isUploadingFilePresent) {
       return t('Please wait for the attachment to load');
+    }
+    if (isConversationNameInvalid) {
+      return t(errorsMessages.entityNameInvalid);
+    }
+    if (isConversationPathInvalid) {
+      return t(errorsMessages.entityPathInvalid);
     }
     return t('Please type a message');
   };

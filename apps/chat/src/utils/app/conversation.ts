@@ -1,4 +1,7 @@
-import { prepareEntityName } from '@/src/utils/app/common';
+import {
+  isEntityNameOrPathInvalid,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 
 import {
   Conversation,
@@ -159,8 +162,13 @@ const removePostfix = (name: string): string => {
 export const isValidConversationForCompare = (
   selectedConversation: Conversation,
   candidate: ConversationInfo,
+  dontCompareNames?: boolean,
 ): boolean => {
-  if (candidate.isReplay || candidate.isPlayback) {
+  if (
+    candidate.isReplay ||
+    candidate.isPlayback ||
+    isEntityNameOrPathInvalid(candidate)
+  ) {
     return false;
   }
 
@@ -168,6 +176,7 @@ export const isValidConversationForCompare = (
     return false;
   }
   return (
+    dontCompareNames ||
     removePostfix(selectedConversation.name) === removePostfix(candidate.name)
   );
 };
