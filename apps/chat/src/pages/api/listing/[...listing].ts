@@ -40,8 +40,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       limit?: number;
     };
     const token = await getToken({ req });
-    // eslint-disable-next-line no-console
-    console.log('token--------->', token);
     const slugs = Array.isArray(req.query.listing)
       ? req.query.listing
       : [req.query.listing];
