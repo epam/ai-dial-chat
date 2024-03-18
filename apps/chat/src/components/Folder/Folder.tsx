@@ -56,6 +56,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
@@ -719,8 +721,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               <Tooltip
                 tooltip={t(
                   isNameInvalid
-                    ? 'The name is invalid. Please, rename it'
-                    : 'The parent folder name is invalid. Please, rename it',
+                    ? errorsMessages.entityNameInvalid
+                    : errorsMessages.entityPathInvalid,
                 )}
                 hideTooltip={!isNameInvalid && !isInvalidPath}
                 triggerClassName={classNames(

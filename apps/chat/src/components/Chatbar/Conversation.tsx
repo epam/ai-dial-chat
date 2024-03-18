@@ -50,6 +50,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -114,8 +115,8 @@ export function ConversationView({
         <Tooltip
           tooltip={t(
             isNameInvalid
-              ? 'The name is invalid. Please, rename it'
-              : 'The parent folder name is invalid. Please, rename it',
+              ? errorsMessages.entityNameInvalid
+              : errorsMessages.entityPathInvalid,
           )}
           hideTooltip={!isNameInvalid && !isInvalidPath}
           triggerClassName=" max-h-5 flex-1 truncate whitespace-pre break-all text-left"

@@ -43,6 +43,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
@@ -317,8 +318,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             <Tooltip
               tooltip={t(
                 isNameInvalid
-                  ? 'The name is invalid. Please, rename it'
-                  : 'The parent folder name is invalid. Please, rename it',
+                  ? errorsMessages.entityNameInvalid
+                  : errorsMessages.entityPathInvalid,
               )}
               hideTooltip={!isNameInvalid && !isInvalidPath}
               triggerClassName={classNames(

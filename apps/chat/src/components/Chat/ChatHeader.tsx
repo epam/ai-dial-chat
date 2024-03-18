@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
   getSelectedAddons,
   getValidEntitiesFromIds,
@@ -66,6 +67,7 @@ export const ChatHeader = ({
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
@@ -116,10 +118,14 @@ export const ChatHeader = ({
             )}
           >
             <span
-              className={classNames('truncate whitespace-pre text-center', {
-                'block max-w-full md:max-w-[330px] lg:max-w-[425px]':
-                  !isChatFullWidth,
-              })}
+              className={classNames(
+                'truncate whitespace-pre text-center',
+                {
+                  'block max-w-full md:max-w-[330px] lg:max-w-[425px]':
+                    !isChatFullWidth,
+                },
+                isConversationInvalid && 'text-secondary',
+              )}
               data-qa="chat-title"
             >
               {conversation.name}
@@ -168,6 +174,7 @@ export const ChatHeader = ({
                     entity={model}
                     size={iconSize}
                     isCustomTooltip
+                    isInvalid={isConversationInvalid}
                   />
                 </Tooltip>
               </span>
@@ -235,7 +242,7 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowModelSelect && (
+            {isShowModelSelect && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
                   className="cursor-pointer text-secondary hover:text-accent-primary"
@@ -246,20 +253,22 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            {isShowClearConversation && !isCompareMode && (
-              <Tooltip
-                isTriggerClickable
-                tooltip={t('Clear conversation messages')}
-              >
-                <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary"
-                  onClick={() => setIsClearConversationModalOpen(true)}
-                  data-qa="clear-conversation"
+            {isShowClearConversation &&
+              !isConversationInvalid &&
+              !isCompareMode && (
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('Clear conversation messages')}
                 >
-                  <IconEraser size={iconSize} />
-                </button>
-              </Tooltip>
-            )}
+                  <button
+                    className="cursor-pointer text-secondary hover:text-accent-primary"
+                    onClick={() => setIsClearConversationModalOpen(true)}
+                    data-qa="clear-conversation"
+                  >
+                    <IconEraser size={iconSize} />
+                  </button>
+                </Tooltip>
+              )}
             {isCompareMode && selectedConversationIds.length > 1 && (
               <Tooltip
                 isTriggerClickable

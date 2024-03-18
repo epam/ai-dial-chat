@@ -178,7 +178,6 @@ export default function ItemContextMenu({
         dataQa: 'export-chat',
         Icon: IconFileArrowRight,
         className: 'max-md:hidden',
-        disabled: disableAll,
         childMenuItems: [
           {
             name: t('With attachments'),

@@ -226,6 +226,7 @@ interface MessageMobileButtonsProps {
   isLastMessage: boolean;
   isMessageStreaming: boolean;
   onRegenerate?: () => void;
+  isConversationInvalid: boolean;
 }
 
 export const MessageMobileButtons = ({
@@ -240,6 +241,7 @@ export const MessageMobileButtons = ({
   onRegenerate,
   isLastMessage,
   isMessageStreaming,
+  isConversationInvalid,
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -247,7 +249,8 @@ export const MessageMobileButtons = ({
 
   if (isAssistant) {
     return (
-      !(isMessageStreaming && isLastMessage) && (
+      !(isMessageStreaming && isLastMessage) &&
+      !isConversationInvalid && (
         <>
           {messageCopied ? (
             <MenuItem
@@ -344,7 +347,8 @@ export const MessageMobileButtons = ({
   }
 
   return (
-    !isMessageStreaming && (
+    !isMessageStreaming &&
+    !isConversationInvalid && (
       <>
         <MenuItem
           className="hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
