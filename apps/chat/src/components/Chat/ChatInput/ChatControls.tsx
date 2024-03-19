@@ -41,7 +41,6 @@ export const ChatControls: FC<Props> = ({
   const dispatch = useAppDispatch();
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
   const isError = useAppSelector(
     ConversationsSelectors.selectIsErrorReplayConversations,
   );
