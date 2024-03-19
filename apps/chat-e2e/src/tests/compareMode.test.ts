@@ -210,8 +210,6 @@ dialTest(
     let modelConversation: Conversation;
     let replayConversation: Conversation;
     let playbackonversation: Conversation;
-    let firstEmptyConversation: Conversation;
-    let secondEmptyConversation: Conversation;
     const conversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(

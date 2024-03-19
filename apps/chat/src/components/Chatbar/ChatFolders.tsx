@@ -359,7 +359,7 @@ export function ChatFolders() {
           openByDefault: true,
         },
         {
-          name: t('Pinned chats'),
+          name: t('Pinned conversations'),
           filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
