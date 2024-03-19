@@ -1,3 +1,5 @@
+import { PlotParams } from 'react-plotly.js';
+
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -23,7 +25,9 @@ export interface ConversationsState {
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
-  compareLoading?: boolean;
   isActiveNewConversationRequest: boolean;
   messageSending: boolean;
+  loadedCharts: { url: string; data: PlotParams }[];
+  chartLoading: boolean;
+  compareLoading?: boolean;
 }

@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Attachment } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
@@ -38,9 +40,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         <ChevronDown
           height={18}
           width={18}
-          className={`shrink-0 text-secondary transition ${
-            isSectionOpened ? 'rotate-180' : ''
-          }`}
+          className={classNames(
+            'shrink-0 text-secondary transition',
+            isSectionOpened && 'rotate-180',
+          )}
         />
       </button>
       {isSectionOpened && (

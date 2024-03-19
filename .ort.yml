@@ -19,3 +19,19 @@ resolutions:
         'NPM::union:0\\.5\\.0'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM::stack-trace:0\\.0\\.9'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM:@mapbox:jsonlint-lines-primitives:2\\.0\\.2'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM:@plotly:mapbox-gl:1\\.13\\.4'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has BSD-3-Clause license in github repo'
+    - message: "The license NOASSERTION is currently not covered by policy rules\\. \
+        The license was declared in package NPM:@plotly:mapbox-gl:1\\.13\\.4"
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has BSD-3-Clause license in github repo'
