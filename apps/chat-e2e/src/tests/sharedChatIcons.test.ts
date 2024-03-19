@@ -1,5 +1,4 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendDataEntity } from '@/chat/types/common';
 import { FolderInterface } from '@/chat/types/folder';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
@@ -12,14 +11,8 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-
-dialTest.beforeEach(async ({ additionalUserItemApiHelper }) => {
-  await additionalUserItemApiHelper.deleteAllData(
-    BucketUtil.getAdditionalShareUserBucket(),
-  );
-});
 
 dialTest(
   'Shared icon does not appear in chat model icon if to click on copy button.\n' +
@@ -917,7 +910,7 @@ dialTest(
       'Get the list of shared with me conversation by another user and verify there is no unshared one',
       async () => {
         const sharedWithAnotherUserConversations =
-          await additionalUserShareApiHelper.listSharedWithMeConversations();
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
         expect
           .soft(
             sharedWithAnotherUserConversations.resources.find(

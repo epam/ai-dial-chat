@@ -7,6 +7,7 @@ export enum ExpectedMessages {
   conversationNotDeleted = 'Conversation is not deleted',
   conversationMovedToFolder = 'Conversation is moved to a folder',
   contextMenuOptionsValid = 'Context menu options are valid',
+  contextMenuIsNotAvailable = 'Context menu is not available',
   conversationIsVisible = 'Conversation is visible in chat bar',
   conversationIsNotVisible = 'Conversation is not visible in chat bar',
   sendMessageButtonIsNotVisible = 'Send message button is not visible in chat input',
@@ -176,6 +177,9 @@ export enum ExpectedMessages {
   shareConversationLinkIsValid = 'Share conversation link is valid',
   shareInviteAcceptanceErrorShown = 'Share invite acceptance error toast is shown',
   conversationIsNotShared = 'Conversation is not shared',
+  conversationIsShared = 'Conversation is shared',
+  folderIsNotShared = 'Folder is not shared',
+  folderIsShared = 'Folder is shared',
   promptIsNotShared = 'Prompt is not shared',
   modalWindowIsClosed = 'Modal window is closed',
   chatNameIsFullyVisible = 'Chat name is fully visible on tooltip',
@@ -202,4 +206,5 @@ export enum ExpectedMessages {
   dataIsNotExported = 'Data is not exported',
   dataIsExported = 'Data is exported',
   dataIsNotImported = 'Data is not imported',
+  chatNotFoundMessageIsValid = 'Chat not found message is valid',
 }
