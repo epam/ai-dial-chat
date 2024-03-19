@@ -1209,7 +1209,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
             : undefined,
           messages: updatedMessages,
           name: newConversationName,
-          isMessageStreaming: true,
         });
 
         return {
@@ -1251,6 +1250,12 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
               }),
             ),
             EMPTY,
+          ),
+          of(
+            ConversationsActions.updateConversation({
+              id: oldConversationId,
+              values: { isMessageStreaming: true },
+            }),
           ),
           of(
             ConversationsActions.streamMessage({
