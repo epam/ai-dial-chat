@@ -197,6 +197,7 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
+  ANTHROPIC_CLAUDE_V3 = 'anthropic.claude-v3',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
