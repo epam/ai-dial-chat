@@ -2216,15 +2216,18 @@ const saveConversationEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => of(ConversationsActions.saveConversationSuccess())),
         catchError((err) => {
           console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the conversation. Please refresh the page.',
+          return concat(
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the conversation. Please refresh the page.',
+                ),
               ),
             ),
+            of(ConversationsActions.saveConversationFail(newConversation)),
           );
         }),
       );
@@ -2244,7 +2247,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
           ),
         )
         .pipe(
-          switchMap(() => EMPTY),
+          switchMap(() => of(ConversationsActions.saveConversationSuccess())),
           catchError((err) => {
             console.error(err);
             return concat(

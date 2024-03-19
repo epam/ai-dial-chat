@@ -55,6 +55,7 @@ const initialState: ConversationsState = {
   loadedCharts: [],
   chartLoading: false,
   isActiveNewConversationRequest: false,
+  isMessageSending: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -115,6 +116,23 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ new: Conversation; old: Conversation }>,
     ) => state,
+    saveConversationSuccess: (state) => {
+      if (state.isMessageSending) {
+        state.isMessageSending = false;
+      }
+    },
+    saveConversationFail: (state, { payload }: PayloadAction<Conversation>) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            isMessageStreaming: false,
+          };
+        }
+
+        return conv;
+      });
+    },
     recreateConversationFail: (
       state,
       {
@@ -126,10 +144,12 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.newId) {
+          const conversation = conv as Conversation;
           return {
-            ...conv,
+            ...conversation,
             ...payload.oldConversation,
-            lastActivityDate: Date.now(),
+            messages: conversation.messages,
+            isMessageStreaming: false,
           };
         }
 
@@ -791,6 +811,9 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
+    setIsMessageSending: (state, { payload }: PayloadAction<boolean>) => {
+      state.isMessageSending = payload;
+    },
     getChartAttachment: (
       state,
       _action: PayloadAction<{

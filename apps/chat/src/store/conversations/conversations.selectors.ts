@@ -665,3 +665,8 @@ export const selectIsChatsBackedUp = createSelector(
   [rootSelector],
   (state) => state.isChatsBackedUp,
 );
+
+export const selectIsMessageSending = createSelector(
+  [rootSelector],
+  (state) => state.isMessageSending,
+);

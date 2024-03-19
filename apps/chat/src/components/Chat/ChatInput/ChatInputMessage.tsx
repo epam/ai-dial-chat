@@ -2,6 +2,7 @@ import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -21,7 +22,10 @@ import { Message, Role } from '@/src/types/chat';
 import { DialFile, DialLink } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -99,6 +103,9 @@ export const ChatInputMessage = ({
   );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const isMessageSending = useAppSelector(
+    ConversationsSelectors.selectIsMessageSending,
+  );
 
   const isError = isLastAssistantMessageEmpty || isMessageError;
 
@@ -147,6 +154,14 @@ export const ChatInputMessage = ({
     isConversationNameInvalid ||
     isConversationPathInvalid;
 
+  useEffect(() => {
+    if (!isMessageSending) {
+      setSelectedDialLinks([]);
+      dispatch(FilesActions.resetSelectedFiles());
+      setContent('');
+    }
+  }, [dispatch, isMessageSending, setContent]);
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
@@ -179,14 +194,13 @@ export const ChatInputMessage = ({
       return;
     }
 
+    dispatch(ConversationsActions.setIsMessageSending(true));
+
     onSend({
       role: Role.User,
       content,
       custom_content: getUserCustomContent(selectedFiles, selectedDialLinks),
     });
-    setSelectedDialLinks([]);
-    dispatch(FilesActions.resetSelectedFiles());
-    setContent('');
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
@@ -194,12 +208,11 @@ export const ChatInputMessage = ({
   }, [
     messageIsStreaming,
     isSendDisabled,
+    dispatch,
     onSend,
     content,
     selectedFiles,
     selectedDialLinks,
-    dispatch,
-    setContent,
     textareaRef,
     onStopConversation,
   ]);
