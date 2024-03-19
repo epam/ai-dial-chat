@@ -103,8 +103,8 @@ export const ChatInputMessage = ({
   );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const messageSending = useAppSelector(
-    ConversationsSelectors.selectMessageSending,
+  const isMessageSending = useAppSelector(
+    ConversationsSelectors.selectIsMessageSending,
   );
 
   const isError = isLastAssistantMessageEmpty || isMessageError;
@@ -155,12 +155,12 @@ export const ChatInputMessage = ({
     isConversationPathInvalid;
 
   useEffect(() => {
-    if (!messageSending) {
+    if (!isMessageSending) {
       setSelectedDialLinks([]);
       dispatch(FilesActions.resetSelectedFiles());
       setContent('');
     }
-  }, [dispatch, messageSending, setContent]);
+  }, [dispatch, isMessageSending, setContent]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -194,7 +194,7 @@ export const ChatInputMessage = ({
       return;
     }
 
-    dispatch(ConversationsActions.setMessageSending(true));
+    dispatch(ConversationsActions.setIsMessageSending(true));
 
     onSend({
       role: Role.User,

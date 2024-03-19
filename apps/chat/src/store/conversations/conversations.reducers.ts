@@ -55,7 +55,7 @@ const initialState: ConversationsState = {
   loadedCharts: [],
   chartLoading: false,
   isActiveNewConversationRequest: false,
-  messageSending: false,
+  isMessageSending: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -117,8 +117,8 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{ new: Conversation; old: Conversation }>,
     ) => state,
     saveConversationSuccess: (state) => {
-      if (state.messageSending) {
-        state.messageSending = false;
+      if (state.isMessageSending) {
+        state.isMessageSending = false;
       }
     },
     saveConversationFail: (state, { payload }: PayloadAction<Conversation>) => {
@@ -811,8 +811,8 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
-    setMessageSending: (state, { payload }: PayloadAction<boolean>) => {
-      state.messageSending = payload;
+    setIsMessageSending: (state, { payload }: PayloadAction<boolean>) => {
+      state.isMessageSending = payload;
     },
     getChartAttachment: (
       state,
