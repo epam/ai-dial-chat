@@ -92,7 +92,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     messagesToSend = messagesToSend.map((message) => ({
-      ...getMessageCustomContent(message),
+      ...(model.type !== EntityType.Model && getMessageCustomContent(message)),
       role: message.role,
       content: message.content,
     }));
