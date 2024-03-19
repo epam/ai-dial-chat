@@ -13,6 +13,8 @@ import {
   modelCursorSignWithBackquote,
 } from '../../constants/chat';
 
+import { Table } from '@/src/components/Markdown/Table';
+
 import BlinkingCursor from '../Chat/BlinkingCursor';
 import { CodeBlock } from './CodeBlock';
 import { MemoizedReactMarkdown } from './MemoizedReactMarkdown';
@@ -61,15 +63,7 @@ export const getMDComponents = (
         </code>
       );
     },
-    table({ children }) {
-      return (
-        <div className="max-w-full overflow-auto">
-          <table className="border-collapse border border-tertiary px-3 py-1 text-sm">
-            {children}
-          </table>
-        </div>
-      );
-    },
+    table: Table,
     th({ children }) {
       return (
         <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">

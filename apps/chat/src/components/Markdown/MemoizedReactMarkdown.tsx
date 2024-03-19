@@ -7,3 +7,4 @@ export const MemoizedReactMarkdown: FC<Options> = memo(
     prevProps.children === nextProps.children &&
     prevProps.className === nextProps.className,
 );
+MemoizedReactMarkdown.displayName = 'MemoizedReactMarkdown';
