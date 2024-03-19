@@ -233,16 +233,18 @@ export const ChatView = memo(() => {
   }, []);
 
   useEffect(() => {
-    const lastMergedMessages = mergedMessages[mergedMessages.length - 1];
+    const lastMergedMessages = mergedMessages.length
+      ? mergedMessages[mergedMessages.length - 1]
+      : [];
 
-    if (lastMergedMessages) {
+    if (!messageIsStreaming) {
       const isErrorInSomeLastMessage = lastMergedMessages.some(
         (mergedStr: [Conversation, Message, number]) =>
           !!mergedStr[1].errorMessage,
       );
       setIsLastMessageError(isErrorInSomeLastMessage);
     }
-  }, [mergedMessages]);
+  }, [mergedMessages, messageIsStreaming]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
