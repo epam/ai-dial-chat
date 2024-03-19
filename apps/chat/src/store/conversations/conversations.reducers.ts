@@ -140,9 +140,11 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.newId) {
+          const conversation = conv as Conversation;
           return {
-            ...conv,
+            ...conversation,
             ...payload.oldConversation,
+            messages: conversation.messages,
             isMessageStreaming: false,
           };
         }
