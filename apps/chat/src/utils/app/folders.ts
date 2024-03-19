@@ -192,7 +192,7 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
-  removeNotAllowedSymbols = false,
+  deleteNotAllowedSymbols = false,
 ) => {
   const path: string[] = [];
   const createPath = (folderId: string) => {
@@ -200,7 +200,7 @@ export const getPathToFolderById = (
     if (!folder) return;
 
     path.unshift(
-      removeNotAllowedSymbols
+      deleteNotAllowedSymbols
         ? folder.name.replace(notAllowedSymbolsRegex, '') || DEFAULT_FOLDER_NAME
         : folder.name,
     );

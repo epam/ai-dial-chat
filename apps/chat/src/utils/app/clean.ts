@@ -132,7 +132,7 @@ export const cleanConversationHistory = (
         return acc;
       } catch (error) {
         console.warn(
-          `error while cleaning conversations' history. Removing culprit`,
+          `error while cleaning conversations' history. Deleting culprit`,
           error,
         );
       }

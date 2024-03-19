@@ -12,13 +12,13 @@ import { FileManagerModal } from '../Files/FileManagerModal';
 interface CustomLogoSelectProps {
   localLogo?: string;
   onLogoSelect: (filesIds: string[]) => void;
-  onRemoveLocalLogoHandler: () => void;
+  onDeleteLocalLogoHandler: () => void;
 }
 
 export const CustomLogoSelect = ({
   localLogo,
   onLogoSelect,
-  onRemoveLocalLogoHandler,
+  onDeleteLocalLogoHandler,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -47,7 +47,7 @@ export const CustomLogoSelect = ({
           </button>
           {localLogo && (
             <button
-              onClick={onRemoveLocalLogoHandler}
+              onClick={onDeleteLocalLogoHandler}
               className="text-accent-primary"
             >
               <IconTrash className="text-secondary" size={18} />

@@ -1,7 +1,7 @@
 import { FileUtil } from '@/src/utils';
 
 async function globalTeardown() {
-  FileUtil.removeExportFolder();
+  FileUtil.deleteExportFolder();
 }
 
 export default globalTeardown;

@@ -315,7 +315,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Remove 1st conversation from compare mode using Close btn in the header',
+      'Delete 1st conversation from compare mode using Close btn in the header',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -324,10 +324,10 @@ dialTest(
         );
         let activeChat;
         if (randomSide === Side.right) {
-          await rightChatHeader.removeConversationFromComparison.click();
+          await rightChatHeader.deleteConversationFromComparison.click();
           activeChat = firstConversation.name;
         } else {
-          await leftChatHeader.removeConversationFromComparison.click();
+          await leftChatHeader.deleteConversationFromComparison.click();
           activeChat = secondConversation.name;
         }
 
@@ -1288,11 +1288,11 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
-        const isRemoveConversationIconVisible =
-          await leftChatHeader.removeConversationFromComparison.isVisible();
+        const isDeleteConversationIconVisible =
+          await leftChatHeader.deleteConversationFromComparison.isVisible();
         expect
           .soft(
-            isRemoveConversationIconVisible,
+            isDeleteConversationIconVisible,
             ExpectedMessages.closeChatIconIsNotVisible,
           )
           .toBeFalsy();

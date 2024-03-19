@@ -207,7 +207,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string, removeShareIcon?: boolean) => {
+    (name: string, deleteShareIcon?: boolean) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -215,7 +215,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
-              isShared: removeShareIcon ? false : conversation.isShared,
+              isShared: deleteShareIcon ? false : conversation.isShared,
             },
           }),
         );
@@ -718,9 +718,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       <ConfirmDialog
         isOpen={isDeleting}
         heading={t('Confirm deleting conversation')}
-        description={`${t('Are you sure that you want to remove a conversation?')}${t(
+        description={`${t('Are you sure that you want to delete a conversation?')}${t(
           conversation.isShared
-            ? '\nRemoving will stop sharing and other users will no longer see this conversation.'
+            ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
             : '',
         )}`}
         confirmLabel={t('Delete')}
