@@ -90,20 +90,21 @@ export const Table = ({ children }: Props) => {
           return ':-:';
         };
 
-        const markdown = Array.from(table.rows).map((row) => {
-          const rowArray = Array.from(row.cells).reduce(
-            (acc: string[], cell) => {
-              const cellText = cell.textContent ? cell.textContent.trim() : '';
-              row.rowIndex === 1
-                ? acc.push(getAlignment(cell.style.textAlign || 'center'))
-                : acc.push(cellText);
-
-              return acc;
-            },
-            [],
+        const markdown = Array.from(table.rows).reduce((acc: string[], row) => {
+          const rowArray = Array.from(row.cells).map((cell) =>
+            cell.textContent ? cell.textContent.trim() : '',
           );
-          return '| ' + rowArray.join(' | ') + ' |';
-        });
+          acc.push('| ' + rowArray.join(' | ') + ' |');
+
+          if (row.rowIndex === 0) {
+            const alignmentArray = Array.from(row.cells).map((cell) => {
+              return getAlignment(cell.style.textAlign || 'left');
+            });
+            acc.push('| ' + alignmentArray.join(' | ') + ' |');
+          }
+
+          return acc;
+        }, []);
 
         return markdown.join('\n');
       })(),
