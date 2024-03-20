@@ -4,6 +4,8 @@ import { Conversations } from './conversations';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
+import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
+import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Page } from '@playwright/test';
 
@@ -13,7 +15,9 @@ export class ChatBar extends SideBar {
   }
 
   private conversations!: Conversations;
+  private sharedWithMeConversations!: SharedWithMeConversations;
   private folderConversations!: FolderConversations;
+  private sharedFolderConversations!: SharedFolderConversations;
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
   );
@@ -31,11 +35,25 @@ export class ChatBar extends SideBar {
     return this.conversations;
   }
 
+  getSharedWithMeConversations(): SharedWithMeConversations {
+    if (!this.sharedWithMeConversations) {
+      this.sharedWithMeConversations = new SharedWithMeConversations(this.page);
+    }
+    return this.sharedWithMeConversations;
+  }
+
   getFolderConversations(): FolderConversations {
     if (!this.folderConversations) {
       this.folderConversations = new FolderConversations(this.page);
     }
     return this.folderConversations;
+  }
+
+  getSharedFolderConversations(): SharedFolderConversations {
+    if (!this.sharedFolderConversations) {
+      this.sharedFolderConversations = new SharedFolderConversations(this.page);
+    }
+    return this.sharedFolderConversations;
   }
 
   public async createNewConversation() {

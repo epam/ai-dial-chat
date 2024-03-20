@@ -53,9 +53,14 @@ export default defineConfig({
       testMatch: /desktopAuth\.ts/,
     },
     {
+      name: 'cleanup',
+      testMatch: /cleanup\.ts/,
+      dependencies: ['auth'],
+    },
+    {
       name: 'api listing',
       testMatch: /listing\.test\.ts/,
-      dependencies: ['auth'],
+      dependencies: ['cleanup'],
       fullyParallel: true,
     },
     {

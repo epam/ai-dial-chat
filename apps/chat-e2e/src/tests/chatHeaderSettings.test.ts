@@ -54,10 +54,12 @@ dialTest(
     await dialTest.step(
       'Verify conversation settings are the same as for initial model',
       async () => {
-        const systemPrompt = await entitySettings.getSystemPrompt();
-        expect
-          .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
-          .toBe(conversation.prompt);
+        if (randomModel.features?.systemPrompt) {
+          const systemPrompt = await entitySettings.getSystemPrompt();
+          expect
+            .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
+            .toBe(conversation.prompt);
+        }
         const temperature = await temperatureSlider.getTemperature();
         expect
           .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)

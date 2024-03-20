@@ -90,6 +90,12 @@ export class Folders extends BaseElement {
     await this.getDropdownMenu().waitForState();
   }
 
+  public async isFolderDropdownMenuAvailable(name: string, index?: number) {
+    const folderToEdit = this.getFolderByName(name, index);
+    await folderToEdit.hover();
+    return this.folderDotsMenu(name, index).isVisible();
+  }
+
   public async editFolderNameWithEnter(name: string, newName: string) {
     await this.editFolderName(name, newName);
     await this.page.keyboard.press(keys.enter);
