@@ -203,16 +203,12 @@ dialTest(
     compareConversationSelector,
     compare,
     localStorageManager,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1133', 'EPMRTC-541');
-    setIssueIds('1038');
     let modelConversation: Conversation;
     let replayConversation: Conversation;
-    let playbackonversation: Conversation;
-    let firstEmptyConversation: Conversation;
-    let secondEmptyConversation: Conversation;
-    const conversationName = GeneratorUtil.randomString(7);
+    let playbackConversation: Conversation;
+    const conversationName = 'test';
 
     await dialTest.step(
       'Prepare new conversation and replay, playback conversations based on it',
@@ -224,7 +220,7 @@ dialTest(
         replayConversation =
           conversationData.prepareDefaultReplayConversation(modelConversation);
         conversationData.resetData();
-        playbackonversation =
+        playbackConversation =
           conversationData.prepareDefaultPlaybackConversation(
             modelConversation,
           );
@@ -232,7 +228,7 @@ dialTest(
         await dataInjector.createConversations([
           modelConversation,
           replayConversation,
-          playbackonversation,
+          playbackConversation,
         ]);
         await localStorageManager.setSelectedConversation(modelConversation);
       },
@@ -247,6 +243,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
           modelConversation.name,
+          3,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
@@ -735,14 +732,8 @@ dialTest(
     const modelsForUpdate = models.filter((m) => m !== initRandomModel);
     const firstUpdatedRandomModel =
       GeneratorUtil.randomArrayElement(modelsForUpdate);
-    const isFirstSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
-      firstUpdatedRandomModel.id,
-    );
     const secondUpdatedRandomModel = GeneratorUtil.randomArrayElement(
       modelsForUpdate.filter((m) => m !== firstUpdatedRandomModel),
-    );
-    const isSecondSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
-      firstUpdatedRandomModel.id,
     );
     const firstUpdatedPrompt = 'first prompt';
     const secondUpdatedPrompt = 'second prompt';
@@ -788,7 +779,7 @@ dialTest(
           .getTalkToSelector()
           .selectModel(firstUpdatedRandomModel.name);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
-        if (isFirstSysPromptAllowed) {
+        if (firstUpdatedRandomModel.features?.systemPrompt) {
           await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
         }
         await leftEntitySettings
@@ -800,7 +791,7 @@ dialTest(
           .selectModel(secondUpdatedRandomModel.name);
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
-        if (isSecondSysPromptAllowed) {
+        if (secondUpdatedRandomModel.features?.systemPrompt) {
           await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
         }
         await rightEntitySettings
@@ -860,7 +851,7 @@ dialTest(
           .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
           .toBe(expectedSecondUpdatedRandomModelIcon);
 
-        if (isSecondSysPromptAllowed) {
+        if (secondUpdatedRandomModel.features?.systemPrompt) {
           const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
           expect
             .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
@@ -884,7 +875,7 @@ dialTest(
           .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
           .toBe(expectedFirstUpdatedRandomModelIcon);
 
-        if (isFirstSysPromptAllowed) {
+        if (firstUpdatedRandomModel.features?.systemPrompt) {
           const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
           expect
             .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)

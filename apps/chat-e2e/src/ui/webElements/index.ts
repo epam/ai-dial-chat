@@ -43,3 +43,7 @@ export * from './modelsDialog';
 export * from './recentEntities';
 export * from './talkToGroup';
 export * from './errorToast';
+export * from './baseConversation';
+export * from './chatNotFound';
+export * from './sharedFolderConversations';
+export * from './sharedWithMeConversations';
