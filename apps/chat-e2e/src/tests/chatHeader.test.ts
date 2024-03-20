@@ -128,7 +128,7 @@ dialTest(
           .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
           .toBe(expectedModelIcon);
 
-        const promptInfo = await chatInfoTooltip.getPromptInfo();
+        const promptInfo = await chatInfoTooltip.getPromptInfo(false);
         expect
           .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
           .toBe('');

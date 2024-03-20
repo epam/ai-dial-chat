@@ -75,6 +75,8 @@ export const ExpectedConstants = {
     'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
   shareFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  chatNotFoundMessage:
+    'Conversation not found.Please select another conversation.',
 };
 
 export enum Groups {
@@ -138,6 +140,7 @@ export const API = {
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
   shareWithMeListing: '/api/share/listing',
+  discardShareWithMeItem: '/api/share/discard',
 };
 
 export const Import = {
@@ -197,6 +200,7 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
+  ANTHROPIC_CLAUDE_V3 = 'anthropic.claude-v3',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
