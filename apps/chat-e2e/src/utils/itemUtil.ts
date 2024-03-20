@@ -5,16 +5,21 @@ import { BucketUtil } from '@/src/utils/bucketUtil';
 export class ItemUtil {
   static conversationIdSeparator = '__';
 
-  public static getConversationBucketPath() {
-    return `conversations/${BucketUtil.getBucket()}`;
+  public static getConversationBucketPath(bucket?: string) {
+    return bucket
+      ? `conversations/${bucket}`
+      : `conversations/${BucketUtil.getBucket()}`;
   }
 
   public static getPromptBucketPath() {
     return `prompts/${BucketUtil.getBucket()}`;
   }
 
-  public static getApiConversationId(conversation: Conversation) {
-    const bucketPath = ItemUtil.getConversationBucketPath();
+  public static getApiConversationId(
+    conversation: Conversation,
+    bucket?: string,
+  ) {
+    const bucketPath = ItemUtil.getConversationBucketPath(bucket);
     return `${bucketPath}/${conversation.id}`;
   }
 
@@ -30,8 +35,11 @@ export class ItemUtil {
       : `${promptBucket}/${prompt.folderId}`;
   }
 
-  public static getApiConversationFolderId(conversation: Conversation) {
-    const conversationBucket = ItemUtil.getConversationBucketPath();
+  public static getApiConversationFolderId(
+    conversation: Conversation,
+    bucket?: string,
+  ) {
+    const conversationBucket = ItemUtil.getConversationBucketPath(bucket);
     return conversation.folderId?.length === 0
       ? conversationBucket
       : `${conversationBucket}/${conversation.folderId}`;

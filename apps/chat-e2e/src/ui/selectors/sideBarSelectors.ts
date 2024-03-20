@@ -38,6 +38,10 @@ export const ChatBarSelectors = {
   actionButton: '[data-qa="action-button"]',
   exportConversations: '[data-qa="export-conversations"]',
   exportPrompts: '[data-qa="export-prompts"]',
+  pinnedChats: () =>
+    `${ChatBarSelectors.chatFolders} > [data-qa="pinned-chats-container"]`,
+  sharedWithMeChats: () =>
+    `${ChatBarSelectors.chatFolders} > [data-qa="shared-with-me-container"]`,
 };
 
 export const PromptBarSelectors = {
