@@ -198,7 +198,7 @@ export const getPathToFolderById = (
     const folder = folders.find((folder) => folder.id === folderId);
     if (!folder) return;
 
-    path.unshift(prepareEntityName(folder.name));
+    path.unshift(prepareEntityName(folder.name) || DEFAULT_FOLDER_NAME);
 
     if (folder.folderId) {
       createPath(folder.folderId);
