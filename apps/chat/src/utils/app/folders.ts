@@ -108,13 +108,11 @@ export const getNextDefaultName = (
   includingPublishedWithMe = false,
   parentFolderId?: string,
 ): string => {
-  const prefix = prepareEntityName(`${defaultName} `);
+  const prefix = `${defaultName} `;
   const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
-    return !startWithEmptyPostfix
-      ? `${prefix}${1 + index}`
-      : prepareEntityName(defaultName);
+    return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
   }
 
   const maxNumber =
