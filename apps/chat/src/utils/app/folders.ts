@@ -192,13 +192,18 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
+  prepareNames = false,
 ) => {
   const path: string[] = [];
   const createPath = (folderId: string) => {
     const folder = folders.find((folder) => folder.id === folderId);
     if (!folder) return;
 
-    path.unshift(prepareEntityName(folder.name) || DEFAULT_FOLDER_NAME);
+    path.unshift(
+      prepareNames
+        ? prepareEntityName(folder.name) || DEFAULT_FOLDER_NAME
+        : folder.name,
+    );
 
     if (folder.folderId) {
       createPath(folder.folderId);
