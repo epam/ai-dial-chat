@@ -1,7 +1,9 @@
 import { Conversation } from '@/chat/types/chat';
+import { BackendDataEntity } from '@/chat/types/common';
 import { FolderInterface } from '@/chat/types/folder';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
@@ -270,7 +272,8 @@ dialTest(
 dialTest(
   'Shared icon stays in chat if to continue the conversation.\n' +
     'Shared icon disappears from chat if to rename conversation.\n' +
-    'Shared icon disappears from chat if to change model',
+    'Shared icon disappears from chat if to change model.\n' +
+    'Shared chat disappears from Shared with me if the original was changed the model',
   async ({
     dialHomePage,
     conversations,
@@ -280,7 +283,7 @@ dialTest(
     additionalUserShareApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1514', 'EPMRTC-2750', 'EPMRTC-2751');
+    setTestIds('EPMRTC-1514', 'EPMRTC-2750', 'EPMRTC-2751', 'EPMRTC-2774');
     let firstConversationToShare: Conversation;
     let secondConversationToShare: Conversation;
     let thirdConversationToShare: Conversation;
@@ -371,6 +374,36 @@ dialTest(
               ExpectedMessages.sharedConversationIconIsNotVisible,
             )
             .toBeFalsy();
+        }
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify only conversation with updated settings is shared with user',
+      async () => {
+        const sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
+        expect
+          .soft(
+            sharedEntities.resources.find(
+              (e) => e.url === firstConversationToShare.id,
+            ),
+            ExpectedMessages.conversationIsShared,
+          )
+          .toBeDefined();
+
+        for (const sharedConversation of [
+          secondConversationToShare,
+          thirdConversationToShare,
+        ]) {
+          expect
+            .soft(
+              sharedEntities.resources.find(
+                (e) => e.url === sharedConversation.id,
+              ),
+              ExpectedMessages.conversationIsNotShared,
+            )
+            .toBeUndefined();
         }
       },
     );
