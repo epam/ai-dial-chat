@@ -18,7 +18,6 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
 
   useEffect(() => {
     if (hiddenTextareaRef.current && mainTextareaRef.current) {
-      hiddenTextareaRef.current.style.width = `${mainTextareaRef.current.clientWidth}px`; // adapt width (parent paddings don't work for absolute element)
       const scrollHeight = hiddenTextareaRef.current.scrollHeight;
       mainTextareaRef.current.style.height = `${scrollHeight}px`; // set height as scrollHeight of hidden element
       mainTextareaRef.current.style.overflowY = `${
@@ -26,6 +25,25 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
       }`;
     }
   }, [maxHeight, value]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (hiddenTextareaRef.current && mainTextareaRef.current) {
+        // we should change hidden textarea width along with main textarea width
+        hiddenTextareaRef.current.style.width = `${mainTextareaRef.current.clientWidth}px`;
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (mainTextareaRef.current) {
+      resizeObserver.observe(mainTextareaRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   return (
     <>
@@ -41,10 +59,10 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
         value={value}
       />
       <textarea
+        {...restProps}
         data-qa="chat-textarea"
         className={className}
         value={value}
-        {...restProps}
         ref={mainTextareaRef}
         name="main"
         style={{ maxHeight: `${maxHeight}px` }}
