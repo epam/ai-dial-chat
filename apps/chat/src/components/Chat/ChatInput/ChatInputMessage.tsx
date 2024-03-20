@@ -430,7 +430,7 @@ export const ChatInputMessage = ({
 
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-20 right-0 md:right-[50%] md:translate-x-1/2"
+            className="-top-16 right-0 md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}
