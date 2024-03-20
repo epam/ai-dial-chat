@@ -96,9 +96,7 @@ dialSharedWithMeTest(
         await dataInjector.updateConversations([conversation]);
 
         await additionalShareUserDialHomePage.reloadPage();
-        await additionalShareUserChatMessages.waitForState({
-          state: 'attached',
-        });
+        await additionalShareUserChatMessages.getChatMessage(1).waitFor();
         const shareWithMeChatMessagesCount =
           await additionalShareUserChatMessages.chatMessages.getElementsCount();
         expect
