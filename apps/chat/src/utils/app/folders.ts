@@ -19,7 +19,7 @@ import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import { doesHaveDotsInTheEnd } from './common';
+import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isRootId } from './id';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -192,7 +192,7 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
-  removeNotAllowedSymbols = false,
+  prepareNames = false,
 ) => {
   const path: string[] = [];
   const createPath = (folderId: string) => {
@@ -200,8 +200,8 @@ export const getPathToFolderById = (
     if (!folder) return;
 
     path.unshift(
-      removeNotAllowedSymbols
-        ? folder.name.replace(notAllowedSymbolsRegex, '') || DEFAULT_FOLDER_NAME
+      prepareNames
+        ? prepareEntityName(folder.name) || DEFAULT_FOLDER_NAME
         : folder.name,
     );
 
