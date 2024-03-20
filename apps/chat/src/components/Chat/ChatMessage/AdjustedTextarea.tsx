@@ -59,10 +59,10 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
         value={value}
       />
       <textarea
-        {...restProps}
         data-qa="chat-textarea"
         className={className}
         value={value}
+        {...restProps}
         ref={mainTextareaRef}
         name="main"
         style={{ maxHeight: `${maxHeight}px` }}
