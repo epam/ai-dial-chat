@@ -94,11 +94,7 @@ export const getPreparedConversations = ({
   addRoot?: boolean;
 }) =>
   conversations.map((conv) => {
-    const { path } = getPathToFolderById(
-      conversationsFolders,
-      conv.folderId,
-      true,
-    );
+    const { path } = getPathToFolderById(conversationsFolders, conv.folderId);
 
     const newName = prepareEntityName(conv.name);
 
@@ -122,11 +118,7 @@ export const getImportPreparedConversations = ({
   conversationsFolders: FolderInterface[];
 }) =>
   conversations.map((conv) => {
-    const { path } = getPathToFolderById(
-      conversationsFolders,
-      conv.folderId,
-      true,
-    );
+    const { path } = getPathToFolderById(conversationsFolders, conv.folderId);
 
     const newName = prepareEntityName(conv.name);
     const rootId = isRootConversationsId(path) ? path : getConversationRootId();

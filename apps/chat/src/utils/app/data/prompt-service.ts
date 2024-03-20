@@ -63,7 +63,7 @@ export const getPreparedPrompts = ({
   addRoot?: boolean;
 }) =>
   prompts.map((prompt) => {
-    const { path } = getPathToFolderById(folders, prompt.folderId, true);
+    const { path } = getPathToFolderById(folders, prompt.folderId);
     const newName = prepareEntityName(prompt.name);
 
     return {
@@ -84,7 +84,7 @@ export const getImportPreparedPrompts = ({
   folders: FolderInterface[];
 }) =>
   prompts.map((prompt) => {
-    const { path } = getPathToFolderById(folders, prompt.folderId, true);
+    const { path } = getPathToFolderById(folders, prompt.folderId);
     const newName = prepareEntityName(prompt.name);
 
     const folderId = isRootPromptId(path)

@@ -19,7 +19,7 @@ import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import { doesHaveDotsInTheEnd } from './common';
+import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isRootId } from './id';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -108,11 +108,13 @@ export const getNextDefaultName = (
   includingPublishedWithMe = false,
   parentFolderId?: string,
 ): string => {
-  const prefix = `${defaultName} `;
+  const prefix = prepareEntityName(`${defaultName} `);
   const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
 
   if (!entities.length) {
-    return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
+    return !startWithEmptyPostfix
+      ? `${prefix}${1 + index}`
+      : prepareEntityName(defaultName);
   }
 
   const maxNumber =
@@ -192,18 +194,13 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
-  removeNotAllowedSymbols = false,
 ) => {
   const path: string[] = [];
   const createPath = (folderId: string) => {
     const folder = folders.find((folder) => folder.id === folderId);
     if (!folder) return;
 
-    path.unshift(
-      removeNotAllowedSymbols
-        ? folder.name.replace(notAllowedSymbolsRegex, '') || DEFAULT_FOLDER_NAME
-        : folder.name,
-    );
+    path.unshift(prepareEntityName(folder.name));
 
     if (folder.folderId) {
       createPath(folder.folderId);
