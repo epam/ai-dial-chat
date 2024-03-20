@@ -169,14 +169,14 @@ export default function Home({ initialState }: HomeProps) {
     ]);
   };
 
-  // if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
-  //   if (
-  //     conversationsToMigrateCount + promptsToMigrateCount ===
-  //     migratedPromptsCount + migratedConversationsCount
-  //   ) {
-  //     return window.location.reload();
-  //   }
-  // }
+  if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
+    if (
+      conversationsToMigrateCount + promptsToMigrateCount ===
+      migratedPromptsCount + migratedConversationsCount
+    ) {
+      return window.location.reload();
+    }
+  }
 
   return (
     <>
