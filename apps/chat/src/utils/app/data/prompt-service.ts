@@ -64,9 +64,13 @@ export const getPreparedPrompts = ({
 }) =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, {
-      forRenaming: false,
+      forRenaming: true,
+      replaceWithSpacesForRenaming: true,
     });
-    const newName = prepareEntityName(prompt.name);
+    const newName = prepareEntityName(prompt.name, {
+      forRenaming: true,
+      replaceWithSpacesForRenaming: true,
+    });
 
     return {
       ...prompt,
