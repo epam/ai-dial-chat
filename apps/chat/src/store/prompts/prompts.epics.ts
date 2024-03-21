@@ -936,7 +936,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
               }),
             ),
             of(
-              PromptsActions.setFolders({
+              PromptsActions.addFolders({
                 folders: uniq(
                   prompts.flatMap((p) =>
                     getParentFolderIdsFromFolderId(p.folderId),
