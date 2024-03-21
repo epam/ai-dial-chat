@@ -2,7 +2,6 @@ import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -103,9 +102,6 @@ export const ChatInputMessage = ({
   );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const isMessageSending = useAppSelector(
-    ConversationsSelectors.selectIsMessageSending,
-  );
 
   const isError = isLastAssistantMessageEmpty || isMessageError;
 
@@ -154,14 +150,6 @@ export const ChatInputMessage = ({
     isConversationNameInvalid ||
     isConversationPathInvalid;
 
-  useEffect(() => {
-    if (!isMessageSending) {
-      setSelectedDialLinks([]);
-      dispatch(FilesActions.resetSelectedFiles());
-      setContent('');
-    }
-  }, [dispatch, isMessageSending, setContent]);
-
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const value = e.target.value;
@@ -201,6 +189,9 @@ export const ChatInputMessage = ({
       content,
       custom_content: getUserCustomContent(selectedFiles, selectedDialLinks),
     });
+    setSelectedDialLinks([]);
+    dispatch(FilesActions.resetSelectedFiles());
+    setContent('');
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
@@ -213,6 +204,7 @@ export const ChatInputMessage = ({
     content,
     selectedFiles,
     selectedDialLinks,
+    setContent,
     textareaRef,
     onStopConversation,
   ]);
@@ -430,7 +422,7 @@ export const ChatInputMessage = ({
 
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-16 right-0 md:-right-14 md:top-[50%] md:-translate-y-1/2"
+            className="-top-16 right-0 md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}
