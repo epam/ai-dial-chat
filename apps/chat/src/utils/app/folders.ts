@@ -5,7 +5,7 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import {
   Entity,
   PartialBy,
@@ -192,11 +192,7 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
-  options?: Partial<{
-    prepareNames: boolean;
-    forRenaming: boolean;
-    replaceWithSpacesForRenaming: boolean;
-  }>,
+  options?: Partial<PrepareNameOptions & { prepareNames: boolean }>,
 ) => {
   const path: string[] = [];
   const createPath = (folderId: string) => {

@@ -1,6 +1,7 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds } from '@/src/utils/app/folders';
 
+import { PrepareNameOptions } from '@/src/types/chat';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
@@ -99,10 +100,7 @@ export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
 export const prepareEntityName = (
   name: string,
-  options?: Partial<{
-    forRenaming: boolean;
-    replaceWithSpacesForRenaming: boolean;
-  }>,
+  options?: Partial<PrepareNameOptions>,
 ) => {
   const clearName = options?.forRenaming
     ? name
