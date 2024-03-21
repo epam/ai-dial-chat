@@ -890,7 +890,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         );
         const sortedConversations = [
           ...conversationsWithoutDate,
-          ...orderBy(conversationsWithDate, (c) => c.lastActivityDate, ['asc']),
+          ...orderBy(conversationsWithDate, (c) => c.lastActivityDate),
         ];
 
         const preparedConversations = getPreparedConversations({

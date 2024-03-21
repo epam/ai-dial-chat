@@ -122,5 +122,5 @@ export const prepareEntityName = (
       ? substring(clearName, 0, MAX_ENTITY_LENGTH)
       : clearName;
 
-  return !(options?.forRenaming ?? false) ? trimEndDots(result) : result.trim();
+  return !options?.forRenaming ? trimEndDots(result) : result.trim();
 };
