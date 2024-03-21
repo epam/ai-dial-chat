@@ -1,68 +1,119 @@
 import { PlotParams } from 'react-plotly.js';
 
-
-
-import { EMPTY, Observable, Subject, TimeoutError, catchError, concat, concatMap, delay, filter, forkJoin, from, ignoreElements, iif, map, merge, mergeMap, of, startWith, switchMap, take, takeWhile, tap, throwError, timeout, zip } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  TimeoutError,
+  catchError,
+  concat,
+  concatMap,
+  delay,
+  filter,
+  forkJoin,
+  from,
+  ignoreElements,
+  iif,
+  map,
+  merge,
+  mergeMap,
+  of,
+  startWith,
+  switchMap,
+  take,
+  takeWhile,
+  tap,
+  throwError,
+  timeout,
+  zip,
+} from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-
-
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-
-
 import { combineEpics } from 'redux-observable';
 
-
-
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { combineEntities, filterMigratedEntities, filterOnlyMyEntities, updateEntitiesFoldersAndIds } from '@/src/utils/app/common';
-import { getConversationInfoFromId, getGeneratedConversationId, getNewConversationName, isChosenConversationValidForCompare, isSettingsChanged, regenerateConversationId, sortByDateAndName } from '@/src/utils/app/conversation';
+import {
+  combineEntities,
+  filterMigratedEntities,
+  filterOnlyMyEntities,
+  updateEntitiesFoldersAndIds,
+} from '@/src/utils/app/common';
+import {
+  getConversationInfoFromId,
+  getGeneratedConversationId,
+  getNewConversationName,
+  isChosenConversationValidForCompare,
+  isSettingsChanged,
+  regenerateConversationId,
+  sortByDateAndName,
+} from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
-import { getOrUploadConversation, getPreparedConversations } from '@/src/utils/app/data/storages/api/conversation-api-storage';
+import {
+  getOrUploadConversation,
+  getPreparedConversations,
+} from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { addGeneratedFolderId, generateNextName, getFolderFromId, getFoldersFromIds, getNextDefaultName, getParentFolderIdsFromEntityId, getParentFolderIdsFromFolderId, updateMovedEntityId, updateMovedFolderId } from '@/src/utils/app/folders';
+import {
+  addGeneratedFolderId,
+  generateNextName,
+  getFolderFromId,
+  getFoldersFromIds,
+  getNextDefaultName,
+  getParentFolderIdsFromEntityId,
+  getParentFolderIdsFromFolderId,
+  updateMovedEntityId,
+  updateMovedFolderId,
+} from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
-import { mergeMessages, parseStreamMessages } from '@/src/utils/app/merge-streams';
+import {
+  mergeMessages,
+  parseStreamMessages,
+} from '@/src/utils/app/merge-streams';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-
-
-import { ChatBody, Conversation, Message, MessageSettings, Playback, RateBody, Role } from '@/src/types/chat';
+import {
+  ChatBody,
+  Conversation,
+  Message,
+  MessageSettings,
+  Playback,
+  RateBody,
+  Role,
+} from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
-
-
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-
-
 import { resetShareEntity } from '@/src/constants/chat';
-import { DEFAULT_CONVERSATION_NAME, DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
-
-
 
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import { ConversationsActions, ConversationsSelectors } from './conversations.reducers';
-
-
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from './conversations.reducers';
 
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
-
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
