@@ -63,7 +63,7 @@ export const promptsSlice = createSlice({
     migratePromptsIfRequired: (state) => state,
     skipFailedMigratedPrompts: (
       state,
-      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+      _action: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
     ) => state,
     initPromptsMigration: (
       state,

@@ -106,7 +106,7 @@ export const conversationsSlice = createSlice({
     },
     skipFailedMigratedConversations: (
       state,
-      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+      _action: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
     ) => state,
     initSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
