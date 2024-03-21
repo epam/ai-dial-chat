@@ -49,7 +49,7 @@ const run = async () => {
     // required, url of host application, needed for security reasons
     hostDomain: window.location.origin,
     // required, url of hosted DIAL application
-    domain: 'https://chat-overlay.staging.deltixhub.io',
+    domain: 'https://your-hosted-overaly-domain.com',
     // optional, theme, 'light' | 'dark'
     theme: 'light',
     // optional, name of model that could be by default
@@ -81,7 +81,7 @@ const run = async () => {
   // set overlay options on the fly
   await overlay.setOverlayOptions({
     hostDomain: window.location.origin,
-    domain: 'https://chat-overlay.staging.deltixhub.io',
+    domain: 'https://your-hosted-overaly-domain.com',
     theme: 'dark',
     modelId: 'statgpt',
     requestTimeout: 11111,
