@@ -882,12 +882,13 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
+        const sortedConversations = orderBy(
+          notMigratedConversations,
+          [(c) => c.lastActivityDate === null, (c) => c.lastActivityDate],
+          ['asc'],
+        );
         const preparedConversations = getPreparedConversations({
-          conversations: orderBy(
-            notMigratedConversations,
-            [(c) => c.lastActivityDate === null, (c) => c.lastActivityDate],
-            ['asc'],
-          ),
+          conversations: sortedConversations,
           conversationsFolders,
           addRoot: true,
         });
@@ -903,11 +904,9 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           from(preparedConversations).pipe(
             concatMap((conversation) =>
               ConversationService.setConversations([conversation]).pipe(
-                // TBD: how we should handle it (backend round timestamps to seconds)
-                delay(1000),
-                switchMap(() => {
+                concatMap(() => {
                   migratedConversationIds.push(
-                    preparedConversations[migratedConversationsCount].id,
+                    sortedConversations[migratedConversationsCount].id,
                   );
 
                   return concat(
@@ -925,7 +924,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
                 }),
                 catchError(() => {
                   failedMigratedConversationIds.push(
-                    preparedConversations[migratedConversationsCount].id,
+                    sortedConversations[migratedConversationsCount].id,
                   );
 
                   return concat(

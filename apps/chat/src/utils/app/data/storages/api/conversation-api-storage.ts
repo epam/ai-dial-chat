@@ -100,7 +100,7 @@ export const getPreparedConversations = ({
       true,
     );
 
-    const newName = prepareEntityName(conv.name);
+    const newName = prepareEntityName(conv.name, true);
 
     return {
       ...conv,
