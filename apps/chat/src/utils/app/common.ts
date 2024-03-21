@@ -97,9 +97,20 @@ export const updateEntitiesFoldersAndIds = (
 
 export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
-export const prepareEntityName = (name: string, forRenaming = false) => {
-  const clearName = forRenaming
-    ? name.replace(notAllowedSymbolsRegex, '').trim()
+export const prepareEntityName = (
+  name: string,
+  options?: Partial<{
+    forRenaming: boolean;
+    replaceWithSpacesForRenaming: boolean;
+  }>,
+) => {
+  const clearName = options?.forRenaming
+    ? name
+        .replace(
+          notAllowedSymbolsRegex,
+          options?.replaceWithSpacesForRenaming ? ' ' : '',
+        )
+        .trim()
     : name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
@@ -111,5 +122,5 @@ export const prepareEntityName = (name: string, forRenaming = false) => {
       ? substring(clearName, 0, MAX_ENTITY_LENGTH)
       : clearName;
 
-  return !forRenaming ? trimEndDots(result) : result.trim();
+  return !(options?.forRenaming ?? false) ? trimEndDots(result) : result.trim();
 };
