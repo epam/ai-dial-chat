@@ -110,7 +110,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     (selectedPrompt: Prompt) => {
       setSubmitted(true);
 
-      const newName = prepareEntityName(name, true);
+      const newName = prepareEntityName(name, { forRenaming: true });
       setName(newName);
 
       if (!newName) return;
