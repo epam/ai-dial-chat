@@ -106,6 +106,7 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -874,14 +875,19 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const sortedConversations = notMigratedConversations.sort((a, b) => {
-          if (!a.lastActivityDate) return 1;
-          if (!b.lastActivityDate) return -1;
+        const conversationsWithoutDate = notMigratedConversations.filter(
+          (c) => !c.lastActivityDate,
+        );
+        const conversationsWithDate = notMigratedConversations.filter(
+          (c) => c.lastActivityDate,
+        );
+        const sortedConversations = [
+          ...conversationsWithoutDate,
+          ...orderBy(conversationsWithDate, (c) => c.lastActivityDate),
+        ];
 
-          return a.lastActivityDate - b.lastActivityDate;
-        });
         const preparedConversations = getPreparedConversations({
-          conversations: notMigratedConversations,
+          conversations: sortedConversations,
           conversationsFolders,
           addRoot: true,
         });
@@ -897,7 +903,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           from(preparedConversations).pipe(
             concatMap((conversation) =>
               ConversationService.setConversations([conversation]).pipe(
-                switchMap(() => {
+                concatMap(() => {
                   migratedConversationIds.push(
                     sortedConversations[migratedConversationsCount].id,
                   );
