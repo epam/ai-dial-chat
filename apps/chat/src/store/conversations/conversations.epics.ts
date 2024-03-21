@@ -881,12 +881,18 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const sortedConversations = notMigratedConversations.sort((a, b) => {
-          if (!a.lastActivityDate) return 1;
-          if (!b.lastActivityDate) return -1;
-
-          return a.lastActivityDate - b.lastActivityDate;
-        });
+        const conversationsWithDate = notMigratedConversations.filter(
+          (c) => c.lastActivityDate,
+        );
+        const conversationsWithoutDate = notMigratedConversations.filter(
+          (c) => !c.lastActivityDate,
+        );
+        const sortedConversations = [
+          ...conversationsWithoutDate,
+          ...conversationsWithDate.sort(
+            (a, b) => a.lastActivityDate! - b.lastActivityDate!,
+          ),
+        ];
         const preparedConversations = getPreparedConversations({
           conversations: notMigratedConversations,
           conversationsFolders,
