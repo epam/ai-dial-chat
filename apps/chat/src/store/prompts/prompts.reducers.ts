@@ -57,7 +57,7 @@ export const promptsSlice = createSlice({
         { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
       >,
     ) => {
-      state.promptsLoaded = !payload?.noLoader;
+      state.promptsLoaded = payload?.noLoader ?? false;
     },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
@@ -410,7 +410,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = payload.folders;
+      state.folders = combineEntities(state.folders, payload.folders);
     },
     addFolders: (
       state,

@@ -880,9 +880,9 @@ export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
 const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
-    switchMap(({ payload }) =>
+    mergeMap(({ payload }) =>
       PromptService.getPrompts(payload?.path, true).pipe(
-        switchMap((prompts) => {
+        mergeMap((prompts) => {
           const actions: Observable<AnyAction>[] = [];
 
           if (!!payload?.selectFirst && !!prompts.length && !!payload?.path) {

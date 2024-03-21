@@ -771,7 +771,7 @@ export const conversationsSlice = createSlice({
       >,
     ) => {
       state.conversationsStatus = UploadStatus.LOADING;
-      state.conversationsLoaded = !payload?.noLoader;
+      state.conversationsLoaded = payload?.noLoader ?? false;
     },
     uploadConversationsSuccess: (
       state,

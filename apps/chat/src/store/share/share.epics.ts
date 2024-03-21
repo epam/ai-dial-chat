@@ -632,6 +632,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             actions.push(
               PromptsActions.uploadPromptsWithFoldersRecursive({
                 path: decodedAcceptedId,
+                noLoader: true,
                 selectFirst: true,
               }),
             );
