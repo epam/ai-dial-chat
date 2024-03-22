@@ -28,7 +28,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
-  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
   PUBLISHING_FOLDER_NAME,
 } from '@/src/constants/folders';
 
@@ -171,7 +171,7 @@ const PromptFolderTemplate = ({
         denyDrop={isExternal}
       />
       <Folder
-        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+        maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
         searchTerm={searchTerm}
         currentFolder={folder}
         itemComponent={PromptComponent}
