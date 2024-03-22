@@ -1875,16 +1875,16 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
-    switchMap((selectedConversationsIds) => {
-      return forkJoin({
+    switchMap((selectedConversationsIds) =>
+      forkJoin({
         selectedConversationsIds: of(selectedConversationsIds),
         _: selectedConversationsIds.length
           ? ConversationService.setSelectedConversationsIds(
               selectedConversationsIds,
             )
           : EMPTY,
-      });
-    }),
+      }),
+    ),
     switchMap(({ selectedConversationsIds }) =>
       of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
     ),
