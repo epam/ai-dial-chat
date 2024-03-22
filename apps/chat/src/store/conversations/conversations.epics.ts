@@ -21,6 +21,7 @@ import {
   startWith,
   switchMap,
   take,
+  takeUntil,
   takeWhile,
   tap,
   throwError,
@@ -92,7 +93,9 @@ import { FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
+import { selectConversations } from '@/src/store/conversations/conversations.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import {
@@ -126,97 +129,106 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$) =>
+const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
-    switchMap(() => ConversationService.getSelectedConversationsIds()),
-    switchMap((selectedIds) => {
-      if (!selectedIds.length) {
-        return forkJoin({
-          selectedConversations: of([]),
-          selectedIds: of([]),
-        });
-      }
-      return forkJoin({
-        selectedConversations: zip(
-          selectedIds.map((id) =>
-            ConversationService.getConversation(
-              getConversationInfoFromId(id),
-            ).pipe(
-              catchError((err) => {
-                console.error('The selected conversation was not found:', err);
-                return of(null);
+    switchMap(() =>
+      ConversationService.getSelectedConversationsIds().pipe(
+        takeUntil(
+          action$.pipe(filter(ShareActions.acceptShareInvitation.match)),
+        ),
+        switchMap((selectedIds) => {
+          if (!selectedIds.length) {
+            return forkJoin({
+              selectedConversations: of([]),
+              selectedIds: of([]),
+            });
+          }
+          return forkJoin({
+            selectedConversations: zip(
+              selectedIds.map((id) =>
+                ConversationService.getConversation(
+                  getConversationInfoFromId(id),
+                ).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The selected conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                ),
+              ),
+            ),
+            selectedIds: of(selectedIds),
+          });
+        }),
+        map(({ selectedConversations, selectedIds }) => {
+          const conversations = selectedConversations
+            .filter(Boolean)
+            .map((conv) => regenerateConversationId(conv!));
+          if (!selectedIds.length || !conversations.length) {
+            return {
+              conversations: [],
+              selectedConversationsIds: [],
+            };
+          }
+
+          const existingSelectedConversationsIds = selectedIds.filter((id) =>
+            conversations.some((conv) => conv.id === id),
+          );
+
+          return {
+            conversations,
+            selectedConversationsIds: existingSelectedConversationsIds,
+          };
+        }),
+        switchMap(({ conversations, selectedConversationsIds }) => {
+          const actions: Observable<AnyAction>[] = [];
+
+          if (conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.addConversations({
+                  conversations,
+                  selectAdded: true,
+                }),
+              ),
+            );
+            const paths = selectedConversationsIds.flatMap((id) =>
+              getParentFolderIdsFromEntityId(id),
+            );
+            actions.push(
+              of(
+                UIActions.setOpenedFoldersIds({
+                  openedFolderIds: paths,
+                  featureType: FeatureType.Chat,
+                }),
+              ),
+            );
+          }
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: selectedConversationsIds,
               }),
             ),
-          ),
-        ),
-        selectedIds: of(selectedIds),
-      });
-    }),
-    map(({ selectedConversations, selectedIds }) => {
-      const conversations = selectedConversations
-        .filter(Boolean)
-        .map((conv) => regenerateConversationId(conv!));
-      if (!selectedIds.length || !conversations.length) {
-        return {
-          conversations: [],
-          selectedConversationsIds: [],
-        };
-      }
+          );
+          if (!conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  shouldUploadConversationsForCompare: true,
+                }),
+              ),
+            );
+          }
 
-      const existingSelectedConversationsIds = selectedIds.filter((id) =>
-        conversations.some((conv) => conv.id === id),
-      );
-
-      return {
-        conversations,
-        selectedConversationsIds: existingSelectedConversationsIds,
-      };
-    }),
-    switchMap(({ conversations, selectedConversationsIds }) => {
-      const actions: Observable<AnyAction>[] = [];
-
-      if (conversations.length) {
-        actions.push(
-          of(
-            ConversationsActions.addConversations({
-              conversations,
-              selectAdded: true,
-            }),
-          ),
-        );
-        const paths = selectedConversationsIds.flatMap((id) =>
-          getParentFolderIdsFromEntityId(id),
-        );
-        actions.push(
-          of(
-            UIActions.setOpenedFoldersIds({
-              openedFolderIds: paths,
-              featureType: FeatureType.Chat,
-            }),
-          ),
-        );
-      }
-      actions.push(
-        of(
-          ConversationsActions.selectConversations({
-            conversationIds: selectedConversationsIds,
-          }),
-        ),
-      );
-      if (!conversations.length) {
-        actions.push(
-          of(
-            ConversationsActions.createNewConversations({
-              names: [translate(DEFAULT_CONVERSATION_NAME)],
-              shouldUploadConversationsForCompare: true,
-            }),
-          ),
-        );
-      }
-
-      return concat(...actions);
-    }),
+          return concat(...actions);
+        }),
+      ),
+    ),
   );
 
 const initFoldersAndConversationsEpic: AppEpic = (action$) =>
@@ -1864,14 +1876,16 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
-    switchMap((selectedConversationsIds) =>
-      forkJoin({
+    switchMap((selectedConversationsIds) => {
+      return forkJoin({
         selectedConversationsIds: of(selectedConversationsIds),
-        _: ConversationService.setSelectedConversationsIds(
-          selectedConversationsIds,
-        ),
-      }),
-    ),
+        _: selectedConversationsIds.length
+          ? ConversationService.setSelectedConversationsIds(
+              selectedConversationsIds,
+            )
+          : EMPTY,
+      });
+    }),
     switchMap(({ selectedConversationsIds }) =>
       of(UIActions.setIsCompareMode(selectedConversationsIds.length > 1)),
     ),
