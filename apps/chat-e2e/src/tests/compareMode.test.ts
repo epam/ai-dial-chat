@@ -1,6 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
-
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
