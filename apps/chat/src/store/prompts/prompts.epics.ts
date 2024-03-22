@@ -789,7 +789,7 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const preparedPrompts: Prompt[] = getPreparedPrompts({
+        const preparedPrompts = getPreparedPrompts({
           prompts: notMigratedPrompts,
           folders: promptsFolders,
         }); // to send prompts with proper parentPath

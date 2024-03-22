@@ -908,7 +908,9 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           ),
           from(preparedConversations).pipe(
             concatMap((conversation) =>
-              ConversationService.setConversations([conversation]).pipe(
+              ConversationService.setConversations([
+                conversation as Conversation,
+              ]).pipe(
                 concatMap(() => {
                   migratedConversationIds.push(
                     sortedConversations[migratedConversationsCount].id,

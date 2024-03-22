@@ -2,14 +2,19 @@ import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanConversation } from '@/src/utils/app/clean';
 import { prepareEntityName } from '@/src/utils/app/common';
-import { getGeneratedConversationId } from '@/src/utils/app/conversation';
+import {
+  getGeneratedConversationId,
+  regenerateConversationId,
+} from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
+  getPromptRootId,
   isRootConversationsId,
+  isRootPromptId,
 } from '@/src/utils/app/id';
 import {
   getConversationApiKey,
@@ -105,19 +110,15 @@ export const getPreparedConversations = ({
       trimEndDotsRequired: true,
     });
 
-    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
-    const folderId = constructPath(rootId, path);
+    const folderId = isRootConversationsId(path)
+      ? path
+      : constructPath(getConversationRootId(), path);
 
-    return {
+    return regenerateConversationId({
       ...conv,
-      id: getGeneratedConversationId({
-        ...conv,
-        name: newName,
-        folderId: folderId,
-      }),
       name: newName,
       folderId,
-    };
+    });
   }); // to send conversation with proper parentPath and lastActivityDate order
 
 export const getImportPreparedConversations = ({
