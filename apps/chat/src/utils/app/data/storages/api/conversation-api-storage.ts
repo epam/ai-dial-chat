@@ -97,11 +97,14 @@ export const getPreparedConversations = ({
     const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
       forRenaming: true,
       replaceWithSpacesForRenaming: true,
+      trimEndDotsRequired: true,
+      prepareNames: true,
     });
 
     const newName = prepareEntityName(conv.name, {
       forRenaming: true,
       replaceWithSpacesForRenaming: true,
+      trimEndDotsRequired: true,
     });
 
     return {
