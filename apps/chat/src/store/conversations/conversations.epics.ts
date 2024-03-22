@@ -93,7 +93,6 @@ import { FolderType } from '@/src/types/folder';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
-import { selectConversations } from '@/src/store/conversations/conversations.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
@@ -129,7 +128,7 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
+const initSelectedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     switchMap(() =>
