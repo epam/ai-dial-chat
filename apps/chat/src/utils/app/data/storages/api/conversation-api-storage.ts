@@ -87,11 +87,9 @@ export const getOrUploadConversation = (
 export const getPreparedConversations = ({
   conversations,
   conversationsFolders,
-  addRoot = false,
 }: {
   conversations: Conversation[];
   conversationsFolders: FolderInterface[];
-  addRoot?: boolean;
 }) =>
   conversations.map((conv) => {
     const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
@@ -107,15 +105,18 @@ export const getPreparedConversations = ({
       trimEndDotsRequired: true,
     });
 
+    const rootId = isRootConversationsId(path) ? path : getConversationRootId();
+    const folderId = constructPath(rootId, path);
+
     return {
       ...conv,
       id: getGeneratedConversationId({
         ...conv,
         name: newName,
-        folderId: path,
+        folderId: folderId,
       }),
       name: newName,
-      folderId: addRoot ? constructPath(getConversationRootId(), path) : path,
+      folderId,
     };
   }); // to send conversation with proper parentPath and lastActivityDate order
 

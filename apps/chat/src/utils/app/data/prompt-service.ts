@@ -56,11 +56,9 @@ export class PromptService {
 export const getPreparedPrompts = ({
   prompts,
   folders,
-  addRoot = false,
 }: {
   prompts: Prompt[];
   folders: FolderInterface[];
-  addRoot?: boolean;
 }) =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, {
@@ -75,13 +73,15 @@ export const getPreparedPrompts = ({
       trimEndDotsRequired: true,
     });
 
+    const folderId = isRootPromptId(path)
+      ? path
+      : constructPath(getPromptRootId(), path);
+
     return {
       ...prompt,
-      id: addRoot
-        ? constructPath(getPromptRootId(), path, newName)
-        : constructPath(path, newName),
+      id: constructPath(folderId, newName),
       name: newName,
-      folderId: addRoot ? constructPath(getPromptRootId(), path) : path,
+      folderId,
     };
   }); // to send prompts with proper parentPath
 

@@ -896,7 +896,6 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         const preparedConversations = getPreparedConversations({
           conversations: sortedConversations,
           conversationsFolders,
-          addRoot: true,
         });
 
         let migratedConversationsCount = 0;
