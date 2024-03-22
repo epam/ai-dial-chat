@@ -12,9 +12,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
-  getPromptRootId,
   isRootConversationsId,
-  isRootPromptId,
 } from '@/src/utils/app/id';
 import {
   getConversationApiKey,
