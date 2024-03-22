@@ -907,7 +907,6 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         const preparedConversations = getPreparedConversations({
           conversations: sortedConversations,
           conversationsFolders,
-          addRoot: true,
         });
 
         let migratedConversationsCount = 0;
@@ -920,7 +919,9 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           ),
           from(preparedConversations).pipe(
             concatMap((conversation) =>
-              ConversationService.setConversations([conversation]).pipe(
+              ConversationService.setConversations([
+                conversation as Conversation,
+              ]).pipe(
                 concatMap(() => {
                   migratedConversationIds.push(
                     sortedConversations[migratedConversationsCount].id,

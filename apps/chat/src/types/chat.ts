@@ -134,4 +134,5 @@ export interface ConversationInfo extends ShareEntity {
 export interface PrepareNameOptions {
   forRenaming: boolean;
   replaceWithSpacesForRenaming: boolean;
+  trimEndDotsRequired: boolean;
 }
