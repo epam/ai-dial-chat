@@ -89,7 +89,7 @@ export const cleanConversation = (
     replay: conversation.replay,
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
-    lastActivityDate: conversation.lastActivityDate || Date.now(),
+    lastActivityDate: conversation.lastActivityDate || 0,
     isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: conversation.playback,

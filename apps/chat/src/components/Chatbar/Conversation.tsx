@@ -230,7 +230,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const handleRename = useCallback(() => {
-    const newName = prepareEntityName(renameValue, true);
+    const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
     if (
@@ -744,7 +744,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           setIsConfirmRenaming(false);
 
           if (result) {
-            performRename(prepareEntityName(renameValue, true));
+            performRename(
+              prepareEntityName(renameValue, { forRenaming: true }),
+            );
           }
 
           setIsContextMenu(false);

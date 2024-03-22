@@ -42,10 +42,12 @@ export class ChatInfoTooltip extends BaseElement {
     return this.assistantModelInfo.getElementInnerContent();
   }
 
-  public async getPromptInfo() {
-    return (await this.promptInfo.isVisible())
-      ? await this.promptInfo.getElementInnerContent()
-      : '';
+  public async getPromptInfo(isPromptExpected = true) {
+    if (isPromptExpected) {
+      await this.promptInfo.waitForState({ state: 'attached' });
+      return this.promptInfo.getElementInnerContent();
+    }
+    return '';
   }
 
   public async getTemperatureInfo() {

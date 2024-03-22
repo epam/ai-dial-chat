@@ -147,7 +147,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       !currentFolder.serverSynced,
   );
   const [renameValue, setRenameValue] = useState(currentFolder.name);
-  const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
@@ -261,7 +260,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const newName = prepareEntityName(renameValue, true);
+    const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
     if (
@@ -689,8 +688,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             }}
             onClick={() => {
               onClickFolder(currentFolder.id);
-
-              setIsSelected(true);
             }}
             draggable={!!handleDrop && !isExternal && !isNameInvalid}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
@@ -752,8 +749,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   ref={refs.setFloating}
                   {...getFloatingProps()}
                   className={classNames(
-                    'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
-                    (isSelected || isContextMenu) && 'max-md:visible',
+                    'invisible absolute right-3 z-50 flex justify-end group-hover/button:visible',
+                    isContextMenu && 'max-md:visible',
                   )}
                 >
                   <FolderContextMenu
