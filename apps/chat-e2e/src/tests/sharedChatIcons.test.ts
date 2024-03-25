@@ -1,5 +1,4 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendDataEntity } from '@/chat/types/common';
 import { FolderInterface } from '@/chat/types/folder';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
@@ -72,11 +71,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(conversation.name);
-        const firstShareLinkResponseText = await conversations.selectMenuOption(
+        const firstShareRequestResponse = await conversations.selectMenuOption(
           MenuOptions.share,
         );
-        firstShareLinkResponse =
-          firstShareLinkResponseText as ShareByLinkResponseModel;
+        firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
           .soft(
@@ -187,9 +185,10 @@ dialTest(
       'Open Share modal again, click "Copy" button and verify the link is different from the previous, no shared icon appears on conversation',
       async () => {
         await conversations.openConversationDropdownMenu(conversation.name);
-        secondShareLinkResponse = (await conversations.selectMenuOption(
+        const secondShareRequestResponse = await conversations.selectMenuOption(
           MenuOptions.share,
-        )) as ShareByLinkResponseModel;
+        );
+        secondShareLinkResponse = secondShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
           .soft(
@@ -198,6 +197,20 @@ dialTest(
             ExpectedMessages.sharedInvitationLinkIsUnique,
           )
           .toBeTruthy();
+        expect
+          .soft(
+            secondShareRequestResponse!.request.resources.length,
+            ExpectedMessages.sharedResourcesCountIsValid,
+          )
+          .toBe(1);
+        expect
+          .soft(
+            secondShareRequestResponse!.request.resources.find(
+              (r) => r.url === conversation.id,
+            ),
+            ExpectedMessages.conversationUrlIsValid,
+          )
+          .toBeDefined();
 
         const isArrowIconVisible = await conversations
           .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
@@ -309,7 +322,7 @@ dialTest(
 
         for (const conversation of conversationsToShare) {
           const shareByLinkResponse =
-            await mainUserShareApiHelper.shareEntityByLink(conversation);
+            await mainUserShareApiHelper.shareEntityByLink([conversation]);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
       },
@@ -450,7 +463,7 @@ dialTest(
         await localStorageManager.setSelectedConversation(conversation);
 
         const shareByLinkResponse =
-          await mainUserShareApiHelper.shareEntityByLink(conversation);
+          await mainUserShareApiHelper.shareEntityByLink([conversation]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
 
         await dataInjector.createConversations([
@@ -473,7 +486,9 @@ dialTest(
         await dataInjector.createConversations([conversationToDelete]);
 
         const shareByLinkResponse =
-          await mainUserShareApiHelper.shareEntityByLink(conversationToDelete);
+          await mainUserShareApiHelper.shareEntityByLink([
+            conversationToDelete,
+          ]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         await itemApiHelper.deleteConversation(conversationToDelete);
 
@@ -551,7 +566,7 @@ dialTest(
 
       for (const conversation of conversationsToShare) {
         const shareByLinkResponse =
-          await mainUserShareApiHelper.shareEntityByLink(conversation);
+          await mainUserShareApiHelper.shareEntityByLink([conversation]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
       }
     });
@@ -649,16 +664,16 @@ dialTest(
 
         const shareFolderByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink(
-            nestedConversations[1],
+            [nestedConversations[1]],
             true,
           );
         await additionalUserShareApiHelper.acceptInvite(
           shareFolderByLinkResponse,
         );
         const shareConversationByLinkResponse =
-          await mainUserShareApiHelper.shareEntityByLink(
+          await mainUserShareApiHelper.shareEntityByLink([
             nestedConversations[2],
-          );
+          ]);
         await additionalUserShareApiHelper.acceptInvite(
           shareConversationByLinkResponse,
         );
@@ -785,8 +800,8 @@ dialTest(
           folderConversation.folders.name,
         );
 
-        shareLinkResponse =
-          (await folderConversations.selectShareMenuOption()) as ShareByLinkResponseModel;
+        shareLinkResponse = (await folderConversations.selectShareMenuOption())
+          .response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
           .soft(
@@ -877,8 +892,9 @@ dialTest(
       conversation = await conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
 
-      shareByLinkResponse =
-        await mainUserShareApiHelper.shareEntityByLink(conversation);
+      shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
+        conversation,
+      ]);
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
     });
 

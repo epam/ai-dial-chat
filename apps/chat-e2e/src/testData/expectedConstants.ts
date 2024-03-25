@@ -163,6 +163,7 @@ export const Import = {
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',
+  cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
 };
 
