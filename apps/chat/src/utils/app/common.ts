@@ -38,6 +38,18 @@ export const isEntityNameOnSameLevelUnique = (
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
+export const isImportEntityNameOnSameLevelUnique = (
+  nameToBeUnique: string,
+  entity: Entity,
+  entities: Entity[],
+): boolean => {
+  const sameLevelEntities = entities.filter(
+    (e) => entity.id === e.id && e.folderId === entity.folderId,
+  );
+
+  return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
+};
+
 export const filterOnlyMyEntities = <T extends ShareEntity>(
   entities: T[],
 ): T[] =>

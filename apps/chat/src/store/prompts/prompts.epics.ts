@@ -13,7 +13,6 @@ import {
   mergeMap,
   of,
   switchMap,
-  toArray,
   zip,
 } from 'rxjs';
 
@@ -25,6 +24,7 @@ import {
   combineEntities,
   filterMigratedEntities,
   filterOnlyMyEntities,
+  isImportEntityNameOnSameLevelUnique,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
@@ -45,7 +45,6 @@ import {
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import {
-  cleanPromptsFolders,
   exportPrompt,
   exportPrompts,
   isPromptsFormat,
@@ -252,9 +251,10 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.updatePrompt.match),
     mergeMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     mergeMap(({ payload, prompt }) => {
-      const { values, id } = payload as {
+      const { values, id, isImportFinish } = payload as {
         id: string;
         values: Partial<Prompt>;
+        isImportFinish?: boolean;
       };
 
       if (!prompt) {
@@ -282,6 +282,11 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
           () => !!prompt && prompt.id !== newPrompt.id,
           of(PromptsActions.recreatePrompt({ old: prompt, new: newPrompt })),
           of(PromptsActions.savePrompt(newPrompt)),
+        ),
+        iif(
+          () => !!isImportFinish,
+          of(ImportExportActions.resetState()),
+          EMPTY,
         ),
       );
     }),
@@ -679,56 +684,76 @@ const importPromptsEpic: AppEpic = (action$) =>
         folders: promptsHistory.folders,
       });
 
-      return PromptService.setPrompts(preparedPrompts).pipe(
-        toArray(),
-        switchMap(() => {
-          return PromptService.getPrompts(undefined, true).pipe(
-            switchMap((promptsListing) => {
-              if (preparedPrompts.length && !promptsListing.length) {
-                return of(ImportExportActions.importPromptsFail());
-              }
+      if (!preparedPrompts.length) {
+        return of(ImportExportActions.importPromptsFail());
+      }
 
-              const foldersIds = uniq(
-                promptsListing.map((info) => info.folderId),
-              );
-              //calculate all folders;
-              const promptsFolders = getFoldersFromIds(
-                uniq(
-                  foldersIds.flatMap((id) =>
-                    getParentFolderIdsFromFolderId(id),
-                  ),
-                ),
-                FolderType.Prompt,
-              );
+      return PromptService.getPrompts(undefined, true).pipe(
+        switchMap((promptsListing) => {
+          const existedImportNamesPrompts = preparedPrompts.filter(
+            (importPrompt) =>
+              !isImportEntityNameOnSameLevelUnique(
+                importPrompt.name,
+                importPrompt,
+                promptsListing,
+              ),
+          );
 
-              const cleanFolders = cleanPromptsFolders(promptsHistory.folders);
-
-              const folders = combineEntities(promptsFolders, cleanFolders);
-
-              return of(
-                PromptsActions.importPromptsSuccess({
-                  prompts: promptsListing,
-                  folders,
-                }),
+          const nonExistedImportNamesPrompts = preparedPrompts.filter(
+            (importPrompt) => {
+              // console.log(
+              //   'isUniq',
+              //   isEntityNameOnSameLevelUnique(
+              //     importConv.name,
+              //     importConv,
+              //     conversationsListing,
+              //   ),
+              // );
+              // console.log(importConv);
+              return isImportEntityNameOnSameLevelUnique(
+                importPrompt.name,
+                importPrompt,
+                preparedPrompts,
               );
-            }),
-            catchError(() => {
-              return concat(
-                of(
-                  UIActions.showErrorToast(
-                    translate(
-                      'An error occurred while uploading prompts and folders',
-                    ),
-                  ),
-                ),
-                of(ImportExportActions.importPromptsFail()),
-              );
-            }),
-          ); //listing of all entities
+            },
+          );
+
+          if (!existedImportNamesPrompts.length) {
+            return of(
+              ImportExportActions.uploadImportedPrompts({
+                itemsToUpload: nonExistedImportNamesPrompts,
+                folders: promptsHistory.folders,
+              }),
+            );
+          }
+
+          if (!nonExistedImportNamesPrompts.length) {
+            return of(
+              ImportExportActions.showReplaceDialog({
+                existed: existedImportNamesPrompts,
+                featureType: FeatureType.Prompt,
+              }),
+            );
+          }
+
+          return concat(
+            of(
+              ImportExportActions.showReplaceDialog({
+                existed: existedImportNamesPrompts,
+                featureType: FeatureType.Prompt,
+              }),
+            ),
+            of(
+              ImportExportActions.uploadImportedPrompts({
+                itemsToUpload: nonExistedImportNamesPrompts,
+                folders: promptsHistory.folders,
+              }),
+            ),
+          );
         }),
+        catchError(() => of(ImportExportActions.importPromptsFail())),
       );
     }),
-    catchError(() => of(ImportExportActions.importPromptsFail())),
   );
 
 const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {

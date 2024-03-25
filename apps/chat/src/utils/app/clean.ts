@@ -15,6 +15,7 @@ import {
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
+import { prepareEntityName } from './common';
 import { constructPath } from './file';
 import { getConversationRootId } from './id';
 
@@ -78,9 +79,12 @@ export const cleanConversation = (
       conversation.id ||
       constructPath(
         conversation.folderId || getConversationRootId(),
-        conversation.name || DEFAULT_CONVERSATION_NAME,
+        (conversation.name && prepareEntityName(conversation.name)) ||
+          DEFAULT_CONVERSATION_NAME,
       ),
-    name: conversation.name || DEFAULT_CONVERSATION_NAME,
+    name:
+      (conversation.name && prepareEntityName(conversation.name)) ||
+      DEFAULT_CONVERSATION_NAME,
     model: model,
     prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,

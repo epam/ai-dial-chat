@@ -14,7 +14,10 @@ import {
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
-import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
+import {
+  ImportExportActions,
+  UploadedAttachment,
+} from '@/src/store/import-export/importExport.reducers';
 
 import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
@@ -428,4 +431,30 @@ export const updateAttachment = ({
     reference_url: newReferenceUrl,
   };
   return updatedAttachment;
+};
+
+export const getCancelImportAction = (featureType: FeatureType) => {
+  switch (featureType) {
+    case FeatureType.Chat:
+      return ImportExportActions.cancelConversationsImportDuplicated;
+    case FeatureType.Prompt:
+      return ImportExportActions.cancelPromptsImportDuplicated;
+    //TODO implement case FeatureType.File
+
+    default:
+      return ImportExportActions.cancelConversationsImportDuplicated;
+  }
+};
+
+export const getFolderType = (featureType: FeatureType) => {
+  switch (featureType) {
+    case FeatureType.Chat:
+      return FolderType.Chat;
+    case FeatureType.Prompt:
+      return FolderType.Prompt;
+    case FeatureType.File:
+      return FolderType.File;
+    default:
+      return FolderType.Chat;
+  }
 };

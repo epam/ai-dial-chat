@@ -43,6 +43,7 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 import ShareModal from '../components/Chat/ShareModal';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
+import { ReplaceConfirmationModal } from '../components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
@@ -94,6 +95,10 @@ export default function Home({ initialState }: HomeProps) {
 
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
+  );
+
+  const isReplaceModalOpened = useAppSelector(
+    ImportExportSelectors.selectIsShowReplaceDialog,
   );
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
@@ -236,6 +241,9 @@ export default function Home({ initialState }: HomeProps) {
                 {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
                 {isProfileOpen && <UserMobile />}
                 {!isShareModalClosed && <ShareModal />}
+                {isReplaceModalOpened && (
+                  <ReplaceConfirmationModal isOpen={isReplaceModalOpened} />
+                )}
               </div>
             </div>
           )}

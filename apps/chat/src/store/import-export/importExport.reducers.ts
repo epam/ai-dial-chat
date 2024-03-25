@@ -1,11 +1,16 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { DialFile, Status } from '@/src/types/files';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import {
   LatestExportFormat,
+  LoadingStatus,
   Operation,
   SupportedExportFormats,
 } from '@/src/types/import-export';
+import { Prompt } from '@/src/types/prompt';
 
 import { RootState } from '..';
 
@@ -20,10 +25,15 @@ interface ImportExportState {
   uploadedAttachments: UploadedAttachment[];
   importedHistory: LatestExportFormat;
   attachmentsErrors: string[];
-  status?: Status;
+  status?: LoadingStatus;
   operation?: Operation;
   isPromptsBackedUp: boolean;
   isChatsBackedUp: boolean;
+  conversationsToReplace: Conversation[];
+  promptsToReplace: Prompt[];
+  filesToReplace: DialFile[];
+  isShowReplaceDialog: boolean;
+  featureType: FeatureType;
 }
 
 const defaultImportedHistory: LatestExportFormat = {
@@ -39,6 +49,13 @@ const initialState: ImportExportState = {
   attachmentsErrors: [],
   isPromptsBackedUp: false,
   isChatsBackedUp: false,
+  conversationsToReplace: [],
+  promptsToReplace: [],
+  filesToReplace: [],
+  status: undefined,
+  operation: undefined,
+  isShowReplaceDialog: false,
+  featureType: FeatureType.Chat,
 };
 
 export const importExportSlice = createSlice({
@@ -46,12 +63,8 @@ export const importExportSlice = createSlice({
   initialState,
   reducers: {
     resetState: (state) => {
-      state.status = undefined;
-      state.attachmentsIdsToUpload = [];
-      state.uploadedAttachments = [];
-      state.importedHistory = defaultImportedHistory;
-      state.attachmentsErrors = [];
-      state.operation = undefined;
+      state = initialState;
+      return state;
     },
     exportConversation: (
       state,
@@ -60,7 +73,7 @@ export const importExportSlice = createSlice({
         withAttachments?: boolean;
       }>,
     ) => {
-      state.status = 'LOADING';
+      state.status = LoadingStatus.Loading;
       state.operation = Operation.Exporting;
     },
     exportConversationSuccess: (state) => state,
@@ -75,14 +88,14 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{ data: SupportedExportFormats }>,
     ) => {
-      state.status = 'LOADING';
+      state.status = LoadingStatus.Loading;
       state.operation = Operation.Importing;
     },
     importZipConversations: (
       state,
       _action: PayloadAction<{ zipFile: File }>,
     ) => {
-      state.status = 'LOADING';
+      state.status = LoadingStatus.Loading;
       state.operation = Operation.Importing;
     },
     importStop: (state) => state,
@@ -124,11 +137,70 @@ export const importExportSlice = createSlice({
     ) => {
       state.attachmentsErrors = state.attachmentsErrors.concat(payload.id);
     },
+    uploadImportedConversations: (
+      state,
+      _action: PayloadAction<{
+        itemsToUpload: Conversation[];
+        folders?: FolderInterface[];
+      }>,
+    ) => {
+      state.isShowReplaceDialog = false;
+    },
     importPrompts: (state) => {
-      state.status = 'LOADING';
+      state.status = LoadingStatus.Loading;
       state.operation = Operation.Importing;
     },
     importPromptsFail: (state) => state,
+    uploadImportedPrompts: (
+      state,
+      _action: PayloadAction<{
+        itemsToUpload: Prompt[];
+        folders?: FolderInterface[];
+      }>,
+    ) => {
+      state.isShowReplaceDialog = false;
+    },
+    showReplaceDialog: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        existed: Conversation[] | Prompt[];
+        featureType: FeatureType;
+      }>,
+    ) => {
+      state.isShowReplaceDialog = true;
+      state.featureType = payload.featureType;
+
+      if (FeatureType.Chat) {
+        state.conversationsToReplace = payload.existed as Conversation[];
+      }
+
+      if (FeatureType.Prompt) {
+        state.promptsToReplace = payload.existed as Prompt[];
+      }
+    },
+    replaceFeatures: (
+      state,
+      _action: PayloadAction<{
+        itemsToReplace: (DialFile | ConversationInfo | Prompt)[];
+        featureType: FeatureType;
+      }>,
+    ) => {
+      state.status = LoadingStatus.Loading;
+      state.operation = Operation.Importing;
+    },
+    cancelConversationsImportDuplicated: (state) => {
+      state.isShowReplaceDialog = false;
+      state.conversationsToReplace = [];
+    },
+    cancelPromptsImportDuplicated: (state) => {
+      state.isShowReplaceDialog = false;
+      state.promptsToReplace = [];
+    },
+    closeReplaceDialog: (state) => {
+      state.isShowReplaceDialog = false;
+    },
   },
 });
 
@@ -159,7 +231,27 @@ const selectOperationName = createSelector([rootSelector], (state) => {
 });
 
 const selectIsLoadingImportExport = createSelector([rootSelector], (state) => {
-  return state.status === 'LOADING';
+  return state.status === LoadingStatus.Loading;
+});
+
+const selectIsShowReplaceDialog = createSelector([rootSelector], (state) => {
+  return state.isShowReplaceDialog;
+});
+
+const selectFeatureType = createSelector([rootSelector], (state) => {
+  return state.featureType;
+});
+
+const selectConversationToReplace = createSelector([rootSelector], (state) => {
+  return state.conversationsToReplace;
+});
+
+const selectPromptsToReplace = createSelector([rootSelector], (state) => {
+  return state.promptsToReplace;
+});
+
+const selectFilesToReplace = createSelector([rootSelector], (state) => {
+  return state.filesToReplace;
 });
 
 export const ImportExportSelectors = {
@@ -170,6 +262,11 @@ export const ImportExportSelectors = {
   selectImportStatus,
   selectOperationName,
   selectIsLoadingImportExport,
+  selectIsShowReplaceDialog,
+  selectFeatureType,
+  selectConversationToReplace,
+  selectPromptsToReplace,
+  selectFilesToReplace,
 };
 
 export const ImportExportActions = importExportSlice.actions;

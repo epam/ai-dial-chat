@@ -100,6 +100,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
+import { ImportExportActions } from '../import-export/importExport.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -2266,9 +2267,10 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       return getOrUploadConversation(payload, state$.value);
     }),
     mergeMap(({ payload, conversation }) => {
-      const { id, values } = payload as {
+      const { id, values, isImportFinish } = payload as {
         id: string;
         values: Partial<Conversation>;
+        isImportFinish?: boolean;
       };
 
       if (!conversation) {
@@ -2305,6 +2307,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             }),
           ),
           of(ConversationsActions.saveConversation(newConversation)),
+        ),
+        iif(
+          () => !!isImportFinish,
+          of(ImportExportActions.importConversationsSuccess()),
+          EMPTY,
         ),
       );
     }),

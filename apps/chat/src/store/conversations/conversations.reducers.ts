@@ -139,7 +139,11 @@ export const conversationsSlice = createSlice({
     },
     updateConversation: (
       state,
-      _action: PayloadAction<{ id: string; values: Partial<Conversation> }>,
+      _action: PayloadAction<{
+        id: string;
+        values: Partial<Conversation>;
+        isImportFinish?: boolean;
+      }>,
     ) => state,
     updateConversationSuccess: (
       state,

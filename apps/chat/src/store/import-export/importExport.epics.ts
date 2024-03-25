@@ -1,5 +1,6 @@
 import {
   EMPTY,
+  Observable,
   catchError,
   concat,
   filter,
@@ -15,12 +16,19 @@ import {
   zip,
 } from 'rxjs';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { combineEpics } from 'redux-observable';
 
-import { combineEntities, filterOnlyMyEntities } from '@/src/utils/app/common';
+import {
+  combineEntities,
+  filterOnlyMyEntities,
+  isImportEntityNameOnSameLevelUnique,
+} from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
+import { PromptService } from '@/src/utils/app/data/prompt-service';
 import {
   getImportPreparedConversations,
   getOrUploadConversation,
@@ -36,6 +44,7 @@ import { getRootId } from '@/src/utils/app/id';
 import {
   cleanConversationsFolders,
   cleanData,
+  cleanPromptsFolders,
   exportConversation,
   exportConversations,
   exportPrompts,
@@ -51,8 +60,10 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { ImportRoot, LatestExportFormat } from '@/src/types/import-export';
+import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
@@ -250,9 +261,8 @@ const importConversationsEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       const { history, folders, isError } = cleanData(payload.data);
       if (isError) {
-        return concat(
-          of(UIActions.showErrorToast(errorsMessages.unsupportedDataFormat)),
-          of(ImportExportActions.importFail()),
+        return of(
+          UIActions.showErrorToast(errorsMessages.unsupportedDataFormat),
         );
       }
 
@@ -261,15 +271,81 @@ const importConversationsEpic: AppEpic = (action$) =>
         conversationsFolders: folders,
       }) as Conversation[];
 
+      if (!preparedConversations.length) {
+        return of(ImportExportActions.importFail());
+      }
+
+      return ConversationService.getConversations(undefined, true).pipe(
+        switchMap((conversationsListing) => {
+          const existedImportNamesConversations = preparedConversations.filter(
+            (importConv) =>
+              !isImportEntityNameOnSameLevelUnique(
+                importConv.name,
+                importConv,
+                conversationsListing,
+              ),
+          );
+
+          const nonExistedImportNamesConversations =
+            preparedConversations.filter((importConv) => {
+              return isImportEntityNameOnSameLevelUnique(
+                importConv.name,
+                importConv,
+                conversationsListing,
+              );
+            });
+
+          if (!existedImportNamesConversations.length) {
+            return of(
+              ImportExportActions.uploadImportedConversations({
+                itemsToUpload: nonExistedImportNamesConversations,
+                folders,
+              }),
+            );
+          }
+
+          if (!nonExistedImportNamesConversations.length) {
+            return of(
+              ImportExportActions.showReplaceDialog({
+                existed: existedImportNamesConversations,
+                featureType: FeatureType.Chat,
+              }),
+            );
+          }
+
+          return concat(
+            of(
+              ImportExportActions.showReplaceDialog({
+                existed: existedImportNamesConversations,
+                featureType: FeatureType.Chat,
+              }),
+            ),
+            of(
+              ImportExportActions.uploadImportedConversations({
+                itemsToUpload: nonExistedImportNamesConversations,
+                folders,
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+    catchError(() => of(ImportExportActions.importFail())),
+  );
+
+const uploadImportedConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ImportExportActions.uploadImportedConversations.match),
+    switchMap(({ payload }) => {
       return from(
-        ConversationService.setConversations(preparedConversations),
+        ConversationService.setConversations(payload.itemsToUpload),
       ).pipe(
         toArray(),
-        switchMap(() => {
+        switchMap((uploadedConversations) => {
           return ConversationService.getConversations(undefined, true).pipe(
             switchMap((conversationsListing) => {
               if (
-                preparedConversations.length &&
+                uploadedConversations.length &&
                 !conversationsListing.length
               ) {
                 return of(ImportExportActions.importFail());
@@ -288,7 +364,9 @@ const importConversationsEpic: AppEpic = (action$) =>
                 FolderType.Chat,
               );
 
-              const cleanFolders = cleanConversationsFolders(folders);
+              const cleanFolders = cleanConversationsFolders(
+                payload.folders ?? [],
+              );
 
               const newFolders = combineEntities(
                 conversationsFolders,
@@ -322,7 +400,104 @@ const importConversationsEpic: AppEpic = (action$) =>
         catchError(() => of(ImportExportActions.importFail())),
       );
     }),
-    catchError(() => of(ImportExportActions.importFail())),
+  );
+
+const uploadImportedPromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ImportExportActions.uploadImportedPrompts.match),
+    switchMap(({ payload }) => {
+      const { itemsToUpload, folders } = payload;
+      return from(PromptService.setPrompts(itemsToUpload)).pipe(
+        toArray(),
+        switchMap(() => {
+          return PromptService.getPrompts(undefined, true).pipe(
+            switchMap((promptsListing) => {
+              if (itemsToUpload.length && !promptsListing.length) {
+                return of(ImportExportActions.importPromptsFail());
+              }
+
+              const foldersIds = uniq(
+                promptsListing.map((info) => info.folderId),
+              );
+              //calculate all folders;
+              const promptsFolders = getFoldersFromIds(
+                uniq(
+                  foldersIds.flatMap((id) =>
+                    getParentFolderIdsFromFolderId(id),
+                  ),
+                ),
+                FolderType.Prompt,
+              );
+
+              const cleanFolders = cleanPromptsFolders(folders ?? []);
+
+              const newFolders = combineEntities(promptsFolders, cleanFolders);
+
+              return of(
+                PromptsActions.importPromptsSuccess({
+                  prompts: promptsListing,
+                  folders: newFolders,
+                }),
+              );
+            }),
+            catchError(() => {
+              return concat(
+                of(
+                  UIActions.showErrorToast(
+                    translate(
+                      'An error occurred while uploading prompts and folders',
+                    ),
+                  ),
+                ),
+                of(ImportExportActions.importPromptsFail()),
+              );
+            }),
+          ); //listing of all entities
+        }),
+      );
+    }),
+  );
+
+const replaceFeaturesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ImportExportActions.replaceFeatures.match),
+    switchMap(({ payload }) => {
+      const actions: Observable<AnyAction>[] = [];
+
+      if (payload.featureType === FeatureType.Chat) {
+        const itemsToReplace = payload.itemsToReplace as Conversation[];
+        itemsToReplace.forEach((conversation, index) => {
+          actions.push(
+            of(
+              ConversationsActions.updateConversation({
+                id: conversation.id,
+                values: { ...conversation },
+                isImportFinish: index === itemsToReplace.length - 1,
+              }),
+            ),
+          );
+        });
+      }
+
+      if (payload.featureType === FeatureType.Prompt) {
+        const itemsToReplace = payload.itemsToReplace as Prompt[];
+        itemsToReplace.forEach((prompt, index) => {
+          actions.push(
+            of(
+              PromptsActions.updatePrompt({
+                id: prompt.id,
+                values: { ...prompt },
+                isImportFinish: index === itemsToReplace.length - 1,
+              }),
+            ),
+          );
+        });
+      }
+
+      return concat(...actions).pipe(
+        takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
+      );
+    }),
   );
 
 const importZipEpic: AppEpic = (action$) =>
@@ -661,10 +836,10 @@ const resetStateEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
+        ImportExportActions.resetState.match(action) ||
         ImportExportActions.exportCancel.match(action) ||
         ImportExportActions.exportConversationSuccess.match(action) ||
         ImportExportActions.exportFail.match(action) ||
-        ImportExportActions.importStop.match(action) ||
         ImportExportActions.importConversationsSuccess.match(action) ||
         ImportExportActions.importFail.match(action) ||
         ImportExportActions.importStop.match(action) ||
@@ -684,10 +859,13 @@ export const ImportExportEpics = combineEpics(
   importZipEpic,
   uploadConversationAttachmentsEpic,
   uploadAllAttachmentsSuccessEpic,
+  uploadImportedConversationsEpic,
   resetStateEpic,
   importFailEpic,
   exportFailEpic,
   checkImportFailEpic,
   exportLocalStorageChatsEpic,
   exportLocalStoragePromptsEpic,
+  replaceFeaturesEpic,
+  uploadImportedPromptsEpic,
 );
