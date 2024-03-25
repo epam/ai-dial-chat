@@ -2,7 +2,10 @@ import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanConversation } from '@/src/utils/app/clean';
 import { prepareEntityName } from '@/src/utils/app/common';
-import { getGeneratedConversationId } from '@/src/utils/app/conversation';
+import {
+  getGeneratedConversationId,
+  regenerateConversationId,
+} from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { constructPath } from '@/src/utils/app/file';
@@ -87,31 +90,33 @@ export const getOrUploadConversation = (
 export const getPreparedConversations = ({
   conversations,
   conversationsFolders,
-  addRoot = false,
 }: {
   conversations: Conversation[];
   conversationsFolders: FolderInterface[];
-  addRoot?: boolean;
 }) =>
   conversations.map((conv) => {
-    const { path } = getPathToFolderById(
-      conversationsFolders,
-      conv.folderId,
-      true,
-    );
+    const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
+      forRenaming: true,
+      replaceWithSpacesForRenaming: true,
+      trimEndDotsRequired: true,
+      prepareNames: true,
+    });
 
-    const newName = prepareEntityName(conv.name);
+    const newName = prepareEntityName(conv.name, {
+      forRenaming: true,
+      replaceWithSpacesForRenaming: true,
+      trimEndDotsRequired: true,
+    });
 
-    return {
+    const folderId = isRootConversationsId(path)
+      ? path
+      : constructPath(getConversationRootId(), path);
+
+    return regenerateConversationId({
       ...conv,
-      id: getGeneratedConversationId({
-        ...conv,
-        name: newName,
-        folderId: path,
-      }),
       name: newName,
-      folderId: addRoot ? constructPath(getConversationRootId(), path) : path,
-    };
+      folderId,
+    });
   }); // to send conversation with proper parentPath and lastActivityDate order
 
 export const getImportPreparedConversations = ({
@@ -122,11 +127,9 @@ export const getImportPreparedConversations = ({
   conversationsFolders: FolderInterface[];
 }) =>
   conversations.map((conv) => {
-    const { path } = getPathToFolderById(
-      conversationsFolders,
-      conv.folderId,
-      true,
-    );
+    const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
+      forRenaming: false,
+    });
 
     const newName = prepareEntityName(conv.name);
     const rootId = isRootConversationsId(path) ? path : getConversationRootId();

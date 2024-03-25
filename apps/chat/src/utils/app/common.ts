@@ -1,6 +1,7 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds } from '@/src/utils/app/folders';
 
+import { PrepareNameOptions } from '@/src/types/chat';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
@@ -97,9 +98,17 @@ export const updateEntitiesFoldersAndIds = (
 
 export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
-export const prepareEntityName = (name: string, forRenaming = false) => {
-  const clearName = forRenaming
-    ? name.replace(notAllowedSymbolsRegex, '').trim()
+export const prepareEntityName = (
+  name: string,
+  options?: Partial<PrepareNameOptions>,
+) => {
+  const clearName = options?.forRenaming
+    ? name
+        .replace(
+          notAllowedSymbolsRegex,
+          options?.replaceWithSpacesForRenaming ? ' ' : '',
+        )
+        .trim()
     : name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
@@ -111,5 +120,7 @@ export const prepareEntityName = (name: string, forRenaming = false) => {
       ? substring(clearName, 0, MAX_ENTITY_LENGTH)
       : clearName;
 
-  return !forRenaming ? trimEndDots(result) : result.trim();
+  return !options?.forRenaming || options?.trimEndDotsRequired
+    ? trimEndDots(result)
+    : result.trim();
 };

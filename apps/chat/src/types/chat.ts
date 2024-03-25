@@ -130,3 +130,9 @@ export interface ConversationInfo extends ShareEntity {
   isPlayback?: boolean;
   isReplay?: boolean;
 }
+
+export interface PrepareNameOptions {
+  forRenaming: boolean;
+  replaceWithSpacesForRenaming: boolean;
+  trimEndDotsRequired: boolean;
+}
