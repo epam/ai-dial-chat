@@ -1,3 +1,5 @@
+import { PlotParams } from 'react-plotly.js';
+
 import {
   EMPTY,
   Observable,
@@ -48,6 +50,7 @@ import {
   sortByDateAndName,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import {
   getOrUploadConversation,
   getPreparedConversations,
@@ -73,6 +76,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -109,6 +113,7 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -526,6 +531,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       return of(
         ConversationsActions.saveNewConversation({
           newConversation,
+          idToReplaceWithNewOne: conversation.id,
         }),
       );
     }),
@@ -541,8 +547,8 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
 
 const saveNewConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.saveNewConversation.match(action)),
-    switchMap(({ payload }) =>
+    filter(ConversationsActions.saveNewConversation.match),
+    mergeMap(({ payload }) =>
       ConversationService.createConversation(payload.newConversation).pipe(
         switchMap(() =>
           of(ConversationsActions.saveNewConversationSuccess(payload)),
@@ -584,7 +590,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         folderId,
         ...conversations.map((conv) => conv.folderId),
       ]);
-      const removedConversationsIds = conversations.map((conv) => conv.id);
+      const deletedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
       actions.push(
         of(
@@ -593,11 +599,11 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
           }),
         ),
       );
-      if (removedConversationsIds.length) {
+      if (deletedConversationsIds.length) {
         actions.push(
           of(
             ConversationsActions.deleteConversations({
-              conversationIds: removedConversationsIds,
+              conversationIds: deletedConversationsIds,
             }),
           ),
         );
@@ -797,7 +803,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `An error occurred while removing the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
@@ -839,6 +845,8 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         isChatsBackedUp: BrowserStorage.getEntityBackedUp(
           MigrationStorageKeys.ChatsBackedUp,
         ),
+        isMigrationInitialized:
+          BrowserStorage.getEntitiesMigrationInitialized(),
       }),
     ),
     switchMap(
@@ -848,12 +856,32 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         migratedConversationIds,
         failedMigratedConversationIds,
         isChatsBackedUp,
+        isMigrationInitialized,
       }) => {
         const notMigratedConversations = filterMigratedEntities(
           conversations,
           [...failedMigratedConversationIds, ...migratedConversationIds],
           true,
         );
+
+        if (
+          !isMigrationInitialized &&
+          conversations.length &&
+          !failedMigratedConversationIds.length &&
+          !migratedConversationIds.length
+        ) {
+          return concat(
+            of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: filterMigratedEntities(
+                  conversations,
+                  conversations.map((c) => c.id),
+                ),
+              }),
+            ),
+            of(UIActions.setShowSelectToMigrateWindow(true)),
+          );
+        }
 
         if (
           SettingsSelectors.selectStorageType(state$.value) !==
@@ -877,16 +905,20 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const sortedConversations = notMigratedConversations.sort((a, b) => {
-          if (!a.lastActivityDate) return 1;
-          if (!b.lastActivityDate) return -1;
+        const conversationsWithoutDate = notMigratedConversations.filter(
+          (c) => !c.lastActivityDate,
+        );
+        const conversationsWithDate = notMigratedConversations.filter(
+          (c) => c.lastActivityDate,
+        );
+        const sortedConversations = [
+          ...conversationsWithoutDate,
+          ...orderBy(conversationsWithDate, (c) => c.lastActivityDate),
+        ];
 
-          return a.lastActivityDate - b.lastActivityDate;
-        });
         const preparedConversations = getPreparedConversations({
-          conversations: notMigratedConversations,
+          conversations: sortedConversations,
           conversationsFolders,
-          addRoot: true,
         });
 
         let migratedConversationsCount = 0;
@@ -899,8 +931,10 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           ),
           from(preparedConversations).pipe(
             concatMap((conversation) =>
-              ConversationService.setConversations([conversation]).pipe(
-                switchMap(() => {
+              ConversationService.setConversations([
+                conversation as Conversation,
+              ]).pipe(
+                concatMap(() => {
                   migratedConversationIds.push(
                     sortedConversations[migratedConversationsCount].id,
                   );
@@ -1177,15 +1211,11 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 
         const newConversationName =
           payload.conversation.replay?.isReplay ||
-          updatedMessages.length > 2 ||
+          updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
           payload.conversation.isNameChanged
             ? payload.conversation.name
             : getNextDefaultName(
-                getNewConversationName(
-                  payload.conversation,
-                  payload.message,
-                  updatedMessages,
-                ),
+                getNewConversationName(payload.conversation, payload.message),
                 conversations.filter(
                   (conv) =>
                     conv.folderId === payload.conversation.folderId &&
@@ -1237,6 +1267,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           of(
             ModelsActions.updateRecentModels({
               modelId: updatedConversation.model.id,
+              rearrange: true,
             }),
           ),
           iif(
@@ -1828,7 +1859,10 @@ const hideChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.uploadConversationsByIdsSuccess.match(action) ||
+        ConversationsActions.createNewConversations.match(action) ||
+        ConversationsActions.selectConversations.match(action) ||
+        ConversationsActions.createNewPlaybackConversation.match(action) ||
+        ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
         (ConversationsActions.addConversations.match(action) &&
           !!action.payload.selectAdded),
@@ -2212,15 +2246,18 @@ const saveConversationEpic: AppEpic = (action$) =>
     ),
     switchMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
-        switchMap(() => EMPTY),
+        switchMap(() => of(ConversationsActions.saveConversationSuccess())),
         catchError((err) => {
           console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the conversation. Please refresh the page.',
+          return concat(
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the conversation. Please refresh the page.',
+                ),
               ),
             ),
+            of(ConversationsActions.saveConversationFail(newConversation)),
           );
         }),
       );
@@ -2231,32 +2268,35 @@ const recreateConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.recreateConversation.match),
     mergeMap(({ payload }) => {
-      return zip(
-        ConversationService.createConversation(payload.new),
-        ConversationService.deleteConversation(
-          getConversationInfoFromId(payload.old.id),
-        ),
-      ).pipe(
-        switchMap(() => EMPTY),
-        catchError((err) => {
-          console.error(err);
-          return concat(
-            of(
-              ConversationsActions.recreateConversationFail({
-                newId: payload.new.id,
-                oldConversation: payload.old,
-              }),
+      return ConversationService.createConversation(payload.new)
+        .pipe(
+          switchMap(() =>
+            ConversationService.deleteConversation(
+              getConversationInfoFromId(payload.old.id),
             ),
-            of(
-              UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the conversation. Please refresh the page.',
+          ),
+        )
+        .pipe(
+          switchMap(() => of(ConversationsActions.saveConversationSuccess())),
+          catchError((err) => {
+            console.error(err);
+            return concat(
+              of(
+                ConversationsActions.recreateConversationFail({
+                  newId: payload.new.id,
+                  oldConversation: payload.old,
+                }),
+              ),
+              of(
+                UIActions.showErrorToast(
+                  translate(
+                    'An error occurred while saving the conversation. Please refresh the page.',
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
-      );
+            );
+          }),
+        );
     }),
   );
 
@@ -2494,6 +2534,32 @@ const openFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const getChartAttachmentEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.getChartAttachment.match),
+    switchMap(({ payload }) =>
+      FileService.getFileContent<PlotParams>(
+        ApiUtils.encodeApiUrl(payload.pathToChart),
+      ).pipe(
+        switchMap((params) => {
+          return of(
+            ConversationsActions.getChartAttachmentSuccess({
+              params,
+              pathToChart: payload.pathToChart,
+            }),
+          );
+        }),
+        catchError(() =>
+          of(
+            UIActions.showErrorToast(
+              translate('Error while uploading chart data'),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
 export const ConversationsEpics = combineEpics(
   migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
@@ -2547,4 +2613,6 @@ export const ConversationsEpics = combineEpics(
   openFolderEpic,
   compareConversationsEpic,
   hideChatbarEpic,
+
+  getChartAttachmentEpic,
 );

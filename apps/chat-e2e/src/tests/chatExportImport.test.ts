@@ -1,3 +1,5 @@
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -8,8 +10,6 @@ import {
   Import,
   MenuOptions,
   ModelIds,
-  TestConversation,
-  TestFolder,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -154,9 +154,9 @@ dialTest(
     confirmationDialog,
   }) => {
     setTestIds('EPMRTC-907');
-    let nestedFolders: TestFolder[];
-    let conversationOutsideFolder: TestConversation;
-    let nestedConversations: TestConversation[] = [];
+    let nestedFolders: FolderInterface[];
+    let conversationOutsideFolder: Conversation;
+    let nestedConversations: Conversation[] = [];
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -233,9 +233,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-913');
     let conversationsInFolder: FolderConversation;
-    let conversationOutsideFolder: TestConversation;
-    let importedFolderConversation: TestConversation;
-    let importedRootConversation: TestConversation;
+    let conversationOutsideFolder: Conversation;
+    let importedFolderConversation: Conversation;
+    let importedRootConversation: Conversation;
     let importedNewFolderConversation: FolderConversation;
 
     await dialTest.step(
@@ -387,7 +387,7 @@ dialTest(
     chatBar,
   }) => {
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925');
-    let importedRootConversation: TestConversation;
+    let importedRootConversation: Conversation;
     const requests = ['1+2', '2+3', '3+4'];
 
     await dialTest.step(
@@ -538,7 +538,9 @@ dialTest(
           .getConversationByName(Import.v14AppBisonChatName)
           .waitFor();
 
-        const defaultIcon = await iconApiHelper.getDefaultEntityIcon();
+        const defaultIcon = await iconApiHelper.getEntityIcon(
+          ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
+        );
         const bisonConversationIcon = await conversations.getConversationIcon(
           Import.v14AppBisonChatName,
         );
@@ -606,8 +608,8 @@ dialTest(
     folderDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
-    let nestedFolders: TestFolder[];
-    let nestedConversations: TestConversation[] = [];
+    let nestedFolders: FolderInterface[];
+    let nestedConversations: Conversation[] = [];
     let exportedData: UploadDownloadData;
     await dialTest.step(
       'Prepare 3 level nested folders with conversations in each folder',
@@ -747,8 +749,8 @@ dialTest(
     conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1374');
-    let nestedFolders: TestFolder[];
-    let nestedConversations: TestConversation[] = [];
+    let nestedFolders: FolderInterface[];
+    let nestedConversations: Conversation[] = [];
     const updatedConversationNames: string[] = [];
 
     await dialTest.step(
@@ -877,8 +879,8 @@ dialTest(
     conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1387', 'EPMRTC-1979');
-    let nestedFolders: TestFolder[];
-    let thirdLevelFolderConversation: TestConversation;
+    let nestedFolders: FolderInterface[];
+    let thirdLevelFolderConversation: Conversation;
     let exportedData: UploadDownloadData;
 
     await dialTest.step(
@@ -887,7 +889,9 @@ dialTest(
         nestedFolders = conversationData.prepareNestedFolder(levelsCount);
         thirdLevelFolderConversation =
           conversationData.prepareDefaultConversation();
-        thirdLevelFolderConversation.folderId = nestedFolders[levelsCount].id;
+        thirdLevelFolderConversation.folderId =
+          nestedFolders[levelsCount].folderId;
+        thirdLevelFolderConversation.id = `${thirdLevelFolderConversation.folderId}/${thirdLevelFolderConversation.id}`;
 
         await dataInjector.createConversations(
           [thirdLevelFolderConversation],

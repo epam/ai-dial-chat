@@ -1,3 +1,4 @@
+import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -5,7 +6,6 @@ import {
   ExpectedMessages,
   MenuOptions,
   ModelIds,
-  TestConversation,
   Theme,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
@@ -39,9 +39,10 @@ dialTest(
     setTestIds,
     iconApiHelper,
     talkToRecentGroupEntities,
+    dataInjector,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
-    let conversation: TestConversation;
+    let conversation: Conversation;
     const conversationModels = [defaultModel, gpt4Model];
     let playbackConversationName: string;
 
@@ -57,7 +58,8 @@ dialTest(
           conversationData.prepareConversationWithDifferentModels(
             conversationModels,
           );
-        await localStorageManager.setConversationHistory(conversation);
+
+        await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
 
         const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
@@ -421,8 +423,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1420', 'EPMRTC-1421');
-    let conversation: TestConversation;
-    let playbackConversation: TestConversation;
+    let conversation: Conversation;
+    let playbackConversation: Conversation;
     const playNextKeys = [
       keys.space,
       keys.enter,
@@ -680,8 +682,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1425');
-    let conversation: TestConversation;
-    let playbackConversation: TestConversation;
+    let conversation: Conversation;
+    let playbackConversation: Conversation;
 
     await dialTest.step(
       'Prepare playback conversation based on 2 requests and played back till the last message',
@@ -754,8 +756,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1427', 'EPMRTC-1470', 'EPMRTC-1473', 'EPMRTC-1428');
-    let conversation: TestConversation;
-    let playbackConversation: TestConversation;
+    let conversation: Conversation;
+    let playbackConversation: Conversation;
 
     await dialTest.step(
       'Prepare playback conversation based on several long requests',
@@ -794,13 +796,11 @@ dialTest(
     await dialTest.step(
       'Click Play Next message button and verify Play Next is not visible and cursor is blinking while response is loading, content auto-scrolled to the end of response',
       async () => {
+        await dialHomePage.throttleAPIResponse('**/*');
         await chat.playNextChatMessage(false);
-        const isPlaybackNextBtnVisible =
-          await playbackControl.playbackNextButton.isVisible();
-        expect(
-          isPlaybackNextBtnVisible,
-          ExpectedMessages.playbackNextMessageIsHidden,
-        ).toBeFalsy();
+        await playbackControl.playbackNextButton.waitForState({
+          state: 'hidden',
+        });
 
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect
@@ -817,11 +817,13 @@ dialTest(
           playedBackResponse,
           ExpectedMessages.playbackMessageIsInViewport,
         ).toBeInViewport();
+
+        await dialHomePage.unRouteAllResponses();
       },
     );
 
     await dialTest.step(
-      'Click Play Previous message button and verify cursor is not blinking, response is removing immediately',
+      'Click Play Previous message button and verify cursor is not blinking, response is deleting immediately',
       async () => {
         await chatMessages.waitForResponseReceived();
         await chat.playPreviousChatMessage();

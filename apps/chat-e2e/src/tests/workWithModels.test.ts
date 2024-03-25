@@ -1,12 +1,12 @@
+import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   ExpectedConstants,
   ExpectedMessages,
   ModelIds,
-  TestConversation,
-  TestPrompt,
   Theme,
 } from '@/src/testData';
 import { Cursors, Styles } from '@/src/ui/domData';
@@ -39,7 +39,7 @@ dialTest(
     chatMessages,
   }) => {
     setTestIds('EPMRTC-476');
-    let conversation: TestConversation;
+    let conversation: Conversation;
     const userRequests = [
       'first request',
       'second request',
@@ -175,7 +175,7 @@ dialTest(
           const tooltipContent = await tooltip.getContent();
           expect
             .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.regenerateResponseTooltip);
+            .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
         }
       },
     );
@@ -204,7 +204,7 @@ dialTest(
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.regenerateResponseTooltip);
+          .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
       },
     );
 
@@ -236,7 +236,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-485', 'EPMRTC-486', 'EPMRTC-487');
     const editData = 'updated message';
-    let conversation: TestConversation;
+    let conversation: Conversation;
     const userRequests = ['1+2=', '2+3=', '3+4='];
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(
@@ -285,7 +285,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Edit 2nd request, save changes and verify response is received, last request is removed',
+      'Edit 2nd request, save changes and verify response is received, last request is deleted',
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.editMessage(userRequests[1], editData);
@@ -314,7 +314,7 @@ dialTest(
 
 dialTest(
   'Delete the message in the middle. Cancel.\n' +
-    'Delete the message in the middle. Remove',
+    'Delete the message in the middle. Delete',
   async ({
     dialHomePage,
     conversationData,
@@ -634,7 +634,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1010', 'EPMRTC-1945');
-    let prompt: TestPrompt;
+    let prompt: Prompt;
 
     await dialTest.step('Prepare prompt with content', async () => {
       prompt = promptData.preparePrompt(promptContent);

@@ -12,13 +12,15 @@ let bison: DialAIEntityModel;
 let recentAddonIds: string[];
 let recentModelIds: string[];
 let allEntities: DialAIEntityModel[];
+let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
-  bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  bison = ModelsUtil.getModel(ModelIds.CHAT_BISON)!;
   recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
+  modelsWithoutSystemPrompt = ModelsUtil.getModelsWithoutSystemPrompt();
 });
 
 dialTest(
@@ -338,7 +340,12 @@ dialTest(
     await talkToSelector.selectModel(randomModel.name);
     const sysPrompt = 'test prompt';
     const temp = 0;
-    await entitySettings.setSystemPrompt(sysPrompt);
+    const isSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
+      randomModel.id,
+    );
+    if (isSysPromptAllowed) {
+      await entitySettings.setSystemPrompt(sysPrompt);
+    }
     await temperatureSlider.setTemperature(temp);
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
@@ -355,10 +362,13 @@ dialTest(
       });
     });
 
-    const systemPrompt = await entitySettings.systemPrompt.getElementContent();
-    expect
-      .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-      .toBe(sysPrompt);
+    if (isSysPromptAllowed) {
+      const systemPrompt =
+        await entitySettings.systemPrompt.getElementContent();
+      expect
+        .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
+        .toBe(sysPrompt);
+    }
 
     const temperature = await temperatureSlider.getTemperature();
     expect
@@ -422,21 +432,27 @@ dialTest(
       ModelsUtil.getOpenAIEntities().filter((m) => m.name.length >= 3),
     );
     const searchTerm = randomEntity.name.substring(0, 3);
-    const matchedModels = ModelsUtil.getLatestModels().filter(
+    const matchedModels = ModelsUtil.getModels().filter(
       (m) =>
         m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedApplications = ModelsUtil.getLatestApplications().filter(
+    const matchedApplications = ModelsUtil.getApplications().filter(
       (a) =>
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-    const matchedAssistants = ModelsUtil.getLatestAssistants().filter(
+    const matchedAssistants = ModelsUtil.getAssistants().filter(
       (a) =>
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         a.version?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
+    const expectedMatchedModelsCount =
+      ModelsUtil.groupEntitiesByName(matchedModels).size;
+    const expectedMatchedAppsCount =
+      ModelsUtil.groupEntitiesByName(matchedApplications).size;
+    const expectedMatchedAssistantsCount =
+      ModelsUtil.groupEntitiesByName(matchedAssistants).size;
 
     await dialTest.step(
       'Create new conversation and click "See full list.." link',
@@ -464,9 +480,9 @@ dialTest(
             ExpectedMessages.searchResultCountIsValid,
           )
           .toBe(
-            matchedModels.length +
-              matchedApplications.length +
-              matchedAssistants.length,
+            expectedMatchedModelsCount +
+              expectedMatchedAppsCount +
+              expectedMatchedAssistantsCount,
           );
       },
     );
@@ -483,13 +499,13 @@ dialTest(
             assistantsCount + appsCount,
             ExpectedMessages.searchResultCountIsValid,
           )
-          .toBe(matchedApplications.length + matchedAssistants.length);
+          .toBe(expectedMatchedAppsCount + expectedMatchedAssistantsCount);
 
         await modelsDialog.assistantsTab.click();
         appsCount = await talkToApplicationGroupEntities.getElementsCount();
         expect
           .soft(appsCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(matchedApplications.length);
+          .toBe(expectedMatchedAppsCount);
 
         await modelsDialog.applicationsTab.click();
         const noResult =

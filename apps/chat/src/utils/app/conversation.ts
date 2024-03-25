@@ -1,4 +1,7 @@
-import { prepareEntityName } from '@/src/utils/app/common';
+import {
+  isEntityNameOrPathInvalid,
+  prepareEntityName,
+} from '@/src/utils/app/common';
 
 import {
   Conversation,
@@ -89,17 +92,8 @@ export const isSettingsChanged = (
 export const getNewConversationName = (
   conversation: Conversation,
   message: Message,
-  updatedMessages: Message[],
 ): string => {
   const convName = prepareEntityName(conversation.name);
-
-  if (
-    conversation.replay?.isReplay ||
-    updatedMessages.length > 2 ||
-    conversation.isNameChanged
-  ) {
-    return convName;
-  }
   const content = prepareEntityName(message.content);
   if (content.length > 0) {
     return content;
@@ -156,7 +150,7 @@ export const sortByDateAndName = <T extends ConversationInfo>(
     ['desc', 'desc'],
   );
 
-const removePostfix = (name: string): string => {
+const deletePostfix = (name: string): string => {
   const regex = / \d{1,3}$/;
   let newName = name.trim();
   while (regex.test(newName)) {
@@ -168,8 +162,13 @@ const removePostfix = (name: string): string => {
 export const isValidConversationForCompare = (
   selectedConversation: Conversation,
   candidate: ConversationInfo,
+  dontCompareNames?: boolean,
 ): boolean => {
-  if (candidate.isReplay || candidate.isPlayback) {
+  if (
+    candidate.isReplay ||
+    candidate.isPlayback ||
+    isEntityNameOrPathInvalid(candidate)
+  ) {
     return false;
   }
 
@@ -177,7 +176,8 @@ export const isValidConversationForCompare = (
     return false;
   }
   return (
-    removePostfix(selectedConversation.name) === removePostfix(candidate.name)
+    dontCompareNames ||
+    deletePostfix(selectedConversation.name) === deletePostfix(candidate.name)
   );
 };
 

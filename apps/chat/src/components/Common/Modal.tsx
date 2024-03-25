@@ -96,7 +96,10 @@ function ModalView({
           data-floating-overlay
           onKeyDown={onKeyDownOverlay}
         >
-          <FloatingFocusManager context={context} initialFocus={initialFocus}>
+          <FloatingFocusManager
+            context={context}
+            {...(initialFocus && { initialFocus: initialFocus })}
+          >
             <Tag
               className={classNames(
                 'relative max-h-full rounded bg-layer-3 text-left',
@@ -121,7 +124,7 @@ function ModalView({
               {heading && typeof heading === 'string' ? (
                 <h4
                   className={classNames(
-                    'mb-2 max-h-[50px] text-left text-base font-semibold',
+                    'mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold',
                     headingClassName,
                   )}
                 >

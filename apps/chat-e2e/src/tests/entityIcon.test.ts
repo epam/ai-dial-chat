@@ -135,18 +135,28 @@ dialTest(
 
 dialTest(
   '"Talk to" item icon is jumping while generating an answer',
-  async ({ dialHomePage, talkToSelector, chat, setTestIds, chatMessages }) => {
+  async ({
+    dialHomePage,
+    chat,
+    setTestIds,
+    chatMessages,
+    conversationData,
+    dataInjector,
+    localStorageManager,
+  }) => {
     setTestIds('EPMRTC-386');
     const model = ModelsUtil.getModel(ModelIds.GPT_4_32K)!;
 
     await dialTest.step(
-      'Create a new conversation based on default model and send a request',
+      'Create a new conversation based on Gpr 4-32 model and send a request',
       async () => {
+        const conversation =
+          await conversationData.prepareEmptyConversation(model);
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setSelectedConversation(conversation);
+
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await talkToSelector.selectModel(model.name);
+        await dialHomePage.waitForPageLoaded();
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },
     );

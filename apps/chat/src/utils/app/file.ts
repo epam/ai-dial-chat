@@ -1,9 +1,10 @@
 import { Attachment, Conversation } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { DialFile, DialLink } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
 import { ApiUtils } from '../server/api';
+import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -38,24 +39,40 @@ export const getFileName = (path: string | undefined): string | undefined => {
 };
 
 export const getUserCustomContent = (
-  files: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
-) => {
-  if (files.length === 0) {
+  files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
+  links?: DialLink[],
+): { attachments: Attachment[] } | undefined => {
+  if (!files?.length && !links?.length) {
     return undefined;
   }
 
-  return {
-    attachments: files
-      .filter(
-        (file) =>
-          file.status !== UploadStatus.FAILED &&
-          file.status !== UploadStatus.LOADING,
-      )
-      .map((file) => ({
+  const filesAttachments: Attachment[] | undefined = files
+    ?.filter(
+      (file) =>
+        file.status !== UploadStatus.FAILED &&
+        file.status !== UploadStatus.LOADING,
+    )
+    .map(
+      (file): Attachment => ({
         type: file.contentType,
         title: file.name,
         url: ApiUtils.encodeApiUrl(`${file.absolutePath}/${file.name}`),
-      })),
+      }),
+    );
+
+  const linksAttachments: Attachment[] | undefined = links?.map(
+    (link): Attachment => ({
+      title: link.title ?? link.href,
+      type: '*/*',
+      url: link.href,
+      reference_url: link.href,
+    }),
+  );
+
+  return {
+    attachments: (
+      [filesAttachments, linksAttachments].filter(Boolean) as Attachment[][]
+    ).flat(),
   };
 };
 
@@ -104,7 +121,7 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/{}';
+export const notAllowedSymbols = ':;,=/{}%&\\';
 export const notAllowedSymbolsRegex = new RegExp(
   `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r)`,
   'gm',
@@ -112,7 +129,10 @@ export const notAllowedSymbolsRegex = new RegExp(
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
 ): T[] => {
-  return files.filter(({ name }) => name.match(notAllowedSymbolsRegex));
+  return files.filter(
+    ({ name }) =>
+      name.match(notAllowedSymbolsRegex) || doesHaveDotsInTheEnd(name),
+  );
 };
 
 export const getFilesWithInvalidFileSize = (
@@ -160,6 +180,30 @@ export const getDialFilesFromAttachments = (
       };
     })
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
+};
+
+export const getDialLinksFromAttachments = (
+  attachments: Attachment[] | undefined,
+): DialLink[] => {
+  if (!attachments) {
+    return [];
+  }
+
+  return attachments
+    .map((attachment): DialLink | null => {
+      if (
+        !attachment.url ||
+        (!attachment.url.startsWith('http') && !attachment.url.startsWith('//'))
+      ) {
+        return null;
+      }
+
+      return {
+        href: attachment.url,
+        title: attachment.title,
+      };
+    })
+    .filter(Boolean) as DialLink[];
 };
 
 export const getExtensionsListForMimeType = (mimeType: string) => {

@@ -15,8 +15,10 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
+  trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { onBlur } from '@/src/utils/app/style-helpers';
@@ -73,7 +75,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   };
 
   const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
-    setName(prepareEntityName(e.target.value, true));
+    setName(prepareEntityName(e.target.value, { forRenaming: true }));
     onBlur(e);
   };
 
@@ -92,47 +94,56 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
   const updatePrompt = useCallback(
     (selectedPrompt: Prompt) => {
-      const newName = prepareEntityName(name, true);
-      setName(newName);
-
-      if (!newName) return;
-
-      if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
-        dispatch(
-          UIActions.showToast({
-            message: t(
-              'Prompt with name "{{newName}}" already exists in this folder.',
-              {
-                ns: 'prompt',
-                newName,
-              },
-            ),
-            type: 'error',
-          }),
-        );
-
-        return;
-      }
-
       onUpdatePrompt({
         ...selectedPrompt,
-        name: newName,
+        name: trimEndDots(name),
         description: description?.trim(),
         content: content.trim(),
       });
       setSubmitted(false);
       onClose();
     },
-    [
-      allPrompts,
-      content,
-      description,
-      dispatch,
-      name,
-      onClose,
-      onUpdatePrompt,
-      t,
-    ],
+    [content, description, name, onClose, onUpdatePrompt],
+  );
+
+  const handleRename = useCallback(
+    (selectedPrompt: Prompt) => {
+      setSubmitted(true);
+
+      const newName = prepareEntityName(name, { forRenaming: true });
+      setName(newName);
+
+      if (!newName) return;
+
+      if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Prompt with name "{{newName}}" already exists in this folder.', {
+              ns: 'prompt',
+              newName,
+            }),
+          ),
+        );
+        return;
+      }
+
+      if (doesHaveDotsInTheEnd(newName)) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the end of a name is not permitted.'),
+          ),
+        );
+        return;
+      }
+
+      if (selectedPrompt.isShared && selectedPrompt.name !== newName) {
+        setIsConfirmDialog(true);
+        return;
+      }
+
+      updatePrompt(selectedPrompt);
+    },
+    [allPrompts, dispatch, name, t, updatePrompt],
   );
 
   const handleSubmit = useCallback(
@@ -140,25 +151,20 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       e.preventDefault();
       e.stopPropagation();
 
-      setSubmitted(true);
-
-      if (selectedPrompt.isShared && selectedPrompt.name !== name) {
-        setIsConfirmDialog(true);
-        return;
-      }
-
-      updatePrompt(selectedPrompt);
+      handleRename(selectedPrompt);
     },
-    [name, updatePrompt],
+    [handleRename],
   );
 
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLDivElement>, selectedPrompt: Prompt) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        updatePrompt(selectedPrompt);
+        e.preventDefault();
+        e.stopPropagation();
+        handleRename(selectedPrompt);
       }
     },
-    [updatePrompt],
+    [handleRename],
   );
 
   useEffect(() => {
@@ -179,7 +185,8 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setName(selectedPrompt?.name || '');
   }, [selectedPrompt?.name]);
 
-  const saveDisabled = !prepareEntityName(name, true) || !content.trim();
+  const saveDisabled =
+    !prepareEntityName(name, { forRenaming: true }) || !content.trim();
 
   return (
     <Modal
@@ -196,7 +203,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       heading={t('Edit prompt')}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
-        if (selectedPrompt) handleEnter(e, selectedPrompt);
+        if (selectedPrompt && !saveDisabled) handleEnter(e, selectedPrompt);
       }}
       initialFocus={nameInputRef}
     >
@@ -295,7 +302,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             cancelLabel={t('Cancel')}
             description={
               t(
-                'Renaming will stop sharing and other users will no longer see this conversation.',
+                'Renaming will stop sharing and other users will no longer see this prompt.',
               ) || ''
             }
             onClose={(result) => {

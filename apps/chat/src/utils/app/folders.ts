@@ -5,7 +5,7 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, PrepareNameOptions } from '@/src/types/chat';
 import {
   Entity,
   PartialBy,
@@ -19,6 +19,7 @@ import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
+import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isRootId } from './id';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -191,7 +192,7 @@ export const getFolderIdByPath = (path: string, folders: FolderInterface[]) => {
 export const getPathToFolderById = (
   folders: FolderInterface[],
   starterId: string | undefined,
-  removeNotAllowedSymbols = false,
+  options?: Partial<PrepareNameOptions & { prepareNames: boolean }>,
 ) => {
   const path: string[] = [];
   const createPath = (folderId: string) => {
@@ -199,8 +200,8 @@ export const getPathToFolderById = (
     if (!folder) return;
 
     path.unshift(
-      removeNotAllowedSymbols
-        ? folder.name.replace(notAllowedSymbolsRegex, '') || DEFAULT_FOLDER_NAME
+      options?.prepareNames
+        ? prepareEntityName(folder.name, options) || DEFAULT_FOLDER_NAME
         : folder.name,
     );
 
@@ -363,6 +364,10 @@ export const validateFolderRenaming = (
 
   if (newName.match(notAllowedSymbolsRegex)) {
     return `The symbols ${notAllowedSymbols} are not allowed in folder name`;
+  }
+
+  if (doesHaveDotsInTheEnd(newName)) {
+    return 'Using a dot at the end of a name is not permitted.';
   }
 };
 

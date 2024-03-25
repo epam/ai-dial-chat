@@ -1,10 +1,10 @@
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
-  TestPrompt,
 } from '@/src/testData';
 import { Colors, Cursors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
@@ -41,12 +41,7 @@ dialTest(
     await promptBar.createNewPrompt();
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
     await promptModalDialog.saveButton.click();
-    expect
-      .soft(
-        await prompts.getPromptByName(newName).isVisible(),
-        ExpectedMessages.newPromptCreated,
-      )
-      .toBeTruthy();
+    await prompts.getPromptByName(newName).waitFor();
   },
 );
 
@@ -414,14 +409,25 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await dataInjector.updatePrompts(
-      [singlePrompt, ...promptInFolder.prompts],
-      promptInFolder.folders,
-    );
-    await dataInjector.updateConversations(
-      [singleConversation, ...conversationInFolder.conversations],
-      conversationInFolder.folders,
-    );
+    if (isApiStorageType) {
+      await dataInjector.createPrompts([
+        singlePrompt,
+        ...promptInFolder.prompts,
+      ]);
+      await dataInjector.createConversations([
+        singleConversation,
+        ...conversationInFolder.conversations,
+      ]);
+    } else {
+      await dataInjector.updatePrompts(
+        [singlePrompt, ...promptInFolder.prompts],
+        promptInFolder.folders,
+      );
+      await dataInjector.updateConversations(
+        [singleConversation, ...conversationInFolder.conversations],
+        conversationInFolder.folders,
+      );
+    }
     await localStorageManager.updateSelectedConversation(singleConversation);
 
     await dialHomePage.reloadPage();
@@ -642,11 +648,11 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1173');
-    let firstPrompt: TestPrompt;
-    let secondPrompt: TestPrompt;
-    let thirdPrompt: TestPrompt;
-    let fourthPrompt: TestPrompt;
-    let fifthPrompt: TestPrompt;
+    let firstPrompt: Prompt;
+    let secondPrompt: Prompt;
+    let thirdPrompt: Prompt;
+    let fourthPrompt: Prompt;
+    let fifthPrompt: Prompt;
     const promptContent = 'Prompt search test';
     const notMatchingSearchTerm = 'abc';
     const searchTerm = 'test';

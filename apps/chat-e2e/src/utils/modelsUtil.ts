@@ -82,7 +82,13 @@ export class ModelsUtil {
   }
 
   public static getDefaultModel() {
-    return ModelsUtil.getModels().find((a) => a.isDefault === true);
+    return ModelsUtil.getModels().find((a) => a.isDefault);
+  }
+
+  public static getModelsWithoutSystemPrompt() {
+    return ModelsUtil.getModels()
+      .filter((m) => m.features?.systemPrompt === false)
+      .map((m) => m.id);
   }
 
   public static getApplication(appId: string) {
@@ -161,5 +167,16 @@ export class ModelsUtil {
     return process.env.RECENT_ADDONS !== 'undefined'
       ? JSON.parse(process.env.RECENT_ADDONS!)
       : [];
+  }
+
+  public static groupEntitiesByName(entities: DialAIEntityModel[]) {
+    return entities.reduce((groupMap, entity) => {
+      if (!groupMap.has(entity.name)) {
+        groupMap.set(entity.name, []);
+      }
+      const group = groupMap.get(entity.name);
+      group?.push(entity);
+      return groupMap;
+    }, new Map<string, DialAIEntityModel[]>());
   }
 }

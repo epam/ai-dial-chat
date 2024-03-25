@@ -111,7 +111,6 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<{ newPrompt: Prompt }>,
     ) => {
       state.prompts = state.prompts.concat(payload.newPrompt);
-      state.selectedPromptId = payload.newPrompt.id;
       state.isNewPromptCreating = false;
     },
     setIsNewPromptCreating: (state, { payload }: PayloadAction<boolean>) => {
@@ -121,9 +120,9 @@ export const promptsSlice = createSlice({
       state,
     deletePrompts: (
       state,
-      { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,
+      { payload }: PayloadAction<{ promptsToDelete: PromptInfo[] }>,
     ) => {
-      const promptToDeleteIds = payload.promptsToRemove.map(
+      const promptToDeleteIds = payload.promptsToDelete.map(
         (prompt) => prompt.id,
       );
 
@@ -314,6 +313,7 @@ export const promptsSlice = createSlice({
             payload.parentId,
           ),
         type: FolderType.Prompt,
+        status: UploadStatus.LOADED,
       });
 
       state.folders = state.folders.concat(newFolder);
@@ -420,7 +420,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = state.folders.concat(payload.folders);
+      state.folders = combineEntities(state.folders, payload.folders);
     },
     setSearchTerm: (
       state,

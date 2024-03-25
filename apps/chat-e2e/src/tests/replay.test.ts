@@ -1,4 +1,5 @@
-import { ChatBody } from '@/chat/types/chat';
+import { ChatBody, Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -7,8 +8,6 @@ import {
   Import,
   MenuOptions,
   ModelIds,
-  TestConversation,
-  TestFolder,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -23,7 +22,7 @@ dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
   gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
-  bison = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  bison = ModelsUtil.getModel(ModelIds.CHAT_BISON)!;
 });
 
 dialTest(
@@ -44,10 +43,10 @@ dialTest(
     addons,
   }) => {
     setTestIds('EPMRTC-501', 'EPMRTC-1264');
-    let replayConversation: TestConversation;
+    let replayConversation: Conversation;
     const replayTemp = 0;
     const replayPrompt = 'replay prompt';
-    let firstConversation: TestConversation;
+    let firstConversation: Conversation;
 
     await dialTest.step(
       'Prepare two conversation with different settings',
@@ -169,8 +168,8 @@ dialTest(
     conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-503');
-    let nestedFolders: TestFolder[];
-    let nestedConversations: TestConversation[] = [];
+    let nestedFolders: FolderInterface[];
+    let nestedConversations: Conversation[] = [];
     const nestedLevels = 3;
 
     await dialTest.step(
@@ -340,11 +339,12 @@ dialTest(
     localStorageManager,
     dataInjector,
     setTestIds,
+    tooltip,
     chatMessages,
   }) => {
     setTestIds('EPMRTC-512');
-    let conversation: TestConversation;
-    let replayConversation: TestConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
     const userRequest = 'write down 100 adjectives';
 
     await dialTest.step('Prepare model conversation to replay', async () => {
@@ -366,11 +366,12 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+
+        await chat.proceedGenerating.hoverOver();
+        const tooltipContent = await tooltip.getContent();
+
         expect
-          .soft(
-            await chat.proceedGenerating.getElementInnerContent(),
-            ExpectedMessages.proceedReplayIsVisible,
-          )
+          .soft(tooltipContent, ExpectedMessages.proceedReplayIsVisible)
           .toBe(ExpectedConstants.continueReplayLabel);
       },
     );
@@ -409,11 +410,12 @@ dialTest(
     dataInjector,
     setTestIds,
     chatMessages,
+    tooltip,
     context,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
-    let conversation: TestConversation;
-    let replayConversation: TestConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
     await dialTest.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareDefaultConversation(gpt35Model);
       replayConversation =
@@ -437,14 +439,15 @@ dialTest(
 
     await dialTest.step('Verify error message is displayed', async () => {
       const generatedContent = await chatMessages.getLastMessageContent();
+
+      await chat.proceedGenerating.hoverOver();
+      const tooltipContent = await tooltip.getContent();
+
       expect
         .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
         .toBe(ExpectedConstants.answerError);
       expect
-        .soft(
-          await chat.proceedGenerating.getElementInnerContent(),
-          ExpectedMessages.proceedReplayIsVisible,
-        )
+        .soft(tooltipContent, ExpectedMessages.proceedReplayIsVisible)
         .toBe(ExpectedConstants.continueReplayAfterErrorLabel);
     });
 
@@ -487,8 +490,8 @@ dialTest(
     setTestIds('EPMRTC-1323', 'EPMRTC-1324');
     const replayTemp = 0.8;
     const replayPrompt = 'reply the same text';
-    let conversation: TestConversation;
-    let replayConversation: TestConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
     const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt35Model);
 
     await dialTest.step('Prepare conversation to replay', async () => {
@@ -587,8 +590,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1322', 'EPMRTC-388');
-    let replayConversation: TestConversation;
-    let conversation: TestConversation;
+    let replayConversation: Conversation;
+    let conversation: Conversation;
     const firstModel = gpt35Model;
     const secondModel = gpt4Model;
     const conversationModels = [gpt35Model, gpt4Model];
@@ -663,7 +666,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1535');
     const message = GeneratorUtil.randomString(10);
-    let replayConversation: TestConversation;
+    let replayConversation: Conversation;
 
     await dialTest.step('Prepare conversation to replay', async () => {
       const requests: string[] = [];
@@ -715,11 +718,15 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        await sendMessage.sendMessageButton.hoverOver();
-        const tooltipContent = await tooltip.getContent();
+        const isSendButtonVisible =
+          await sendMessage.sendMessageButton.isVisible();
+
         expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.proceedReplayTooltip);
+          .soft(
+            isSendButtonVisible,
+            ExpectedMessages.sendMessageButtonIsNotVisible,
+          )
+          .toBeFalsy();
 
         await chat.footer.waitForState({ state: 'attached' });
       },
@@ -741,11 +748,14 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        await sendMessage.sendMessageButton.hoverOver();
-        const tooltipContent = await tooltip.getContent();
+        const isSendButtonVisible =
+          await sendMessage.sendMessageButton.isVisible();
         expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.proceedReplayTooltip);
+          .soft(
+            isSendButtonVisible,
+            ExpectedMessages.sendMessageButtonIsNotVisible,
+          )
+          .toBeFalsy();
 
         await chat.footer.waitForState({ state: 'attached' });
       },
@@ -768,8 +778,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
-    let conversation: TestConversation;
-    let replayConversation: TestConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
 
     await dialTest.step(
       'Prepare conversation to replay with updated name',
@@ -857,8 +867,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1312');
-    let errorConversation: TestConversation;
-    let replayConversation: TestConversation;
+    let errorConversation: Conversation;
+    let replayConversation: Conversation;
 
     await dialTest.step(
       'Prepare errorConversation with error response and replay errorConversation',
@@ -902,8 +912,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1328');
-    let notAllowedModelConversation: TestConversation;
-    let replayConversation: TestConversation;
+    let notAllowedModelConversation: Conversation;
+    let replayConversation: Conversation;
 
     await dialTest.step(
       'Prepare conversation with not allowed model and replay for it',
@@ -1004,7 +1014,7 @@ dialTest(
           { isHttpMethodTriggered: true },
         );
 
-        const newModels = [ModelIds.BISON_001, ModelIds.GPT_4];
+        const newModels = [ModelIds.CHAT_BISON, ModelIds.GPT_4];
         for (let i = 1; i <= newModels.length; i++) {
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
@@ -1058,7 +1068,7 @@ dialTest(
       async () => {
         const requests = await chat.startReplayForDifferentModels();
         for (let i = 0; i < requests.length; i++) {
-          const modelId = i === 1 ? ModelIds.BISON_001 : ModelIds.GPT_4;
+          const modelId = i === 1 ? ModelIds.CHAT_BISON : ModelIds.GPT_4;
           expect
             .soft(requests[i].modelId, ExpectedMessages.chatRequestModelIsValid)
             .toBe(modelId);
@@ -1080,7 +1090,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-500');
-    let conversation: TestConversation;
+    let conversation: Conversation;
 
     await dialTest.step('Prepare empty conversation', async () => {
       conversation = conversationData.prepareEmptyConversation();
@@ -1117,8 +1127,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1542');
-    let conversation: TestConversation;
-    let replayConversation: TestConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
 
     await dialTest.step('Prepare partially replayed conversation', async () => {
       conversation = conversationData.prepareConversationWithDifferentModels([

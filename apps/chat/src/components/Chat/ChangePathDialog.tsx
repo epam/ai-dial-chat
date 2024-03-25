@@ -24,7 +24,7 @@ import {
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
-  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
   PUBLISHING_FOLDER_NAME,
 } from '@/src/constants/folders';
 
@@ -161,12 +161,14 @@ export const ChangePathDialog = ({
   const getPath = () => {
     const { path, pathDepth } = getPathToFolderById(folders, selectedFolderId);
 
-    if (pathDepth + (depth ? depth : 0) > MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH) {
+    if (
+      pathDepth + (depth ? depth : 0) >
+      MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH
+    ) {
       dispatch(
-        UIActions.showToast({
-          message: t("It's not allowed to have more nested folders"),
-          type: 'error',
-        }),
+        UIActions.showErrorToast(
+          t("It's not allowed to have more nested folders"),
+        ),
       );
       return;
     }

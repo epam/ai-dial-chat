@@ -20,8 +20,7 @@ export const ExpectedConstants = {
   emptyPlaybackMessage: 'Type a message',
   startReplayLabel: 'Start replay',
   continueReplayLabel: 'Continue replay',
-  continueReplayAfterErrorLabel:
-    'Looks like something went wrong. Do you want to continue replay?',
+  continueReplayAfterErrorLabel: 'Try again',
   answerError:
     'Error happened during answering. Please check your internet connection and try again.',
   noConversationsAvailable: 'No conversations available',
@@ -30,7 +29,12 @@ export const ExpectedConstants = {
   enterMessageAlert: 'Please enter a message',
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
-    'Are you sure that you want to remove a folder with all nested elements?',
+    'Are you sure that you want to delete a folder with all nested elements?',
+  deleteSharedFolderMessage:
+    'Are you sure that you want to delete a folder with all nested elements?\n' +
+    'Deleting will stop sharing and other users will no longer see this folder.',
+  renameSharedFolderMessage:
+    'Renaming will stop sharing and other users will no longer see this folder.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
@@ -43,8 +47,9 @@ export const ExpectedConstants = {
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
     'Please note that some of your messages were created in older DIAL version. "Replay as is" could be working not as expected.',
-  regenerateResponseTooltip:
+  regenerateResponseToContinueTooltip:
     'Please regenerate response to continue working with chat',
+  regenerateResponseTooltip: 'Regenerate response',
   sharedConversationTooltip: 'Shared',
   sharedConversationName: (name: string) => `Share: ${name}`,
   sharedLink: (invitationLink: string) => {
@@ -66,6 +71,12 @@ export const ExpectedConstants = {
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
+  shareConversationText:
+    'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
+  shareFolderText:
+    'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  chatNotFoundMessage:
+    'Conversation not found.Please select another conversation.',
 };
 
 export enum Groups {
@@ -128,6 +139,8 @@ export const API = {
   importFilePath: (bucket: string) => `files/${bucket}/imports`,
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
+  shareWithMeListing: '/api/share/listing',
+  discardShareWithMeItem: '/api/share/discard',
 };
 
 export const Import = {
@@ -150,6 +163,7 @@ export const Import = {
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',
+  cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
 };
 
@@ -173,24 +187,30 @@ export enum ModelIds {
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
   GPT_4_VISION_PREVIEW = 'gpt-4-vision-preview',
+  CHAT_BISON = 'chat-bison',
   BISON_001 = 'chat-bison@001',
   BISON_32k_002 = 'chat-bison-32k@002',
+  CODE_CHAT_BISON = 'codechat-bison',
   CODE_BISON_001 = 'codechat-bison@001',
   CODE_BISON_32K_002 = 'codechat-bison-32k@002',
   DALLE = 'dall-e-3',
   AWS_TITAN = 'amazon.titan-tg1-large',
   AI21_GRANDE = 'ai21.j2-grande-instruct',
   AI21_JUMBO = 'ai21.j2-jumbo-instruct',
+  ANTHROPIC_CLAUDE = 'anthropic.claude',
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
+  ANTHROPIC_CLAUDE_V3 = 'anthropic.claude-v3',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
   GEMINI_PRO = 'gemini-pro',
+  META_LLAMA_2 = 'meta.llama2',
   LLAMA2_13B_CHAT_V1 = 'meta.llama2-13b-chat-v1',
   LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
   COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
+  MISTRAL_LARGE = 'mistral-large-azure',
 }
 
 export enum AddonIds {

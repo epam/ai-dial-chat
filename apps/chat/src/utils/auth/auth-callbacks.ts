@@ -8,6 +8,8 @@ import NextClient, { RefreshToken } from './nextauth-client';
 
 import { TokenSet } from 'openid-client';
 
+const waitRefreshTokenTimeout = 5;
+
 // Need to be set for all providers
 export const tokenConfig: TokenEndpointHandler = {
   request: async (context) => {
@@ -73,8 +75,10 @@ async function refreshAccessToken(token: Token) {
       await NextClient.delay();
       msWaiting += 50;
 
-      if (msWaiting >= 20000) {
-        throw new Error(`Waiting more than 20 seconds for refreshing token`);
+      if (msWaiting >= waitRefreshTokenTimeout * 1000) {
+        throw new Error(
+          `Waiting more than ${waitRefreshTokenTimeout} seconds for refreshing token`,
+        );
       }
     }
 

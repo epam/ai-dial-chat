@@ -20,8 +20,12 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  doesHaveDotsInTheEnd,
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
+  trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
@@ -52,6 +56,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { errorsMessages } from '@/src/constants/errors';
+
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
@@ -62,6 +68,7 @@ import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
+import Tooltip from '../Common/Tooltip';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -140,7 +147,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       !currentFolder.serverSynced,
   );
   const [renameValue, setRenameValue] = useState(currentFolder.name);
-  const [isSelected, setIsSelected] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
@@ -154,6 +160,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
+  const isNameInvalid = isEntityNameInvalid(currentFolder.name);
+  const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -252,7 +260,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const newName = prepareEntityName(renameValue, true);
+    const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
     if (
@@ -263,18 +271,25 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       )
     ) {
       dispatch(
-        UIActions.showToast({
-          message: t(
+        UIActions.showErrorToast(
+          t(
             'Folder with name "{{folderName}}" already exists in this folder.',
             {
               ns: 'folder',
               folderName: newName,
             },
           ),
-          type: 'error',
-        }),
+        ),
       );
+      return;
+    }
 
+    if (doesHaveDotsInTheEnd(newName)) {
+      dispatch(
+        UIActions.showErrorToast(
+          t('Using a dot at the end of a name is not permitted.'),
+        ),
+      );
       return;
     }
 
@@ -286,7 +301,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
 
     if (newName && newName !== currentFolder.name) {
-      onRenameFolder(newName, currentFolder.id);
+      onRenameFolder(trimEndDots(newName), currentFolder.id);
     }
     setRenameValue('');
     setIsRenaming(false);
@@ -341,12 +356,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
           if (childIds.has(currentFolder.id)) {
             dispatch(
-              UIActions.showToast({
-                message: t(
-                  "It's not allowed to move parent folder in child folder",
-                ),
-                type: 'error',
-              }),
+              UIActions.showErrorToast(
+                t("It's not allowed to move parent folder in child folder"),
+              ),
             );
             return;
           }
@@ -355,10 +367,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
           if (maxDepth && level + foldersDepth > maxDepth) {
             dispatch(
-              UIActions.showToast({
-                message: t("It's not allowed to have more nested folders"),
-                type: 'error',
-              }),
+              UIActions.showErrorToast(
+                t("It's not allowed to have more nested folders"),
+              ),
             );
             return;
           }
@@ -371,16 +382,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )
           ) {
             dispatch(
-              UIActions.showToast({
-                message: t(
+              UIActions.showErrorToast(
+                t(
                   'Folder with name "{{folderName}}" already exists in this folder.',
                   {
                     ns: 'folder',
                     folderName: draggedFolder.name,
                   },
                 ),
-                type: 'error',
-              }),
+              ),
             );
 
             return;
@@ -401,8 +411,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )
           ) {
             dispatch(
-              UIActions.showToast({
-                message: t(
+              UIActions.showErrorToast(
+                t(
                   '{{entityType}} with name "{{entityName}}" already exists in this folder.',
                   {
                     ns: 'common',
@@ -413,8 +423,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     entityName: draggedEntity.name,
                   },
                 ),
-                type: 'error',
-              }),
+              ),
             );
 
             return;
@@ -491,7 +500,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder.id, dispatch, featureType, isExternal, isParentFolder],
   );
 
-  const removeHighlight = useCallback(
+  const deleteHighlight = useCallback(
     (evt: DragEvent) => {
       if (!dragDropElement.current?.contains(evt.relatedTarget as Node)) {
         setIsDraggingOver(false);
@@ -543,10 +552,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (maxDepth && level + 1 > maxDepth) {
         dispatch(
-          UIActions.showToast({
-            message: t("It's not allowed to have more nested folders"),
-            type: 'error',
-          }),
+          UIActions.showErrorToast(
+            t("It's not allowed to have more nested folders"),
+          ),
         );
         return;
       }
@@ -621,7 +629,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       onDrop={dropHandler}
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
-      onDragLeave={removeHighlight}
+      onDragLeave={deleteHighlight}
       onContextMenu={handleContextMenuOpen}
       ref={dragDropElement}
     >
@@ -680,10 +688,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             }}
             onClick={() => {
               onClickFolder(currentFolder.id);
-
-              setIsSelected(true);
             }}
-            draggable={!!handleDrop && !isExternal}
+            draggable={!!handleDrop && !isExternal && !isNameInvalid}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
               if (!isExternal && hasDragEventAnyData(e, featureType)) {
@@ -709,17 +715,32 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               </ShareIcon>
             )}
             <div
-              className={classNames(
-                'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
-                highlightTemporaryFolders &&
-                  (currentFolder.temporary ? 'text-primary' : 'text-secondary'),
-                highlightedFolders?.includes(currentFolder.id) && featureType
-                  ? 'text-accent-primary'
-                  : 'text-primary',
-              )}
+              className="relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5"
               data-qa="folder-name"
             >
-              {currentFolder.name}
+              <Tooltip
+                tooltip={t(
+                  isNameInvalid
+                    ? errorsMessages.entityNameInvalid
+                    : errorsMessages.entityPathInvalid,
+                )}
+                hideTooltip={!isNameInvalid && !isInvalidPath}
+                triggerClassName={classNames(
+                  'block max-h-5 flex-1 truncate break-all text-left',
+                  highlightTemporaryFolders &&
+                    (currentFolder.temporary
+                      ? 'text-primary'
+                      : 'text-secondary'),
+                  isNameInvalid
+                    ? 'text-secondary'
+                    : highlightedFolders?.includes(currentFolder.id) &&
+                        featureType
+                      ? 'text-accent-primary'
+                      : 'text-primary',
+                )}
+              >
+                {currentFolder.name}
+              </Tooltip>
             </div>
             {(onDeleteFolder || onRenameFolder || onAddFolder) &&
               !readonly &&
@@ -728,8 +749,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   ref={refs.setFloating}
                   {...getFloatingProps()}
                   className={classNames(
-                    'invisible absolute right-3 z-50 flex justify-end md:group-hover/button:visible',
-                    (isSelected || isContextMenu) && 'max-md:visible',
+                    'invisible absolute right-3 z-50 flex justify-end group-hover/button:visible',
+                    isContextMenu && 'max-md:visible',
                   )}
                 >
                   <FolderContextMenu
@@ -849,12 +870,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
           heading={t('Confirm deleting folder')}
-          description={`${t('Are you sure that you want to remove a folder with all nested elements?')}${t(
+          description={`${t('Are you sure that you want to delete a folder with all nested elements?')}${t(
             currentFolder.isShared
-              ? '\nRemoving will stop sharing and other users will no longer see this folder.'
+              ? '\nDeleting will stop sharing and other users will no longer see this folder.'
               : '',
           )}`}
-          confirmLabel={t('Remove')}
+          confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsDeletingConfirmDialog(false);
@@ -892,7 +913,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to {{folderName}}', {
+          heading={t('Confirm revoking access to: {{folderName}}', {
             folderName: currentFolder.name,
           })}
           description={
@@ -922,13 +943,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         cancelLabel={t('Cancel')}
         description={
           t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
+            'Renaming will stop sharing and other users will no longer see this folder.',
           ) || ''
         }
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {
-            const newName = prepareEntityName(renameValue, true);
+            const newName = prepareEntityName(renameValue);
 
             if (newName) {
               onRenameFolder!(newName, currentFolder.id);

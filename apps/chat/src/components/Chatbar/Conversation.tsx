@@ -16,8 +16,13 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  doesHaveDotsInTheEnd,
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
+  isEntityNameOrPathInvalid,
   prepareEntityName,
+  trimEndDots,
 } from '@/src/utils/app/common';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
@@ -29,7 +34,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, isNotLoaded } from '@/src/types/common';
+import { FeatureType, UploadStatus, isNotLoaded } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -45,6 +50,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -56,16 +62,25 @@ import ShareIcon from '@/src/components/Common/ShareIcon';
 import PublishModal from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
+import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
 interface ViewProps {
   conversation: ConversationInfo;
   isHighlited: boolean;
+  isInvalid: boolean;
 }
 
-export function ConversationView({ conversation, isHighlited }: ViewProps) {
+export function ConversationView({
+  conversation,
+  isHighlited,
+  isInvalid,
+}: ViewProps) {
+  const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const isNameInvalid = isEntityNameInvalid(conversation.name);
+  const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
 
   return (
     <>
@@ -73,6 +88,7 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
         {...conversation}
         isHighlighted={isHighlited}
         featureType={FeatureType.Chat}
+        isInvalid={isInvalid}
       >
         {conversation.isReplay && (
           <span className="flex shrink-0">
@@ -91,14 +107,25 @@ export function ConversationView({ conversation, isHighlited }: ViewProps) {
             size={18}
             entityId={conversation.model.id}
             entity={modelsMap[conversation.model.id]}
+            isInvalid={isInvalid}
           />
         )}
       </ShareIcon>
       <div
         className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-        data-qa="chat-name"
+        data-qa="conversation-name"
       >
-        {conversation.name}
+        <Tooltip
+          tooltip={t(
+            isNameInvalid
+              ? errorsMessages.entityNameInvalid
+              : errorsMessages.entityPathInvalid,
+          )}
+          hideTooltip={!isNameInvalid && !isInvalidPath}
+          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+        >
+          {conversation.name}
+        </Tooltip>
       </div>
     </>
   );
@@ -180,7 +207,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string, removeShareIcon?: boolean) => {
+    (name: string, deleteShareIcon?: boolean) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -188,7 +215,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
-              isShared: removeShareIcon ? false : conversation.isShared,
+              isShared: deleteShareIcon ? false : conversation.isShared,
             },
           }),
         );
@@ -203,25 +230,33 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const handleRename = useCallback(() => {
-    const newName = prepareEntityName(renameValue, true);
+    const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
     if (
       !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
     ) {
       dispatch(
-        UIActions.showToast({
-          message: t(
+        UIActions.showErrorToast(
+          t(
             'Conversation with name "{{newName}}" already exists in this folder.',
             {
               ns: 'chat',
               newName,
             },
           ),
-          type: 'error',
-        }),
+        ),
       );
 
+      return;
+    }
+
+    if (doesHaveDotsInTheEnd(newName)) {
+      dispatch(
+        UIActions.showErrorToast(
+          t('Using a dot at the end of a name is not permitted.'),
+        ),
+      );
       return;
     }
 
@@ -232,7 +267,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       return;
     }
 
-    performRename(newName);
+    performRename(trimEndDots(newName));
   }, [allConversations, conversation, dispatch, performRename, renameValue, t]);
 
   const handleEnterDown = useCallback(
@@ -405,16 +440,15 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         )
       ) {
         dispatch(
-          UIActions.showToast({
-            message: t(
+          UIActions.showErrorToast(
+            t(
               'Conversation with name "{{name}}" already exists in this folder.',
               {
                 ns: 'chat',
                 name: conversation.name,
               },
             ),
-            type: 'error',
-          }),
+          ),
         );
 
         return;
@@ -480,6 +514,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   };
 
   const isHighlighted = isSelected || isRenaming || isDeleting;
+  const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
 
   return (
     <div
@@ -489,6 +524,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ? 'border-l-accent-primary bg-accent-primary-alpha'
           : 'border-l-transparent',
         { 'bg-accent-primary-alpha': isContextMenu },
+        isNameOrPathInvalid && !isRenaming && 'text-secondary',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -553,13 +589,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             );
           }}
           disabled={messageIsStreaming}
-          draggable={!isExternal}
+          draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
         >
           <ConversationView
             conversation={conversation}
             isHighlited={isHighlighted || isContextMenu}
+            isInvalid={isNameOrPathInvalid}
           />
         </button>
       )}
@@ -569,7 +606,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'invisible absolute right-3 z-50 flex justify-end group-hover:visible',
+            'absolute right-3 z-50 flex justify-end group-hover:visible',
+            (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
+              'invisible',
           )}
           data-qa="dots-menu"
         >
@@ -578,9 +617,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             isEmptyConversation={isEmptyConversation}
             folders={folders}
             featureType={FeatureType.Chat}
-            onOpenMoveToModal={() => {
-              setIsShowMoveToModal(true);
-            }}
+            onOpenMoveToModal={() => setIsShowMoveToModal(true)}
             onMoveToFolder={handleMoveToFolder}
             onDelete={handleOpenDeleteModal}
             onRename={handleStartRename}
@@ -597,6 +634,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onUnpublish={handleOpenUnpublishing}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
+            isLoading={conversation.status !== UploadStatus.LOADED}
           />
         </div>
       )}
@@ -654,7 +692,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to {{conversationName}}', {
+          heading={t('Confirm revoking access to: {{conversationName}}', {
             conversationName: conversation.name,
           })}
           description={
@@ -680,9 +718,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       <ConfirmDialog
         isOpen={isDeleting}
         heading={t('Confirm deleting conversation')}
-        description={`${t('Are you sure that you want to remove a conversation?')}${t(
+        description={`${t('Are you sure that you want to delete a conversation?')}${t(
           conversation.isShared
-            ? '\nRemoving will stop sharing and other users will no longer see this conversation.'
+            ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
             : '',
         )}`}
         confirmLabel={t('Delete')}
@@ -706,7 +744,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           setIsConfirmRenaming(false);
 
           if (result) {
-            performRename(prepareEntityName(renameValue, true), true);
+            performRename(
+              prepareEntityName(renameValue, { forRenaming: true }),
+            );
           }
 
           setIsContextMenu(false);

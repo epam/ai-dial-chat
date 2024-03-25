@@ -29,12 +29,15 @@ export class BasePage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
-  async openHomePage(options?: {
-    iconsToBeLoaded?: (string | undefined)[];
-    setEntitiesEnvVars?: boolean;
-  }) {
+  async openHomePage(
+    options?: {
+      iconsToBeLoaded?: (string | undefined)[];
+      setEntitiesEnvVars?: boolean;
+    },
+    url?: string,
+  ) {
     await this.waitForApiResponsesReceived(
-      () => this.navigateToBaseUrl(),
+      () => (url ? this.navigateToUrl(url) : this.navigateToBaseUrl()),
       options,
     );
   }

@@ -1,3 +1,5 @@
+import { PlotParams } from 'react-plotly.js';
+
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
@@ -50,7 +52,10 @@ const initialState: ConversationsState = {
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
+  loadedCharts: [],
+  chartLoading: false,
   isActiveNewConversationRequest: false,
+  isMessageSending: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -111,6 +116,23 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ new: Conversation; old: Conversation }>,
     ) => state,
+    saveConversationSuccess: (state) => {
+      if (state.isMessageSending) {
+        state.isMessageSending = false;
+      }
+    },
+    saveConversationFail: (state, { payload }: PayloadAction<Conversation>) => {
+      state.conversations = state.conversations.map((conv) => {
+        if (conv.id === payload.id) {
+          return {
+            ...conv,
+            isMessageStreaming: false,
+          };
+        }
+
+        return conv;
+      });
+    },
     recreateConversationFail: (
       state,
       {
@@ -122,10 +144,12 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.newId) {
+          const conversation = conv as Conversation;
           return {
-            ...conv,
+            ...conversation,
             ...payload.oldConversation,
-            lastActivityDate: Date.now(),
+            messages: conversation.messages,
+            isMessageStreaming: false,
           };
         }
 
@@ -324,16 +348,27 @@ export const conversationsSlice = createSlice({
     ) => state,
     saveNewConversation: (
       state,
-      _action: PayloadAction<{ newConversation: Conversation }>,
+      _action: PayloadAction<{
+        newConversation: Conversation;
+        idToReplaceWithNewOne?: string;
+      }>,
     ) => state,
     saveNewConversationSuccess: (
       state,
       {
-        payload: { newConversation },
-      }: PayloadAction<{ newConversation: Conversation }>,
+        payload: { newConversation, idToReplaceWithNewOne },
+      }: PayloadAction<{
+        newConversation: Conversation;
+        idToReplaceWithNewOne?: string;
+      }>,
     ) => {
       state.conversations = state.conversations.concat(newConversation);
-      state.selectedConversationsIds = [newConversation.id];
+      state.selectedConversationsIds = idToReplaceWithNewOne
+        ? state.selectedConversationsIds.map((id) =>
+            id === idToReplaceWithNewOne ? newConversation.id : id,
+          )
+        : [newConversation.id];
+
       state.areSelectedConversationsLoaded = true;
     },
     createNewPlaybackConversation: (
@@ -431,6 +466,7 @@ export const conversationsSlice = createSlice({
             payload?.parentId,
           ),
         type: FolderType.Chat,
+        status: UploadStatus.LOADED,
       });
 
       state.folders = state.folders.concat(newFolder);
@@ -701,7 +737,7 @@ export const conversationsSlice = createSlice({
         (id) => !payload.paths.has(id),
       );
       state.foldersStatus = UploadStatus.LOADED;
-      state.folders = combineEntities(payload.folders, state.folders).map(
+      state.folders = combineEntities(state.folders, payload.folders).map(
         (f) =>
           payload.paths.has(f.id)
             ? {
@@ -758,6 +794,7 @@ export const conversationsSlice = createSlice({
       const ids = new Set(payload.conversations.map((c) => c.id));
 
       state.conversations = combineEntities(
+        state.conversations,
         payload.conversations.map((conv) =>
           ids.has(conv.id)
             ? {
@@ -766,7 +803,6 @@ export const conversationsSlice = createSlice({
               }
             : conv,
         ),
-        state.conversations,
       );
       state.conversationsStatus = UploadStatus.LOADED;
     },
@@ -779,6 +815,39 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
+    setIsMessageSending: (state, { payload }: PayloadAction<boolean>) => {
+      state.isMessageSending = payload;
+    },
+    getChartAttachment: (
+      state,
+      _action: PayloadAction<{
+        pathToChart: string;
+      }>,
+    ) => {
+      state.chartLoading = true;
+    },
+    getChartAttachmentSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        params: PlotParams;
+        pathToChart: string;
+      }>,
+    ) => {
+      state.loadedCharts = state.loadedCharts.find(
+        (chart) => chart.url === payload.pathToChart,
+      )
+        ? state.loadedCharts
+        : [
+            ...state.loadedCharts,
+            {
+              url: payload.pathToChart,
+              data: payload.params,
+            },
+          ];
+      state.chartLoading = false;
+    },
   },
 });
 

@@ -1,6 +1,7 @@
+import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages, TestConversation } from '@/src/testData';
+import { ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -25,8 +26,8 @@ dialTest(
     dataInjector,
   }) => {
     setTestIds('EPMRTC-449');
-    let conversation: TestConversation;
-    const allModels = ModelsUtil.getModels();
+    let conversation: Conversation;
+    const allModels = ModelsUtil.getLatestModels();
     const randomModel = GeneratorUtil.randomArrayElement(
       allModels.filter((m) => m.id !== defaultModel.id),
     );
@@ -53,10 +54,12 @@ dialTest(
     await dialTest.step(
       'Verify conversation settings are the same as for initial model',
       async () => {
-        const systemPrompt = await entitySettings.getSystemPrompt();
-        expect
-          .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
-          .toBe(conversation.prompt);
+        if (randomModel.features?.systemPrompt) {
+          const systemPrompt = await entitySettings.getSystemPrompt();
+          expect
+            .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
+            .toBe(conversation.prompt);
+        }
         const temperature = await temperatureSlider.getTemperature();
         expect
           .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)

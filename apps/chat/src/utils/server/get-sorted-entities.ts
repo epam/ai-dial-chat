@@ -8,6 +8,7 @@ import {
 } from '@/src/types/models';
 
 import {
+  DEFAULT_MODEL_ID,
   MAX_PROMPT_TOKENS_DEFAULT_PERCENT,
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
@@ -42,38 +43,57 @@ const getTokensPerMessage = (
   }
 };
 
+async function getAllEntities(accessToken: string, jobTitle: string) {
+  const [modelsResult, applicationsResult, assistantsResult] =
+    await Promise.allSettled([
+      getEntities<CoreAIEntity<EntityType.Model>[]>(
+        EntityType.Model,
+        accessToken,
+        jobTitle,
+      ),
+      getEntities<CoreAIEntity<EntityType.Application>[]>(
+        EntityType.Application,
+        accessToken,
+        jobTitle,
+      ),
+      getEntities<CoreAIEntity<EntityType.Assistant>[]>(
+        EntityType.Assistant,
+        accessToken,
+        jobTitle,
+      ),
+    ]);
+
+  const models: CoreAIEntity<EntityType.Model>[] =
+    modelsResult.status === 'fulfilled'
+      ? modelsResult.value
+      : (logger.error(modelsResult.reason), []);
+
+  const applications: CoreAIEntity<EntityType.Application>[] =
+    applicationsResult.status === 'fulfilled'
+      ? applicationsResult.value
+      : (logger.error(applicationsResult.reason), []);
+
+  const assistants: CoreAIEntity<EntityType.Assistant>[] =
+    assistantsResult.status === 'fulfilled'
+      ? assistantsResult.value
+      : (logger.error(assistantsResult.reason), []);
+
+  return { models, applications, assistants };
+}
+
 export const getSortedEntities = async (token: JWT | null) => {
   const entities: DialAIEntityModel[] = [];
   const accessToken = token?.access_token as string;
   const jobTitle = token?.jobTitle as string;
-  const models = await getEntities<CoreAIEntity<EntityType.Model>[]>(
-    EntityType.Model,
+  const { models, applications, assistants } = await getAllEntities(
     accessToken,
     jobTitle,
-  ).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
-
-  const applications = await getEntities<
-    CoreAIEntity<EntityType.Application>[]
-  >(EntityType.Application, accessToken, jobTitle).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
-  const assistants = await getEntities<CoreAIEntity<EntityType.Assistant>[]>(
-    EntityType.Assistant,
-    accessToken,
-    jobTitle,
-  ).catch((error) => {
-    logger.error(error.message);
-    return [];
-  });
+  );
 
   const preProcessedEntities = [...models, ...applications, ...assistants];
-  const defaultModelId =
-    preProcessedEntities.find((model) => model.id === process.env.DEFAULT_MODEL)
-      ?.id || preProcessedEntities[0].id;
+  let defaultModelId = preProcessedEntities.find(
+    (model) => model.id === DEFAULT_MODEL_ID,
+  )?.id;
 
   for (const entity of [...models, ...applications, ...assistants]) {
     if (
@@ -82,6 +102,14 @@ export const getSortedEntities = async (token: JWT | null) => {
         entity.capabilities?.chat_completion !== true)
     ) {
       continue;
+    }
+
+    if (!defaultModelId) {
+      logger.warn(
+        undefined,
+        `Cannot find default model id("${DEFAULT_MODEL_ID}") in models listing. Recheck config for models in Core or change default model id to existing model.`,
+      );
+      defaultModelId = entity.id;
     }
 
     let maxRequestTokens;
@@ -99,8 +127,8 @@ export const getSortedEntities = async (token: JWT | null) => {
           ? resPromptTokens + resCompletionTokens
           : undefined);
 
-      maxRequestTokens =
-        resPromptTokens ??
+      maxResponseTokens =
+        resCompletionTokens ??
         (maxTotalTokens
           ? Math.min(
               MAX_PROMPT_TOKENS_DEFAULT_VALUE,
@@ -110,10 +138,10 @@ export const getSortedEntities = async (token: JWT | null) => {
             )
           : undefined);
 
-      maxResponseTokens =
-        resCompletionTokens ??
-        (maxTotalTokens && maxRequestTokens
-          ? maxTotalTokens - maxRequestTokens
+      maxRequestTokens =
+        resPromptTokens ??
+        (maxTotalTokens && maxResponseTokens
+          ? maxTotalTokens - maxResponseTokens
           : undefined);
     }
 
@@ -137,8 +165,9 @@ export const getSortedEntities = async (token: JWT | null) => {
             }
           : undefined,
       features: entity.features && {
-        systemPrompt: entity.features?.system_prompt || false,
-        truncatePrompt: entity.features?.truncate_prompt || false,
+        systemPrompt: entity.features.system_prompt || false,
+        truncatePrompt: entity.features.truncate_prompt || false,
+        urlAttachments: entity.features.url_attachments || false,
       },
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,

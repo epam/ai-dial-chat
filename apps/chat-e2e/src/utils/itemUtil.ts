@@ -1,11 +1,14 @@
-import { TestConversation, TestPrompt } from '@/src/testData';
+import { Conversation } from '@/chat/types/chat';
+import { Prompt } from '@/chat/types/prompt';
 import { BucketUtil } from '@/src/utils/bucketUtil';
 
 export class ItemUtil {
   static conversationIdSeparator = '__';
 
-  public static getConversationBucketPath() {
-    return `conversations/${BucketUtil.getBucket()}`;
+  public static getConversationBucketPath(bucket?: string) {
+    return bucket
+      ? `conversations/${bucket}`
+      : `conversations/${BucketUtil.getBucket()}`;
   }
 
   public static getPromptBucketPath() {
@@ -13,44 +16,32 @@ export class ItemUtil {
   }
 
   public static getApiConversationId(
-    conversation: TestConversation,
-    path = '',
+    conversation: Conversation,
+    bucket?: string,
   ) {
-    const bucketPath = ItemUtil.getConversationBucketPath();
-    const conversationId = `${ItemUtil.conversationIdSeparator}${conversation.name}`;
-    if (conversation.replay?.isReplay) {
-      const replayConversationId = `replay${conversationId}`;
-      return path.length === 0
-        ? `${bucketPath}/${replayConversationId}`
-        : `${bucketPath}/${path}/${replayConversationId}`;
-    } else if (conversation.playback?.isPlayback) {
-      const playbackConversationId = `playback${ItemUtil.conversationIdSeparator}${conversation.name}`;
-      return path.length === 0
-        ? `${bucketPath}/${playbackConversationId}`
-        : `${bucketPath}/${path}/${playbackConversationId}`;
-    }
-    const simpleConversationId = `${conversation.model.id}${conversationId}`;
-    return path.length === 0
-      ? `${bucketPath}/${simpleConversationId}`
-      : `${bucketPath}/${path}/${simpleConversationId}`;
+    const bucketPath = ItemUtil.getConversationBucketPath(bucket);
+    return `${bucketPath}/${conversation.id}`;
   }
 
-  public static getApiPromptId(prompt: TestPrompt, path: string) {
+  public static getApiPromptId(prompt: Prompt) {
     const bucketPath = ItemUtil.getPromptBucketPath();
-    return path.length === 0
-      ? `${bucketPath}/${prompt.name}`
-      : `${bucketPath}/${path}/${prompt.name}`;
+    return `${bucketPath}/${prompt.id}`;
   }
 
-  public static getApiPromptFolderId(path: string) {
-    return path.length === 0
-      ? ItemUtil.getPromptBucketPath()
-      : `${ItemUtil.getPromptBucketPath()}/${path}`;
+  public static getApiPromptFolderId(prompt: Prompt) {
+    const promptBucket = ItemUtil.getPromptBucketPath();
+    return prompt.folderId?.length === 0
+      ? promptBucket
+      : `${promptBucket}/${prompt.folderId}`;
   }
 
-  public static getApiConversationFolderId(path: string) {
-    return path.length === 0
-      ? ItemUtil.getConversationBucketPath()
-      : `${ItemUtil.getConversationBucketPath()}/${path}`;
+  public static getApiConversationFolderId(
+    conversation: Conversation,
+    bucket?: string,
+  ) {
+    const conversationBucket = ItemUtil.getConversationBucketPath(bucket);
+    return conversation.folderId?.length === 0
+      ? conversationBucket
+      : `${conversationBucket}/${conversation.folderId}`;
   }
 }

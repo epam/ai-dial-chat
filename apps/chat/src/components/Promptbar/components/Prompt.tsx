@@ -13,7 +13,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
+import {
+  hasInvalidNameInPath,
+  isEntityNameInvalid,
+  isEntityNameOnSameLevelUnique,
+} from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
@@ -39,6 +43,7 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
@@ -47,6 +52,7 @@ import PublishModal from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
+import Tooltip from '../../Common/Tooltip';
 import { PreviewPromptModal } from './PreviewPromptModal';
 
 interface Props {
@@ -75,6 +81,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
   );
+  const isNameInvalid = isEntityNameInvalid(prompt.name);
+  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -217,16 +225,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         )
       ) {
         dispatch(
-          UIActions.showToast({
-            message: t(
-              'Prompt with name "{{name}}" already exists in this folder.',
-              {
-                ns: 'prompt',
-                name: prompt.name,
-              },
-            ),
-            type: 'error',
-          }),
+          UIActions.showErrorToast(
+            t('Prompt with name "{{name}}" already exists in this folder.', {
+              ns: 'prompt',
+              name: prompt.name,
+            }),
+          ),
         );
 
         return;
@@ -284,7 +288,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     <>
       <div
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:pr-9',
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
@@ -299,7 +303,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           className={classNames('flex size-full items-center gap-2', {
             'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
           })}
-          draggable={!isExternal}
+          draggable={!isExternal && !isNameInvalid && !isInvalidPath}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <ShareIcon
@@ -310,12 +314,21 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
-          <div
-            className={classNames(
-              'relative max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-            )}
-          >
-            {prompt.name}
+          <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
+            <Tooltip
+              tooltip={t(
+                isNameInvalid
+                  ? errorsMessages.entityNameInvalid
+                  : errorsMessages.entityPathInvalid,
+              )}
+              hideTooltip={!isNameInvalid && !isInvalidPath}
+              triggerClassName={classNames(
+                'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                (isNameInvalid || isInvalidPath) && 'text-secondary',
+              )}
+            >
+              {prompt.name}
+            </Tooltip>
           </div>
         </div>
         {!isDeleting && !isRenaming && (
@@ -370,7 +383,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               handleClose();
             }}
             onClose={handleClose}
-            onUnshare={handleOpenUnsharing}
+            onDelete={() => setIsDeleting(true)}
           />
         )}
       </div>
@@ -394,9 +407,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       <ConfirmDialog
         isOpen={isDeleting}
         heading={t('Confirm deleting prompt')}
-        description={`${t('Are you sure that you want to remove a prompt?')}${t(
+        description={`${t('Are you sure that you want to delete a prompt?')}${t(
           prompt.isShared
-            ? '\nRemoving will stop sharing and other users will no longer see this prompt.'
+            ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
             : '',
         )}`}
         confirmLabel={t('Delete')}
@@ -409,7 +422,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to {{promptName}}', {
+          heading={t('Confirm revoking access to: {{promptName}}', {
             promptName: prompt.name,
           })}
           description={

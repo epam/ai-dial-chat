@@ -41,6 +41,7 @@ interface Props {
   initialFilesSelect?: boolean;
   maximumAttachmentsAmount?: number;
   allowedTypes?: string[];
+  allowedTypesLabel?: string;
   onClose: (result: boolean) => void;
   onUploadFiles: (
     selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
@@ -57,6 +58,7 @@ export const PreUploadDialog = ({
   initialFilesSelect,
   maximumAttachmentsAmount = 0,
   allowedTypes = [],
+  allowedTypesLabel,
   onClose,
   onUploadFiles,
   uploadFolderId,
@@ -133,9 +135,8 @@ export const PreUploadDialog = ({
       if (incorrectTypeFiles.length > 0) {
         errors.push(
           t(
-            `Supported types: {{allowedExtensions}}. Next files haven't been uploaded: {{incorrectTypeFileNames}}`,
+            `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
             {
-              allowedExtensions: allowedExtensions.join(', '),
               incorrectTypeFileNames: incorrectTypeFiles.join(', '),
             },
           ),
@@ -160,7 +161,7 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedExtensions, allowedTypes, folderPath, t],
+    [allowedTypes, folderPath, t],
   );
 
   const handleUpload = useCallback(() => {
@@ -184,7 +185,7 @@ export const PreUploadDialog = ({
     if (incorrectFileNames.length > 0) {
       errors.push(
         t(
-          `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or remove them from uploading files list: {{fileNames}}`,
+          `The symbols {{notAllowedSymbols}} are not allowed in file name. Also using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}`,
           {
             notAllowedSymbols,
             fileNames: incorrectFileNames.join(', '),
@@ -202,7 +203,7 @@ export const PreUploadDialog = ({
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
         t(
-          'Files which you trying to upload already presented in selected folder. Please rename or remove them from uploading files list: {{fileNames}}',
+          'Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}',
           { fileNames: localIncorrectSameNameFiles.join(', ') },
         ) as string,
       );
@@ -212,7 +213,7 @@ export const PreUploadDialog = ({
     if (fileNameSet.size < selectedFiles.length) {
       errors.push(
         t(
-          'Files which you trying to upload have same names. Please rename or remove them from uploading files list',
+          'Files which you trying to upload have same names. Please rename or delete them from uploading files list',
         ) as string,
       );
     }
@@ -324,7 +325,9 @@ export const PreUploadDialog = ({
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
               allowedExtensions:
-                allowedExtensions.join(', ') || 'no available extensions',
+                allowedTypesLabel ||
+                allowedExtensions.join(', ') ||
+                'no available extensions',
             },
           )}
         </p>

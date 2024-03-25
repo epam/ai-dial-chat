@@ -1,6 +1,12 @@
 import { ShareEntity } from './common';
 import { MIMEType } from './files';
 
+export enum CopyTableType {
+  MD = 'md',
+  CSV = 'csv',
+  TXT = 'txt',
+}
+
 export enum LikeState {
   Disliked = -1,
   Liked = 1,
@@ -123,4 +129,10 @@ export interface ConversationInfo extends ShareEntity {
   lastActivityDate?: number;
   isPlayback?: boolean;
   isReplay?: boolean;
+}
+
+export interface PrepareNameOptions {
+  forRenaming: boolean;
+  replaceWithSpacesForRenaming: boolean;
+  trimEndDotsRequired: boolean;
 }

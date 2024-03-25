@@ -18,25 +18,30 @@ import { isMobile } from '@/src/utils/app/mobile';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
-import { DialFile } from '@/src/types/files';
+import { DialFile, DialLink } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { errorsMessages } from '@/src/constants/errors';
+
+import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
 import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
-import { PromptDialog } from './PromptDialog';
 import { PromptList } from './PromptList';
-import { SendMessageButton } from './SendMessageButton';
+import { PromptVariablesDialog } from './PromptVariablesDialog';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -44,6 +49,9 @@ interface Props {
   onScrollDownClick: () => void;
   onSend: (message: Message) => void;
   onStopConversation: () => void;
+  isLastMessageError: boolean;
+  onRegenerate: () => void;
+  showReplayControls: boolean;
 }
 
 const MAX_HEIGHT = 320;
@@ -54,20 +62,29 @@ export const ChatInputMessage = ({
   onScrollDownClick,
   onSend,
   onStopConversation,
+  onRegenerate,
+  isLastMessageError,
+  showReplayControls,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
-
+  const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const isConversationNameInvalid = useAppSelector(
+    ConversationsSelectors.selectIsConversationNameInvalid,
+  );
+  const isConversationPathInvalid = useAppSelector(
+    ConversationsSelectors.selectIsConversationPathInvalid,
+  );
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttach);
+  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttachFile);
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
@@ -112,21 +129,26 @@ export const ChatInputMessage = ({
     setShowPromptList,
     updatePromptListVisibility,
     filteredPrompts,
-    variables,
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
   } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
   const isInputEmpty = useMemo(() => {
-    return content.trim().length === 0 && selectedFiles.length === 0;
-  }, [content, selectedFiles.length]);
+    return (
+      content.trim().length === 0 &&
+      selectedFiles.length === 0 &&
+      !selectedDialLinks.length
+    );
+  }, [content, selectedDialLinks.length, selectedFiles.length]);
   const isSendDisabled =
     isReplay ||
     isError ||
     isInputEmpty ||
     !isModelsLoaded ||
-    isUploadingFilePresent;
+    isUploadingFilePresent ||
+    isConversationNameInvalid ||
+    isConversationPathInvalid;
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -160,11 +182,14 @@ export const ChatInputMessage = ({
       return;
     }
 
+    dispatch(ConversationsActions.setIsMessageSending(true));
+
     onSend({
       role: Role.User,
       content,
-      custom_content: getUserCustomContent(selectedFiles),
+      custom_content: getUserCustomContent(selectedFiles, selectedDialLinks),
     });
+    setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
     setContent('');
 
@@ -172,12 +197,13 @@ export const ChatInputMessage = ({
       textareaRef.current.blur();
     }
   }, [
-    isSendDisabled,
     messageIsStreaming,
+    isSendDisabled,
+    dispatch,
     onSend,
     content,
     selectedFiles,
-    dispatch,
+    selectedDialLinks,
     setContent,
     textareaRef,
     onStopConversation,
@@ -210,12 +236,7 @@ export const ChatInputMessage = ({
   );
 
   const handlePromptApply = useCallback(
-    (updatedVariables: string[]) => {
-      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
-        const index = variables.indexOf(variable);
-        return updatedVariables[index];
-      });
-
+    (newContent: string) => {
       const valueTokensLength = getTokensLength(newContent);
 
       if (valueTokensLength > maxTokensLength) {
@@ -230,13 +251,11 @@ export const ChatInputMessage = ({
       }
     },
     [
-      content,
       getTokensLength,
       maxTokensLength,
       setContent,
       setIsPromptLimitModalOpen,
       textareaRef,
-      variables,
     ],
   );
 
@@ -293,23 +312,38 @@ export const ChatInputMessage = ({
     [dispatch],
   );
 
+  const handleAddLinkToMessage = useCallback((link: DialLink) => {
+    setSelectedDialLinks((links) => links.concat([link]));
+  }, []);
+  const handleUnselectLink = useCallback((unselectedIndex: number) => {
+    setSelectedDialLinks((links) =>
+      links.filter((_link, index) => unselectedIndex !== index),
+    );
+  }, []);
+
   const tooltipContent = (): string => {
     if (messageIsStreaming) {
       return t('Stop generating');
     }
     if (!isModelsLoaded) {
       return t(
-        'Please wait for models will be loaded to continue working with chat',
+        'Please wait for models will be loaded to continue working with conversation',
       );
     }
     if (isReplay) {
-      return t('Please continue replay to continue working with chat');
+      return t('Please continue replay to continue working with conversation');
     }
     if (isError) {
-      return t('Please regenerate response to continue working with chat');
+      return t('Regenerate response');
     }
     if (isUploadingFilePresent) {
       return t('Please wait for the attachment to load');
+    }
+    if (isConversationNameInvalid) {
+      return t(errorsMessages.entityNameInvalid);
+    }
+    if (isConversationPathInvalid) {
+      return t(errorsMessages.entityPathInvalid);
     }
     return t('Please type a message');
   };
@@ -325,7 +359,7 @@ export const ChatInputMessage = ({
   return (
     <div
       className={classNames(
-        'mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0  md:last:mb-6',
+        'mx-2 mb-2 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-6',
         isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
       )}
     >
@@ -354,12 +388,13 @@ export const ChatInputMessage = ({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
         />
-
-        <SendMessageButton
-          handleSend={handleSend}
-          isDisabled={isSendDisabled}
+        <ChatControls
+          showReplayControls={showReplayControls}
+          onSend={isLastMessageError ? onRegenerate : handleSend}
           tooltip={tooltipContent()}
+          isLastMessageError={isLastMessageError}
           isLoading={isLoading}
+          isSendDisabled={isSendDisabled}
         />
         {canAttach && (
           <>
@@ -368,14 +403,17 @@ export const ChatInputMessage = ({
                 selectedFilesIds={attachedFilesIds}
                 onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                 onUploadFromDevice={handleUploadFromDevice}
+                onAddLinkToMessage={handleAddLinkToMessage}
               />
             </div>
-            {selectedFiles.length > 0 && (
+            {(selectedFiles.length > 0 || selectedDialLinks.length > 0) && (
               <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
                 <ChatInputAttachments
                   files={selectedFiles}
+                  links={selectedDialLinks}
                   onUnselectFile={handleUnselectFile}
                   onRetryFile={handleRetry}
+                  onUnselectLink={handleUnselectLink}
                 />
               </div>
             )}
@@ -384,7 +422,7 @@ export const ChatInputMessage = ({
 
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-14 right-0 xl:right-2 2xl:bottom-0 2xl:right-[-60px] 2xl:top-auto"
+            className="-top-16 right-0 md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}
@@ -403,9 +441,8 @@ export const ChatInputMessage = ({
         )}
 
         {isModalVisible && (
-          <PromptDialog
+          <PromptVariablesDialog
             prompt={filteredPrompts[activePromptIndex]}
-            variables={variables}
             onSubmit={handlePromptApply}
             onClose={() => setIsModalVisible(false)}
           />

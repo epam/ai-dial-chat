@@ -25,8 +25,8 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { DisableOverlay } from '../Common/DisableOverlay';
-import { PromptDialog } from './ChatInput/PromptDialog';
 import { PromptList } from './ChatInput/PromptList';
+import { PromptVariablesDialog } from './ChatInput/PromptVariablesDialog';
 import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
 
 import debounce from 'lodash-es/debounce';
@@ -44,7 +44,6 @@ interface Props {
 const MAX_HEIGHT = 300;
 
 export const SystemPrompt: FC<Props> = ({
-  prompts,
   tokenizer,
   maxTokensLength,
   prompt,
@@ -79,7 +78,6 @@ export const SystemPrompt: FC<Props> = ({
     setIsPromptLimitModalOpen,
     updatePromptListVisibility,
     filteredPrompts,
-    variables,
     showPromptList,
     setShowPromptList,
     handleKeyDownIfShown,
@@ -125,12 +123,7 @@ export const SystemPrompt: FC<Props> = ({
   );
 
   const handleSubmit = useCallback(
-    (updatedVariables: string[]) => {
-      const newContent = content?.replace(/{{(.*?)}}/g, (match, variable) => {
-        const index = variables.indexOf(variable);
-        return updatedVariables[index];
-      });
-
+    (newContent: string) => {
       setContent(newContent);
       onChangePrompt(newContent);
 
@@ -138,7 +131,7 @@ export const SystemPrompt: FC<Props> = ({
         textareaRef.current.focus();
       }
     },
-    [content, setContent, onChangePrompt, variables],
+    [setContent, onChangePrompt],
   );
 
   const handleKeyDown = useCallback(
@@ -219,9 +212,8 @@ export const SystemPrompt: FC<Props> = ({
       />
 
       {isModalVisible && (
-        <PromptDialog
-          prompt={prompts[activePromptIndex]}
-          variables={variables}
+        <PromptVariablesDialog
+          prompt={filteredPrompts[activePromptIndex]}
           onSubmit={handleSubmit}
           onClose={() => setIsModalVisible(false)}
         />

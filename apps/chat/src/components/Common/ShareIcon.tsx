@@ -16,11 +16,12 @@ import Tooltip from './Tooltip';
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
 import World from '@/public/images/icons/world.svg';
 
-interface ShareIсonProps extends ShareInterface {
+interface ShareIconProps extends ShareInterface {
   isHighlighted: boolean;
   size?: number;
   children: ReactNode | ReactNode[];
   featureType: FeatureType;
+  isInvalid?: boolean;
 }
 
 export default function ShareIcon({
@@ -30,7 +31,8 @@ export default function ShareIcon({
   size = 12,
   children,
   featureType,
-}: ShareIсonProps) {
+  isInvalid,
+}: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
@@ -38,19 +40,20 @@ export default function ShareIcon({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
+  const containerClass = classNames('relative', isInvalid && 'text-secondary');
 
   if (
     (!isSharingEnabled || !isShared) &&
     (!isPublishingEnabled || !isPublished)
   ) {
-    return <>{children}</>;
+    return <div className={containerClass}>{children}</div>;
   }
 
   const AdditionalIcon =
     isPublished && isPublishingEnabled ? World : ArrowUpRight;
 
   return (
-    <div className="relative">
+    <div className={containerClass}>
       {children}
       <div
         className={classNames(

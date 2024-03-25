@@ -90,6 +90,12 @@ export class Folders extends BaseElement {
     await this.getDropdownMenu().waitForState();
   }
 
+  public async isFolderDropdownMenuAvailable(name: string, index?: number) {
+    const folderToEdit = this.getFolderByName(name, index);
+    await folderToEdit.hover();
+    return this.folderDotsMenu(name, index).isVisible();
+  }
+
   public async editFolderNameWithEnter(name: string, newName: string) {
     await this.editFolderName(name, newName);
     await this.page.keyboard.press(keys.enter);
@@ -208,5 +214,21 @@ export class Folders extends BaseElement {
     await folderEntity.hover();
     await this.folderEntityDotsMenu(folderName, entityName).click();
     await this.getDropdownMenu().waitForState();
+  }
+
+  public getFolderArrowIcon(name: string, index?: number) {
+    return this.getFolderByName(name, index).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
+  }
+
+  public getFolderEntityArrowIcon(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.getFolderEntity(folderName, entityName, index).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
   }
 }

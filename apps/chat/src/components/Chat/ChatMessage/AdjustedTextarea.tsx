@@ -14,11 +14,10 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
   const mainTextareaRef = useRef<HTMLTextAreaElement>(null);
   useImperativeHandle(ref, () => mainTextareaRef.current); // proxy ref
 
-  const { value, className, maxHeight = 100000 } = props;
+  const { value, maxHeight = 10000, className, ...restProps } = props;
 
   useEffect(() => {
     if (hiddenTextareaRef.current && mainTextareaRef.current) {
-      hiddenTextareaRef.current.style.width = `${mainTextareaRef.current.clientWidth}px`; // adapt width (parent paddings don't work for absolute element)
       const scrollHeight = hiddenTextareaRef.current.scrollHeight;
       mainTextareaRef.current.style.height = `${scrollHeight}px`; // set height as scrollHeight of hidden element
       mainTextareaRef.current.style.overflowY = `${
@@ -27,10 +26,29 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
     }
   }, [maxHeight, value]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (hiddenTextareaRef.current && mainTextareaRef.current) {
+        // we should change hidden textarea width along with main textarea width
+        hiddenTextareaRef.current.style.width = `${mainTextareaRef.current.clientWidth}px`;
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (mainTextareaRef.current) {
+      resizeObserver.observe(mainTextareaRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
     <>
       <textarea
-        {...props}
+        {...restProps}
         ref={hiddenTextareaRef}
         name="hidden"
         className={classNames(
@@ -38,10 +56,13 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
           'invisible absolute', // hidden, but exists
         )}
         data-qa="hidden-textarea"
+        value={value}
       />
       <textarea
         data-qa="chat-textarea"
-        {...props}
+        className={className}
+        value={value}
+        {...restProps}
         ref={mainTextareaRef}
         name="main"
         style={{ maxHeight: `${maxHeight}px` }}

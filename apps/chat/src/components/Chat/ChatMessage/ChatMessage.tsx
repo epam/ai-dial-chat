@@ -2,6 +2,7 @@ import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, LikeState, Message } from '@/src/types/chat';
@@ -23,6 +24,7 @@ export interface Props {
   editDisabled: boolean;
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
+  messagesLength: number;
   onEdit?: (editedMessage: Message, index: number) => void;
   onRegenerate?: () => void;
 }
@@ -39,6 +41,8 @@ export const ChatMessage: FC<Props> = memo(
     editDisabled,
     onRegenerate,
     onEdit,
+    messageIndex,
+    messagesLength,
     ...props
   }) => {
     const { t } = useTranslation(Translation.Chat);
@@ -47,10 +51,13 @@ export const ChatMessage: FC<Props> = memo(
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [clientY, setClientY] = useState(0);
     const [clientX, setClientX] = useState(0);
-    const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
+    const [isDeleteConfirmationOpened, setIsDeleteConfirmationOpened] =
       useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+    const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
+
+    const isLastMessage = messageIndex === (messagesLength ?? 0) - 1;
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
@@ -88,15 +95,15 @@ export const ChatMessage: FC<Props> = memo(
 
     const confirmationDialog = (
       <ConfirmDialog
-        isOpen={isRemoveConfirmationOpened}
-        heading={t('Confirm removing message')}
+        isOpen={isDeleteConfirmationOpened}
+        heading={t('Confirm deleting message')}
         description={
-          t('Are you sure that you want to remove the message?') || ''
+          t('Are you sure that you want to delete the message?') || ''
         }
-        confirmLabel={t('Remove')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          setIsRemoveConfirmationOpened(false);
+          setIsDeleteConfirmationOpened(false);
           if (result) handleDeleteMessage();
         }}
       />
@@ -109,9 +116,11 @@ export const ChatMessage: FC<Props> = memo(
       return (
         <>
           <ChatMessageContent
+            isLastMessage={isLastMessage}
+            messageIndex={messageIndex}
             onEdit={onEdit}
             onDelete={() => {
-              setIsRemoveConfirmationOpened(true);
+              setIsDeleteConfirmationOpened(true);
             }}
             toggleEditing={toggleEditing}
             isEditing={isEditing}
@@ -146,6 +155,8 @@ export const ChatMessage: FC<Props> = memo(
           noFocusReturn
           trigger={
             <ChatMessageContent
+              isLastMessage={isLastMessage}
+              messageIndex={messageIndex}
               conversation={conversation}
               isEditing={isEditing}
               toggleEditing={toggleEditing}
@@ -168,16 +179,18 @@ export const ChatMessage: FC<Props> = memo(
           }
         >
           <MessageMobileButtons
-            isEditAvailable={!!onEdit}
+            isMessageStreaming={!!conversation.isMessageStreaming}
+            isLastMessage={isLastMessage}
             message={message}
             onCopy={handleCopy}
             messageCopied={messageCopied}
             editDisabled={editDisabled}
             onLike={onLike}
-            onDelete={() => setIsRemoveConfirmationOpened(true)}
+            onDelete={() => setIsDeleteConfirmationOpened(true)}
             isEditing={isEditing}
             toggleEditing={toggleEditing}
             onRegenerate={onRegenerate}
+            isConversationInvalid={isConversationInvalid}
           />
         </Menu>
         {confirmationDialog}

@@ -14,6 +14,7 @@ export const ChatSelectors = {
   groupEntityName: '[data-qa="group-entity-name"]',
   groupEntityDescr: '[data-qa="group-entity-descr"]',
   expandGroupEntity: '[data-qa="expand-group-entity"]',
+  selectedGroupEntity: '.border-accent-primary',
   systemPrompt: '[data-qa="system-prompt"]',
   message: '[data-qa="message"]',
   textarea: '[data-qa="chat-textarea"]',
@@ -68,7 +69,7 @@ export const ChatSelectors = {
   playbackPrevious: '[data-qa="playback-prev"]',
   playbackPreviousDisabled: () =>
     `${ChatSelectors.playbackPrevious}[${Attributes.disabled}]`,
-  removeFromCompareIcon: '[data-qa="remove-from-compare"]',
+  deleteFromCompareIcon: '[data-qa="delete-from-compare"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
   replayAsIs: '[data-qa="replay-as-is"]',
@@ -84,4 +85,6 @@ export const ChatSelectors = {
   importExportLoader: '[data-qa="import-export-loader"]',
   stopLoading: '[data-qa="stop-loading"]',
   errorToast: 'div > .text-error',
+  conversationNotFound: '[data-qa="not-found"]',
+  codeblock: '.codeblock',
 };

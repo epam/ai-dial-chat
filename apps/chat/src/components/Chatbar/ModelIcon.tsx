@@ -16,10 +16,17 @@ interface Props {
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
+  isInvalid?: boolean;
 }
 
 const ModelIconTemplate = memo(
-  ({ entity, size, animate, entityId }: Omit<Props, 'isCustomTooltip'>) => {
+  ({
+    entity,
+    size,
+    animate,
+    entityId,
+    isInvalid,
+  }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
       entity?.type === EntityType.Addon
         ? `api/themes/image?name=default-addon`
@@ -29,7 +36,8 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none text-primary',
+          'relative inline-block shrink-0 leading-none',
+          isInvalid ? 'text-secondary' : 'text-primary',
           animate && 'animate-bounce',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
@@ -61,6 +69,7 @@ export const ModelIcon = ({
   size,
   animate,
   isCustomTooltip,
+  isInvalid,
 }: Props) => {
   return (
     <Tooltip
@@ -73,6 +82,7 @@ export const ModelIcon = ({
         entityId={entityId}
         size={size}
         animate={animate}
+        isInvalid={isInvalid}
       />
     </Tooltip>
   );

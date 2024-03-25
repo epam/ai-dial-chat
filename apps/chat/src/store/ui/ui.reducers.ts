@@ -20,6 +20,7 @@ export interface UIState {
   openedFoldersIds: Record<FeatureType, string[]>;
   textOfClosedAnnouncement?: string | undefined;
   isChatFullWidth: boolean;
+  showSelectToMigrateWindow: boolean;
   chatbarWidth?: number;
   promptbarWidth?: number;
   customLogo?: string;
@@ -44,6 +45,7 @@ const initialState: UIState = {
   chatbarWidth: SIDEBAR_MIN_WIDTH,
   promptbarWidth: SIDEBAR_MIN_WIDTH,
   isChatFullWidth: false,
+  showSelectToMigrateWindow: false,
 };
 
 export const uiSlice = createSlice({
@@ -102,7 +104,7 @@ export const uiSlice = createSlice({
     setCustomLogo: (state, { payload }: PayloadAction<{ logo: string }>) => {
       state.customLogo = payload.logo;
     },
-    removeCustomLogo: (state) => {
+    deleteCustomLogo: (state) => {
       state.customLogo = undefined;
     },
     showToast: (
@@ -173,6 +175,12 @@ export const uiSlice = createSlice({
       state.textOfClosedAnnouncement = payload.announcement;
     },
     resize: (state) => state,
+    setShowSelectToMigrateWindow: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.showSelectToMigrateWindow = payload;
+    },
   },
 });
 
@@ -251,6 +259,11 @@ const selectCustomLogo = createSelector([rootSelector], (state) => {
   return state.customLogo;
 });
 
+export const selectShowSelectToMigrateWindow = createSelector(
+  [rootSelector],
+  (state) => state.showSelectToMigrateWindow,
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -269,4 +282,5 @@ export const UISelectors = {
   selectPromptbarWidth,
   selectIsChatFullWidth,
   selectCustomLogo,
+  selectShowSelectToMigrateWindow,
 };

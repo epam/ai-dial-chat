@@ -19,7 +19,9 @@ export default function ChatExternalControls({ conversations }: Props) {
 
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
-      dispatch(ConversationsActions.duplicateConversation(conv));
+      if (conv.sharedWithMe) {
+        dispatch(ConversationsActions.duplicateConversation(conv));
+      }
     });
   }, [conversations, dispatch]);
 
@@ -32,7 +34,7 @@ export default function ChatExternalControls({ conversations }: Props) {
       <span className="text-secondary">
         <IconCopy width={18} height={18} />
       </span>
-      {t('Duplicate the chat to be able to edit it')}
+      {t('Duplicate the conversation to be able to edit it')}
     </button>
   );
 }

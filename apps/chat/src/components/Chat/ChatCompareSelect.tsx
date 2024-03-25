@@ -30,11 +30,11 @@ const Option = ({ item }: OptionProps) => {
   );
 
   return (
-    <div className="group flex items-center gap-3 pl-1">
+    <div className="group flex items-center gap-3 truncate pl-1">
       <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
         <ModelIcon entity={model} entityId={item.model.id} size={18} />
       </ShareIcon>
-      <span className="truncate">{item.name}</span>
+      <span className="truncate whitespace-pre">{item.name}</span>
     </div>
   );
 };
@@ -73,9 +73,7 @@ export const ChatCompareSelect = ({
       const selectedConversation = selectedConversations[0];
 
       const comparableConversations = conversations.filter((conv) =>
-        showAll
-          ? conv.id !== selectedConversation.id
-          : isValidConversationForCompare(selectedConversation, conv),
+        isValidConversationForCompare(selectedConversation, conv, showAll),
       );
       setComparableConversations(sortByName(comparableConversations));
     }

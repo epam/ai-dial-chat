@@ -38,6 +38,7 @@ interface Props {
   isOpen: boolean;
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
+  allowedTypesLabel?: string;
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
@@ -48,6 +49,7 @@ interface Props {
 export const FileManagerModal = ({
   isOpen,
   allowedTypes = [],
+  allowedTypesLabel,
   initialSelectedFilesIds = [],
   headerLabel,
   customButtonLabel,
@@ -143,7 +145,7 @@ export const FileManagerModal = ({
     [dispatch, openedFoldersIds],
   );
 
-  const handleStartRemoveMultipleFiles = useCallback(() => {
+  const handleStartDeleteMultipleFiles = useCallback(() => {
     if (!selectedFilesIds.length) {
       return;
     }
@@ -171,9 +173,9 @@ export const FileManagerModal = ({
           });
           break;
         case FileItemEventIds.Cancel:
-          dispatch(FilesActions.removeFile({ fileId: data }));
+          dispatch(FilesActions.deleteFile({ fileId: data }));
           break;
-        case FileItemEventIds.Remove:
+        case FileItemEventIds.Delete:
           setDeletingFileIds([data]);
           break;
         default:
@@ -207,9 +209,8 @@ export const FileManagerModal = ({
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
         t(
-          `Supported types: {{allowedExtensions}}. You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
           {
-            allowedExtensions: allowedExtensions.join(', '),
             incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
           },
         ) as string,
@@ -219,7 +220,6 @@ export const FileManagerModal = ({
 
     onClose(selectedFilesIds);
   }, [
-    allowedExtensions,
     allowedTypes,
     files,
     maximumAttachmentsAmount,
@@ -252,12 +252,12 @@ export const FileManagerModal = ({
     [dispatch],
   );
 
-  const handleRemoveMultipleFiles = useCallback(() => {
+  const handleDeleteMultipleFiles = useCallback(() => {
     if (!deletingFileIds.length) {
       return;
     }
 
-    dispatch(FilesActions.removeFilesList({ fileIds: deletingFileIds }));
+    dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
     if (selectedFilesIds === deletingFileIds) {
       setSelectedFilesIds([]);
     }
@@ -292,7 +292,9 @@ export const FileManagerModal = ({
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
               allowedExtensions:
-                allowedExtensions.join(', ') || 'no available extensions',
+                allowedTypesLabel ||
+                allowedExtensions.join(', ') ||
+                'no available extensions',
             },
           )}
           &nbsp;
@@ -394,7 +396,7 @@ export const FileManagerModal = ({
           {selectedFilesIds.length > 0 ? (
             <>
               <button
-                onClick={handleStartRemoveMultipleFiles}
+                onClick={handleStartDeleteMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
                 <Tooltip tooltip="Delete files" isTriggerClickable>
@@ -446,6 +448,7 @@ export const FileManagerModal = ({
           uploadFolderId={uploadFolderId}
           isOpen
           allowedTypes={allowedTypes}
+          allowedTypesLabel={allowedTypesLabel}
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
@@ -461,14 +464,14 @@ export const FileManagerModal = ({
         )}
         description={
           t(
-            `Are you sure that you want to remove ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
+            `Are you sure that you want to delete ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
           ) || ''
         }
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           if (result) {
-            handleRemoveMultipleFiles();
+            handleDeleteMultipleFiles();
           }
           setDeletingFileIds([]);
         }}

@@ -1,12 +1,15 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds } from '@/src/utils/app/folders';
 
+import { PrepareNameOptions } from '@/src/types/chat';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 
+import trimEnd from 'lodash-es/trimEnd';
 import uniq from 'lodash-es/uniq';
+import { substring } from 'stringz';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -49,6 +52,16 @@ export const isImportEntityNameOnSameLevelUnique = (
 
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
+export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
+
+export const isEntityNameInvalid = (name: string) =>
+  doesHaveDotsInTheEnd(name) || notAllowedSymbolsRegex.test(name);
+
+export const hasInvalidNameInPath = (path: string) =>
+  path.split('/').some((part) => isEntityNameInvalid(part));
+
+export const isEntityNameOrPathInvalid = (entity: Entity) =>
+  isEntityNameInvalid(entity.name) || hasInvalidNameInPath(entity.folderId);
 
 export const filterOnlyMyEntities = <T extends ShareEntity>(
   entities: T[],
@@ -94,18 +107,31 @@ export const updateEntitiesFoldersAndIds = (
   return { updatedFolders, updatedOpenedFoldersIds };
 };
 
-export const prepareEntityName = (name: string, forRenaming = false) => {
-  const clearName = forRenaming
-    ? name.replace(notAllowedSymbolsRegex, '').trim()
+export const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
+
+export const prepareEntityName = (
+  name: string,
+  options?: Partial<PrepareNameOptions>,
+) => {
+  const clearName = options?.forRenaming
+    ? name
+        .replace(
+          notAllowedSymbolsRegex,
+          options?.replaceWithSpacesForRenaming ? ' ' : '',
+        )
+        .trim()
     : name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
         .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
         .filter(Boolean)[0] ?? '';
 
-  if (clearName.length > MAX_ENTITY_LENGTH) {
-    return clearName.substring(0, MAX_ENTITY_LENGTH - 3) + '...';
-  }
+  const result =
+    clearName.length > MAX_ENTITY_LENGTH
+      ? substring(clearName, 0, MAX_ENTITY_LENGTH)
+      : clearName;
 
-  return clearName;
+  return !options?.forRenaming || options?.trimEndDotsRequired
+    ? trimEndDots(result)
+    : result.trim();
 };

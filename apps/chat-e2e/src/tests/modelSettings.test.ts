@@ -34,9 +34,13 @@ dialTest(
       models.filter((m) => m.id !== defaultModel.id),
     );
 
+    await talkToSelector.selectModel(randomModel.name);
+    await talkToRecentGroupEntities.waitForGroupEntitySelected(
+      randomModel.name,
+    );
     await entitySettings.setSystemPrompt(sysPrompt);
     await temperatureSlider.setTemperature(temp);
-    await talkToSelector.selectModel(randomModel.name);
+
     const modelBorderColors = await talkToRecentGroupEntities
       .groupEntity(randomModel.name)
       .getAllBorderColors();

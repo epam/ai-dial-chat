@@ -28,7 +28,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
-  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
   PUBLISHING_FOLDER_NAME,
 } from '@/src/constants/folders';
 
@@ -130,16 +130,12 @@ const PromptFolderTemplate = ({
         )
       ) {
         dispatch(
-          UIActions.showToast({
-            message: t(
-              'Folder with name "{{name}}" already exists at the root.',
-              {
-                ns: 'folder',
-                name: folder.name,
-              },
-            ),
-            type: 'error',
-          }),
+          UIActions.showErrorToast(
+            t('Folder with name "{{name}}" already exists at the root.', {
+              ns: 'folder',
+              name: folder.name,
+            }),
+          ),
         );
 
         return;
@@ -175,7 +171,7 @@ const PromptFolderTemplate = ({
         denyDrop={isExternal}
       />
       <Folder
-        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+        maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
         searchTerm={searchTerm}
         currentFolder={folder}
         itemComponent={PromptComponent}

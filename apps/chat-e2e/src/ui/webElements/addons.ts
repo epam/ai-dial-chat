@@ -45,7 +45,7 @@ export class Addons extends BaseElement {
     return this.recentAddons.getElementsInnerContent();
   }
 
-  public async removeSelectedAddon(addon: string) {
+  public async deleteSelectedAddon(addon: string) {
     await this.selectedAddon(addon).click({ force: true });
   }
 

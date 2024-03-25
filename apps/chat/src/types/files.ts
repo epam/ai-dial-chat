@@ -2,6 +2,7 @@ import {
   BackendEntity,
   BackendFolder,
   BaseDialEntity,
+  ShareEntity,
 } from '@/src/types/common';
 
 import { FolderInterface } from './folder';
@@ -29,7 +30,7 @@ export type DialFile = Omit<
   BaseDialEntity & {
     percent?: number;
     fileContent?: File;
-  };
+  } & ShareEntity;
 
 // For file folders folderId is relative path and id is relative path + '/' + name
 export type FileFolderInterface = FolderInterface & {
@@ -38,3 +39,8 @@ export type FileFolderInterface = FolderInterface & {
 };
 
 export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
+
+export interface DialLink {
+  title?: string;
+  href: string;
+}
