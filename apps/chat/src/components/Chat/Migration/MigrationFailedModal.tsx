@@ -173,6 +173,7 @@ export const MigrationFailedWindow = ({
   const [promptsToRetryIds, setPromptsToRetryIds] = useState<string[]>([]);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const [dontWantBackup, setDontWantBackup] = useState(false);
+  const [isScreenSmall, setIsScreenSmall] = useState(isSmallScreen());
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -184,6 +185,13 @@ export const MigrationFailedWindow = ({
   const isChatsBackedUp = useAppSelector(
     ConversationsSelectors.selectIsChatsBackedUp,
   );
+
+  useEffect(() => {
+    const handleResize = () => setIsScreenSmall(isSmallScreen());
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setConversationsToRetryIds(
@@ -302,7 +310,9 @@ export const MigrationFailedWindow = ({
             </p>
             <div className="mt-4 flex justify-end">
               <div className="flex w-[100px] text-xs">
-                <p className="flex w-[50px] justify-center">{t('Retry')}</p>
+                <p className="flex w-[50px] justify-center">
+                  {showSelectToMigrateWindow ? t('Migrate') : t('Retry')}
+                </p>
                 <p className="flex w-[50px] justify-center">{t('Discard')}</p>
               </div>
             </div>
@@ -402,7 +412,7 @@ export const MigrationFailedWindow = ({
                   ) : (
                     <IconDownload size={18} className="mr-3 text-secondary" />
                   )}
-                  {!isSmallScreen() && t('Backup')} {t('prompts')}
+                  {!isScreenSmall && t('Backup')} {t('prompts')}
                 </button>
               )}
               {!!failedMigratedConversations.length && (
@@ -419,7 +429,7 @@ export const MigrationFailedWindow = ({
                   ) : (
                     <IconDownload size={18} className="mr-3 text-secondary" />
                   )}
-                  {!isSmallScreen() && t('Backup')} {t('chats')}
+                  {!isScreenSmall && t('Backup')} {t('chats')}
                 </button>
               )}
               <button
