@@ -193,14 +193,10 @@ export class ConversationData extends FolderData {
     return defaultReplayConversation;
   }
 
-  public prepareAddonsConversation(
-    model: DialAIEntityModel,
-    addons: string[],
-    request?: string,
-  ) {
-    const conversation = this.conversationBuilder.getConversation();
-    conversation.model = { id: model.id };
+  public prepareAddonsConversation(model: DialAIEntityModel, addons: string[]) {
+    const conversation = this.prepareDefaultConversation(model);
     conversation.selectedAddons = addons;
+    conversation.assistantModelId = model.id;
     const messageSettings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
@@ -208,37 +204,65 @@ export class ConversationData extends FolderData {
     };
     const userMessage: Message = {
       role: Role.User,
-      content: request ?? 'what is epam? what is epam revenue in 2020?',
-      model: { id: conversation.model.id },
+      content: 'what is the temperature in Spain Malaga',
+      model: conversation.model,
+      settings: messageSettings,
+    };
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'The temperature is 16.5 degrees Celsius.',
+      model: conversation.model,
+      custom_content: {
+        stages: [
+          {
+            index: 0,
+            name: `addon-xweather({"query": "/weather/summary/Spain, Malaga"})`,
+            content:
+              '```javascript\nget_summary_weather_summary__location__get({"location": "Spain, Malaga"})\n```\n```json\n{"alerts": [], "conditions": {"dateTimeISO": "2024-03-20T10:30:00+01:00", "tempC": 16.5, "tempF": 61.7, "feelsLikeC": 16.5, "feelsLikeF": 61.7, "windDir": "ESE", "windSpeedMPH": 2.19, "windSpeedKPH": 3.53, "windGustMPH": 11.77, "windGustKPH": 18.94, "precipRateMM": 0.0, "precipRateIN": 0.0, "weather": "Partly Cloudy", "uvi": 2, "aqi": 76, "aqiCategory": "moderate", "aqiDominantPollutant": "pm10"}}\n```\nAs of 10:30 AM on March 20, 2024, the weather in Malaga, Spain is partly cloudy. The temperature is 16.5 degrees Celsius. The wind is coming from the ESE at 3.53 km/h with gusts up to 18.94 km/h. There is no precipitation expected. The UV index is 2. The air quality index (AQI) is 76, which is considered moderate, with PM10 being the dominant pollutant.',
+            status: 'completed',
+          },
+        ],
+        state: {
+          invocations: [
+            {
+              index: 0,
+              request:
+                '{"commands": [{"command": "XWeather", "arguments": {"query": "/weather/summary/Spain, Malaga"}}]}',
+              response:
+                '{"responses": [{"status": "SUCCESS", "response": "As of 10:30 AM on March 20, 2024, the weather in Malaga, Spain is partly cloudy. The temperature is 16.5 degrees Celsius. The wind is coming from the ESE at 3.53 km/h with gusts up to 18.94 km/h. There is no precipitation expected. The UV index is 2. The air quality index (AQI) is 76, which is considered moderate, with PM10 being the dominant pollutant."}]}',
+            },
+          ],
+        },
+      },
+      settings: messageSettings,
+    };
+    conversation.messages = [userMessage, assistantMessage];
+    return this.conversationBuilder.build();
+  }
+
+  public prepareConversationWithCodeContent(
+    model?: string | DialAIEntityModel,
+  ) {
+    const conversation = this.prepareDefaultConversation(model);
+    const messageSettings: MessageSettings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'provide an example of interface declaration in Java',
+      model: conversation.model,
       settings: messageSettings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
       content:
-        'EPAM is a global provider of software engineering and IT consulting services',
-      model: { id: conversation.model.id },
-      custom_content: {
-        stages: [
-          {
-            index: 0,
-            name: `stage 1("what is epam?")`,
-            content: 'stage content 1',
-            status: 'completed',
-          },
-          {
-            index: 1,
-            name: `stage 2("what is epam revenue in 2020?")`,
-            content: 'stage content 2',
-            status: 'completed',
-          },
-        ],
-        state: {
-          invocations: [{ index: 0, request: 'request', response: 'response' }],
-        },
-      },
+        'Here is an example of an interface declaration in Java:\n\n```java\npublic interface Animal {\n    void eat();\n    void sleep();\n    void makeSound();\n}\n```\n\nIn this example, `Animal` is an interface that declares three methods: `eat()`, `sleep()`, and `makeSound()`. Any class that implements the `Animal` interface will need to provide implementations for these three methods.',
+      model: conversation.model,
       settings: messageSettings,
     };
-    conversation.messages.push(userMessage, assistantMessage);
+    conversation.messages = [userMessage, assistantMessage];
     return this.conversationBuilder.build();
   }
 
@@ -287,6 +311,17 @@ export class ConversationData extends FolderData {
       conversation.id = `${folder.folderId}/${conversation.id}`;
       conversations.push(conversation);
       this.resetData();
+    }
+    return { conversations: conversations, folders: folder };
+  }
+
+  public prepareConversationsInFolder(
+    conversations: Conversation[],
+  ): FolderConversation {
+    const folder = this.prepareFolder();
+    for (const conversation of conversations) {
+      conversation.folderId = folder.folderId;
+      conversation.id = `${folder.folderId}/${conversation.id}`;
     }
     return { conversations: conversations, folders: folder };
   }
@@ -369,19 +404,12 @@ export class ConversationData extends FolderData {
     model: DialAIEntityModel | string,
     hasRequest?: boolean,
   ) {
-    const filename = FileApiHelper.extractFilename(attachmentUrl);
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const userMessage: Message = {
       role: Role.User,
       content: hasRequest ? 'what is on picture?' : '',
       custom_content: {
-        attachments: [
-          {
-            type: FileApiHelper.getContentTypeForFile(filename)!,
-            title: filename,
-            url: attachmentUrl,
-          },
-        ],
+        attachments: [this.getAttachmentData(attachmentUrl)],
       },
       model: modelToUse,
     };
@@ -404,7 +432,6 @@ export class ConversationData extends FolderData {
     attachmentUrl: string,
     model: DialAIEntityModel | string,
   ) {
-    const filename = FileApiHelper.extractFilename(attachmentUrl);
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const userMessage: Message = {
       role: Role.User,
@@ -416,13 +443,7 @@ export class ConversationData extends FolderData {
       content: '',
       model: modelToUse,
       custom_content: {
-        attachments: [
-          {
-            type: FileApiHelper.getContentTypeForFile(filename)!,
-            title: filename,
-            url: attachmentUrl,
-          },
-        ],
+        attachments: [this.getAttachmentData(attachmentUrl)],
       },
     };
     const name = GeneratorUtil.randomString(10);
@@ -433,6 +454,15 @@ export class ConversationData extends FolderData {
       .withMessage(assistantMessage)
       .withModel(modelToUse)
       .build();
+  }
+
+  public getAttachmentData(attachmentUrl: string) {
+    const filename = FileApiHelper.extractFilename(attachmentUrl);
+    return {
+      type: FileApiHelper.getContentTypeForFile(filename)!,
+      title: filename,
+      url: attachmentUrl,
+    };
   }
 
   public prepareHistoryConversation(...conversations: Conversation[]) {
