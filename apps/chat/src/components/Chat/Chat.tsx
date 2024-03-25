@@ -293,7 +293,11 @@ export const ChatView = memo(() => {
       setMergedMessages(mergedMessages);
     }
 
-    if (selectedConversations.every((conv) => !conv.messages.length)) {
+    if (
+      selectedConversations.every(
+        (conv) => !conv.messages.find((m) => m.role !== Role.Assistant),
+      )
+    ) {
       setShowScrollDownButton(false);
     } else {
       handleScroll();
