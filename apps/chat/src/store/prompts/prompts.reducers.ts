@@ -120,9 +120,9 @@ export const promptsSlice = createSlice({
       state,
     deletePrompts: (
       state,
-      { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,
+      { payload }: PayloadAction<{ promptsToDelete: PromptInfo[] }>,
     ) => {
-      const promptToDeleteIds = payload.promptsToRemove.map(
+      const promptToDeleteIds = payload.promptsToDelete.map(
         (prompt) => prompt.id,
       );
 

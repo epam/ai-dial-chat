@@ -277,19 +277,19 @@ export const filesSlice = createSlice({
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
     },
-    removeFilesList: (
+    deleteFilesList: (
       state,
       _action: PayloadAction<{
         fileIds: string[];
       }>,
     ) => state,
-    removeFile: (
+    deleteFile: (
       state,
       _action: PayloadAction<{
         fileId: string;
       }>,
     ) => state,
-    removeFileSuccess: (
+    deleteFileSuccess: (
       state,
       {
         payload,
@@ -300,7 +300,7 @@ export const filesSlice = createSlice({
       state.files = state.files.filter((file) => file.id !== payload.fileId);
       state.selectedFilesIds.filter((id) => id !== payload.fileId);
     },
-    removeFileFail: (
+    deleteFileFail: (
       state,
       _action: PayloadAction<{
         fileName: string;

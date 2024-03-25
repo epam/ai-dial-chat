@@ -44,7 +44,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     return getCustomLogoLocalStoreName(customLogoId);
   }, [customLogoId]);
 
-  const [removeLogo, setRemoveLogo] = useState<boolean>(false);
+  const [deleteLogo, setDeleteLogo] = useState<boolean>(false);
   const [localTheme, setLocalTheme] = useState(theme);
   const [isChatFullWidthLocal, setIsChatFullWidthLocal] =
     useState(isChatFullWidth);
@@ -66,7 +66,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     setLocalTheme(theme);
     setIsChatFullWidthLocal(isChatFullWidth);
     setLocalLogoFile(undefined);
-    setRemoveLogo(false);
+    setDeleteLogo(false);
     onClose();
   }, [onClose, isChatFullWidth, theme]);
 
@@ -87,24 +87,24 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   }, []);
 
   const onLogoSelect = (filesIds: string[]) => {
-    setRemoveLogo(false);
+    setDeleteLogo(false);
     const selectedFileId = filesIds[0];
     const newFile = files.find((file) => file.id === selectedFileId);
     setLocalLogoFile(newFile);
   };
-  const onRemoveLocalLogoHandler = () => {
+  const onDeleteLocalLogoHandler = () => {
     setLocalLogoFile(undefined);
-    setRemoveLogo(true);
+    setDeleteLogo(true);
   };
 
   const handleSave = useCallback(() => {
     dispatch(UIActions.setTheme(localTheme));
     dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
-    if (localLogoFile && !removeLogo) {
+    if (localLogoFile && !deleteLogo) {
       dispatch(UIActions.setCustomLogo({ logo: localLogoFile?.id }));
     }
-    if (removeLogo) {
-      dispatch(UIActions.removeCustomLogo());
+    if (deleteLogo) {
+      dispatch(UIActions.deleteCustomLogo());
     }
 
     onClose();
@@ -114,7 +114,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     onClose,
     isChatFullWidthLocal,
     localLogoFile,
-    removeLogo,
+    deleteLogo,
   ]);
 
   if (!open) {
@@ -146,9 +146,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         {isCustomLogoFeatureEnabled && (
           <CustomLogoSelect
             onLogoSelect={onLogoSelect}
-            onRemoveLocalLogoHandler={onRemoveLocalLogoHandler}
+            onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
             localLogo={
-              removeLogo
+              deleteLogo
                 ? undefined
                 : (localLogoFile && localLogoFile.name) ??
                   customLogoLocalStoreName

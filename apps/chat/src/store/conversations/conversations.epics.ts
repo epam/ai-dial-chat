@@ -589,7 +589,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         folderId,
         ...conversations.map((conv) => conv.folderId),
       ]);
-      const removedConversationsIds = conversations.map((conv) => conv.id);
+      const deletedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
       actions.push(
         of(
@@ -598,11 +598,11 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
           }),
         ),
       );
-      if (removedConversationsIds.length) {
+      if (deletedConversationsIds.length) {
         actions.push(
           of(
             ConversationsActions.deleteConversations({
-              conversationIds: removedConversationsIds,
+              conversationIds: deletedConversationsIds,
             }),
           ),
         );
@@ -802,7 +802,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `An error occurred while removing the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
@@ -896,7 +896,6 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         const preparedConversations = getPreparedConversations({
           conversations: sortedConversations,
           conversationsFolders,
-          addRoot: true,
         });
 
         let migratedConversationsCount = 0;
@@ -909,7 +908,9 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           ),
           from(preparedConversations).pipe(
             concatMap((conversation) =>
-              ConversationService.setConversations([conversation]).pipe(
+              ConversationService.setConversations([
+                conversation as Conversation,
+              ]).pipe(
                 concatMap(() => {
                   migratedConversationIds.push(
                     sortedConversations[migratedConversationsCount].id,

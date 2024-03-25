@@ -298,7 +298,7 @@ export const deletePromptEpic: AppEpic = (action$) =>
           return of(
             UIActions.showErrorToast(
               translate(
-                `An error occurred while removing the prompt "${payload.prompt.name}"`,
+                `An error occurred while deleting the prompt "${payload.prompt.name}"`,
               ),
             ),
           );
@@ -322,7 +322,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.deletePrompts.match),
     map(({ payload }) => ({
-      deletePrompts: payload.promptsToRemove,
+      deletePrompts: payload.promptsToDelete,
     })),
     switchMap(({ deletePrompts }) =>
       zip(
@@ -346,7 +346,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
               of(
                 UIActions.showErrorToast(
                   translate(
-                    `An error occurred while removing the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                    `An error occurred while deleting the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
                   ),
                 ),
               ),
@@ -463,7 +463,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) =>
       forkJoin({
         folderId: of(payload.folderId),
-        promptsToRemove: PromptService.getPrompts(payload.folderId, true).pipe(
+        promptsToDelete: PromptService.getPrompts(payload.folderId, true).pipe(
           catchError((err) => {
             console.error(
               'An error occurred while uploading prompts and folders:',
@@ -475,10 +475,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         folders: of(PromptsSelectors.selectFolders(state$.value)),
       }),
     ),
-    switchMap(({ folderId, promptsToRemove, folders }) => {
+    switchMap(({ folderId, promptsToDelete, folders }) => {
       const childFolders = new Set([
         folderId,
-        ...promptsToRemove.map((prompt) => prompt.folderId),
+        ...promptsToDelete.map((prompt) => prompt.folderId),
       ]);
       const actions: Observable<AnyAction>[] = [];
       actions.push(
@@ -489,11 +489,11 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         ),
       );
 
-      if (promptsToRemove.length) {
+      if (promptsToDelete.length) {
         actions.push(
           of(
             PromptsActions.deletePrompts({
-              promptsToRemove,
+              promptsToDelete: promptsToDelete,
             }),
           ),
         );
@@ -789,10 +789,9 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const preparedPrompts: Prompt[] = getPreparedPrompts({
+        const preparedPrompts = getPreparedPrompts({
           prompts: notMigratedPrompts,
           folders: promptsFolders,
-          addRoot: true,
         }); // to send prompts with proper parentPath
 
         let migratedPromptsCount = 0;
