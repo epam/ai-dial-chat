@@ -308,7 +308,7 @@ export const MigrationFailedWindow = ({
               {t('All discarded items will be ')}
               <strong>{t('PERMANENTLY LOST')}</strong>.
             </p>
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex justify-end overflow-y-scroll">
               <div className="flex w-[100px] text-xs">
                 <p className="flex w-[50px] justify-center">
                   {showSelectToMigrateWindow ? t('Migrate') : t('Retry')}
@@ -316,7 +316,7 @@ export const MigrationFailedWindow = ({
                 <p className="flex w-[50px] justify-center">{t('Discard')}</p>
               </div>
             </div>
-            <div className="my-2 flex justify-between border-b-[1px] border-b-tertiary pb-2">
+            <div className="my-2 flex justify-between overflow-y-scroll border-b-[1px] border-b-tertiary pb-2">
               <div className="flex items-center gap-1 py-1 text-xs">
                 {t('All items')}
               </div>
@@ -337,7 +337,7 @@ export const MigrationFailedWindow = ({
             </div>
           </div>
 
-          <div className="flex-col divide-y divide-tertiary overflow-auto px-6">
+          <div className="flex-col divide-y divide-tertiary  overflow-y-scroll px-6">
             <ItemsList
               entitiesToRetryIds={conversationsToRetryIds}
               setEntitiesToRetryIds={(convIds: string[]) =>
