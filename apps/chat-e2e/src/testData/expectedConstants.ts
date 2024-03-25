@@ -29,10 +29,10 @@ export const ExpectedConstants = {
   enterMessageAlert: 'Please enter a message',
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
-    'Are you sure that you want to remove a folder with all nested elements?',
+    'Are you sure that you want to delete a folder with all nested elements?',
   deleteSharedFolderMessage:
-    'Are you sure that you want to remove a folder with all nested elements?\n' +
-    'Removing will stop sharing and other users will no longer see this folder.',
+    'Are you sure that you want to delete a folder with all nested elements?\n' +
+    'Deleting will stop sharing and other users will no longer see this folder.',
   renameSharedFolderMessage:
     'Renaming will stop sharing and other users will no longer see this folder.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,

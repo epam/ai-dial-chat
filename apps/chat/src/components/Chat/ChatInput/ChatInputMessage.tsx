@@ -327,11 +327,11 @@ export const ChatInputMessage = ({
     }
     if (!isModelsLoaded) {
       return t(
-        'Please wait for models will be loaded to continue working with chat',
+        'Please wait for models will be loaded to continue working with conversation',
       );
     }
     if (isReplay) {
-      return t('Please continue replay to continue working with chat');
+      return t('Please continue replay to continue working with conversation');
     }
     if (isError) {
       return t('Regenerate response');

@@ -272,13 +272,13 @@ export const ChatHeader = ({
             {isCompareMode && selectedConversationIds.length > 1 && (
               <Tooltip
                 isTriggerClickable
-                tooltip={t('Remove conversation from compare mode')}
+                tooltip={t('Delete conversation from compare mode')}
               >
                 <button
                   className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
                   onClick={() => onUnselectConversation(conversation.id)}
                   disabled={conversation.isMessageStreaming}
-                  data-qa="remove-from-compare"
+                  data-qa="delete-from-compare"
                 >
                   <IconX size={18} />
                 </button>

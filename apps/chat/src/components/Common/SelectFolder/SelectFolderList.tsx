@@ -9,7 +9,7 @@ import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
@@ -73,7 +73,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                   <div className="relative" key={folder.id}>
                     <Folder
                       {...folderProps}
-                      maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+                      maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                       currentFolder={folder}
                       highlightedFolders={highlightedFolders}
                       highlightTemporaryFolders={highlightTemporaryFolders}

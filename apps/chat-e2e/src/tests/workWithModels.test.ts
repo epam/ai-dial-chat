@@ -285,7 +285,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Edit 2nd request, save changes and verify response is received, last request is removed',
+      'Edit 2nd request, save changes and verify response is received, last request is deleted',
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.editMessage(userRequests[1], editData);
@@ -314,7 +314,7 @@ dialTest(
 
 dialTest(
   'Delete the message in the middle. Cancel.\n' +
-    'Delete the message in the middle. Remove',
+    'Delete the message in the middle. Delete',
   async ({
     dialHomePage,
     conversationData,

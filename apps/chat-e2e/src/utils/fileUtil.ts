@@ -21,11 +21,11 @@ export class FileUtil {
     return JSON.parse(content);
   }
 
-  public static removeExportFolder() {
-    FileUtil.removeFolder(Import.exportPath);
+  public static deleteExportFolder() {
+    FileUtil.deleteFolder(Import.exportPath);
   }
 
-  public static removeFolder(path: PathLike) {
+  public static deleteFolder(path: PathLike) {
     fs.rmSync(path, {
       recursive: true,
       force: true,

@@ -111,7 +111,7 @@ describe('MultipleComboBox', () => {
     expect(onChangeSelectedItems).toHaveBeenCalledWith(['ba']);
   });
 
-  it('removes selected item when close button is clicked', async () => {
+  it('deletes selected item when close button is clicked', async () => {
     const selectedItems = [items[0], items[1]];
     render(
       <MultipleComboBox
