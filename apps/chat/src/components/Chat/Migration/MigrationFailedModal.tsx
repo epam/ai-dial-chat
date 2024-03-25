@@ -267,7 +267,7 @@ export const MigrationFailedWindow = ({
 
   return (
     <div className="flex size-full flex-col items-center justify-center p-2">
-      <div className="flex max-h-[90%] w-full max-w-[523px] flex-col divide-y divide-tertiary rounded bg-layer-2 pt-6">
+      <div className="flex max-h-[90%] w-full max-w-[523px] flex-col rounded bg-layer-2 pt-6">
         <div className="flex max-h-full flex-col pb-4">
           <div className="px-6">
             <h1 className="text-base font-semibold">
@@ -358,7 +358,7 @@ export const MigrationFailedWindow = ({
               withPt={!!failedMigratedConversations.length}
             />
           </div>
-          <footer className="flex flex-col items-center justify-end px-6 pt-4">
+          <footer className="flex flex-col items-center justify-end border-t-[1px] border-t-tertiary px-6 pt-4">
             {!!(
               (!isChatsBackedUp && failedMigratedConversations.length) ||
               (!isPromptsBackedUp && failedMigratedPrompts.length)
