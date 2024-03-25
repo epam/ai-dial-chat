@@ -660,8 +660,11 @@ export const ChatView = memo(() => {
                   <div
                     onScroll={() => {
                       if (
-                        selectedConversations.some((conv) =>
-                          conv.messages.find((m) => m.role !== Role.Assistant),
+                        selectedConversations.some(
+                          (conv) =>
+                            !!conv.messages.find(
+                              (m) => m.role !== Role.Assistant,
+                            ),
                         )
                       ) {
                         handleScroll();
