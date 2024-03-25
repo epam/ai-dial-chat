@@ -33,6 +33,7 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -115,11 +116,6 @@ const ItemsList = <T extends Conversation | Prompt>({
   );
 };
 
-interface Props {
-  failedMigratedConversations: Conversation[];
-  failedMigratedPrompts: Prompt[];
-}
-
 interface AllItemsCheckboxesProps {
   isChecked: boolean;
   isCheckIcon: boolean;
@@ -154,9 +150,16 @@ const AllItemsCheckboxes = ({
   );
 };
 
+interface Props {
+  failedMigratedConversations: Conversation[];
+  failedMigratedPrompts: Prompt[];
+  showSelectToMigrateWindow: boolean;
+}
+
 export const MigrationFailedWindow = ({
   failedMigratedConversations,
   failedMigratedPrompts,
+  showSelectToMigrateWindow,
 }: Props) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -199,6 +202,9 @@ export const MigrationFailedWindow = ({
     const failedMigratedPromptIds = failedMigratedPrompts.map(
       (conv) => conv.id,
     );
+
+    BrowserStorage.setEntitiesMigrationInitialized();
+    dispatch(UIActions.setShowSelectToMigrateWindow(false));
 
     dispatch(
       ConversationsActions.skipFailedMigratedConversations({
@@ -265,16 +271,33 @@ export const MigrationFailedWindow = ({
         <div className="flex flex-col pb-4">
           <div className="px-6">
             <h1 className="text-base font-semibold">
-              {t('Some items failed to migrate, retry migration?')}
+              {showSelectToMigrateWindow
+                ? t('Now your data will be available on all your devices')
+                : t('Some items failed to migrate, retry migration?')}
             </h1>
             <p className="mt-2 text-secondary">
-              {t(
-                'Retry migration or discard the unsuccessfully migrated conversations',
+              {showSelectToMigrateWindow ? (
+                <>
+                  {t('All current conversations')}
+                  <wbr />
+                  /
+                  <wbr />
+                  {t(
+                    'prompts from all devices will be migrated to the central storage. Select items to migrate or discard. ',
+                  )}
+                </>
+              ) : (
+                <>
+                  {t(
+                    'Retry migration or discard the unsuccessfully migrated conversations',
+                  )}
+                  <wbr />
+                  /
+                  <wbr />
+                  {t('prompts')}
+                </>
               )}
-              <wbr />
-              /
-              <wbr />
-              {t('prompts. All discarded items will be ')}
+              {t('All discarded items will be ')}
               <strong>{t('PERMANENTLY LOST')}</strong>.
             </p>
             <div className="mt-4 flex justify-end">

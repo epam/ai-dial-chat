@@ -60,6 +60,7 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
@@ -751,6 +752,8 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         isPromptsBackedUp: BrowserStorage.getEntityBackedUp(
           MigrationStorageKeys.PromptsBackedUp,
         ),
+        isMigrationInitialized:
+          BrowserStorage.getEntitiesMigrationInitialized(),
       }),
     ),
     switchMap(
@@ -760,12 +763,32 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         migratedPromptIds,
         failedMigratedPromptIds,
         isPromptsBackedUp,
+        isMigrationInitialized,
       }) => {
         const notMigratedPrompts = filterMigratedEntities(
           prompts,
           [...migratedPromptIds, ...failedMigratedPromptIds],
           true,
         );
+
+        if (
+          !isMigrationInitialized &&
+          prompts.length &&
+          !failedMigratedPromptIds.length &&
+          !migratedPromptIds.length
+        ) {
+          return concat(
+            of(
+              PromptsActions.setFailedMigratedPrompts({
+                failedMigratedPrompts: filterMigratedEntities(
+                  prompts,
+                  prompts.map((p) => p.id),
+                ),
+              }),
+            ),
+            of(UIActions.setShowSelectToMigrateWindow(true)),
+          );
+        }
 
         if (
           SettingsSelectors.selectStorageType(state$.value) !==
