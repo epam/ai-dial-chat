@@ -289,6 +289,20 @@ export class BrowserStorage implements DialStorage {
     return BrowserStorage.getData(key, false);
   }
 
+  public static setEntitiesMigrationInitialized(): Observable<void> {
+    return BrowserStorage.setData(
+      MigrationStorageKeys.MigrationInitialized,
+      true,
+    );
+  }
+
+  public static getEntitiesMigrationInitialized(): Observable<boolean> {
+    return BrowserStorage.getData(
+      MigrationStorageKeys.MigrationInitialized,
+      false,
+    );
+  }
+
   public static getData<K = undefined>(
     key: UIStorageKeys | MigrationStorageKeys,
     defaultValue: K,
