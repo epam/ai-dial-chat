@@ -821,7 +821,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click Play Previous message button and verify cursor is not blinking, response is removing immediately',
+      'Click Play Previous message button and verify cursor is not blinking, response is deleting immediately',
       async () => {
         await chatMessages.waitForResponseReceived();
         await chat.playPreviousChatMessage();

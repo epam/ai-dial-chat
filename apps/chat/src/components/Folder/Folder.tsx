@@ -500,7 +500,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder.id, dispatch, featureType, isExternal, isParentFolder],
   );
 
-  const removeHighlight = useCallback(
+  const deleteHighlight = useCallback(
     (evt: DragEvent) => {
       if (!dragDropElement.current?.contains(evt.relatedTarget as Node)) {
         setIsDraggingOver(false);
@@ -629,7 +629,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       onDrop={dropHandler}
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
-      onDragLeave={removeHighlight}
+      onDragLeave={deleteHighlight}
       onContextMenu={handleContextMenuOpen}
       ref={dragDropElement}
     >
@@ -870,12 +870,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
           heading={t('Confirm deleting folder')}
-          description={`${t('Are you sure that you want to remove a folder with all nested elements?')}${t(
+          description={`${t('Are you sure that you want to delete a folder with all nested elements?')}${t(
             currentFolder.isShared
-              ? '\nRemoving will stop sharing and other users will no longer see this folder.'
+              ? '\nDeleting will stop sharing and other users will no longer see this folder.'
               : '',
           )}`}
-          confirmLabel={t('Remove')}
+          confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsDeletingConfirmDialog(false);

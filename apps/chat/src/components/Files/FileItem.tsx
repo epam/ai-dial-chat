@@ -29,7 +29,7 @@ export enum FileItemEventIds {
   Cancel = 'cancel',
   Retry = 'retry',
   Toggle = 'toggle',
-  Remove = 'remove',
+  Delete = 'delete',
 }
 
 interface Props {
@@ -74,9 +74,9 @@ export const FileItem = ({
     onEvent?.(FileItemEventIds.Retry, item.id);
   }, [item.id, onEvent]);
 
-  const handleRemove = useCallback(() => {
+  const handleDelete = useCallback(() => {
     setIsContextMenu(false);
-    onEvent?.(FileItemEventIds.Remove, item.id);
+    onEvent?.(FileItemEventIds.Delete, item.id);
   }, [item.id, onEvent]);
 
   const handleUnshare: MouseEventHandler<HTMLButtonElement> =
@@ -201,7 +201,7 @@ export const FileItem = ({
         ) : (
           <FileItemContextMenu
             file={item}
-            onDelete={handleRemove}
+            onDelete={handleDelete}
             onOpenChange={setIsContextMenu}
             onUnshare={handleUnshare}
             onUnpublish={handleOpenUnpublishing}

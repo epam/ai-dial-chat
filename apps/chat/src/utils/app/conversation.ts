@@ -150,7 +150,7 @@ export const sortByDateAndName = <T extends ConversationInfo>(
     ['desc', 'desc'],
   );
 
-const removePostfix = (name: string): string => {
+const deletePostfix = (name: string): string => {
   const regex = / \d{1,3}$/;
   let newName = name.trim();
   while (regex.test(newName)) {
@@ -177,7 +177,7 @@ export const isValidConversationForCompare = (
   }
   return (
     dontCompareNames ||
-    removePostfix(selectedConversation.name) === removePostfix(candidate.name)
+    deletePostfix(selectedConversation.name) === deletePostfix(candidate.name)
   );
 };
 

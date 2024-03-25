@@ -1,4 +1,3 @@
-import { Tags } from '../domData';
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 

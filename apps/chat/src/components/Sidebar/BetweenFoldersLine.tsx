@@ -68,7 +68,7 @@ export const BetweenFoldersLine = ({
     [denyDrop, featureType, onDraggingOver],
   );
 
-  const removeHighlight = useCallback(() => {
+  const deleteHighlight = useCallback(() => {
     if (denyDrop) {
       return;
     }
@@ -81,7 +81,7 @@ export const BetweenFoldersLine = ({
       onDrop={dropHandler}
       onDragOver={allowDrop}
       onDragEnter={highlightDrop}
-      onDragLeave={removeHighlight}
+      onDragLeave={deleteHighlight}
       ref={dragDropElement}
       className={classNames('h-1', isDraggingOver && 'bg-accent-primary-alpha')}
       style={{

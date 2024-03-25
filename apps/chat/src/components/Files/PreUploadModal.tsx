@@ -185,7 +185,7 @@ export const PreUploadDialog = ({
     if (incorrectFileNames.length > 0) {
       errors.push(
         t(
-          `The symbols {{notAllowedSymbols}} are not allowed in file name. Also using a dot at the end of a name is not permitted. Please rename or remove them from uploading files list: {{fileNames}}`,
+          `The symbols {{notAllowedSymbols}} are not allowed in file name. Also using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}`,
           {
             notAllowedSymbols,
             fileNames: incorrectFileNames.join(', '),
@@ -203,7 +203,7 @@ export const PreUploadDialog = ({
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
         t(
-          'Files which you trying to upload already presented in selected folder. Please rename or remove them from uploading files list: {{fileNames}}',
+          'Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}',
           { fileNames: localIncorrectSameNameFiles.join(', ') },
         ) as string,
       );
@@ -213,7 +213,7 @@ export const PreUploadDialog = ({
     if (fileNameSet.size < selectedFiles.length) {
       errors.push(
         t(
-          'Files which you trying to upload have same names. Please rename or remove them from uploading files list',
+          'Files which you trying to upload have same names. Please rename or delete them from uploading files list',
         ) as string,
       );
     }

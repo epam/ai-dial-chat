@@ -242,7 +242,7 @@ export class ChatOverlay {
       }
     }
 
-    // if request was replied -> should remove it from this.requests
+    // if request was replied -> should delete it from this.requests
     this.requests = this.requests.filter((request) => !request.isReplied);
   };
 
