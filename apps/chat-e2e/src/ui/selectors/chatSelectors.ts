@@ -69,7 +69,7 @@ export const ChatSelectors = {
   playbackPrevious: '[data-qa="playback-prev"]',
   playbackPreviousDisabled: () =>
     `${ChatSelectors.playbackPrevious}[${Attributes.disabled}]`,
-  removeFromCompareIcon: '[data-qa="remove-from-compare"]',
+  deleteFromCompareIcon: '[data-qa="delete-from-compare"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
   replayAsIs: '[data-qa="replay-as-is"]',

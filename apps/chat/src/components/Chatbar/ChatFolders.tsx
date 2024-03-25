@@ -28,7 +28,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
-  MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH,
+  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
   PUBLISHING_FOLDER_NAME,
 } from '@/src/constants/folders';
 
@@ -174,7 +174,7 @@ const ChatFolderTemplate = ({
         denyDrop={isExternal}
       />
       <Folder
-        maxDepth={MAX_CHAT_AND_PROMPT_FOLDERS_DEPTH}
+        maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
         readonly={readonly}
         searchTerm={searchTerm}
         currentFolder={folder}
@@ -267,8 +267,8 @@ export const ChatSection = ({
     const shouldBeHighlighted =
       rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
       (!!displayRootFiles &&
-        sortedRootConversations.some((chat) =>
-          selectedConversationsIds.includes(chat.id),
+        sortedRootConversations.some((conv) =>
+          selectedConversationsIds.includes(conv.id),
         ));
     if (isSectionHighlighted !== shouldBeHighlighted) {
       setIsSectionHighlighted(shouldBeHighlighted);
@@ -359,7 +359,7 @@ export function ChatFolders() {
           openByDefault: true,
         },
         {
-          name: t('Pinned chats'),
+          name: t('Pinned conversations'),
           filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           openByDefault: true,
