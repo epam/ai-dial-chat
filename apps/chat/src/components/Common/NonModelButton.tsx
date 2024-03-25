@@ -21,7 +21,11 @@ export const NonModelButton = ({
   );
 
   return (
-    <button className={asIsButtonClassName} onClick={onClickHandler} data-qa={buttonLabel}>
+    <button
+      className={asIsButtonClassName}
+      onClick={onClickHandler}
+      data-qa={buttonLabel}
+    >
       <span className="relative inline-block shrink-0 leading-none">
         {icon}
       </span>
