@@ -86,4 +86,5 @@ export const ChatSelectors = {
   stopLoading: '[data-qa="stop-loading"]',
   errorToast: 'div > .text-error',
   conversationNotFound: '[data-qa="not-found"]',
+  codeblock: '.codeblock',
 };

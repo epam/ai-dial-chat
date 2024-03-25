@@ -14,10 +14,23 @@ import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { expect } from '@playwright/test';
 
 export class ShareApiHelper extends BaseApiHelper {
-  public async shareEntityByLink(entity: Conversation, isFolder = false) {
+  public async shareEntityByLink(entities: Conversation[], isFolder = false) {
+    const resources: { url: string }[] = [];
+    for (const entity of entities) {
+      const url = isFolder ? `${entity.folderId!}/` : entity.id!;
+      if (!resources.find((r) => r.url === url)) {
+        resources.push({ url: isFolder ? `${entity.folderId!}/` : entity.id! });
+      }
+      entity.messages.map((m) =>
+        m.custom_content?.attachments?.forEach((a) =>
+          resources.push({ url: a.url! }),
+        ),
+      );
+    }
+
     const requestData: ShareRequestModel = {
       invitationType: ShareRequestType.link,
-      resources: [{ url: isFolder ? `${entity.folderId!}/` : entity.id! }],
+      resources: resources,
     };
     const response = await this.request.post(API.shareConversationHost, {
       data: requestData,
