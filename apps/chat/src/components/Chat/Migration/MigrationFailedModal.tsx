@@ -33,6 +33,7 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ReportIssueDialog } from '@/src/components/Chat/ReportIssueDialog';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -115,11 +116,6 @@ const ItemsList = <T extends Conversation | Prompt>({
   );
 };
 
-interface Props {
-  failedMigratedConversations: Conversation[];
-  failedMigratedPrompts: Prompt[];
-}
-
 interface AllItemsCheckboxesProps {
   isChecked: boolean;
   isCheckIcon: boolean;
@@ -154,9 +150,16 @@ const AllItemsCheckboxes = ({
   );
 };
 
+interface Props {
+  failedMigratedConversations: Conversation[];
+  failedMigratedPrompts: Prompt[];
+  showSelectToMigrateWindow: boolean;
+}
+
 export const MigrationFailedWindow = ({
   failedMigratedConversations,
   failedMigratedPrompts,
+  showSelectToMigrateWindow,
 }: Props) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -170,6 +173,7 @@ export const MigrationFailedWindow = ({
   const [promptsToRetryIds, setPromptsToRetryIds] = useState<string[]>([]);
   const [isReportIssueDialogOpen, setIsReportIssueDialogOpen] = useState(false);
   const [dontWantBackup, setDontWantBackup] = useState(false);
+  const [isScreenSmall, setIsScreenSmall] = useState(isSmallScreen());
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -181,6 +185,13 @@ export const MigrationFailedWindow = ({
   const isChatsBackedUp = useAppSelector(
     ConversationsSelectors.selectIsChatsBackedUp,
   );
+
+  useEffect(() => {
+    const handleResize = () => setIsScreenSmall(isSmallScreen());
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setConversationsToRetryIds(
@@ -199,6 +210,9 @@ export const MigrationFailedWindow = ({
     const failedMigratedPromptIds = failedMigratedPrompts.map(
       (conv) => conv.id,
     );
+
+    BrowserStorage.setEntitiesMigrationInitialized();
+    dispatch(UIActions.setShowSelectToMigrateWindow(false));
 
     dispatch(
       ConversationsActions.skipFailedMigratedConversations({
@@ -260,30 +274,49 @@ export const MigrationFailedWindow = ({
       (isPromptsBackedUp || !failedMigratedPrompts.length));
 
   return (
-    <div className="flex size-full flex-col items-center justify-center">
-      <div className="m-2 flex max-w-[523px] flex-col divide-y divide-tertiary rounded bg-layer-2 pb-4 pt-6">
-        <div className="flex flex-col pb-4">
+    <div className="flex size-full flex-col items-center justify-center p-2">
+      <div className="flex max-h-[90%] w-full max-w-[523px] flex-col rounded bg-layer-2 pt-6">
+        <div className="flex max-h-full flex-col pb-4">
           <div className="px-6">
             <h1 className="text-base font-semibold">
-              {t('Some items failed to migrate, retry migration?')}
+              {showSelectToMigrateWindow
+                ? t('Now your data will be available on all your devices')
+                : t('Some items failed to migrate, retry migration?')}
             </h1>
             <p className="mt-2 text-secondary">
-              {t(
-                'Retry migration or discard the unsuccessfully migrated conversations',
+              {showSelectToMigrateWindow ? (
+                <>
+                  {t('All current conversations')}
+                  <wbr />
+                  /
+                  <wbr />
+                  {t(
+                    'prompts from all devices will be migrated to the central storage. Select items to migrate or discard. ',
+                  )}
+                </>
+              ) : (
+                <>
+                  {t(
+                    'Retry migration or discard the unsuccessfully migrated conversations',
+                  )}
+                  <wbr />
+                  /
+                  <wbr />
+                  {t('prompts')}
+                </>
               )}
-              <wbr />
-              /
-              <wbr />
-              {t('prompts. All discarded items will be ')}
+              {t('All discarded items will be ')}
               <strong>{t('PERMANENTLY LOST')}</strong>.
             </p>
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex justify-end overflow-y-scroll">
               <div className="flex w-[100px] text-xs">
-                <p className="flex w-[50px] justify-center">{t('Retry')}</p>
+                <p className="flex w-[50px] justify-center">
+                  {showSelectToMigrateWindow ? t('Migrate') : t('Retry')}
+                </p>
                 <p className="flex w-[50px] justify-center">{t('Discard')}</p>
               </div>
             </div>
-            <div className="my-2 flex justify-between border-b-[1px] border-b-tertiary pb-2">
+            <div className="my-2 flex justify-between overflow-y-scroll border-b-[1px] border-b-tertiary pb-2">
               <div className="flex items-center gap-1 py-1 text-xs">
                 {t('All items')}
               </div>
@@ -304,7 +337,7 @@ export const MigrationFailedWindow = ({
             </div>
           </div>
 
-          <div className="max-h-[45vh] flex-col divide-y divide-tertiary overflow-auto px-6">
+          <div className="flex-col divide-y divide-tertiary  overflow-y-scroll px-6">
             <ItemsList
               entitiesToRetryIds={conversationsToRetryIds}
               setEntitiesToRetryIds={(convIds: string[]) =>
@@ -332,84 +365,84 @@ export const MigrationFailedWindow = ({
                   <IconBulb size={18} className="text-secondary" />
                 </div>
               )}
-              withPt
+              withPt={!!failedMigratedConversations.length}
             />
           </div>
-        </div>
-        <footer className="flex flex-col items-center justify-end px-6 pt-4">
-          {!!(
-            (!isChatsBackedUp && failedMigratedConversations.length) ||
-            (!isPromptsBackedUp && failedMigratedPrompts.length)
-          ) && (
-            <div className="flex items-center gap-4">
-              <div className="relative flex size-[18px] group-hover/file-item:flex">
-                <input
-                  className="checkbox peer size-[18px] bg-transparent"
-                  type="checkbox"
-                  onClick={() => setDontWantBackup((prev) => !prev)}
-                  readOnly
-                  checked={dontWantBackup}
-                />
-                {dontWantBackup && (
-                  <IconCheck
-                    size={18}
-                    className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          <footer className="flex flex-col items-center justify-end border-t-[1px] border-t-tertiary px-6 pt-4">
+            {!!(
+              (!isChatsBackedUp && failedMigratedConversations.length) ||
+              (!isPromptsBackedUp && failedMigratedPrompts.length)
+            ) && (
+              <div className="flex items-center gap-4">
+                <div className="relative flex size-[18px] group-hover/file-item:flex">
+                  <input
+                    className="checkbox peer size-[18px] bg-transparent"
+                    type="checkbox"
+                    onClick={() => setDontWantBackup((prev) => !prev)}
+                    readOnly
+                    checked={dontWantBackup}
                   />
-                )}
+                  {dontWantBackup && (
+                    <IconCheck
+                      size={18}
+                      className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                    />
+                  )}
+                </div>
+                <p className="text-secondary">
+                  {t(
+                    "I don't want to backup conversations/prompts and I’m ready ",
+                  )}
+                  <span className="font-semibold">{t('TO LOSE DATA')}</span>
+                </p>
               </div>
-              <p className="text-secondary">
-                {t(
-                  "I don't want to backup conversations/prompts and I’m ready ",
-                )}
-                <span className="font-semibold">{t('TO LOSE DATA')}</span>
-              </p>
+            )}
+            <div className="mt-3 flex w-full justify-end">
+              {!!failedMigratedPrompts.length && (
+                <button
+                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
+                  data-qa="skip-migration"
+                  onClick={handleBackupPrompts}
+                >
+                  {isPromptsBackedUp ? (
+                    <IconCircleCheck
+                      size={18}
+                      className="mr-3 text-accent-secondary"
+                    />
+                  ) : (
+                    <IconDownload size={18} className="mr-3 text-secondary" />
+                  )}
+                  {!isScreenSmall && t('Backup')} {t('prompts')}
+                </button>
+              )}
+              {!!failedMigratedConversations.length && (
+                <button
+                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
+                  data-qa="skip-migration"
+                  onClick={handleBackupChats}
+                >
+                  {isChatsBackedUp ? (
+                    <IconCircleCheck
+                      size={18}
+                      className="mr-3 text-accent-secondary"
+                    />
+                  ) : (
+                    <IconDownload size={18} className="mr-3 text-secondary" />
+                  )}
+                  {!isScreenSmall && t('Backup')} {t('chats')}
+                </button>
+              )}
+              <button
+                className="button button-primary mr-3 flex h-[38px] items-center"
+                data-qa="skip-migration"
+                onClick={retryMigration}
+                disabled={!isNextButtonEnabled}
+              >
+                {t('Next')}
+              </button>
             </div>
-          )}
-          <div className="mt-3 flex w-full justify-end">
-            {!!failedMigratedPrompts.length && (
-              <button
-                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
-                data-qa="skip-migration"
-                onClick={handleBackupPrompts}
-              >
-                {isPromptsBackedUp ? (
-                  <IconCircleCheck
-                    size={18}
-                    className="mr-3 text-accent-secondary"
-                  />
-                ) : (
-                  <IconDownload size={18} className="mr-3 text-secondary" />
-                )}
-                {!isSmallScreen() && t('Backup')} {t('prompts')}
-              </button>
-            )}
-            {!!failedMigratedConversations.length && (
-              <button
-                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
-                data-qa="skip-migration"
-                onClick={handleBackupChats}
-              >
-                {isChatsBackedUp ? (
-                  <IconCircleCheck
-                    size={18}
-                    className="mr-3 text-accent-secondary"
-                  />
-                ) : (
-                  <IconDownload size={18} className="mr-3 text-secondary" />
-                )}
-                {!isSmallScreen() && t('Backup')} {t('chats')}
-              </button>
-            )}
-            <button
-              className="button button-primary mr-3 flex h-[38px] items-center"
-              data-qa="skip-migration"
-              onClick={retryMigration}
-              disabled={!isNextButtonEnabled}
-            >
-              {t('Next')}
-            </button>
-          </div>
-        </footer>
+          </footer>
+        </div>
       </div>
       <p className="mt-6 text-secondary">
         {t('If you have a problem please ')}

@@ -39,6 +39,7 @@ dialTest(
     setTestIds,
     iconApiHelper,
     talkToRecentGroupEntities,
+    dataInjector,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
     let conversation: Conversation;
@@ -57,7 +58,8 @@ dialTest(
           conversationData.prepareConversationWithDifferentModels(
             conversationModels,
           );
-        await localStorageManager.setConversationHistory(conversation);
+
+        await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
 
         const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
