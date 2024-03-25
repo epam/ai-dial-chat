@@ -855,6 +855,8 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         isChatsBackedUp: BrowserStorage.getEntityBackedUp(
           MigrationStorageKeys.ChatsBackedUp,
         ),
+        isMigrationInitialized:
+          BrowserStorage.getEntitiesMigrationInitialized(),
       }),
     ),
     switchMap(
@@ -864,12 +866,32 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         migratedConversationIds,
         failedMigratedConversationIds,
         isChatsBackedUp,
+        isMigrationInitialized,
       }) => {
         const notMigratedConversations = filterMigratedEntities(
           conversations,
           [...failedMigratedConversationIds, ...migratedConversationIds],
           true,
         );
+
+        if (
+          !isMigrationInitialized &&
+          conversations.length &&
+          !failedMigratedConversationIds.length &&
+          !migratedConversationIds.length
+        ) {
+          return concat(
+            of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: filterMigratedEntities(
+                  conversations,
+                  conversations.map((c) => c.id),
+                ),
+              }),
+            ),
+            of(UIActions.setShowSelectToMigrateWindow(true)),
+          );
+        }
 
         if (
           SettingsSelectors.selectStorageType(state$.value) !==
