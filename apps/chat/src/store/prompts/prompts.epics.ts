@@ -763,6 +763,8 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         isPromptsBackedUp: BrowserStorage.getEntityBackedUp(
           MigrationStorageKeys.PromptsBackedUp,
         ),
+        isMigrationInitialized:
+          BrowserStorage.getEntitiesMigrationInitialized(),
       }),
     ),
     switchMap(
@@ -772,12 +774,32 @@ const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
         migratedPromptIds,
         failedMigratedPromptIds,
         isPromptsBackedUp,
+        isMigrationInitialized,
       }) => {
         const notMigratedPrompts = filterMigratedEntities(
           prompts,
           [...migratedPromptIds, ...failedMigratedPromptIds],
           true,
         );
+
+        if (
+          !isMigrationInitialized &&
+          prompts.length &&
+          !failedMigratedPromptIds.length &&
+          !migratedPromptIds.length
+        ) {
+          return concat(
+            of(
+              PromptsActions.setFailedMigratedPrompts({
+                failedMigratedPrompts: filterMigratedEntities(
+                  prompts,
+                  prompts.map((p) => p.id),
+                ),
+              }),
+            ),
+            of(UIActions.setShowSelectToMigrateWindow(true)),
+          );
+        }
 
         if (
           SettingsSelectors.selectStorageType(state$.value) !==

@@ -253,7 +253,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const newName = prepareEntityName(renameValue, true);
+    const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
     if (
@@ -936,7 +936,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {
-            const newName = prepareEntityName(renameValue, true);
+            const newName = prepareEntityName(renameValue, {
+              forRenaming: true,
+            });
 
             if (newName) {
               onRenameFolder!(newName, currentFolder.id);

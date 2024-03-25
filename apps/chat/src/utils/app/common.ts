@@ -1,6 +1,7 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds } from '@/src/utils/app/folders';
 
+import { PrepareNameOptions } from '@/src/types/chat';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
@@ -90,18 +91,27 @@ export const updateEntitiesFoldersAndIds = (
 
 const trimEndDots = (str: string) => trimEnd(str, '. \t\r\n');
 
-export const prepareEntityName = (name: string, forRenaming = false) => {
-  const clearName = forRenaming
-    ? name.replace(notAllowedSymbolsRegex, '').trim()
+export const prepareEntityName = (
+  name: string,
+  options?: Partial<PrepareNameOptions>,
+) => {
+  const clearName = options?.forRenaming
+    ? name
+        .replace(
+          notAllowedSymbolsRegex,
+          options?.replaceWithSpacesForRenaming ? ' ' : '',
+        )
+        .trim()
     : name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
         .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
         .filter(Boolean)[0] ?? '';
 
-  if (clearName.length > MAX_ENTITY_LENGTH) {
-    return trimEndDots(substring(clearName, 0, MAX_ENTITY_LENGTH));
-  }
+  const result =
+    clearName.length > MAX_ENTITY_LENGTH
+      ? substring(clearName, 0, MAX_ENTITY_LENGTH)
+      : clearName;
 
-  return trimEndDots(clearName);
+  return !options?.forRenaming ? trimEndDots(result) : result.trim();
 };
