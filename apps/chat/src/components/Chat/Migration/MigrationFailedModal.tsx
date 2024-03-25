@@ -266,9 +266,9 @@ export const MigrationFailedWindow = ({
       (isPromptsBackedUp || !failedMigratedPrompts.length));
 
   return (
-    <div className="flex size-full flex-col items-center justify-center">
-      <div className="m-2 flex max-w-[523px] flex-col divide-y divide-tertiary rounded bg-layer-2 pb-4 pt-6">
-        <div className="flex flex-col pb-4">
+    <div className="flex size-full flex-col items-center justify-center p-2">
+      <div className="flex max-h-[90%] w-full max-w-[523px] flex-col divide-y divide-tertiary rounded bg-layer-2 pt-6">
+        <div className="flex max-h-full flex-col pb-4">
           <div className="px-6">
             <h1 className="text-base font-semibold">
               {showSelectToMigrateWindow
@@ -327,7 +327,7 @@ export const MigrationFailedWindow = ({
             </div>
           </div>
 
-          <div className="max-h-[45vh] flex-col divide-y divide-tertiary overflow-auto px-6">
+          <div className="flex-col divide-y divide-tertiary overflow-auto px-6">
             <ItemsList
               entitiesToRetryIds={conversationsToRetryIds}
               setEntitiesToRetryIds={(convIds: string[]) =>
@@ -355,84 +355,84 @@ export const MigrationFailedWindow = ({
                   <IconBulb size={18} className="text-secondary" />
                 </div>
               )}
-              withPt
+              withPt={!!failedMigratedConversations.length}
             />
           </div>
-        </div>
-        <footer className="flex flex-col items-center justify-end px-6 pt-4">
-          {!!(
-            (!isChatsBackedUp && failedMigratedConversations.length) ||
-            (!isPromptsBackedUp && failedMigratedPrompts.length)
-          ) && (
-            <div className="flex items-center gap-4">
-              <div className="relative flex size-[18px] group-hover/file-item:flex">
-                <input
-                  className="checkbox peer size-[18px] bg-transparent"
-                  type="checkbox"
-                  onClick={() => setDontWantBackup((prev) => !prev)}
-                  readOnly
-                  checked={dontWantBackup}
-                />
-                {dontWantBackup && (
-                  <IconCheck
-                    size={18}
-                    className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          <footer className="flex flex-col items-center justify-end px-6 pt-4">
+            {!!(
+              (!isChatsBackedUp && failedMigratedConversations.length) ||
+              (!isPromptsBackedUp && failedMigratedPrompts.length)
+            ) && (
+              <div className="flex items-center gap-4">
+                <div className="relative flex size-[18px] group-hover/file-item:flex">
+                  <input
+                    className="checkbox peer size-[18px] bg-transparent"
+                    type="checkbox"
+                    onClick={() => setDontWantBackup((prev) => !prev)}
+                    readOnly
+                    checked={dontWantBackup}
                   />
-                )}
+                  {dontWantBackup && (
+                    <IconCheck
+                      size={18}
+                      className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                    />
+                  )}
+                </div>
+                <p className="text-secondary">
+                  {t(
+                    "I don't want to backup conversations/prompts and I’m ready ",
+                  )}
+                  <span className="font-semibold">{t('TO LOSE DATA')}</span>
+                </p>
               </div>
-              <p className="text-secondary">
-                {t(
-                  "I don't want to backup conversations/prompts and I’m ready ",
-                )}
-                <span className="font-semibold">{t('TO LOSE DATA')}</span>
-              </p>
+            )}
+            <div className="mt-3 flex w-full justify-end">
+              {!!failedMigratedPrompts.length && (
+                <button
+                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
+                  data-qa="skip-migration"
+                  onClick={handleBackupPrompts}
+                >
+                  {isPromptsBackedUp ? (
+                    <IconCircleCheck
+                      size={18}
+                      className="mr-3 text-accent-secondary"
+                    />
+                  ) : (
+                    <IconDownload size={18} className="mr-3 text-secondary" />
+                  )}
+                  {!isSmallScreen() && t('Backup')} {t('prompts')}
+                </button>
+              )}
+              {!!failedMigratedConversations.length && (
+                <button
+                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
+                  data-qa="skip-migration"
+                  onClick={handleBackupChats}
+                >
+                  {isChatsBackedUp ? (
+                    <IconCircleCheck
+                      size={18}
+                      className="mr-3 text-accent-secondary"
+                    />
+                  ) : (
+                    <IconDownload size={18} className="mr-3 text-secondary" />
+                  )}
+                  {!isSmallScreen() && t('Backup')} {t('chats')}
+                </button>
+              )}
+              <button
+                className="button button-primary mr-3 flex h-[38px] items-center"
+                data-qa="skip-migration"
+                onClick={retryMigration}
+                disabled={!isNextButtonEnabled}
+              >
+                {t('Next')}
+              </button>
             </div>
-          )}
-          <div className="mt-3 flex w-full justify-end">
-            {!!failedMigratedPrompts.length && (
-              <button
-                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
-                data-qa="skip-migration"
-                onClick={handleBackupPrompts}
-              >
-                {isPromptsBackedUp ? (
-                  <IconCircleCheck
-                    size={18}
-                    className="mr-3 text-accent-secondary"
-                  />
-                ) : (
-                  <IconDownload size={18} className="mr-3 text-secondary" />
-                )}
-                {!isSmallScreen() && t('Backup')} {t('prompts')}
-              </button>
-            )}
-            {!!failedMigratedConversations.length && (
-              <button
-                className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
-                data-qa="skip-migration"
-                onClick={handleBackupChats}
-              >
-                {isChatsBackedUp ? (
-                  <IconCircleCheck
-                    size={18}
-                    className="mr-3 text-accent-secondary"
-                  />
-                ) : (
-                  <IconDownload size={18} className="mr-3 text-secondary" />
-                )}
-                {!isSmallScreen() && t('Backup')} {t('chats')}
-              </button>
-            )}
-            <button
-              className="button button-primary mr-3 flex h-[38px] items-center"
-              data-qa="skip-migration"
-              onClick={retryMigration}
-              disabled={!isNextButtonEnabled}
-            >
-              {t('Next')}
-            </button>
-          </div>
-        </footer>
+          </footer>
+        </div>
       </div>
       <p className="mt-6 text-secondary">
         {t('If you have a problem please ')}
