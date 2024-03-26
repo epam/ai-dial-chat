@@ -836,7 +836,6 @@ const resetStateEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
-        ImportExportActions.resetState.match(action) ||
         ImportExportActions.exportCancel.match(action) ||
         ImportExportActions.exportConversationSuccess.match(action) ||
         ImportExportActions.exportFail.match(action) ||
