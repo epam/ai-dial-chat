@@ -24,6 +24,7 @@ import {
   prepareEntityName,
   trimEndDots,
 } from '@/src/utils/app/common';
+import { getEntityNameError } from '@/src/utils/app/errors';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -50,7 +51,6 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -81,6 +81,9 @@ export function ConversationView({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isNameInvalid = isEntityNameInvalid(conversation.name);
   const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+  );
 
   return (
     <>
@@ -117,9 +120,7 @@ export function ConversationView({
       >
         <Tooltip
           tooltip={t(
-            isNameInvalid
-              ? errorsMessages.entityNameInvalid
-              : errorsMessages.entityPathInvalid,
+            getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
           )}
           hideTooltip={!isNameInvalid && !isInvalidPath}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
