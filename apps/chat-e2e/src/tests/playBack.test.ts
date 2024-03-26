@@ -38,7 +38,6 @@ dialTest(
     chatHeader,
     setTestIds,
     iconApiHelper,
-    talkToRecentGroupEntities,
     dataInjector,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
