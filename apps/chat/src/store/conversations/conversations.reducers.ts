@@ -106,7 +106,7 @@ export const conversationsSlice = createSlice({
     },
     skipFailedMigratedConversations: (
       state,
-      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+      _action: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
     ) => state,
     initSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
@@ -771,7 +771,7 @@ export const conversationsSlice = createSlice({
       >,
     ) => {
       state.conversationsStatus = UploadStatus.LOADING;
-      state.conversationsLoaded = !payload?.noLoader;
+      state.conversationsLoaded = !!payload?.noLoader;
     },
     uploadConversationsSuccess: (
       state,
