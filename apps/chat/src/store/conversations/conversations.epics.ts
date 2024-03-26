@@ -2531,9 +2531,7 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.getChartAttachment.match),
     switchMap(({ payload }) =>
-      FileService.getFileContent<PlotParams>(
-        ApiUtils.encodeApiUrl(payload.pathToChart),
-      ).pipe(
+      FileService.getFileContent<PlotParams>(payload.pathToChart).pipe(
         switchMap((params) => {
           return of(
             ConversationsActions.getChartAttachmentSuccess({
