@@ -290,11 +290,17 @@ const acceptInvitationSuccessEpic: AppEpic = (action$) =>
 const acceptInvitationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationFail.match),
-    map(({ payload }) => {
-      history.replaceState({}, '', `${window.location.origin}`);
+    switchMap(({ payload }) => {
+      history.replaceState({}, '', window.location.origin);
 
-      return UIActions.showErrorToast(
-        translate(payload.message || errorsMessages.acceptShareFailed),
+      return concat(
+        of(ShareActions.resetShareId()),
+        of(ConversationsActions.getSelectedConversations()),
+        of(
+          UIActions.showErrorToast(
+            translate(payload.message || errorsMessages.acceptShareFailed),
+          ),
+        ),
       );
     }),
   );
@@ -648,7 +654,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           }
           if (!selectedConv) {
             // shared with me could be already selected, so we haven't to upload it twice
-            actions.push(ConversationsActions.initSelectedConversations());
+            actions.push(ConversationsActions.getSelectedConversations());
           }
           actions.push(
             PromptsActions.setIsEditModalOpen({
