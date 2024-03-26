@@ -83,6 +83,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
   const isNameInvalid = isEntityNameInvalid(prompt.name);
   const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -303,7 +304,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           className={classNames('flex size-full items-center gap-2', {
             'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
           })}
-          draggable={!isExternal && !isNameInvalid && !isInvalidPath}
+          draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <ShareIcon
@@ -319,10 +320,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               tooltip={t(
                 getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
               )}
-              hideTooltip={!isNameInvalid && !isInvalidPath}
+              hideTooltip={!isNameOrPathInvalid}
               triggerClassName={classNames(
                 'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-                (isNameInvalid || isInvalidPath) && 'text-secondary',
+                isNameOrPathInvalid && 'text-secondary',
               )}
             >
               {prompt.name}

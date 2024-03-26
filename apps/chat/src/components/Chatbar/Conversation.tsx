@@ -81,6 +81,7 @@ export function ConversationView({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isNameInvalid = isEntityNameInvalid(conversation.name);
   const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
@@ -115,14 +116,16 @@ export function ConversationView({
         )}
       </ShareIcon>
       <div
-        className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+        className={classNames(
+          'relative max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+        )}
         data-qa="conversation-name"
       >
         <Tooltip
           tooltip={t(
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
           )}
-          hideTooltip={!isNameInvalid && !isInvalidPath}
+          hideTooltip={!isNameOrPathInvalid}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         >
           {conversation.name}

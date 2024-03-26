@@ -161,6 +161,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -688,7 +689,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClick={() => {
               onClickFolder(currentFolder.id);
             }}
-            draggable={!!handleDrop && !isExternal && !isNameInvalid}
+            draggable={!!handleDrop && !isNameOrPathInvalid}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
               if (!isExternal && hasDragEventAnyData(e, featureType)) {
@@ -714,21 +715,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               </ShareIcon>
             )}
             <div
-              className="relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5"
+              className={classNames(
+                'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
+                isNameOrPathInvalid && 'text-secondary',
+              )}
               data-qa="folder-name"
             >
               <Tooltip
                 tooltip={t(
                   getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
                 )}
-                hideTooltip={!isNameInvalid && !isInvalidPath}
+                hideTooltip={!isNameOrPathInvalid}
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate break-all text-left',
+                  'max-h-5 flex-1 truncate break-all text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
                       ? 'text-primary'
                       : 'text-secondary'),
-                  isNameInvalid
+                  isNameOrPathInvalid
                     ? 'text-secondary'
                     : highlightedFolders?.includes(currentFolder.id) &&
                         featureType
