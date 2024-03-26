@@ -76,7 +76,6 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -2531,9 +2530,7 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.getChartAttachment.match),
     switchMap(({ payload }) =>
-      FileService.getFileContent<PlotParams>(
-        ApiUtils.encodeApiUrl(payload.pathToChart),
-      ).pipe(
+      FileService.getFileContent<PlotParams>(payload.pathToChart).pipe(
         switchMap((params) => {
           return of(
             ConversationsActions.getChartAttachmentSuccess({
