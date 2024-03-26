@@ -54,14 +54,18 @@ export const PromptsList = ({
           </div>
         );
       })}
-      {promptsToReplace.map((prompt) => {
+      {promptsToReplace.map((prompt, index) => {
         if (!isRootId(prompt.folderId)) {
           return null;
         }
 
         return (
-          <div key={prompt.id}>
-            <PromptsRow item={prompt} />
+          <div key={index + prompt.id}>
+            <PromptsRow
+              item={prompt}
+              onEvent={onItemEvent}
+              additionalItemData={{ mappedActions }}
+            />
           </div>
         );
       })}

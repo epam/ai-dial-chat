@@ -32,15 +32,19 @@ import {
 } from '@/src/store/import-export/importExport.reducers';
 
 import Modal from '../Modal';
+import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
 import { PromptsList } from './PromptsList';
 
 import { uniq } from 'lodash-es';
 
-const getMappedActions = (items: Conversation[] | Prompt[] | DialFile[]) => {
+const getMappedActions = (
+  items: Conversation[] | Prompt[] | DialFile[],
+  action?: ReplaceOptions,
+) => {
   const replaceActions: MappedReplaceActions = {};
   items.forEach((item) => {
-    replaceActions[item.id] = ReplaceOptions.Postfix;
+    replaceActions[item.id] = action ?? ReplaceOptions.Postfix;
   });
   return { ...replaceActions };
 };
@@ -68,11 +72,11 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       case FeatureType.Chat:
         return conversations;
       case FeatureType.Prompt:
-        return prompts as Prompt[];
+        return prompts;
       //TODO case FeatureType.File:
 
       default:
-        return conversations;
+        return [];
     }
   }, [featureType, conversations, prompts]);
 
@@ -95,17 +99,35 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     getMappedActions(featuresToReplace),
   );
 
+  const [actionForAllItems, setActionForAllItems] = useState<ReplaceOptions>(
+    ReplaceOptions.Postfix,
+  );
+
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
 
-  const onItemEvent = useCallback((actionOption: string, entityId: unknown) => {
-    setMappedActions((prev) => {
-      prev[entityId as string] = actionOption as ReplaceOptions;
-      return { ...prev };
-    });
-  }, []);
+  const onItemEvent = useCallback(
+    (actionOption: string, entityId: unknown) => {
+      if (
+        Object.entries(mappedActions).some(
+          ([id, option]) => id !== entityId && option !== actionOption,
+        )
+      ) {
+        setActionForAllItems(ReplaceOptions.Mixed);
+      } else {
+        setActionForAllItems(actionOption as ReplaceOptions);
+      }
+
+      setMappedActions((prev) => {
+        prev[entityId as string] = actionOption as ReplaceOptions;
+        return { ...prev };
+      });
+    },
+    [mappedActions],
+  );
 
   const handleCancel = useCallback(() => {
     const cancelAction = getCancelImportAction(featureType);
+    dispatch(ImportExportActions.importStop());
     dispatch(cancelAction());
   }, [dispatch, featureType]);
 
@@ -130,6 +152,16 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     [folders, openedFoldersIds],
   );
 
+  const handleOnChangeAllAction = useCallback(
+    (actionOption: string) => {
+      setActionForAllItems(actionOption as ReplaceOptions);
+      setMappedActions(() =>
+        getMappedActions(featuresToReplace, actionOption as ReplaceOptions),
+      );
+    },
+    [featuresToReplace],
+  );
+
   const handleContinueImport = useCallback(() => {
     const itemsToPostfix = [];
     const itemsToReplace = [];
@@ -150,13 +182,16 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       }
     }
 
+    if (!itemsToReplace.length && !itemsToPostfix.length) {
+      dispatch(ImportExportActions.importStop());
+    }
     if (itemsToReplace.length) {
       dispatch(
         ImportExportActions.replaceFeatures({ itemsToReplace, featureType }),
       );
     }
 
-    if (FeatureType.Chat && itemsToPostfix.length) {
+    if (featureType === FeatureType.Chat && itemsToPostfix.length) {
       dispatch(
         ImportExportActions.uploadImportedConversations({
           itemsToUpload: itemsToPostfix as Conversation[],
@@ -164,7 +199,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       );
     }
 
-    if (FeatureType.Prompt && itemsToPostfix.length) {
+    if (featureType === FeatureType.Prompt && itemsToPostfix.length) {
       dispatch(
         ImportExportActions.uploadImportedPrompts({
           itemsToUpload: itemsToPostfix as Prompt[],
@@ -180,6 +215,10 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   useEffect(() => {
     setMappedActions(() => getMappedActions(featuresToReplace));
   }, [featuresToReplace]);
+
+  useEffect(() => {
+    setOpenedFoldersIds(() => folders.map((folder) => folder.id));
+  }, [folders]);
 
   const featureList = useMemo(() => {
     const featureGeneralProps = {
@@ -204,12 +243,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       //TODO implement case FeatureType.File:
 
       default:
-        return (
-          <ConversationsList
-            conversationsToReplace={conversations}
-            {...featureGeneralProps}
-          />
-        );
+        return null;
     }
   }, [
     featureType,
@@ -231,7 +265,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       containerClassName="flex flex-col sm:w-[525px] size-full"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="flex h-full flex-col gap-4">
+      <div className="flex h-full flex-col justify-between gap-4">
         <div className="flex h-[90%] flex-col gap-4 p-6 pb-0">
           <div className="flex flex-col gap-2">
             <h2 className="text-base font-semibold">
@@ -245,13 +279,16 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
           </div>
 
           <div className="flex h-full min-h-[350px] flex-col">
-            <div className="flex flex-row justify-between border-b-[1px] border-tertiary p-3">
+            <div className="flex flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pb-3 pl-3">
               <span>{t('All items')}</span>
-              <span>Mixed</span>
+              <ReplaceSelector
+                selectedOption={actionForAllItems}
+                onOptionChangeHandler={handleOnChangeAllAction}
+              />
             </div>
             <div className="flex min-h-[250px] flex-col gap-0.5">
               {folders.length !== 0 && (
-                <div className="flex flex-col gap-1 overflow-y-auto">
+                <div className="flex flex-col gap-1 overflow-y-scroll">
                   {featuresToReplace && featureList}
                 </div>
               )}

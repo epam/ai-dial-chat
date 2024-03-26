@@ -54,14 +54,18 @@ export const ConversationsList = ({
           </div>
         );
       })}
-      {conversationsToReplace.map((conversation) => {
+      {conversationsToReplace.map((conversation, index) => {
         if (!isRootId(conversation.folderId)) {
           return null;
         }
 
         return (
-          <div key={conversation.id}>
-            <ConversationRow item={conversation} />
+          <div key={index + conversation.id}>
+            <ConversationRow
+              item={conversation}
+              onEvent={onItemEvent}
+              additionalItemData={{ mappedActions }}
+            />
           </div>
         );
       })}

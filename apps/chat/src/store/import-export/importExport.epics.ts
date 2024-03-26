@@ -454,6 +454,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$) =>
             }),
           ); //listing of all entities
         }),
+        catchError(() => of(ImportExportActions.importPromptsFail())),
       );
     }),
   );

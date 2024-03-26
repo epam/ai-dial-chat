@@ -52,6 +52,7 @@ export const isImportEntityNameOnSameLevelUnique = (
 
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
+
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
 
 export const isEntityNameInvalid = (name: string) =>
