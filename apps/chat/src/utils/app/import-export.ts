@@ -16,6 +16,8 @@ import { Prompt } from '@/src/types/prompt';
 
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
 
+import { chartType } from '@/src/constants/chat';
+
 import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { combineEntities } from './common';
@@ -241,6 +243,7 @@ interface PrepareConversationsForExport {
   conversations: Conversation[];
   folders: FolderInterface[];
 }
+
 export const prepareConversationsForExport = ({
   conversations,
   folders,
@@ -300,6 +303,7 @@ export interface ImportConversationsResponse {
   folders: FolderInterface[];
   isError: boolean;
 }
+
 export const importConversations = (
   importedData: SupportedExportFormats,
   {
@@ -408,22 +412,35 @@ export const updateAttachment = ({
     return oldAttachment;
   }
 
-  const newAttachmentUrl =
-    oldAttachment.url &&
-    ApiUtils.encodeApiUrl(
-      constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
-    );
-
   const newReferenceUrl =
     oldAttachment.reference_url &&
     ApiUtils.encodeApiUrl(
       constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
     ) + `#${oldHash}`;
 
+  // TODO: remove ApiUtils.encodeApiUrl from updateAttachment()
+  const newAttachmentUrl =
+    oldAttachment.url &&
+    (oldAttachment.type === chartType
+      ? constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name)
+      : ApiUtils.encodeApiUrl(
+          constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
+        ));
+
+  const newType =
+    oldAttachment.type === chartType
+      ? oldAttachment.type ?? newAttachmentFile.contentType
+      : newAttachmentFile.contentType ?? oldAttachment.type;
+
+  const newTitle =
+    oldAttachment.type === chartType
+      ? oldAttachment.title ?? newAttachmentFile.name
+      : newAttachmentFile.name ?? oldAttachment.title;
+
   const updatedAttachment: Attachment = {
     ...oldAttachment,
-    title: newAttachmentFile.name,
-    type: newAttachmentFile.contentType ?? oldAttachment.type,
+    title: newTitle,
+    type: newType,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,
   };
