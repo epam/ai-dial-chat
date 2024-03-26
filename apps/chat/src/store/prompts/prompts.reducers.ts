@@ -57,7 +57,7 @@ export const promptsSlice = createSlice({
         { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
       >,
     ) => {
-      state.promptsLoaded = payload?.noLoader ?? false;
+      state.promptsLoaded = !!payload?.noLoader;
     },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
