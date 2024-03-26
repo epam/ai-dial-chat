@@ -42,6 +42,7 @@ dialTest(
     dataInjector,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
+    let theme: string;
     let conversation: Conversation;
     const conversationModels = [defaultModel, gpt4Model];
     let playbackConversationName: string;
@@ -62,7 +63,7 @@ dialTest(
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
 
-        const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
+        theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
         await localStorageManager.setSettings(theme);
       },
     );
@@ -80,14 +81,17 @@ dialTest(
           .getConversationByName(playbackConversationName)
           .waitFor();
 
-        const modelBorderColors = await talkToRecentGroupEntities
-          .groupEntity(`[${MenuOptions.playback}] ${defaultModel.name}`)
-          .getAllBorderColors();
+        const expectedButtonBorderColor =
+          theme === Theme.light
+            ? Colors.controlsBackgroundAccentPrimary
+            : Colors.controlsBackgroundAccent;
+        const modelBorderColors =
+          await recentEntities.playbackButton.getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
             expect
               .soft(borderColor, ExpectedMessages.playbackIconIsSelected)
-              .toBe(Colors.controlsBackgroundAccent);
+              .toBe(expectedButtonBorderColor);
           });
         });
 
