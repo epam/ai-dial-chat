@@ -19,7 +19,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import { stopBubbling } from '@/src/constants/chat';
+import { chartType, stopBubbling } from '@/src/constants/chat';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
@@ -42,7 +42,6 @@ const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
   'image/vnd.microsoft.icon',
   'image/x-icon',
 ]);
-const chartType = 'application/vnd.plotly.v1+json';
 
 interface AttachmentDataRendererProps {
   attachment: Attachment;

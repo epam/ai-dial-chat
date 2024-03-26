@@ -33,7 +33,11 @@ import {
   SettingsSelectors,
   SettingsState,
 } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import {
+  UIActions,
+  UISelectors,
+  selectShowSelectToMigrateWindow,
+} from '@/src/store/ui/ui.reducers';
 
 import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
 import { SHARE_QUERY_PARAM } from '../constants/share';
@@ -75,11 +79,9 @@ export default function Home({ initialState }: HomeProps) {
     ShareSelectors.selectShareModalClosed,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
   const { conversationsToMigrateCount, migratedConversationsCount } =
@@ -91,7 +93,9 @@ export default function Home({ initialState }: HomeProps) {
     selectFailedMigratedConversations,
   );
   const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
-
+  const showSelectToMigrateWindow = useAppSelector(
+    selectShowSelectToMigrateWindow,
+  );
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
@@ -214,8 +218,10 @@ export default function Home({ initialState }: HomeProps) {
               uploaded={migratedPromptsCount + migratedConversationsCount}
             />
           ) : failedMigratedConversations.length ||
-            failedMigratedPrompts.length ? (
+            failedMigratedPrompts.length ||
+            showSelectToMigrateWindow ? (
             <MigrationFailedWindow
+              showSelectToMigrateWindow={showSelectToMigrateWindow}
               failedMigratedConversations={failedMigratedConversations}
               failedMigratedPrompts={failedMigratedPrompts}
             />

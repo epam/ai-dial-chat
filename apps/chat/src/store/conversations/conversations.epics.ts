@@ -76,7 +76,6 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -112,6 +111,7 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -843,6 +843,8 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         isChatsBackedUp: BrowserStorage.getEntityBackedUp(
           MigrationStorageKeys.ChatsBackedUp,
         ),
+        isMigrationInitialized:
+          BrowserStorage.getEntitiesMigrationInitialized(),
       }),
     ),
     switchMap(
@@ -852,12 +854,32 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         migratedConversationIds,
         failedMigratedConversationIds,
         isChatsBackedUp,
+        isMigrationInitialized,
       }) => {
         const notMigratedConversations = filterMigratedEntities(
           conversations,
           [...failedMigratedConversationIds, ...migratedConversationIds],
           true,
         );
+
+        if (
+          !isMigrationInitialized &&
+          conversations.length &&
+          !failedMigratedConversationIds.length &&
+          !migratedConversationIds.length
+        ) {
+          return concat(
+            of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: filterMigratedEntities(
+                  conversations,
+                  conversations.map((c) => c.id),
+                ),
+              }),
+            ),
+            of(UIActions.setShowSelectToMigrateWindow(true)),
+          );
+        }
 
         if (
           SettingsSelectors.selectStorageType(state$.value) !==
@@ -881,14 +903,19 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const sortedConversations = notMigratedConversations.sort((a, b) => {
-          if (!a.lastActivityDate) return 1;
-          if (!b.lastActivityDate) return -1;
+        const conversationsWithoutDate = notMigratedConversations.filter(
+          (c) => !c.lastActivityDate,
+        );
+        const conversationsWithDate = notMigratedConversations.filter(
+          (c) => c.lastActivityDate,
+        );
+        const sortedConversations = [
+          ...conversationsWithoutDate,
+          ...orderBy(conversationsWithDate, (c) => c.lastActivityDate),
+        ];
 
-          return a.lastActivityDate - b.lastActivityDate;
-        });
         const preparedConversations = getPreparedConversations({
-          conversations: notMigratedConversations,
+          conversations: sortedConversations,
           conversationsFolders,
           addRoot: true,
         });
@@ -904,7 +931,7 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           from(preparedConversations).pipe(
             concatMap((conversation) =>
               ConversationService.setConversations([conversation]).pipe(
-                switchMap(() => {
+                concatMap(() => {
                   migratedConversationIds.push(
                     sortedConversations[migratedConversationsCount].id,
                   );
@@ -2502,9 +2529,7 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.getChartAttachment.match),
     switchMap(({ payload }) =>
-      FileService.getFileContent<PlotParams>(
-        ApiUtils.encodeApiUrl(payload.pathToChart),
-      ).pipe(
+      FileService.getFileContent<PlotParams>(payload.pathToChart).pipe(
         switchMap((params) => {
           return of(
             ConversationsActions.getChartAttachmentSuccess({

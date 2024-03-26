@@ -75,7 +75,11 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   };
 
   const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
-    setName(prepareEntityName(e.target.value, true));
+    setName(
+      prepareEntityName(e.target.value, {
+        forRenaming: true,
+      }),
+    );
     onBlur(e);
   };
 
@@ -110,7 +114,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     (selectedPrompt: Prompt) => {
       setSubmitted(true);
 
-      const newName = prepareEntityName(name, true);
+      const newName = prepareEntityName(name, { forRenaming: true });
       setName(newName);
 
       if (!newName) return;
@@ -185,7 +189,10 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setName(selectedPrompt?.name || '');
   }, [selectedPrompt?.name]);
 
-  const saveDisabled = !prepareEntityName(name, true) || !content.trim();
+  const saveDisabled =
+    !prepareEntityName(name, {
+      forRenaming: true,
+    }) || !content.trim();
 
   return (
     <Modal
