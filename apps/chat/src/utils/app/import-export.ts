@@ -420,20 +420,26 @@ export const updateAttachment = ({
 
   // TODO: remove ApiUtils.encodeApiUrl from updateAttachment()
   const newAttachmentUrl =
-    oldAttachment.url && oldAttachment.type === chartType
+    oldAttachment.url &&
+    (oldAttachment.type === chartType
       ? constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name)
       : ApiUtils.encodeApiUrl(
           constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
-        );
+        ));
 
   const newType =
     oldAttachment.type === chartType
       ? oldAttachment.type ?? newAttachmentFile.contentType
       : newAttachmentFile.contentType ?? oldAttachment.type;
 
+  const newTitle =
+    oldAttachment.type === chartType
+      ? oldAttachment.title ?? newAttachmentFile.name
+      : newAttachmentFile.name ?? oldAttachment.title;
+
   const updatedAttachment: Attachment = {
     ...oldAttachment,
-    title: oldAttachment.title ?? newAttachmentFile.name,
+    title: newTitle,
     type: newType,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,
