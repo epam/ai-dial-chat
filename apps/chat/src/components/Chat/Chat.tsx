@@ -290,10 +290,14 @@ export const ChatView = memo(() => {
         );
       }
 
-      setMergedMessages([...mergedMessages]);
+      setMergedMessages(mergedMessages);
     }
 
-    if (selectedConversations.every((conv) => conv.messages.length === 0)) {
+    if (
+      selectedConversations.every(
+        (conv) => !conv.messages.find((m) => m.role !== Role.Assistant),
+      )
+    ) {
       setShowScrollDownButton(false);
     } else {
       handleScroll();
@@ -658,7 +662,18 @@ export const ChatView = memo(() => {
                     ))}
                   </div>
                   <div
-                    onScroll={handleScroll}
+                    onScroll={() => {
+                      if (
+                        selectedConversations.some(
+                          (conv) =>
+                            !!conv.messages.find(
+                              (m) => m.role !== Role.Assistant,
+                            ),
+                        )
+                      ) {
+                        handleScroll();
+                      }
+                    }}
                     ref={setChatContainerRef}
                     className="h-full overflow-x-hidden"
                   >
