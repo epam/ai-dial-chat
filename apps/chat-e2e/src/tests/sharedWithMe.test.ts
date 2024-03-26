@@ -118,7 +118,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Delete shared conversation and verify "Conversation not found" message shown',
+      'Delete shared conversation and verify "Conversation not found" message is not shown',
       async () => {
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
@@ -129,12 +129,10 @@ dialSharedWithMeTest(
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });
-        await additionalShareUserNotFound.waitForState();
-        const notFoundMessage =
-          await additionalShareUserNotFound.getChatNotFoundContent();
-        expect
-          .soft(notFoundMessage, ExpectedMessages.chatNotFoundMessageIsValid)
-          .toBe(ExpectedConstants.chatNotFoundMessage);
+        await additionalShareUserSharedWithMeConversations
+          .getConversationByName(conversation.name)
+          .waitFor({ state: 'hidden' });
+        await additionalShareUserNotFound.waitForState({ state: 'hidden' });
       },
     );
   },
