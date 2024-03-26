@@ -39,7 +39,7 @@ dialTest(
     talkToSelector,
     entitySettings,
     temperatureSlider,
-    talkToRecentGroupEntities,
+    recentEntities,
     addons,
   }) => {
     setTestIds('EPMRTC-501', 'EPMRTC-1264');
@@ -115,14 +115,13 @@ dialTest(
     await dialTest.step(
       'Verify "Replay as is" option is selected',
       async () => {
-        const modelBorderColors = await talkToRecentGroupEntities
-          .groupEntity(ExpectedConstants.talkToReply)
-          .getAllBorderColors();
+        const modelBorderColors =
+          await recentEntities.replayAsIsButton.getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
             expect
               .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-              .toBe(Colors.textPrimary);
+              .toBe(Colors.controlsBackgroundAccent);
           });
         });
 
@@ -136,7 +135,7 @@ dialTest(
     await dialTest.step(
       'Select some model and verify it has the same settings as parent model',
       async () => {
-        await talkToSelector.selectModel(gpt35Model.name);
+        await talkToSelector.selectModel(gpt35Model);
 
         const newModelSystemPrompt = await entitySettings.getSystemPrompt();
         expect
@@ -263,7 +262,7 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectModel(bison.name);
+        await talkToSelector.selectModel(bison);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
         replayRequest = await chat.startReplay();
@@ -958,7 +957,7 @@ dialTest(
     await dialTest.step(
       'Select any available model and start replaying',
       async () => {
-        await talkToSelector.selectModel(gpt35Model.name);
+        await talkToSelector.selectModel(gpt35Model);
         const replayRequest = await chat.startReplay();
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
@@ -1018,7 +1017,7 @@ dialTest(
         for (let i = 1; i <= newModels.length; i++) {
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
-          await talkToSelector.selectModel(newModel.name);
+          await talkToSelector.selectModel(newModel);
           await chat.applyNewEntity();
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);
