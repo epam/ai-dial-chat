@@ -6,7 +6,6 @@ import {
   ChatInfoTooltip,
   ChatMessages,
   ConfirmationDialog,
-  ConversationSettings,
   DropdownMenu,
 } from '../ui/webElements';
 
@@ -31,7 +30,6 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChat: Chat;
   additionalShareUserChatHeader: ChatHeader;
   additionalShareUserChatMessages: ChatMessages;
-  additionalShareUserConversationSettings: ConversationSettings;
   additionalShareUserChatInfoTooltip: ChatInfoTooltip;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
@@ -106,14 +104,6 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserChatMessages =
       additionalShareUserChat.getChatMessages();
     await use(additionalShareUserChatMessages);
-  },
-  additionalShareUserConversationSettings: async (
-    { additionalShareUserChat },
-    use,
-  ) => {
-    const additionalShareUserConversationSettings =
-      additionalShareUserChat.getConversationSettings();
-    await use(additionalShareUserConversationSettings);
   },
   additionalShareUserChatInfoTooltip: async (
     { additionalShareUserPage },

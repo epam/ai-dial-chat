@@ -41,7 +41,7 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     localStorageManager,
     additionalShareUserChatInfoTooltip,
-    additionalShareUserConversationSettings,
+    additionalShareUserNotFound,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConfirmationDialog,
     setTestIds,
@@ -129,11 +129,12 @@ dialSharedWithMeTest(
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });
-
-        await additionalShareUserSharedWithMeConversations
-          .getConversationByName(conversation.name)
-          .waitFor({ state: 'hidden' });
-        await additionalShareUserConversationSettings.waitForState();
+        await additionalShareUserNotFound.waitForState();
+        const notFoundMessage =
+          await additionalShareUserNotFound.getChatNotFoundContent();
+        expect
+          .soft(notFoundMessage, ExpectedMessages.chatNotFoundMessageIsValid)
+          .toBe(ExpectedConstants.chatNotFoundMessage);
       },
     );
   },
