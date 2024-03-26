@@ -1,3 +1,4 @@
+import { DialAIEntityModel } from '@/chat/types/models';
 import { Styles, Tags } from '@/src/ui/domData';
 import { ChatSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -12,29 +13,54 @@ export class GroupEntity extends BaseElement {
     ChatSelectors.groupEntityName,
   );
 
-  public groupEntity = (entity: string) => {
-    const entityName = new BaseElement(
+  public groupEntity = (entity: DialAIEntityModel) => {
+    let entityName = new BaseElement(
       this.page,
-      `${ChatSelectors.groupEntityName}:text('${entity}')`,
+      `${ChatSelectors.groupEntityName}:text('${entity.name}')`,
     ).getElementLocator();
-    return this.createElementFromLocator(
-      this.rootLocator.filter({ has: entityName }).first(),
-    );
+    if (entity.version) {
+      if (entity.version.match(/^\d+$/g)) {
+        entityName = new BaseElement(
+          this.page,
+          `${ChatSelectors.groupEntityName}:text('${entity.name} ${entity.version}')`,
+        ).getElementLocator();
+        return this.createElementFromLocator(
+          this.rootLocator.filter({ has: entityName }).first(),
+        );
+      }
+      const entityVersion = new BaseElement(
+        this.page,
+        `${ChatSelectors.groupEntityVersion}:has-text('${entity.version}')`,
+      ).getElementLocator();
+      return this.createElementFromLocator(
+        this.rootLocator
+          .filter({ has: entityName })
+          .filter({ has: entityVersion })
+          .first(),
+      );
+    } else {
+      return this.createElementFromLocator(
+        this.rootLocator.filter({ has: entityName }).first(),
+      );
+    }
   };
 
-  public groupEntityDescription = (entity: string) =>
+  public groupEntityDescription = (entity: DialAIEntityModel) =>
     this.groupEntity(entity).getChildElementBySelector(
       ChatSelectors.groupEntityDescr,
     );
 
-  public async getGroupEntityDescription(entity: string) {
+  public async getGroupEntityDescription(entity: DialAIEntityModel) {
     const description = this.groupEntityDescription(entity);
     return (await description.isVisible())
       ? description.getElementInnerContent()
       : '';
   }
 
-  public getGroupEntityDescriptionLink = (entity: string, linkText: string) => {
+  public getGroupEntityDescriptionLink = (
+    entity: DialAIEntityModel,
+    linkText: string,
+  ) => {
     return this.createElementFromLocator(
       this.groupEntityDescription(entity).getElementLocatorByText(
         `${Tags.a}:text-is('${linkText}')`,
@@ -42,20 +68,20 @@ export class GroupEntity extends BaseElement {
     );
   };
 
-  public expandGroupEntity = (entity: string) =>
+  public expandGroupEntity = (entity: DialAIEntityModel) =>
     this.groupEntity(entity).getChildElementBySelector(
       ChatSelectors.expandGroupEntity,
     );
 
-  public async expandGroupEntityDescription(entity: string) {
+  public async expandGroupEntityDescription(entity: DialAIEntityModel) {
     await this.expandGroupEntity(entity).click();
   }
 
-  public async selectGroupEntity(entity: string) {
+  public async selectGroupEntity(entity: DialAIEntityModel) {
     await this.groupEntity(entity).click();
   }
 
-  public async waitForGroupEntitySelected(entity: string) {
+  public async waitForGroupEntitySelected(entity: DialAIEntityModel) {
     await this.groupEntity(entity)
       .getElementLocator()
       .and(
@@ -76,14 +102,14 @@ export class GroupEntity extends BaseElement {
   }
 
   public async openGroupEntityDescriptionLink(
-    entity: string,
+    entity: DialAIEntityModel,
     linkText: string,
   ) {
     await this.getGroupEntityDescriptionLink(entity, linkText).click();
   }
 
   public async getGroupEntityDescriptionLinkColor(
-    entity: string,
+    entity: DialAIEntityModel,
     linkText: string,
   ) {
     return this.getGroupEntityDescriptionLink(

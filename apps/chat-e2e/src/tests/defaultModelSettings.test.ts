@@ -73,7 +73,7 @@ dialTest(
       async () => {
         await recentEntities.waitForState();
         const modelBorderColors = await talkToRecentGroupEntities
-          .groupEntity(defaultModel.name)
+          .groupEntity(defaultModel)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
@@ -217,7 +217,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(bison.name);
+        await talkToSelector.selectModel(bison);
 
         const isSendMessageBtnEnabled =
           await sendMessage.sendMessageButton.isElementEnabled();
@@ -299,7 +299,7 @@ dialTest(
       async () => {
         await chatBar.createNewConversation();
         const modelBorderColors = await talkToRecentGroupEntities
-          .groupEntity(bison.name)
+          .groupEntity(bison)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
@@ -337,7 +337,7 @@ dialTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
-    await talkToSelector.selectModel(randomModel.name);
+    await talkToSelector.selectModel(randomModel);
     const sysPrompt = 'test prompt';
     const temp = 0;
     const isSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
@@ -352,7 +352,7 @@ dialTest(
 
     await recentEntities.waitForState();
     const modelBorderColors = await talkToRecentGroupEntities
-      .groupEntity(randomModel.name)
+      .groupEntity(randomModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -395,11 +395,11 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(bison.name);
+    await talkToSelector.selectModel(bison);
     await chat.sendRequestWithButton('test message');
     await chatBar.createNewConversation();
     const modelBorderColors = await talkToRecentGroupEntities
-      .groupEntity(bison.name)
+      .groupEntity(bison)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
