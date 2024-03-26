@@ -426,10 +426,15 @@ export const updateAttachment = ({
           constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
         );
 
+  const newType =
+    oldAttachment.type === chartType
+      ? oldAttachment.type ?? newAttachmentFile.contentType
+      : newAttachmentFile.contentType ?? oldAttachment.type;
+
   const updatedAttachment: Attachment = {
     ...oldAttachment,
     title: oldAttachment.title ?? newAttachmentFile.name,
-    type: oldAttachment.type ?? newAttachmentFile.contentType,
+    type: newType,
     url: newAttachmentUrl,
     reference_url: newReferenceUrl,
   };
