@@ -14,11 +14,20 @@ export class GroupEntity extends BaseElement {
   );
 
   public groupEntity = (entity: DialAIEntityModel) => {
-    const entityName = new BaseElement(
+    let entityName = new BaseElement(
       this.page,
       `${ChatSelectors.groupEntityName}:text('${entity.name}')`,
     ).getElementLocator();
     if (entity.version) {
+      if (entity.version.match(/^\d+$/g)) {
+        entityName = new BaseElement(
+          this.page,
+          `${ChatSelectors.groupEntityName}:text('${entity.name} ${entity.version}')`,
+        ).getElementLocator();
+        return this.createElementFromLocator(
+          this.rootLocator.filter({ has: entityName }).first(),
+        );
+      }
       const entityVersion = new BaseElement(
         this.page,
         `${ChatSelectors.groupEntityVersion}:has-text('${entity.version}')`,
