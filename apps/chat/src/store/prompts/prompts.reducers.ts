@@ -410,7 +410,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = combineEntities(state.folders, payload.folders);
+      state.folders = payload.folders;
     },
     addFolders: (
       state,

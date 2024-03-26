@@ -860,6 +860,8 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
                   !item.id.startsWith(`${payload.resourceId}/`),
               ),
             }),
+          ),
+          of(
             PromptsActions.setPrompts({
               prompts: prompts.filter(
                 (p) => !p.id.startsWith(`${payload.resourceId}/`),
