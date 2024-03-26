@@ -18,6 +18,7 @@ import {
   isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
+import { getEntityNameError } from '@/src/utils/app/errors';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
@@ -43,7 +44,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
@@ -83,6 +83,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
   const isNameInvalid = isEntityNameInvalid(prompt.name);
   const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -303,7 +304,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           className={classNames('flex size-full items-center gap-2', {
             'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
           })}
-          draggable={!isExternal && !isNameInvalid && !isInvalidPath}
+          draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <ShareIcon
@@ -317,14 +318,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
           <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
             <Tooltip
               tooltip={t(
-                isNameInvalid
-                  ? errorsMessages.entityNameInvalid
-                  : errorsMessages.entityPathInvalid,
+                getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
               )}
-              hideTooltip={!isNameInvalid && !isInvalidPath}
+              hideTooltip={!isNameOrPathInvalid}
               triggerClassName={classNames(
                 'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-                (isNameInvalid || isInvalidPath) && 'text-secondary',
+                isNameOrPathInvalid && 'text-secondary',
               )}
             >
               {prompt.name}
