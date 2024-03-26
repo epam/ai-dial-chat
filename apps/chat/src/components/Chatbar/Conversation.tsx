@@ -116,9 +116,7 @@ export function ConversationView({
         )}
       </ShareIcon>
       <div
-        className={classNames(
-          'relative max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-        )}
+        className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         data-qa="conversation-name"
       >
         <Tooltip

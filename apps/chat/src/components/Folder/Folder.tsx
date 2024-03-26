@@ -689,7 +689,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClick={() => {
               onClickFolder(currentFolder.id);
             }}
-            draggable={!!handleDrop && !isNameOrPathInvalid}
+            draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
             onDragOver={(e) => {
               if (!isExternal && hasDragEventAnyData(e, featureType)) {
