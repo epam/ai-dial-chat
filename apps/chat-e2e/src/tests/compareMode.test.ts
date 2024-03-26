@@ -19,13 +19,11 @@ import { expect } from '@playwright/test';
 let defaultModel: DialAIEntityModel;
 let gpt4Model: DialAIEntityModel;
 let bisonModel: DialAIEntityModel;
-let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
-  modelsWithoutSystemPrompt = ModelsUtil.getModelsWithoutSystemPrompt();
 });
 
 dialTest(
@@ -777,7 +775,7 @@ dialTest(
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
-          .selectModel(firstUpdatedRandomModel.name);
+          .selectModel(firstUpdatedRandomModel);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         if (firstUpdatedRandomModel.features?.systemPrompt) {
           await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
@@ -788,7 +786,7 @@ dialTest(
 
         await rightConversationSettings
           .getTalkToSelector()
-          .selectModel(secondUpdatedRandomModel.name);
+          .selectModel(secondUpdatedRandomModel);
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
         if (secondUpdatedRandomModel.features?.systemPrompt) {
