@@ -1,6 +1,7 @@
 import { ChatSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { DialAIEntityModel } from '@/chat/types/models';
 import { Groups } from '@/src/testData';
 import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { RecentEntities } from '@/src/ui/webElements/recentEntities';
@@ -35,19 +36,19 @@ export class EntitySelector extends BaseElement {
     await this.seeFullListButton.click();
   }
 
-  public async selectAssistant(assistant: string) {
+  public async selectAssistant(assistant: DialAIEntityModel) {
     await this.selectEntity(assistant, Groups.assistants);
   }
 
-  public async selectApplication(application: string) {
+  public async selectApplication(application: DialAIEntityModel) {
     await this.selectEntity(application, Groups.applications);
   }
 
-  public async selectModel(model: string) {
+  public async selectModel(model: DialAIEntityModel) {
     await this.selectEntity(model, Groups.models);
   }
 
-  public async selectEntity(entity: string, group: Groups) {
+  public async selectEntity(entity: DialAIEntityModel, group: Groups) {
     const recentEntities = this.getRecentEntities();
     await recentEntities.waitForState({ state: 'attached' });
     const recentGroupEntity = recentEntities.getTalkToGroup().getGroupEntity();

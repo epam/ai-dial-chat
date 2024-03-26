@@ -118,7 +118,7 @@ dialTest(
         const randomEntity = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModels(),
         );
-        await talkToSelector.selectModel(randomEntity.name);
+        await talkToSelector.selectModel(randomEntity);
 
         const conversationIcon = await conversations.getConversationIcon(
           ExpectedConstants.newConversationTitle,

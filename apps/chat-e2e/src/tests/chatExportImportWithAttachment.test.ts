@@ -342,7 +342,7 @@ dialTest(
       'Send new request in chat and verify response received',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(ModelsUtil.getDefaultModel()!.name);
+        await talkToSelector.selectModel(ModelsUtil.getDefaultModel()!);
         await chat.applyNewEntity();
         await chat.sendRequestWithButton('1+2=');
         const messagesCount =
