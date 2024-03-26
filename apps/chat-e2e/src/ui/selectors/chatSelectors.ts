@@ -12,6 +12,7 @@ export const ChatSelectors = {
   recentEntities: '[data-qa="recent"]',
   groupEntity: '[data-qa="group-entity"]',
   groupEntityName: '[data-qa="group-entity-name"]',
+  groupEntityVersion: '[data-qa="model-version-select-trigger"]',
   groupEntityDescr: '[data-qa="group-entity-descr"]',
   expandGroupEntity: '[data-qa="expand-group-entity"]',
   selectedGroupEntity: '.border-accent-primary',
@@ -69,7 +70,7 @@ export const ChatSelectors = {
   playbackPrevious: '[data-qa="playback-prev"]',
   playbackPreviousDisabled: () =>
     `${ChatSelectors.playbackPrevious}[${Attributes.disabled}]`,
-  removeFromCompareIcon: '[data-qa="remove-from-compare"]',
+  deleteFromCompareIcon: '[data-qa="delete-from-compare"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',
   replayAsIs: '[data-qa="replay-as-is"]',
@@ -79,6 +80,8 @@ export const ChatSelectors = {
   footer: '[data-qa="footer-message"]',
   notAllowedModel: '[data-qa="not-allowed-model-error"]',
   replayOldVersion: '[data-qa="replay-old-version"]',
+  replayAsIsButton: '[data-qa="Replay as is"]',
+  playbackButton: '[data-qa="Playback"]',
   sendMessage: '[data-qa="send"]',
   rate: (rate: Rate) => `[data-qa="${rate}"]`,
   chatLoader: '[data-qa="chat-loader"]',
@@ -86,4 +89,5 @@ export const ChatSelectors = {
   stopLoading: '[data-qa="stop-loading"]',
   errorToast: 'div > .text-error',
   conversationNotFound: '[data-qa="not-found"]',
+  codeblock: '.codeblock',
 };

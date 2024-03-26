@@ -1,3 +1,7 @@
+import {
+  ShareByLinkResponseModel,
+  ShareRequestModel,
+} from '@/chat/types/share';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { MenuOptions } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
@@ -71,7 +75,11 @@ export class BaseConversation extends SideBarEntities {
       await menu.selectMenuOption(option);
       const response = await respPromise;
       const responseText = await response.text();
-      return JSON.parse(responseText);
+      const request = await response.request().postDataJSON();
+      return {
+        request: request as ShareRequestModel,
+        response: JSON.parse(responseText) as ShareByLinkResponseModel,
+      };
     }
     await menu.selectMenuOption(option);
   }

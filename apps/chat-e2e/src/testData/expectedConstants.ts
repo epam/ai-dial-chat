@@ -29,10 +29,10 @@ export const ExpectedConstants = {
   enterMessageAlert: 'Please enter a message',
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
-    'Are you sure that you want to remove a folder with all nested elements?',
+    'Are you sure that you want to delete a folder with all nested elements?',
   deleteSharedFolderMessage:
-    'Are you sure that you want to remove a folder with all nested elements?\n' +
-    'Removing will stop sharing and other users will no longer see this folder.',
+    'Are you sure that you want to delete a folder with all nested elements?\n' +
+    'Deleting will stop sharing and other users will no longer see this folder.',
   renameSharedFolderMessage:
     'Renaming will stop sharing and other users will no longer see this folder.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
@@ -163,6 +163,7 @@ export const Import = {
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',
+  cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
 };
 
@@ -177,6 +178,7 @@ export enum ModelIds {
   GPT_3_5_TURBO_0613 = 'gpt-35-turbo-0613',
   GPT_3_5_TURBO_1106 = 'gpt-35-turbo-1106',
   GPT_3_5_TURBO_16K = 'gpt-35-turbo-16k',
+  GPT_3_5_TURBO_0125 = 'gpt-35-turbo-0125',
   GPT_4 = 'gpt-4',
   GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',

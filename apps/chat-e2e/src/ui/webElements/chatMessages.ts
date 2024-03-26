@@ -324,6 +324,12 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.textarea);
   }
 
+  public async isChatMessageCodeVisible(message: number | string) {
+    return this.getChatMessage(message)
+      .locator(ChatSelectors.codeblock)
+      .isVisible();
+  }
+
   public messageEditIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.editIcon);
   public saveAndSubmit = new BaseElement(

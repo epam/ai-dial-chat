@@ -22,8 +22,8 @@ export class ChatHeader extends BaseElement {
   public chatAddonIcons = this.getChildElementBySelector(
     `${ChatSelectors.chatAddons} > ${Tags.span}`,
   );
-  public removeConversationFromComparison = this.getChildElementBySelector(
-    ChatSelectors.removeFromCompareIcon,
+  public deleteConversationFromComparison = this.getChildElementBySelector(
+    ChatSelectors.deleteFromCompareIcon,
   );
   public openConversationSettings = this.getChildElementBySelector(
     ChatSelectors.conversationSettingsIcon,

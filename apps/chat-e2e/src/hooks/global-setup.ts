@@ -16,7 +16,7 @@ export const ExecutionResults = {
 
 async function globalSetup() {
   for (const path of Object.values(ExecutionResults)) {
-    FileUtil.removeFolder(path);
+    FileUtil.deleteFolder(path);
   }
 }
 
