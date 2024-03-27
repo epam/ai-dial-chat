@@ -55,6 +55,7 @@ export const getMDComponents = (
           language={(match && match[1]) || ''}
           value={String(children).replace(/\n$/, '')}
           isInner={isInner}
+          isLastMessageStreaming={isShowResponseLoader}
           {...props}
         />
       ) : (
@@ -63,7 +64,11 @@ export const getMDComponents = (
         </code>
       );
     },
-    table: Table,
+    table({ children }) {
+      return (
+        <Table isLastMessageStreaming={isShowResponseLoader}>{children}</Table>
+      );
+    },
     th({ children }) {
       return (
         <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">

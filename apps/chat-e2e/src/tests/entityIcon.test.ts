@@ -150,8 +150,7 @@ dialTest(
     await dialTest.step(
       'Create a new conversation based on Gpr 4-32 model and send a request',
       async () => {
-        const conversation =
-          await conversationData.prepareEmptyConversation(model);
+        const conversation = conversationData.prepareEmptyConversation(model);
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
 

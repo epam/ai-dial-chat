@@ -237,14 +237,12 @@ export const ChatView = memo(() => {
       ? mergedMessages[mergedMessages.length - 1]
       : [];
 
-    if (!messageIsStreaming) {
-      const isErrorInSomeLastMessage = lastMergedMessages.some(
-        (mergedStr: [Conversation, Message, number]) =>
-          !!mergedStr[1].errorMessage,
-      );
-      setIsLastMessageError(isErrorInSomeLastMessage);
-    }
-  }, [mergedMessages, messageIsStreaming]);
+    const isErrorInSomeLastMessage = lastMergedMessages.some(
+      (mergedStr: [Conversation, Message, number]) =>
+        !!mergedStr[1].errorMessage,
+    );
+    setIsLastMessageError(isErrorInSomeLastMessage);
+  }, [mergedMessages]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -290,10 +288,14 @@ export const ChatView = memo(() => {
         );
       }
 
-      setMergedMessages([...mergedMessages]);
+      setMergedMessages(mergedMessages);
     }
 
-    if (selectedConversations.every((conv) => conv.messages.length === 0)) {
+    if (
+      selectedConversations.every(
+        (conv) => !conv.messages.find((m) => m.role !== Role.Assistant),
+      )
+    ) {
       setShowScrollDownButton(false);
     } else {
       handleScroll();
@@ -658,7 +660,18 @@ export const ChatView = memo(() => {
                     ))}
                   </div>
                   <div
-                    onScroll={handleScroll}
+                    onScroll={() => {
+                      if (
+                        selectedConversations.some(
+                          (conv) =>
+                            !!conv.messages.find(
+                              (m) => m.role !== Role.Assistant,
+                            ),
+                        )
+                      ) {
+                        handleScroll();
+                      }
+                    }}
                     ref={setChatContainerRef}
                     className="h-full overflow-x-hidden"
                   >

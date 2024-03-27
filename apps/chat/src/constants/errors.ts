@@ -40,4 +40,6 @@ export const errorsMessages = {
     'You made a request with an unavailable or nonexistent entity type',
   entityNameInvalid: 'The name is invalid. Please, rename it',
   entityPathInvalid: 'The parent folder name is invalid. Please, rename it',
+  entityNameInvalidExternal: 'The name is invalid',
+  entityPathInvalidExternal: 'The parent folder name is invalid',
 };
