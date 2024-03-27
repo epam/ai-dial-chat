@@ -60,6 +60,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   const [content, setContent] = useState(selectedPrompt?.content || '');
   const [isConfirmDialog, setIsConfirmDialog] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isDotError, setIsDotError] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -71,7 +72,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   }, [onClose]);
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value.replaceAll(notAllowedSymbolsRegex, ''));
+    const newName = e.target.value.replaceAll(notAllowedSymbolsRegex, '');
+    setIsDotError(newName.trim().at(-1) === '.');
+    setName(newName);
   };
 
   const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
@@ -220,7 +223,11 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             <input
               ref={nameInputRef}
               name="promptName"
-              className={inputClassName}
+              className={classNames(
+                isDotError &&
+                  'border-error hover:border-error focus:border-error',
+                inputClassName,
+              )}
               placeholder={t('A name for your prompt.') || ''}
               value={name}
               required
@@ -229,7 +236,14 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               onChange={nameOnChangeHandler}
               data-qa="prompt-name"
             />
-            <EmptyRequiredInputMessage />
+            <EmptyRequiredInputMessage
+              isShown={isDotError}
+              text={
+                (isDotError
+                  ? t('Using a dot at the end of a name is not permitted.')
+                  : t('Please fill in all required fields')) || ''
+              }
+            />
           </div>
 
           <div className="mb-4">
