@@ -60,7 +60,7 @@ dialTest(
     let secondShareLinkResponse: ShareByLinkResponseModel;
 
     await dialTest.step('Prepare default conversation', async () => {
-      conversation = await conversationData.prepareDefaultConversation();
+      conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
       await localStorageManager.setSelectedConversation(conversation);
     });
@@ -305,13 +305,13 @@ dialTest(
       'Prepare three conversations and share them with another user',
       async () => {
         firstConversationToShare =
-          await conversationData.prepareDefaultConversation();
+          conversationData.prepareDefaultConversation();
         conversationData.resetData();
         secondConversationToShare =
-          await conversationData.prepareDefaultConversation();
+          conversationData.prepareDefaultConversation();
         conversationData.resetData();
         thirdConversationToShare =
-          await conversationData.prepareDefaultConversation();
+          conversationData.prepareDefaultConversation();
         const conversationsToShare = [
           firstConversationToShare,
           secondConversationToShare,
@@ -446,17 +446,15 @@ dialTest(
     await dialTest.step(
       'Prepare shared conversation and replay and playback conversations based on it',
       async () => {
-        conversation = await conversationData.prepareDefaultConversation();
+        conversation = conversationData.prepareDefaultConversation();
         conversationData.resetData();
 
         replayConversation =
-          await conversationData.prepareDefaultReplayConversation(conversation);
+          conversationData.prepareDefaultReplayConversation(conversation);
         conversationData.resetData();
 
         playbackConversation =
-          await conversationData.prepareDefaultPlaybackConversation(
-            conversation,
-          );
+          conversationData.prepareDefaultPlaybackConversation(conversation);
         conversationData.resetData();
 
         await dataInjector.createConversations([conversation]);
@@ -477,11 +475,10 @@ dialTest(
       'Prepare one more conversation, delete it and recreate with the same data',
       async () => {
         const conversationToDeleteName = GeneratorUtil.randomString(7);
-        conversationToDelete =
-          await conversationData.prepareDefaultConversation(
-            ModelIds.GPT_4,
-            conversationToDeleteName,
-          );
+        conversationToDelete = conversationData.prepareDefaultConversation(
+          ModelIds.GPT_4,
+          conversationToDeleteName,
+        );
         conversationData.resetData();
         await dataInjector.createConversations([conversationToDelete]);
 
@@ -492,11 +489,10 @@ dialTest(
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         await itemApiHelper.deleteConversation(conversationToDelete);
 
-        conversationToDelete =
-          await conversationData.prepareDefaultConversation(
-            ModelIds.GPT_4,
-            conversationToDeleteName,
-          );
+        conversationToDelete = conversationData.prepareDefaultConversation(
+          ModelIds.GPT_4,
+          conversationToDeleteName,
+        );
         await dataInjector.createConversations([conversationToDelete]);
       },
     );
@@ -548,11 +544,9 @@ dialTest(
     let secondSharedConversation: Conversation;
 
     await dialTest.step('Prepare two shared conversations', async () => {
-      firstSharedConversation =
-        await conversationData.prepareDefaultConversation();
+      firstSharedConversation = conversationData.prepareDefaultConversation();
       conversationData.resetData();
-      secondSharedConversation =
-        await conversationData.prepareDefaultConversation();
+      secondSharedConversation = conversationData.prepareDefaultConversation();
 
       const conversationsToShare = [
         firstSharedConversation,
@@ -757,7 +751,8 @@ dialTest(
     'Share form text differs for chat and folder.\n' +
     'Confirmation message if to delete shared chat folder.\n' +
     'Shared icon disappears from the folder if to use Unshare.\n' +
-    'Share form text differs for chat and folder',
+    'Share form text differs for chat and folder.\n' +
+    'Shared folder disappears from Shared with me if the original was unshared',
   async ({
     dialHomePage,
     conversationData,
@@ -776,6 +771,7 @@ dialTest(
       'EPMRTC-2811',
       'EPMRTC-2757',
       'EPMRTC-1811',
+      'EPMRTC-2763',
     );
     let folderConversation: FolderConversation;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -862,6 +858,22 @@ dialTest(
           .waitFor({ state: 'hidden' });
       },
     );
+
+    await dialTest.step(
+      'Verify folder is not shared with another user',
+      async () => {
+        const sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
+        expect
+          .soft(
+            sharedEntities.resources.find(
+              (f) => f.name === folderConversation.folders.name,
+            ),
+            ExpectedMessages.folderIsNotShared,
+          )
+          .toBeUndefined();
+      },
+    );
   },
 );
 
@@ -870,7 +882,8 @@ dialTest(
     'Shared icon stays in chat if to cancel unshare.\n' +
     'Unshare item appears for shared chats only.\n' +
     'Shared icon disappears in chat if to unshare.\n' +
-    'Error appears if chat was unshared, but user clicks on shared link',
+    'Error appears if chat was unshared, but user clicks on shared link.\n' +
+    'Shared chat disappears from Shared with me if the original was unshared',
   async ({
     dialHomePage,
     conversations,
@@ -884,12 +897,18 @@ dialTest(
     chat,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2748', 'EPMRTC-2746', 'EPMRTC-2749', 'EPMRTC-2765');
+    setTestIds(
+      'EPMRTC-2748',
+      'EPMRTC-2746',
+      'EPMRTC-2749',
+      'EPMRTC-2765',
+      'EPMRTC-2762',
+    );
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
     await dialTest.step('Prepare shared conversation', async () => {
-      conversation = await conversationData.prepareDefaultConversation();
+      conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
 
       shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
@@ -956,7 +975,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Get the list of shared with me conversation by another user and verify there is no unshared one',
+      'Get the list of shared with me conversation by another user and verify there is no shared one',
       async () => {
         const sharedWithAnotherUserConversations =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
