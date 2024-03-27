@@ -237,14 +237,12 @@ export const ChatView = memo(() => {
       ? mergedMessages[mergedMessages.length - 1]
       : [];
 
-    if (!messageIsStreaming) {
-      const isErrorInSomeLastMessage = lastMergedMessages.some(
-        (mergedStr: [Conversation, Message, number]) =>
-          !!mergedStr[1].errorMessage,
-      );
-      setIsLastMessageError(isErrorInSomeLastMessage);
-    }
-  }, [mergedMessages, messageIsStreaming]);
+    const isErrorInSomeLastMessage = lastMergedMessages.some(
+      (mergedStr: [Conversation, Message, number]) =>
+        !!mergedStr[1].errorMessage,
+    );
+    setIsLastMessageError(isErrorInSomeLastMessage);
+  }, [mergedMessages]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
