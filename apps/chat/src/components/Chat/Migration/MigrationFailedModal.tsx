@@ -302,7 +302,7 @@ export const MigrationFailedWindow = ({
                   <wbr />
                   /
                   <wbr />
-                  {t('prompts')}
+                  {t('prompts. ')}
                 </>
               )}
               {t('All discarded items will be ')}
