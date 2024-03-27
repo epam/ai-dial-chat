@@ -6,6 +6,7 @@ import {
   filter,
   forkJoin,
   from,
+  iif,
   map,
   mergeAll,
   of,
@@ -261,8 +262,9 @@ const importConversationsEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       const { history, folders, isError } = cleanData(payload.data);
       if (isError) {
-        return of(
-          UIActions.showErrorToast(errorsMessages.unsupportedDataFormat),
+        return concat(
+          of(UIActions.showErrorToast(errorsMessages.unsupportedDataFormat)),
+          of(ImportExportActions.resetState()),
         );
       }
 
@@ -279,20 +281,18 @@ const importConversationsEpic: AppEpic = (action$) =>
         switchMap((conversationsListing) => {
           const existedImportNamesConversations = preparedConversations.filter(
             (importConv) =>
-              !isImportEntityNameOnSameLevelUnique(
-                importConv.name,
-                importConv,
-                conversationsListing,
-              ),
+              !isImportEntityNameOnSameLevelUnique({
+                entity: importConv,
+                entities: conversationsListing,
+              }),
           );
 
           const nonExistedImportNamesConversations =
             preparedConversations.filter((importConv) => {
-              return isImportEntityNameOnSameLevelUnique(
-                importConv.name,
-                importConv,
-                conversationsListing,
-              );
+              return isImportEntityNameOnSameLevelUnique({
+                entity: importConv,
+                entities: conversationsListing,
+              });
             });
 
           if (!existedImportNamesConversations.length) {
@@ -307,7 +307,7 @@ const importConversationsEpic: AppEpic = (action$) =>
           if (!nonExistedImportNamesConversations.length) {
             return of(
               ImportExportActions.showReplaceDialog({
-                existed: existedImportNamesConversations,
+                duplicatedItems: existedImportNamesConversations,
                 featureType: FeatureType.Chat,
               }),
             );
@@ -316,7 +316,7 @@ const importConversationsEpic: AppEpic = (action$) =>
           return concat(
             of(
               ImportExportActions.showReplaceDialog({
-                existed: existedImportNamesConversations,
+                duplicatedItems: existedImportNamesConversations,
                 featureType: FeatureType.Chat,
               }),
             ),
@@ -324,6 +324,7 @@ const importConversationsEpic: AppEpic = (action$) =>
               ImportExportActions.uploadImportedConversations({
                 itemsToUpload: nonExistedImportNamesConversations,
                 folders,
+                disableStateReset: true,
               }),
             ),
           );
@@ -380,7 +381,16 @@ const uploadImportedConversationsEpic: AppEpic = (action$) =>
                     folders: newFolders,
                   }),
                 ),
-                of(ImportExportActions.importConversationsSuccess()),
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [uploadedConversations[0].id],
+                  }),
+                ),
+                iif(
+                  () => !payload.disableStateReset,
+                  of(ImportExportActions.resetState()),
+                  EMPTY,
+                ),
               );
             }),
             catchError(() => {
@@ -406,7 +416,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.uploadImportedPrompts.match),
     switchMap(({ payload }) => {
-      const { itemsToUpload, folders } = payload;
+      const { itemsToUpload, folders, disableStateReset } = payload;
       return from(PromptService.setPrompts(itemsToUpload)).pipe(
         toArray(),
         switchMap(() => {
@@ -433,11 +443,18 @@ const uploadImportedPromptsEpic: AppEpic = (action$) =>
 
               const newFolders = combineEntities(promptsFolders, cleanFolders);
 
-              return of(
-                PromptsActions.importPromptsSuccess({
-                  prompts: promptsListing,
-                  folders: newFolders,
-                }),
+              return concat(
+                of(
+                  PromptsActions.importPromptsSuccess({
+                    prompts: promptsListing,
+                    folders: newFolders,
+                  }),
+                ),
+                iif(
+                  () => !disableStateReset,
+                  of(ImportExportActions.resetState()),
+                  EMPTY,
+                ),
               );
             }),
             catchError(() => {
@@ -589,10 +606,62 @@ const importZipEpic: AppEpic = (action$) =>
                   if (!attachmentsToUpload.length) {
                     return of(ImportExportActions.importFail());
                   }
-                  return of(
-                    ImportExportActions.uploadConversationAttachments({
-                      attachmentsToUpload,
-                      completeHistory: cleanHistory,
+
+                  const bucket = BucketService.getBucket();
+
+                  if (!bucket.length) {
+                    return of(ImportExportActions.importFail());
+                  }
+
+                  const conversation =
+                    cleanHistory.history[firstConversationIndex];
+
+                  const importFileFolderPath = constructPath(
+                    getRootId(),
+                    ImportRoot.Imports,
+                    conversation.name,
+                  );
+
+                  return FileService.getFiles(importFileFolderPath).pipe(
+                    switchMap((existedFiles) => {
+                      const attachmentsToUploadWithFolder =
+                        attachmentsToUpload.map((attachment) => ({
+                          ...attachment,
+                          folderId: importFileFolderPath,
+                        }));
+
+                      const duplicatedFiles =
+                        attachmentsToUploadWithFolder.filter((fileToUpload) =>
+                          existedFiles.some(
+                            (e) => fileToUpload.name === e.name,
+                          ),
+                        );
+
+                      const nonDuplicatedFiles =
+                        attachmentsToUploadWithFolder.filter(
+                          (fileToUpload) =>
+                            !existedFiles.some(
+                              (e) => fileToUpload.name === e.name,
+                            ),
+                        );
+
+                      return iif(
+                        () => !!duplicatedFiles.length,
+                        of(
+                          ImportExportActions.showReplaceDialog({
+                            duplicatedItems: duplicatedFiles,
+                            featureType: FeatureType.File,
+                            completeHistory: cleanHistory,
+                            nonDuplicatedFiles: nonDuplicatedFiles,
+                          }),
+                        ),
+                        of(
+                          ImportExportActions.uploadConversationAttachments({
+                            attachmentsToPostfix: attachmentsToUpload,
+                            completeHistory: cleanHistory,
+                          }),
+                        ),
+                      );
                     }),
                   );
                 }),
@@ -604,11 +673,12 @@ const importZipEpic: AppEpic = (action$) =>
     }),
   );
 
-const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
+const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadConversationAttachments.match),
     switchMap(({ payload }) => {
-      const { attachmentsToUpload, completeHistory } = payload;
+      const { attachmentsToPostfix, attachmentsToReplace, completeHistory } =
+        payload;
       const bucket = BucketService.getBucket();
 
       if (!bucket.length) {
@@ -623,17 +693,28 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$) =>
         conversation.name,
       );
 
-      return forkJoin({
-        filesFromFolder: FileService.getFiles(importFileFolderPath),
-        attachmentsToUpload: of(attachmentsToUpload),
-      }).pipe(
-        switchMap(({ filesFromFolder, attachmentsToUpload }) => {
+      return FileService.getFiles(importFileFolderPath).pipe(
+        switchMap((filesFromFolder) => {
+          const nonDuplicatedFiles =
+            ImportExportSelectors.selectNonDuplicatedFiles(state$.value);
+
+          const alreadyExistedFiles = [
+            ...filesFromFolder,
+            ...nonDuplicatedFiles,
+          ];
+
           const updatedAttachments = updateAttachmentsNames({
-            filesFromFolder,
-            attachmentsToUpload,
+            filesFromFolder: alreadyExistedFiles,
+            attachmentsToPostfix,
           });
 
-          const actions = updatedAttachments.map((attachment) => {
+          const allAttachments = [
+            ...updatedAttachments,
+            ...nonDuplicatedFiles,
+            ...(attachmentsToReplace ?? []),
+          ];
+
+          const actions = allAttachments.map((attachment) => {
             const formData = new FormData();
 
             if (!attachment.fileContent) {
@@ -840,11 +921,9 @@ const resetStateEpic: AppEpic = (action$) =>
         ImportExportActions.exportCancel.match(action) ||
         ImportExportActions.exportConversationSuccess.match(action) ||
         ImportExportActions.exportFail.match(action) ||
-        ImportExportActions.importConversationsSuccess.match(action) ||
         ImportExportActions.importFail.match(action) ||
         ImportExportActions.importStop.match(action) ||
         ImportExportActions.importPromptsFail.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action) ||
         PromptsActions.initPromptsSuccess.match(action),
     ),
     switchMap(() => {

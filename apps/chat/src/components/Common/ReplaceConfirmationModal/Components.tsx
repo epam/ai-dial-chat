@@ -1,4 +1,4 @@
-import { IconBulb } from '@tabler/icons-react';
+import { IconBulb, IconFile } from '@tabler/icons-react';
 import {
   ReactElement,
   ReactNode,
@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { ConversationInfo } from '@/src/types/chat';
+import { DialFile } from '@/src/types/files';
 import {
   MappedReplaceActions,
   ReplaceOptions,
@@ -214,4 +215,46 @@ export const PromptsRow = ({
   );
 };
 
-//TODO implement FilesRow
+interface FileViewProps {
+  item: DialFile;
+}
+
+const FileView = ({ item: file }: FileViewProps) => {
+  return (
+    <FeatureContainer>
+      <IconFile size={18} className="text-secondary" />
+      <Tooltip
+        tooltip={file.name}
+        triggerClassName="truncate text-center w-full"
+      >
+        <div className="truncate whitespace-pre break-all text-left">
+          {file.name}
+        </div>
+      </Tooltip>
+    </FeatureContainer>
+  );
+};
+
+export interface FileRowProps extends FileViewProps {
+  level?: number;
+  onEvent?: (eventId: ReplaceOptions, data: string) => void;
+  additionalItemData?: Record<string, unknown>;
+}
+
+export const FilesRow = ({
+  level,
+  item,
+  additionalItemData,
+  onEvent,
+}: FileRowProps) => {
+  return (
+    <EntityRow
+      entityId={item.id}
+      level={level}
+      additionalItemData={additionalItemData}
+      onEvent={onEvent}
+    >
+      <FileView item={item} />
+    </EntityRow>
+  );
+};

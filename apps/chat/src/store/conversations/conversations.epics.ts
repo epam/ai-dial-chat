@@ -1880,7 +1880,6 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
         ConversationsActions.unselectConversations.match(action) ||
         ConversationsActions.updateConversationSuccess.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
-        ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.deleteConversationsComplete.match(action) ||
         ConversationsActions.addConversations.match(action),
     ),
@@ -1902,11 +1901,7 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.selectConversations.match(action) ||
-        ConversationsActions.importConversationsSuccess.match(action),
-    ),
+    filter((action) => ConversationsActions.selectConversations.match(action)),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
@@ -2349,7 +2344,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         ),
         iif(
           () => !!isImportFinish,
-          of(ImportExportActions.importConversationsSuccess()),
+          of(ImportExportActions.resetState()),
           EMPTY,
         ),
       );

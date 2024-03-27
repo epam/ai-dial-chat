@@ -34,6 +34,7 @@ import {
 import Modal from '../Modal';
 import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
+import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 
 import { uniq } from 'lodash-es';
@@ -65,7 +66,14 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     ImportExportSelectors.selectConversationToReplace,
   );
   const prompts = useAppSelector(ImportExportSelectors.selectPromptsToReplace);
-  //TODO implement files
+
+  const duplicatedFiles = useAppSelector(
+    ImportExportSelectors.selectDuplicatedFiles,
+  );
+
+  const importedHistory = useAppSelector(
+    ImportExportSelectors.selectImportedHistory,
+  );
 
   const featuresToReplace = useMemo(() => {
     switch (featureType) {
@@ -73,12 +81,13 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         return conversations;
       case FeatureType.Prompt:
         return prompts;
-      //TODO case FeatureType.File:
+      case FeatureType.File:
+        return duplicatedFiles;
 
       default:
         return [];
     }
-  }, [featureType, conversations, prompts]);
+  }, [featureType, conversations, prompts, duplicatedFiles]);
 
   const folderType: FolderType = useMemo(
     () => getFolderType(featureType),
@@ -92,6 +101,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
       folderType,
     );
+
     return featuresFolders;
   }, [featuresToReplace, folderType]);
 
@@ -183,34 +193,58 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     }
 
     if (!itemsToReplace.length && !itemsToPostfix.length) {
-      dispatch(ImportExportActions.importStop());
+      if (featureType !== FeatureType.File) {
+        dispatch(ImportExportActions.importStop());
+      }
+      if (featureType === FeatureType.File) {
+        dispatch(
+          ImportExportActions.importConversations({ data: importedHistory }),
+        );
+      }
     }
-    if (itemsToReplace.length) {
+
+    if (featureType === FeatureType.File) {
+      dispatch(
+        ImportExportActions.uploadConversationAttachments({
+          attachmentsToPostfix: itemsToPostfix as DialFile[],
+          attachmentsToReplace: itemsToReplace as DialFile[],
+          completeHistory: importedHistory,
+        }),
+      );
+    }
+
+    if (itemsToReplace.length && featureType !== FeatureType.File) {
       dispatch(
         ImportExportActions.replaceFeatures({ itemsToReplace, featureType }),
       );
     }
 
-    if (featureType === FeatureType.Chat && itemsToPostfix.length) {
-      dispatch(
-        ImportExportActions.uploadImportedConversations({
-          itemsToUpload: itemsToPostfix as Conversation[],
-        }),
-      );
-    }
+    if (itemsToPostfix.length) {
+      if (featureType === FeatureType.Chat) {
+        dispatch(
+          ImportExportActions.uploadImportedConversations({
+            itemsToUpload: itemsToPostfix as Conversation[],
+          }),
+        );
+      }
 
-    if (featureType === FeatureType.Prompt && itemsToPostfix.length) {
-      dispatch(
-        ImportExportActions.uploadImportedPrompts({
-          itemsToUpload: itemsToPostfix as Prompt[],
-        }),
-      );
+      if (featureType === FeatureType.Prompt) {
+        dispatch(
+          ImportExportActions.uploadImportedPrompts({
+            itemsToUpload: itemsToPostfix as Prompt[],
+          }),
+        );
+      }
     }
-
-    //TODO implement FeatureType.File
 
     dispatch(ImportExportActions.closeReplaceDialog());
-  }, [dispatch, featureType, featuresToReplace, mappedActions]);
+  }, [
+    dispatch,
+    featureType,
+    featuresToReplace,
+    mappedActions,
+    importedHistory,
+  ]);
 
   useEffect(() => {
     setMappedActions(() => getMappedActions(featuresToReplace));
@@ -240,8 +274,13 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         return (
           <PromptsList promptsToReplace={prompts} {...featureGeneralProps} />
         );
-      //TODO implement case FeatureType.File:
-
+      case FeatureType.File:
+        return (
+          <FilesList
+            duplicatedFiles={duplicatedFiles}
+            {...featureGeneralProps}
+          />
+        );
       default:
         return null;
     }
@@ -250,10 +289,11 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     folders,
     mappedActions,
     openedFoldersIds,
-    handleToggleFolder,
-    onItemEvent,
     conversations,
     prompts,
+    duplicatedFiles,
+    handleToggleFolder,
+    onItemEvent,
   ]);
 
   return (
@@ -287,11 +327,9 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
               />
             </div>
             <div className="flex min-h-[250px] flex-col gap-0.5">
-              {folders.length !== 0 && (
-                <div className="flex flex-col gap-1 overflow-y-scroll">
-                  {featuresToReplace && featureList}
-                </div>
-              )}
+              <div className="flex flex-col gap-1 overflow-y-scroll">
+                {featuresToReplace && featureList}
+              </div>
             </div>
           </div>
         </div>

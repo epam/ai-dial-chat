@@ -23,6 +23,7 @@ export type AttachmentToUpload = DialFile;
 interface ImportExportState {
   attachmentsIdsToUpload: string[];
   uploadedAttachments: UploadedAttachment[];
+  nonDuplicatedFiles: DialFile[];
   importedHistory: LatestExportFormat;
   attachmentsErrors: string[];
   status?: LoadingStatus;
@@ -31,7 +32,7 @@ interface ImportExportState {
   isChatsBackedUp: boolean;
   conversationsToReplace: Conversation[];
   promptsToReplace: Prompt[];
-  filesToReplace: DialFile[];
+  duplicatedFiles: DialFile[];
   isShowReplaceDialog: boolean;
   featureType: FeatureType;
 }
@@ -45,13 +46,14 @@ const defaultImportedHistory: LatestExportFormat = {
 const initialState: ImportExportState = {
   attachmentsIdsToUpload: [],
   uploadedAttachments: [],
+  nonDuplicatedFiles: [],
   importedHistory: defaultImportedHistory,
   attachmentsErrors: [],
   isPromptsBackedUp: false,
   isChatsBackedUp: false,
   conversationsToReplace: [],
   promptsToReplace: [],
-  filesToReplace: [],
+  duplicatedFiles: [],
   status: undefined,
   operation: undefined,
   isShowReplaceDialog: false,
@@ -99,20 +101,22 @@ export const importExportSlice = createSlice({
       state.operation = Operation.Importing;
     },
     importStop: (state) => state,
-    importConversationsSuccess: (state) => state,
     importFail: (state) => state,
     uploadConversationAttachments: (
       state,
       {
         payload,
       }: PayloadAction<{
-        attachmentsToUpload: AttachmentToUpload[];
+        attachmentsToPostfix: AttachmentToUpload[];
+        attachmentsToReplace?: AttachmentToUpload[];
         completeHistory: LatestExportFormat;
       }>,
     ) => {
-      state.attachmentsIdsToUpload = payload.attachmentsToUpload.map(
-        ({ id }) => id,
-      );
+      const attachmentsToUpload = [
+        ...payload.attachmentsToPostfix,
+        ...(payload.attachmentsToReplace ?? []),
+      ];
+      state.attachmentsIdsToUpload = attachmentsToUpload.map(({ id }) => id);
       state.importedHistory = payload.completeHistory;
     },
     uploadSingleAttachmentSuccess: (
@@ -139,12 +143,17 @@ export const importExportSlice = createSlice({
     },
     uploadImportedConversations: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         itemsToUpload: Conversation[];
         folders?: FolderInterface[];
+        disableStateReset?: boolean;
       }>,
     ) => {
-      state.isShowReplaceDialog = false;
+      if (!payload.disableStateReset) {
+        state.isShowReplaceDialog = false;
+      }
     },
     importPrompts: (state) => {
       state.status = LoadingStatus.Loading;
@@ -153,31 +162,50 @@ export const importExportSlice = createSlice({
     importPromptsFail: (state) => state,
     uploadImportedPrompts: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         itemsToUpload: Prompt[];
         folders?: FolderInterface[];
+        disableStateReset?: boolean;
       }>,
     ) => {
-      state.isShowReplaceDialog = false;
+      if (!payload.disableStateReset) {
+        state.isShowReplaceDialog = false;
+      }
     },
     showReplaceDialog: (
       state,
       {
         payload,
       }: PayloadAction<{
-        existed: Conversation[] | Prompt[];
+        duplicatedItems: Conversation[] | Prompt[] | DialFile[];
         featureType: FeatureType;
+        completeHistory?: LatestExportFormat;
+        nonDuplicatedFiles?: DialFile[];
       }>,
     ) => {
       state.isShowReplaceDialog = true;
       state.featureType = payload.featureType;
 
-      if (FeatureType.Chat) {
-        state.conversationsToReplace = payload.existed as Conversation[];
+      if (payload.featureType === FeatureType.Chat) {
+        state.conversationsToReplace =
+          payload.duplicatedItems as Conversation[];
       }
 
-      if (FeatureType.Prompt) {
-        state.promptsToReplace = payload.existed as Prompt[];
+      if (payload.featureType === FeatureType.Prompt) {
+        state.promptsToReplace = payload.duplicatedItems as Prompt[];
+      }
+
+      if (payload.featureType === FeatureType.File) {
+        state.duplicatedFiles = payload.duplicatedItems as DialFile[];
+        if (payload.nonDuplicatedFiles) {
+          state.nonDuplicatedFiles = payload.nonDuplicatedFiles;
+        }
+      }
+
+      if (payload.completeHistory) {
+        state.importedHistory = payload.completeHistory;
       }
     },
     replaceFeatures: (
@@ -250,8 +278,12 @@ const selectPromptsToReplace = createSelector([rootSelector], (state) => {
   return state.promptsToReplace;
 });
 
-const selectFilesToReplace = createSelector([rootSelector], (state) => {
-  return state.filesToReplace;
+const selectDuplicatedFiles = createSelector([rootSelector], (state) => {
+  return state.duplicatedFiles;
+});
+
+const selectNonDuplicatedFiles = createSelector([rootSelector], (state) => {
+  return state.nonDuplicatedFiles;
 });
 
 export const ImportExportSelectors = {
@@ -266,7 +298,8 @@ export const ImportExportSelectors = {
   selectFeatureType,
   selectConversationToReplace,
   selectPromptsToReplace,
-  selectFilesToReplace,
+  selectDuplicatedFiles,
+  selectNonDuplicatedFiles,
 };
 
 export const ImportExportActions = importExportSlice.actions;

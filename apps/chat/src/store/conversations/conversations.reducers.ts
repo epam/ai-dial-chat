@@ -391,9 +391,6 @@ export const conversationsSlice = createSlice({
         state.conversations,
       );
       state.folders = combineEntities(payload.folders, state.folders);
-      state.selectedConversationsIds = [
-        payload.conversations[payload.conversations.length - 1].id,
-      ];
     },
     // TODO: refactor this method - use only for direct write without any combination
     setConversations: (

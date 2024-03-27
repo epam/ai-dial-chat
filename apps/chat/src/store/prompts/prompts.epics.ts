@@ -692,29 +692,18 @@ const importPromptsEpic: AppEpic = (action$) =>
         switchMap((promptsListing) => {
           const existedImportNamesPrompts = preparedPrompts.filter(
             (importPrompt) =>
-              !isImportEntityNameOnSameLevelUnique(
-                importPrompt.name,
-                importPrompt,
-                promptsListing,
-              ),
+              !isImportEntityNameOnSameLevelUnique({
+                entity: importPrompt,
+                entities: promptsListing,
+              }),
           );
 
           const nonExistedImportNamesPrompts = preparedPrompts.filter(
             (importPrompt) => {
-              // console.log(
-              //   'isUniq',
-              //   isEntityNameOnSameLevelUnique(
-              //     importConv.name,
-              //     importConv,
-              //     conversationsListing,
-              //   ),
-              // );
-              // console.log(importConv);
-              return isImportEntityNameOnSameLevelUnique(
-                importPrompt.name,
-                importPrompt,
-                preparedPrompts,
-              );
+              return isImportEntityNameOnSameLevelUnique({
+                entity: importPrompt,
+                entities: promptsListing,
+              });
             },
           );
 
@@ -730,7 +719,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           if (!nonExistedImportNamesPrompts.length) {
             return of(
               ImportExportActions.showReplaceDialog({
-                existed: existedImportNamesPrompts,
+                duplicatedItems: existedImportNamesPrompts,
                 featureType: FeatureType.Prompt,
               }),
             );
@@ -739,7 +728,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           return concat(
             of(
               ImportExportActions.showReplaceDialog({
-                existed: existedImportNamesPrompts,
+                duplicatedItems: existedImportNamesPrompts,
                 featureType: FeatureType.Prompt,
               }),
             ),
@@ -747,6 +736,7 @@ const importPromptsEpic: AppEpic = (action$) =>
               ImportExportActions.uploadImportedPrompts({
                 itemsToUpload: nonExistedImportNamesPrompts,
                 folders: promptsHistory.folders,
+                disableStateReset: true,
               }),
             ),
           );

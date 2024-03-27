@@ -41,16 +41,18 @@ export const isEntityNameOnSameLevelUnique = (
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
-export const isImportEntityNameOnSameLevelUnique = (
-  nameToBeUnique: string,
-  entity: Entity,
-  entities: Entity[],
-): boolean => {
+export const isImportEntityNameOnSameLevelUnique = ({
+  entity,
+  entities,
+}: {
+  entity: Entity;
+  entities: Entity[];
+}): boolean => {
   const sameLevelEntities = entities.filter(
-    (e) => entity.id === e.id && e.folderId === entity.folderId,
+    (e) => e.folderId === entity.folderId,
   );
 
-  return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
+  return !sameLevelEntities.some((e) => entity.name === e.name);
 };
 
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
