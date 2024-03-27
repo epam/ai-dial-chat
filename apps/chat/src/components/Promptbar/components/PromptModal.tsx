@@ -73,7 +73,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value.replaceAll(notAllowedSymbolsRegex, '');
-    setIsDotError(newName.trim().at(-1) === '.');
+    setIsDotError(doesHaveDotsInTheEnd(newName));
     setName(newName);
   };
 
