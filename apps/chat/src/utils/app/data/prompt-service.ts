@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 
 import { constructPath } from '@/src/utils/app/file';
 import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
+import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -56,30 +57,32 @@ export class PromptService {
 export const getPreparedPrompts = ({
   prompts,
   folders,
-  addRoot = false,
 }: {
   prompts: Prompt[];
   folders: FolderInterface[];
-  addRoot?: boolean;
 }) =>
   prompts.map((prompt) => {
     const { path } = getPathToFolderById(folders, prompt.folderId, {
+      prepareNames: true,
       forRenaming: true,
       replaceWithSpacesForRenaming: true,
+      trimEndDotsRequired: true,
     });
     const newName = prepareEntityName(prompt.name, {
       forRenaming: true,
       replaceWithSpacesForRenaming: true,
+      trimEndDotsRequired: true,
     });
 
-    return {
+    const folderId = isRootPromptId(path)
+      ? path
+      : constructPath(getPromptRootId(), path);
+
+    return addGeneratedPromptId({
       ...prompt,
-      id: addRoot
-        ? constructPath(getPromptRootId(), path, newName)
-        : constructPath(path, newName),
       name: newName,
-      folderId: addRoot ? constructPath(getPromptRootId(), path) : path,
-    };
+      folderId,
+    });
   }); // to send prompts with proper parentPath
 
 export const getImportPreparedPrompts = ({
