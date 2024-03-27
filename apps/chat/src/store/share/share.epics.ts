@@ -281,7 +281,7 @@ const acceptInvitationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationSuccess.match),
     switchMap(() => {
-      history.replaceState({}, '', `${window.location.origin}`);
+      history.replaceState({}, '', window.location.origin);
 
       return EMPTY;
     }),
@@ -290,11 +290,17 @@ const acceptInvitationSuccessEpic: AppEpic = (action$) =>
 const acceptInvitationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationFail.match),
-    map(({ payload }) => {
-      history.replaceState({}, '', `${window.location.origin}`);
+    switchMap(({ payload }) => {
+      history.replaceState({}, '', window.location.origin);
 
-      return UIActions.showErrorToast(
-        translate(payload.message || errorsMessages.acceptShareFailed),
+      return concat(
+        of(ShareActions.resetShareId()),
+        of(ConversationsActions.getSelectedConversations()),
+        of(
+          UIActions.showErrorToast(
+            translate(payload.message || errorsMessages.acceptShareFailed),
+          ),
+        ),
       );
     }),
   );
@@ -442,6 +448,10 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         ...payload.resources.folders,
       ].some((item) => item.id === decodedAcceptedId);
 
+      const [selectedConv] = ConversationsSelectors.selectSelectedConversations(
+        state$.value,
+      );
+
       if (payload.featureType === FeatureType.Chat) {
         if (payload.sharedWith === ShareRelations.others) {
           const conversations = ConversationsSelectors.selectConversations(
@@ -488,12 +498,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          const [selectedConv] =
-            ConversationsSelectors.selectSelectedConversations(state$.value);
-
           if (
             selectedConv &&
-            !isNewResource &&
             payload.resources.entities.some(
               (conv) => conv.id === selectedConv.id,
             )
@@ -619,7 +625,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 noLoader: true,
               }),
             );
-            actions.push(ShareActions.resetShareId());
           } else {
             actions.push(
               ConversationsActions.selectConversations({
@@ -636,7 +641,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 selectFirst: true,
               }),
             );
-            actions.push(ShareActions.resetShareId());
           } else {
             actions.push(
               PromptsActions.setSelectedPrompt({
@@ -649,6 +653,10 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
           }
+          if (!selectedConv) {
+            // shared with me could be already selected, so we haven't to upload it twice
+            actions.push(ConversationsActions.getSelectedConversations());
+          }
           actions.push(
             PromptsActions.setIsEditModalOpen({
               isOpen: true,
@@ -656,6 +664,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             }),
           );
         }
+        actions.push(ShareActions.resetShareId());
       }
 
       return concat(actions);
