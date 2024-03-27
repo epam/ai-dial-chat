@@ -2461,8 +2461,11 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                     featureType: FeatureType.Chat,
                     openedFolderIds: [
                       ...openedFolders,
-                      ...getParentFolderIdsFromFolderId(conv[0].folderId),
-                      ...payload.path,
+                      ...uniq(
+                        conv.flatMap((c) =>
+                          getParentFolderIdsFromFolderId(c.folderId),
+                        ),
+                      ),
                     ],
                   }),
                 ),
