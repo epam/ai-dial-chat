@@ -51,7 +51,7 @@ dialSharedWithMeTest(
     let shareByLinkResponse: ShareByLinkResponseModel;
 
     await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
-      conversation = await conversationData.prepareDefaultConversation();
+      conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
       shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
         conversation,
@@ -167,7 +167,7 @@ dialSharedWithMeTest(
       'Prepare shared conversation inside folder',
       async () => {
         conversationInFolder =
-          await conversationData.prepareDefaultConversationInFolder();
+          conversationData.prepareDefaultConversationInFolder();
         await dataInjector.createConversations(
           conversationInFolder.conversations,
           conversationInFolder.folders,
@@ -1117,6 +1117,222 @@ dialSharedWithMeTest(
         expect
           .soft(isCodeContentVisible, ExpectedMessages.codeIsVisibleInResponse)
           .toBeTruthy();
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Shared with me. Chat is deleted when another one is focused',
+  async ({
+    additionalShareUserDialHomePage,
+    additionalShareUserSharedWithMeConversations,
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
+    additionalShareUserConfirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1834');
+    let conversationInFolder: FolderConversation;
+    let conversation: Conversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialSharedWithMeTest.step(
+      'Prepare shared conversation inside folder',
+      async () => {
+        conversationInFolder =
+          conversationData.prepareDefaultConversationInFolder();
+        await dataInjector.createConversations(
+          conversationInFolder.conversations,
+          conversationInFolder.folders,
+        );
+        conversation = conversationInFolder.conversations[0];
+        shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
+          conversation,
+        ]);
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open app by another user and delete shared conversation',
+      async () => {
+        await additionalShareUserDialHomePage.openHomePage({
+          iconsToBeLoaded: [defaultModel!.iconUrl],
+        });
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+          conversation.name,
+        );
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
+          MenuOptions.delete,
+        );
+        await additionalShareUserConfirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+        });
+
+        await additionalShareUserSharedWithMeConversations
+          .getConversationByName(conversation.name)
+          .waitFor({ state: 'hidden' });
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Shared with me. Structure creates again if it was deleted if to open the same link',
+  async ({
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1855');
+    let conversationInFolder: FolderConversation;
+    let conversation: Conversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialSharedWithMeTest.step(
+      'Prepare shared conversation inside folder',
+      async () => {
+        conversationInFolder =
+          conversationData.prepareDefaultConversationInFolder();
+        await dataInjector.createConversations(
+          conversationInFolder.conversations,
+          conversationInFolder.folders,
+        );
+        conversation = conversationInFolder.conversations[0];
+        shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
+          [conversation],
+          true,
+        );
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Delete shared folder from "Shared with me" section',
+      async () => {
+        let sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
+        await additionalUserShareApiHelper.deleteSharedWithMeEntities(
+          sharedEntities.resources,
+        );
+        sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
+
+        expect
+          .soft(
+            sharedEntities.resources.find(
+              (f) => f.name === conversationInFolder.folders.name,
+            ),
+            ExpectedMessages.folderIsNotShared,
+          )
+          .toBeUndefined();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Accept the same share invite again and verify folder with chat shown in "Shared with me" section',
+      async () => {
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        const sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
+        expect
+          .soft(
+            sharedEntities.resources.find(
+              (f) => f.name === conversationInFolder.folders.name,
+            ),
+            ExpectedMessages.folderIsNotShared,
+          )
+          .toBeDefined();
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Shared folder disappears from Shared with me if the original was deleted.\n' +
+    'Shared chat disappears from Shared with me if the original was deleted',
+  async ({
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    itemApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2770', 'EPMRTC-2772');
+    let conversationInFolder: FolderConversation;
+    let conversation: Conversation;
+    let shareByLinkFolderResponse: ShareByLinkResponseModel;
+    let shareByLinkConversationResponse: ShareByLinkResponseModel;
+
+    await dialSharedWithMeTest.step(
+      'Prepare shared folder with conversation and single shared conversation',
+      async () => {
+        conversationInFolder =
+          conversationData.prepareDefaultConversationInFolder();
+        conversationData.resetData();
+        conversation = conversationData.prepareDefaultConversation();
+        await dataInjector.createConversations(
+          [conversation, ...conversationInFolder.conversations],
+          conversationInFolder.folders,
+        );
+
+        shareByLinkFolderResponse =
+          await mainUserShareApiHelper.shareEntityByLink(
+            conversationInFolder.conversations,
+            true,
+          );
+        await additionalUserShareApiHelper.acceptInvite(
+          shareByLinkFolderResponse,
+        );
+
+        shareByLinkConversationResponse =
+          await mainUserShareApiHelper.shareEntityByLink([conversation]);
+        await additionalUserShareApiHelper.acceptInvite(
+          shareByLinkConversationResponse,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Delete shared folder and conversation by main user',
+      async () => {
+        await itemApiHelper.deleteConversation(
+          conversationInFolder.conversations[0],
+        );
+        await itemApiHelper.deleteConversation(conversation);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify folder and conversation are not shared with user any more',
+      async () => {
+        const sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
+        //TODO: enable when https://github.com/epam/ai-dial-chat/issues/1139 is fixed
+        // expect
+        //   .soft(
+        //     sharedEntities.resources.find(
+        //       (f) => f.name === conversationInFolder.folders.name,
+        //     ),
+        //     ExpectedMessages.folderIsNotShared,
+        //   )
+        //   .toBeUndefined();
+        expect
+          .soft(
+            sharedEntities.resources.find((c) => c.url === conversation.id),
+            ExpectedMessages.conversationIsNotShared,
+          )
+          .toBeUndefined();
       },
     );
   },

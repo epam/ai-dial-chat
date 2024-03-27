@@ -180,11 +180,10 @@ dialTest(
     setTestIds('EPMRTC-490', 'EPMRTC-491');
     let conversation: Conversation;
     await dialTest.step('Prepare conversation with history', async () => {
-      conversation =
-        await conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          ['first request', 'second request', 'third request'],
-        );
+      conversation = conversationData.prepareModelConversationBasedOnRequests(
+        defaultModel,
+        ['first request', 'second request', 'third request'],
+      );
       await dataInjector.createConversations([conversation]);
       await localStorageManager.setSelectedConversation(conversation);
     });
