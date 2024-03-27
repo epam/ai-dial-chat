@@ -5,14 +5,7 @@ import {
   IconTxt,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import React, {
-  FC,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { FC, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { CopyTableType } from '@/src/types/chat';
 
@@ -40,9 +33,10 @@ const CopyIcon = ({ Icon, onClick, copied }: CopyIconProps) => {
 
 interface Props {
   children: ReactNode[];
+  isLastMessageStreaming: boolean;
 }
 
-export const Table = ({ children }: Props) => {
+export const Table = ({ children, isLastMessageStreaming }: Props) => {
   const tableRef = useRef<HTMLTableElement | null>(null);
 
   const [copiedType, setCopiedType] = useState<CopyTableType | undefined>(
@@ -145,23 +139,25 @@ export const Table = ({ children }: Props) => {
 
   return (
     <div className="mt-7 max-w-full overflow-auto">
-      <div className="flex max-w-full justify-end gap-2 bg-layer-3 px-2 py-1">
-        <CopyIcon
-          Icon={IconCsv}
-          onClick={copyTableToCSV}
-          copied={CopyTableType.CSV === copiedType}
-        />
-        <CopyIcon
-          Icon={IconTxt}
-          onClick={copyTableToTXT}
-          copied={CopyTableType.TXT === copiedType}
-        />
-        <CopyIcon
-          Icon={IconMarkdown}
-          onClick={copyTableToMD}
-          copied={CopyTableType.MD === copiedType}
-        />
-      </div>
+      {!isLastMessageStreaming && (
+        <div className="flex max-w-full justify-end gap-2 bg-layer-3 px-2 py-1">
+          <CopyIcon
+            Icon={IconCsv}
+            onClick={copyTableToCSV}
+            copied={CopyTableType.CSV === copiedType}
+          />
+          <CopyIcon
+            Icon={IconTxt}
+            onClick={copyTableToTXT}
+            copied={CopyTableType.TXT === copiedType}
+          />
+          <CopyIcon
+            Icon={IconMarkdown}
+            onClick={copyTableToMD}
+            copied={CopyTableType.MD === copiedType}
+          />
+        </div>
+      )}
       <table
         ref={tableRef}
         className="mt-0 border-collapse border border-tertiary px-3 py-1 text-sm"
