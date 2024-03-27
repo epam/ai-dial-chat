@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 
 import { constructPath } from '@/src/utils/app/file';
 import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { addGeneratedPromptId } from '@/src/utils/app/prompts';
 
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -78,7 +78,7 @@ export const getPreparedPrompts = ({
       ? path
       : constructPath(getPromptRootId(), path);
 
-    return regeneratePromptId({
+    return addGeneratedPromptId({
       ...prompt,
       name: newName,
       folderId,
