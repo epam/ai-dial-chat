@@ -127,7 +127,7 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$) =>
+const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     takeUntil(action$.pipe(filter(ShareActions.acceptShareInvitation.match))),
@@ -135,7 +135,7 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
     switchMap(() => of(ConversationsActions.getSelectedConversations())),
   );
 
-const getSelectedConversationsEpic: AppEpic = (action$) =>
+const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.getSelectedConversations.match),
     switchMap(() =>
@@ -188,6 +188,24 @@ const getSelectedConversationsEpic: AppEpic = (action$) =>
         }),
         switchMap(({ conversations, selectedConversationsIds }) => {
           const actions: Observable<AnyAction>[] = [];
+          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+            state$.value,
+          );
+
+          // Always create new conversation in isolated view
+          if (isIsolatedView) {
+            const namePrefix = Math.floor(1000 + Math.random() * 9000);
+
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [`isolated_${namePrefix}`],
+                  shouldUploadConversationsForCompare: true,
+                }),
+              ),
+            );
+            return concat(...actions);
+          }
 
           if (conversations.length) {
             actions.push(
@@ -293,7 +311,16 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
-        map((state) => ModelsSelectors.selectRecentModels(state)),
+        map((state) => {
+          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(state);
+          const isolatedModelId =
+            SettingsSelectors.selectIsolatedModelId(state);
+          if (isIsolatedView && isolatedModelId) {
+            const models = ModelsSelectors.selectModels(state);
+            return models.filter((i) => i?.id === isolatedModelId);
+          }
+          return ModelsSelectors.selectRecentModels(state);
+        }),
         filter((models) => models && models.length > 0),
         take(1),
         switchMap((recentModels) => {

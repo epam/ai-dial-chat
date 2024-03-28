@@ -21,6 +21,8 @@ export interface SettingsState {
   defaultRecentAddonsIds: string[];
   storageType: StorageType;
   themesHostDefined: boolean;
+  isIsolatedView: boolean;
+  isolatedModelId?: string;
 }
 
 const initialState: SettingsState = {
@@ -36,6 +38,7 @@ const initialState: SettingsState = {
   defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
+  isIsolatedView: false,
 };
 
 export const settingsSlice = createSlice({
@@ -130,6 +133,14 @@ const selectEnabledFeatures = createSelector([rootSelector], (state) => {
   return new Set(state.enabledFeatures);
 });
 
+const selectIsIsolatedView = createSelector([rootSelector], (state) => {
+  return state.isIsolatedView;
+});
+
+const selectIsolatedModelId = createSelector([rootSelector], (state) => {
+  return state.isolatedModelId;
+});
+
 const isFeatureEnabled = createSelector(
   [selectEnabledFeatures, (_, featureName: Feature) => featureName],
   (enabledFeatures, featureName) => {
@@ -209,4 +220,6 @@ export const SettingsSelectors = {
   selectStorageType,
   selectAnnouncement,
   selectThemeHostDefined,
+  selectIsIsolatedView,
+  selectIsolatedModelId,
 };

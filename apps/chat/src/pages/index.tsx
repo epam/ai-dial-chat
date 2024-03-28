@@ -307,6 +307,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
+    isIsolatedView: false,
   };
 
   return {
