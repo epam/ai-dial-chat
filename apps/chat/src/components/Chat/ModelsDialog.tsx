@@ -120,7 +120,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
 
   return (
     <Modal
-      dataQa="addons-dialog"
+      dataQa="models-dialog"
       portalId="chat"
       onClose={onClose}
       overlayClassName="fixed inset-0 top-[48px]"
