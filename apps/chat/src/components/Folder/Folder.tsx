@@ -727,7 +727,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 )}
                 hideTooltip={!isNameOrPathInvalid}
                 triggerClassName={classNames(
-                  'max-h-5 flex-1 truncate break-all text-left',
+                  'max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
                       ? 'text-primary'
