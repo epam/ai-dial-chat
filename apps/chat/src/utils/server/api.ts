@@ -101,7 +101,8 @@ export class ApiUtils {
     constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
 
   static request(url: string, options?: RequestInit) {
-    return fromFetch(url, {
+    const absoluteUrl = url.startsWith('/') ? url : `/${url}`;
+    return fromFetch(absoluteUrl, {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     }).pipe(
