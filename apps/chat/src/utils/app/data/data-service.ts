@@ -76,7 +76,7 @@ export class DataService {
   }
 
   public static getAvailableThemes(): Observable<Theme[]> {
-    return ApiUtils.request('api/themes/listing');
+    return ApiUtils.request('/api/themes/listing');
   }
 
   public static getChatbarWidth(): Observable<number> {

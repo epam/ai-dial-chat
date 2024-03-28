@@ -1060,7 +1060,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         value: payload.rate > 0 ? true : false,
       };
 
-      return fromFetch(`api/rate`, {
+      return fromFetch(`/api/rate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1377,7 +1377,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       let eventData = '';
       let message = payload.message;
       return from(
-        fetch('api/chat', {
+        fetch('/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
