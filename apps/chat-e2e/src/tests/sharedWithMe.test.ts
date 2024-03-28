@@ -34,6 +34,7 @@ dialSharedWithMeTest(
   async ({
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserChatBar,
     additionalShareUserChatHeader,
     conversationData,
     dataInjector,
@@ -120,6 +121,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Delete shared conversation and verify "Conversation not found" message is not shown',
       async () => {
+        await additionalShareUserChatBar.createNewConversation();
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
         );

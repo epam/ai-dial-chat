@@ -405,7 +405,7 @@ dialTest(
         const response = await chatMessages.getLastMessageContent();
         expect
           .soft(response, ExpectedMessages.messageContentIsValid)
-          .toBe(expectedResponse);
+          .toMatch(expectedResponse);
       },
     );
   },

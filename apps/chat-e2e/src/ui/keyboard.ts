@@ -10,4 +10,5 @@ export const keys = {
   arrowLeft: 'ArrowLeft',
   arrowUp: 'ArrowUp',
   arrowDown: 'ArrowDown',
+  delete: 'Delete',
 };

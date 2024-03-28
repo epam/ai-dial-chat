@@ -15,6 +15,8 @@ export const PromptModal = {
   promptDescription: '[data-qa="prompt-descr"]',
   promptValue: '[data-qa="prompt-value"]',
   savePrompt: '[data-qa="save-prompt"]',
+  fieldLabel: (label: string) => `label[for="${label}"]`,
+  fieldError: '.text-error',
 };
 
 export const VariableModal = {

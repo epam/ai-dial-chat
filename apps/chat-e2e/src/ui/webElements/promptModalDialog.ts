@@ -10,13 +10,16 @@ export class PromptModalDialog extends BaseElement {
     super(page, PromptModal.promptModalDialog);
   }
 
-  public name = new BaseElement(this.page, PromptModal.promptName);
-  public description = new BaseElement(
-    this.page,
+  public name = this.getChildElementBySelector(PromptModal.promptName);
+  public description = this.getChildElementBySelector(
     PromptModal.promptDescription,
   );
-  public prompt = new BaseElement(this.page, PromptModal.promptValue);
-  public saveButton = new BaseElement(this.page, PromptModal.savePrompt);
+  public prompt = this.getChildElementBySelector(PromptModal.promptValue);
+  public saveButton = this.getChildElementBySelector(PromptModal.savePrompt);
+  public fieldLabel = (label: string) =>
+    this.getChildElementBySelector(PromptModal.fieldLabel(label));
+  public getFieldBottomMessage = (field: BaseElement) =>
+    field.getElementLocator().locator(`~${PromptModal.fieldError}`);
 
   public async fillPromptDetails(
     name: string,
@@ -32,6 +35,13 @@ export class PromptModalDialog extends BaseElement {
     await this.prompt.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     await this.prompt.typeInInput(value);
+  }
+
+  public async setField(field: BaseElement, value: string) {
+    await field.click();
+    await this.page.keyboard.press(keys.ctrlPlusA);
+    await this.page.keyboard.press(keys.delete);
+    await field.typeInInput(value);
   }
 
   public async updatePromptDetailsWithButton(
@@ -81,5 +91,9 @@ export class PromptModalDialog extends BaseElement {
 
   public async getPrompt() {
     return this.prompt.getElementContent();
+  }
+
+  public async isFieldHasAsterisk(label: string) {
+    return this.fieldLabel(label).getElementLocatorByText('*').isVisible();
   }
 }
