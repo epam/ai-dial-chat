@@ -31,7 +31,9 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     const randomModel = GeneratorUtil.randomArrayElement(
-      models.filter((m) => m.id !== defaultModel.id),
+      models.filter(
+        (m) => m.id !== defaultModel.id && m.features?.systemPrompt === true,
+      ),
     );
 
     await talkToSelector.selectModel(randomModel);
