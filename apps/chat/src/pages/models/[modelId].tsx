@@ -19,6 +19,7 @@ import { Translation } from '../../types/translation';
 
 import { AuthActions, AuthSelectors } from '../../store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   SettingsActions,
   SettingsSelectors,
@@ -30,6 +31,7 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { AnnouncementsBanner } from '../../components/Common/AnnouncementBanner';
 import { Chat } from '@/src/components/Chat/Chat';
+import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 
 import { Feature } from '@epam/ai-dial-shared';
 import { URL } from 'url';
@@ -42,7 +44,7 @@ export interface HomeProps {
 
 export default function Home({ initialState }: HomeProps) {
   const router = useRouter();
-  const { modelId } = router.query;
+  const modelId = router.query?.modelId as string;
   const session: SessionContextValue<boolean> = useSession();
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -50,7 +52,10 @@ export default function Home({ initialState }: HomeProps) {
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
-
+  const modelIsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const activeModel = useAppSelector((state) =>
+    ModelsSelectors.selectModel(state, modelId),
+  );
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
   // EFFECTS  --------------------------------------------
@@ -116,7 +121,7 @@ export default function Home({ initialState }: HomeProps) {
   return (
     <>
       <Head>
-        <title className="whitespace-pre">{modelId}</title>
+        <title className="whitespace-pre">{activeModel?.name || modelId}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
@@ -135,23 +140,34 @@ export default function Home({ initialState }: HomeProps) {
           </button>
         </div>
       ) : (
-        <main
-          // eslint-disable-next-line tailwindcss/enforces-shorthand
-          className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
-          id="theme-main"
-        >
-          <div className="flex size-full flex-col sm:pt-1">
-            <div className="flex w-full grow overflow-auto">
-              <div className="flex min-w-0 grow flex-col">
-                <h1 className="w-full whitespace-pre text-center text-xl font-semibold">
-                  {modelId}
-                </h1>
-                <AnnouncementsBanner />
-                <Chat />
-              </div>
+        <>
+          {modelId && modelIsLoaded && !activeModel ? (
+            <div className="pt-2">
+              <NotFoundEntity
+                entity={t('Model')}
+                additionalText="Please select another model."
+              />
             </div>
-          </div>
-        </main>
+          ) : (
+            <main
+              // eslint-disable-next-line tailwindcss/enforces-shorthand
+              className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
+              id="theme-main"
+            >
+              <div className="flex size-full flex-col">
+                <div className="flex w-full grow overflow-auto">
+                  <div className="flex min-w-0 grow flex-col">
+                    <h1 className="my-2 w-full whitespace-pre text-center text-xl font-semibold">
+                      {activeModel?.name}
+                    </h1>
+                    <AnnouncementsBanner />
+                    <Chat />
+                  </div>
+                </div>
+              </div>
+            </main>
+          )}
+        </>
       )}
     </>
   );

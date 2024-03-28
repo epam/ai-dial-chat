@@ -127,7 +127,7 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
+const initSelectedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     takeUntil(action$.pipe(filter(ShareActions.acceptShareInvitation.match))),
