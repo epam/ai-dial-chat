@@ -142,7 +142,7 @@ export default function Home({ initialState }: HomeProps) {
       ) : (
         <>
           {modelId && modelIsLoaded && !activeModel ? (
-            <div className="pt-2">
+            <div className="h-screen pt-2">
               <NotFoundEntity
                 entity={t('Model')}
                 additionalText="Please select another model."

@@ -8,7 +8,7 @@ import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { constructPath } from '../app/file';
 
-const pathKeySeparator = '__';
+export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
 
 enum PseudoModel {
@@ -85,6 +85,10 @@ export const parsePromptApiKey = (
   };
 };
 
+export const isUrlAbsolute = (url: string): boolean => {
+  return url.indexOf('://') > 0 || url.indexOf('//') === 0;
+};
+
 export class ApiUtils {
   static safeEncodeURIComponent = (urlComponent: string) =>
     // eslint-disable-next-line no-misleading-character-class
@@ -101,8 +105,9 @@ export class ApiUtils {
     constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
 
   static request(url: string, options?: RequestInit) {
-    const absoluteUrl = url.startsWith('/') ? url : `/${url}`;
-    return fromFetch(absoluteUrl, {
+    const correctUrl =
+      !isUrlAbsolute(url) && !url.startsWith('/') ? `/${url}` : url;
+    return fromFetch(correctUrl, {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     }).pipe(
