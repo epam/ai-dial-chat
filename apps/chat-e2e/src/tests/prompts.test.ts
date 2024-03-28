@@ -23,25 +23,262 @@ dialTest(
     promptModalDialog,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-945');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await conversationSettings.waitForState();
-    await promptBar.hoverOverNewEntity();
-    const newPromptCursor = await promptBar.getNewEntityCursor();
-    expect
-      .soft(newPromptCursor[0], ExpectedMessages.newPromptButtonCursorIsPointer)
-      .toBe(Cursors.pointer);
+    setTestIds('EPMRTC-945', 'EPMRTC-956', 'EPMRTC-1452');
+    await dialTest.step(
+      'Hover over "New prompt" button and verify cursor type and color highlight.\n' +
+        'Prompt name can not be empty.\n' +
+        'Prompt body can not be empty',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await conversationSettings.waitForState();
+        await promptBar.hoverOverNewEntity();
+        const newPromptCursor = await promptBar.getNewEntityCursor();
+        expect
+          .soft(
+            newPromptCursor[0],
+            ExpectedMessages.newPromptButtonCursorIsPointer,
+          )
+          .toBe(Cursors.pointer);
 
-    const newPromptColor = await promptBar.getNewEntityBackgroundColor();
-    expect
-      .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
-      .toBe(Colors.backgroundAccentTertiary);
+        const newPromptColor = await promptBar.getNewEntityBackgroundColor();
+        expect
+          .soft(newPromptColor, ExpectedMessages.newPromptButtonIsHighlighted)
+          .toBe(Colors.backgroundAccentTertiary);
+      },
+    );
 
-    await promptBar.createNewPrompt();
-    await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
-    await promptModalDialog.saveButton.click();
-    await prompts.getPromptByName(newName).waitFor();
+    await dialTest.step(
+      'Click "New prompt" button and verify Name and Prompt fields have asterisk',
+      async () => {
+        await promptBar.createNewPrompt();
+        expect
+          .soft(
+            await promptModalDialog.isFieldHasAsterisk(
+              ExpectedConstants.promptNameLabel,
+            ),
+            ExpectedMessages.fieldIsRequired,
+          )
+          .toBeTruthy();
+        expect
+          .soft(
+            await promptModalDialog.isFieldHasAsterisk(
+              ExpectedConstants.promptContentLabel,
+            ),
+            ExpectedMessages.fieldIsRequired,
+          )
+          .toBeTruthy();
+      },
+    );
+
+    await dialTest.step(
+      'Clear Name field and verify error message is shown, field has red border, Save button is disabled',
+      async () => {
+        await promptModalDialog.setField(promptModalDialog.name, '');
+        await promptModalDialog.description.click();
+        const nameBorderColors =
+          await promptModalDialog.name.getAllBorderColors();
+        Object.values(nameBorderColors).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
+              .toBe(Colors.textError);
+          });
+        });
+
+        await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.name)
+          .waitFor();
+        const nameErrorMessage = await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.name)
+          .textContent();
+        expect
+          .soft(nameErrorMessage, ExpectedMessages.fieldIsHighlightedWithRed)
+          .toBe(ExpectedConstants.requiredFieldErrorMessage);
+
+        expect
+          .soft(
+            await promptModalDialog.saveButton.isElementEnabled(),
+            ExpectedMessages.buttonIsDisabled,
+          )
+          .toBeFalsy();
+      },
+    );
+
+    await dialTest.step(
+      'Set spaces in Name field and verify error message is shown, field has red border, Save button is disabled',
+      async () => {
+        await promptModalDialog.setField(promptModalDialog.name, '   ');
+        await promptModalDialog.description.click();
+        const nameBorderColors =
+          await promptModalDialog.name.getAllBorderColors();
+        Object.values(nameBorderColors).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
+              .toBe(Colors.textError);
+          });
+        });
+
+        await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.name)
+          .waitFor();
+        const nameErrorMessage = await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.name)
+          .textContent();
+        expect
+          .soft(nameErrorMessage, ExpectedMessages.fieldIsHighlightedWithRed)
+          .toBe(ExpectedConstants.requiredFieldErrorMessage);
+
+        expect
+          .soft(
+            await promptModalDialog.getName(),
+            ExpectedMessages.promptNameUpdated,
+          )
+          .toBe('');
+        expect
+          .soft(
+            await promptModalDialog.saveButton.isElementEnabled(),
+            ExpectedMessages.buttonIsDisabled,
+          )
+          .toBeFalsy();
+      },
+    );
+
+    await dialTest.step(
+      'Type value in Name field and verify error message disappears, field has blue border, Save button is enabled',
+      async () => {
+        await promptModalDialog.setField(promptModalDialog.name, newName);
+        const nameBorderColors =
+          await promptModalDialog.name.getAllBorderColors();
+        Object.values(nameBorderColors).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithBlue)
+              .toBe(Colors.controlsBackgroundAccent);
+          });
+        });
+
+        await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.name)
+          .waitFor({ state: 'hidden' });
+      },
+    );
+
+    await dialTest.step(
+      'Set cursor in prompt field and verify error message is shown, field has red border, Save button is disabled',
+      async () => {
+        await promptModalDialog.setField(promptModalDialog.prompt, '');
+        await promptModalDialog.description.click();
+        const promptBorderColors =
+          await promptModalDialog.prompt.getAllBorderColors();
+        Object.values(promptBorderColors).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
+              .toBe(Colors.textError);
+          });
+        });
+
+        await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.prompt)
+          .waitFor();
+        const nameErrorMessage = await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.prompt)
+          .textContent();
+        expect
+          .soft(nameErrorMessage, ExpectedMessages.fieldIsHighlightedWithRed)
+          .toBe(ExpectedConstants.requiredFieldErrorMessage);
+
+        expect
+          .soft(
+            await promptModalDialog.saveButton.isElementEnabled(),
+            ExpectedMessages.buttonIsDisabled,
+          )
+          .toBeFalsy();
+      },
+    );
+
+    await dialTest.step(
+      'Set spaces in prompt field and verify error message is shown, field has red border, Save button is disabled',
+      async () => {
+        await promptModalDialog.setField(promptModalDialog.prompt, '   ');
+        await promptModalDialog.description.click();
+        const promptBorderColors =
+          await promptModalDialog.prompt.getAllBorderColors();
+        Object.values(promptBorderColors).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
+              .toBe(Colors.textError);
+          });
+        });
+
+        await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.prompt)
+          .waitFor();
+        const nameErrorMessage = await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.prompt)
+          .textContent();
+        expect
+          .soft(nameErrorMessage, ExpectedMessages.fieldIsHighlightedWithRed)
+          .toBe(ExpectedConstants.requiredFieldErrorMessage);
+
+        expect
+          .soft(
+            await promptModalDialog.getPrompt(),
+            ExpectedMessages.promptValueUpdated,
+          )
+          .toBe('');
+        expect
+          .soft(
+            await promptModalDialog.saveButton.isElementEnabled(),
+            ExpectedMessages.buttonIsDisabled,
+          )
+          .toBeFalsy();
+      },
+    );
+
+    await dialTest.step(
+      'Type value in Prompt field and verify error message disappears, field has blue border, Save button is enabled',
+      async () => {
+        await promptModalDialog.setField(promptModalDialog.prompt, newValue);
+        const promptBorderColors =
+          await promptModalDialog.prompt.getAllBorderColors();
+        Object.values(promptBorderColors).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithBlue)
+              .toBe(Colors.controlsBackgroundAccent);
+          });
+        });
+
+        await promptModalDialog
+          .getFieldBottomMessage(promptModalDialog.prompt)
+          .waitFor({ state: 'hidden' });
+
+        expect
+          .soft(
+            await promptModalDialog.saveButton.isElementEnabled(),
+            ExpectedMessages.buttonIsEnabled,
+          )
+          .toBeTruthy();
+      },
+    );
+
+    await dialTest.step(
+      'Set Description field value, click Save and verify prompt is created',
+      async () => {
+        await promptModalDialog.setField(
+          promptModalDialog.description,
+          newDescr,
+        );
+        await promptModalDialog.saveButton.click();
+        await prompts.getPromptByName(newName).waitFor();
+      },
+    );
   },
 );
 
@@ -540,7 +777,9 @@ dialTest(
 );
 
 dialTest(
-  'Use prompt with parameters',
+  'Use prompt with parameters.\n' +
+    'Check that equal parameter does not appear several times to be filled in.\n' +
+    'Check that parameter after equal parameter is filled in',
   async ({
     dialHomePage,
     promptData,
@@ -549,12 +788,15 @@ dialTest(
     variableModalDialog,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1012');
+    setTestIds('EPMRTC-1012', 'EPMRTC-2007', 'EPMRTC-2911');
     const promptDescription = 'Prompt description';
     const aVariable = 'A';
-    const promptContent = (variable: string) => `Calculate ${variable} * 100`;
+    const bVariable = 'B';
+    const cVariable = 'C';
+    const promptContent = (a: string, b: string, c: string) =>
+      `Calculate ${a} + ${b} - ${a} + ${c}`;
     const prompt = promptData.preparePrompt(
-      promptContent(`{{${aVariable}}}`),
+      promptContent(`{{${aVariable}}}`, `{{${bVariable}}}`, `{{${cVariable}}}`),
       promptDescription,
     );
     await dataInjector.createPrompts([prompt]);
@@ -574,22 +816,25 @@ dialTest(
       .soft(promptDescr, ExpectedMessages.promptDescriptionValid)
       .toBe(prompt.description);
 
-    const promptVariablePlaceholder =
-      await variableModalDialog.getVariablePlaceholder(aVariable);
-    expect
-      .soft(
-        promptVariablePlaceholder,
-        ExpectedMessages.promptVariablePlaceholderValid,
-      )
-      .toBe(ExpectedConstants.promptPlaceholder(aVariable));
+    let varValue = 0;
+    for (const variable of [aVariable, bVariable, cVariable]) {
+      const promptVariablePlaceholder =
+        await variableModalDialog.getVariablePlaceholder(variable);
+      expect
+        .soft(
+          promptVariablePlaceholder,
+          ExpectedMessages.promptVariablePlaceholderValid,
+        )
+        .toBe(ExpectedConstants.promptPlaceholder(variable));
 
-    const variable = '20';
-    await variableModalDialog.setVariable(aVariable, variable);
+      varValue += 10;
+      await variableModalDialog.setVariable(variable, varValue.toString());
+    }
 
     const actualMessage = await sendMessage.getMessage();
     expect
       .soft(actualMessage, ExpectedMessages.promptApplied)
-      .toBe(promptContent(variable));
+      .toBe(promptContent('10', '20', '30'));
   },
 );
 
