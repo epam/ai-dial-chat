@@ -469,24 +469,17 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
               'An error occurred while uploading prompts and folders:',
               err,
             );
-            return [];
+            return of([]);
           }),
         ),
         folders: of(PromptsSelectors.selectFolders(state$.value)),
       }),
     ),
     switchMap(({ folderId, promptsToDelete, folders }) => {
-      const childFolders = new Set([
-        folderId,
-        ...promptsToDelete.map((prompt) => prompt.folderId),
-      ]);
       const actions: Observable<AnyAction>[] = [];
-      actions.push(
-        of(
-          PromptsActions.setFolders({
-            folders: folders.filter((folder) => !childFolders.has(folder.id)),
-          }),
-        ),
+      const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+        state$.value,
+        FeatureType.Prompt,
       );
 
       if (promptsToDelete.length) {
@@ -501,7 +494,25 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         actions.push(of(PromptsActions.setPrompts({ prompts: [] })));
       }
 
-      return concat(...actions);
+      return concat(
+        of(
+          PromptsActions.setFolders({
+            folders: folders.filter(
+              (folder) =>
+                folder.id !== folderId && !folder.id.startsWith(`${folderId}/`),
+            ),
+          }),
+        ),
+        of(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: openedFolderIds.filter(
+              (id) => id !== folderId && !id.startsWith(`${folderId}/`),
+            ),
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+        ...actions,
+      );
     }),
   );
 
