@@ -41,6 +41,20 @@ export const isEntityNameOnSameLevelUnique = (
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
 };
 
+export const isImportEntityNameOnSameLevelUnique = ({
+  entity,
+  entities,
+}: {
+  entity: Entity;
+  entities: Entity[];
+}): boolean => {
+  const sameLevelEntities = entities.filter(
+    (e) => e.folderId === entity.folderId,
+  );
+
+  return !sameLevelEntities.some((e) => entity.name === e.name);
+};
+
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
 
 export const isEntityNameInvalid = (name: string) =>
