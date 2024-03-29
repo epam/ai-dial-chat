@@ -7,7 +7,12 @@ import {
 } from '@tabler/icons-react';
 import { FC, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { CopyTableType } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
+
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface CopyIconProps {
   Icon: FC<TablerIconsProps>;
@@ -37,6 +42,8 @@ interface Props {
 }
 
 export const Table = ({ children, isLastMessageStreaming }: Props) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const tableRef = useRef<HTMLTableElement | null>(null);
 
   const [copiedType, setCopiedType] = useState<CopyTableType | undefined>(
@@ -140,22 +147,30 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
   return (
     <div className="mt-7 max-w-full overflow-auto">
       {!isLastMessageStreaming && (
-        <div className="flex max-w-full justify-end gap-2 bg-layer-3 px-2 py-1">
-          <CopyIcon
-            Icon={IconCsv}
-            onClick={copyTableToCSV}
-            copied={CopyTableType.CSV === copiedType}
-          />
-          <CopyIcon
-            Icon={IconTxt}
-            onClick={copyTableToTXT}
-            copied={CopyTableType.TXT === copiedType}
-          />
-          <CopyIcon
-            Icon={IconMarkdown}
-            onClick={copyTableToMD}
-            copied={CopyTableType.MD === copiedType}
-          />
+        <div className="flex max-w-full justify-end bg-layer-3 px-2 py-1">
+          <div data-no-context-menu className="flex gap-2">
+            <Tooltip placement="top" tooltip={t('Copy as CSV')}>
+              <CopyIcon
+                Icon={IconCsv}
+                onClick={copyTableToCSV}
+                copied={CopyTableType.CSV === copiedType}
+              />
+            </Tooltip>
+            <Tooltip placement="top" tooltip={t('Copy as TXT')}>
+              <CopyIcon
+                Icon={IconTxt}
+                onClick={copyTableToTXT}
+                copied={CopyTableType.TXT === copiedType}
+              />
+            </Tooltip>
+            <Tooltip placement="top" tooltip={t('Copy as MD')}>
+              <CopyIcon
+                Icon={IconMarkdown}
+                onClick={copyTableToMD}
+                copied={CopyTableType.MD === copiedType}
+              />
+            </Tooltip>
+          </div>
         </div>
       )}
       <table
