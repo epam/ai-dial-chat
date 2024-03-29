@@ -24,17 +24,17 @@ export default function Document(props: Props) {
           content={process.env.NEXT_PUBLIC_APP_NAME || 'AI Dial'}
         ></meta>
         {!!process.env.THEMES_CONFIG_HOST && (
-          <link rel="stylesheet" href={`/api/themes/styles`} />
+          <link rel="stylesheet" href={'api/themes/styles'} />
         )}
         <link
           rel="icon"
-          href={`/api/themes/image?name=favicon`}
+          href="api/themes/image?name=favicon"
           sizes="any"
           type="image/png"
         />
         <link
           rel="apple-touch-icon"
-          href={`/api/themes/image?name=favicon`}
+          href="api/themes/image?name=favicon"
           type="image/png"
         />
       </Head>

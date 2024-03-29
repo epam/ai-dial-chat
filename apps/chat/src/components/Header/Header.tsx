@@ -46,6 +46,7 @@ const Header = () => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.SideBar);
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const handleToggleChatbar = useCallback(() => {
     if (!showChatbar && isSmallScreen()) {
@@ -79,36 +80,38 @@ const Header = () => {
       )}
       data-qa="header"
     >
-      <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
-        <div
-          className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
-          onClick={handleToggleChatbar}
-          data-qa="chat-panel-toggle"
-        >
-          {showChatbar ? (
-            <>
-              <IconX
-                className="text-secondary md:hidden"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
+      {!isIsolatedView && (
+        <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
+          <div
+            className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
+            onClick={handleToggleChatbar}
+            data-qa="chat-panel-toggle"
+          >
+            {showChatbar ? (
+              <>
+                <IconX
+                  className="text-secondary md:hidden"
+                  width={headerIconSize}
+                  height={headerIconSize}
+                />
 
-              <MoveLeftIcon
-                className="text-secondary hover:text-accent-secondary max-md:hidden"
+                <MoveLeftIcon
+                  className="text-secondary hover:text-accent-secondary max-md:hidden"
+                  width={headerIconSize}
+                  height={headerIconSize}
+                />
+              </>
+            ) : (
+              <MoveRightIcon
+                className="text-secondary hover:text-accent-secondary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
-            </>
-          ) : (
-            <MoveRightIcon
-              className="text-secondary hover:text-accent-secondary"
-              width={headerIconSize}
-              height={headerIconSize}
-            />
-          )}
-        </div>
-      </Tooltip>
-      <CreateNewChatMobile iconSize={headerIconSize} />
+            )}
+          </div>
+        </Tooltip>
+      )}
+      {!isIsolatedView && <CreateNewChatMobile iconSize={headerIconSize} />}
       <div className="flex grow justify-between">
         <span
           className={classNames(
@@ -126,35 +129,37 @@ const Header = () => {
         </div>
       </div>
 
-      <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
-        <div
-          className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
-          onClick={handleTogglePromtbar}
-          data-qa="prompts-panel-toggle"
-        >
-          {showPromptbar ? (
-            <>
-              <IconX
-                className="text-secondary md:hidden"
-                width={headerIconSize}
-                height={headerIconSize}
-              />
+      {!isIsolatedView && (
+        <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
+          <div
+            className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
+            onClick={handleTogglePromtbar}
+            data-qa="prompts-panel-toggle"
+          >
+            {showPromptbar ? (
+              <>
+                <IconX
+                  className="text-secondary md:hidden"
+                  width={headerIconSize}
+                  height={headerIconSize}
+                />
 
-              <MoveRightIcon
-                className="text-secondary hover:text-accent-tertiary max-md:hidden"
+                <MoveRightIcon
+                  className="text-secondary hover:text-accent-tertiary max-md:hidden"
+                  width={headerIconSize}
+                  height={headerIconSize}
+                />
+              </>
+            ) : (
+              <MoveLeftIcon
+                className="text-secondary hover:text-accent-tertiary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
-            </>
-          ) : (
-            <MoveLeftIcon
-              className="text-secondary hover:text-accent-tertiary"
-              width={headerIconSize}
-              height={headerIconSize}
-            />
-          )}
-        </div>
-      </Tooltip>
+            )}
+          </div>
+        </Tooltip>
+      )}
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
     </div>
   );

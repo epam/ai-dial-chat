@@ -1,6 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
+
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
@@ -48,7 +49,7 @@ export class ItemApiHelper extends BaseApiHelper {
 
   public async deleteBackendItem(...items: BackendDataEntity[]) {
     for (const item of items) {
-      const url = `/api/${item.url}`;
+      const url = `api/${item.url}`;
       const response = await this.request.delete(url);
       expect(
         response.status(),
@@ -58,7 +59,7 @@ export class ItemApiHelper extends BaseApiHelper {
   }
 
   public async deleteConversation(conversation: Conversation) {
-    const url = `/api/${conversation.id}`;
+    const url = `api/${conversation.id}`;
     const response = await this.request.delete(url);
     expect(
       response.status(),

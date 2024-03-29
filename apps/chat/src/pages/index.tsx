@@ -39,6 +39,7 @@ import {
   selectShowSelectToMigrateWindow,
 } from '@/src/store/ui/ui.reducers';
 
+import { ISOLATED_MODEL_QUERY_PARAM } from '../constants/chat';
 import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
 import { SHARE_QUERY_PARAM } from '../constants/share';
 
@@ -99,6 +100,7 @@ export default function Home({ initialState }: HomeProps) {
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
@@ -109,6 +111,13 @@ export default function Home({ initialState }: HomeProps) {
         ShareActions.acceptShareInvitation({
           invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
         }),
+      );
+    }
+    if (searchParams.has(ISOLATED_MODEL_QUERY_PARAM)) {
+      dispatch(
+        SettingsActions.setIsolatedModelId(
+          searchParams.get(ISOLATED_MODEL_QUERY_PARAM) || '',
+        ),
       );
     }
   }, [dispatch]);
@@ -229,9 +238,8 @@ export default function Home({ initialState }: HomeProps) {
             <div className="flex size-full flex-col sm:pt-0">
               {enabledFeatures.has(Feature.Header) && <Header />}
               <div className="flex w-full grow overflow-auto">
-                {enabledFeatures.has(Feature.ConversationsSection) && (
-                  <Chatbar />
-                )}
+                {enabledFeatures.has(Feature.ConversationsSection) &&
+                  !isIsolatedView && <Chatbar />}
 
                 <div className="flex min-w-0 grow flex-col">
                   <AnnouncementsBanner />
@@ -241,7 +249,8 @@ export default function Home({ initialState }: HomeProps) {
                     <ImportExportLoader isOpen={isImportingExporting} />
                   )}
                 </div>
-                {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
+                {enabledFeatures.has(Feature.PromptsSection) &&
+                  !isIsolatedView && <Promptbar />}
                 {isProfileOpen && <UserMobile />}
                 {!isShareModalClosed && <ShareModal />}
               </div>
@@ -307,7 +316,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
-    isIsolatedView: false,
   };
 
   return {

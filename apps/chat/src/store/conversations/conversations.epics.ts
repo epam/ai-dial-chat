@@ -1113,7 +1113,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         value: payload.rate > 0 ? true : false,
       };
 
-      return fromFetch(`/api/rate`, {
+      return fromFetch('api/rate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

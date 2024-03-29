@@ -134,7 +134,7 @@ export class FileService {
   }
 
   public static deleteFile(filePath: string): Observable<void> {
-    return ApiUtils.request(`/api/${ApiUtils.encodeApiUrl(filePath)}`, {
+    return ApiUtils.request(`api/${ApiUtils.encodeApiUrl(filePath)}`, {
       method: 'DELETE',
     });
   }

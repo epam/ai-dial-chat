@@ -1,5 +1,6 @@
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
+
 import { API, Attachment } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil } from '@/src/utils';
@@ -38,7 +39,7 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async deleteFile(path: string) {
-    const url = `/api/${path}`;
+    const url = `api/${path}`;
     const response = await this.request.delete(url);
     expect(response.status(), `File by path: ${path} was deleted`).toBe(200);
   }

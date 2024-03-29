@@ -3,6 +3,9 @@ import { useCallback } from 'react';
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 
@@ -39,6 +42,9 @@ export const ChatSettingsEmpty = ({
     },
     [conversation, onApplyAddons],
   );
+  const isolatedModelId = useAppSelector(
+    SettingsSelectors.selectIsolatedModelId,
+  );
 
   return (
     <>
@@ -56,7 +62,7 @@ export const ChatSettingsEmpty = ({
                     data-qa="app-name"
                     className="w-full whitespace-pre text-center text-xl font-semibold"
                   >
-                    {appName}
+                    {isolatedModelId ?? appName}
                   </h4>
                 </div>
               )}
