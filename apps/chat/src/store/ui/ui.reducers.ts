@@ -264,6 +264,11 @@ export const selectShowSelectToMigrateWindow = createSelector(
   (state) => state.showSelectToMigrateWindow,
 );
 
+export const selectIsAnyMenuOpen = createSelector(
+  [rootSelector],
+  (state) => state.showPromptbar || state.showChatbar || state.isProfileOpen,
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -283,4 +288,5 @@ export const UISelectors = {
   selectIsChatFullWidth,
   selectCustomLogo,
   selectShowSelectToMigrateWindow,
+  selectIsAnyMenuOpen,
 };
