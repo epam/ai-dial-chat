@@ -1,4 +1,4 @@
-import { decodeModelId, encodeModelId } from '../api';
+import { decodeModelId, encodeModelId, isUrlAbsolute } from '../api';
 
 describe('decodeModelId and encodeModelId', () => {
   it.each([
@@ -9,5 +9,12 @@ describe('decodeModelId and encodeModelId', () => {
     'gpt-4',
   ])('decodeModelId(encodeModelId(%s))', (path: string) => {
     expect(decodeModelId(encodeModelId(path))).toBe(path);
+  });
+});
+
+describe('isUrlAbsolute', () => {
+  it('should check if url is absolute', () => {
+    expect(isUrlAbsolute('api/conversations/')).toBeFalsy();
+    expect(isUrlAbsolute('http://host.com/api')).toBeTruthy();
   });
 });
