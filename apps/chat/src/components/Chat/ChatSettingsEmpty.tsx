@@ -4,6 +4,7 @@ import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { Spinner } from '../Common/Spinner';
@@ -45,6 +46,7 @@ export const ChatSettingsEmpty = ({
   const isolatedModelId = useAppSelector(
     SettingsSelectors.selectIsolatedModelId,
   );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <>
@@ -62,7 +64,9 @@ export const ChatSettingsEmpty = ({
                     data-qa="app-name"
                     className="w-full whitespace-pre text-center text-xl font-semibold"
                   >
-                    {isolatedModelId ?? appName}
+                    {isolatedModelId && modelsMap[isolatedModelId]
+                      ? modelsMap[isolatedModelId]?.name
+                      : appName}
                   </h4>
                 </div>
               )}
