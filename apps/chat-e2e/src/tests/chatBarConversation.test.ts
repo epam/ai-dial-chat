@@ -295,6 +295,7 @@ dialTest(
       .toEqual([
         MenuOptions.rename,
         MenuOptions.compare,
+        MenuOptions.duplicate,
         MenuOptions.moveTo,
         MenuOptions.delete,
       ]);
@@ -331,6 +332,7 @@ dialTest(
       .toEqual([
         MenuOptions.rename,
         MenuOptions.compare,
+        MenuOptions.duplicate,
         MenuOptions.replay,
         MenuOptions.playback,
         MenuOptions.export,

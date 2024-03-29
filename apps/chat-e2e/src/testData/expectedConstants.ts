@@ -92,6 +92,7 @@ export enum MenuOptions {
   rename = 'Rename',
   edit = 'Edit',
   compare = 'Compare',
+  duplicate = 'Duplicate',
   replay = 'Replay',
   playback = 'Playback',
   export = 'Export',
