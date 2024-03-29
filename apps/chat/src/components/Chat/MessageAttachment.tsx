@@ -202,6 +202,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
 
   return (
     <div
+      data-no-context-menu
       className={classNames(
         'rounded bg-layer-3 px-1 py-2',
         isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
