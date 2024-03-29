@@ -24,6 +24,7 @@ interface Props {
   isInner: boolean;
   isLastMessageStreaming: boolean;
 }
+
 const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   dark: oneDark,
   light: oneLight,
@@ -87,7 +88,10 @@ export const CodeBlock: FC<Props> = memo(
           <span className="lowercase">{language}</span>
 
           {!isLastMessageStreaming && (
-            <div className="flex items-center gap-3 text-secondary">
+            <div
+              data-no-context-menu
+              className="flex items-center gap-3 text-secondary"
+            >
               <button
                 className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
                 onClick={copyToClipboard}
