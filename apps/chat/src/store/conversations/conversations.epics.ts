@@ -57,7 +57,6 @@ import {
   getPreparedConversations,
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
-import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -78,7 +77,6 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { encodeModelId, pathKeySeparator } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -2640,13 +2638,13 @@ const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.deleteConversations({
             conversationIds: [
-              constructPath(
-                getConversationRootId(),
-                [
-                  encodeModelId(isolatedModelId),
-                  `isolated_${isolatedModelId}`,
-                ].join(pathKeySeparator),
-              ),
+              getGeneratedConversationId({
+                name: `isolated_${isolatedModelId}`,
+                folderId: getConversationRootId(),
+                model: {
+                  id: isolatedModelId,
+                },
+              }),
             ],
             suppressErrorMessage: true,
           }),

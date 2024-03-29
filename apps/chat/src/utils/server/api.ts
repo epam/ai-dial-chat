@@ -8,7 +8,7 @@ import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { constructPath } from '../app/file';
 
-export const pathKeySeparator = '__';
+const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
 
 enum PseudoModel {
