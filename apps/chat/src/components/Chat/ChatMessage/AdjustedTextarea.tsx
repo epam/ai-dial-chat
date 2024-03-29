@@ -31,6 +31,8 @@ export const AdjustedTextarea = React.forwardRef((props: Props, ref) => {
       if (hiddenTextareaRef.current && mainTextareaRef.current) {
         // we should change hidden textarea width along with main textarea width
         hiddenTextareaRef.current.style.width = `${mainTextareaRef.current.clientWidth}px`;
+        const scrollHeight = hiddenTextareaRef.current.scrollHeight;
+        mainTextareaRef.current.style.height = `${scrollHeight}px`; // set height as scrollHeight of hidden element
       }
     };
 
