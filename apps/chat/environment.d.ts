@@ -71,6 +71,11 @@ declare global {
       AUTH_PING_ID_NAME?: string;
       AUTH_PING_ID_SECRET?: string;
       AUTH_PING_ID_SCOPE?: string;
+      AUTH_COGNITO_CLIENT_ID?: string;
+      AUTH_COGNITO_SECRET?: string;
+      AUTH_COGNITO_HOST?: string;
+      AUTH_COGNITO_NAME?: string;
+      AUTH_COGNITO_SCOPE?: string;
     }
   }
 }

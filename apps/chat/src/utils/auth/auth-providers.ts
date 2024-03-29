@@ -1,6 +1,7 @@
 import { Provider } from 'next-auth/providers';
 import Auth0Provider from 'next-auth/providers/auth0';
 import AzureProvider from 'next-auth/providers/azure-ad';
+import CognitoProvider from 'next-auth/providers/cognito';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
 
@@ -115,6 +116,22 @@ const allProviders: (Provider | boolean)[] = [
           scope:
             process.env.AUTH_KEYCLOAK_SCOPE ||
             'openid email profile offline_access',
+        },
+      },
+      token: tokenConfig,
+    }),
+
+  !!process.env.AUTH_COGNITO_CLIENT_ID &&
+    !!process.env.AUTH_COGNITO_SECRET &&
+    !!process.env.AUTH_COGNITO_HOST &&
+    CognitoProvider({
+      clientId: process.env.AUTH_COGNITO_CLIENT_ID,
+      clientSecret: process.env.AUTH_COGNITO_SECRET,
+      issuer: process.env.AUTH_COGNITO_HOST,
+      name: process.env.AUTH_COGNITO_NAME ?? DEFAULT_NAME,
+      authorization: {
+        params: {
+          scope: process.env.AUTH_COGNITO_SCOPE || 'openid email profile',
         },
       },
       token: tokenConfig,
