@@ -57,6 +57,7 @@ import {
   getPreparedConversations,
 } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -77,6 +78,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
+import { encodeModelId, pathKeySeparator } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -135,7 +137,7 @@ const initSelectedConversationsEpic: AppEpic = (action$) =>
     switchMap(() => of(ConversationsActions.getSelectedConversations())),
   );
 
-const getSelectedConversationsEpic: AppEpic = (action$) =>
+const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.getSelectedConversations.match),
     switchMap(() =>
@@ -188,6 +190,26 @@ const getSelectedConversationsEpic: AppEpic = (action$) =>
         }),
         switchMap(({ conversations, selectedConversationsIds }) => {
           const actions: Observable<AnyAction>[] = [];
+          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+            state$.value,
+          );
+
+          // Always create new conversation in isolated view
+          if (isIsolatedView) {
+            const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
+              state$.value,
+            );
+
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [`isolated_${isolatedModelId}`],
+                  shouldUploadConversationsForCompare: true,
+                }),
+              ),
+            );
+            return concat(...actions);
+          }
 
           if (conversations.length) {
             actions.push(
@@ -293,7 +315,16 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
-        map((state) => ModelsSelectors.selectRecentModels(state)),
+        map((state) => {
+          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(state);
+          const isolatedModelId =
+            SettingsSelectors.selectIsolatedModelId(state);
+          if (isIsolatedView && isolatedModelId) {
+            const models = ModelsSelectors.selectModels(state);
+            return models.filter((i) => i?.id === isolatedModelId);
+          }
+          return ModelsSelectors.selectRecentModels(state);
+        }),
         filter((models) => models && models.length > 0),
         take(1),
         switchMap((recentModels) => {
@@ -754,86 +785,108 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
       selectedConversationsIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
       deleteIds: new Set(payload.conversationIds),
+      suppressErrorMessage: payload.suppressErrorMessage || false,
     })),
-    switchMap(({ conversations, selectedConversationsIds, deleteIds }) => {
-      const otherConversations = conversations.filter(
-        (conv) => !deleteIds.has(conv.id),
-      );
-
-      const newSelectedConversationsIds = selectedConversationsIds.filter(
-        (id) => !deleteIds.has(id),
-      );
-
-      const actions: Observable<AnyAction>[] = [];
-
-      if (otherConversations.length === 0) {
-        actions.push(
-          of(
-            ConversationsActions.createNewConversations({
-              names: [translate(DEFAULT_CONVERSATION_NAME)],
-            }),
-          ),
+    switchMap(
+      ({
+        conversations,
+        selectedConversationsIds,
+        deleteIds,
+        suppressErrorMessage,
+      }) => {
+        const otherConversations = conversations.filter(
+          (conv) => !deleteIds.has(conv.id),
         );
-      } else if (newSelectedConversationsIds.length === 0) {
-        actions.push(
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: [sortByDateAndName(otherConversations)[0].id],
-            }),
-          ),
-        );
-      } else if (
-        newSelectedConversationsIds.length !== selectedConversationsIds.length
-      ) {
-        actions.push(
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: newSelectedConversationsIds,
-            }),
-          ),
-        );
-      }
 
-      return concat(
-        ...actions,
-        zip(
-          Array.from(deleteIds).map((id) =>
-            ConversationService.deleteConversation(
-              getConversationInfoFromId(id),
-            ).pipe(
-              switchMap(() => of(null)),
-              catchError((err) => {
-                const { name } = getConversationInfoFromId(id);
-                console.error(`Error during deleting "${name}"`, err);
-                return of(name);
-              }),
-            ),
-          ),
-        ).pipe(
-          switchMap((failedNames) =>
-            concat(
-              iif(
-                () => failedNames.filter(Boolean).length > 0,
-                of(
-                  UIActions.showErrorToast(
-                    translate(
-                      `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
-                    ),
-                  ),
-                ),
-                EMPTY,
-              ),
+        const newSelectedConversationsIds = selectedConversationsIds.filter(
+          (id) => !deleteIds.has(id),
+        );
+
+        const actions: Observable<AnyAction>[] = [];
+
+        const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+          state$.value,
+        );
+
+        // No need to recreate conversation for isolated view
+        if (!isIsolatedView) {
+          if (otherConversations.length === 0) {
+            actions.push(
               of(
-                ConversationsActions.deleteConversationsComplete({
-                  deleteIds,
+                ConversationsActions.createNewConversations({
+                  names: [translate(DEFAULT_CONVERSATION_NAME)],
                 }),
               ),
-              of(ConversationsActions.setConversations({ conversations: [] })),
+            );
+          } else if (newSelectedConversationsIds.length === 0) {
+            actions.push(
+              of(
+                ConversationsActions.selectConversations({
+                  conversationIds: [
+                    sortByDateAndName(otherConversations)[0].id,
+                  ],
+                }),
+              ),
+            );
+          } else if (
+            newSelectedConversationsIds.length !==
+            selectedConversationsIds.length
+          ) {
+            actions.push(
+              of(
+                ConversationsActions.selectConversations({
+                  conversationIds: newSelectedConversationsIds,
+                }),
+              ),
+            );
+          }
+        }
+
+        return concat(
+          ...actions,
+          zip(
+            Array.from(deleteIds).map((id) =>
+              ConversationService.deleteConversation(
+                getConversationInfoFromId(id),
+              ).pipe(
+                switchMap(() => of(null)),
+                catchError((err) => {
+                  const { name } = getConversationInfoFromId(id);
+                  console.error(`Error during deleting "${name}"`, err);
+                  return of(name);
+                }),
+              ),
+            ),
+          ).pipe(
+            switchMap((failedNames) =>
+              concat(
+                iif(
+                  () =>
+                    failedNames.filter(Boolean).length > 0 &&
+                    !suppressErrorMessage,
+                  of(
+                    UIActions.showErrorToast(
+                      translate(
+                        `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      ),
+                    ),
+                  ),
+                  EMPTY,
+                ),
+                of(
+                  ConversationsActions.deleteConversationsComplete({
+                    deleteIds,
+                  }),
+                ),
+                of(
+                  ConversationsActions.setConversations({ conversations: [] }),
+                ),
+              ),
             ),
           ),
-        ),
-      );
-    }),
+        );
+      },
+    ),
   );
 
 const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
@@ -1060,7 +1113,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         value: payload.rate > 0 ? true : false,
       };
 
-      return fromFetch(`api/rate`, {
+      return fromFetch(`/api/rate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1377,7 +1430,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       let eventData = '';
       let message = payload.message;
       return from(
-        fetch('api/chat', {
+        fetch('/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2571,6 +2624,38 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
     ),
   );
 
+const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.cleanupIsolatedConversation.match(action),
+    ),
+    switchMap(() => {
+      const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+        state$.value,
+      );
+      const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
+        state$.value,
+      );
+      if (isIsolatedView && isolatedModelId) {
+        return of(
+          ConversationsActions.deleteConversations({
+            conversationIds: [
+              constructPath(
+                getConversationRootId(),
+                [
+                  encodeModelId(isolatedModelId),
+                  `isolated_${isolatedModelId}`,
+                ].join(pathKeySeparator),
+              ),
+            ],
+            suppressErrorMessage: true,
+          }),
+        );
+      }
+      return EMPTY;
+    }),
+  );
+
 export const ConversationsEpics = combineEpics(
   migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
@@ -2627,4 +2712,6 @@ export const ConversationsEpics = combineEpics(
   hideChatbarEpic,
 
   getChartAttachmentEpic,
+
+  cleanupIsolatedConversationEpic,
 );
