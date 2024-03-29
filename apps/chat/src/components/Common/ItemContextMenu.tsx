@@ -128,7 +128,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Duplicate'),
-        display: !!onDuplicate && isExternal,
+        display: !!onDuplicate,
         dataQa: 'duplicate',
         Icon: IconCopy,
         onClick: onDuplicate,
