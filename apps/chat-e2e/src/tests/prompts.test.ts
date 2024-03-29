@@ -305,6 +305,7 @@ dialTest(
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
         MenuOptions.edit,
+        MenuOptions.duplicate,
         MenuOptions.export,
         MenuOptions.moveTo,
         MenuOptions.share,
