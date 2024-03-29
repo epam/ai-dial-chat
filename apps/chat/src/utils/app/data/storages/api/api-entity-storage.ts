@@ -55,7 +55,7 @@ export abstract class ApiEntityStorage<
   }
 
   private getEntityUrl = (entity: TEntityInfo): string =>
-    ApiUtils.encodeApiUrl(constructPath('/api', entity.id));
+    ApiUtils.encodeApiUrl(constructPath('api', entity.id));
 
   private getListingUrl = ({
     path,
@@ -66,7 +66,7 @@ export abstract class ApiEntityStorage<
   }): string => {
     const listingUrl = ApiUtils.encodeApiUrl(
       constructPath(
-        '/api/listing',
+        'api/listing',
         path ||
           getRootId({
             featureType: EnumMapper.getFeatureTypeByApiKey(

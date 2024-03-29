@@ -83,9 +83,9 @@ export class FileService {
     resultQuery?: string;
   }): string => {
     const listingUrl = ApiUtils.encodeApiUrl(
-      constructPath('/api/listing', path || getRootId()),
+      constructPath('api/listing', path || getRootId()),
     );
-    return resultQuery ? `/${listingUrl}?${resultQuery}` : listingUrl;
+    return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
 
   public static getFileFolders(
@@ -184,6 +184,6 @@ export class FileService {
   }
 
   public static getFileContent<T>(path: string): Observable<T> {
-    return ApiUtils.request(`/${ApiUtils.encodeApiUrl(path)}`);
+    return ApiUtils.request(ApiUtils.encodeApiUrl(path));
   }
 }

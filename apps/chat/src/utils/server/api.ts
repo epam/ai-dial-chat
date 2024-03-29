@@ -85,10 +85,6 @@ export const parsePromptApiKey = (
   };
 };
 
-export const isUrlAbsolute = (url: string): boolean => {
-  return url.indexOf('://') > 0 || url.indexOf('//') === 0;
-};
-
 export class ApiUtils {
   static safeEncodeURIComponent = (urlComponent: string) =>
     // eslint-disable-next-line no-misleading-character-class
@@ -105,9 +101,7 @@ export class ApiUtils {
     constructPath(...path.split('/').map((part) => decodeURIComponent(part)));
 
   static request(url: string, options?: RequestInit) {
-    const correctUrl =
-      !isUrlAbsolute(url) && !url.startsWith('/') ? `/${url}` : url;
-    return fromFetch(correctUrl, {
+    return fromFetch(url, {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     }).pipe(
