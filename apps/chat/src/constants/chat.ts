@@ -16,3 +16,5 @@ export const resetShareEntity: ShareInterface = {
   publishedWithMe: false,
   sharedWithMe: false,
 };
+
+export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';

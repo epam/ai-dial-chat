@@ -16,6 +16,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -28,6 +29,8 @@ import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 const ChatActionsBlock = () => {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
@@ -37,6 +40,13 @@ const ChatActionsBlock = () => {
   const isActiveNewConversationRequest = useAppSelector(
     ConversationsSelectors.selectIsActiveNewConversationRequest,
   );
+  const isNewConversationDisabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
+  );
+
+  if (isNewConversationDisabled) {
+    return null;
+  }
 
   return (
     <div className="flex px-2 py-1">

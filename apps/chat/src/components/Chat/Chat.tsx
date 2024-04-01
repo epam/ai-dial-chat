@@ -871,6 +871,25 @@ export function Chat() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
+  const modelIsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const isolatedModelId = useAppSelector(
+    SettingsSelectors.selectIsolatedModelId,
+  );
+  const activeModel = useAppSelector((state) =>
+    ModelsSelectors.selectModel(state, isolatedModelId || ''),
+  );
+
+  if (isolatedModelId && modelIsLoaded && !activeModel) {
+    return (
+      <div className="h-screen pt-2">
+        <NotFoundEntity
+          entity={t('Model')}
+          additionalText="Please select another model."
+        />
+      </div>
+    );
+  }
+
   if (
     !areSelectedConversationsLoaded &&
     (!selectedConversations.length ||
