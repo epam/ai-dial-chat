@@ -253,6 +253,13 @@ export default function Home({ initialState }: HomeProps) {
   );
 }
 
+const hiddenFeaturesForIsolatedView = new Set([
+  Feature.ConversationsSection,
+  Feature.PromptsSection,
+  Feature.EmptyChatSettings,
+  Feature.TopChatModelSettings,
+]);
+
 export const getServerSideProps: GetServerSideProps = async ({
   locale,
   req,
@@ -295,12 +302,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
     ).filter((feature) =>
       params?.has(ISOLATED_MODEL_QUERY_PARAM)
-        ? ![
-            Feature.ConversationsSection,
-            Feature.PromptsSection,
-            Feature.EmptyChatSettings,
-            Feature.TopChatModelSettings,
-          ].includes(feature)
+        ? !hiddenFeaturesForIsolatedView.has(feature)
         : true,
     ),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
