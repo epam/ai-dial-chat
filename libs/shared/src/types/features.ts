@@ -19,6 +19,7 @@ export enum Feature {
   ConversationsPublishing = 'conversations-publishing',
   PromptsPublishing = 'prompts-publishing',
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
+  HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -42,4 +43,5 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.ConversationsPublishing]: true,
   [Feature.PromptsPublishing]: true,
   [Feature.CustomLogo]: true,
+  [Feature.HideNewConversation]: true,
 };

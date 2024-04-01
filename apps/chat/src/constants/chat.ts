@@ -18,3 +18,5 @@ export const resetShareEntity: ShareInterface = {
 };
 
 export const chartType = 'application/vnd.plotly.v1+json';
+
+export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
