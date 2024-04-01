@@ -146,9 +146,9 @@ const getFoldersListEpic: AppEpic = (action$) =>
     }),
   );
 
-const removeFileEpic: AppEpic = (action$, state$) =>
+const deleteFileEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(FilesActions.removeFile.match),
+    filter(FilesActions.deleteFile.match),
     mergeMap(({ payload }) => {
       const file = FilesSelectors.selectFiles(state$.value).find(
         (file) => file.id === payload.fileId,
@@ -162,33 +162,33 @@ const removeFileEpic: AppEpic = (action$, state$) =>
             }),
           ),
           of(
-            FilesActions.removeFileSuccess({
+            FilesActions.deleteFileSuccess({
               fileId: payload.fileId,
             }),
           ),
         );
       }
 
-      return FileService.removeFile(payload.fileId).pipe(
+      return FileService.deleteFile(payload.fileId).pipe(
         map(() => {
-          return FilesActions.removeFileSuccess({
+          return FilesActions.deleteFileSuccess({
             fileId: payload.fileId,
           });
         }),
         catchError(() => {
-          return of(FilesActions.removeFileFail({ fileName: file.name }));
+          return of(FilesActions.deleteFileFail({ fileName: file.name }));
         }),
       );
     }),
   );
 
-const removeFileFailEpic: AppEpic = (action$) =>
+const deleteFileFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.removeFileFail.match),
+    filter(FilesActions.deleteFileFail.match),
     map(({ payload }) => {
       return UIActions.showToast({
         message: translate(
-          'Removing file {{fileName}} failed. Please try again later',
+          'Deleting file {{fileName}} failed. Please try again later',
           {
             ns: 'file',
             fileName: payload.fileName,
@@ -199,13 +199,13 @@ const removeFileFailEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
-const removeMultipleFilesEpic: AppEpic = (action$) =>
+const deleteMultipleFilesEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(FilesActions.removeFilesList.match),
+    filter(FilesActions.deleteFilesList.match),
     switchMap(({ payload }) => {
       return concat(
         ...payload.fileIds.map((fileId) =>
-          of(FilesActions.removeFile({ fileId })),
+          of(FilesActions.deleteFile({ fileId })),
         ),
       );
     }),
@@ -249,10 +249,10 @@ export const FilesEpics = combineEpics(
   getFilesEpic,
   reuploadFileEpic,
   getFilesWithFoldersEpic,
-  removeFileEpic,
+  deleteFileEpic,
   getFoldersListEpic,
-  removeMultipleFilesEpic,
+  deleteMultipleFilesEpic,
   downloadFilesListEpic,
-  removeFileFailEpic,
+  deleteFileFailEpic,
   unselectFilesEpic,
 );

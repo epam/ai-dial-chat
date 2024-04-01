@@ -51,7 +51,7 @@ export const ChatMessage: FC<Props> = memo(
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [clientY, setClientY] = useState(0);
     const [clientX, setClientX] = useState(0);
-    const [isRemoveConfirmationOpened, setIsRemoveConfirmationOpened] =
+    const [isDeleteConfirmationOpened, setIsDeleteConfirmationOpened] =
       useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -95,15 +95,15 @@ export const ChatMessage: FC<Props> = memo(
 
     const confirmationDialog = (
       <ConfirmDialog
-        isOpen={isRemoveConfirmationOpened}
-        heading={t('Confirm removing message')}
+        isOpen={isDeleteConfirmationOpened}
+        heading={t('Confirm deleting message')}
         description={
-          t('Are you sure that you want to remove the message?') || ''
+          t('Are you sure that you want to delete the message?') || ''
         }
-        confirmLabel={t('Remove')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          setIsRemoveConfirmationOpened(false);
+          setIsDeleteConfirmationOpened(false);
           if (result) handleDeleteMessage();
         }}
       />
@@ -120,7 +120,7 @@ export const ChatMessage: FC<Props> = memo(
             messageIndex={messageIndex}
             onEdit={onEdit}
             onDelete={() => {
-              setIsRemoveConfirmationOpened(true);
+              setIsDeleteConfirmationOpened(true);
             }}
             toggleEditing={toggleEditing}
             isEditing={isEditing}
@@ -186,7 +186,7 @@ export const ChatMessage: FC<Props> = memo(
             messageCopied={messageCopied}
             editDisabled={editDisabled}
             onLike={onLike}
-            onDelete={() => setIsRemoveConfirmationOpened(true)}
+            onDelete={() => setIsDeleteConfirmationOpened(true)}
             isEditing={isEditing}
             toggleEditing={toggleEditing}
             onRegenerate={onRegenerate}

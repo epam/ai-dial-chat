@@ -1,6 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
-import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
@@ -32,6 +31,21 @@ export class ItemApiHelper extends BaseApiHelper {
     return entities;
   }
 
+  public async listItem(itemUrl: string) {
+    const response = await this.request.get(`${API.listingHost}/${itemUrl}`, {
+      params: {
+        filter: BackendDataNodeType.ITEM,
+        recursive: true,
+      },
+    });
+    const entities = (await response.json()) as BackendDataEntity[];
+    expect(
+      response.status(),
+      `Received items: ${JSON.stringify(entities)}`,
+    ).toBe(200);
+    return entities;
+  }
+
   public async deleteBackendItem(...items: BackendDataEntity[]) {
     for (const item of items) {
       const url = `/api/${item.url}`;
@@ -52,10 +66,16 @@ export class ItemApiHelper extends BaseApiHelper {
     ).toBe(200);
   }
 
-  public async createConversations(conversations: Conversation[]) {
+  public async createConversations(
+    conversations: Conversation[],
+    bucket?: string,
+  ) {
     for (const conversation of conversations) {
-      conversation.folderId = ItemUtil.getApiConversationFolderId(conversation);
-      conversation.id = ItemUtil.getApiConversationId(conversation);
+      conversation.folderId = ItemUtil.getApiConversationFolderId(
+        conversation,
+        bucket,
+      );
+      conversation.id = ItemUtil.getApiConversationId(conversation, bucket);
       await this.createItem(conversation);
     }
   }
@@ -77,22 +97,5 @@ export class ItemApiHelper extends BaseApiHelper {
       response.status(),
       `Item created with data: ${JSON.stringify(item)}`,
     ).toBe(200);
-  }
-
-  private async getItemPath(
-    item: Prompt | Conversation,
-    ...folders: FolderInterface[]
-  ) {
-    let path = '';
-    const itemFolderId = item.folderId;
-    if (itemFolderId && folders.length > 0) {
-      let itemFolder = folders.find((f) => f.id === itemFolderId);
-      path = itemFolder!.name;
-      while (itemFolder!.folderId) {
-        itemFolder = folders.find((f) => f.id === itemFolder?.folderId);
-        path = `${itemFolder?.name}/${path}`;
-      }
-    }
-    return path;
   }
 }

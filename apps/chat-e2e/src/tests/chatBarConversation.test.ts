@@ -295,6 +295,7 @@ dialTest(
       .toEqual([
         MenuOptions.rename,
         MenuOptions.compare,
+        MenuOptions.duplicate,
         MenuOptions.moveTo,
         MenuOptions.delete,
       ]);
@@ -331,6 +332,7 @@ dialTest(
       .toEqual([
         MenuOptions.rename,
         MenuOptions.compare,
+        MenuOptions.duplicate,
         MenuOptions.replay,
         MenuOptions.playback,
         MenuOptions.export,
@@ -956,7 +958,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Type not matching search term is "Search chat..." field and verify no results found',
+      'Type not matching search term is "Search conversation..." field and verify no results found',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
@@ -1079,7 +1081,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Type not matching search term is "Search chat..." field and verify no results found',
+      'Type not matching search term is "Search conversation..." field and verify no results found',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({

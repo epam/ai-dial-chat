@@ -133,7 +133,7 @@ export class FileService {
     );
   }
 
-  public static removeFile(filePath: string): Observable<void> {
+  public static deleteFile(filePath: string): Observable<void> {
     return ApiUtils.request(`api/${ApiUtils.encodeApiUrl(filePath)}`, {
       method: 'DELETE',
     });
@@ -184,6 +184,6 @@ export class FileService {
   }
 
   public static getFileContent<T>(path: string): Observable<T> {
-    return ApiUtils.request(path);
+    return ApiUtils.request(ApiUtils.encodeApiUrl(path));
   }
 }

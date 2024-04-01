@@ -16,3 +16,5 @@ export const resetShareEntity: ShareInterface = {
   publishedWithMe: false,
   sharedWithMe: false,
 };
+
+export const chartType = 'application/vnd.plotly.v1+json';

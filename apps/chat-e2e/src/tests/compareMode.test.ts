@@ -19,13 +19,11 @@ import { expect } from '@playwright/test';
 let defaultModel: DialAIEntityModel;
 let gpt4Model: DialAIEntityModel;
 let bisonModel: DialAIEntityModel;
-let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
   bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
-  modelsWithoutSystemPrompt = ModelsUtil.getModelsWithoutSystemPrompt();
 });
 
 dialTest(
@@ -203,16 +201,12 @@ dialTest(
     compareConversationSelector,
     compare,
     localStorageManager,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1133', 'EPMRTC-541');
-    setIssueIds('1038');
     let modelConversation: Conversation;
     let replayConversation: Conversation;
-    let playbackonversation: Conversation;
-    let firstEmptyConversation: Conversation;
-    let secondEmptyConversation: Conversation;
-    const conversationName = GeneratorUtil.randomString(7);
+    let playbackConversation: Conversation;
+    const conversationName = 'test';
 
     await dialTest.step(
       'Prepare new conversation and replay, playback conversations based on it',
@@ -224,7 +218,7 @@ dialTest(
         replayConversation =
           conversationData.prepareDefaultReplayConversation(modelConversation);
         conversationData.resetData();
-        playbackonversation =
+        playbackConversation =
           conversationData.prepareDefaultPlaybackConversation(
             modelConversation,
           );
@@ -232,7 +226,7 @@ dialTest(
         await dataInjector.createConversations([
           modelConversation,
           replayConversation,
-          playbackonversation,
+          playbackConversation,
         ]);
         await localStorageManager.setSelectedConversation(modelConversation);
       },
@@ -247,6 +241,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
           modelConversation.name,
+          3,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
@@ -317,7 +312,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Remove 1st conversation from compare mode using Close btn in the header',
+      'Delete 1st conversation from compare mode using Close btn in the header',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -326,10 +321,10 @@ dialTest(
         );
         let activeChat;
         if (randomSide === Side.right) {
-          await rightChatHeader.removeConversationFromComparison.click();
+          await rightChatHeader.deleteConversationFromComparison.click();
           activeChat = firstConversation.name;
         } else {
-          await leftChatHeader.removeConversationFromComparison.click();
+          await leftChatHeader.deleteConversationFromComparison.click();
           activeChat = secondConversation.name;
         }
 
@@ -735,14 +730,8 @@ dialTest(
     const modelsForUpdate = models.filter((m) => m !== initRandomModel);
     const firstUpdatedRandomModel =
       GeneratorUtil.randomArrayElement(modelsForUpdate);
-    const isFirstSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
-      firstUpdatedRandomModel.id,
-    );
     const secondUpdatedRandomModel = GeneratorUtil.randomArrayElement(
       modelsForUpdate.filter((m) => m !== firstUpdatedRandomModel),
-    );
-    const isSecondSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
-      firstUpdatedRandomModel.id,
     );
     const firstUpdatedPrompt = 'first prompt';
     const secondUpdatedPrompt = 'second prompt';
@@ -786,9 +775,9 @@ dialTest(
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
-          .selectModel(firstUpdatedRandomModel.name);
+          .selectModel(firstUpdatedRandomModel);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
-        if (isFirstSysPromptAllowed) {
+        if (firstUpdatedRandomModel.features?.systemPrompt) {
           await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
         }
         await leftEntitySettings
@@ -797,10 +786,10 @@ dialTest(
 
         await rightConversationSettings
           .getTalkToSelector()
-          .selectModel(secondUpdatedRandomModel.name);
+          .selectModel(secondUpdatedRandomModel);
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
-        if (isSecondSysPromptAllowed) {
+        if (secondUpdatedRandomModel.features?.systemPrompt) {
           await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
         }
         await rightEntitySettings
@@ -860,7 +849,7 @@ dialTest(
           .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
           .toBe(expectedSecondUpdatedRandomModelIcon);
 
-        if (isSecondSysPromptAllowed) {
+        if (secondUpdatedRandomModel.features?.systemPrompt) {
           const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
           expect
             .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
@@ -884,7 +873,7 @@ dialTest(
           .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
           .toBe(expectedFirstUpdatedRandomModelIcon);
 
-        if (isFirstSysPromptAllowed) {
+        if (firstUpdatedRandomModel.features?.systemPrompt) {
           const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
           expect
             .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
@@ -1290,11 +1279,11 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
-        const isRemoveConversationIconVisible =
-          await leftChatHeader.removeConversationFromComparison.isVisible();
+        const isDeleteConversationIconVisible =
+          await leftChatHeader.deleteConversationFromComparison.isVisible();
         expect
           .soft(
-            isRemoveConversationIconVisible,
+            isDeleteConversationIconVisible,
             ExpectedMessages.closeChatIconIsNotVisible,
           )
           .toBeFalsy();
@@ -1490,12 +1479,9 @@ dialTest(
           Side.left,
           1,
         );
-        expect
-          .soft(
-            await firstComparedMessage.textContent(),
-            ExpectedMessages.messageContentIsValid,
-          )
-          .toBe(firstConversationRequests[1]);
+        await expect
+          .soft(firstComparedMessage, ExpectedMessages.messageContentIsValid)
+          .toHaveText(firstConversationRequests[1]);
       },
     );
 
@@ -1531,12 +1517,9 @@ dialTest(
             side,
             1,
           );
-          expect
-            .soft(
-              await firstComparedMessage.textContent(),
-              ExpectedMessages.messageContentIsValid,
-            )
-            .toBe(updatedRequestContent);
+          await expect
+            .soft(firstComparedMessage, ExpectedMessages.messageContentIsValid)
+            .toHaveText(updatedRequestContent);
         }
       },
     );

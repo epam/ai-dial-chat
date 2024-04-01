@@ -21,6 +21,7 @@ import {
   startWith,
   switchMap,
   take,
+  takeUntil,
   takeWhile,
   tap,
   throwError,
@@ -76,7 +77,6 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -93,6 +93,7 @@ import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import {
@@ -112,6 +113,7 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -128,94 +130,108 @@ const initEpic: AppEpic = (action$) =>
 const initSelectedConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
-    switchMap(() => ConversationService.getSelectedConversationsIds()),
-    switchMap((selectedIds) => {
-      if (!selectedIds.length) {
-        return forkJoin({
-          selectedConversations: of([]),
-          selectedIds: of([]),
-        });
-      }
-      return forkJoin({
-        selectedConversations: zip(
-          selectedIds.map((id) =>
-            ConversationService.getConversation(
-              getConversationInfoFromId(id),
-            ).pipe(
-              catchError((err) => {
-                console.error('The selected conversation was not found:', err);
-                return of(null);
+    takeUntil(action$.pipe(filter(ShareActions.acceptShareInvitation.match))),
+    // use getSelectedConversations to load selected conversations, we can unsubscribe from this action if we try to accept a share link
+    switchMap(() => of(ConversationsActions.getSelectedConversations())),
+  );
+
+const getSelectedConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.getSelectedConversations.match),
+    switchMap(() =>
+      ConversationService.getSelectedConversationsIds().pipe(
+        switchMap((selectedIds) => {
+          if (!selectedIds.length) {
+            return forkJoin({
+              selectedConversations: of([]),
+              selectedIds: of([]),
+            });
+          }
+          return forkJoin({
+            selectedConversations: zip(
+              selectedIds.map((id) =>
+                ConversationService.getConversation(
+                  getConversationInfoFromId(id),
+                ).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The selected conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                ),
+              ),
+            ),
+            selectedIds: of(selectedIds),
+          });
+        }),
+        map(({ selectedConversations, selectedIds }) => {
+          const conversations = selectedConversations
+            .filter(Boolean)
+            .map((conv) => regenerateConversationId(conv!));
+          if (!selectedIds.length || !conversations.length) {
+            return {
+              conversations: [],
+              selectedConversationsIds: [],
+            };
+          }
+
+          const existingSelectedConversationsIds = selectedIds.filter((id) =>
+            conversations.some((conv) => conv.id === id),
+          );
+
+          return {
+            conversations,
+            selectedConversationsIds: existingSelectedConversationsIds,
+          };
+        }),
+        switchMap(({ conversations, selectedConversationsIds }) => {
+          const actions: Observable<AnyAction>[] = [];
+
+          if (conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.addConversations({
+                  conversations,
+                  selectAdded: true,
+                }),
+              ),
+            );
+            const paths = selectedConversationsIds.flatMap((id) =>
+              getParentFolderIdsFromEntityId(id),
+            );
+            actions.push(
+              of(
+                UIActions.setOpenedFoldersIds({
+                  openedFolderIds: paths,
+                  featureType: FeatureType.Chat,
+                }),
+              ),
+            );
+          }
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: selectedConversationsIds,
               }),
             ),
-          ),
-        ),
-        selectedIds: of(selectedIds),
-      });
-    }),
-    map(({ selectedConversations, selectedIds }) => {
-      const conversations = selectedConversations
-        .filter(Boolean)
-        .map((conv) => regenerateConversationId(conv!));
-      if (!selectedIds.length || !conversations.length) {
-        return {
-          conversations: [],
-          selectedConversationsIds: [],
-        };
-      }
+          );
+          if (!conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  shouldUploadConversationsForCompare: true,
+                }),
+              ),
+            );
+          }
 
-      const existingSelectedConversationsIds = selectedIds.filter((id) =>
-        conversations.some((conv) => conv.id === id),
-      );
-
-      return {
-        conversations,
-        selectedConversationsIds: existingSelectedConversationsIds,
-      };
-    }),
-    switchMap(({ conversations, selectedConversationsIds }) => {
-      const actions: Observable<AnyAction>[] = [];
-
-      if (conversations.length) {
-        actions.push(
-          of(
-            ConversationsActions.addConversations({
-              conversations,
-              selectAdded: true,
-            }),
-          ),
-        );
-        const paths = selectedConversationsIds.flatMap((id) =>
-          getParentFolderIdsFromEntityId(id),
-        );
-        actions.push(
-          of(
-            UIActions.setOpenedFoldersIds({
-              openedFolderIds: paths,
-              featureType: FeatureType.Chat,
-            }),
-          ),
-        );
-      }
-      actions.push(
-        of(
-          ConversationsActions.selectConversations({
-            conversationIds: selectedConversationsIds,
-          }),
-        ),
-      );
-      if (!conversations.length) {
-        actions.push(
-          of(
-            ConversationsActions.createNewConversations({
-              names: [translate(DEFAULT_CONVERSATION_NAME)],
-              shouldUploadConversationsForCompare: true,
-            }),
-          ),
-        );
-      }
-
-      return concat(...actions);
-    }),
+          return concat(...actions);
+        }),
+      ),
+    ),
   );
 
 const initFoldersAndConversationsEpic: AppEpic = (action$) =>
@@ -588,7 +604,7 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         folderId,
         ...conversations.map((conv) => conv.folderId),
       ]);
-      const removedConversationsIds = conversations.map((conv) => conv.id);
+      const deletedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
       actions.push(
         of(
@@ -597,11 +613,11 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
           }),
         ),
       );
-      if (removedConversationsIds.length) {
+      if (deletedConversationsIds.length) {
         actions.push(
           of(
             ConversationsActions.deleteConversations({
-              conversationIds: removedConversationsIds,
+              conversationIds: deletedConversationsIds,
             }),
           ),
         );
@@ -801,7 +817,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      `An error occurred while removing the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
                     ),
                   ),
                 ),
@@ -843,6 +859,8 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         isChatsBackedUp: BrowserStorage.getEntityBackedUp(
           MigrationStorageKeys.ChatsBackedUp,
         ),
+        isMigrationInitialized:
+          BrowserStorage.getEntitiesMigrationInitialized(),
       }),
     ),
     switchMap(
@@ -852,12 +870,32 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
         migratedConversationIds,
         failedMigratedConversationIds,
         isChatsBackedUp,
+        isMigrationInitialized,
       }) => {
         const notMigratedConversations = filterMigratedEntities(
           conversations,
           [...failedMigratedConversationIds, ...migratedConversationIds],
           true,
         );
+
+        if (
+          !isMigrationInitialized &&
+          conversations.length &&
+          !failedMigratedConversationIds.length &&
+          !migratedConversationIds.length
+        ) {
+          return concat(
+            of(
+              ConversationsActions.setFailedMigratedConversations({
+                failedMigratedConversations: filterMigratedEntities(
+                  conversations,
+                  conversations.map((c) => c.id),
+                ),
+              }),
+            ),
+            of(UIActions.setShowSelectToMigrateWindow(true)),
+          );
+        }
 
         if (
           SettingsSelectors.selectStorageType(state$.value) !==
@@ -881,16 +919,20 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           return EMPTY;
         }
 
-        const sortedConversations = notMigratedConversations.sort((a, b) => {
-          if (!a.lastActivityDate) return 1;
-          if (!b.lastActivityDate) return -1;
+        const conversationsWithoutDate = notMigratedConversations.filter(
+          (c) => !c.lastActivityDate,
+        );
+        const conversationsWithDate = notMigratedConversations.filter(
+          (c) => c.lastActivityDate,
+        );
+        const sortedConversations = [
+          ...conversationsWithoutDate,
+          ...orderBy(conversationsWithDate, (c) => c.lastActivityDate),
+        ];
 
-          return a.lastActivityDate - b.lastActivityDate;
-        });
         const preparedConversations = getPreparedConversations({
-          conversations: notMigratedConversations,
+          conversations: sortedConversations,
           conversationsFolders,
-          addRoot: true,
         });
 
         let migratedConversationsCount = 0;
@@ -903,8 +945,10 @@ const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
           ),
           from(preparedConversations).pipe(
             concatMap((conversation) =>
-              ConversationService.setConversations([conversation]).pipe(
-                switchMap(() => {
+              ConversationService.setConversations([
+                conversation as Conversation,
+              ]).pipe(
+                concatMap(() => {
                   migratedConversationIds.push(
                     sortedConversations[migratedConversationsCount].id,
                   );
@@ -1861,9 +1905,11 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
     switchMap((selectedConversationsIds) =>
       forkJoin({
         selectedConversationsIds: of(selectedConversationsIds),
-        _: ConversationService.setSelectedConversationsIds(
-          selectedConversationsIds,
-        ),
+        _: selectedConversationsIds.length
+          ? ConversationService.setSelectedConversationsIds(
+              selectedConversationsIds,
+            )
+          : EMPTY,
       }),
     ),
     switchMap(({ selectedConversationsIds }) =>
@@ -2415,8 +2461,11 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                     featureType: FeatureType.Chat,
                     openedFolderIds: [
                       ...openedFolders,
-                      ...getParentFolderIdsFromFolderId(conv[0].folderId),
-                      ...payload.path,
+                      ...uniq(
+                        conv.flatMap((c) =>
+                          getParentFolderIdsFromFolderId(c.folderId),
+                        ),
+                      ),
                     ],
                   }),
                 ),
@@ -2502,9 +2551,7 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.getChartAttachment.match),
     switchMap(({ payload }) =>
-      FileService.getFileContent<PlotParams>(
-        ApiUtils.encodeApiUrl(payload.pathToChart),
-      ).pipe(
+      FileService.getFileContent<PlotParams>(payload.pathToChart).pipe(
         switchMap((params) => {
           return of(
             ConversationsActions.getChartAttachmentSuccess({
@@ -2539,6 +2586,7 @@ export const ConversationsEpics = combineEpics(
   // select
   selectConversationsEpic,
   uploadSelectedConversationsEpic,
+  getSelectedConversationsEpic,
 
   saveNewConversationEpic,
   createNewConversationsSuccessEpic,

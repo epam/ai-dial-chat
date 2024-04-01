@@ -89,7 +89,7 @@ export const cleanConversation = (
     replay: conversation.replay,
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
-    lastActivityDate: conversation.lastActivityDate || Date.now(),
+    lastActivityDate: conversation.lastActivityDate || 0,
     isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
       playback: conversation.playback,
@@ -132,7 +132,7 @@ export const cleanConversationHistory = (
         return acc;
       } catch (error) {
         console.warn(
-          `error while cleaning conversations' history. Removing culprit`,
+          `error while cleaning conversations' history. Deleting culprit`,
           error,
         );
       }

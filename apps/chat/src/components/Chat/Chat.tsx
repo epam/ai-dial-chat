@@ -1,3 +1,4 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -5,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   Conversation,
@@ -96,6 +98,7 @@ export const ChatView = memo(() => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -237,14 +240,12 @@ export const ChatView = memo(() => {
       ? mergedMessages[mergedMessages.length - 1]
       : [];
 
-    if (!messageIsStreaming) {
-      const isErrorInSomeLastMessage = lastMergedMessages.some(
-        (mergedStr: [Conversation, Message, number]) =>
-          !!mergedStr[1].errorMessage,
-      );
-      setIsLastMessageError(isErrorInSomeLastMessage);
-    }
-  }, [mergedMessages, messageIsStreaming]);
+    const isErrorInSomeLastMessage = lastMergedMessages.some(
+      (mergedStr: [Conversation, Message, number]) =>
+        !!mergedStr[1].errorMessage,
+    );
+    setIsLastMessageError(isErrorInSomeLastMessage);
+  }, [mergedMessages]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -290,10 +291,14 @@ export const ChatView = memo(() => {
         );
       }
 
-      setMergedMessages([...mergedMessages]);
+      setMergedMessages(mergedMessages);
     }
 
-    if (selectedConversations.every((conv) => conv.messages.length === 0)) {
+    if (
+      selectedConversations.every(
+        (conv) => !conv.messages.find((m) => m.role !== Role.Assistant),
+      )
+    ) {
       setShowScrollDownButton(false);
     } else {
       handleScroll();
@@ -561,6 +566,7 @@ export const ChatView = memo(() => {
 
   const showLastMessageRegenerate =
     !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
+  const showFloatingOverlay = isSmallScreen() && isAnyMenuOpen;
 
   return (
     <div
@@ -568,6 +574,7 @@ export const ChatView = memo(() => {
       data-qa="chat"
       id="chat"
     >
+      {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
@@ -658,7 +665,18 @@ export const ChatView = memo(() => {
                     ))}
                   </div>
                   <div
-                    onScroll={handleScroll}
+                    onScroll={() => {
+                      if (
+                        selectedConversations.some(
+                          (conv) =>
+                            !!conv.messages.find(
+                              (m) => m.role !== Role.Assistant,
+                            ),
+                        )
+                      ) {
+                        handleScroll();
+                      }
+                    }}
                     ref={setChatContainerRef}
                     className="h-full overflow-x-hidden"
                   >

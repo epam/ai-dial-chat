@@ -33,11 +33,15 @@ export const ChatBarSelectors = {
   attachments: '[data-qa="attachments"]',
   conversations: '[data-qa="conversations"]',
   conversation: '[data-qa="conversation"]',
-  conversationName: '[data-qa="chat-name"]',
+  conversationName: '[data-qa="conversation-name"]',
   chatFolders: '[data-qa="chat-folders"]',
   actionButton: '[data-qa="action-button"]',
   exportConversations: '[data-qa="export-conversations"]',
   exportPrompts: '[data-qa="export-prompts"]',
+  pinnedChats: () =>
+    `${ChatBarSelectors.chatFolders} > [data-qa="pinned-chats-container"]`,
+  sharedWithMeChats: () =>
+    `${ChatBarSelectors.chatFolders} > [data-qa="shared-with-me-container"]`,
 };
 
 export const PromptBarSelectors = {

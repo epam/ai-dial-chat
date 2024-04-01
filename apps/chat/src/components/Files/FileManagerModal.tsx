@@ -145,7 +145,7 @@ export const FileManagerModal = ({
     [dispatch, openedFoldersIds],
   );
 
-  const handleStartRemoveMultipleFiles = useCallback(() => {
+  const handleStartDeleteMultipleFiles = useCallback(() => {
     if (!selectedFilesIds.length) {
       return;
     }
@@ -173,9 +173,9 @@ export const FileManagerModal = ({
           });
           break;
         case FileItemEventIds.Cancel:
-          dispatch(FilesActions.removeFile({ fileId: data }));
+          dispatch(FilesActions.deleteFile({ fileId: data }));
           break;
-        case FileItemEventIds.Remove:
+        case FileItemEventIds.Delete:
           setDeletingFileIds([data]);
           break;
         default:
@@ -252,12 +252,12 @@ export const FileManagerModal = ({
     [dispatch],
   );
 
-  const handleRemoveMultipleFiles = useCallback(() => {
+  const handleDeleteMultipleFiles = useCallback(() => {
     if (!deletingFileIds.length) {
       return;
     }
 
-    dispatch(FilesActions.removeFilesList({ fileIds: deletingFileIds }));
+    dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
     if (selectedFilesIds === deletingFileIds) {
       setSelectedFilesIds([]);
     }
@@ -396,7 +396,7 @@ export const FileManagerModal = ({
           {selectedFilesIds.length > 0 ? (
             <>
               <button
-                onClick={handleStartRemoveMultipleFiles}
+                onClick={handleStartDeleteMultipleFiles}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
                 <Tooltip tooltip="Delete files" isTriggerClickable>
@@ -464,14 +464,14 @@ export const FileManagerModal = ({
         )}
         description={
           t(
-            `Are you sure that you want to remove ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
+            `Are you sure that you want to delete ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
           ) || ''
         }
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           if (result) {
-            handleRemoveMultipleFiles();
+            handleDeleteMultipleFiles();
           }
           setDeletingFileIds([]);
         }}

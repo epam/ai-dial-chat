@@ -24,6 +24,7 @@ import {
   prepareEntityName,
   trimEndDots,
 } from '@/src/utils/app/common';
+import { getEntityNameError } from '@/src/utils/app/errors';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -50,7 +51,6 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
 
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -81,6 +81,10 @@ export function ConversationView({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isNameInvalid = isEntityNameInvalid(conversation.name);
   const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
+  const isExternal = useAppSelector((state) =>
+    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+  );
 
   return (
     <>
@@ -113,15 +117,13 @@ export function ConversationView({
       </ShareIcon>
       <div
         className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-        data-qa="chat-name"
+        data-qa="conversation-name"
       >
         <Tooltip
           tooltip={t(
-            isNameInvalid
-              ? errorsMessages.entityNameInvalid
-              : errorsMessages.entityPathInvalid,
+            getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
           )}
-          hideTooltip={!isNameInvalid && !isInvalidPath}
+          hideTooltip={!isNameOrPathInvalid}
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         >
           {conversation.name}
@@ -207,7 +209,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string, removeShareIcon?: boolean) => {
+    (name: string, deleteShareIcon?: boolean) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -215,7 +217,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
-              isShared: removeShareIcon ? false : conversation.isShared,
+              isShared: deleteShareIcon ? false : conversation.isShared,
             },
           }),
         );
@@ -230,7 +232,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const handleRename = useCallback(() => {
-    const newName = prepareEntityName(renameValue, true);
+    const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
     if (
@@ -718,9 +720,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       <ConfirmDialog
         isOpen={isDeleting}
         heading={t('Confirm deleting conversation')}
-        description={`${t('Are you sure that you want to remove a conversation?')}${t(
+        description={`${t('Are you sure that you want to delete a conversation?')}${t(
           conversation.isShared
-            ? '\nRemoving will stop sharing and other users will no longer see this conversation.'
+            ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
             : '',
         )}`}
         confirmLabel={t('Delete')}
@@ -744,7 +746,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           setIsConfirmRenaming(false);
 
           if (result) {
-            performRename(prepareEntityName(renameValue, true));
+            performRename(
+              prepareEntityName(renameValue, { forRenaming: true }),
+            );
           }
 
           setIsContextMenu(false);

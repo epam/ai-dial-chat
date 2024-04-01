@@ -29,10 +29,10 @@ export const ExpectedConstants = {
   enterMessageAlert: 'Please enter a message',
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
-    'Are you sure that you want to remove a folder with all nested elements?',
+    'Are you sure that you want to delete a folder with all nested elements?',
   deleteSharedFolderMessage:
-    'Are you sure that you want to remove a folder with all nested elements?\n' +
-    'Removing will stop sharing and other users will no longer see this folder.',
+    'Are you sure that you want to delete a folder with all nested elements?\n' +
+    'Deleting will stop sharing and other users will no longer see this folder.',
   renameSharedFolderMessage:
     'Renaming will stop sharing and other users will no longer see this folder.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
@@ -75,6 +75,11 @@ export const ExpectedConstants = {
     'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
   shareFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  chatNotFoundMessage:
+    'Conversation not found.Please select another conversation.',
+  promptNameLabel: 'promptName',
+  promptContentLabel: 'content',
+  requiredFieldErrorMessage: 'Please fill in all required fields',
 };
 
 export enum Groups {
@@ -87,6 +92,7 @@ export enum MenuOptions {
   rename = 'Rename',
   edit = 'Edit',
   compare = 'Compare',
+  duplicate = 'Duplicate',
   replay = 'Replay',
   playback = 'Playback',
   export = 'Export',
@@ -138,6 +144,7 @@ export const API = {
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
   shareWithMeListing: '/api/share/listing',
+  discardShareWithMeItem: '/api/share/discard',
 };
 
 export const Import = {
@@ -160,6 +167,7 @@ export const Import = {
 export const Attachment = {
   attachmentPath: path.resolve(__dirname, 'attachments'),
   sunImageName: 'sun.jpg',
+  cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
 };
 
@@ -174,6 +182,7 @@ export enum ModelIds {
   GPT_3_5_TURBO_0613 = 'gpt-35-turbo-0613',
   GPT_3_5_TURBO_1106 = 'gpt-35-turbo-1106',
   GPT_3_5_TURBO_16K = 'gpt-35-turbo-16k',
+  GPT_3_5_TURBO_0125 = 'gpt-35-turbo-0125',
   GPT_4 = 'gpt-4',
   GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',
@@ -197,6 +206,7 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
+  ANTHROPIC_CLAUDE_V3 = 'anthropic.claude-v3',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_VISION = 'gemini-pro-vision',

@@ -57,13 +57,13 @@ export const promptsSlice = createSlice({
         { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
       >,
     ) => {
-      state.promptsLoaded = !payload?.noLoader;
+      state.promptsLoaded = !!payload?.noLoader;
     },
     initPromptsSuccess: (state) => state,
     migratePromptsIfRequired: (state) => state,
     skipFailedMigratedPrompts: (
       state,
-      { payload: _ }: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
+      _action: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
     ) => state,
     initPromptsMigration: (
       state,
@@ -120,9 +120,9 @@ export const promptsSlice = createSlice({
       state,
     deletePrompts: (
       state,
-      { payload }: PayloadAction<{ promptsToRemove: PromptInfo[] }>,
+      { payload }: PayloadAction<{ promptsToDelete: PromptInfo[] }>,
     ) => {
-      const promptToDeleteIds = payload.promptsToRemove.map(
+      const promptToDeleteIds = payload.promptsToDelete.map(
         (prompt) => prompt.id,
       );
 

@@ -17,4 +17,12 @@ export class RecentEntities extends BaseElement {
     }
     return this.talkToGroup;
   }
+
+  public replayAsIsButton = this.getChildElementBySelector(
+    ChatSelectors.replayAsIsButton,
+  );
+
+  public playbackButton = this.getChildElementBySelector(
+    ChatSelectors.playbackButton,
+  );
 }

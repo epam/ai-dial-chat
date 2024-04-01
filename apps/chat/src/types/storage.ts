@@ -39,6 +39,7 @@ export enum MigrationStorageKeys {
   FailedMigratedPromptIds = 'failedMigratedPromptIds',
   ChatsBackedUp = 'chatsBackedUp',
   PromptsBackedUp = 'promptsBackedUp',
+  MigrationInitialized = 'migrationInitialized',
 }
 
 export interface EntityStorage<
