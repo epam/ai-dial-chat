@@ -46,7 +46,6 @@ const Header = () => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.SideBar);
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
@@ -114,7 +113,9 @@ const Header = () => {
           </div>
         </Tooltip>
       )}
-      {!isIsolatedView && <CreateNewChatMobile iconSize={headerIconSize} />}
+      {!enabledFeatures.has(Feature.HideNewConversation) && (
+        <CreateNewChatMobile iconSize={headerIconSize} />
+      )}
       <div className="flex grow justify-between">
         <span
           className={classNames(

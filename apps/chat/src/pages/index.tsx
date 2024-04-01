@@ -300,11 +300,17 @@ export const getServerSideProps: GetServerSideProps = async ({
     defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
     enabledFeatures: (
       (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
-    ).filter((feature) =>
-      params?.has(ISOLATED_MODEL_QUERY_PARAM)
-        ? !hiddenFeaturesForIsolatedView.has(feature)
-        : true,
-    ),
+    )
+      .filter((feature) =>
+        params?.has(ISOLATED_MODEL_QUERY_PARAM)
+          ? !hiddenFeaturesForIsolatedView.has(feature)
+          : true,
+      )
+      .concat(
+        params?.has(ISOLATED_MODEL_QUERY_PARAM)
+          ? Feature.HideNewConversation
+          : [],
+      ),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
