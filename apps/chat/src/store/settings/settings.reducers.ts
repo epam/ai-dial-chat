@@ -21,6 +21,7 @@ export interface SettingsState {
   defaultRecentAddonsIds: string[];
   storageType: StorageType;
   themesHostDefined: boolean;
+  isolatedModelId?: string;
 }
 
 const initialState: SettingsState = {
@@ -109,6 +110,9 @@ export const settingsSlice = createSlice({
     ) => {
       state.themesHostDefined = payload.themesHostDefined;
     },
+    setIsolatedModelId: (state, { payload }: PayloadAction<string>) => {
+      state.isolatedModelId = payload;
+    },
   },
 });
 
@@ -128,6 +132,14 @@ const selectFooterHtmlMessage = createSelector([rootSelector], (state) => {
 
 const selectEnabledFeatures = createSelector([rootSelector], (state) => {
   return new Set(state.enabledFeatures);
+});
+
+const selectIsIsolatedView = createSelector([rootSelector], (state) => {
+  return !!state.isolatedModelId;
+});
+
+const selectIsolatedModelId = createSelector([rootSelector], (state) => {
+  return state.isolatedModelId;
 });
 
 const isFeatureEnabled = createSelector(
@@ -209,4 +221,6 @@ export const SettingsSelectors = {
   selectStorageType,
   selectAnnouncement,
   selectThemeHostDefined,
+  selectIsIsolatedView,
+  selectIsolatedModelId,
 };
