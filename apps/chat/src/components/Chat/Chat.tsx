@@ -1,3 +1,4 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -5,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   Conversation,
@@ -96,6 +98,7 @@ export const ChatView = memo(() => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -563,6 +566,7 @@ export const ChatView = memo(() => {
 
   const showLastMessageRegenerate =
     !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
+  const showFloatingOverlay = isSmallScreen() && isAnyMenuOpen;
 
   return (
     <div
@@ -570,6 +574,7 @@ export const ChatView = memo(() => {
       data-qa="chat"
       id="chat"
     >
+      {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
       {modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
