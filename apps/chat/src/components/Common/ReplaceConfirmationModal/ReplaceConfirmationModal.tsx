@@ -8,10 +8,7 @@ import {
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
 import { isRootId } from '@/src/utils/app/id';
-import {
-  getCancelImportAction,
-  getFolderType,
-} from '@/src/utils/app/import-export';
+import { getFolderTypeByFeatureType } from '@/src/utils/app/mappers';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -90,7 +87,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   }, [featureType, conversations, prompts, duplicatedFiles]);
 
   const folderType: FolderType = useMemo(
-    () => getFolderType(featureType),
+    () => getFolderTypeByFeatureType(featureType),
     [featureType],
   );
 
@@ -136,10 +133,8 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   );
 
   const handleCancel = useCallback(() => {
-    const cancelAction = getCancelImportAction(featureType);
     dispatch(ImportExportActions.importStop());
-    dispatch(cancelAction());
-  }, [dispatch, featureType]);
+  }, [dispatch]);
 
   const handleToggleFolder = useCallback(
     (folderId: string) => {

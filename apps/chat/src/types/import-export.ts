@@ -84,12 +84,6 @@ export enum ImportRoot {
   Files = 'files',
 }
 
-export enum LoadingStatus {
-  Loading = 'LOADING',
-  Failed = 'FAILED',
-  Loaded = 'LOADED',
-}
-
 export enum ReplaceOptions {
   Postfix = 'Postfix',
   Replace = 'Replace',

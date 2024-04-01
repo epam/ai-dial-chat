@@ -79,12 +79,9 @@ export const cleanConversation = (
       conversation.id ||
       constructPath(
         conversation.folderId || getConversationRootId(),
-        (conversation.name && prepareEntityName(conversation.name)) ||
-          DEFAULT_CONVERSATION_NAME,
+        conversation.name || DEFAULT_CONVERSATION_NAME,
       ),
-    name:
-      (conversation.name && prepareEntityName(conversation.name)) ||
-      DEFAULT_CONVERSATION_NAME,
+    name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
     prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
@@ -130,7 +127,10 @@ export const cleanConversationHistory = (
   return history.reduce(
     (acc: Conversation[], conversation: Partial<Conversation>) => {
       try {
-        const cleanedConversation = cleanConversation(conversation);
+        const cleanedConversation = cleanConversation({
+          ...conversation,
+          name: conversation.name && prepareEntityName(conversation.name),
+        });
 
         acc.push(cleanedConversation);
         return acc;

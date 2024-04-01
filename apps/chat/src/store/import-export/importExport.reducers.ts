@@ -1,12 +1,11 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import {
   LatestExportFormat,
-  LoadingStatus,
   Operation,
   SupportedExportFormats,
 } from '@/src/types/import-export';
@@ -26,7 +25,7 @@ interface ImportExportState {
   nonDuplicatedFiles: DialFile[];
   importedHistory: LatestExportFormat;
   attachmentsErrors: string[];
-  status?: LoadingStatus;
+  status?: UploadStatus;
   operation?: Operation;
   isPromptsBackedUp: boolean;
   isChatsBackedUp: boolean;
@@ -75,7 +74,7 @@ export const importExportSlice = createSlice({
         withAttachments?: boolean;
       }>,
     ) => {
-      state.status = LoadingStatus.Loading;
+      state.status = UploadStatus.LOADING;
       state.operation = Operation.Exporting;
     },
     exportConversationSuccess: (state) => state,
@@ -90,14 +89,14 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{ data: SupportedExportFormats }>,
     ) => {
-      state.status = LoadingStatus.Loading;
+      state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
     },
     importZipConversations: (
       state,
       _action: PayloadAction<{ zipFile: File }>,
     ) => {
-      state.status = LoadingStatus.Loading;
+      state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
     },
     importStop: (state) => state,
@@ -156,7 +155,7 @@ export const importExportSlice = createSlice({
       }
     },
     importPrompts: (state) => {
-      state.status = LoadingStatus.Loading;
+      state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
     },
     importPromptsFail: (state) => state,
@@ -215,16 +214,8 @@ export const importExportSlice = createSlice({
         featureType: FeatureType;
       }>,
     ) => {
-      state.status = LoadingStatus.Loading;
+      state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
-    },
-    cancelConversationsImportDuplicated: (state) => {
-      state.isShowReplaceDialog = false;
-      state.conversationsToReplace = [];
-    },
-    cancelPromptsImportDuplicated: (state) => {
-      state.isShowReplaceDialog = false;
-      state.promptsToReplace = [];
     },
     closeReplaceDialog: (state) => {
       state.isShowReplaceDialog = false;
@@ -259,7 +250,7 @@ const selectOperationName = createSelector([rootSelector], (state) => {
 });
 
 const selectIsLoadingImportExport = createSelector([rootSelector], (state) => {
-  return state.status === LoadingStatus.Loading;
+  return state.status === UploadStatus.LOADING;
 });
 
 const selectIsShowReplaceDialog = createSelector([rootSelector], (state) => {
