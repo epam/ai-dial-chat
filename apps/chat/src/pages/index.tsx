@@ -100,8 +100,6 @@ export default function Home({ initialState }: HomeProps) {
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
-
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
   useEffect(() => {
@@ -111,13 +109,6 @@ export default function Home({ initialState }: HomeProps) {
         ShareActions.acceptShareInvitation({
           invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
         }),
-      );
-    }
-    if (searchParams.has(ISOLATED_MODEL_QUERY_PARAM)) {
-      dispatch(
-        SettingsActions.setIsolatedModelId(
-          searchParams.get(ISOLATED_MODEL_QUERY_PARAM) || '',
-        ),
       );
     }
   }, [dispatch]);
@@ -238,8 +229,9 @@ export default function Home({ initialState }: HomeProps) {
             <div className="flex size-full flex-col sm:pt-0">
               {enabledFeatures.has(Feature.Header) && <Header />}
               <div className="flex w-full grow overflow-auto">
-                {enabledFeatures.has(Feature.ConversationsSection) &&
-                  !isIsolatedView && <Chatbar />}
+                {enabledFeatures.has(Feature.ConversationsSection) && (
+                  <Chatbar />
+                )}
 
                 <div className="flex min-w-0 grow flex-col">
                   <AnnouncementsBanner />
@@ -249,8 +241,7 @@ export default function Home({ initialState }: HomeProps) {
                     <ImportExportLoader isOpen={isImportingExporting} />
                   )}
                 </div>
-                {enabledFeatures.has(Feature.PromptsSection) &&
-                  !isIsolatedView && <Promptbar />}
+                {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
                 {isProfileOpen && <UserMobile />}
                 {!isShareModalClosed && <ShareModal />}
               </div>
@@ -275,11 +266,11 @@ export const getServerSideProps: GetServerSideProps = async ({
   );
 
   const session = await getServerSession(req, res, authOptions);
+  let params: URLSearchParams | undefined;
+  if (req.url) {
+    params = new URL(req.url, `http://${req.headers.host}`).searchParams;
+  }
   if (!isServerSessionValid(session)) {
-    let params;
-    if (req.url) {
-      params = new URL(req.url, `http://${req.headers.host}`).searchParams;
-    }
     return {
       redirect: {
         permanent: false,
@@ -300,9 +291,18 @@ export const getServerSideProps: GetServerSideProps = async ({
         process.env.RECENT_ADDONS_IDS.split(',')) ||
       [],
     defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
-    enabledFeatures: (process.env.ENABLED_FEATURES || '').split(
-      ',',
-    ) as Feature[],
+    enabledFeatures: (
+      (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
+    ).filter((feature) =>
+      params?.has(ISOLATED_MODEL_QUERY_PARAM)
+        ? ![
+            Feature.ConversationsSection,
+            Feature.PromptsSection,
+            Feature.EmptyChatSettings,
+            Feature.TopChatModelSettings,
+          ].includes(feature)
+        : true,
+    ),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
@@ -317,6 +317,10 @@ export const getServerSideProps: GetServerSideProps = async ({
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
   };
+
+  if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
+    settings.isolatedModelId = params.get(ISOLATED_MODEL_QUERY_PARAM) || '';
+  }
 
   return {
     props: {

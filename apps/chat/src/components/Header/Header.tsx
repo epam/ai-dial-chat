@@ -47,6 +47,9 @@ const Header = () => {
 
   const { t } = useTranslation(Translation.SideBar);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
 
   const handleToggleChatbar = useCallback(() => {
     if (!showChatbar && isSmallScreen()) {
@@ -80,7 +83,7 @@ const Header = () => {
       )}
       data-qa="header"
     >
-      {!isIsolatedView && (
+      {enabledFeatures.has(Feature.ConversationsSection) && (
         <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
           <div
             className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
@@ -129,7 +132,7 @@ const Header = () => {
         </div>
       </div>
 
-      {!isIsolatedView && (
+      {enabledFeatures.has(Feature.PromptsSection) && (
         <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
           <div
             className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"

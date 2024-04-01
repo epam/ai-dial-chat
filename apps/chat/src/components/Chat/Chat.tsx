@@ -115,7 +115,6 @@ export const ChatView = memo(() => {
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
@@ -699,11 +698,9 @@ export const ChatView = memo(() => {
                                   conversation={conv}
                                   isModels={models.length !== 0}
                                   prompts={prompts}
-                                  isShowSettings={
-                                    enabledFeatures.has(
-                                      Feature.EmptyChatSettings,
-                                    ) && !isIsolatedView
-                                  }
+                                  isShowSettings={enabledFeatures.has(
+                                    Feature.EmptyChatSettings,
+                                  )}
                                   onSelectModel={(modelId: string) =>
                                     handleSelectModel(conv, modelId)
                                   }
