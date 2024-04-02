@@ -117,6 +117,7 @@ export const importExportSlice = createSlice({
       ];
       state.attachmentsIdsToUpload = attachmentsToUpload.map(({ id }) => id);
       state.importedHistory = payload.completeHistory;
+      state.duplicatedFiles = [];
     },
     uploadSingleAttachmentSuccess: (
       state,
@@ -152,6 +153,7 @@ export const importExportSlice = createSlice({
     ) => {
       if (!payload.disableStateReset) {
         state.isShowReplaceDialog = false;
+        state.conversationsToReplace = [];
       }
     },
     importPrompts: (state) => {
@@ -171,6 +173,7 @@ export const importExportSlice = createSlice({
     ) => {
       if (!payload.disableStateReset) {
         state.isShowReplaceDialog = false;
+        state.promptsToReplace = [];
       }
     },
     showReplaceDialog: (
@@ -209,13 +212,23 @@ export const importExportSlice = createSlice({
     },
     replaceFeatures: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         itemsToReplace: (DialFile | ConversationInfo | Prompt)[];
         featureType: FeatureType;
       }>,
     ) => {
       state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
+
+      if (payload.featureType === FeatureType.Chat) {
+        state.conversationsToReplace = [];
+      }
+
+      if (payload.featureType === FeatureType.Prompt) {
+        state.promptsToReplace = [];
+      }
     },
     closeReplaceDialog: (state) => {
       state.isShowReplaceDialog = false;

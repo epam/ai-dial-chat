@@ -1,11 +1,7 @@
 import { IconChevronDown } from '@tabler/icons-react';
 import { MouseEvent, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
-
-import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from './DropdownMenu';
 
@@ -32,8 +28,6 @@ export const Select = ({
   triggerClassName,
   optionClassName,
 }: SelectProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const [isOpen, setIsOpen] = useState(false);
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
@@ -56,7 +50,7 @@ export const Select = ({
               triggerClassName,
             )}
           >
-            {t(selectedOptionName)}
+            {selectedOptionName}
             <IconChevronDown
               className={classNames(
                 'shrink-0 text-primary transition-all',
@@ -75,7 +69,7 @@ export const Select = ({
               'max-w-[350px] hover:bg-accent-primary-alpha',
               optionClassName,
             )}
-            item={t(option.displayName)}
+            item={option.displayName}
             value={option.id}
             onClick={onChangeHandler}
           />

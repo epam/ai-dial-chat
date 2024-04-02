@@ -8,6 +8,8 @@ import {
   useState,
 } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { ConversationInfo } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import {
@@ -15,6 +17,7 @@ import {
   ReplaceOptions,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -24,32 +27,28 @@ import { Select, SelectOption } from '../Select';
 import Tooltip from '../Tooltip';
 
 interface ReplaceSelectorProps {
-  selectedOption: string;
-  onOptionChangeHandler: (option: string) => void;
+  selectedOption: ReplaceOptions;
+  onOptionChangeHandler: (optionId: string) => void;
 }
 
-const replaceSelectorOptions: SelectOption[] = [
-  {
-    id: ReplaceOptions.Postfix,
-    displayName: ReplaceOptions.Postfix,
-  },
-  {
-    id: ReplaceOptions.Replace,
-    displayName: ReplaceOptions.Replace,
-  },
-  {
-    id: ReplaceOptions.Ignore,
-    displayName: ReplaceOptions.Ignore,
-  },
-];
 export const ReplaceSelector = ({
   selectedOption,
   onOptionChangeHandler,
 }: ReplaceSelectorProps) => {
+  const { t } = useTranslation(Translation.Chat);
+  const replaceSelectorOptions: SelectOption[] = [
+    ReplaceOptions.Postfix,
+    ReplaceOptions.Replace,
+    ReplaceOptions.Ignore,
+  ].map((option) => ({
+    id: option,
+    displayName: t(option),
+  }));
+
   return (
     <Select
       options={replaceSelectorOptions}
-      selectedOptionName={selectedOption}
+      selectedOptionName={t(selectedOption)}
       onOptionChangeHandler={onOptionChangeHandler}
       optionClassName="pl-5"
     />
