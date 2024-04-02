@@ -374,6 +374,8 @@ const uploadImportedConversationsEpic: AppEpic = (action$) =>
                 cleanFolders,
               );
 
+              // const foldersToOpen =
+              const firstImportedConverstaion = uploadedConversations[0];
               return concat(
                 of(
                   ConversationsActions.importConversationsSuccess({
@@ -383,7 +385,13 @@ const uploadImportedConversationsEpic: AppEpic = (action$) =>
                 ),
                 of(
                   ConversationsActions.selectConversations({
-                    conversationIds: [uploadedConversations[0].id],
+                    conversationIds: [firstImportedConverstaion.id],
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    openedFolderIds: [firstImportedConverstaion.folderId],
+                    featureType: FeatureType.Chat,
                   }),
                 ),
                 iif(

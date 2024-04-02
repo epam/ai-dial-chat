@@ -2413,7 +2413,20 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         ),
         iif(
           () => !!isImportFinish,
-          of(ImportExportActions.resetState()),
+          concat(
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: [newConversation.id],
+              }),
+            ),
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: [newConversation.folderId],
+                featureType: FeatureType.Chat,
+              }),
+            ),
+            of(ImportExportActions.resetState()),
+          ),
           EMPTY,
         ),
       );
