@@ -231,7 +231,6 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
-        await folderPrompts.expandFolder(promptInsideFolder.folders.name);
         await folderPrompts
           .getFolderByName(promptInsideFolder.folders.name)
           .waitFor();
