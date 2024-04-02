@@ -39,6 +39,7 @@ import {
   selectShowSelectToMigrateWindow,
 } from '@/src/store/ui/ui.reducers';
 
+import { ISOLATED_MODEL_QUERY_PARAM } from '../constants/chat';
 import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
 import { SHARE_QUERY_PARAM } from '../constants/share';
 
@@ -104,7 +105,6 @@ export default function Home({ initialState }: HomeProps) {
   const isReplaceModalOpened = useAppSelector(
     ImportExportSelectors.selectIsShowReplaceDialog,
   );
-
   const shouldOverlayLogin = isOverlay && shouldLogin;
 
   useEffect(() => {
@@ -261,6 +261,13 @@ export default function Home({ initialState }: HomeProps) {
   );
 }
 
+const hiddenFeaturesForIsolatedView = new Set([
+  Feature.ConversationsSection,
+  Feature.PromptsSection,
+  Feature.EmptyChatSettings,
+  Feature.TopChatModelSettings,
+]);
+
 export const getServerSideProps: GetServerSideProps = async ({
   locale,
   req,
@@ -274,11 +281,11 @@ export const getServerSideProps: GetServerSideProps = async ({
   );
 
   const session = await getServerSession(req, res, authOptions);
+  let params: URLSearchParams | undefined;
+  if (req.url) {
+    params = new URL(req.url, `http://${req.headers.host}`).searchParams;
+  }
   if (!isServerSessionValid(session)) {
-    let params;
-    if (req.url) {
-      params = new URL(req.url, `http://${req.headers.host}`).searchParams;
-    }
     return {
       redirect: {
         permanent: false,
@@ -299,9 +306,19 @@ export const getServerSideProps: GetServerSideProps = async ({
         process.env.RECENT_ADDONS_IDS.split(',')) ||
       [],
     defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
-    enabledFeatures: (process.env.ENABLED_FEATURES || '').split(
-      ',',
-    ) as Feature[],
+    enabledFeatures: (
+      (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
+    )
+      .filter((feature) =>
+        params?.has(ISOLATED_MODEL_QUERY_PARAM)
+          ? !hiddenFeaturesForIsolatedView.has(feature)
+          : true,
+      )
+      .concat(
+        params?.has(ISOLATED_MODEL_QUERY_PARAM)
+          ? Feature.HideNewConversation
+          : [],
+      ),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
@@ -316,6 +333,10 @@ export const getServerSideProps: GetServerSideProps = async ({
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
   };
+
+  if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
+    settings.isolatedModelId = params.get(ISOLATED_MODEL_QUERY_PARAM) || '';
+  }
 
   return {
     props: {

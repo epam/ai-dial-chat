@@ -87,6 +87,7 @@ export function limitMessagesByTokens({
 export const hardLimitMessages = (messages: Message[]) => {
   let userMessageFound = false;
   return messages
+    .reverse()
     .filter((message) => message.role !== Role.Assistant)
     .reduce((acc, current) => {
       if (current.role === Role.User && !userMessageFound) {
