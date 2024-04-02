@@ -113,7 +113,9 @@ export const OpenAIStream = async ({
       model.limits?.isMaxRequestTokensCustom
     ) {
       retries += 1;
+      const json = await res.json();
       logger.info(
+        json,
         `Getting 400 error and retrying chat request to ${model.id} model`,
       );
       messagesToSend = hardLimitMessages(messagesToSend);

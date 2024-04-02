@@ -30,7 +30,7 @@ export class ShareService {
   public static share(
     shareData: ShareRequestModel,
   ): Observable<ShareByLinkResponseModel> {
-    return ApiUtils.request(`api/share/create`, {
+    return ApiUtils.request('api/share/create', {
       method: 'POST',
       body: JSON.stringify(shareData),
     });
@@ -39,7 +39,7 @@ export class ShareService {
   public static shareAccept(
     shareAcceptData: ShareAcceptRequestModel,
   ): Observable<void> {
-    return ApiUtils.request(`api/share/accept`, {
+    return ApiUtils.request('api/share/accept', {
       method: 'POST',
       body: JSON.stringify(shareAcceptData),
     });
@@ -48,14 +48,14 @@ export class ShareService {
   public static getShareDetails(
     shareAcceptData: ShareAcceptRequestModel,
   ): Observable<InvitationDetails> {
-    return ApiUtils.request(`api/share/details`, {
+    return ApiUtils.request('api/share/details', {
       method: 'POST',
       body: JSON.stringify(shareAcceptData),
     });
   }
 
   public static shareRevoke(resourceUrls: string[]): Observable<void> {
-    return ApiUtils.request(`api/share/revoke`, {
+    return ApiUtils.request('api/share/revoke', {
       method: 'POST',
       body: JSON.stringify({
         resources: resourceUrls.map((url) => ({ url })),
@@ -64,7 +64,7 @@ export class ShareService {
   }
 
   public static shareDiscard(resourceUrls: string[]): Observable<void> {
-    return ApiUtils.request(`api/share/discard`, {
+    return ApiUtils.request('api/share/discard', {
       method: 'POST',
       body: JSON.stringify({
         resources: resourceUrls.map((url) => ({ url })),
@@ -78,7 +78,7 @@ export class ShareService {
     entities: (ConversationInfo | PromptInfo)[];
     folders: FolderInterface[];
   }> {
-    return ApiUtils.request(`api/share/listing`, {
+    return ApiUtils.request('api/share/listing', {
       method: 'POST',
       body: JSON.stringify(sharedListingData),
     }).pipe(
