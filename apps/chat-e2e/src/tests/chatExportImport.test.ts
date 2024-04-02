@@ -129,9 +129,6 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-        await folderConversations.expandFolder(
-          conversationInFolder.folders.name,
-        );
 
         await folderConversations
           .getFolderEntity(
@@ -701,7 +698,6 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-        await folderConversations.expandFolder(nestedFolders[levelsCount].name);
 
         await folderConversations
           .getFolderEntity(
@@ -724,9 +720,6 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-        for (let i = levelsCount - 1; i <= levelsCount; i++) {
-          await folderConversations.expandFolder(nestedFolders[i].name);
-        }
 
         await folderConversations
           .getFolderEntity(

@@ -631,10 +631,6 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     switchMap(({ folderId, conversations, folders }) => {
       const actions: Observable<AnyAction>[] = [];
       const deletedConversationsIds = conversations.map((conv) => conv.id);
-      const openedFolderIds = UISelectors.selectOpenedFoldersIds(
-        state$.value,
-        FeatureType.Chat,
-      );
 
       if (deletedConversationsIds.length) {
         actions.push(
@@ -657,14 +653,6 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
               (folder) =>
                 folder.id !== folderId && !folder.id.startsWith(`${folderId}/`),
             ),
-          }),
-        ),
-        of(
-          UIActions.setOpenedFoldersIds({
-            openedFolderIds: openedFolderIds.filter(
-              (id) => id !== folderId && !id.startsWith(`${folderId}/`),
-            ),
-            featureType: FeatureType.Chat,
           }),
         ),
         ...actions,

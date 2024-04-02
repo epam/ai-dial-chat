@@ -477,10 +477,6 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ folderId, promptsToDelete, folders }) => {
       const actions: Observable<AnyAction>[] = [];
-      const openedFolderIds = UISelectors.selectOpenedFoldersIds(
-        state$.value,
-        FeatureType.Prompt,
-      );
 
       if (promptsToDelete.length) {
         actions.push(
@@ -501,14 +497,6 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
               (folder) =>
                 folder.id !== folderId && !folder.id.startsWith(`${folderId}/`),
             ),
-          }),
-        ),
-        of(
-          UIActions.setOpenedFoldersIds({
-            openedFolderIds: openedFolderIds.filter(
-              (id) => id !== folderId && !id.startsWith(`${folderId}/`),
-            ),
-            featureType: FeatureType.Prompt,
           }),
         ),
         ...actions,

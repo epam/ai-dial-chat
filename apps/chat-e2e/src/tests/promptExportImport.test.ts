@@ -626,7 +626,6 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
-        await folderPrompts.expandFolder(nestedFolders[levelsCount].name);
 
         await folderPrompts
           .getFolderEntity(
@@ -649,10 +648,6 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
-
-        for (let i = levelsCount - 1; i <= levelsCount; i++) {
-          await folderPrompts.expandFolder(nestedFolders[i].name);
-        }
 
         await folderPrompts
           .getFolderEntity(
