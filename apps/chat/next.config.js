@@ -83,6 +83,11 @@ const nextConfig = {
         destination: '/?share=:slug',
         permanent: false,
       },
+      {
+        source: '/models/:slug([A-Za-z0-9-]+)',
+        destination: '/?isolated-model-id=:slug',
+        permanent: false,
+      },
     ];
   },
 
