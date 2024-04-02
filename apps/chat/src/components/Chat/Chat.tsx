@@ -99,6 +99,7 @@ export const ChatView = memo(() => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -148,9 +149,14 @@ export const ChatView = memo(() => {
             );
           }
 
+          const model = models.find(({ id }) => id === conv.model.id);
+
           return (
             !modelIds.includes(conv.model.id) ||
-            (conv.assistantModelId && !modelIds.includes(conv.assistantModelId))
+            (model &&
+              model.type === EntityType.Assistant &&
+              conv.assistantModelId &&
+              !modelIds.includes(conv.assistantModelId))
           );
         }));
     if (isNotAllowedModel) {
@@ -566,7 +572,8 @@ export const ChatView = memo(() => {
 
   const showLastMessageRegenerate =
     !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
-  const showFloatingOverlay = isSmallScreen() && isAnyMenuOpen;
+  const showFloatingOverlay =
+    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
 
   return (
     <div
