@@ -520,9 +520,10 @@ const replaceFeaturesEpic: AppEpic = (action$) =>
         });
       }
 
-      return concat(...actions);
+      return concat(...actions).pipe(
+        takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
+      );
     }),
-    takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
   );
 
 const importZipEpic: AppEpic = (action$) =>
