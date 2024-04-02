@@ -118,6 +118,10 @@ export const FileItem = ({
           {!isSelected && item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
+              containerClassName={classNames(
+                item.status !== UploadStatus.LOADING &&
+                  'group-hover/file-item:hidden',
+              )}
               featureType={FeatureType.Chat}
               isHighlighted={isSelected}
             >

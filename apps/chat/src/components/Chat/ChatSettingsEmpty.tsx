@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { Conversation } from '@/src/types/chat';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -9,6 +10,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
+import { ModelDescription } from './ModelDescription';
 
 interface Props {
   isModels: boolean;
@@ -64,9 +66,16 @@ export const ChatSettingsEmpty = ({
                     data-qa="app-name"
                     className="w-full whitespace-pre text-center text-xl font-semibold"
                   >
-                    {isolatedModelId && modelsMap[isolatedModelId]
-                      ? modelsMap[isolatedModelId]?.name
-                      : appName}
+                    {isolatedModelId && modelsMap[isolatedModelId] ? (
+                      <ModelDescription
+                        model={modelsMap[isolatedModelId] as DialAIEntityModel}
+                        className="justify-center"
+                        hideMoreInfo
+                        isShortDescription
+                      />
+                    ) : (
+                      appName
+                    )}
                   </h4>
                 </div>
               )}
