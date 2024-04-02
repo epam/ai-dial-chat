@@ -58,6 +58,9 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   const dispatch = useAppDispatch();
 
   const featureType = useAppSelector(ImportExportSelectors.selectFeatureType);
+  const isLoading = useAppSelector(
+    ImportExportSelectors.selectIsLoadingImportExport,
+  );
 
   const conversations = useAppSelector(
     ImportExportSelectors.selectConversationToReplace,
@@ -188,7 +191,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     }
 
     if (!itemsToReplace.length && !itemsToPostfix.length) {
-      if (featureType !== FeatureType.File) {
+      if (featureType !== FeatureType.File && !isLoading) {
         dispatch(ImportExportActions.importStop());
       }
       if (featureType === FeatureType.File) {
@@ -239,6 +242,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     featuresToReplace,
     mappedActions,
     importedHistory,
+    isLoading,
   ]);
 
   useEffect(() => {

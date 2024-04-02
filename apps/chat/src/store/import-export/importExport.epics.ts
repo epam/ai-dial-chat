@@ -519,7 +519,7 @@ const replaceFeaturesEpic: AppEpic = (action$) =>
           );
         });
       }
-
+      mergeAll(5);
       return concat(...actions).pipe(
         takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
       );
