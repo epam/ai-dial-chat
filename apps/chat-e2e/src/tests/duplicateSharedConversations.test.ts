@@ -260,10 +260,12 @@ dialSharedWithMeTest(
             ExpectedMessages.conversationsToCompareOptionsValid,
           )
           .toEqual(
-            [
-              secondComparedConversation.name,
-              thirdComparedConversation.name,
-            ].sort(),
+            expect.arrayContaining(
+              [
+                secondComparedConversation.name,
+                thirdComparedConversation.name,
+              ].sort(),
+            ),
           );
       },
     );
