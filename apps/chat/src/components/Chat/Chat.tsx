@@ -148,9 +148,14 @@ export const ChatView = memo(() => {
             );
           }
 
+          const model = models.find(({ id }) => id === conv.model.id);
+
           return (
             !modelIds.includes(conv.model.id) ||
-            (conv.assistantModelId && !modelIds.includes(conv.assistantModelId))
+            (model &&
+              model.type === EntityType.Assistant &&
+              conv.assistantModelId &&
+              !modelIds.includes(conv.assistantModelId))
           );
         }));
     if (isNotAllowedModel) {
