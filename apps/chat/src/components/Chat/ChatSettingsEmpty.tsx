@@ -71,6 +71,7 @@ export const ChatSettingsEmpty = ({
                         model={modelsMap[isolatedModelId] as DialAIEntityModel}
                         className="justify-center"
                         hideMoreInfo
+                        isShortDescription
                       />
                     ) : (
                       appName
