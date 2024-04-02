@@ -851,7 +851,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 switchMap(() => of(null)),
                 catchError((err) => {
                   const { name } = getConversationInfoFromId(id);
-                  console.error(`Error during deleting "${name}"`, err);
+                  !suppressErrorMessage &&
+                    console.error(`Error during deleting "${name}"`, err);
                   return of(name);
                 }),
               ),
