@@ -32,6 +32,8 @@ export class ChatMessages extends BaseElement {
       ChatSelectors.chatMessage,
     );
 
+  public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
+
   public messageStage = (messagesIndex: number, stageIndex: number) =>
     this.chatMessages
       .getNthElement(messagesIndex)
@@ -389,5 +391,12 @@ export class ChatMessages extends BaseElement {
       .locator(ChatSelectors.messageIcon)
       .locator(SideBarSelectors.arrowAdditionalIcon)
       .isVisible();
+  }
+
+  public async regenerateResponse(waitForAnswer = true) {
+    await this.regenerate.click();
+    if (waitForAnswer) {
+      await this.waitForResponseReceived();
+    }
   }
 }

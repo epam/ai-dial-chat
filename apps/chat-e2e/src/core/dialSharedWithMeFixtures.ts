@@ -5,8 +5,12 @@ import {
   ChatHeader,
   ChatInfoTooltip,
   ChatMessages,
+  Compare,
   ConfirmationDialog,
+  ConversationToCompare,
+  Conversations,
   DropdownMenu,
+  ModelSelector,
 } from '../ui/webElements';
 
 import config from '@/config/playwright.config';
@@ -33,6 +37,10 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChatInfoTooltip: ChatInfoTooltip;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
+  additionalShareUserConversations: Conversations;
+  additionalShareUserCompare: Compare;
+  additionalShareUserCompareConversation: ConversationToCompare;
+  additionalShareUserCompareConversationSelector: ModelSelector;
   additionalShareUserNotFound: ChatNotFound;
   additionalShareUserConfirmationDialog: ConfirmationDialog;
 }>({
@@ -94,6 +102,34 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChat: async ({ additionalShareUserAppContainer }, use) => {
     const additionalShareUserChat = additionalShareUserAppContainer.getChat();
     await use(additionalShareUserChat);
+  },
+  additionalShareUserConversations: async (
+    { additionalShareUserChatBar },
+    use,
+  ) => {
+    const additionalShareUserConversations =
+      additionalShareUserChatBar.getConversations();
+    await use(additionalShareUserConversations);
+  },
+  additionalShareUserCompare: async ({ additionalShareUserChat }, use) => {
+    const additionalShareUserCompare = additionalShareUserChat.getCompare();
+    await use(additionalShareUserCompare);
+  },
+  additionalShareUserCompareConversation: async (
+    { additionalShareUserCompare },
+    use,
+  ) => {
+    const additionalShareUserCompareConversation =
+      additionalShareUserCompare.getConversationToCompare();
+    await use(additionalShareUserCompareConversation);
+  },
+  additionalShareUserCompareConversationSelector: async (
+    { additionalShareUserCompareConversation },
+    use,
+  ) => {
+    const additionalShareUserCompareConversationSelector =
+      additionalShareUserCompareConversation.getConversationSelector();
+    await use(additionalShareUserCompareConversationSelector);
   },
   additionalShareUserChatHeader: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatHeader =

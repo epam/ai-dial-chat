@@ -63,7 +63,7 @@ dialTest(
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
           );
-        await chat.regenerateResponse(false);
+        await chatMessages.regenerateResponse(false);
         const preservedPartialContent =
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
@@ -120,7 +120,8 @@ dialTest(
           .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
           .toBe(ExpectedConstants.answerError);
 
-        const isGenerateResponseVisible = await chat.regenerate.isVisible();
+        const isGenerateResponseVisible =
+          await chatMessages.regenerate.isVisible();
         expect
           .soft(
             isGenerateResponseVisible,
@@ -211,7 +212,7 @@ dialTest(
     await dialTest.step(
       'Click Regenerate response and validate answer received',
       async () => {
-        await chat.regenerateResponse(false);
+        await chatMessages.regenerateResponse(false);
         await chatMessages.waitForPartialMessageReceived(2);
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
@@ -462,7 +463,8 @@ dialTest(
           .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedModelIcon);
 
-        const isRegenerateButtonVisible = await chat.regenerate.isVisible();
+        const isRegenerateButtonVisible =
+          await chatMessages.regenerate.isVisible();
         expect
           .soft(
             isRegenerateButtonVisible,
@@ -522,7 +524,7 @@ dialTest(
     await dialTest.step(
       'Send request and stop generation when partial content received',
       async () => {
-        await chat.regenerateResponse(false);
+        await chatMessages.regenerateResponse(false);
         await chatMessages.waitForPartialMessageReceived(2);
         await chat.stopGenerating.click();
       },
@@ -541,7 +543,8 @@ dialTest(
           .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedModelIcon);
 
-        const isRegenerateButtonVisible = await chat.regenerate.isVisible();
+        const isRegenerateButtonVisible =
+          await chatMessages.regenerate.isVisible();
         expect
           .soft(
             isRegenerateButtonVisible,
