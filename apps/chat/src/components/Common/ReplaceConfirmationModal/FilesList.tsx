@@ -54,13 +54,13 @@ export const FilesList = ({
           </div>
         );
       })}
-      {duplicatedFiles.map((file, index) => {
+      {duplicatedFiles.map((file) => {
         if (!isRootId(file.folderId)) {
           return null;
         }
 
         return (
-          <div key={index + file.id}>
+          <div key={file.id}>
             <FilesRow
               item={file}
               onEvent={onItemEvent}
