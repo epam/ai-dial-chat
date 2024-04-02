@@ -14,9 +14,15 @@ interface Props {
   model: DialAIEntityModel;
   hideMoreInfo?: boolean;
   className?: string;
+  isShortDescription?: boolean;
 }
 
-export const ModelDescription = ({ model, hideMoreInfo, className }: Props) => {
+export const ModelDescription = ({
+  model,
+  hideMoreInfo,
+  className,
+  isShortDescription,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
@@ -30,8 +36,11 @@ export const ModelDescription = ({ model, hideMoreInfo, className }: Props) => {
         <span>{getOpenAIEntityFullName(model)}</span>
       </div>
       {model.description && (
-        <span className="text-xs text-secondary" data-qa="app-descr">
-          <EntityMarkdownDescription>
+        <span
+          className="whitespace-pre-wrap text-xs text-secondary"
+          data-qa="app-descr"
+        >
+          <EntityMarkdownDescription isShortDescription={isShortDescription}>
             {model.description}
           </EntityMarkdownDescription>
         </span>
