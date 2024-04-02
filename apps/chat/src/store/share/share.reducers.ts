@@ -20,7 +20,7 @@ export interface ShareState {
   shareResourceName: string | undefined;
   shareModalState: ModalState;
   acceptedId: string | undefined;
-  isFolderAccepted: string | undefined;
+  isFolderAccepted: boolean | undefined;
   shareFeatureType?: FeatureType;
   shareIsFolder?: boolean;
 }
