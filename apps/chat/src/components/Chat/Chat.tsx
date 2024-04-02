@@ -99,6 +99,7 @@ export const ChatView = memo(() => {
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -571,7 +572,8 @@ export const ChatView = memo(() => {
 
   const showLastMessageRegenerate =
     !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
-  const showFloatingOverlay = isSmallScreen() && isAnyMenuOpen;
+  const showFloatingOverlay =
+    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
 
   return (
     <div
