@@ -334,7 +334,7 @@ const importConversationsEpic: AppEpic = (action$) =>
     catchError(() => of(ImportExportActions.importFail())),
   );
 
-const uploadImportedConversationsEpic: AppEpic = (action$) =>
+const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadImportedConversations.match),
     switchMap(({ payload }) => {
@@ -374,8 +374,11 @@ const uploadImportedConversationsEpic: AppEpic = (action$) =>
                 cleanFolders,
               );
 
-              // const foldersToOpen =
               const firstImportedConverstaion = uploadedConversations[0];
+
+              const isReplaceFinished =
+                ImportExportSelectors.selectIsReplaceFinished(state$.value);
+
               return concat(
                 of(
                   ConversationsActions.importConversationsSuccess({
@@ -395,9 +398,13 @@ const uploadImportedConversationsEpic: AppEpic = (action$) =>
                   }),
                 ),
                 iif(
-                  () => !payload.disableStateReset,
+                  () => !payload.disableStateReset && isReplaceFinished,
                   of(ImportExportActions.resetState()),
-                  EMPTY,
+                  of(
+                    ImportExportActions.setPostfixFinished({
+                      isPostfixFinished: true,
+                    }),
+                  ),
                 ),
               );
             }),
@@ -420,7 +427,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$) =>
     }),
   );
 
-const uploadImportedPromptsEpic: AppEpic = (action$) =>
+const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadImportedPrompts.match),
     switchMap(({ payload }) => {
@@ -451,6 +458,9 @@ const uploadImportedPromptsEpic: AppEpic = (action$) =>
 
               const newFolders = combineEntities(promptsFolders, cleanFolders);
 
+              const isReplaceFinished =
+                ImportExportSelectors.selectIsReplaceFinished(state$.value);
+
               return concat(
                 of(
                   PromptsActions.importPromptsSuccess({
@@ -459,9 +469,13 @@ const uploadImportedPromptsEpic: AppEpic = (action$) =>
                   }),
                 ),
                 iif(
-                  () => !disableStateReset,
+                  () => !disableStateReset && isReplaceFinished,
                   of(ImportExportActions.resetState()),
-                  EMPTY,
+                  of(
+                    ImportExportActions.setPostfixFinished({
+                      isPostfixFinished: true,
+                    }),
+                  ),
                 ),
               );
             }),

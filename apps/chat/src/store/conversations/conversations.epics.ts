@@ -105,7 +105,10 @@ import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
-import { ImportExportActions } from '../import-export/importExport.reducers';
+import {
+  ImportExportActions,
+  ImportExportSelectors,
+} from '../import-export/importExport.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -2392,6 +2395,9 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
       });
 
+      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
+        state$.value,
+      );
       return concat(
         of(
           ConversationsActions.updateConversationSuccess({
@@ -2413,7 +2419,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           of(ConversationsActions.saveConversation(newConversation)),
         ),
         iif(
-          () => !!isImportFinish,
+          () => !!isImportFinish && isPostfixFinished,
           concat(
             of(
               ConversationsActions.selectConversations({
@@ -2428,7 +2434,9 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             ),
             of(ImportExportActions.resetState()),
           ),
-          EMPTY,
+          of(
+            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
+          ),
         ),
       );
     }),

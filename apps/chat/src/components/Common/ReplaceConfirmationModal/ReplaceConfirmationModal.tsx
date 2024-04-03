@@ -215,9 +215,15 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       dispatch(
         ImportExportActions.replaceFeatures({ itemsToReplace, featureType }),
       );
+      dispatch(
+        ImportExportActions.setReplaceFinished({ isReplaceFinished: false }),
+      );
     }
 
     if (itemsToPostfix.length) {
+      dispatch(
+        ImportExportActions.setPostfixFinished({ isPostfixFinished: false }),
+      );
       if (featureType === FeatureType.Chat) {
         dispatch(
           ImportExportActions.uploadImportedConversations({

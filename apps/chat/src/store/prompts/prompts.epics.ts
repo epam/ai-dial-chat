@@ -65,7 +65,10 @@ import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
-import { ImportExportActions } from '../import-export/importExport.reducers';
+import {
+  ImportExportActions,
+  ImportExportSelectors,
+} from '../import-export/importExport.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
@@ -276,6 +279,10 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         ),
       };
 
+      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
+        state$.value,
+      );
+
       return concat(
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
         iif(
@@ -284,9 +291,11 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
           of(PromptsActions.savePrompt(newPrompt)),
         ),
         iif(
-          () => !!isImportFinish,
+          () => !!isImportFinish && isPostfixFinished,
           of(ImportExportActions.resetState()),
-          EMPTY,
+          of(
+            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
+          ),
         ),
       );
     }),

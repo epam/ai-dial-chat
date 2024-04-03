@@ -34,6 +34,8 @@ interface ImportExportState {
   duplicatedFiles: DialFile[];
   isShowReplaceDialog: boolean;
   featureType: FeatureType;
+  isReplaceFinished: boolean;
+  isPostfixFinished: boolean;
 }
 
 const defaultImportedHistory: LatestExportFormat = {
@@ -57,6 +59,8 @@ const initialState: ImportExportState = {
   operation: undefined,
   isShowReplaceDialog: false,
   featureType: FeatureType.Chat,
+  isReplaceFinished: true,
+  isPostfixFinished: true,
 };
 
 export const importExportSlice = createSlice({
@@ -153,7 +157,6 @@ export const importExportSlice = createSlice({
     ) => {
       if (!payload.disableStateReset) {
         state.isShowReplaceDialog = false;
-        state.conversationsToReplace = [];
       }
     },
     importPrompts: (state) => {
@@ -173,7 +176,6 @@ export const importExportSlice = createSlice({
     ) => {
       if (!payload.disableStateReset) {
         state.isShowReplaceDialog = false;
-        state.promptsToReplace = [];
       }
     },
     showReplaceDialog: (
@@ -212,26 +214,28 @@ export const importExportSlice = createSlice({
     },
     replaceFeatures: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         itemsToReplace: (DialFile | ConversationInfo | Prompt)[];
         featureType: FeatureType;
       }>,
     ) => {
       state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
-
-      if (payload.featureType === FeatureType.Chat) {
-        state.conversationsToReplace = [];
-      }
-
-      if (payload.featureType === FeatureType.Prompt) {
-        state.promptsToReplace = [];
-      }
     },
     closeReplaceDialog: (state) => {
       state.isShowReplaceDialog = false;
+    },
+    setReplaceFinished: (
+      state,
+      { payload }: PayloadAction<{ isReplaceFinished: boolean }>,
+    ) => {
+      state.isReplaceFinished = payload.isReplaceFinished;
+    },
+    setPostfixFinished: (
+      state,
+      { payload }: PayloadAction<{ isPostfixFinished: boolean }>,
+    ) => {
+      state.isPostfixFinished = payload.isPostfixFinished;
     },
   },
 });
@@ -290,6 +294,14 @@ const selectNonDuplicatedFiles = createSelector([rootSelector], (state) => {
   return state.nonDuplicatedFiles;
 });
 
+const selectIsReplaceFinished = createSelector([rootSelector], (state) => {
+  return state.isReplaceFinished;
+});
+
+const selectIsPostfixFinished = createSelector([rootSelector], (state) => {
+  return state.isPostfixFinished;
+});
+
 export const ImportExportSelectors = {
   selectAttachmentsIdsToUpload,
   selectUploadedAttachments,
@@ -304,6 +316,8 @@ export const ImportExportSelectors = {
   selectPromptsToReplace,
   selectDuplicatedFiles,
   selectNonDuplicatedFiles,
+  selectIsReplaceFinished,
+  selectIsPostfixFinished,
 };
 
 export const ImportExportActions = importExportSlice.actions;
