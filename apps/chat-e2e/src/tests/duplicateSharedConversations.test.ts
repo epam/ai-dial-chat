@@ -106,10 +106,8 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     additionalShareUserChat,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-1844');
-    setIssueIds('1166');
     let folderConversation: FolderConversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let conversationName: string;
