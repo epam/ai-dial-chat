@@ -120,97 +120,113 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$) =>
+const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
-    switchMap(() => ConversationService.getSelectedConversationsIds()),
-    switchMap((selectedIds) => {
-      if (!selectedIds.length) {
-        return forkJoin({
-          selectedConversations: of([]),
-          selectedIds: of([]),
-        });
-      }
-      return forkJoin({
-        selectedConversations: zip(
-          selectedIds.map((id) =>
-            ConversationService.getConversation(
-              getConversationInfoFromId(id),
-            ).pipe(
-              catchError((err) => {
-                console.error('The selected conversation was not found:', err);
-                return of(null);
+    switchMap(() =>
+      ConversationService.getSelectedConversationsIds().pipe(
+        switchMap((selectedIds) => {
+          if (!selectedIds.length) {
+            return forkJoin({
+              selectedConversations: of([]),
+              selectedIds: of([]),
+            });
+          }
+          return forkJoin({
+            selectedConversations: zip(
+              selectedIds.map((id) =>
+                ConversationService.getConversation(
+                  getConversationInfoFromId(id),
+                ).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The selected conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                ),
+              ),
+            ),
+            selectedIds: of(selectedIds),
+          });
+        }),
+        map(({ selectedConversations, selectedIds }) => {
+          const conversations = selectedConversations
+            .filter(Boolean)
+            .map((conv) => regenerateConversationId(conv!));
+          if (!selectedIds.length || !conversations.length) {
+            return {
+              conversations: [],
+              selectedConversationsIds: [],
+            };
+          }
+
+          const existingSelectedConversationsIds = selectedIds.filter((id) =>
+            conversations.some((conv) => conv.id === id),
+          );
+
+          return {
+            conversations,
+            selectedConversationsIds: existingSelectedConversationsIds,
+          };
+        }),
+        switchMap(({ conversations, selectedConversationsIds }) => {
+          const actions: Observable<AnyAction>[] = [];
+          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+            state$.value,
+          );
+
+          // Always create new conversation in isolated view
+          if (isIsolatedView) {
+            const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
+              state$.value,
+            );
+
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [`isolated_${isolatedModelId}`],
+                  shouldUploadConversationsForCompare: true,
+                }),
+              ),
+            );
+            return concat(...actions);
+          }
+
+          if (conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.addConversations({
+                  conversations,
+                  selectAdded: true,
+                }),
+              ),
+            );
+            const paths = selectedConversationsIds.flatMap((id) =>
+              getParentFolderIdsFromEntityId(id),
+            );
+            actions.push(
+              of(
+                UIActions.setOpenedFoldersIds({
+                  openedFolderIds: paths,
+                  featureType: FeatureType.Chat,
+                }),
+              ),
+            );
+          }
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: selectedConversationsIds,
               }),
             ),
-          ),
-        ),
-        selectedIds: of(selectedIds),
-      });
-    }),
-    map(({ selectedConversations, selectedIds }) => {
-      const conversations = selectedConversations
-        .filter(Boolean)
-        .map((conv) => regenerateConversationId(conv!));
-      if (!selectedIds.length || !conversations.length) {
-        return {
-          conversations: [],
-          selectedConversationsIds: [],
-        };
-      }
+          );
 
-      const existingSelectedConversationsIds = selectedIds.filter((id) =>
-        conversations.some((conv) => conv.id === id),
-      );
-
-      return {
-        conversations,
-        selectedConversationsIds: existingSelectedConversationsIds,
-      };
-    }),
-    switchMap(({ conversations, selectedConversationsIds }) => {
-      const actions: Observable<AnyAction>[] = [];
-
-      if (conversations.length) {
-        actions.push(
-          of(
-            ConversationsActions.addConversations({
-              conversations,
-              selectAdded: true,
-            }),
-          ),
-        );
-        const paths = selectedConversationsIds.flatMap((id) =>
-          getParentFolderIdsFromEntityId(id),
-        );
-        actions.push(
-          of(
-            UIActions.setOpenedFoldersIds({
-              openedFolderIds: paths,
-              featureType: FeatureType.Chat,
-            }),
-          ),
-        );
-      }
-      actions.push(
-        of(
-          ConversationsActions.selectConversations({
-            conversationIds: selectedConversationsIds,
-          }),
-        ),
-      );
-      if (!conversations.length) {
-        actions.push(
-          of(
-            ConversationsActions.createNewConversations({
-              names: [translate(DEFAULT_CONVERSATION_NAME)],
-              shouldUploadConversationsForCompare: true,
-            }),
-          ),
-        );
-      }
-
-      return concat(...actions);
-    }),
+          return concat(...actions);
+        }),
+      ),
+    ),
   );
 
 const initFoldersAndConversationsEpic: AppEpic = (action$) =>
@@ -272,7 +288,16 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
-        map((state) => ModelsSelectors.selectRecentModels(state)),
+        map((state) => {
+          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(state);
+          const isolatedModelId =
+            SettingsSelectors.selectIsolatedModelId(state);
+          if (isIsolatedView && isolatedModelId) {
+            const models = ModelsSelectors.selectModels(state);
+            return models.filter((i) => i?.id === isolatedModelId);
+          }
+          return ModelsSelectors.selectRecentModels(state);
+        }),
         filter((models) => models && models.length > 0),
         take(1),
         switchMap((recentModels) => {
@@ -732,86 +757,109 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
       selectedConversationsIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
       deleteIds: new Set(payload.conversationIds),
+      suppressErrorMessage: payload.suppressErrorMessage || false,
     })),
-    switchMap(({ conversations, selectedConversationsIds, deleteIds }) => {
-      const otherConversations = conversations.filter(
-        (conv) => !deleteIds.has(conv.id),
-      );
-
-      const newSelectedConversationsIds = selectedConversationsIds.filter(
-        (id) => !deleteIds.has(id),
-      );
-
-      const actions: Observable<AnyAction>[] = [];
-
-      if (otherConversations.length === 0) {
-        actions.push(
-          of(
-            ConversationsActions.createNewConversations({
-              names: [translate(DEFAULT_CONVERSATION_NAME)],
-            }),
-          ),
+    switchMap(
+      ({
+        conversations,
+        selectedConversationsIds,
+        deleteIds,
+        suppressErrorMessage,
+      }) => {
+        const otherConversations = conversations.filter(
+          (conv) => !deleteIds.has(conv.id),
         );
-      } else if (newSelectedConversationsIds.length === 0) {
-        actions.push(
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: [sortByDateAndName(otherConversations)[0].id],
-            }),
-          ),
-        );
-      } else if (
-        newSelectedConversationsIds.length !== selectedConversationsIds.length
-      ) {
-        actions.push(
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: newSelectedConversationsIds,
-            }),
-          ),
-        );
-      }
 
-      return concat(
-        ...actions,
-        zip(
-          Array.from(deleteIds).map((id) =>
-            ConversationService.deleteConversation(
-              getConversationInfoFromId(id),
-            ).pipe(
-              switchMap(() => of(null)),
-              catchError((err) => {
-                const { name } = getConversationInfoFromId(id);
-                console.error(`Error during deleting "${name}"`, err);
-                return of(name);
-              }),
-            ),
-          ),
-        ).pipe(
-          switchMap((failedNames) =>
-            concat(
-              iif(
-                () => failedNames.filter(Boolean).length > 0,
-                of(
-                  UIActions.showErrorToast(
-                    translate(
-                      `An error occurred while removing the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
-                    ),
-                  ),
-                ),
-                EMPTY,
-              ),
+        const newSelectedConversationsIds = selectedConversationsIds.filter(
+          (id) => !deleteIds.has(id),
+        );
+
+        const actions: Observable<AnyAction>[] = [];
+
+        const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+          state$.value,
+        );
+
+        // No need to recreate conversation for isolated view
+        if (!isIsolatedView) {
+          if (otherConversations.length === 0) {
+            actions.push(
               of(
-                ConversationsActions.deleteConversationsComplete({
-                  deleteIds,
+                ConversationsActions.createNewConversations({
+                  names: [translate(DEFAULT_CONVERSATION_NAME)],
                 }),
               ),
-              of(ConversationsActions.setConversations({ conversations: [] })),
+            );
+          } else if (newSelectedConversationsIds.length === 0) {
+            actions.push(
+              of(
+                ConversationsActions.selectConversations({
+                  conversationIds: [
+                    sortByDateAndName(otherConversations)[0].id,
+                  ],
+                }),
+              ),
+            );
+          } else if (
+            newSelectedConversationsIds.length !==
+            selectedConversationsIds.length
+          ) {
+            actions.push(
+              of(
+                ConversationsActions.selectConversations({
+                  conversationIds: newSelectedConversationsIds,
+                }),
+              ),
+            );
+          }
+        }
+
+        return concat(
+          ...actions,
+          zip(
+            Array.from(deleteIds).map((id) =>
+              ConversationService.deleteConversation(
+                getConversationInfoFromId(id),
+              ).pipe(
+                switchMap(() => of(null)),
+                catchError((err) => {
+                  const { name } = getConversationInfoFromId(id);
+                  !suppressErrorMessage &&
+                    console.error(`Error during deleting "${name}"`, err);
+                  return of(name);
+                }),
+              ),
+            ),
+          ).pipe(
+            switchMap((failedNames) =>
+              concat(
+                iif(
+                  () =>
+                    failedNames.filter(Boolean).length > 0 &&
+                    !suppressErrorMessage,
+                  of(
+                    UIActions.showErrorToast(
+                      translate(
+                        `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
+                      ),
+                    ),
+                  ),
+                  EMPTY,
+                ),
+                of(
+                  ConversationsActions.deleteConversationsComplete({
+                    deleteIds,
+                  }),
+                ),
+                of(
+                  ConversationsActions.setConversations({ conversations: [] }),
+                ),
+              ),
             ),
           ),
-        ),
-      );
-    }),
+        );
+      },
+    ),
   );
 
 const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
@@ -1038,7 +1086,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         value: payload.rate > 0 ? true : false,
       };
 
-      return fromFetch(`api/rate`, {
+      return fromFetch('api/rate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2489,6 +2537,38 @@ const openFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.cleanupIsolatedConversation.match(action),
+    ),
+    switchMap(() => {
+      const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+        state$.value,
+      );
+      const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
+        state$.value,
+      );
+      if (isIsolatedView && isolatedModelId) {
+        return of(
+          ConversationsActions.deleteConversations({
+            conversationIds: [
+              getGeneratedConversationId({
+                name: `isolated_${isolatedModelId}`,
+                folderId: getConversationRootId(),
+                model: {
+                  id: isolatedModelId,
+                },
+              }),
+            ],
+            suppressErrorMessage: true,
+          }),
+        );
+      }
+      return EMPTY;
+    }),
+  );
+
 export const ConversationsEpics = combineEpics(
   migrateConversationsIfRequiredEpic,
   skipFailedMigratedConversationsEpic,
@@ -2542,4 +2622,6 @@ export const ConversationsEpics = combineEpics(
   openFolderEpic,
   compareConversationsEpic,
   hideChatbarEpic,
+
+  cleanupIsolatedConversationEpic,
 );

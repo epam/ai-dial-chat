@@ -99,6 +99,8 @@ export const ChatInputMessage = ({
       : Infinity;
   const { getTokensLength } = useTokenizer(modelTokenizer);
 
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+
   const {
     content,
     setContent,
@@ -345,7 +347,7 @@ export const ChatInputMessage = ({
           )}
           style={{ maxHeight: `${MAX_HEIGHT}px` }}
           placeholder={
-            isOverlay
+            isOverlay || isIsolatedView
               ? t('Type a message') || ''
               : t('Type a text or «/» to use a prompt...') || ''
           }

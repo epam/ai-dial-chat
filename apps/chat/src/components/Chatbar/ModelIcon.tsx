@@ -22,8 +22,8 @@ const ModelIconTemplate = memo(
   ({ entity, size, animate, entityId }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
       entity?.type === EntityType.Addon
-        ? `api/themes/image?name=default-addon`
-        : `api/themes/image?name=default-model`;
+        ? 'api/themes/image?name=default-addon'
+        : 'api/themes/image?name=default-model';
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
     return (

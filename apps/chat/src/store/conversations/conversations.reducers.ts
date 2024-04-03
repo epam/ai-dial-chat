@@ -264,7 +264,10 @@ export const conversationsSlice = createSlice({
 
     deleteConversations: (
       state,
-      _action: PayloadAction<{ conversationIds: string[] }>,
+      _action: PayloadAction<{
+        conversationIds: string[];
+        suppressErrorMessage?: boolean;
+      }>,
     ) => state,
     deleteConversationsComplete: (
       state,
@@ -775,6 +778,7 @@ export const conversationsSlice = createSlice({
         id: string;
       }>,
     ) => state,
+    cleanupIsolatedConversation: (state) => state,
   },
 });
 
