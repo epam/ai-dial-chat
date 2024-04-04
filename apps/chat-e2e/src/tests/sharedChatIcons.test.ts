@@ -1173,7 +1173,7 @@ dialTest(
         const sharedEntities =
           await additionalSecondUserShareApiHelper.listSharedWithMeEntities();
         await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
-          sharedEntities.resources.filter((e) => e.name === conversation.name),
+          sharedEntities.resources.filter((e) => e.url === conversation.id),
         );
 
         await dialHomePage.openHomePage();
@@ -1187,7 +1187,7 @@ dialTest(
     await dialTest.step(
       'Delete conversation from shared for the rest user and verify arrow icon is not displayed for main user',
       async () => {
-        let sharedEntities =
+        const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
         await additionalUserShareApiHelper.deleteSharedWithMeEntities(
           sharedEntities.resources.filter((e) => e.url === conversation.id),
@@ -1197,6 +1197,82 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations
           .getConversationArrowIcon(conversation.name)
+          .waitFor({ state: 'hidden' });
+      },
+    );
+  },
+);
+
+dialTest(
+  'Shared icon disappears from folder if the folder was deleted from "Shared with me" by others',
+  async ({
+    dialHomePage,
+    folderConversations,
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalSecondUserShareApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2755');
+    let folderConversation: FolderConversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialTest.step(
+      'Prepare shared folder with conversation and share it with 2 users',
+      async () => {
+        folderConversation =
+          conversationData.prepareDefaultConversationInFolder();
+        await dataInjector.createConversations(
+          folderConversation.conversations,
+          folderConversation.folders,
+        );
+        shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
+          folderConversation.conversations,
+          true,
+        );
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+        await additionalSecondUserShareApiHelper.acceptInvite(
+          shareByLinkResponse,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Delete folder from shared for one of the user and verify arrow icon is displayed for main user',
+      async () => {
+        const sharedEntities =
+          await additionalSecondUserShareApiHelper.listSharedWithMeEntities();
+        await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
+          sharedEntities.resources.filter(
+            (e) => e.name === folderConversation.folders.name,
+          ),
+        );
+
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await folderConversations
+          .getFolderArrowIcon(folderConversation.folders.name)
+          .waitFor();
+      },
+    );
+
+    await dialTest.step(
+      'Delete conversation from shared for the rest user and verify arrow icon is not displayed for main user',
+      async () => {
+        const sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMeEntities();
+        await additionalUserShareApiHelper.deleteSharedWithMeEntities(
+          sharedEntities.resources.filter(
+            (e) => e.name === folderConversation.folders.name,
+          ),
+        );
+
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await folderConversations
+          .getFolderArrowIcon(folderConversation.folders.name)
           .waitFor({ state: 'hidden' });
       },
     );

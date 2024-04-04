@@ -151,6 +151,7 @@ const dialTest = test.extend<
     additionalUserShareApiHelper: ShareApiHelper;
     additionalUserItemApiHelper: ItemApiHelper;
     additionalSecondUserShareApiHelper: ShareApiHelper;
+    additionalSecondUserItemApiHelper: ItemApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -515,6 +516,15 @@ const dialTest = test.extend<
       additionalShareUserRequestContext,
     );
     await use(additionalUserItemApiHelper);
+  },
+  additionalSecondUserItemApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondUserItemApiHelper = new ItemApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondUserItemApiHelper);
   },
 });
 
