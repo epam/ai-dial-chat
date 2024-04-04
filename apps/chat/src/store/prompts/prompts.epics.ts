@@ -43,7 +43,7 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import {
   cleanPromptsFolders,
   exportPrompt,
