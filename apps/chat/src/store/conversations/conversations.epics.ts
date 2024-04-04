@@ -75,6 +75,7 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
@@ -558,15 +559,24 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
-      const conversationRootId = getConversationRootId();
+      const conversationFolderId = isEntityOrParentsExternal(
+        state$.value,
+        conversation,
+        FeatureType.Chat,
+      )
+        ? getConversationRootId()
+        : conversation.folderId;
+
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: conversationRootId,
+        folderId: conversationFolderId,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          conversations.filter((conv) => conv.folderId === conversationRootId), // only my root conversations
+          conversations.filter(
+            (conv) => conv.folderId === conversationFolderId,
+          ), // only root conversations for external entities
         ),
         lastActivityDate: Date.now(),
       });
