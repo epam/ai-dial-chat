@@ -368,7 +368,7 @@ export const ChatMessageContent = ({
         >
           {isUser ? (
             isEditing ? (
-              <div className="flex w-full flex-col gap-3">
+              <div data-no-context-menu className="flex w-full flex-col gap-3">
                 <div
                   className={classNames(
                     'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
