@@ -639,19 +639,9 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
       }),
     ),
     switchMap(({ folderId, conversations, folders }) => {
-      const childFolders = new Set([
-        folderId,
-        ...conversations.map((conv) => conv.folderId),
-      ]);
-      const deletedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
-      actions.push(
-        of(
-          ConversationsActions.setFolders({
-            folders: folders.filter((folder) => !childFolders.has(folder.id)),
-          }),
-        ),
-      );
+      const deletedConversationsIds = conversations.map((conv) => conv.id);
+
       if (deletedConversationsIds.length) {
         actions.push(
           of(
@@ -666,7 +656,17 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return concat(...actions);
+      return concat(
+        of(
+          ConversationsActions.setFolders({
+            folders: folders.filter(
+              (folder) =>
+                folder.id !== folderId && !folder.id.startsWith(`${folderId}/`),
+            ),
+          }),
+        ),
+        ...actions,
+      );
     }),
   );
 
