@@ -33,8 +33,13 @@ export const ExpectedConstants = {
   deleteSharedFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?\n' +
     'Deleting will stop sharing and other users will no longer see this folder.',
+  deleteSharedConversationMessage:
+    'Are you sure that you want to delete a conversation?\n' +
+    'Deleting will stop sharing and other users will no longer see this conversation.',
   renameSharedFolderMessage:
     'Renaming will stop sharing and other users will no longer see this folder.',
+  renameSharedConversationMessage:
+    'Renaming will stop sharing and other users will no longer see this conversation.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
@@ -63,7 +68,10 @@ export const ExpectedConstants = {
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
+  shareInviteDoesNotExist:
+    'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
+  revokeAccessTo: (name: string) => `Confirm revoking access to: ${name}`,
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',

@@ -18,7 +18,7 @@ export class ShareModal extends BaseElement {
   public shareLinkInput = this.getChildElementBySelector(
     ModalSelectors.shareLink,
   );
-  public chatName = this.getChildElementBySelector(ModalSelectors.chatName);
+  public entityName = this.getChildElementBySelector(ModalSelectors.entityName);
 
   public linkInputLoader = this.getChildElementBySelector(
     ChatSelectors.messageSpinner,
