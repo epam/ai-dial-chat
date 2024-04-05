@@ -25,7 +25,6 @@ export class Chat extends BaseElement {
   private compare!: Compare;
   private playBack!: Playback;
   private playbackControl!: PlaybackControl;
-  public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
   public replay = new BaseElement(this.page, ChatSelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(this.page, ChatSelectors.applyChanges).getNthElement(
@@ -44,6 +43,7 @@ export class Chat extends BaseElement {
   public notAllowedModelLabel = this.getChildElementBySelector(
     ChatSelectors.notAllowedModel,
   );
+  public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
@@ -102,11 +102,6 @@ export class Chat extends BaseElement {
     );
   }
 
-  public async regenerateResponse(waitForAnswer = true) {
-    await this.regenerate.click();
-    await this.waitForResponse(waitForAnswer);
-  }
-
   public async startReplay(userRequest?: string, waitForAnswer = false) {
     await this.replay.waitForState();
     const requestPromise = this.waitForRequestSent(userRequest);
@@ -160,7 +155,7 @@ export class Chat extends BaseElement {
     const leftRequestPromise = this.waitForRequestSent(
       comparedEntities.leftEntity,
     );
-    await this.regenerate.getNthElement(1).click();
+    await this.getChatMessages().regenerate.getNthElement(1).click();
     const rightRequest = await rightRequestPromise;
     const leftRequest = await leftRequestPromise;
     await this.waitForResponse(waitForAnswer);
@@ -244,5 +239,13 @@ export class Chat extends BaseElement {
 
   public async applyNewEntity() {
     await this.applyChanges().click();
+  }
+
+  public async duplicateSharedConversation() {
+    const respPromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'POST',
+    );
+    await this.duplicate.click();
+    await respPromise;
   }
 }

@@ -483,7 +483,7 @@ dialTest.skip(
       )
       .toBeTruthy();
 
-    await chat.regenerateResponse();
+    await chatMessages.regenerateResponse();
     let todayConversations = await conversations.getTodayConversations();
     expect
       .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
