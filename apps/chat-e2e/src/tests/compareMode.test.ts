@@ -650,7 +650,7 @@ dialTest(
         await chatMessages.waitForCompareMessageJumpingIconDisappears(
           Side.left,
         );
-        const isRegenerateButtonVisible = await chat.regenerate
+        const isRegenerateButtonVisible = await chatMessages.regenerate
           .getNthElement(1)
           .isVisible();
         expect
@@ -670,7 +670,7 @@ dialTest(
     await dialTest.step(
       'Click "Regenerate" button and verify last response is regenerated for both chats',
       async () => {
-        await chat.regenerate.getNthElement(1).waitFor();
+        await chatMessages.regenerate.getNthElement(1).waitFor();
 
         const requestsData = await chat.regenerateResponseInCompareMode({
           rightEntity: firstConversation.model.id,

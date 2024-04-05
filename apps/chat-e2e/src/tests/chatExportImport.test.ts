@@ -415,7 +415,7 @@ dialTest(
           chatBar.importButton.click(),
         );
         await conversations.selectConversation(importedRootConversation.name);
-        await chat.regenerateResponse();
+        await chatMessages.regenerateResponse();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect

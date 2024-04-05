@@ -172,7 +172,7 @@ dialTest(
       'Send one more request and verify model icon size remained the same',
       async () => {
         const initialMessageIconSize = await chatMessages.getMessageIconSize();
-        await chat.regenerate.waitForState();
+        await chatMessages.regenerate.waitForState();
 
         await chat.sendRequestWithButton('1+2=', false);
         const lastMessageIconSize = await chatMessages.getMessageIconSize();
