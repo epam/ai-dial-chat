@@ -23,6 +23,7 @@ import { OverlayEpics } from './overlay/overlay.epics';
 import { overlaySlice } from './overlay/overlay.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
+import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
 import { SettingsState, settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
@@ -55,6 +56,7 @@ const reducer = {
   auth: authSlice.reducer,
   importExport: importExportSlice.reducer,
   share: shareSlice.reducer,
+  apiService: serviceSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
