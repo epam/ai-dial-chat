@@ -19,7 +19,7 @@ import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { isConversationId, isPromptId } from '@/src/utils/app/id';
+import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { hasExternalParent } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
@@ -261,7 +261,7 @@ const acceptInvitationEpic: AppEpic = (action$) =>
               of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId: ApiUtils.decodeApiUrl(data.resources[0].url),
-                  isFolder: data.resources[0].url.endsWith('/'),
+                  isFolder: isFolderId(data.resources[0].url),
                 }),
               ),
             ),
