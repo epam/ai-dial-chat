@@ -21,6 +21,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { hasExternalParent } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
@@ -259,7 +260,8 @@ const acceptInvitationEpic: AppEpic = (action$) =>
             switchMap((data) =>
               of(
                 ShareActions.acceptShareInvitationSuccess({
-                  acceptedId: data.resources[0].url,
+                  acceptedId: ApiUtils.decodeApiUrl(data.resources[0].url),
+                  isFolder: isFolderId(data.resources[0].url),
                 }),
               ),
             ),
@@ -294,7 +296,7 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
       history.replaceState({}, '', window.location.origin);
 
       return concat(
-        of(ShareActions.resetShareId()),
+        of(ShareActions.resetAcceptedEntityInfo()),
         of(ConversationsActions.getSelectedConversations()),
         of(
           UIActions.showErrorToast(
@@ -441,13 +443,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.getSharedListingSuccess.match),
     switchMap(({ payload }) => {
       const actions = [];
-      const acceptedId = ShareSelectors.selectAcceptedId(state$.value);
-      const decodedAcceptedId = acceptedId && ApiUtils.decodeApiUrl(acceptedId);
-      const isNewResource = [
-        ...payload.resources.entities,
-        ...payload.resources.folders,
-      ].some((item) => item.id === decodedAcceptedId);
-
+      const { acceptedId, isFolderAccepted } =
+        ShareSelectors.selectAcceptedEntityInfo(state$.value);
       const [selectedConv] = ConversationsSelectors.selectSelectedConversations(
         state$.value,
       );
@@ -498,6 +495,28 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
+          if (
+            selectedConv &&
+            hasExternalParent(
+              state$.value,
+              selectedConv.folderId,
+              FeatureType.Chat,
+            )
+          ) {
+            const folderToUpload = payload.resources.folders.find((folder) =>
+              selectedConv.folderId.startsWith(`${folder.id}/`),
+            );
+
+            if (folderToUpload) {
+              actions.push(
+                ConversationsActions.uploadConversationsWithFoldersRecursive({
+                  path: folderToUpload.id,
+                  noLoader: true,
+                }),
+              );
+            }
+          }
+
           if (
             selectedConv &&
             payload.resources.entities.some(
@@ -615,12 +634,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      if (decodedAcceptedId && isNewResource) {
+      if (acceptedId) {
         if (isConversationId(acceptedId)) {
-          if (isFolderId(acceptedId)) {
+          if (isFolderAccepted) {
             actions.push(
               ConversationsActions.uploadConversationsWithFoldersRecursive({
-                path: decodedAcceptedId,
+                path: acceptedId,
                 selectFirst: true,
                 noLoader: true,
               }),
@@ -628,15 +647,15 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           } else {
             actions.push(
               ConversationsActions.selectConversations({
-                conversationIds: [decodedAcceptedId],
+                conversationIds: [acceptedId],
               }),
             );
           }
         } else if (isPromptId(acceptedId)) {
-          if (isFolderId(acceptedId)) {
+          if (isFolderAccepted) {
             actions.push(
               PromptsActions.uploadPromptsWithFoldersRecursive({
-                path: decodedAcceptedId,
+                path: acceptedId,
                 noLoader: true,
                 selectFirst: true,
               }),
@@ -644,12 +663,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
           } else {
             actions.push(
               PromptsActions.setSelectedPrompt({
-                promptId: decodedAcceptedId,
+                promptId: acceptedId,
               }),
             );
             actions.push(
               PromptsActions.uploadPrompt({
-                promptId: decodedAcceptedId,
+                promptId: acceptedId,
               }),
             );
           }
@@ -664,7 +683,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             }),
           );
         }
-        actions.push(ShareActions.resetShareId());
+        actions.push(ShareActions.resetAcceptedEntityInfo());
       }
 
       return concat(actions);
