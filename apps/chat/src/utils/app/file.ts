@@ -107,7 +107,7 @@ export const getFilesWithInvalidFileType = (
 };
 export const notAllowedSymbols = ':;,=/{}%&\\';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r)`,
+  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)`,
   'gm',
 );
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
