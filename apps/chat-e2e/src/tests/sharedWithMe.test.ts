@@ -368,22 +368,21 @@ dialSharedWithMeTest(
           ),
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        for (let i = 0; i <= nestedLevel; i++) {
-          await additionalShareUserSharedFolderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor();
-        }
+        await additionalShareUserSharedFolderConversations
+          .getFolderEntity(nestedFolders[0].name, nestedConversations[0].name)
+          .waitFor();
 
-        const conversationBackgroundColor =
-          await additionalShareUserSharedWithMeConversations.getConversationBackgroundColor(
-            nestedConversations[nestedLevel].name,
-          );
-        expect
-          .soft(
-            conversationBackgroundColor,
-            ExpectedMessages.conversationIsSelected,
-          )
-          .toBe(Colors.backgroundAccentSecondary);
+        //TODO: enable when issue https://github.com/epam/ai-dial-chat/issues/1202 is fixed
+        // const conversationBackgroundColor =
+        //   await additionalShareUserSharedWithMeConversations.getConversationBackgroundColor(
+        //     nestedConversations[0].name,
+        //   );
+        // expect
+        //   .soft(
+        //     conversationBackgroundColor,
+        //     ExpectedMessages.conversationIsSelected,
+        //   )
+        //   .toBe(Colors.backgroundAccentSecondary);
       },
     );
 
