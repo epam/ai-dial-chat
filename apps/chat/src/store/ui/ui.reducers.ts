@@ -2,6 +2,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
 import { Theme } from '@/src/types/themes';
+import { Feature } from 'libs/shared/src/types/features';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
@@ -265,8 +266,11 @@ export const selectShowSelectToMigrateWindow = createSelector(
 );
 
 export const selectIsAnyMenuOpen = createSelector(
-  [rootSelector],
-  (state) => state.showPromptbar || state.showChatbar || state.isProfileOpen,
+  [rootSelector, (_state, enabledFeatures) => enabledFeatures],
+  (state, enabledFeatures: Set<Feature>) =>
+    (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
+    (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
+    state.isProfileOpen,
 );
 
 export const UIActions = uiSlice.actions;
