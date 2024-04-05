@@ -1224,7 +1224,9 @@ dialSharedWithMeTest(
         let sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
         await additionalUserShareApiHelper.deleteSharedWithMeEntities(
-          sharedEntities.resources,
+          sharedEntities.resources.filter(
+            (r) => r.name === conversationInFolder.folders.name,
+          ),
         );
         sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();

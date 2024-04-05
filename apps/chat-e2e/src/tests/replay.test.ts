@@ -827,7 +827,7 @@ dialTest(
     await dialTest.step(
       'Regenerate response and verify it regenerated',
       async () => {
-        await chat.regenerateResponse();
+        await chatMessages.regenerateResponse();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect

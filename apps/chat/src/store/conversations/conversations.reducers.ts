@@ -433,6 +433,7 @@ export const conversationsSlice = createSlice({
     },
     clearConversations: (state) => {
       state.conversationsLoaded = false;
+      state.areSelectedConversationsLoaded = false;
     },
     clearConversationsSuccess: (state) => {
       state.conversations = state.conversations.filter(

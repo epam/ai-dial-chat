@@ -50,6 +50,7 @@ import {
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
 
@@ -483,25 +484,14 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
               'An error occurred while uploading prompts and folders:',
               err,
             );
-            return [];
+            return of([]);
           }),
         ),
         folders: of(PromptsSelectors.selectFolders(state$.value)),
       }),
     ),
     switchMap(({ folderId, promptsToDelete, folders }) => {
-      const childFolders = new Set([
-        folderId,
-        ...promptsToDelete.map((prompt) => prompt.folderId),
-      ]);
       const actions: Observable<AnyAction>[] = [];
-      actions.push(
-        of(
-          PromptsActions.setFolders({
-            folders: folders.filter((folder) => !childFolders.has(folder.id)),
-          }),
-        ),
-      );
 
       if (promptsToDelete.length) {
         actions.push(
@@ -515,7 +505,17 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         actions.push(of(PromptsActions.setPrompts({ prompts: [] })));
       }
 
-      return concat(...actions);
+      return concat(
+        of(
+          PromptsActions.setFolders({
+            folders: folders.filter(
+              (folder) =>
+                folder.id !== folderId && !folder.id.startsWith(`${folderId}/`),
+            ),
+          }),
+        ),
+        ...actions,
+      );
     }),
   );
 
@@ -574,15 +574,22 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       if (!prompt) return EMPTY;
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const promptRootId = getPromptRootId();
+      const promptFolderId = isEntityOrParentsExternal(
+        state$.value,
+        prompt,
+        FeatureType.Prompt,
+      )
+        ? getPromptRootId()
+        : prompt.folderId;
+
       const newPrompt = regeneratePromptId({
         ...prompt,
         ...resetShareEntity,
-        folderId: promptRootId,
+        folderId: promptFolderId,
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
           prompt.name,
-          prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
+          prompts.filter((prompt) => prompt.folderId === promptFolderId), // only root prompts for external entities
         ),
       });
 
