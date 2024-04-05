@@ -2,12 +2,12 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
 import { Theme } from '@/src/types/themes';
-import { Feature } from 'libs/shared/src/types/features';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '..';
 
+import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface UIState {
@@ -266,8 +266,8 @@ export const selectShowSelectToMigrateWindow = createSelector(
 );
 
 export const selectIsAnyMenuOpen = createSelector(
-  [rootSelector, (_state, enabledFeatures) => enabledFeatures],
-  (state, enabledFeatures: Set<Feature>) =>
+  [rootSelector, (_state, enabledFeatures: Set<Feature>) => enabledFeatures],
+  (state, enabledFeatures) =>
     (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
     (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||
     state.isProfileOpen,
