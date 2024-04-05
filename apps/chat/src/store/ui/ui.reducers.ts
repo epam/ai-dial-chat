@@ -6,6 +6,7 @@ import { Theme } from '@/src/types/themes';
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '..';
+import { SettingsSelectors } from '../settings/settings.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
@@ -266,7 +267,7 @@ export const selectShowSelectToMigrateWindow = createSelector(
 );
 
 export const selectIsAnyMenuOpen = createSelector(
-  [rootSelector, (_state, enabledFeatures: Set<Feature>) => enabledFeatures],
+  [rootSelector, SettingsSelectors.selectEnabledFeatures],
   (state, enabledFeatures) =>
     (state.showPromptbar && enabledFeatures.has(Feature.PromptsSection)) ||
     (state.showChatbar && enabledFeatures.has(Feature.ConversationsSection)) ||

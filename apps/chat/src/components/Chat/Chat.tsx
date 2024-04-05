@@ -98,9 +98,7 @@ export const ChatView = memo(() => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
-  const isAnyMenuOpen = useAppSelector((state) =>
-    UISelectors.selectIsAnyMenuOpen(state, enabledFeatures),
-  );
+  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
