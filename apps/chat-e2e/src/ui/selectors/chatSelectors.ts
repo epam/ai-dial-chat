@@ -90,4 +90,5 @@ export const ChatSelectors = {
   errorToast: 'div > .text-error',
   conversationNotFound: '[data-qa="not-found"]',
   codeblock: '.codeblock',
+  duplicate: '[data-qa="duplicate"]',
 };
