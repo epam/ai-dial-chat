@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersFromIds,
@@ -171,8 +173,8 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   );
 
   const handleContinueImport = useCallback(() => {
-    const itemsToPostfix = [];
-    const itemsToReplace = [];
+    let itemsToPostfix = [];
+    let itemsToReplace = [];
     for (const featureId in mappedActions) {
       const item = featuresToReplace.find(
         (feature) => feature.id === featureId,
@@ -189,7 +191,6 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         itemsToReplace.push(item);
       }
     }
-
     if (!itemsToReplace.length && !itemsToPostfix.length) {
       if (featureType !== FeatureType.File && !isLoading) {
         dispatch(ImportExportActions.importStop());
@@ -209,37 +210,17 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
           completeHistory: importedHistory,
         }),
       );
-    }
-
-    if (itemsToReplace.length && featureType !== FeatureType.File) {
+    } else {
       dispatch(
-        ImportExportActions.replaceFeatures({ itemsToReplace, featureType }),
-      );
-      dispatch(
-        ImportExportActions.setReplaceFinished({ isReplaceFinished: false }),
+        ImportExportActions.handleDuplicatedItems({
+          itemsToReplace,
+          itemsToPostfix,
+          featureType,
+        }),
       );
     }
-
-    if (itemsToPostfix.length) {
-      dispatch(
-        ImportExportActions.setPostfixFinished({ isPostfixFinished: false }),
-      );
-      if (featureType === FeatureType.Chat) {
-        dispatch(
-          ImportExportActions.uploadImportedConversations({
-            itemsToUpload: itemsToPostfix as Conversation[],
-          }),
-        );
-      }
-
-      if (featureType === FeatureType.Prompt) {
-        dispatch(
-          ImportExportActions.uploadImportedPrompts({
-            itemsToUpload: itemsToPostfix as Prompt[],
-          }),
-        );
-      }
-    }
+    itemsToPostfix = [];
+    itemsToReplace = [];
 
     dispatch(ImportExportActions.closeReplaceDialog());
   }, [
@@ -305,14 +286,21 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     <Modal
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={handleCancel}
+      onClose={() => {
+        return;
+      }}
+      hideClose
       dataQa="replace-confirmation-modal"
-      containerClassName="flex flex-col sm:w-[525px] size-full"
+      containerClassName={classNames(
+        'flex size-full flex-col sm:w-[525px]',
+        featuresToReplace.length < 3 && 'sm:h-fit',
+      )}
+      overlayClassName="px-0 py-0"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="flex h-full flex-col justify-between gap-4">
+      <div className="flex h-full flex-col justify-between gap-2 sm:gap-4">
         <div className="flex h-[90%] flex-col gap-4 p-6 pb-0">
-          <div className="flex flex-col gap-2">
+          <div className="flex h-fit flex-col gap-2">
             <h2 className="text-base font-semibold">
               {t('Some items failed to import due to duplicate names')}
             </h2>
@@ -323,31 +311,29 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
             </p>
           </div>
 
-          <div className="flex h-full min-h-[350px] flex-col">
-            <div className="flex flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pb-3 pl-3">
+          <div className="flex h-[90%] min-h-[150px] flex-col sm:h-[92%]">
+            <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pb-1 pl-3 sm:pb-3">
               <span>{t('All items')}</span>
               <ReplaceSelector
                 selectedOption={actionForAllItems}
                 onOptionChangeHandler={handleOnChangeAllAction}
               />
             </div>
-            <div className="flex min-h-[250px] flex-col gap-0.5">
-              <div className="flex flex-col gap-1 overflow-y-scroll">
-                {featuresToReplace && featureList}
-              </div>
+            <div className="flex max-h-[80%] flex-col gap-1 overflow-y-scroll pt-1 sm:max-h-full">
+              {featuresToReplace && featureList}
             </div>
           </div>
         </div>
-        <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-6 py-4">
+        <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-6 py-2 sm:py-4">
           <button
             onClick={handleCancel}
-            className="h-[38px] rounded border border-primary px-3"
+            className="button button-secondary h-[38px] rounded px-3"
           >
             {t('Cancel')}
           </button>
           <button
             onClick={handleContinueImport}
-            className="h-[38px] rounded bg-accent-primary px-3 "
+            className="h-[38px] rounded bg-controls-accent px-3 hover:bg-controls-accent-hover"
           >
             {t('Continue')}
           </button>

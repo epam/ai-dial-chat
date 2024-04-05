@@ -9,6 +9,7 @@ import {
   iif,
   map,
   mergeAll,
+  mergeMap,
   of,
   switchMap,
   takeUntil,
@@ -61,13 +62,16 @@ import {
 } from '@/src/utils/app/zip-import-export';
 
 import { Conversation, Message, Stage } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { ImportRoot, LatestExportFormat } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -334,6 +338,51 @@ const importConversationsEpic: AppEpic = (action$) =>
     catchError(() => of(ImportExportActions.importFail())),
   );
 
+const handleDuplicatedItemsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ImportExportActions.handleDuplicatedItems.match),
+    switchMap(({ payload }) => {
+      const { itemsToPostfix, itemsToReplace, featureType } = payload;
+
+      const actions: Observable<AnyAction>[] = [];
+
+      if (itemsToReplace.length) {
+        actions.push(
+          of(
+            ImportExportActions.replaceFeatures({
+              itemsToReplace,
+              featureType,
+            }),
+          ),
+        );
+      }
+
+      if (itemsToPostfix.length) {
+        if (featureType === FeatureType.Chat) {
+          actions.push(
+            of(
+              ImportExportActions.uploadImportedConversations({
+                itemsToUpload: itemsToPostfix as Conversation[],
+              }),
+            ),
+          );
+        }
+
+        if (featureType === FeatureType.Prompt) {
+          actions.push(
+            of(
+              ImportExportActions.uploadImportedPrompts({
+                itemsToUpload: itemsToPostfix as Prompt[],
+              }),
+            ),
+          );
+        }
+      }
+
+      return concat(...actions);
+    }),
+  );
+
 const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadImportedConversations.match),
@@ -509,9 +558,8 @@ const replaceFeaturesEpic: AppEpic = (action$) =>
         itemsToReplace.forEach((conversation, index) => {
           actions.push(
             of(
-              ConversationsActions.updateConversation({
-                id: conversation.id,
-                values: { ...conversation },
+              ImportExportActions.replaceConversation({
+                conversation,
                 isImportFinish: index === itemsToReplace.length - 1,
               }),
             ),
@@ -524,18 +572,155 @@ const replaceFeaturesEpic: AppEpic = (action$) =>
         itemsToReplace.forEach((prompt, index) => {
           actions.push(
             of(
-              PromptsActions.updatePrompt({
-                id: prompt.id,
-                values: { ...prompt },
+              ImportExportActions.replacePrompt({
+                prompt: prompt,
                 isImportFinish: index === itemsToReplace.length - 1,
               }),
             ),
           );
         });
       }
-      mergeAll(5);
+
       return concat(...actions).pipe(
         takeUntil(action$.pipe(filter(ImportExportActions.importStop.match))),
+      );
+    }),
+  );
+
+const replaceConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ImportExportActions.replaceConversation.match),
+
+    mergeMap(({ payload }) => {
+      const { conversation, isImportFinish } = payload;
+
+      const oldConversation =
+        ConversationsSelectors.selectDuplicatedConversation(state$.value, {
+          importId: conversation.id,
+          conversationName: conversation.name,
+        });
+
+      if (!oldConversation) {
+        return concat(
+          of(
+            UIActions.showErrorToast(
+              translate(
+                'It looks like this conversation has been deleted. Please reload the page and try to import it again',
+              ),
+            ),
+          ),
+          of(ImportExportActions.importFail()),
+        );
+      }
+      const newConversation: Conversation = {
+        ...conversation,
+        folderId: oldConversation.folderId,
+        id: oldConversation.id,
+        status: UploadStatus.UNINITIALIZED,
+        lastActivityDate: Date.now(),
+      };
+
+      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
+        state$.value,
+      );
+
+      return concat(
+        of(ConversationsActions.saveConversation(newConversation)),
+        of(
+          ConversationsActions.updateConversationSuccess({
+            id: oldConversation.id,
+            conversation: {
+              ...newConversation,
+            },
+          }),
+        ),
+        iif(
+          () => isImportFinish,
+          of(
+            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
+          ),
+          EMPTY,
+        ),
+
+        iif(
+          () => isImportFinish && isPostfixFinished,
+          concat(
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: [newConversation.id],
+              }),
+            ),
+
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: [newConversation.folderId],
+                featureType: FeatureType.Chat,
+              }),
+            ),
+            of(ImportExportActions.resetState()),
+          ),
+          EMPTY,
+        ),
+      );
+    }),
+  );
+
+const replacePromptEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ImportExportActions.replacePrompt.match),
+
+    mergeMap(({ payload }) => {
+      const { prompt, isImportFinish } = payload;
+
+      const oldPrompt = PromptsSelectors.selectDuplicatedPrompt(state$.value, {
+        importId: prompt.id,
+        promptName: prompt.name,
+      });
+
+      if (!oldPrompt) {
+        return concat(
+          of(
+            UIActions.showErrorToast(
+              translate(
+                'It looks like this prompt has been deleted. Please reload the page and try to import it again',
+              ),
+            ),
+          ),
+          of(ImportExportActions.importFail()),
+        );
+      }
+
+      const newPrompt: Prompt = {
+        ...prompt,
+        folderId: oldPrompt.folderId,
+        id: oldPrompt.id,
+      };
+
+      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
+        state$.value,
+      );
+
+      return concat(
+        of(
+          PromptsActions.updatePromptSuccess({
+            prompt: newPrompt,
+            id: oldPrompt.id,
+          }),
+        ),
+        of(PromptsActions.savePrompt(newPrompt)),
+        iif(
+          () => isImportFinish,
+          of(
+            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
+          ),
+          EMPTY,
+        ),
+
+        iif(
+          () => isImportFinish && isPostfixFinished,
+          of(ImportExportActions.resetState()),
+          EMPTY,
+        ),
       );
     }),
   );
@@ -969,4 +1154,7 @@ export const ImportExportEpics = combineEpics(
   exportLocalStoragePromptsEpic,
   replaceFeaturesEpic,
   uploadImportedPromptsEpic,
+  replaceConversationEpic,
+  replacePromptEpic,
+  handleDuplicatedItemsEpic,
 );

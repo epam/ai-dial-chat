@@ -198,7 +198,7 @@ const getOrUploadPrompt = (
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.savePrompt.match),
-    switchMap(({ payload: newPrompt }) =>
+    concatMap(({ payload: newPrompt }) =>
       PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
     ),
     catchError((err) => {
@@ -1102,5 +1102,4 @@ export const PromptsEpics = combineEpics(
   createNewPromptEpic,
   duplicatePromptEpic,
   uploadPromptEpic,
-  // importPromptsSuccessEpic,
 );

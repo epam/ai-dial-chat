@@ -50,6 +50,7 @@ export const FilesList = ({
               onItemEvent={onItemEvent}
               withBorderHighlight={false}
               featureType={FeatureType.File}
+              folderClassName="h-[38px]"
             />
           </div>
         );

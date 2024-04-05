@@ -50,6 +50,7 @@ export const PromptsList = ({
               onItemEvent={onItemEvent}
               withBorderHighlight={false}
               featureType={FeatureType.Prompt}
+              folderClassName="h-[38px]"
             />
           </div>
         );

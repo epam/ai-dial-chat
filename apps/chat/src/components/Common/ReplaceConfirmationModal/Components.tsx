@@ -99,7 +99,7 @@ export const EntityRow = ({
 
   return (
     <div
-      className="flex justify-between hover:bg-accent-primary-alpha"
+      className="flex justify-between hover:rounded hover:bg-accent-primary-alpha"
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}

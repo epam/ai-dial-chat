@@ -95,6 +95,7 @@ export const importExportSlice = createSlice({
     ) => {
       state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
+      state.isShowReplaceDialog = false;
     },
     importZipConversations: (
       state,
@@ -122,6 +123,7 @@ export const importExportSlice = createSlice({
       state.attachmentsIdsToUpload = attachmentsToUpload.map(({ id }) => id);
       state.importedHistory = payload.completeHistory;
       state.duplicatedFiles = [];
+      state.isShowReplaceDialog = false;
     },
     uploadSingleAttachmentSuccess: (
       state,
@@ -158,6 +160,7 @@ export const importExportSlice = createSlice({
       if (!payload.disableStateReset) {
         state.isShowReplaceDialog = false;
       }
+      state.isPostfixFinished = false;
     },
     importPrompts: (state) => {
       state.status = UploadStatus.LOADING;
@@ -177,6 +180,7 @@ export const importExportSlice = createSlice({
       if (!payload.disableStateReset) {
         state.isShowReplaceDialog = false;
       }
+      state.isPostfixFinished = false;
     },
     showReplaceDialog: (
       state,
@@ -221,6 +225,7 @@ export const importExportSlice = createSlice({
     ) => {
       state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
+      state.isReplaceFinished = false;
     },
     closeReplaceDialog: (state) => {
       state.isShowReplaceDialog = false;
@@ -236,6 +241,38 @@ export const importExportSlice = createSlice({
       { payload }: PayloadAction<{ isPostfixFinished: boolean }>,
     ) => {
       state.isPostfixFinished = payload.isPostfixFinished;
+    },
+    replaceConversation: (
+      state,
+      _action: PayloadAction<{
+        conversation: Conversation;
+        isImportFinish: boolean;
+      }>,
+    ) => state,
+    replacePrompt: (
+      state,
+      _action: PayloadAction<{ prompt: Prompt; isImportFinish: boolean }>,
+    ) => state,
+    handleDuplicatedItems: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        itemsToReplace: Conversation[] | Prompt[];
+        itemsToPostfix: Conversation[] | Prompt[];
+        featureType: FeatureType;
+      }>,
+    ) => {
+      state.isShowReplaceDialog = false;
+      state.isPostfixFinished = !payload.itemsToPostfix.length;
+      state.isReplaceFinished = !payload.itemsToReplace.length;
+      if (payload.featureType === FeatureType.Chat) {
+        state.conversationsToReplace = [];
+      }
+
+      if (payload.featureType === FeatureType.Prompt) {
+        state.promptsToReplace = [];
+      }
     },
   },
 });

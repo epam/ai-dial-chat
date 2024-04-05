@@ -105,10 +105,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
-import {
-  ImportExportActions,
-  ImportExportSelectors,
-} from '../import-export/importExport.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
@@ -2311,7 +2307,7 @@ const saveConversationEpic: AppEpic = (action$) =>
         ConversationsActions.saveConversation.match(action) &&
         !action.payload.isMessageStreaming, // shouldn't save during streaming
     ),
-    switchMap(({ payload: newConversation }) => {
+    concatMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
         switchMap(() => of(ConversationsActions.saveConversationSuccess())),
         catchError((err) => {
@@ -2374,10 +2370,9 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       return getOrUploadConversation(payload, state$.value);
     }),
     mergeMap(({ payload, conversation }) => {
-      const { id, values, isImportFinish } = payload as {
+      const { id, values } = payload as {
         id: string;
         values: Partial<Conversation>;
-        isImportFinish?: boolean;
       };
 
       if (!conversation) {
@@ -2395,9 +2390,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
       });
 
-      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
-        state$.value,
-      );
       return concat(
         of(
           ConversationsActions.updateConversationSuccess({
@@ -2417,26 +2409,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             }),
           ),
           of(ConversationsActions.saveConversation(newConversation)),
-        ),
-        iif(
-          () => !!isImportFinish && isPostfixFinished,
-          concat(
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: [newConversation.id],
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: [newConversation.folderId],
-                featureType: FeatureType.Chat,
-              }),
-            ),
-            of(ImportExportActions.resetState()),
-          ),
-          of(
-            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
-          ),
         ),
       );
     }),

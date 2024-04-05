@@ -50,6 +50,7 @@ export const ConversationsList = ({
               onItemEvent={onItemEvent}
               withBorderHighlight={false}
               featureType={FeatureType.Chat}
+              folderClassName="h-[38px]"
             />
           </div>
         );
