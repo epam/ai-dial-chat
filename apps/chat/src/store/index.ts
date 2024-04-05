@@ -55,10 +55,6 @@ const reducer = {
   auth: authSlice.reducer,
   importExport: importExportSlice.reducer,
   share: shareSlice.reducer,
-<<<<<<< Updated upstream
-=======
-  service: serviceSlice.reducer,
->>>>>>> Stashed changes
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
