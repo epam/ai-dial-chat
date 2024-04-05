@@ -209,6 +209,12 @@ export const ChatMessageContent = ({
     [isEditing, toggleEditing],
   );
 
+  useEffect(() => {
+    if (isEditing) {
+      setShouldScroll(true);
+    }
+  }, [isEditing]);
+
   const handleEditMessage = useCallback(() => {
     if (isSubmitAllowed) {
       return;
@@ -436,10 +442,7 @@ export const ChatMessageContent = ({
                     >
                       {t('Save & Submit')}
                     </button>
-                    <div
-                      ref={anchorRef}
-                      className="absolute bottom-[-120px]"
-                    ></div>
+                    <div ref={anchorRef} className="absolute bottom-0"></div>
                   </div>
                 </div>
               </div>
@@ -463,10 +466,7 @@ export const ChatMessageContent = ({
                   <MessageAttachments
                     attachments={message.custom_content?.attachments}
                   />
-                  <div
-                    ref={anchorRef}
-                    className="absolute bottom-[-160px]"
-                  ></div>
+                  <div ref={anchorRef} className="absolute bottom-0"></div>
                 </div>
                 {showUserButtons && !isConversationInvalid && (
                   <MessageUserButtons
