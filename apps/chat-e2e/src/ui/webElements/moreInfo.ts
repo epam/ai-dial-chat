@@ -11,7 +11,7 @@ export class MoreInfo extends BaseElement {
   public entityInfo = this.getChildElementBySelector(ChatSelectors.entityInfo);
 
   public entityDescription = this.getChildElementBySelector(
-    ChatSelectors.description,
+    ChatSelectors.entityDescription,
   );
   public entityIcon = this.getChildElementBySelector(Tags.svg);
 
@@ -25,5 +25,13 @@ export class MoreInfo extends BaseElement {
       return this.entityDescription.getElementInnerContent();
     }
     return '';
+  }
+
+  public async getEntityName() {
+    return this.entityInfo
+      .getElementLocator()
+      .locator(Tags.span)
+      .last()
+      .textContent();
   }
 }

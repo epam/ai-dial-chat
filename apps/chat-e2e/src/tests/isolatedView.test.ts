@@ -34,7 +34,7 @@ dialTest(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
         await isolatedView.waitForState();
-        const modelName = await isolatedView.entityInfo.getElementContent();
+        const modelName = await isolatedView.getEntityName();
         expect
           .soft(modelName, ExpectedMessages.entityNameIsValid)
           .toBe(expectedModelName);

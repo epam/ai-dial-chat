@@ -12,7 +12,7 @@ export class ReplayAsIs extends BaseElement {
   );
 
   public replayAsIsDescr = this.getChildElementBySelector(
-    ChatSelectors.description,
+    ChatSelectors.replayDescription,
   );
 
   public replayOldVersionWarning = this.getChildElementBySelector(
