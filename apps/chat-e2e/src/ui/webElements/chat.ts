@@ -7,6 +7,7 @@ import { SendMessage } from './sendMessage';
 import { API } from '@/src/testData';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
+import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { Page } from '@playwright/test';
@@ -25,6 +26,7 @@ export class Chat extends BaseElement {
   private compare!: Compare;
   private playBack!: Playback;
   private playbackControl!: PlaybackControl;
+  private isolatedView!: MoreInfo;
   public replay = new BaseElement(this.page, ChatSelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(this.page, ChatSelectors.applyChanges).getNthElement(
@@ -92,6 +94,13 @@ export class Chat extends BaseElement {
       this.playbackControl = new PlaybackControl(this.page);
     }
     return this.playbackControl;
+  }
+
+  getIsolatedView(): MoreInfo {
+    if (!this.isolatedView) {
+      this.isolatedView = new MoreInfo(this.page, this.rootLocator);
+    }
+    return this.isolatedView;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {

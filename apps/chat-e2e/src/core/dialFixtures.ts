@@ -5,6 +5,7 @@ import {
   ChatBar,
   ChatHeader,
   ChatMessages,
+  ChatNotFound,
   ConversationSettings,
   ConversationToCompare,
   Conversations,
@@ -106,6 +107,7 @@ const dialTest = test.extend<
     temperatureSlider: TemperatureSlider;
     addons: Addons;
     addonsDialog: AddonsDialog;
+    isolatedView: MoreInfo;
     conversationData: ConversationData;
     promptData: PromptData;
     conversationDropdownMenu: DropdownMenu;
@@ -149,6 +151,7 @@ const dialTest = test.extend<
     mainUserShareApiHelper: ShareApiHelper;
     additionalUserShareApiHelper: ShareApiHelper;
     additionalUserItemApiHelper: ItemApiHelper;
+    chatNotFound: ChatNotFound;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -326,6 +329,10 @@ const dialTest = test.extend<
     const addonsDialog = addons.getAddonsDialog();
     await use(addonsDialog);
   },
+  isolatedView: async ({ chat }, use) => {
+    const isolatedView = chat.getIsolatedView();
+    await use(isolatedView);
+  },
   modelSelector: async ({ entitySettings }, use) => {
     const modelSelector = entitySettings.getModelSelector();
     await use(modelSelector);
@@ -497,6 +504,10 @@ const dialTest = test.extend<
       additionalShareUserRequestContext,
     );
     await use(additionalUserItemApiHelper);
+  },
+  chatNotFound: async ({ page }, use) => {
+    const chatNotFound = new ChatNotFound(page);
+    await use(chatNotFound);
   },
 });
 
