@@ -12,8 +12,8 @@
     "test:coverage": "nx run-many -t test:coverage",
     "publish": "nx run-many -t publish",
     "publish:dry": "nx run-many -t publish --output-style=static --dry",
-    "e2e": "nx run-many -t e2e --output-style=stream",
-    "e2e:ci": "nx run-many -t e2e --configuration=production --output-style=stream",
+    "e2e": "nx run-many -t e2e --output-style=stream --skipInstall",
+    "e2e:ci": "nx run-many -t e2e --configuration=production --output-style=stream --skipInstall",
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint:fix",
     "format": "nx run-many -t format",
@@ -149,6 +149,7 @@
   "optionalDependencies": {
     "@nx/playwright": "^18.2.2",
     "@playwright/test": "^1.43.0",
+    "playwright-chromium": "^1.43.0",
     "allure-playwright": "^2.15.0",
     "eslint-plugin-playwright": "^1.5.4"
   },
