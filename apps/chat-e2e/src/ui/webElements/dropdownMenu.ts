@@ -4,7 +4,7 @@ import { Menu } from '@/src/ui/webElements/menu';
 export class DropdownMenu extends Menu {
   public menuOptions = () =>
     this.getChildElementBySelector(
-      `${Tags.div}:not([class*=' md:${Attributes.hidden}'])`,
+      `${Tags.button}:not([class*=' md:${Attributes.hidden}'])`,
     );
 
   public menuOption = (option: string) =>
