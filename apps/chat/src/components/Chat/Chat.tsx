@@ -904,6 +904,25 @@ export function Chat() {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
+  const modelIsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
+  const isolatedModelId = useAppSelector(
+    SettingsSelectors.selectIsolatedModelId,
+  );
+  const activeModel = useAppSelector((state) =>
+    ModelsSelectors.selectModel(state, isolatedModelId || ''),
+  );
+
+  if (isolatedModelId && modelIsLoaded && !activeModel) {
+    return (
+      <div className="h-screen pt-2">
+        <NotFoundEntity
+          entity={t('Model is')}
+          additionalText={t('Please contact your administrator.') || ''}
+        />
+      </div>
+    );
+  }
+
   if (
     !areSelectedConversationsLoaded &&
     (!selectedConversations.length ||
@@ -918,7 +937,7 @@ export function Chat() {
     return (
       <NotFoundEntity
         entity={t('Conversation')}
-        additionalText="Please select another conversation."
+        additionalText={t('Please select another conversation.') || ''}
       />
     );
   }
