@@ -456,8 +456,7 @@ export const ChatInputMessage = ({
         heading={t('Prompt limit exceeded')}
         description={
           t(
-            `Prompt limit is ${maxTokensLength} tokens.
-            ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
+            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
           ) || ''
         }
         confirmLabel={t('Confirm')}

@@ -75,6 +75,7 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 
@@ -558,15 +559,24 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
-      const conversationRootId = getConversationRootId();
+      const conversationFolderId = isEntityOrParentsExternal(
+        state$.value,
+        conversation,
+        FeatureType.Chat,
+      )
+        ? getConversationRootId()
+        : conversation.folderId;
+
       const newConversation: Conversation = regenerateConversationId({
         ...conversation,
         ...resetShareEntity,
-        folderId: conversationRootId,
+        folderId: conversationFolderId,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          conversations.filter((conv) => conv.folderId === conversationRootId), // only my root conversations
+          conversations.filter(
+            (conv) => conv.folderId === conversationFolderId,
+          ), // only root conversations for external entities
         ),
         lastActivityDate: Date.now(),
       });
@@ -629,19 +639,9 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
       }),
     ),
     switchMap(({ folderId, conversations, folders }) => {
-      const childFolders = new Set([
-        folderId,
-        ...conversations.map((conv) => conv.folderId),
-      ]);
-      const deletedConversationsIds = conversations.map((conv) => conv.id);
       const actions: Observable<AnyAction>[] = [];
-      actions.push(
-        of(
-          ConversationsActions.setFolders({
-            folders: folders.filter((folder) => !childFolders.has(folder.id)),
-          }),
-        ),
-      );
+      const deletedConversationsIds = conversations.map((conv) => conv.id);
+
       if (deletedConversationsIds.length) {
         actions.push(
           of(
@@ -656,7 +656,17 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      return concat(...actions);
+      return concat(
+        of(
+          ConversationsActions.setFolders({
+            folders: folders.filter(
+              (folder) =>
+                folder.id !== folderId && !folder.id.startsWith(`${folderId}/`),
+            ),
+          }),
+        ),
+        ...actions,
+      );
     }),
   );
 

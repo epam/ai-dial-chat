@@ -215,7 +215,7 @@ export enum ExpectedMessages {
   dataIsNotExported = 'Data is not exported',
   dataIsExported = 'Data is exported',
   dataIsNotImported = 'Data is not imported',
-  chatNotFoundMessageIsValid = 'Chat not found message is valid',
   stageIsVisibleInResponse = 'Stage is visible in message response',
   codeIsVisibleInResponse = 'Code is visible in message response',
+  duplicateButtonIsNotVisible = 'Duplicate button is not visible',
 }
