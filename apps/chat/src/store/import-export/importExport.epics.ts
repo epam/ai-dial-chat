@@ -424,10 +424,13 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
               );
 
               const firstImportedConversation = uploadedConversations[0];
-              const firstImportedConversationFolders = uniq(
-                [firstImportedConversation.folderId].flatMap((id) =>
-                  getParentFolderIdsFromFolderId(id),
-                ),
+
+              const uploadedConversationsFoldersIds = uniq(
+                uploadedConversations.map((info) => info.folderId),
+              );
+
+              const importedFoldersIds = cleanFolders.map(
+                (folder) => folder.id,
               );
 
               const numberOfRunningOperations =
@@ -452,7 +455,10 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   UIActions.setOpenedFoldersIds({
-                    openedFolderIds: firstImportedConversationFolders,
+                    openedFolderIds: uniq([
+                      ...uploadedConversationsFoldersIds,
+                      ...importedFoldersIds,
+                    ]),
                     featureType: FeatureType.Chat,
                   }),
                 ),
