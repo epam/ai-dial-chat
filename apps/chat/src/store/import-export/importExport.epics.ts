@@ -83,7 +83,7 @@ import {
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
-import { UIActions } from '../ui/ui.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   ImportExportActions,
   ImportExportSelectors,
@@ -433,6 +433,11 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 (folder) => folder.id,
               );
 
+              const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+                state$.value,
+                FeatureType.Chat,
+              );
+
               const numberOfRunningOperations =
                 ImportExportSelectors.selectNumberOfRunningOperations(
                   state$.value,
@@ -458,6 +463,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                     openedFolderIds: uniq([
                       ...uploadedConversationsFoldersIds,
                       ...importedFoldersIds,
+                      ...openedFolderIds,
                     ]),
                     featureType: FeatureType.Chat,
                   }),
