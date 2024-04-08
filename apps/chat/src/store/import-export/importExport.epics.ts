@@ -3,6 +3,7 @@ import {
   Observable,
   catchError,
   concat,
+  concatMap,
   filter,
   forkJoin,
   from,
@@ -328,7 +329,6 @@ const importConversationsEpic: AppEpic = (action$) =>
               ImportExportActions.uploadImportedConversations({
                 itemsToUpload: nonExistedImportNamesConversations,
                 folders,
-                disableStateReset: true,
               }),
             ),
           );
@@ -386,7 +386,7 @@ const handleDuplicatedItemsEpic: AppEpic = (action$) =>
 const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadImportedConversations.match),
-    switchMap(({ payload }) => {
+    concatMap(({ payload }) => {
       return from(
         ConversationService.setConversations(payload.itemsToUpload),
       ).pipe(
@@ -425,10 +425,15 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
 
               const firstImportedConverstaion = uploadedConversations[0];
 
-              const isReplaceFinished =
-                ImportExportSelectors.selectIsReplaceFinished(state$.value);
-
+              const numberOfRunningOperations =
+                ImportExportSelectors.selectNumberOfRunningOperations(
+                  state$.value,
+                );
+              const isShowReplaceDialog =
+                ImportExportSelectors.selectIsShowReplaceDialog(state$.value);
               return concat(
+                of(ImportExportActions.decreaseNumberOfRunningOperations()),
+
                 of(
                   ConversationsActions.importConversationsSuccess({
                     conversations: conversationsListing,
@@ -447,13 +452,10 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                   }),
                 ),
                 iif(
-                  () => !payload.disableStateReset && isReplaceFinished,
+                  () =>
+                    numberOfRunningOperations - 1 <= 0 && !isShowReplaceDialog,
                   of(ImportExportActions.resetState()),
-                  of(
-                    ImportExportActions.setPostfixFinished({
-                      isPostfixFinished: true,
-                    }),
-                  ),
+                  EMPTY,
                 ),
               );
             }),
@@ -480,7 +482,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadImportedPrompts.match),
     switchMap(({ payload }) => {
-      const { itemsToUpload, folders, disableStateReset } = payload;
+      const { itemsToUpload, folders } = payload;
       return from(PromptService.setPrompts(itemsToUpload)).pipe(
         toArray(),
         switchMap(() => {
@@ -507,24 +509,27 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
 
               const newFolders = combineEntities(promptsFolders, cleanFolders);
 
-              const isReplaceFinished =
-                ImportExportSelectors.selectIsReplaceFinished(state$.value);
+              const numberOfRunningOperations =
+                ImportExportSelectors.selectNumberOfRunningOperations(
+                  state$.value,
+                );
+              const isShowReplaceDialog =
+                ImportExportSelectors.selectIsShowReplaceDialog(state$.value);
 
               return concat(
+                of(ImportExportActions.decreaseNumberOfRunningOperations()),
                 of(
                   PromptsActions.importPromptsSuccess({
                     prompts: promptsListing,
                     folders: newFolders,
                   }),
                 ),
+
                 iif(
-                  () => !disableStateReset && isReplaceFinished,
+                  () =>
+                    numberOfRunningOperations - 1 <= 0 && !isShowReplaceDialog,
                   of(ImportExportActions.resetState()),
-                  of(
-                    ImportExportActions.setPostfixFinished({
-                      isPostfixFinished: true,
-                    }),
-                  ),
+                  EMPTY,
                 ),
               );
             }),
@@ -555,12 +560,11 @@ const replaceFeaturesEpic: AppEpic = (action$) =>
 
       if (payload.featureType === FeatureType.Chat) {
         const itemsToReplace = payload.itemsToReplace as Conversation[];
-        itemsToReplace.forEach((conversation, index) => {
+        itemsToReplace.forEach((conversation) => {
           actions.push(
             of(
               ImportExportActions.replaceConversation({
                 conversation,
-                isImportFinish: index === itemsToReplace.length - 1,
               }),
             ),
           );
@@ -569,12 +573,11 @@ const replaceFeaturesEpic: AppEpic = (action$) =>
 
       if (payload.featureType === FeatureType.Prompt) {
         const itemsToReplace = payload.itemsToReplace as Prompt[];
-        itemsToReplace.forEach((prompt, index) => {
+        itemsToReplace.forEach((prompt) => {
           actions.push(
             of(
               ImportExportActions.replacePrompt({
                 prompt: prompt,
-                isImportFinish: index === itemsToReplace.length - 1,
               }),
             ),
           );
@@ -592,7 +595,7 @@ const replaceConversationEpic: AppEpic = (action$, state$) =>
     filter(ImportExportActions.replaceConversation.match),
 
     mergeMap(({ payload }) => {
-      const { conversation, isImportFinish } = payload;
+      const { conversation } = payload;
 
       const oldConversation =
         ConversationsSelectors.selectDuplicatedConversation(state$.value, {
@@ -620,9 +623,8 @@ const replaceConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
       };
 
-      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
-        state$.value,
-      );
+      const numberOfRunningOperations =
+        ImportExportSelectors.selectNumberOfRunningOperations(state$.value);
 
       return concat(
         of(ConversationsActions.saveConversation(newConversation)),
@@ -634,16 +636,10 @@ const replaceConversationEpic: AppEpic = (action$, state$) =>
             },
           }),
         ),
-        iif(
-          () => isImportFinish,
-          of(
-            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
-          ),
-          EMPTY,
-        ),
+        of(ImportExportActions.decreaseNumberOfRunningOperations()),
 
         iif(
-          () => isImportFinish && isPostfixFinished,
+          () => numberOfRunningOperations - 1 <= 0,
           concat(
             of(
               ConversationsActions.selectConversations({
@@ -670,7 +666,7 @@ const replacePromptEpic: AppEpic = (action$, state$) =>
     filter(ImportExportActions.replacePrompt.match),
 
     mergeMap(({ payload }) => {
-      const { prompt, isImportFinish } = payload;
+      const { prompt } = payload;
 
       const oldPrompt = PromptsSelectors.selectDuplicatedPrompt(state$.value, {
         importId: prompt.id,
@@ -696,9 +692,8 @@ const replacePromptEpic: AppEpic = (action$, state$) =>
         id: oldPrompt.id,
       };
 
-      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
-        state$.value,
-      );
+      const numberOfRunningOperations =
+        ImportExportSelectors.selectNumberOfRunningOperations(state$.value);
 
       return concat(
         of(
@@ -708,16 +703,9 @@ const replacePromptEpic: AppEpic = (action$, state$) =>
           }),
         ),
         of(PromptsActions.savePrompt(newPrompt)),
+        of(ImportExportActions.decreaseNumberOfRunningOperations()),
         iif(
-          () => isImportFinish,
-          of(
-            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
-          ),
-          EMPTY,
-        ),
-
-        iif(
-          () => isImportFinish && isPostfixFinished,
+          () => numberOfRunningOperations - 1 <= 0,
           of(ImportExportActions.resetState()),
           EMPTY,
         ),

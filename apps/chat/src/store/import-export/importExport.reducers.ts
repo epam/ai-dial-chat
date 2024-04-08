@@ -34,8 +34,7 @@ interface ImportExportState {
   duplicatedFiles: DialFile[];
   isShowReplaceDialog: boolean;
   featureType: FeatureType;
-  isReplaceFinished: boolean;
-  isPostfixFinished: boolean;
+  numberOfRunningOperations: number;
 }
 
 const defaultImportedHistory: LatestExportFormat = {
@@ -59,8 +58,7 @@ const initialState: ImportExportState = {
   operation: undefined,
   isShowReplaceDialog: false,
   featureType: FeatureType.Chat,
-  isReplaceFinished: true,
-  isPostfixFinished: true,
+  numberOfRunningOperations: 0,
 };
 
 export const importExportSlice = createSlice({
@@ -149,18 +147,12 @@ export const importExportSlice = createSlice({
     },
     uploadImportedConversations: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         itemsToUpload: Conversation[];
         folders?: FolderInterface[];
-        disableStateReset?: boolean;
       }>,
     ) => {
-      if (!payload.disableStateReset) {
-        state.isShowReplaceDialog = false;
-      }
-      state.isPostfixFinished = false;
+      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
     },
     importPrompts: (state) => {
       state.status = UploadStatus.LOADING;
@@ -169,18 +161,12 @@ export const importExportSlice = createSlice({
     importPromptsFail: (state) => state,
     uploadImportedPrompts: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         itemsToUpload: Prompt[];
         folders?: FolderInterface[];
-        disableStateReset?: boolean;
       }>,
     ) => {
-      if (!payload.disableStateReset) {
-        state.isShowReplaceDialog = false;
-      }
-      state.isPostfixFinished = false;
+      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
     },
     showReplaceDialog: (
       state,
@@ -225,34 +211,21 @@ export const importExportSlice = createSlice({
     ) => {
       state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
-      state.isReplaceFinished = false;
     },
     closeReplaceDialog: (state) => {
       state.isShowReplaceDialog = false;
-    },
-    setReplaceFinished: (
-      state,
-      { payload }: PayloadAction<{ isReplaceFinished: boolean }>,
-    ) => {
-      state.isReplaceFinished = payload.isReplaceFinished;
-    },
-    setPostfixFinished: (
-      state,
-      { payload }: PayloadAction<{ isPostfixFinished: boolean }>,
-    ) => {
-      state.isPostfixFinished = payload.isPostfixFinished;
     },
     replaceConversation: (
       state,
       _action: PayloadAction<{
         conversation: Conversation;
-        isImportFinish: boolean;
       }>,
-    ) => state,
-    replacePrompt: (
-      state,
-      _action: PayloadAction<{ prompt: Prompt; isImportFinish: boolean }>,
-    ) => state,
+    ) => {
+      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
+    },
+    replacePrompt: (state, _action: PayloadAction<{ prompt: Prompt }>) => {
+      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
+    },
     handleDuplicatedItems: (
       state,
       {
@@ -264,8 +237,7 @@ export const importExportSlice = createSlice({
       }>,
     ) => {
       state.isShowReplaceDialog = false;
-      state.isPostfixFinished = !payload.itemsToPostfix.length;
-      state.isReplaceFinished = !payload.itemsToReplace.length;
+
       if (payload.featureType === FeatureType.Chat) {
         state.conversationsToReplace = [];
       }
@@ -273,6 +245,12 @@ export const importExportSlice = createSlice({
       if (payload.featureType === FeatureType.Prompt) {
         state.promptsToReplace = [];
       }
+    },
+    increaseNumberOfRunningOperations: (state) => {
+      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
+    },
+    decreaseNumberOfRunningOperations: (state) => {
+      state.numberOfRunningOperations = state.numberOfRunningOperations - 1;
     },
   },
 });
@@ -331,13 +309,12 @@ const selectNonDuplicatedFiles = createSelector([rootSelector], (state) => {
   return state.nonDuplicatedFiles;
 });
 
-const selectIsReplaceFinished = createSelector([rootSelector], (state) => {
-  return state.isReplaceFinished;
-});
-
-const selectIsPostfixFinished = createSelector([rootSelector], (state) => {
-  return state.isPostfixFinished;
-});
+const selectNumberOfRunningOperations = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.numberOfRunningOperations;
+  },
+);
 
 export const ImportExportSelectors = {
   selectAttachmentsIdsToUpload,
@@ -353,8 +330,7 @@ export const ImportExportSelectors = {
   selectPromptsToReplace,
   selectDuplicatedFiles,
   selectNonDuplicatedFiles,
-  selectIsReplaceFinished,
-  selectIsPostfixFinished,
+  selectNumberOfRunningOperations,
 };
 
 export const ImportExportActions = importExportSlice.actions;

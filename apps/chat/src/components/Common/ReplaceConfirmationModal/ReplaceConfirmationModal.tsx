@@ -60,8 +60,9 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   const dispatch = useAppDispatch();
 
   const featureType = useAppSelector(ImportExportSelectors.selectFeatureType);
-  const isLoading = useAppSelector(
-    ImportExportSelectors.selectIsLoadingImportExport,
+
+  const numberOfOperations = useAppSelector(
+    ImportExportSelectors.selectNumberOfRunningOperations,
   );
 
   const conversations = useAppSelector(
@@ -192,7 +193,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       }
     }
     if (!itemsToReplace.length && !itemsToPostfix.length) {
-      if (featureType !== FeatureType.File && !isLoading) {
+      if (featureType !== FeatureType.File && numberOfOperations <= 0) {
         dispatch(ImportExportActions.importStop());
       }
       if (featureType === FeatureType.File) {
@@ -202,23 +203,26 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       }
     }
 
-    if (featureType === FeatureType.File) {
-      dispatch(
-        ImportExportActions.uploadConversationAttachments({
-          attachmentsToPostfix: itemsToPostfix as DialFile[],
-          attachmentsToReplace: itemsToReplace as DialFile[],
-          completeHistory: importedHistory,
-        }),
-      );
-    } else {
-      dispatch(
-        ImportExportActions.handleDuplicatedItems({
-          itemsToReplace,
-          itemsToPostfix,
-          featureType,
-        }),
-      );
+    if (itemsToReplace.length || itemsToPostfix.length) {
+      if (featureType === FeatureType.File) {
+        dispatch(
+          ImportExportActions.uploadConversationAttachments({
+            attachmentsToPostfix: itemsToPostfix as DialFile[],
+            attachmentsToReplace: itemsToReplace as DialFile[],
+            completeHistory: importedHistory,
+          }),
+        );
+      } else {
+        dispatch(
+          ImportExportActions.handleDuplicatedItems({
+            itemsToReplace,
+            itemsToPostfix,
+            featureType,
+          }),
+        );
+      }
     }
+
     itemsToPostfix = [];
     itemsToReplace = [];
 
@@ -229,7 +233,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     featuresToReplace,
     mappedActions,
     importedHistory,
-    isLoading,
+    numberOfOperations,
   ]);
 
   useEffect(() => {

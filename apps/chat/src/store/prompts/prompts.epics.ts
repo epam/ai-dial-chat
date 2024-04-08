@@ -65,10 +65,7 @@ import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
-import {
-  ImportExportActions,
-  ImportExportSelectors,
-} from '../import-export/importExport.reducers';
+import { ImportExportActions } from '../import-export/importExport.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
@@ -254,10 +251,9 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.updatePrompt.match),
     mergeMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
     mergeMap(({ payload, prompt }) => {
-      const { values, id, isImportFinish } = payload as {
+      const { values, id } = payload as {
         id: string;
         values: Partial<Prompt>;
-        isImportFinish?: boolean;
       };
 
       if (!prompt) {
@@ -279,23 +275,12 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
         ),
       };
 
-      const isPostfixFinished = ImportExportSelectors.selectIsPostfixFinished(
-        state$.value,
-      );
-
       return concat(
         of(PromptsActions.updatePromptSuccess({ prompt: newPrompt, id })),
         iif(
           () => !!prompt && prompt.id !== newPrompt.id,
           of(PromptsActions.recreatePrompt({ old: prompt, new: newPrompt })),
           of(PromptsActions.savePrompt(newPrompt)),
-        ),
-        iif(
-          () => !!isImportFinish && isPostfixFinished,
-          of(ImportExportActions.resetState()),
-          of(
-            ImportExportActions.setReplaceFinished({ isReplaceFinished: true }),
-          ),
         ),
       );
     }),
@@ -745,7 +730,6 @@ const importPromptsEpic: AppEpic = (action$) =>
               ImportExportActions.uploadImportedPrompts({
                 itemsToUpload: nonExistedImportNamesPrompts,
                 folders: promptsHistory.folders,
-                disableStateReset: true,
               }),
             ),
           );
