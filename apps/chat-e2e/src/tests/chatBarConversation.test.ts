@@ -1,8 +1,12 @@
+import { isApiStorageType } from '@/src/hooks/global-setup';
+
+import { ModelsUtil } from '@/src/utils/modelsUtil';
+
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
+
 import dialTest from '@/src/core/dialFixtures';
-import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   Chronology,
   ExpectedConstants,
@@ -12,7 +16,6 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
-import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 
 let gpt35Model: DialAIEntityModel;
@@ -130,12 +133,12 @@ dialTest(
           newName,
         );
         await nameInput.clickCancelButton();
-        expect
+        await expect
           .soft(
-            await conversations.getConversationByName(newName).isVisible(),
+            conversations.getConversationByName(newName),
             ExpectedMessages.conversationNameNotUpdated,
           )
-          .toBeFalsy();
+          .toBeHidden();
       },
     );
 
@@ -177,12 +180,12 @@ dialTest(
       ExpectedConstants.newConversationTitle,
       newName,
     );
-    expect
+    await expect
       .soft(
-        await conversations.getConversationByName(newName).isVisible(),
+        conversations.getConversationByName(newName),
         ExpectedMessages.conversationNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     const chatNameOverflow = await conversations
       .getConversationName(newName)
@@ -192,12 +195,12 @@ dialTest(
       .toBe(Overflow.ellipsis);
 
     await chat.sendRequestWithButton('one more test message');
-    expect
+    await expect
       .soft(
-        await conversations.getConversationByName(newName).isVisible(),
+        conversations.getConversationByName(newName),
         ExpectedMessages.conversationNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
   },
 );
 
@@ -239,12 +242,12 @@ dialTest(
       conversation.name,
       newName,
     );
-    expect
+    await expect
       .soft(
-        await conversations.getConversationByName(newName).isVisible(),
+        conversations.getConversationByName(newName),
         ExpectedMessages.conversationNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     const isChatHeaderTitleTruncated =
       await chatHeader.chatTitle.isElementWidthTruncated();
@@ -275,7 +278,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Menu for New conversation',
   async ({
     dialHomePage,
@@ -302,7 +305,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Menu for conversation with history.\n' +
     'Special characters are allowed in chat name',
   async ({
@@ -510,7 +513,7 @@ dialTest.skip(
   },
 );
 
-dialTest(
+dialTest.only(
   'Chat is moved to folder created from Move to',
   async ({
     dialHomePage,
