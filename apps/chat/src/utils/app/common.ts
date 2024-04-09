@@ -1,5 +1,5 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { getFoldersFromIds } from '@/src/utils/app/folders';
+import { getFoldersFromIds, splitEntityId } from '@/src/utils/app/folders';
 
 import { PrepareNameOptions } from '@/src/types/chat';
 import { Entity, ShareEntity } from '@/src/types/common';
@@ -39,6 +39,26 @@ export const isEntityNameOnSameLevelUnique = (
   );
 
   return !sameLevelEntities.some((e) => nameToBeUnique === e.name);
+};
+
+export const isImportEntityNameOnSameLevelUnique = ({
+  entity,
+  entities,
+}: {
+  entity: Entity;
+  entities: Entity[];
+}): boolean => {
+  return !entities.some((e) => {
+    const { apiKey, parentPath } = splitEntityId(e.id);
+    const { apiKey: importApiKey, parentPath: importParentPath } =
+      splitEntityId(entity.id);
+
+    return (
+      apiKey === importApiKey &&
+      parentPath === importParentPath &&
+      entity.name === e.name
+    );
+  });
 };
 
 export const doesHaveDotsInTheEnd = (name: string) => name.trim().endsWith('.');
