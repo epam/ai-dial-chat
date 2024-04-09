@@ -7,10 +7,10 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
-import { isEntityExternal } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -25,10 +25,6 @@ import { PromptsState } from './prompts.types';
 export { PromptsSelectors };
 
 const initialState: PromptsState = {
-  promptsToMigrateCount: 0,
-  migratedPromptsCount: 0,
-  isPromptsBackedUp: false,
-  failedMigratedPrompts: [],
   prompts: [],
   folders: [],
   temporaryFolders: [],
@@ -59,51 +55,8 @@ export const promptsSlice = createSlice({
     ) => {
       state.promptsLoaded = !!payload?.noLoader;
     },
-    initPromptsSuccess: (state) => state,
-    migratePromptsIfRequired: (state) => state,
-    skipFailedMigratedPrompts: (
-      state,
-      _action: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
-    ) => state,
-    initPromptsMigration: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        promptsToMigrateCount: number;
-      }>,
-    ) => {
-      state.promptsToMigrateCount = payload.promptsToMigrateCount;
-    },
-    migratePromptFinish: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        migratedPromptsCount: number;
-      }>,
-    ) => {
-      state.migratedPromptsCount = payload.migratedPromptsCount;
-    },
-    setFailedMigratedPrompts: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        failedMigratedPrompts: Prompt[];
-      }>,
-    ) => {
-      state.failedMigratedPrompts = payload.failedMigratedPrompts;
-    },
-    setIsPromptsBackedUp: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        isPromptsBackedUp: boolean;
-      }>,
-    ) => {
-      state.isPromptsBackedUp = payload.isPromptsBackedUp;
+    initFoldersAndPromptsSuccess: (state) => {
+      state.promptsLoaded = true;
     },
     createNewPrompt: (state, _action: PayloadAction<Prompt>) => state,
     createNewPromptSuccess: (
@@ -141,6 +94,8 @@ export const promptsSlice = createSlice({
       state.prompts = state.prompts.filter(
         (prompt) => !deleteIds.has(prompt.id),
       );
+
+      state.promptsLoaded = true;
     },
     deletePrompt: (
       state,
@@ -244,13 +199,9 @@ export const promptsSlice = createSlice({
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setPrompts: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ prompts: PromptInfo[]; ignoreCombining?: boolean }>,
+      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
     ) => {
-      state.prompts = payload.ignoreCombining
-        ? payload.prompts
-        : combineEntities(state.prompts, payload.prompts);
+      state.prompts = payload.prompts;
       state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
@@ -260,21 +211,11 @@ export const promptsSlice = createSlice({
       state.promptsLoaded = false;
     },
     clearPromptsSuccess: (state) => {
-      state.prompts = state.prompts.filter(
-        (prompt) =>
-          isEntityExternal(prompt) ||
-          PromptsSelectors.hasExternalParent(
-            { prompts: state },
-            prompt.folderId,
-          ),
+      state.prompts = state.prompts.filter((prompt) =>
+        isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
       );
-      state.folders = state.folders.filter(
-        (folder) =>
-          isEntityExternal(folder) ||
-          PromptsSelectors.hasExternalParent(
-            { prompts: state },
-            folder.folderId,
-          ),
+      state.folders = state.folders.filter((folder) =>
+        isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
       );
     },
     exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,

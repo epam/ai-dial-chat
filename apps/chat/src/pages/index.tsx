@@ -18,16 +18,9 @@ import { Translation } from '../types/translation';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
+import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { ShareActions, ShareSelectors } from '../store/share/share.reducers';
-import {
-  selectConversationsToMigrateAndMigratedCount,
-  selectFailedMigratedConversations,
-} from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  selectFailedMigratedPrompts,
-  selectPromptsToMigrateAndMigratedCount,
-} from '@/src/store/prompts/prompts.selectors';
 import {
   SettingsActions,
   SettingsSelectors,
@@ -86,14 +79,18 @@ export default function Home({ initialState }: HomeProps) {
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
   const { conversationsToMigrateCount, migratedConversationsCount } =
-    useAppSelector(selectConversationsToMigrateAndMigratedCount);
+    useAppSelector(
+      MigrationSelectors.selectConversationsToMigrateAndMigratedCount,
+    );
   const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
-    selectPromptsToMigrateAndMigratedCount,
+    MigrationSelectors.selectPromptsToMigrateAndMigratedCount,
   );
   const failedMigratedConversations = useAppSelector(
-    selectFailedMigratedConversations,
+    MigrationSelectors.selectFailedMigratedConversations,
   );
-  const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
+  const failedMigratedPrompts = useAppSelector(
+    MigrationSelectors.selectFailedMigratedPrompts,
+  );
   const showSelectToMigrateWindow = useAppSelector(
     selectShowSelectToMigrateWindow,
   );

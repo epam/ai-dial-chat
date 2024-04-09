@@ -3,10 +3,8 @@ import {
   Observable,
   catchError,
   concat,
-  concatMap,
   filter,
   forkJoin,
-  from,
   ignoreElements,
   iif,
   map,
@@ -23,16 +21,13 @@ import { combineEpics } from 'redux-observable';
 
 import {
   combineEntities,
-  filterMigratedEntities,
   filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
   PromptService,
   getImportPreparedPrompts,
-  getPreparedPrompts,
 } from '@/src/utils/app/data/prompt-service';
-import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -58,7 +53,6 @@ import { getPromptApiKey } from '@/src/utils/server/api';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -358,7 +352,6 @@ const deletePromptsEpic: AppEpic = (action$) =>
                 deletePrompts,
               }),
             ),
-            of(PromptsActions.setPrompts({ prompts: [] })),
           ),
         ),
       ),
@@ -487,8 +480,6 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         );
-      } else {
-        actions.push(of(PromptsActions.setPrompts({ prompts: [] })));
       }
 
       return concat(
@@ -738,173 +729,6 @@ const importPromptsEpic: AppEpic = (action$) =>
     catchError(() => of(ImportExportActions.importPromptsFail())),
   );
 
-const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
-  const browserStorage = new BrowserStorage();
-
-  return action$.pipe(
-    filter(PromptsActions.migratePromptsIfRequired.match),
-    switchMap(() =>
-      forkJoin({
-        prompts: browserStorage.getPrompts().pipe(map(filterOnlyMyEntities)),
-        promptsFolders: browserStorage
-          .getPromptsFolders(undefined, true)
-          .pipe(map(filterOnlyMyEntities)),
-        migratedPromptIds: BrowserStorage.getMigratedEntityIds(
-          MigrationStorageKeys.MigratedPromptIds,
-        ),
-        failedMigratedPromptIds: BrowserStorage.getFailedMigratedEntityIds(
-          MigrationStorageKeys.FailedMigratedPromptIds,
-        ),
-        isPromptsBackedUp: BrowserStorage.getEntityBackedUp(
-          MigrationStorageKeys.PromptsBackedUp,
-        ),
-        isMigrationInitialized:
-          BrowserStorage.getEntitiesMigrationInitialized(),
-      }),
-    ),
-    switchMap(
-      ({
-        prompts,
-        promptsFolders,
-        migratedPromptIds,
-        failedMigratedPromptIds,
-        isPromptsBackedUp,
-        isMigrationInitialized,
-      }) => {
-        const notMigratedPrompts = filterMigratedEntities(
-          prompts,
-          [...migratedPromptIds, ...failedMigratedPromptIds],
-          true,
-        );
-
-        if (
-          !isMigrationInitialized &&
-          prompts.length &&
-          !failedMigratedPromptIds.length &&
-          !migratedPromptIds.length
-        ) {
-          return concat(
-            of(
-              PromptsActions.setFailedMigratedPrompts({
-                failedMigratedPrompts: filterMigratedEntities(
-                  prompts,
-                  prompts.map((p) => p.id),
-                ),
-              }),
-            ),
-            of(UIActions.setShowSelectToMigrateWindow(true)),
-          );
-        }
-
-        if (
-          SettingsSelectors.selectStorageType(state$.value) !==
-            StorageType.API ||
-          !notMigratedPrompts.length
-        ) {
-          if (failedMigratedPromptIds.length) {
-            return concat(
-              of(PromptsActions.setIsPromptsBackedUp({ isPromptsBackedUp })),
-              of(
-                PromptsActions.setFailedMigratedPrompts({
-                  failedMigratedPrompts: filterMigratedEntities(
-                    prompts,
-                    failedMigratedPromptIds,
-                  ),
-                }),
-              ),
-            );
-          }
-
-          return EMPTY;
-        }
-
-        const preparedPrompts = getPreparedPrompts({
-          prompts: notMigratedPrompts,
-          folders: promptsFolders,
-        }); // to send prompts with proper parentPath
-
-        let migratedPromptsCount = 0;
-
-        return concat(
-          of(
-            PromptsActions.initPromptsMigration({
-              promptsToMigrateCount: notMigratedPrompts.length,
-            }),
-          ),
-          from(preparedPrompts).pipe(
-            concatMap((prompt) =>
-              PromptService.setPrompts([prompt]).pipe(
-                switchMap(() => {
-                  migratedPromptIds.push(
-                    notMigratedPrompts[migratedPromptsCount].id,
-                  );
-
-                  return concat(
-                    BrowserStorage.setMigratedEntitiesIds(
-                      migratedPromptIds,
-                      MigrationStorageKeys.MigratedPromptIds,
-                    ).pipe(switchMap(() => EMPTY)),
-                    of(
-                      PromptsActions.migratePromptFinish({
-                        migratedPromptsCount: ++migratedPromptsCount,
-                      }),
-                    ),
-                  );
-                }),
-                catchError(() => {
-                  failedMigratedPromptIds.push(
-                    notMigratedPrompts[migratedPromptsCount].id,
-                  );
-
-                  return concat(
-                    BrowserStorage.setFailedMigratedEntityIds(
-                      failedMigratedPromptIds,
-                      MigrationStorageKeys.FailedMigratedPromptIds,
-                    ).pipe(switchMap(() => EMPTY)),
-                    of(
-                      PromptsActions.migratePromptFinish({
-                        migratedPromptsCount: ++migratedPromptsCount,
-                      }),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-        );
-      },
-    ),
-  );
-};
-
-export const skipFailedMigratedPromptsEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PromptsActions.skipFailedMigratedPrompts.match),
-    switchMap(({ payload }) =>
-      BrowserStorage.getMigratedEntityIds(
-        MigrationStorageKeys.MigratedPromptIds,
-      ).pipe(
-        switchMap((migratedPromptIds) =>
-          concat(
-            BrowserStorage.setMigratedEntitiesIds(
-              [...payload.idsToMarkAsMigrated, ...migratedPromptIds],
-              MigrationStorageKeys.MigratedPromptIds,
-            ).pipe(switchMap(() => EMPTY)),
-            BrowserStorage.setFailedMigratedEntityIds(
-              [],
-              MigrationStorageKeys.FailedMigratedPromptIds,
-            ).pipe(switchMap(() => EMPTY)),
-            of(
-              PromptsActions.setFailedMigratedPrompts({
-                failedMigratedPrompts: [],
-              }),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-
 const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
@@ -962,7 +786,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
 
           return concat(
             of(
-              PromptsActions.setPrompts({
+              PromptsActions.addPrompts({
                 prompts,
               }),
             ),
@@ -978,7 +802,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
                 })),
               }),
             ),
-            of(PromptsActions.initPromptsSuccess()),
+            of(PromptsActions.initFoldersAndPromptsSuccess()),
             ...actions,
           );
         }),
@@ -1062,8 +886,6 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
   );
 
 export const PromptsEpics = combineEpics(
-  migratePromptsIfRequiredEpic,
-  skipFailedMigratedPromptsEpic,
   initEpic,
   uploadPromptsWithFoldersRecursiveEpic,
   uploadPromptsWithFoldersEpic,

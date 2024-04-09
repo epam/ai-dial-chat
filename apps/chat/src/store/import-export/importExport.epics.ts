@@ -65,6 +65,7 @@ import {
 } from '../conversations/conversations.reducers';
 import { getUniqueAttachments } from '../conversations/conversations.selectors';
 import { FilesActions } from '../files/files.reducers';
+import { MigrationActions } from '../migration/migration.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
@@ -218,7 +219,7 @@ const exportLocalStorageChatsEpic: AppEpic = (action$, state$) => {
       exportConversations(conversations, conversationFolders, appName, 4);
     }),
     switchMap(() =>
-      of(ConversationsActions.setIsChatsBackedUp({ isChatsBackedUp: true })),
+      of(MigrationActions.setIsChatsBackedUp({ isChatsBackedUp: true })),
     ),
   );
 };
@@ -239,7 +240,7 @@ const exportLocalStoragePromptsEpic: AppEpic = (action$, state$) => {
       exportPrompts(prompts, promptFolders, appName);
     }),
     switchMap(() =>
-      of(PromptsActions.setIsPromptsBackedUp({ isPromptsBackedUp: true })),
+      of(MigrationActions.setIsPromptsBackedUp({ isPromptsBackedUp: true })),
     ),
   );
 };
@@ -670,7 +671,7 @@ const resetStateEpic: AppEpic = (action$) =>
         ImportExportActions.importStop.match(action) ||
         ImportExportActions.importPromptsFail.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
-        PromptsActions.initPromptsSuccess.match(action),
+        PromptsActions.initFoldersAndPromptsSuccess.match(action),
     ),
     switchMap(() => {
       return of(ImportExportActions.resetState());

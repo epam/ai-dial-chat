@@ -595,14 +595,6 @@ export const areConversationsUploaded = createSelector(
   },
 );
 
-export const selectConversationsToMigrateAndMigratedCount = createSelector(
-  [rootSelector],
-  (state) => ({
-    conversationsToMigrateCount: state.conversationsToMigrateCount,
-    migratedConversationsCount: state.migratedConversationsCount,
-  }),
-);
-
 export const selectFoldersStatus = createSelector([rootSelector], (state) => {
   return state.foldersStatus;
 });
@@ -642,11 +634,6 @@ export const selectLoadingFolderIds = createSelector(
   },
 );
 
-export const selectFailedMigratedConversations = createSelector(
-  [rootSelector],
-  (state) => state.failedMigratedConversations,
-);
-
 export const selectIsCompareLoading = createSelector(
   [rootSelector],
   (state) => {
@@ -659,11 +646,6 @@ export const selectIsActiveNewConversationRequest = createSelector(
   (state) => {
     return state.isActiveNewConversationRequest;
   },
-);
-
-export const selectIsChatsBackedUp = createSelector(
-  [rootSelector],
-  (state) => state.isChatsBackedUp,
 );
 
 export const selectIsMessageSending = createSelector(

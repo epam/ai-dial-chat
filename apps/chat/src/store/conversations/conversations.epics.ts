@@ -7,7 +7,6 @@ import {
   TimeoutError,
   catchError,
   concat,
-  concatMap,
   delay,
   filter,
   forkJoin,
@@ -37,8 +36,6 @@ import { combineEpics } from 'redux-observable';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   combineEntities,
-  filterMigratedEntities,
-  filterOnlyMyEntities,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
@@ -52,11 +49,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
-import {
-  getOrUploadConversation,
-  getPreparedConversations,
-} from '@/src/utils/app/data/storages/api/conversation-api-storage';
-import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import {
   addGeneratedFolderId,
   generateNextName,
@@ -90,7 +83,6 @@ import {
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { MigrationStorageKeys, StorageType } from '@/src/types/storage';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -114,7 +106,6 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
-import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -584,7 +575,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       return of(
         ConversationsActions.saveNewConversation({
           newConversation,
-          idToReplaceWithNewOne: conversation.id,
         }),
       );
     }),
@@ -649,10 +639,6 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
               conversationIds: deletedConversationsIds,
             }),
           ),
-        );
-      } else {
-        actions.push(
-          of(ConversationsActions.setConversations({ conversations: [] })),
         );
       }
 
@@ -887,199 +873,11 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                     deleteIds,
                   }),
                 ),
-                of(
-                  ConversationsActions.setConversations({ conversations: [] }),
-                ),
               ),
             ),
           ),
         );
       },
-    ),
-  );
-
-const migrateConversationsIfRequiredEpic: AppEpic = (action$, state$) => {
-  const browserStorage = new BrowserStorage();
-
-  return action$.pipe(
-    filter(ConversationsActions.migrateConversationsIfRequired.match),
-    switchMap(() =>
-      forkJoin({
-        conversations: browserStorage
-          .getConversations()
-          .pipe(map(filterOnlyMyEntities)),
-        conversationsFolders: browserStorage
-          .getConversationsFolders(undefined, true)
-          .pipe(map(filterOnlyMyEntities)),
-        migratedConversationIds: BrowserStorage.getMigratedEntityIds(
-          MigrationStorageKeys.MigratedConversationIds,
-        ),
-        failedMigratedConversationIds:
-          BrowserStorage.getFailedMigratedEntityIds(
-            MigrationStorageKeys.FailedMigratedConversationIds,
-          ),
-        isChatsBackedUp: BrowserStorage.getEntityBackedUp(
-          MigrationStorageKeys.ChatsBackedUp,
-        ),
-        isMigrationInitialized:
-          BrowserStorage.getEntitiesMigrationInitialized(),
-      }),
-    ),
-    switchMap(
-      ({
-        conversations,
-        conversationsFolders,
-        migratedConversationIds,
-        failedMigratedConversationIds,
-        isChatsBackedUp,
-        isMigrationInitialized,
-      }) => {
-        const notMigratedConversations = filterMigratedEntities(
-          conversations,
-          [...failedMigratedConversationIds, ...migratedConversationIds],
-          true,
-        );
-
-        if (
-          !isMigrationInitialized &&
-          conversations.length &&
-          !failedMigratedConversationIds.length &&
-          !migratedConversationIds.length
-        ) {
-          return concat(
-            of(
-              ConversationsActions.setFailedMigratedConversations({
-                failedMigratedConversations: filterMigratedEntities(
-                  conversations,
-                  conversations.map((c) => c.id),
-                ),
-              }),
-            ),
-            of(UIActions.setShowSelectToMigrateWindow(true)),
-          );
-        }
-
-        if (
-          SettingsSelectors.selectStorageType(state$.value) !==
-            StorageType.API ||
-          !notMigratedConversations.length
-        ) {
-          if (failedMigratedConversationIds.length) {
-            return concat(
-              of(ConversationsActions.setIsChatsBackedUp({ isChatsBackedUp })),
-              of(
-                ConversationsActions.setFailedMigratedConversations({
-                  failedMigratedConversations: filterMigratedEntities(
-                    conversations,
-                    failedMigratedConversationIds,
-                  ),
-                }),
-              ),
-            );
-          }
-
-          return EMPTY;
-        }
-
-        const conversationsWithoutDate = notMigratedConversations.filter(
-          (c) => !c.lastActivityDate,
-        );
-        const conversationsWithDate = notMigratedConversations.filter(
-          (c) => c.lastActivityDate,
-        );
-        const sortedConversations = [
-          ...conversationsWithoutDate,
-          ...orderBy(conversationsWithDate, (c) => c.lastActivityDate),
-        ];
-
-        const preparedConversations = getPreparedConversations({
-          conversations: sortedConversations,
-          conversationsFolders,
-        });
-
-        let migratedConversationsCount = 0;
-
-        return concat(
-          of(
-            ConversationsActions.initConversationsMigration({
-              conversationsToMigrateCount: notMigratedConversations.length,
-            }),
-          ),
-          from(preparedConversations).pipe(
-            concatMap((conversation) =>
-              ConversationService.setConversations([
-                conversation as Conversation,
-              ]).pipe(
-                concatMap(() => {
-                  migratedConversationIds.push(
-                    sortedConversations[migratedConversationsCount].id,
-                  );
-
-                  return concat(
-                    BrowserStorage.setMigratedEntitiesIds(
-                      migratedConversationIds,
-                      MigrationStorageKeys.MigratedConversationIds,
-                    ).pipe(switchMap(() => EMPTY)),
-                    of(
-                      ConversationsActions.migrateConversationFinish({
-                        migratedConversationsCount:
-                          ++migratedConversationsCount,
-                      }),
-                    ),
-                  );
-                }),
-                catchError(() => {
-                  failedMigratedConversationIds.push(
-                    sortedConversations[migratedConversationsCount].id,
-                  );
-
-                  return concat(
-                    BrowserStorage.setFailedMigratedEntityIds(
-                      failedMigratedConversationIds,
-                      MigrationStorageKeys.FailedMigratedConversationIds,
-                    ).pipe(switchMap(() => EMPTY)),
-                    of(
-                      ConversationsActions.migrateConversationFinish({
-                        migratedConversationsCount:
-                          ++migratedConversationsCount,
-                      }),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-        );
-      },
-    ),
-  );
-};
-
-export const skipFailedMigratedConversationsEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ConversationsActions.skipFailedMigratedConversations.match),
-    switchMap(({ payload }) =>
-      BrowserStorage.getMigratedEntityIds(
-        MigrationStorageKeys.MigratedConversationIds,
-      ).pipe(
-        switchMap((migratedConversationIds) =>
-          concat(
-            BrowserStorage.setMigratedEntitiesIds(
-              [...payload.idsToMarkAsMigrated, ...migratedConversationIds],
-              MigrationStorageKeys.MigratedConversationIds,
-            ).pipe(switchMap(() => EMPTY)),
-            BrowserStorage.setFailedMigratedEntityIds(
-              [],
-              MigrationStorageKeys.FailedMigratedConversationIds,
-            ).pipe(switchMap(() => EMPTY)),
-            of(
-              ConversationsActions.setFailedMigratedConversations({
-                failedMigratedConversations: [],
-              }),
-            ),
-          ),
-        ),
-      ),
     ),
   );
 
@@ -2434,8 +2232,8 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
     filter(ConversationsActions.uploadConversationsWithFolders.match),
     switchMap(({ payload }) =>
       zip(
-        payload.paths.map((path) =>
-          ConversationService.getConversationsAndFolders(path),
+        payload.ids.map((ids) =>
+          ConversationService.getConversationsAndFolders(ids),
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
@@ -2444,14 +2242,9 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
 
           return concat(
             of(
-              ConversationsActions.uploadFoldersSuccess({
-                paths: new Set(payload.paths),
+              ConversationsActions.uploadChildConversationsWithFoldersSuccess({
+                parentIds: payload.ids,
                 folders: folders,
-              }),
-            ),
-            of(
-              ConversationsActions.uploadConversationsSuccess({
-                paths: new Set(payload.paths),
                 conversations: conversations,
               }),
             ),
@@ -2462,7 +2255,7 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
           return concat(
             of(
               ConversationsActions.uploadFoldersFail({
-                paths: new Set(payload.paths),
+                paths: new Set(payload.ids),
               }),
             ),
             of(ConversationsActions.uploadConversationsFail()),
@@ -2602,7 +2395,7 @@ const openFolderEpic: AppEpic = (action$, state$) =>
       return concat(
         of(
           ConversationsActions.uploadConversationsWithFolders({
-            paths: [payload.id],
+            ids: [payload.id],
           }),
         ),
       );
@@ -2666,8 +2459,6 @@ const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
   );
 
 export const ConversationsEpics = combineEpics(
-  migrateConversationsIfRequiredEpic,
-  skipFailedMigratedConversationsEpic,
   // init
   initEpic,
   initSelectedConversationsEpic,

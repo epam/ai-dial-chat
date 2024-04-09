@@ -342,7 +342,7 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        PromptsActions.initPromptsSuccess.match(action) ||
+        PromptsActions.initFoldersAndPromptsSuccess.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
     filter(() =>
@@ -838,7 +838,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             of(
               ConversationsActions.setConversations({
                 conversations: newConversations,
-                ignoreCombining: true,
               }),
             ),
             ...actions,
@@ -859,7 +858,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           of(
             ConversationsActions.setConversations({
               conversations: newConversations,
-              ignoreCombining: true,
             }),
           ),
           ...actions,
@@ -873,7 +871,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           return of(
             PromptsActions.setPrompts({
               prompts: prompts.filter((item) => item.id !== payload.resourceId),
-              ignoreCombining: true,
             }),
           );
         }
@@ -894,7 +891,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
               prompts: prompts.filter(
                 (p) => !p.id.startsWith(`${payload.resourceId}/`),
               ),
-              ignoreCombining: true,
             }),
           ),
         );
