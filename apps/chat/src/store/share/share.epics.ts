@@ -590,13 +590,20 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .filter(Boolean) as AnyAction[]),
             );
         } else {
+          const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
+            state$.value,
+          );
+
           payload.resources.entities.length &&
             actions.push(
               PromptsActions.addPrompts({
-                prompts: payload.resources.entities.map((res) => ({
-                  ...res,
-                  sharedWithMe: true,
-                })) as Prompt[],
+                prompts: payload.resources.entities
+                  // do not override selected prompt
+                  .filter((res) => res.id !== selectedPrompt?.id)
+                  .map((res) => ({
+                    ...res,
+                    sharedWithMe: true,
+                  })) as Prompt[],
               }),
             );
           payload.resources.folders.length &&
