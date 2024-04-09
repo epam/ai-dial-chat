@@ -14,6 +14,7 @@
     "publish:dry": "nx run-many -t publish --output-style=static --dry",
     "e2e": "nx run-many -t e2e --output-style=stream --skipInstall",
     "e2e:ci": "nx run-many -t e2e --configuration=production --output-style=stream --skipInstall",
+    "e2e:overlay:ci": "nx run-many -t e2e --configuration=productionOverlay --output-style=stream --skipInstall",
     "lint": "nx run-many -t lint",
     "lint:fix": "nx run-many -t lint:fix",
     "format": "nx run-many -t format",

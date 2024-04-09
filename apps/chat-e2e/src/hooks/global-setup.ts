@@ -10,6 +10,10 @@ export const ExecutionResults = {
     __dirname,
     `../../${ResultFolder.allureReport}`,
   ),
+  allureOverlayReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.allureOverlayReport}`,
+  ),
   htmlReportPath: path.resolve(__dirname, `../../${ResultFolder.htmlReport}`),
   testResultsPath: path.resolve(__dirname, `../../${ResultFolder.testResults}`),
 };
