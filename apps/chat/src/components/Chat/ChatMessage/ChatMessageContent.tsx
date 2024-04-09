@@ -466,7 +466,10 @@ export const ChatMessageContent = ({
                   <MessageAttachments
                     attachments={message.custom_content?.attachments}
                   />
-                  <div ref={anchorRef} className="absolute bottom-0"></div>
+                  <div
+                    ref={anchorRef}
+                    className="absolute bottom-[-140px]"
+                  ></div>
                 </div>
                 {showUserButtons && !isConversationInvalid && (
                   <MessageUserButtons
