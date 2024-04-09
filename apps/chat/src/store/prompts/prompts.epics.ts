@@ -1051,9 +1051,9 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
 
       return PromptService.getPrompt(
         originalPrompt || ({ id: payload.promptId } as PromptInfo),
-      ).pipe(map((servicePrompt) => ({ servicePrompt })));
+      );
     }),
-    map(({ servicePrompt }) => {
+    map((servicePrompt) => {
       return PromptsActions.uploadPromptSuccess({
         prompt: servicePrompt,
       });
