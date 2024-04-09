@@ -13,7 +13,6 @@ import {
   mergeMap,
   of,
   switchMap,
-  toArray,
   zip,
 } from 'rxjs';
 
@@ -25,6 +24,7 @@ import {
   combineEntities,
   filterMigratedEntities,
   filterOnlyMyEntities,
+  isImportEntityNameOnSameLevelUnique,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
@@ -45,7 +45,6 @@ import {
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import {
-  cleanPromptsFolders,
   exportPrompt,
   exportPrompts,
   isPromptsFormat,
@@ -197,7 +196,7 @@ const getOrUploadPrompt = (
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.savePrompt.match),
-    switchMap(({ payload: newPrompt }) =>
+    concatMap(({ payload: newPrompt }) =>
       PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
     ),
     catchError((err) => {
@@ -686,56 +685,65 @@ const importPromptsEpic: AppEpic = (action$) =>
         folders: promptsHistory.folders,
       });
 
-      return PromptService.setPrompts(preparedPrompts).pipe(
-        toArray(),
-        switchMap(() => {
-          return PromptService.getPrompts(undefined, true).pipe(
-            switchMap((promptsListing) => {
-              if (preparedPrompts.length && !promptsListing.length) {
-                return of(ImportExportActions.importPromptsFail());
-              }
+      if (!preparedPrompts.length) {
+        return of(ImportExportActions.importPromptsFail());
+      }
 
-              const foldersIds = uniq(
-                promptsListing.map((info) => info.folderId),
-              );
-              //calculate all folders;
-              const promptsFolders = getFoldersFromIds(
-                uniq(
-                  foldersIds.flatMap((id) =>
-                    getParentFolderIdsFromFolderId(id),
-                  ),
-                ),
-                FolderType.Prompt,
-              );
+      return PromptService.getPrompts(undefined, true).pipe(
+        switchMap((promptsListing) => {
+          const existedImportNamesPrompts = preparedPrompts.filter(
+            (importPrompt) =>
+              !isImportEntityNameOnSameLevelUnique({
+                entity: importPrompt,
+                entities: promptsListing,
+              }),
+          );
 
-              const cleanFolders = cleanPromptsFolders(promptsHistory.folders);
+          const nonExistedImportNamesPrompts = preparedPrompts.filter(
+            (importPrompt) => {
+              return isImportEntityNameOnSameLevelUnique({
+                entity: importPrompt,
+                entities: promptsListing,
+              });
+            },
+          );
 
-              const folders = combineEntities(promptsFolders, cleanFolders);
+          if (!existedImportNamesPrompts.length) {
+            return of(
+              ImportExportActions.uploadImportedPrompts({
+                itemsToUpload: nonExistedImportNamesPrompts,
+                folders: promptsHistory.folders,
+              }),
+            );
+          }
 
-              return of(
-                PromptsActions.importPromptsSuccess({
-                  prompts: promptsListing,
-                  folders,
-                }),
-              );
-            }),
-            catchError(() => {
-              return concat(
-                of(
-                  UIActions.showErrorToast(
-                    translate(
-                      'An error occurred while uploading prompts and folders',
-                    ),
-                  ),
-                ),
-                of(ImportExportActions.importPromptsFail()),
-              );
-            }),
-          ); //listing of all entities
+          if (!nonExistedImportNamesPrompts.length) {
+            return of(
+              ImportExportActions.showReplaceDialog({
+                duplicatedItems: existedImportNamesPrompts,
+                featureType: FeatureType.Prompt,
+              }),
+            );
+          }
+
+          return concat(
+            of(
+              ImportExportActions.showReplaceDialog({
+                duplicatedItems: existedImportNamesPrompts,
+                featureType: FeatureType.Prompt,
+              }),
+            ),
+            of(
+              ImportExportActions.uploadImportedPrompts({
+                itemsToUpload: nonExistedImportNamesPrompts,
+                folders: promptsHistory.folders,
+              }),
+            ),
+          );
         }),
+        catchError(() => of(ImportExportActions.importPromptsFail())),
       );
     }),
-    catchError(() => of(ImportExportActions.importPromptsFail())),
   );
 
 const migratePromptsIfRequiredEpic: AppEpic = (action$, state$) => {
@@ -1085,5 +1093,4 @@ export const PromptsEpics = combineEpics(
   createNewPromptEpic,
   duplicatePromptEpic,
   uploadPromptEpic,
-  // importPromptsSuccessEpic,
 );

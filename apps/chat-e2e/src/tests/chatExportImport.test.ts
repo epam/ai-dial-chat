@@ -152,6 +152,7 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -174,6 +175,9 @@ dialTest(
           [...nestedConversations, conversationOutsideFolder],
           ...nestedFolders,
         );
+        await localStorageManager.setSelectedConversation(
+          nestedConversations[levelsCount],
+        );
       },
     );
 
@@ -183,10 +187,6 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
-        await chatBar.createNewConversation();
-        for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandFolder(nestedFolder.name);
-        }
         exportedData = await dialHomePage.downloadData(() =>
           chatBar.exportButton.click(),
         );
