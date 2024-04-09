@@ -127,11 +127,7 @@ export const promptsSlice = createSlice({
     },
     updatePrompt: (
       state,
-      _action: PayloadAction<{
-        id: string;
-        values: Partial<Prompt>;
-        isImportFinish?: boolean;
-      }>,
+      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
     ) => state,
     updatePromptSuccess: (
       state,
@@ -216,10 +212,18 @@ export const promptsSlice = createSlice({
     },
     clearPromptsSuccess: (state) => {
       state.prompts = state.prompts.filter((prompt) =>
-        isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
+        isEntityOrParentsExternal(
+          { prompts: state },
+          prompt,
+          FeatureType.Prompt,
+        ),
       );
       state.folders = state.folders.filter((folder) =>
-        isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
+        isEntityOrParentsExternal(
+          { prompts: state },
+          folder,
+          FeatureType.Prompt,
+        ),
       );
     },
     exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,

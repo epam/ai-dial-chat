@@ -576,6 +576,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       return of(
         ConversationsActions.saveNewConversation({
           newConversation,
+          idToReplaceWithNewOne: conversation.id,
         }),
       );
     }),
@@ -2283,9 +2284,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
       ConversationService.getConversations(payload?.path, true).pipe(
         mergeMap((conversations) => {
           const actions: Observable<AnyAction>[] = [];
-
-          const conv = conversations.flat();
-          const folderIds = uniq(conv.map((c) => c.folderId));
+          const folderIds = uniq(conversations.map((c) => c.folderId));
           const paths = uniq(
             folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
           );
@@ -2303,6 +2302,19 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
             actions.push(
               concat(
                 of(
+                  ConversationsActions.uploadChildConversationsWithFoldersSuccess(
+                    {
+                      parentIds: [...payload.path, ...paths],
+                      folders: getFoldersFromIds(
+                        paths,
+                        FolderType.Chat,
+                        UploadStatus.LOADED,
+                      ),
+                      conversations,
+                    },
+                  ),
+                ),
+                of(
                   ConversationsActions.selectConversations({
                     conversationIds: [conversations[0]?.id],
                   }),
@@ -2313,7 +2325,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                     openedFolderIds: [
                       ...openedFolders,
                       ...uniq(
-                        conv.flatMap((c) =>
+                        conversations.flatMap((c) =>
                           getParentFolderIdsFromFolderId(c.folderId),
                         ),
                       ),
@@ -2324,22 +2336,23 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
             );
           }
 
+          const selectedConversationIds =
+            ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+
           return concat(
             of(
-              ConversationsActions.uploadConversationsSuccess({
-                paths: new Set(),
-                conversations: conv,
+              ConversationsActions.addConversations({
+                conversations: conversations.filter(
+                  ({ id }) => !selectedConversationIds.includes(id),
+                ),
               }),
             ),
             of(
-              ConversationsActions.uploadFoldersSuccess({
-                paths: new Set(),
-                folders: getFoldersFromIds(
-                  paths,
-                  FolderType.Chat,
-                  UploadStatus.LOADED,
-                ),
-                allLoaded: true,
+              ConversationsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),

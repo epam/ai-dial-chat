@@ -745,13 +745,12 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
       PromptService.getPrompts(payload?.path, true).pipe(
         mergeMap((prompts) => {
           const actions: Observable<AnyAction>[] = [];
+          const folderIds = uniq(prompts.map((c) => c.folderId));
+          const paths = uniq(
+            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          );
 
           if (!!payload?.selectFirst && !!prompts.length && !!payload?.path) {
-            const folderIds = uniq(prompts.map((c) => c.folderId));
-            const paths = uniq(
-              folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
-            );
-
             const openedFolders = UISelectors.selectOpenedFoldersIds(
               state$.value,
               FeatureType.Prompt,
@@ -801,11 +800,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
             ),
             of(
               PromptsActions.addFolders({
-                folders: uniq(
-                  prompts.flatMap((p) =>
-                    getParentFolderIdsFromFolderId(p.folderId),
-                  ),
-                ).map((path) => ({
+                folders: paths.map((path) => ({
                   ...getFolderFromId(path, FolderType.Prompt),
                   status: UploadStatus.LOADED,
                 })),
