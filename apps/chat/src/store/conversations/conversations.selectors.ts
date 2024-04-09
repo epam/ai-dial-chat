@@ -15,6 +15,7 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
+  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import {
@@ -651,4 +652,28 @@ export const selectIsActiveNewConversationRequest = createSelector(
 export const selectIsMessageSending = createSelector(
   [rootSelector],
   (state) => state.isMessageSending,
+);
+
+export const selectDuplicatedConversation = createSelector(
+  [
+    selectConversations,
+    (
+      _state: RootState,
+      {
+        importId,
+        conversationName,
+      }: { importId: string; conversationName: string },
+    ) => ({ importId, conversationName }),
+  ],
+  (conversations, { importId, conversationName }) => {
+    return conversations.find((conversation) => {
+      const { parentPath } = splitEntityId(conversation.id);
+      const { parentPath: importParentPath } = splitEntityId(importId);
+
+      return (
+        parentPath === importParentPath &&
+        conversation.name === conversationName
+      );
+    });
+  },
 );

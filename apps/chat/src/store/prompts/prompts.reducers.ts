@@ -127,7 +127,11 @@ export const promptsSlice = createSlice({
     },
     updatePrompt: (
       state,
-      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
+      _action: PayloadAction<{
+        id: string;
+        values: Partial<Prompt>;
+        isImportFinish?: boolean;
+      }>,
     ) => state,
     updatePromptSuccess: (
       state,
