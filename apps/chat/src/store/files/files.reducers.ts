@@ -6,9 +6,11 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
   getParentAndChildFolders,
+  getParentAndCurrentFoldersById,
   sortByName,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getFileRootId, getRootId } from '@/src/utils/app/id';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -396,6 +398,16 @@ const selectFoldersWithSearchTerm = createSelector(
     return getParentAndChildFolders(folders, filtered);
   },
 );
+const hasExternalParent = createSelector(
+  [selectFolders, (_state: RootState, folderId: string) => folderId],
+  (folders, folderId) => {
+    if (!folderId.startsWith(getFileRootId())) {
+      return true;
+    }
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => isEntityExternal(folder));
+  },
+);
 
 export const FilesSelectors = {
   selectFiles,
@@ -408,6 +420,7 @@ export const FilesSelectors = {
   selectNewAddedFolderId,
   selectFilesByIds,
   selectFoldersWithSearchTerm,
+  hasExternalParent,
 };
 
 export const FilesActions = filesSlice.actions;

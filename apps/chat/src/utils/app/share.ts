@@ -5,7 +5,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -55,9 +55,13 @@ export const hasExternalParent = (
 ) => {
   if (!featureType) return false;
 
-  return featureType === FeatureType.Chat
-    ? ConversationsSelectors.hasExternalParent(state, folderId)
-    : PromptsSelectors.hasExternalParent(state, folderId);
+  if (featureType === FeatureType.Chat) {
+    return ConversationsSelectors.hasExternalParent(state, folderId);
+  } else if (featureType === FeatureType.Prompt) {
+    return PromptsSelectors.hasExternalParent(state, folderId);
+  }
+
+  return FilesSelectors.hasExternalParent(state, folderId);
 };
 
 export const isEntityOrParentsExternal = (
