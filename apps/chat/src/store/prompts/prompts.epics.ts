@@ -708,8 +708,9 @@ const importPromptsEpic: AppEpic = (action$) =>
             },
           );
 
-          const emptyFolders = promptsHistory.folders.filter((folder) =>
-            preparedPrompts.some((conv) => conv.folderId === folder.id),
+          const emptyFolders = promptsHistory.folders.filter(
+            (folder) =>
+              !preparedPrompts.some((conv) => conv.folderId === folder.id),
           );
 
           if (!existedImportNamesPrompts.length) {

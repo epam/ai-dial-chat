@@ -299,10 +299,12 @@ const importConversationsEpic: AppEpic = (action$) =>
                 entities: conversationsListing,
               });
             });
-          const emptyFolders = folders.filter((folder) =>
-            preparedConversations.some((conv) => conv.folderId === folder.id),
+          const emptyFolders = folders.filter(
+            (folder) =>
+              !preparedConversations.some(
+                (conv) => conv.folderId === folder.id,
+              ),
           );
-
           if (!existedImportNamesConversations.length) {
             return of(
               ImportExportActions.uploadImportedConversations({
