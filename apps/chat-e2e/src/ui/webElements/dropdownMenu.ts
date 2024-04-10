@@ -11,8 +11,6 @@ export class DropdownMenu extends Menu {
     this.menuOptions().getElementLocatorByText(option);
 
   public getMenuOption(option: string) {
-    return this.createElementFromLocator(
-      this.menuOption(option).locator(Tags.span),
-    );
+    return this.createElementFromLocator(this.menuOption(option));
   }
 }
