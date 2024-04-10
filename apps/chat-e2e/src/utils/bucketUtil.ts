@@ -12,4 +12,8 @@ export class BucketUtil {
   public static getAdditionalShareUserBucket() {
     return BucketUtil.getBucket(+config.workers!);
   }
+
+  public static getAdditionalSecondShareUserBucket() {
+    return BucketUtil.getBucket(+config.workers! + 1);
+  }
 }
