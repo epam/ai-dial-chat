@@ -708,11 +708,15 @@ const importPromptsEpic: AppEpic = (action$) =>
             },
           );
 
+          const emptyFolders = promptsHistory.folders.filter((folder) =>
+            preparedPrompts.some((conv) => conv.folderId === folder.id),
+          );
+
           if (!existedImportNamesPrompts.length) {
             return of(
               ImportExportActions.uploadImportedPrompts({
                 itemsToUpload: nonExistedImportNamesPrompts,
-                folders: promptsHistory.folders,
+                folders: emptyFolders,
               }),
             );
           }
@@ -736,7 +740,7 @@ const importPromptsEpic: AppEpic = (action$) =>
             of(
               ImportExportActions.uploadImportedPrompts({
                 itemsToUpload: nonExistedImportNamesPrompts,
-                folders: promptsHistory.folders,
+                folders: emptyFolders,
               }),
             ),
           );
