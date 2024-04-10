@@ -129,6 +129,8 @@ export const getImportPreparedConversations = ({
   conversations.map((conv) => {
     const { path } = getPathToFolderById(conversationsFolders, conv.folderId, {
       forRenaming: false,
+      trimEndDotsRequired: true,
+      prepareNames: true,
     });
 
     const newName = prepareEntityName(conv.name);

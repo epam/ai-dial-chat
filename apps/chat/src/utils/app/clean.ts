@@ -15,6 +15,7 @@ import {
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
+import { prepareEntityName } from './common';
 import { constructPath } from './file';
 import { getConversationRootId } from './id';
 
@@ -126,7 +127,10 @@ export const cleanConversationHistory = (
   return history.reduce(
     (acc: Conversation[], conversation: Partial<Conversation>) => {
       try {
-        const cleanedConversation = cleanConversation(conversation);
+        const cleanedConversation = cleanConversation({
+          ...conversation,
+          name: conversation.name && prepareEntityName(conversation.name),
+        });
 
         acc.push(cleanedConversation);
         return acc;
