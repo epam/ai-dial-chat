@@ -111,10 +111,10 @@ export const ChatView = memo(() => {
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
   >({});
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
+  const chatMessagesRef = useRef<HTMLDivElement | null>(null);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -254,28 +254,22 @@ export const ChatView = memo(() => {
   }, [mergedMessages]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setAutoScrollEnabled(entry.isIntersecting);
-        if (entry.isIntersecting) {
-          textareaRef.current?.focus();
-        }
-      },
-      {
-        threshold: 0.1,
-      },
-    );
-
-    const messagesEndElement = messagesEndRef.current;
-    if (messagesEndElement) {
-      observer.observe(messagesEndElement);
-    }
-    return () => {
-      if (messagesEndElement) {
-        observer.unobserve(messagesEndElement);
+    const handleResize = () => {
+      if (chatMessagesRef.current && !messageIsStreaming) {
+        handleScroll();
       }
     };
-  }, [messagesEndRef]);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (chatMessagesRef.current) {
+      resizeObserver.observe(chatMessagesRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [handleScroll, messageIsStreaming]);
 
   useEffect(() => {
     setIsShowChatSettings(false);
@@ -738,69 +732,72 @@ export const ChatView = memo(() => {
                           ),
                       )}
                     </div>
-                    {mergedMessages?.length > 0 && (
-                      <div className="flex flex-col" data-qa="chat-messages">
-                        {mergedMessages.map(
-                          (
-                            mergedStr: [Conversation, Message, number][],
-                            i: number,
-                          ) => (
-                            <div
-                              key={i}
-                              className="flex w-full"
-                              data-qa={
-                                isCompareMode
-                                  ? 'compare-message-row'
-                                  : 'message-row'
-                              }
-                            >
-                              {mergedStr.map(
-                                ([conv, message, index]: [
-                                  Conversation,
-                                  Message,
-                                  number,
-                                ]) => (
-                                  <div
-                                    key={conv.id}
-                                    className={classNames(
-                                      isCompareMode &&
-                                        selectedConversations.length > 1
-                                        ? 'w-[50%]'
-                                        : 'w-full',
-                                    )}
-                                  >
-                                    <div className="size-full">
-                                      <MemoizedChatMessage
-                                        key={conv.id}
-                                        message={message}
-                                        messageIndex={index}
-                                        conversation={conv}
-                                        isLikesEnabled={enabledFeatures.has(
-                                          Feature.Likes,
-                                        )}
-                                        editDisabled={!!notAllowedType}
-                                        onEdit={onEditMessage}
-                                        onLike={onLikeHandler(index, conv)}
-                                        onDelete={() => {
-                                          handleDeleteMessage(index, conv);
-                                        }}
-                                        onRegenerate={
-                                          index === mergedMessages.length - 1 &&
-                                          showLastMessageRegenerate
-                                            ? onRegenerateMessage
-                                            : undefined
-                                        }
-                                        messagesLength={mergedMessages.length}
-                                      />
+                    <div ref={chatMessagesRef}>
+                      {mergedMessages?.length > 0 && (
+                        <div className="flex flex-col" data-qa="chat-messages">
+                          {mergedMessages.map(
+                            (
+                              mergedStr: [Conversation, Message, number][],
+                              i: number,
+                            ) => (
+                              <div
+                                key={i}
+                                className="flex w-full"
+                                data-qa={
+                                  isCompareMode
+                                    ? 'compare-message-row'
+                                    : 'message-row'
+                                }
+                              >
+                                {mergedStr.map(
+                                  ([conv, message, index]: [
+                                    Conversation,
+                                    Message,
+                                    number,
+                                  ]) => (
+                                    <div
+                                      key={conv.id}
+                                      className={classNames(
+                                        isCompareMode &&
+                                          selectedConversations.length > 1
+                                          ? 'w-[50%]'
+                                          : 'w-full',
+                                      )}
+                                    >
+                                      <div className="size-full">
+                                        <MemoizedChatMessage
+                                          key={conv.id}
+                                          message={message}
+                                          messageIndex={index}
+                                          conversation={conv}
+                                          isLikesEnabled={enabledFeatures.has(
+                                            Feature.Likes,
+                                          )}
+                                          editDisabled={!!notAllowedType}
+                                          onEdit={onEditMessage}
+                                          onLike={onLikeHandler(index, conv)}
+                                          onDelete={() => {
+                                            handleDeleteMessage(index, conv);
+                                          }}
+                                          onRegenerate={
+                                            index ===
+                                              mergedMessages.length - 1 &&
+                                            showLastMessageRegenerate
+                                              ? onRegenerateMessage
+                                              : undefined
+                                          }
+                                          messagesLength={mergedMessages.length}
+                                        />
+                                      </div>
                                     </div>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    )}
+                                  ),
+                                )}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {!isPlayback && notAllowedType ? (
                     <NotAllowedModel type={notAllowedType} />
