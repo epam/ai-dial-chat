@@ -103,6 +103,7 @@ export interface FolderProps<T, P = unknown> {
   withBorderHighlight?: boolean;
   allFoldersWithoutFilters?: FolderInterface[];
   allItemsWithoutFilters?: T[];
+  folderClassName?: string;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -133,6 +134,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   maxDepth,
   highlightTemporaryFolders,
   withBorderHighlight = true,
+  folderClassName,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -639,6 +641,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           !withBorderHighlight && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
           isHighlighted && withBorderHighlight && 'border-accent-primary',
+          folderClassName,
         )}
         data-qa="folder"
       >

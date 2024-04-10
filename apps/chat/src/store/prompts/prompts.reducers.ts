@@ -172,7 +172,11 @@ export const promptsSlice = createSlice({
     },
     updatePrompt: (
       state,
-      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
+      _action: PayloadAction<{
+        id: string;
+        values: Partial<Prompt>;
+        isImportFinish?: boolean;
+      }>,
     ) => state,
     updatePromptSuccess: (
       state,
@@ -458,24 +462,18 @@ export const promptsSlice = createSlice({
     },
     uploadPromptSuccess: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ prompt: Prompt | null; originalPromptId: string }>,
+      { payload }: PayloadAction<{ prompt: Prompt | null }>,
     ) => {
       state.isPromptLoading = false;
-      const foundPromptIdx = state.prompts.findIndex(
-        (prompt) => prompt.id === payload.prompt?.id,
-      );
 
-      if (foundPromptIdx !== -1) {
-        state.prompts[foundPromptIdx] = payload.prompt as Prompt;
-      } else {
-        state.prompts = state.prompts.filter(
-          (prompt) => prompt.id !== payload.originalPromptId,
+      if (payload.prompt) {
+        state.prompts = state.prompts.map((prompt) =>
+          prompt.id === payload.prompt?.id
+            ? { ...payload.prompt, ...prompt }
+            : prompt,
         );
       }
     },
-
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
     uploadChildPromptsWithFolders: (
       state,
