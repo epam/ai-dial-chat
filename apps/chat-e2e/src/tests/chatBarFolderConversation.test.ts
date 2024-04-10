@@ -291,57 +291,76 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-606', 'EPMRTC-1373');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
 
-    for (let i = 1; i <= 3; i++) {
-      await chatBar.createNewFolder();
-    }
-    for (let i = 3; i >= 2; i--) {
-      await chatBar.dragAndDropEntityToFolder(
-        folderConversations.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(i),
-        ),
-        folderConversations.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(i - 1),
-        ),
-      );
-    }
-    await folderConversations.expandFolder(
-      ExpectedConstants.newFolderWithIndexTitle(2),
+    await dialTest.step('Create max nested folders structure', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+
+      for (let i = 1; i <= 3; i++) {
+        await chatBar.createNewFolder();
+      }
+      for (let i = 3; i >= 2; i--) {
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i),
+          ),
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i - 1),
+          ),
+        );
+      }
+    });
+
+    await dialTest.step(
+      'For root folder open dropdown menu, select "Delete" option, cancel delete and verify folder remains',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        expect
+          .soft(
+            await confirmationDialog.getConfirmationMessage(),
+            ExpectedMessages.confirmationMessageIsValid,
+          )
+          .toBe(ExpectedConstants.deleteFolderMessage);
+
+        await confirmationDialog.cancelDialog();
+        expect
+          .soft(
+            await folderConversations
+              .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+              .isVisible(),
+            ExpectedMessages.folderNotDeleted,
+          )
+          .toBeTruthy();
+      },
     );
 
-    await folderConversations.openFolderDropdownMenu(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    await dialTest.step(
+      'For root folder open dropdown menu, select "Delete" option, confirm delete and verify folder with all nested elements are deleted',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm();
+        for (let i = 2; i <= 3; i++) {
+          await folderConversations
+            .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
+            .waitFor({ state: 'hidden' });
+        }
+      },
     );
-    await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-    expect
-      .soft(
-        await confirmationDialog.getConfirmationMessage(),
-        ExpectedMessages.confirmationMessageIsValid,
-      )
-      .toBe(ExpectedConstants.deleteFolderMessage);
 
-    await confirmationDialog.cancelDialog();
-    expect
-      .soft(
-        await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .isVisible(),
-        ExpectedMessages.folderNotDeleted,
-      )
-      .toBeTruthy();
-
-    await folderConversations.openFolderDropdownMenu(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    await dialTest.step(
+      'Create again root folder, expand and verify no nested elements available inside',
+      async () => {
+        await chatBar.createNewFolder();
+        const foldersCount = await folderConversations.getFoldersCount();
+        expect.soft(foldersCount, ExpectedMessages.foldersCountIsValid).toBe(1);
+      },
     );
-    await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-    await confirmationDialog.confirm();
-    for (let i = 2; i <= 3; i++) {
-      await folderConversations
-        .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
-        .waitFor({ state: 'hidden' });
-    }
   },
 );
 

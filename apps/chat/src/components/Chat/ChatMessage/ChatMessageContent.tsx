@@ -194,13 +194,6 @@ export const ChatMessageContent = ({
     [],
   );
 
-  useEffect(() => {
-    if (shouldScroll) {
-      anchorRef.current?.scrollIntoView({ block: 'end' });
-      setShouldScroll(false);
-    }
-  }, [shouldScroll]);
-
   const handleToggleEditing = useCallback(
     (value?: boolean) => {
       toggleEditing(value ?? !isEditing);
@@ -214,6 +207,13 @@ export const ChatMessageContent = ({
       setShouldScroll(true);
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    if (shouldScroll) {
+      anchorRef.current?.scrollIntoView({ block: 'end' });
+      setShouldScroll(false);
+    }
+  }, [shouldScroll]);
 
   const handleEditMessage = useCallback(() => {
     if (isSubmitAllowed) {

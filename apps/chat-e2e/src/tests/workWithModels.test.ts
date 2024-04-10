@@ -32,7 +32,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    chat,
     localStorageManager,
     dataInjector,
     setTestIds,
