@@ -189,14 +189,32 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [wasOpened, setWasOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (wasOpened) {
-      setTimeout(() => {
-        anchorRef.current?.scrollIntoView({ block: 'end' });
-      }, 500);
-      setWasOpened(false);
+    const handleResize = () => {
+      if (wasOpened && anchorRef.current) {
+        const anchor = anchorRef.current;
+        const styles = getComputedStyle(anchorRef.current);
+        const padding =
+          parseFloat(styles.paddingBottom || '0') +
+          parseFloat(styles.paddingTop || '0');
+        if (anchor.clientHeight - padding > 0) {
+          anchorRef.current?.scrollIntoView({ block: 'end' });
+          setWasOpened(false);
+        }
+      }
+    };
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (anchorRef.current) {
+      resizeObserver.observe(anchorRef.current);
     }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, [wasOpened]);
+
   const isOpenable =
     attachment.data ||
     (attachment.url && imageTypes.has(attachment.type)) ||
