@@ -22,7 +22,7 @@ config.use!.baseURL = 'http://localhost:4200';
 
 config.webServer = {
   cwd: workspaceRoot,
-  command: 'npx nx serve:sandbox overlay-sandbox',
+  command: 'npx nx serve:sandbox overlay-sandbox --configurations=production',
   url: 'http://localhost:4200',
   timeout: 180000,
   reuseExistingServer: true,
