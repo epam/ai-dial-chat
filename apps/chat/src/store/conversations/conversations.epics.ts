@@ -249,11 +249,37 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
 
 const initFoldersAndConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) =>
-      ConversationsActions.initFoldersAndConversations.match(action),
-    ),
+    filter(ConversationsActions.initFoldersAndConversations.match),
     switchMap(() =>
-      of(ConversationsActions.uploadConversationsWithFoldersRecursive()),
+      ConversationService.getConversations(undefined, true).pipe(
+        switchMap((conversations) => {
+          const folderIds = uniq(conversations.map((c) => c.folderId));
+          const paths = uniq(
+            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+          );
+
+          return concat(
+            of(
+              ConversationsActions.addConversations({
+                conversations,
+              }),
+            ),
+            of(
+              ConversationsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Chat),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            of(ConversationsActions.initFoldersAndConversationsSuccess()),
+          );
+        }),
+        catchError((err) => {
+          console.error('Error during upload conversations and folders', err);
+          return of(ConversationsActions.uploadConversationsFail());
+        }),
+      ),
     ),
   );
 
@@ -2340,6 +2366,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
           return concat(
+            // do not override selected conversations to avoid losing messages
             of(
               ConversationsActions.addConversations({
                 conversations: conversations.filter(
@@ -2350,12 +2377,14 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
             of(
               ConversationsActions.addFolders({
                 folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Prompt),
+                  ...getFolderFromId(path, FolderType.Chat),
                   status: UploadStatus.LOADED,
                 })),
               }),
             ),
-            of(ConversationsActions.initFoldersAndConversationsSuccess()),
+            of(
+              ConversationsActions.uploadConversationsWithFoldersRecursiveSuccess(),
+            ),
             ...actions,
           );
         }),

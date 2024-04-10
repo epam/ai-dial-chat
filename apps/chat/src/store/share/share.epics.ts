@@ -495,17 +495,13 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          const { needToUploadFolder } =
-            ShareSelectors.selectNeedToUploadFolder(state$.value);
-
           if (
             selectedConv &&
             hasExternalParent(
               state$.value,
               selectedConv.folderId,
               FeatureType.Chat,
-            ) &&
-            needToUploadFolder
+            )
           ) {
             const folderToUpload = payload.resources.folders.find((folder) =>
               selectedConv.folderId.startsWith(`${folder.id}/`),
@@ -552,8 +548,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 })) as FolderInterface[],
               }),
             );
-
-          actions.push(ShareActions.resetNeedToUploadFolder());
         }
       }
       if (payload.featureType === FeatureType.Prompt) {

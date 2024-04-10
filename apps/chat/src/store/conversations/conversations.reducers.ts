@@ -523,7 +523,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = combineEntities(payload.folders, state.folders);
+      state.folders = combineEntities(state.folders, payload.folders);
     },
     setSearchTerm: (
       state,
@@ -686,6 +686,9 @@ export const conversationsSlice = createSlice({
       );
       state.foldersStatus = UploadStatus.FAILED;
     },
+    initConversationsRecursive: (state) => {
+      state.conversationsStatus = UploadStatus.LOADING;
+    },
     uploadConversationsWithFoldersRecursive: (
       state,
       {
@@ -696,6 +699,9 @@ export const conversationsSlice = createSlice({
     ) => {
       state.conversationsStatus = UploadStatus.LOADING;
       state.conversationsLoaded = !!payload?.noLoader;
+    },
+    uploadConversationsWithFoldersRecursiveSuccess: (state) => {
+      state.conversationsLoaded = true;
     },
     uploadConversationsFail: (state) => {
       state.conversationsStatus = UploadStatus.FAILED;
