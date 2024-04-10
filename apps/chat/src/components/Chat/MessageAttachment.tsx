@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { IconDownload, IconPaperclip } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
 import { useTranslation } from 'next-i18next';
@@ -186,7 +186,35 @@ interface Props {
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
+  const [wasOpened, setWasOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const anchorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (wasOpened && anchorRef.current) {
+        const anchor = anchorRef.current;
+        const styles = getComputedStyle(anchorRef.current);
+        const padding =
+          parseFloat(styles.paddingBottom || '0') +
+          parseFloat(styles.paddingTop || '0');
+        if (anchor.clientHeight - padding > 0) {
+          anchorRef.current?.scrollIntoView({ block: 'end' });
+          setWasOpened(false);
+        }
+      }
+    };
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (anchorRef.current) {
+      resizeObserver.observe(anchorRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [wasOpened]);
+
   const isOpenable =
     attachment.data ||
     (attachment.url && imageTypes.has(attachment.type)) ||
@@ -232,7 +260,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           onClick={() => {
             setIsExpanded((isExpanded) => !isExpanded);
             if (isOpenable) {
-              setIsOpened((isOpened) => !isOpened);
+              setIsOpened((isOpened) => {
+                if (!isOpened) {
+                  setWasOpened(true);
+                }
+                return !isOpened;
+              });
             }
           }}
           className="flex grow items-center justify-between overflow-hidden"
@@ -281,7 +314,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         </button>
       </div>
       {isOpenable && isOpened && (
-        <div className="relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200">
+        <div
+          className="relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200"
+          ref={anchorRef}
+        >
           {attachment.data && (
             <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}
