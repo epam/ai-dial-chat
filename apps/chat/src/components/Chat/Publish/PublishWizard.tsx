@@ -16,7 +16,7 @@ import {
   constructPath,
   validatePublishingFileRenaming,
 } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/id';
+import { getFileRootId } from '@/src/utils/app/id';
 import {
   getAttachments,
   getPublishActionByType,
@@ -427,7 +427,7 @@ export default function PublishWizard({
         }}
         type={type}
         depth={depth}
-        rootFolderId={getRootId()}
+        rootFolderId={getFileRootId()}
       />
     </Modal>
   );
