@@ -52,3 +52,16 @@ export class EnumMapper {
     }
   };
 }
+
+export const getFolderTypeByFeatureType = (featureType: FeatureType) => {
+  switch (featureType) {
+    case FeatureType.Chat:
+      return FolderType.Chat;
+    case FeatureType.Prompt:
+      return FolderType.Prompt;
+    case FeatureType.File:
+      return FolderType.File;
+    default:
+      return FolderType.Chat;
+  }
+};
