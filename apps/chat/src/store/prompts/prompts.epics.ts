@@ -62,11 +62,43 @@ import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { ImportExportActions } from '../import-export/importExport.reducers';
+import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { RootState } from '@/src/store';
 import uniq from 'lodash-es/uniq';
+
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => PromptsActions.init.match(action)),
+    switchMap(() =>
+      PromptService.getPrompts(undefined, true).pipe(
+        mergeMap((prompts) => {
+          const paths = uniq(
+            prompts.flatMap((p) => getParentFolderIdsFromFolderId(p.folderId)),
+          );
+
+          return concat(
+            of(
+              PromptsActions.addPrompts({
+                prompts,
+              }),
+            ),
+            of(
+              PromptsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            of(PromptsActions.initFoldersAndPromptsSuccess()),
+          );
+        }),
+      ),
+    ),
+  );
 
 const createNewPromptEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -78,7 +110,10 @@ const createNewPromptEpic: AppEpic = (action$) =>
             iif(
               // check if something renamed
               () => apiPrompt?.name !== newPrompt.name,
-              of(PromptsActions.uploadPromptsWithFoldersRecursive()),
+              concat(
+                of(PromptsActions.uploadPromptsWithFoldersRecursive()),
+                of(ShareActions.triggerGettingSharedPromptListings()),
+              ),
               of(
                 PromptsActions.createNewPromptSuccess({
                   newPrompt,
@@ -745,9 +780,8 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
       PromptService.getPrompts(payload?.path, true).pipe(
         mergeMap((prompts) => {
           const actions: Observable<AnyAction>[] = [];
-          const folderIds = uniq(prompts.map((c) => c.folderId));
           const paths = uniq(
-            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            prompts.flatMap((p) => getParentFolderIdsFromFolderId(p.folderId)),
           );
 
           if (!!payload?.selectFirst && !!prompts.length && !!payload?.path) {
@@ -778,14 +812,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.setOpenedFoldersIds({
                     featureType: FeatureType.Prompt,
-                    openedFolderIds: [
-                      ...uniq(
-                        prompts.flatMap((p) =>
-                          getParentFolderIdsFromFolderId(p.folderId),
-                        ),
-                      ),
-                      ...openedFolders,
-                    ],
+                    openedFolderIds: [...openedFolders, ...paths],
                   }),
                 ),
               ),
@@ -806,7 +833,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
                 })),
               }),
             ),
-            of(PromptsActions.initFoldersAndPromptsSuccess()),
+            of(PromptsActions.uploadPromptsWithFoldersRecursiveSuccess()),
             ...actions,
           );
         }),
@@ -849,14 +876,6 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
           );
         }),
       ),
-    ),
-  );
-
-const initEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter((action) => PromptsActions.init.match(action)),
-    switchMap(() =>
-      concat(of(PromptsActions.uploadPromptsWithFoldersRecursive())),
     ),
   );
 

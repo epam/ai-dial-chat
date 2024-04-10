@@ -315,7 +315,8 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
     filter(
       (action) =>
         ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedConversationListings.match(action),
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
@@ -343,7 +344,8 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
     filter(
       (action) =>
         PromptsActions.initFoldersAndPromptsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedPromptListings.match(action),
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),

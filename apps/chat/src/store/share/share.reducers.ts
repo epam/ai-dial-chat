@@ -161,6 +161,8 @@ export const shareSlice = createSlice({
       state.acceptedId = payload.acceptedId;
       state.isFolderAccepted = payload.isFolder;
     },
+    triggerGettingSharedConversationListings: (state) => state,
+    triggerGettingSharedPromptListings: (state) => state,
     acceptShareInvitationFail: (
       state,
       _action: PayloadAction<{

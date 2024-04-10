@@ -253,9 +253,10 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
     switchMap(() =>
       ConversationService.getConversations(undefined, true).pipe(
         switchMap((conversations) => {
-          const folderIds = uniq(conversations.map((c) => c.folderId));
           const paths = uniq(
-            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            conversations.flatMap((c) =>
+              getParentFolderIdsFromFolderId(c.folderId),
+            ),
           );
 
           return concat(
@@ -394,8 +395,11 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 iif(
                   // check if something renamed
                   () => apiNames.some((name) => !newNames.includes(name)),
-                  of(
-                    ConversationsActions.uploadConversationsWithFoldersRecursive(),
+                  concat(
+                    of(
+                      ConversationsActions.uploadConversationsWithFoldersRecursive(),
+                    ),
+                    of(ShareActions.triggerGettingSharedConversationListings()),
                   ),
                   of(
                     ConversationsActions.addConversations({
@@ -2310,9 +2314,10 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
       ConversationService.getConversations(payload?.path, true).pipe(
         mergeMap((conversations) => {
           const actions: Observable<AnyAction>[] = [];
-          const folderIds = uniq(conversations.map((c) => c.folderId));
           const paths = uniq(
-            folderIds.flatMap((id) => getParentFolderIdsFromFolderId(id)),
+            conversations.flatMap((c) =>
+              getParentFolderIdsFromFolderId(c.folderId),
+            ),
           );
 
           if (
@@ -2348,14 +2353,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                 of(
                   UIActions.setOpenedFoldersIds({
                     featureType: FeatureType.Chat,
-                    openedFolderIds: [
-                      ...openedFolders,
-                      ...uniq(
-                        conversations.flatMap((c) =>
-                          getParentFolderIdsFromFolderId(c.folderId),
-                        ),
-                      ),
-                    ],
+                    openedFolderIds: [...openedFolders, ...paths],
                   }),
                 ),
               ),
