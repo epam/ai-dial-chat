@@ -867,16 +867,15 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
       const originalPrompt = PromptsSelectors.selectPrompt(
         state$.value,
         payload.promptId,
-      ) as PromptInfo;
+      );
 
-      return PromptService.getPrompt(originalPrompt).pipe(
-        map((servicePrompt) => ({ originalPrompt, servicePrompt })),
+      return PromptService.getPrompt(
+        originalPrompt || ({ id: payload.promptId } as PromptInfo),
       );
     }),
-    map(({ servicePrompt, originalPrompt }) => {
+    map((servicePrompt) => {
       return PromptsActions.uploadPromptSuccess({
         prompt: servicePrompt,
-        originalPromptId: originalPrompt.id,
       });
     }),
     catchError((err) => {
