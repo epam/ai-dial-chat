@@ -1,4 +1,4 @@
-import config from './playwright.config';
+import config from './chat.playwright.config';
 
 import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
@@ -18,12 +18,12 @@ config.reporter = [
     },
   ],
 ];
-config.use!.baseURL = 'http://127.0.0.1:4200';
+config.use!.baseURL = 'http://localhost:4200';
 
 config.webServer = {
   cwd: workspaceRoot,
   command: 'npx nx serve:sandbox overlay-sandbox',
-  url: 'http://127.0.0.1:4200',
+  url: 'http://localhost:4200',
   timeout: 180000,
   reuseExistingServer: true,
 };

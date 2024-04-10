@@ -85,6 +85,7 @@ export class ChatOverlay {
 
     iframe.src = this.options.domain;
     iframe.allow = 'clipboard-write';
+    iframe.name = 'overlay';
 
     iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-scripts');

@@ -1,4 +1,4 @@
-import config from '../../../config/playwright.config';
+import config from '../../../config/chat.playwright.config';
 import { ChatSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 

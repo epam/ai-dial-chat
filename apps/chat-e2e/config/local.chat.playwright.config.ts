@@ -1,4 +1,4 @@
-import config from './playwright.config';
+import config from './chat.playwright.config';
 
 import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';

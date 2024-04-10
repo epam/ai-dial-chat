@@ -1,4 +1,4 @@
-import config from '../../config/playwright.config';
+import config from '../../config/chat.playwright.config';
 import { stateFilePath } from '../core/dialFixtures';
 
 import test from '@/src/core/baseFixtures';

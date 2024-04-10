@@ -8,7 +8,7 @@ export const isApiStorageType =
 export const ExecutionResults = {
   allureReportPath: path.resolve(
     __dirname,
-    `../../${ResultFolder.allureReport}`,
+    `../../${ResultFolder.allureChatReport}`,
   ),
   allureOverlayReportPath: path.resolve(
     __dirname,

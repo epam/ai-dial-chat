@@ -1,4 +1,4 @@
-import config from '../../config/playwright.config';
+import config from '../../config/chat.playwright.config';
 
 import path from 'path';
 
@@ -234,7 +234,7 @@ export enum Theme {
 }
 
 export enum ResultFolder {
-  allureReport = 'allure-results',
+  allureChatReport = 'allure-chat-results',
   allureOverlayReport = 'allure-overlay-results',
   htmlReport = 'html-report',
   testResults = 'test-results',

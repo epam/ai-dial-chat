@@ -10,10 +10,10 @@
       "defaultConfiguration": "development",
       "configurations": {
         "development": {
-          "config": "apps/chat-e2e/config/local.playwright.config.ts"
+          "config": "apps/chat-e2e/config/local.chat.playwright.config.ts"
         },
         "production": {
-          "config": "apps/chat-e2e/config/playwright.config.ts"
+          "config": "apps/chat-e2e/config/chat.playwright.config.ts"
         },
         "productionOverlay": {
           "config": "apps/chat-e2e/config/overlay.playwright.config.ts"

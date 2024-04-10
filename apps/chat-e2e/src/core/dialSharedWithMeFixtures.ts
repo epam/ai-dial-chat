@@ -13,7 +13,7 @@ import {
   ModelSelector,
 } from '../ui/webElements';
 
-import config from '@/config/playwright.config';
+import config from '@/config/chat.playwright.config';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';

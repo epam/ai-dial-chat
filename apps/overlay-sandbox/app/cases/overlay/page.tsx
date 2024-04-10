@@ -5,7 +5,7 @@ import { Feature } from '@epam/ai-dial-shared';
 import { useEffect, useRef } from 'react';
 
 const overlayOptions: Omit<ChatOverlayOptions, 'hostDomain'> = {
-  domain: 'http://localhost:3000',
+  domain: process.env.E2E_OVERLAY_HOST ?? 'http://localhost:3000',
   theme: 'light',
   modelId: 'gpt-4',
   enabledFeatures: [

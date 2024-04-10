@@ -1,4 +1,4 @@
-import config from '../../../config/playwright.config';
+import config from '../../../config/chat.playwright.config';
 
 import { API, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
