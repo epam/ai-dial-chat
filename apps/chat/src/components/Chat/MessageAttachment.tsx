@@ -324,7 +324,6 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           )}
         </div>
       )}
-      <div ref={anchorRef} className="absolute bottom-0"></div>
     </div>
   );
 };
