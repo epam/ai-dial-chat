@@ -28,6 +28,9 @@ export const getConversationRootId = (bucket?: string) =>
 export const getPromptRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Prompt, bucket });
 
+export const getFileRootId = (bucket?: string) =>
+  getRootId({ featureType: FeatureType.File, bucket });
+
 export const isRootId = (id?: string) => {
   return id?.split('/').length === 2 ?? false;
 };
