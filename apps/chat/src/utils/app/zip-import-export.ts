@@ -202,14 +202,14 @@ export const compressConversationInZip = async ({
 
 export const updateAttachmentsNames = ({
   filesFromFolder,
-  attachmentsToUpload,
+  attachmentsToPostfix,
 }: {
   filesFromFolder: DialFile[];
-  attachmentsToUpload: DialFile[];
+  attachmentsToPostfix: DialFile[];
 }) => {
   const existingFiles = filesFromFolder;
 
-  const updatedAttachments = attachmentsToUpload.map((attachment) => {
+  const updatedAttachments = attachmentsToPostfix.map((attachment) => {
     if (
       existingFiles.length &&
       existingFiles.some(({ name }) => name === attachment.name)

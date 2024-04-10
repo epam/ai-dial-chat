@@ -21,6 +21,7 @@ export interface ShareState {
   shareModalState: ModalState;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
+  needToUploadFolder: boolean;
   shareFeatureType?: FeatureType;
   shareIsFolder?: boolean;
 }
@@ -35,6 +36,7 @@ const initialState: ShareState = {
   isFolderAccepted: undefined,
   shareFeatureType: undefined,
   shareIsFolder: undefined,
+  needToUploadFolder: true,
 };
 
 export const shareSlice = createSlice({
@@ -190,6 +192,9 @@ export const shareSlice = createSlice({
       }>,
     ) => state,
     getSharedListingFail: (state) => state,
+    resetNeedToUploadFolder: (state) => {
+      state.needToUploadFolder = false;
+    },
   },
 });
 
@@ -219,6 +224,11 @@ const selectAcceptedEntityInfo = createSelector([rootSelector], (state) => {
     isFolderAccepted: state.isFolderAccepted,
   };
 });
+const selectNeedToUploadFolder = createSelector([rootSelector], (state) => {
+  return {
+    needToUploadFolder: state.needToUploadFolder,
+  };
+});
 
 export const ShareSelectors = {
   selectInvitationId,
@@ -228,6 +238,7 @@ export const ShareSelectors = {
   selectAcceptedEntityInfo,
   selectShareFeatureType,
   selectShareIsFolder,
+  selectNeedToUploadFolder,
 };
 
 export const ShareActions = shareSlice.actions;

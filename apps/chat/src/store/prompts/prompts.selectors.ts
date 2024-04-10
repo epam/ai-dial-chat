@@ -6,6 +6,7 @@ import {
   getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
+  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
@@ -375,5 +376,25 @@ export const selectSelectedOrNewPrompt = createSelector(
     return isNewPromptCreating
       ? getNewPrompt(state)
       : selectSelectedPrompt(state);
+  },
+);
+
+export const selectDuplicatedPrompt = createSelector(
+  [
+    selectPrompts,
+    (
+      _state: RootState,
+      { importId, promptName }: { importId: string; promptName: string },
+    ) => ({ importId, promptName }),
+  ],
+  (conversations, { importId, promptName }) => {
+    return conversations.find((conversation) => {
+      const { parentPath } = splitEntityId(conversation.id);
+      const { parentPath: importParentPath } = splitEntityId(importId);
+
+      return (
+        parentPath === importParentPath && conversation.name === promptName
+      );
+    });
   },
 );
