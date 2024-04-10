@@ -617,7 +617,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest.only(
+dialSharedWithMeTest(
   'Shared with me. Folder structure is updated if to remove chat from original folder',
   async ({
     conversationData,
