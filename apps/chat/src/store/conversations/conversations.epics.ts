@@ -198,23 +198,10 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
           }
 
           if (conversations.length) {
-            const externalConversations =
-              ConversationsSelectors.selectExternalConversations(state$.value);
-            const sharedOrPublishedConversations =
-              ConversationsSelectors.selectPublishedOrSharedByMeConversations(
-                state$.value,
-              );
-            const addedConversations = [
-              ...sharedOrPublishedConversations,
-              ...externalConversations,
-            ].map((c) => c.id);
-
             actions.push(
               of(
                 ConversationsActions.addConversations({
-                  conversations: conversations.filter(
-                    (c) => !addedConversations.includes(c.id),
-                  ),
+                  conversations,
                 }),
               ),
             );

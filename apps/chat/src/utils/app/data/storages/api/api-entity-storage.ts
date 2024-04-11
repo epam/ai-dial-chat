@@ -134,10 +134,7 @@ export abstract class ApiEntityStorage<
       return ApiUtils.request(this.getEntityUrl(info)).pipe(
         map((entity: TEntity) => {
           return {
-            ...this.mergeGetResult(info, {
-              ...entity,
-              ...resetShareEntity,
-            }),
+            ...this.mergeGetResult(info, entity),
             status: UploadStatus.LOADED,
           };
         }),
