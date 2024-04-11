@@ -350,7 +350,6 @@ export const conversationsSlice = createSlice({
       );
       state.folders = combineEntities(payload.folders, state.folders);
     },
-    // TODO: refactor this method - use only for direct write without any combination
     setConversations: (
       state,
       {
