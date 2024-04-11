@@ -194,13 +194,6 @@ export const ChatMessageContent = ({
     [],
   );
 
-  useEffect(() => {
-    if (shouldScroll) {
-      anchorRef.current?.scrollIntoView({ block: 'end' });
-      setShouldScroll(false);
-    }
-  }, [shouldScroll]);
-
   const handleToggleEditing = useCallback(
     (value?: boolean) => {
       toggleEditing(value ?? !isEditing);
@@ -208,6 +201,19 @@ export const ChatMessageContent = ({
     },
     [isEditing, toggleEditing],
   );
+
+  useEffect(() => {
+    if (isEditing) {
+      setShouldScroll(true);
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (shouldScroll) {
+      anchorRef.current?.scrollIntoView({ block: 'end' });
+      setShouldScroll(false);
+    }
+  }, [shouldScroll]);
 
   const handleEditMessage = useCallback(() => {
     if (isSubmitAllowed) {
@@ -368,7 +374,7 @@ export const ChatMessageContent = ({
         >
           {isUser ? (
             isEditing ? (
-              <div className="flex w-full flex-col gap-3">
+              <div data-no-context-menu className="flex w-full flex-col gap-3">
                 <div
                   className={classNames(
                     'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
@@ -436,10 +442,7 @@ export const ChatMessageContent = ({
                     >
                       {t('Save & Submit')}
                     </button>
-                    <div
-                      ref={anchorRef}
-                      className="absolute bottom-[-120px]"
-                    ></div>
+                    <div ref={anchorRef} className="absolute bottom-0"></div>
                   </div>
                 </div>
               </div>
@@ -465,7 +468,7 @@ export const ChatMessageContent = ({
                   />
                   <div
                     ref={anchorRef}
-                    className="absolute bottom-[-160px]"
+                    className="absolute bottom-[-140px]"
                   ></div>
                 </div>
                 {showUserButtons && !isConversationInvalid && (

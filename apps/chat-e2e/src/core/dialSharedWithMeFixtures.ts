@@ -10,6 +10,7 @@ import {
   ConversationToCompare,
   Conversations,
   DropdownMenu,
+  ErrorToast,
   ModelSelector,
 } from '../ui/webElements';
 
@@ -18,6 +19,7 @@ import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
+import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
 import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
 import { BucketUtil } from '@/src/utils';
@@ -43,6 +45,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserCompareConversationSelector: ModelSelector;
   additionalShareUserNotFound: ChatNotFound;
   additionalShareUserConfirmationDialog: ConfirmationDialog;
+  additionalShareUserPlaybackControl: PlaybackControl;
+  additionalShareUserErrorToast: ErrorToast;
 }>({
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -180,6 +184,22 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPage,
     );
     await use(additionalShareUserConfirmationDialog);
+  },
+  additionalShareUserPlaybackControl: async (
+    { additionalShareUserChat },
+    use,
+  ) => {
+    const additionalShareUserPlaybackControl =
+      additionalShareUserChat.getPlaybackControl();
+    await use(additionalShareUserPlaybackControl);
+  },
+  additionalShareUserErrorToast: async (
+    { additionalShareUserAppContainer },
+    use,
+  ) => {
+    const additionalShareUserErrorToast =
+      additionalShareUserAppContainer.getErrorToast();
+    await use(additionalShareUserErrorToast);
   },
 });
 
