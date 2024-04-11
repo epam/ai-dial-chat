@@ -12,7 +12,6 @@ import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -229,12 +228,6 @@ export const promptsSlice = createSlice({
         ),
       );
     },
-    exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
-    exportPrompts: (state) => state,
-    importPrompts: (
-      state,
-      _action: PayloadAction<{ promptsHistory: PromptsHistory }>,
-    ) => state,
     importPromptsSuccess: (
       state,
       {

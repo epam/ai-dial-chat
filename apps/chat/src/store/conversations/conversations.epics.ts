@@ -112,12 +112,7 @@ import uniq from 'lodash-es/uniq';
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.init.match(action)),
-    switchMap(() =>
-      concat(
-        of(ConversationsActions.initSelectedConversations()),
-        of(ConversationsActions.initFoldersAndConversations()),
-      ),
-    ),
+    switchMap(() => of(ConversationsActions.initFoldersAndConversations())),
   );
 
 const initSelectedConversationsEpic: AppEpic = (action$) =>
@@ -274,6 +269,7 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
+            of(ConversationsActions.initSelectedConversations()),
           );
         }),
         catchError((err) => {
@@ -564,10 +560,12 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.duplicateConversation.match),
     switchMap(({ payload }) =>
       forkJoin({
-        conversationAndPayload: getOrUploadConversation(payload, state$.value),
+        conversation: getOrUploadConversation(payload, state$.value).pipe(
+          map((data) => data.conversation),
+        ),
       }),
     ),
-    switchMap(({ conversationAndPayload: { conversation } }) => {
+    switchMap(({ conversation }) => {
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
@@ -586,7 +584,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         conversation,
         FeatureType.Chat,
       )
-        ? getConversationRootId()
+        ? getConversationRootId() // duplicate external entities in the root only
         : conversation.folderId;
 
       const newConversation: Conversation = regenerateConversationId({
@@ -596,9 +594,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
-          conversations.filter(
-            (conv) => conv.folderId === conversationFolderId,
-          ), // only root conversations for external entities
+          conversations.filter((c) => c.folderId === conversationFolderId), // only root conversations for external entities
         ),
         lastActivityDate: Date.now(),
       });
@@ -2171,35 +2167,32 @@ const recreateConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.recreateConversation.match),
     mergeMap(({ payload }) => {
-      return ConversationService.createConversation(payload.new)
-        .pipe(
-          switchMap(() =>
-            ConversationService.deleteConversation(
-              getConversationInfoFromId(payload.old.id),
-            ),
+      return ConversationService.createConversation(payload.new).pipe(
+        switchMap(() =>
+          ConversationService.deleteConversation(
+            getConversationInfoFromId(payload.old.id),
           ),
-        )
-        .pipe(
-          switchMap(() => of(ConversationsActions.saveConversationSuccess())),
-          catchError((err) => {
-            console.error(err);
-            return concat(
-              of(
-                ConversationsActions.recreateConversationFail({
-                  newId: payload.new.id,
-                  oldConversation: payload.old,
-                }),
-              ),
-              of(
-                UIActions.showErrorToast(
-                  translate(
-                    'An error occurred while saving the conversation. Please refresh the page.',
-                  ),
+        ),
+        switchMap(() => of(ConversationsActions.saveConversationSuccess())),
+        catchError((err) => {
+          console.error(err);
+          return concat(
+            of(
+              ConversationsActions.recreateConversationFail({
+                newId: payload.new.id,
+                oldConversation: payload.old,
+              }),
+            ),
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while saving the conversation. Please refresh the page.',
                 ),
               ),
-            );
-          }),
-        );
+            ),
+          );
+        }),
+      );
     }),
   );
 

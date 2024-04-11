@@ -60,16 +60,12 @@ export const conversationsSlice = createSlice({
   reducers: {
     init: (state) => state,
     initSelectedConversations: (state) => state,
-    getSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
     initFoldersAndConversationsSuccess: (state) => {
       state.conversationsLoaded = true;
     },
+    getSelectedConversations: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
-    recreateConversation: (
-      state,
-      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
-    ) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {
         state.isMessageSending = false;
@@ -87,6 +83,10 @@ export const conversationsSlice = createSlice({
         return conv;
       });
     },
+    recreateConversation: (
+      state,
+      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
+    ) => state,
     recreateConversationFail: (
       state,
       {

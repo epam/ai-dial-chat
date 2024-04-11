@@ -21,14 +21,10 @@ import { combineEpics } from 'redux-observable';
 
 import {
   combineEntities,
-  filterOnlyMyEntities,
-  isImportEntityNameOnSameLevelUnique,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
-import {
-  PromptService,
-  getImportPreparedPrompts,
-} from '@/src/utils/app/data/prompt-service';
+import { PromptService } from '@/src/utils/app/data/prompt-service';
+import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -40,11 +36,6 @@ import {
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
-import {
-  exportPrompt,
-  exportPrompts,
-  isPromptsFormat,
-} from '@/src/utils/app/import-export';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
@@ -55,18 +46,13 @@ import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
 import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
 
-import { ImportExportActions } from '../import-export/importExport.reducers';
 import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
-import { RootState } from '@/src/store';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -190,44 +176,11 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const getOrUploadPrompt = (
-  payload: { id: string },
-  state: RootState,
-): Observable<{
-  prompt: Prompt | null;
-  payload: { id: string };
-}> => {
-  const prompt = PromptsSelectors.selectPrompt(state, payload.id);
-
-  if (prompt?.status !== UploadStatus.LOADED) {
-    const { apiKey, bucket, name, parentPath } = splitEntityId(payload.id);
-    const prompt = regeneratePromptId({
-      name,
-      folderId: constructPath(apiKey, bucket, parentPath),
-    });
-
-    return forkJoin({
-      prompt: PromptService.getPrompt(prompt).pipe(
-        catchError((err) => {
-          console.error('The prompt was not found:', err);
-          return of(null);
-        }),
-      ),
-      payload: of(payload),
-    });
-  } else {
-    return forkJoin({
-      prompt: of(prompt),
-      payload: of(payload),
-    });
-  }
-};
-
 const savePromptEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.savePrompt.match),
     concatMap(({ payload: newPrompt }) =>
-      PromptService.updatePrompt(newPrompt).pipe(switchMap(() => EMPTY)),
+      PromptService.updatePrompt(newPrompt),
     ),
     catchError((err) => {
       console.error(err);
@@ -239,6 +192,7 @@ const savePromptEpic: AppEpic = (action$) =>
         ),
       );
     }),
+    ignoreElements(),
   );
 
 const recreatePromptEpic: AppEpic = (action$) =>
@@ -246,15 +200,14 @@ const recreatePromptEpic: AppEpic = (action$) =>
     filter(PromptsActions.recreatePrompt.match),
     mergeMap(({ payload }) => {
       const { parentPath } = splitEntityId(payload.old.id);
-      return zip(
-        PromptService.createPrompt(payload.new),
-        PromptService.deletePrompt({
-          id: payload.old.id,
-          folderId: parentPath || getPromptRootId(),
-          name: payload.old.name,
-        }),
-      ).pipe(
-        switchMap(() => EMPTY),
+      return PromptService.createPrompt(payload.new).pipe(
+        switchMap(() =>
+          PromptService.deletePrompt({
+            id: payload.old.id,
+            folderId: parentPath || getPromptRootId(),
+            name: payload.old.name,
+          }),
+        ),
         catchError((err) => {
           console.error(err);
           return concat(
@@ -273,6 +226,7 @@ const recreatePromptEpic: AppEpic = (action$) =>
             ),
           );
         }),
+        ignoreElements(),
       );
     }),
   );
@@ -579,11 +533,21 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.duplicatePrompt.match),
     switchMap(({ payload }) =>
       forkJoin({
-        prompt: PromptService.getPrompt(payload),
+        prompt: getOrUploadPrompt(payload, state$.value).pipe(
+          map((data) => data.prompt),
+        ),
       }),
     ),
     switchMap(({ prompt }) => {
-      if (!prompt) return EMPTY;
+      if (!prompt) {
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this prompt has been deleted. Please reload the page',
+            ),
+          ),
+        );
+      }
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
       const promptFolderId = isEntityOrParentsExternal(
@@ -591,7 +555,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         prompt,
         FeatureType.Prompt,
       )
-        ? getPromptRootId()
+        ? getPromptRootId() // duplicate external entities in the root only
         : prompt.folderId;
 
       const newPrompt = regeneratePromptId({
@@ -601,175 +565,11 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
           prompt.name,
-          prompts.filter((prompt) => prompt.folderId === promptFolderId), // only root prompts for external entities
+          prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
         ),
       });
 
       return of(PromptsActions.saveNewPrompt({ newPrompt }));
-    }),
-  );
-
-const exportPromptsEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PromptsActions.exportPrompts.match),
-    switchMap(() =>
-      //listing of all entities
-      PromptService.getPrompts(undefined, true),
-    ),
-    switchMap((promptsListing) => {
-      const onlyMyPromptsListing = filterOnlyMyEntities(promptsListing);
-      const foldersIds = uniq(
-        onlyMyPromptsListing.map((info) => info.folderId),
-      );
-      //calculate all folders;
-      const foldersWithPrompts = getFoldersFromIds(
-        uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
-        FolderType.Prompt,
-      );
-
-      const allFolders = PromptsSelectors.selectFolders(state$.value);
-
-      const folders = combineEntities(foldersWithPrompts, allFolders);
-
-      return forkJoin({
-        //get all prompts from api
-        prompts: zip(
-          onlyMyPromptsListing.map((info) => PromptService.getPrompt(info)),
-        ),
-        folders: of(folders),
-      });
-    }),
-    switchMap(({ prompts, folders }) => {
-      const filteredPrompts = prompts.filter(Boolean) as Prompt[];
-
-      const appName = SettingsSelectors.selectAppName(state$.value);
-
-      exportPrompts(filteredPrompts, folders, appName);
-      return EMPTY;
-    }),
-    catchError(() =>
-      concat(
-        of(
-          UIActions.showErrorToast(
-            translate('An error occurred while uploading prompts'),
-          ),
-        ),
-        of(ImportExportActions.exportFail()),
-      ),
-    ),
-  );
-
-const exportPromptEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PromptsActions.exportPrompt.match),
-    switchMap(({ payload }) => getOrUploadPrompt(payload, state$.value)),
-
-    switchMap((promptAndPayload) => {
-      const { prompt } = promptAndPayload;
-      if (!prompt) {
-        return concat(
-          of(
-            UIActions.showErrorToast(
-              translate('An error occurred while uploading prompt'),
-            ),
-          ),
-          of(ImportExportActions.exportFail()),
-        );
-      }
-
-      const appName = SettingsSelectors.selectAppName(state$.value);
-
-      exportPrompt(
-        prompt,
-        PromptsSelectors.selectParentFolders(state$.value, prompt.folderId),
-        appName,
-      );
-      return EMPTY;
-    }),
-  );
-
-const importPromptsEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PromptsActions.importPrompts.match),
-    switchMap(({ payload }) => {
-      const { promptsHistory } = payload;
-
-      if (!isPromptsFormat(promptsHistory)) {
-        return concat(
-          of(ImportExportActions.importPromptsFail()),
-          of(
-            UIActions.showErrorToast(
-              translate(errorsMessages.unsupportedDataFormat, {
-                ns: 'common',
-              }),
-            ),
-          ),
-        );
-      }
-
-      const preparedPrompts: Prompt[] = getImportPreparedPrompts({
-        prompts: promptsHistory.prompts,
-        folders: promptsHistory.folders,
-      });
-
-      if (!preparedPrompts.length) {
-        return of(ImportExportActions.importPromptsFail());
-      }
-
-      return PromptService.getPrompts(undefined, true).pipe(
-        switchMap((promptsListing) => {
-          const existedImportNamesPrompts = preparedPrompts.filter(
-            (importPrompt) =>
-              !isImportEntityNameOnSameLevelUnique({
-                entity: importPrompt,
-                entities: promptsListing,
-              }),
-          );
-
-          const nonExistedImportNamesPrompts = preparedPrompts.filter(
-            (importPrompt) => {
-              return isImportEntityNameOnSameLevelUnique({
-                entity: importPrompt,
-                entities: promptsListing,
-              });
-            },
-          );
-
-          if (!existedImportNamesPrompts.length) {
-            return of(
-              ImportExportActions.uploadImportedPrompts({
-                itemsToUpload: nonExistedImportNamesPrompts,
-                folders: promptsHistory.folders,
-              }),
-            );
-          }
-
-          if (!nonExistedImportNamesPrompts.length) {
-            return of(
-              ImportExportActions.showReplaceDialog({
-                duplicatedItems: existedImportNamesPrompts,
-                featureType: FeatureType.Prompt,
-              }),
-            );
-          }
-
-          return concat(
-            of(
-              ImportExportActions.showReplaceDialog({
-                duplicatedItems: existedImportNamesPrompts,
-                featureType: FeatureType.Prompt,
-              }),
-            ),
-            of(
-              ImportExportActions.uploadImportedPrompts({
-                itemsToUpload: nonExistedImportNamesPrompts,
-                folders: promptsHistory.folders,
-              }),
-            ),
-          );
-        }),
-        catchError(() => of(ImportExportActions.importPromptsFail())),
-      );
     }),
   );
 
@@ -916,9 +716,6 @@ export const PromptsEpics = combineEpics(
   saveFoldersEpic,
   saveNewPromptEpic,
   deleteFolderEpic,
-  exportPromptsEpic,
-  exportPromptEpic,
-  importPromptsEpic,
   savePromptEpic,
   recreatePromptEpic,
   updatePromptEpic,
