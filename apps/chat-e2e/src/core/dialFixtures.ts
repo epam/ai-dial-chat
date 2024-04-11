@@ -148,9 +148,12 @@ const dialTest = test.extend<
     dataInjector: DataInjectorInterface;
     errorToast: ErrorToast;
     additionalShareUserRequestContext: APIRequestContext;
+    additionalSecondShareUserRequestContext: APIRequestContext;
     mainUserShareApiHelper: ShareApiHelper;
     additionalUserShareApiHelper: ShareApiHelper;
     additionalUserItemApiHelper: ItemApiHelper;
+    additionalSecondUserShareApiHelper: ShareApiHelper;
+    additionalSecondUserItemApiHelper: ItemApiHelper;
     chatNotFound: ChatNotFound;
   }
 >({
@@ -487,6 +490,13 @@ const dialTest = test.extend<
       });
     await use(additionalShareUserRequestContext);
   },
+  additionalSecondShareUserRequestContext: async ({ playwright }, use) => {
+    const additionalSecondShareUserRequestContext =
+      await playwright.request.newContext({
+        storageState: stateFilePath(+config.workers! + 1),
+      });
+    await use(additionalSecondShareUserRequestContext);
+  },
   additionalUserShareApiHelper: async (
     { additionalShareUserRequestContext },
     use,
@@ -495,6 +505,15 @@ const dialTest = test.extend<
       additionalShareUserRequestContext,
     );
     await use(additionalUserShareApiHelper);
+  },
+  additionalSecondUserShareApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondUserShareApiHelper = new ShareApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondUserShareApiHelper);
   },
   additionalUserItemApiHelper: async (
     { additionalShareUserRequestContext },
@@ -508,6 +527,15 @@ const dialTest = test.extend<
   chatNotFound: async ({ page }, use) => {
     const chatNotFound = new ChatNotFound(page);
     await use(chatNotFound);
+  },
+  additionalSecondUserItemApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondUserItemApiHelper = new ItemApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondUserItemApiHelper);
   },
 });
 
