@@ -36,7 +36,10 @@ import {
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import {
+  getPromptInfoFromId,
+  regeneratePromptId,
+} from '@/src/utils/app/prompts';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
@@ -306,19 +309,20 @@ const deletePromptsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.deletePrompts.match),
     map(({ payload }) => ({
-      deletePrompts: payload.promptsToDelete,
+      promptIds: new Set(payload.promptIds),
     })),
-    switchMap(({ deletePrompts }) =>
+    switchMap(({ promptIds }) =>
       zip(
-        deletePrompts.map((info) =>
-          PromptService.deletePrompt(info).pipe(
-            switchMap(() => of(null)),
+        Array.from(promptIds).map((id) =>
+          PromptService.deletePrompt(getPromptInfoFromId(id)).pipe(
             catchError((err) => {
+              const { name } = getPromptInfoFromId(id);
+
               console.error(
-                `An error occurred while deleting the prompt "${info.name}"`,
+                `An error occurred while deleting the prompt "${name}"`,
                 err,
               );
-              return of(info.name);
+              return of(name);
             }),
           ),
         ),
@@ -336,11 +340,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
               ),
               EMPTY,
             ),
-            of(
-              PromptsActions.deletePromptsComplete({
-                deletePrompts,
-              }),
-            ),
+            of(PromptsActions.deletePromptsComplete({ promptIds })),
           ),
         ),
       ),
@@ -460,15 +460,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ folderId, promptsToDelete, folders }) => {
       const actions: Observable<AnyAction>[] = [];
+      const promptIds = promptsToDelete.map((p) => p.id);
 
-      if (promptsToDelete.length) {
-        actions.push(
-          of(
-            PromptsActions.deletePrompts({
-              promptsToDelete: promptsToDelete,
-            }),
-          ),
-        );
+      if (promptIds.length) {
+        actions.push(of(PromptsActions.deletePrompts({ promptIds })));
       }
 
       return concat(

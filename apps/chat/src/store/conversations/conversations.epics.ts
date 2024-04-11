@@ -198,10 +198,23 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
           }
 
           if (conversations.length) {
+            const externalConversations =
+              ConversationsSelectors.selectExternalConversations(state$.value);
+            const sharedOrPublishedConversations =
+              ConversationsSelectors.selectPublishedOrSharedByMeConversations(
+                state$.value,
+              );
+            const addedConversations = [
+              ...sharedOrPublishedConversations,
+              ...externalConversations,
+            ].map((c) => c.id);
+
             actions.push(
               of(
                 ConversationsActions.addConversations({
-                  conversations,
+                  conversations: conversations.filter(
+                    (c) => !addedConversations.includes(c.id),
+                  ),
                 }),
               ),
             );
@@ -663,15 +676,11 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ folderId, conversations, folders }) => {
       const actions: Observable<AnyAction>[] = [];
-      const deletedConversationsIds = conversations.map((conv) => conv.id);
+      const conversationIds = conversations.map((conv) => conv.id);
 
-      if (deletedConversationsIds.length) {
+      if (conversationIds.length) {
         actions.push(
-          of(
-            ConversationsActions.deleteConversations({
-              conversationIds: deletedConversationsIds,
-            }),
-          ),
+          of(ConversationsActions.deleteConversations({ conversationIds })),
         );
       }
 
@@ -811,22 +820,22 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       selectedConversationsIds:
         ConversationsSelectors.selectSelectedConversationsIds(state$.value),
-      deleteIds: new Set(payload.conversationIds),
+      conversationIds: new Set(payload.conversationIds),
       suppressErrorMessage: payload.suppressErrorMessage || false,
     })),
     switchMap(
       ({
         conversations,
         selectedConversationsIds,
-        deleteIds,
+        conversationIds,
         suppressErrorMessage,
       }) => {
         const otherConversations = conversations.filter(
-          (conv) => !deleteIds.has(conv.id),
+          (conv) => !conversationIds.has(conv.id),
         );
 
         const newSelectedConversationsIds = selectedConversationsIds.filter(
-          (id) => !deleteIds.has(id),
+          (id) => !conversationIds.has(id),
         );
 
         const actions: Observable<AnyAction>[] = [];
@@ -872,11 +881,10 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         return concat(
           ...actions,
           zip(
-            Array.from(deleteIds).map((id) =>
+            Array.from(conversationIds).map((id) =>
               ConversationService.deleteConversation(
                 getConversationInfoFromId(id),
               ).pipe(
-                switchMap(() => of(null)),
                 catchError((err) => {
                   const { name } = getConversationInfoFromId(id);
                   !suppressErrorMessage &&
@@ -903,7 +911,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   ConversationsActions.deleteConversationsComplete({
-                    deleteIds,
+                    conversationIds,
                   }),
                 ),
               ),

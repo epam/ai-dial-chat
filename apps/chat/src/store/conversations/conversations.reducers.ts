@@ -242,7 +242,6 @@ export const conversationsSlice = createSlice({
         return folder;
       });
     },
-
     deleteConversations: (
       state,
       _action: PayloadAction<{
@@ -252,13 +251,13 @@ export const conversationsSlice = createSlice({
     ) => state,
     deleteConversationsComplete: (
       state,
-      { payload }: PayloadAction<{ deleteIds: Set<string> }>,
+      { payload }: PayloadAction<{ conversationIds: Set<string> }>,
     ) => {
       state.conversations = state.conversations.filter(
-        (conv) => !payload.deleteIds.has(conv.id),
+        (conv) => !payload.conversationIds.has(conv.id),
       );
       state.selectedConversationsIds = state.selectedConversationsIds.filter(
-        (id) => !payload.deleteIds.has(id),
+        (id) => !payload.conversationIds.has(id),
       );
       state.conversationsLoaded = true;
     },

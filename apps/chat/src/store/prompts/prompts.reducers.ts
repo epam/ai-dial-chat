@@ -73,30 +73,15 @@ export const promptsSlice = createSlice({
     },
     saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
       state,
-    deletePrompts: (
+    deletePrompts: (state, _action: PayloadAction<{ promptIds: string[] }>) =>
       state,
-      { payload }: PayloadAction<{ promptsToDelete: PromptInfo[] }>,
-    ) => {
-      const promptToDeleteIds = payload.promptsToDelete.map(
-        (prompt) => prompt.id,
-      );
-
-      state.prompts = state.prompts.filter(
-        (p) => !promptToDeleteIds.includes(p.id),
-      );
-    },
     deletePromptsComplete: (
       state,
-      { payload }: PayloadAction<{ deletePrompts: PromptInfo[] }>,
+      { payload }: PayloadAction<{ promptIds: Set<string> }>,
     ) => {
-      const deleteIds = new Set(
-        payload.deletePrompts.map((prompt) => prompt.id),
-      );
-
       state.prompts = state.prompts.filter(
-        (prompt) => !deleteIds.has(prompt.id),
+        (prompt) => !payload.promptIds.has(prompt.id),
       );
-
       state.promptsLoaded = true;
     },
     deletePrompt: (
