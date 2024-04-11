@@ -20,7 +20,7 @@ import { chartType } from '@/src/constants/chat';
 
 import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
-import { combineEntities } from './common';
+import { combineEntities, prepareEntityName } from './common';
 import { constructPath, triggerDownload } from './file';
 import { splitEntityId } from './folders';
 import { getConversationRootId, getRootId } from './id';
@@ -77,10 +77,14 @@ export function cleanFolders({
       getRootId({ featureType }),
       parentFolder?.name,
     );
-    const newId = constructPath(newFolderId, folder.name);
+
+    const newName = prepareEntityName(folder.name, {
+      trimEndDotsRequired: true,
+    });
+    const newId = constructPath(newFolderId, newName);
     return {
       id: newId,
-      name: folder.name,
+      name: newName,
       type: folderType,
       folderId: newFolderId,
     };

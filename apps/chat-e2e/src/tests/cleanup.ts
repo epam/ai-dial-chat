@@ -3,15 +3,29 @@ import { BucketUtil } from '@/src/utils';
 
 dialTest(
   'Cleanup shared entities',
-  async ({ additionalUserItemApiHelper, additionalUserShareApiHelper }) => {
+  async ({
+    additionalUserItemApiHelper,
+    additionalUserShareApiHelper,
+    additionalSecondUserShareApiHelper,
+    additionalSecondUserItemApiHelper,
+  }) => {
     await additionalUserItemApiHelper.deleteAllData(
       BucketUtil.getAdditionalShareUserBucket(),
     );
+    await additionalSecondUserItemApiHelper.deleteAllData(
+      BucketUtil.getAdditionalSecondShareUserBucket(),
+    );
 
-    const sharedEntities =
+    const additionalUserSharedEntities =
       await additionalUserShareApiHelper.listSharedWithMeEntities();
     await additionalUserShareApiHelper.deleteSharedWithMeEntities(
-      sharedEntities.resources,
+      additionalUserSharedEntities.resources,
+    );
+
+    const additionalSecondUserSharedEntities =
+      await additionalSecondUserShareApiHelper.listSharedWithMeEntities();
+    await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
+      additionalSecondUserSharedEntities.resources,
     );
   },
 );

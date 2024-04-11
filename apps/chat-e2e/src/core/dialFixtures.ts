@@ -146,9 +146,12 @@ const dialTest = test.extend<
     dataInjector: DataInjectorInterface;
     errorToast: ErrorToast;
     additionalShareUserRequestContext: APIRequestContext;
+    additionalSecondShareUserRequestContext: APIRequestContext;
     mainUserShareApiHelper: ShareApiHelper;
     additionalUserShareApiHelper: ShareApiHelper;
     additionalUserItemApiHelper: ItemApiHelper;
+    additionalSecondUserShareApiHelper: ShareApiHelper;
+    additionalSecondUserItemApiHelper: ItemApiHelper;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -480,6 +483,13 @@ const dialTest = test.extend<
       });
     await use(additionalShareUserRequestContext);
   },
+  additionalSecondShareUserRequestContext: async ({ playwright }, use) => {
+    const additionalSecondShareUserRequestContext =
+      await playwright.request.newContext({
+        storageState: stateFilePath(+config.workers! + 1),
+      });
+    await use(additionalSecondShareUserRequestContext);
+  },
   additionalUserShareApiHelper: async (
     { additionalShareUserRequestContext },
     use,
@@ -489,6 +499,15 @@ const dialTest = test.extend<
     );
     await use(additionalUserShareApiHelper);
   },
+  additionalSecondUserShareApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondUserShareApiHelper = new ShareApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondUserShareApiHelper);
+  },
   additionalUserItemApiHelper: async (
     { additionalShareUserRequestContext },
     use,
@@ -497,6 +516,15 @@ const dialTest = test.extend<
       additionalShareUserRequestContext,
     );
     await use(additionalUserItemApiHelper);
+  },
+  additionalSecondUserItemApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondUserItemApiHelper = new ItemApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondUserItemApiHelper);
   },
 });
 

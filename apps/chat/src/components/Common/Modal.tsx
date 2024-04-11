@@ -131,7 +131,7 @@ function ModalView({
                   <Tooltip tooltip={heading}>
                     <div
                       className="line-clamp-2 w-full break-words"
-                      data-qa="modal-chat-name"
+                      data-qa="modal-entity-name"
                     >
                       {heading}
                     </div>
