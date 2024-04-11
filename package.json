@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "scripts": {
     "nx": "nx",
