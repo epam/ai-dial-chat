@@ -198,14 +198,6 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
           }
 
           if (conversations.length) {
-            actions.push(
-              of(
-                ConversationsActions.addConversations({
-                  conversations,
-                  selectAdded: true,
-                }),
-              ),
-            );
             const paths = selectedConversationsIds.flatMap((id) =>
               getParentFolderIdsFromEntityId(id),
             );
