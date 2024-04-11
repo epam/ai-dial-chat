@@ -347,6 +347,51 @@ const exportLocalStoragePromptsEpic: AppEpic = (action$, state$) => {
   );
 };
 
+const handleDuplicatedItemsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ImportExportActions.handleDuplicatedItems.match),
+    switchMap(({ payload }) => {
+      const { itemsToPostfix, itemsToReplace, featureType } = payload;
+
+      const actions: Observable<AnyAction>[] = [];
+
+      if (itemsToReplace.length) {
+        actions.push(
+          of(
+            ImportExportActions.replaceFeatures({
+              itemsToReplace,
+              featureType,
+            }),
+          ),
+        );
+      }
+
+      if (itemsToPostfix.length) {
+        if (featureType === FeatureType.Chat) {
+          actions.push(
+            of(
+              ImportExportActions.uploadImportedConversations({
+                itemsToUpload: itemsToPostfix as Conversation[],
+              }),
+            ),
+          );
+        }
+
+        if (featureType === FeatureType.Prompt) {
+          actions.push(
+            of(
+              ImportExportActions.uploadImportedPrompts({
+                itemsToUpload: itemsToPostfix as Prompt[],
+              }),
+            ),
+          );
+        }
+      }
+
+      return concat(...actions);
+    }),
+  );
+
 const importConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.importConversations.match),
@@ -1301,4 +1346,5 @@ export const ImportExportEpics = combineEpics(
   uploadImportedPromptsEpic,
   replaceConversationEpic,
   replacePromptEpic,
+  handleDuplicatedItemsEpic,
 );
