@@ -471,11 +471,16 @@ const importPromptsEpic: AppEpic = (action$) =>
             },
           );
 
+          const emptyFolders = promptsHistory.folders.filter(
+            (folder) =>
+              !preparedPrompts.some((conv) => conv.folderId === folder.id),
+          );
+
           if (!existedImportNamesPrompts.length) {
             return of(
               ImportExportActions.uploadImportedPrompts({
                 itemsToUpload: nonExistedImportNamesPrompts,
-                folders: promptsHistory.folders,
+                folders: emptyFolders,
               }),
             );
           }
@@ -499,58 +504,13 @@ const importPromptsEpic: AppEpic = (action$) =>
             of(
               ImportExportActions.uploadImportedPrompts({
                 itemsToUpload: nonExistedImportNamesPrompts,
-                folders: promptsHistory.folders,
+                folders: emptyFolders,
               }),
             ),
           );
         }),
         catchError(() => of(ImportExportActions.importPromptsFail())),
       );
-    }),
-  );
-
-const handleDuplicatedItemsEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ImportExportActions.handleDuplicatedItems.match),
-    switchMap(({ payload }) => {
-      const { itemsToPostfix, itemsToReplace, featureType } = payload;
-
-      const actions: Observable<AnyAction>[] = [];
-
-      if (itemsToReplace.length) {
-        actions.push(
-          of(
-            ImportExportActions.replaceFeatures({
-              itemsToReplace,
-              featureType,
-            }),
-          ),
-        );
-      }
-
-      if (itemsToPostfix.length) {
-        if (featureType === FeatureType.Chat) {
-          actions.push(
-            of(
-              ImportExportActions.uploadImportedConversations({
-                itemsToUpload: itemsToPostfix as Conversation[],
-              }),
-            ),
-          );
-        }
-
-        if (featureType === FeatureType.Prompt) {
-          actions.push(
-            of(
-              ImportExportActions.uploadImportedPrompts({
-                itemsToUpload: itemsToPostfix as Prompt[],
-              }),
-            ),
-          );
-        }
-      }
-
-      return concat(...actions);
     }),
   );
 
