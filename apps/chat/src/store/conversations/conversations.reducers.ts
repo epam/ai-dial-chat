@@ -367,19 +367,12 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         conversations: ConversationInfo[];
-        selectAdded?: boolean;
       }>,
     ) => {
       state.conversations = combineEntities(
         payload.conversations,
         state.conversations,
       );
-      if (payload.selectAdded) {
-        state.selectedConversationsIds = payload.conversations.map(
-          ({ id }) => id,
-        );
-        state.areSelectedConversationsLoaded = true;
-      }
     },
     clearConversations: (state) => {
       state.conversationsLoaded = false;

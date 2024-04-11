@@ -198,6 +198,13 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
           }
 
           if (conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.addConversations({
+                  conversations,
+                }),
+              ),
+            );
             const paths = selectedConversationsIds.flatMap((id) =>
               getParentFolderIdsFromEntityId(id),
             );
@@ -389,11 +396,17 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     ),
                     of(ShareActions.triggerGettingSharedConversationListings()),
                   ),
-                  of(
-                    ConversationsActions.addConversations({
-                      conversations: newConversations,
-                      selectAdded: true,
-                    }),
+                  concat(
+                    of(
+                      ConversationsActions.addConversations({
+                        conversations: newConversations,
+                      }),
+                    ),
+                    of(
+                      ConversationsActions.selectConversations({
+                        conversationIds: newConversations.map((c) => c.id),
+                      }),
+                    ),
                   ),
                 ),
                 of(ConversationsActions.setIsActiveConversationRequest(false)),
@@ -1758,8 +1771,7 @@ const hideChatbarEpic: AppEpic = (action$) =>
         ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
-        (ConversationsActions.addConversations.match(action) &&
-          !!action.payload.selectAdded),
+        ConversationsActions.addConversations.match(action),
     ),
     switchMap(() =>
       isSmallScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
