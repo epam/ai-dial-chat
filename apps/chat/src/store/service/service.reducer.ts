@@ -1,5 +1,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { RequestAPIKeyBody } from '@/src/types/request-api-key';
+
 import { RootState } from '../index';
 
 export interface ServiceState {
@@ -22,18 +24,7 @@ export const serviceSlice = createSlice({
       state.isSuccessfullySent = true;
     },
     reportIssueFail: (state) => state,
-    requestApiKey: (
-      state,
-      _action: PayloadAction<{
-        access_scenario: string;
-        business_reason: string;
-        project_end: string;
-        project_id: string;
-        project_lead: string;
-        project_stream: string;
-        workload_pattern: string;
-      }>,
-    ) => state,
+    requestApiKey: (state, _action: PayloadAction<RequestAPIKeyBody>) => state,
     requestApiKeySuccess: (state) => {
       state.isSuccessfullySent = true;
     },
