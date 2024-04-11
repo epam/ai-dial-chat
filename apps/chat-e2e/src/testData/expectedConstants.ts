@@ -88,6 +88,7 @@ export const ExpectedConstants = {
   promptNameLabel: 'promptName',
   promptContentLabel: 'content',
   requiredFieldErrorMessage: 'Please fill in all required fields',
+  nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
 };
 
 export enum Groups {

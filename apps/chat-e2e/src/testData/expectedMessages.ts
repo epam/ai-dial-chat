@@ -219,4 +219,6 @@ export enum ExpectedMessages {
   stageIsVisibleInResponse = 'Stage is visible in message response',
   codeIsVisibleInResponse = 'Code is visible in message response',
   duplicateButtonIsNotVisible = 'Duplicate button is not visible',
+  notAllowedNameErrorShown = 'Not allowed name error toast is shown',
+  charactersAreNotDisplayed = 'Characters are not displayed',
 }

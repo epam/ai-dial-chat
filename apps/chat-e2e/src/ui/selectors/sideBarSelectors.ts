@@ -8,8 +8,7 @@ export const SideBarSelectors = {
   folderGroup: '#folder',
   folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',
-  renameInput: (value: string) =>
-    `${Tags.input}[${Attributes.value}="${value}"]`,
+  renameInput: `${Tags.input}[${Attributes.name}="rename-input"]`,
   renameDefaultNameInput: (value: string) =>
     `${Tags.input}[${Attributes.value}^="${value}"]`,
   dropdownMenu: '[data-qa="dropdown-menu"]',

@@ -19,11 +19,11 @@ export class Folders extends BaseElement {
 
   private folderInput!: Input;
 
-  getFolderInput(name: string): Input {
+  getFolderInput(): Input {
     if (!this.folderInput) {
       this.folderInput = new Input(
         this.page,
-        `${SideBarSelectors.folder} >> ${SideBarSelectors.renameInput(name)}`,
+        `${SideBarSelectors.folder} >> ${SideBarSelectors.renameInput}`,
       );
     }
     return this.folderInput;
@@ -96,13 +96,13 @@ export class Folders extends BaseElement {
     return this.folderDotsMenu(name, index).isVisible();
   }
 
-  public async editFolderNameWithEnter(name: string, newName: string) {
-    await this.editFolderName(name, newName);
+  public async editFolderNameWithEnter(newName: string) {
+    await this.editFolderName(newName);
     await this.page.keyboard.press(keys.enter);
   }
 
-  public async editFolderNameWithTick(name: string, newName: string) {
-    const folderInput = await this.editFolderName(name, newName);
+  public async editFolderNameWithTick(newName: string) {
+    const folderInput = await this.editFolderName(newName);
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse((resp) => {
         return (
@@ -116,8 +116,8 @@ export class Folders extends BaseElement {
     await folderInput.clickTickButton();
   }
 
-  public async editFolderName(name: string, newName: string) {
-    const folderInput = await this.getFolderInput(name);
+  public async editFolderName(newName: string) {
+    const folderInput = await this.getFolderInput();
     await folderInput.editValue(newName);
     return folderInput;
   }
