@@ -112,7 +112,12 @@ import uniq from 'lodash-es/uniq';
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter((action) => ConversationsActions.init.match(action)),
-    switchMap(() => of(ConversationsActions.initFoldersAndConversations())),
+    switchMap(() =>
+      concat(
+        of(ConversationsActions.initSelectedConversations()),
+        of(ConversationsActions.initFoldersAndConversations()),
+      ),
+    ),
   );
 
 const initSelectedConversationsEpic: AppEpic = (action$) =>
@@ -264,7 +269,6 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
-            of(ConversationsActions.initSelectedConversations()),
           );
         }),
         catchError((err) => {
