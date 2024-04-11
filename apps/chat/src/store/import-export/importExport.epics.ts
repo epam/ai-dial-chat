@@ -43,7 +43,7 @@ import {
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getFileRootId } from '@/src/utils/app/id';
 import {
   cleanConversationsFolders,
   cleanData,
@@ -834,7 +834,7 @@ const importZipEpic: AppEpic = (action$) =>
                     cleanHistory.history[firstConversationIndex];
 
                   const importFileFolderPath = constructPath(
-                    getRootId(),
+                    getFileRootId(),
                     ImportRoot.Imports,
                     conversation.name,
                   );
@@ -905,7 +905,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
       const conversation = completeHistory.history[firstConversationIndex];
 
       const importFileFolderPath = constructPath(
-        getRootId(),
+        getFileRootId(),
         ImportRoot.Imports,
         conversation.name,
       );
