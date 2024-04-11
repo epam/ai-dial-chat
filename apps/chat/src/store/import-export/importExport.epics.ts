@@ -1301,5 +1301,4 @@ export const ImportExportEpics = combineEpics(
   uploadImportedPromptsEpic,
   replaceConversationEpic,
   replacePromptEpic,
-  handleDuplicatedItemsEpic,
 );
