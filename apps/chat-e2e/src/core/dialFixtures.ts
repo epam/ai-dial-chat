@@ -5,6 +5,7 @@ import {
   ChatBar,
   ChatHeader,
   ChatMessages,
+  ChatNotFound,
   ConversationSettings,
   ConversationToCompare,
   Conversations,
@@ -106,6 +107,7 @@ const dialTest = test.extend<
     temperatureSlider: TemperatureSlider;
     addons: Addons;
     addonsDialog: AddonsDialog;
+    isolatedView: MoreInfo;
     conversationData: ConversationData;
     promptData: PromptData;
     conversationDropdownMenu: DropdownMenu;
@@ -152,6 +154,7 @@ const dialTest = test.extend<
     additionalUserItemApiHelper: ItemApiHelper;
     additionalSecondUserShareApiHelper: ShareApiHelper;
     additionalSecondUserItemApiHelper: ItemApiHelper;
+    chatNotFound: ChatNotFound;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -328,6 +331,10 @@ const dialTest = test.extend<
   addonsDialog: async ({ addons }, use) => {
     const addonsDialog = addons.getAddonsDialog();
     await use(addonsDialog);
+  },
+  isolatedView: async ({ chat }, use) => {
+    const isolatedView = chat.getIsolatedView();
+    await use(isolatedView);
   },
   modelSelector: async ({ entitySettings }, use) => {
     const modelSelector = entitySettings.getModelSelector();
@@ -516,6 +523,10 @@ const dialTest = test.extend<
       additionalShareUserRequestContext,
     );
     await use(additionalUserItemApiHelper);
+  },
+  chatNotFound: async ({ page }, use) => {
+    const chatNotFound = new ChatNotFound(page);
+    await use(chatNotFound);
   },
   additionalSecondUserItemApiHelper: async (
     { additionalSecondShareUserRequestContext },

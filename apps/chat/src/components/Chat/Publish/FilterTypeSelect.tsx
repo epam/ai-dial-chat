@@ -38,10 +38,10 @@ export function FilterTypeSelect({
       className="h-[38px] w-full max-w-[140px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary"
     >
       <Menu
-        className="w-full px-3"
+        className="flex w-full items-center px-3"
         onOpenChange={setIsOpen}
         trigger={
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex w-full items-center justify-between gap-2">
             {selectedType}
             <IconChevronDown
               data-qa={`open-filter-dropdown-${id}`}

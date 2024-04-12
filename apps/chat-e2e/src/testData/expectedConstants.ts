@@ -88,6 +88,9 @@ export const ExpectedConstants = {
   promptNameLabel: 'promptName',
   promptContentLabel: 'content',
   requiredFieldErrorMessage: 'Please fill in all required fields',
+  isolatedUrl: (modelId: string) => `${config.use!.baseURL}/models/${modelId}`,
+  modelNotFountErrorMessage:
+    'Model is not found.Please contact your administrator.',
 };
 
 export enum Groups {
