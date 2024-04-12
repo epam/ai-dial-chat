@@ -255,7 +255,11 @@ export const ChatView = memo(() => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (chatMessagesRef.current && !messageIsStreaming) {
+      if (
+        chatMessagesRef.current &&
+        !messageIsStreaming &&
+        mergedMessages.length
+      ) {
         handleScroll();
       }
     };
@@ -269,7 +273,7 @@ export const ChatView = memo(() => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [handleScroll, messageIsStreaming]);
+  }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
   useEffect(() => {
     setIsShowChatSettings(false);
