@@ -179,4 +179,14 @@ export class ModelsUtil {
       return groupMap;
     }, new Map<string, DialAIEntityModel[]>());
   }
+
+  public static getEntityName(entity: DialAIEntityModel) {
+    if (entity.version !== undefined) {
+      return entity.id.includes(entity.version)
+        ? entity.name
+        : `${entity.name} ${entity.version}`;
+    } else {
+      return entity.name;
+    }
+  }
 }

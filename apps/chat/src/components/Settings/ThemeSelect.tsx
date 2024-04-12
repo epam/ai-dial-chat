@@ -41,7 +41,7 @@ export const ThemeSelect = ({
       <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
       <div className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary">
         <Menu
-          className="w-full px-3"
+          className="flex w-full items-center px-3"
           onOpenChange={setIsOpen}
           trigger={
             <div className="flex w-full min-w-[120px] items-center justify-between gap-2 capitalize">

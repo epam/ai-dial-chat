@@ -227,7 +227,7 @@ dialTest(
           promptInsideFolder.folders.name,
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
@@ -620,7 +620,7 @@ dialTest(
           nestedFolders[levelsCount].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
@@ -838,6 +838,7 @@ dialTest(
         await promptBar.drugAndDropFolderToFolder(
           nestedFolders[levelsCount].name,
           nestedFolders[0].name,
+          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),

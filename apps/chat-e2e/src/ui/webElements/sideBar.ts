@@ -173,8 +173,16 @@ export class SideBar extends BaseElement {
   public async dragAndDropEntityToFolder(
     entityLocator: Locator,
     folderLocator: Locator,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     await this.dragEntityToFolder(entityLocator, folderLocator);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
     await this.page.mouse.up();
   }
 }

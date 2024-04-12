@@ -88,6 +88,9 @@ export const ExpectedConstants = {
   promptNameLabel: 'promptName',
   promptContentLabel: 'content',
   requiredFieldErrorMessage: 'Please fill in all required fields',
+  isolatedUrl: (modelId: string) => `${config.use!.baseURL}/models/${modelId}`,
+  modelNotFountErrorMessage:
+    'Model is not found.Please contact your administrator.',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
   duplicatedFolderNameErrorMessage: (name: string) =>
     `Folder with name "${name}" already exists in this folder.`,
