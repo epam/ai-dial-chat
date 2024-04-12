@@ -37,7 +37,7 @@ export const UserDesktop = () => {
         onOpenChange={setIsOpen}
         trigger={
           <div
-            className="flex min-w-[120px] items-center justify-between gap-2 pr-3"
+            className="flex w-full min-w-[120px] items-center justify-between gap-2 pr-3"
             data-qa="account-settings"
           >
             <div className="flex items-center gap-3">

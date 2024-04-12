@@ -11,7 +11,7 @@ import { FolderType } from '@/src/types/folder';
 
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
-import { getRootId } from '../id';
+import { getFileRootId } from '../id';
 
 export class FileService {
   public static sendFile(
@@ -20,7 +20,7 @@ export class FileService {
     fileName: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = ApiUtils.encodeApiUrl(
-      constructPath(getRootId(), relativePath, fileName),
+      constructPath(getFileRootId(), relativePath, fileName),
     );
 
     return ApiUtils.requestOld({
@@ -83,7 +83,7 @@ export class FileService {
     resultQuery?: string;
   }): string => {
     const listingUrl = ApiUtils.encodeApiUrl(
-      constructPath('api/listing', path || getRootId()),
+      constructPath('api/listing', path || getFileRootId()),
     );
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
@@ -122,10 +122,7 @@ export class FileService {
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: constructPath(
-              getRootId({ bucket: folder.bucket }),
-              relativePath,
-            ),
+            folderId: constructPath(getFileRootId(folder.bucket), relativePath),
             serverSynced: true,
           };
         });
@@ -170,10 +167,7 @@ export class FileService {
               relativePath,
             ),
             relativePath: relativePath,
-            folderId: constructPath(
-              getRootId({ bucket: file.bucket }),
-              relativePath,
-            ),
+            folderId: constructPath(getFileRootId(file.bucket), relativePath),
             contentLength: file.contentLength,
             contentType: file.contentType,
             serverSynced: true,

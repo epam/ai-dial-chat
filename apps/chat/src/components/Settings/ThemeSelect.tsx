@@ -44,7 +44,7 @@ export const ThemeSelect = ({
           className="w-full px-3"
           onOpenChange={setIsOpen}
           trigger={
-            <div className="flex min-w-[120px] items-center justify-between gap-2 capitalize">
+            <div className="flex w-full min-w-[120px] items-center justify-between gap-2 capitalize">
               {localTheme}
               <ChevronDownIcon
                 className={classNames(
