@@ -14,7 +14,9 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
+import { RECENT_MODELS_COUNT, TALK_TO_TOOLTIP } from '@/src/constants/chat';
+
+import { TooltipContainer } from '@/src/components/Common/TooltipContainer';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
@@ -73,7 +75,10 @@ export const ConversationSettingsModel = ({
 
   return (
     <div className="w-full" data-qa="entity-selector">
-      <div className="mb-4">{t('Talk to')}</div>
+      <div className="mb-4 flex items-center gap-2">
+        <div>{t('Talk to')}</div>
+        <TooltipContainer description={t(TALK_TO_TOOLTIP)} />
+      </div>
 
       <div className="flex flex-col gap-3" data-qa="recent">
         <div className="grid grid-cols-1 gap-3">
