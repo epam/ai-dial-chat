@@ -13,12 +13,12 @@ import { useTranslation } from 'next-i18next';
 
 import {
   constructPath,
-  getExtensionsListForMimeTypes,
   getFileNameExtension,
   getFileNameWithoutExtension,
   getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
+  getShortExtentionsListFromMimeType,
   notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
@@ -98,7 +98,7 @@ export const PreUploadDialog = ({
       return [t('all')];
     }
 
-    return getExtensionsListForMimeTypes(allowedTypes);
+    return getShortExtentionsListFromMimeType(allowedTypes, t);
   }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(

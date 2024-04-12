@@ -10,7 +10,7 @@ import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
 import {
   getDialFilesWithInvalidFileType,
-  getExtensionsListForMimeTypes,
+  getShortExtentionsListFromMimeType,
 } from '@/src/utils/app/file';
 import { getFileRootId, isRootId } from '@/src/utils/app/id';
 
@@ -106,19 +106,25 @@ export const FileManagerModal = ({
       name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [files, searchQuery]);
+
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return getExtensionsListForMimeTypes(allowedTypes);
+
+    return getShortExtentionsListFromMimeType(allowedTypes, t);
   }, [allowedTypes, t]);
 
   const typesLabel = useMemo(() => {
     if (allowedTypesLabel) {
       return allowedTypesLabel;
     }
-    if (allowedTypes.length === 1 && allowedTypes[0] === 'image/*') {
-      return t('images');
+    if (
+      allowedTypes.length === 1 &&
+      allowedTypes[0].endsWith('/*') &&
+      !allowedTypes[0].startsWith('*/')
+    ) {
+      return t(allowedTypes[0].replace('/*', 's'));
     }
   }, [allowedTypes, allowedTypesLabel, t]);
 
