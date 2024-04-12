@@ -97,6 +97,7 @@ export const PreUploadDialog = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
+
     return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
 

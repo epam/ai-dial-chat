@@ -38,7 +38,7 @@ interface Props {
   isOpen: boolean;
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
-  allowedTypesLabel?: string;
+  allowedTypesLabel?: string | null;
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
@@ -112,6 +112,16 @@ export const FileManagerModal = ({
     }
     return getExtensionsListForMimeTypes(allowedTypes);
   }, [allowedTypes, t]);
+
+  const typesLabel = useMemo(() => {
+    if (allowedTypesLabel) {
+      return allowedTypesLabel;
+    }
+    if (allowedTypes.length === 1 && allowedTypes[0] === 'image/*') {
+      return t('images');
+    }
+  }, [allowedTypes, allowedTypesLabel, t]);
+
   const showSpinner = folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
@@ -292,7 +302,7 @@ export const FileManagerModal = ({
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
               allowedExtensions:
-                allowedTypesLabel ||
+                typesLabel ||
                 allowedExtensions.join(', ') ||
                 'no available extensions',
             },
@@ -448,7 +458,7 @@ export const FileManagerModal = ({
           uploadFolderId={uploadFolderId}
           isOpen
           allowedTypes={allowedTypes}
-          allowedTypesLabel={allowedTypesLabel}
+          allowedTypesLabel={typesLabel}
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
