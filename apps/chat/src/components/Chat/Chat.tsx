@@ -788,7 +788,9 @@ export const ChatView = memo(() => {
                                           isLikesEnabled={enabledFeatures.has(
                                             Feature.Likes,
                                           )}
-                                          editDisabled={!!notAllowedType}
+                                          editDisabled={
+                                            !!notAllowedType || isExternal
+                                          }
                                           onEdit={onEditMessage}
                                           onLike={onLikeHandler(index, conv)}
                                           onDelete={() => {
