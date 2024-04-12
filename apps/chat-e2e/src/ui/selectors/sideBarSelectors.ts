@@ -24,6 +24,7 @@ export const SideBarSelectors = {
   search: '[data-qa="search"]',
   filterMenuTrigger: '[data-qa="menu-trigger"]',
   folderSeparator: '.h-1',
+  pinnedEntities: '[data-qa^="pinned"]',
 };
 
 export const ChatBarSelectors = {

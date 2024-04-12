@@ -127,13 +127,14 @@ export class SideBarEntities extends BaseElement {
   }
 
   public async selectMoveToMenuOption(name: string) {
+    const dropdownMenu = this.getDropdownMenu();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );
-      await this.getDropdownMenu().selectMenuOption(name);
+      await dropdownMenu.selectMenuOption(name);
       return respPromise;
     }
-    await this.getDropdownMenu().selectMenuOption(name);
+    await dropdownMenu.selectMenuOption(name);
   }
 }

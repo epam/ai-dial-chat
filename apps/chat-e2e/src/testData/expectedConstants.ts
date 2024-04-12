@@ -89,6 +89,10 @@ export const ExpectedConstants = {
   promptContentLabel: 'content',
   requiredFieldErrorMessage: 'Please fill in all required fields',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
+  duplicatedFolderNameErrorMessage: (name: string) =>
+    `Folder with name "${name}" already exists in this folder.`,
+  duplicatedFolderRootNameErrorMessage: (name: string) =>
+    `Folder with name "${name}" already exists at the root.`,
 };
 
 export enum Groups {

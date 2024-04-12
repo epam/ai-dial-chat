@@ -157,6 +157,17 @@ export class Folders extends BaseElement {
     return folder.getComputedStyleProperty(Styles.color);
   }
 
+  public getNestedFolder(
+    parentName: string,
+    childName: string,
+    index?: number,
+  ) {
+    return this.getFolderByName(parentName, index)
+      .locator('~*')
+      .locator(SideBarSelectors.folder)
+      .filter({ hasText: childName });
+  }
+
   public getFolderEntities(name: string, index?: number) {
     return this.getFolderByName(name, index).locator(
       `~${Tags.div} ${this.entitySelector}`,
