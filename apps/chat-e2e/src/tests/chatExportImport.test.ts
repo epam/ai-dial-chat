@@ -293,10 +293,6 @@ dialTest(
         await dialHomePage.importFile(folderConversationData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations.expandFolder(
-          conversationsInFolder.folders.name,
-        );
         await folderConversations.selectFolderEntity(
           conversationsInFolder.folders.name,
           importedFolderConversation.name,
@@ -353,10 +349,6 @@ dialTest(
       async () => {
         await dialHomePage.importFile(newFolderConversationData, () =>
           chatBar.importButton.click(),
-        );
-
-        await folderConversations.expandFolder(
-          importedNewFolderConversation.folders.name,
         );
         await folderConversations.selectFolderEntity(
           importedNewFolderConversation.folders.name,
