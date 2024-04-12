@@ -162,6 +162,7 @@ export const ChatMessage: FC<Props> = memo(
               isEditing={isEditing}
               toggleEditing={toggleEditing}
               message={message}
+              onEdit={onEdit}
               onClick={(e, messageRef) => {
                 const rect = messageRef.current!.getBoundingClientRect();
                 setClientY(e.clientY - rect.y);
