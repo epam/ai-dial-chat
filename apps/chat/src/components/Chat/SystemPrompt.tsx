@@ -19,10 +19,12 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { SYSTEM_PROMPT_TOOLTIP } from '@/src/constants/chat';
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
+import { TooltipContainer } from '@/src/components/Common/TooltipContainer';
 
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { PromptList } from './ChatInput/PromptList';
@@ -162,7 +164,10 @@ export const SystemPrompt: FC<Props> = ({
 
   return (
     <div className="flex flex-col">
-      <label className="mb-4 text-left">{t('System prompt')}</label>
+      <div className="mb-4 flex items-center gap-2">
+        <label className="text-left">{t('System prompt')}</label>
+        <TooltipContainer description={t(SYSTEM_PROMPT_TOOLTIP)} />
+      </div>
       <div className="relative flex flex-col">
         {disabled && <DisableOverlay />}
         <AdjustedTextarea
