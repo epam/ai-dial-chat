@@ -19,6 +19,8 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
+import { ModelIds } from "../../../../chat-e2e/src/testData";
+import { ICON_SIZE_DEFAULT, ICON_SIZE_GPT_4 } from "@/src/constants/chat";
 
 interface ModelGroupProps {
   entities: DialAIEntity[];
@@ -71,6 +73,12 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
 
+  const iconSize = useMemo(
+    () =>
+      currentEntity.id === ModelIds.GPT_4 ? ICON_SIZE_GPT_4 : ICON_SIZE_DEFAULT,
+    [currentEntity.id],
+  );
+
   return (
     <div
       className={classNames(
@@ -101,7 +109,7 @@ const ModelGroup = ({
         <ModelIcon
           entityId={currentEntity.id}
           entity={currentEntity}
-          size={24}
+          size={iconSize}
         />
         <div className="flex w-full flex-col gap-1 text-left">
           <div className="flex items-center justify-between">
