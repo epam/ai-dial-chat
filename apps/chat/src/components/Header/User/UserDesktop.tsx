@@ -33,7 +33,7 @@ export const UserDesktop = () => {
   return (
     <>
       <Menu
-        className="w-full"
+        className="flex w-full items-center"
         onOpenChange={setIsOpen}
         trigger={
           <div
