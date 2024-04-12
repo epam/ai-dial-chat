@@ -286,7 +286,7 @@ export const conversationsSlice = createSlice({
           ...conv,
           isMessageStreaming: false, // we shouldn't try to continue stream after upload
         })),
-        state.conversations.filter((conv) => !payload.setIds.has(conv.id)),
+        state.conversations,
       );
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
