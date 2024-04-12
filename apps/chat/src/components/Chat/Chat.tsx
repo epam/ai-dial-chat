@@ -107,6 +107,7 @@ export const ChatView = memo(() => {
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
+  const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -392,6 +393,16 @@ export const ChatView = memo(() => {
     },
     [dispatch],
   );
+
+  useEffect(() => {
+    if (!selectedConversationsIds.some((id) => prevSelectedIds.includes(id))) {
+      setAutoScroll();
+      chatContainerRef.current?.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+      });
+      setPrevSelectedIds(selectedConversationsIds);
+    }
+  }, [prevSelectedIds, selectedConversationsIds]);
 
   const handleOnChangeAddon = useCallback(
     (conversation: Conversation, addonId: string) => {
