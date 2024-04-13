@@ -1,4 +1,3 @@
-import { IconHelp } from '@tabler/icons-react';
 import {
   FC,
   KeyboardEventHandler,
@@ -14,14 +13,13 @@ import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 
-import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import Tooltip from '@/src/components/Common/Tooltip';
-
 import { DisableOverlay } from '../Common/DisableOverlay';
 
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { HandleProps } from 'rc-slider/lib/Handles/Handle';
+import { TEMPERATURE_TOOLTIP } from "@/src/constants/chat";
+import { TooltipContainer } from "@/src/components/Common/TooltipContainer";
 
 interface TemperatureIndicatorProps extends HandleProps {
   onKeyDown: KeyboardEventHandler<HTMLDivElement>;
@@ -77,19 +75,7 @@ export const TemperatureSlider: FC<Props> = ({
     <div className="flex flex-col gap-2" data-qa="temp-slider">
       <div className="flex items-center gap-2">
         <label className="text-left">{label}</label>
-        <Tooltip
-          contentClassName="max-w-[220px]"
-          triggerClassName="text-secondary"
-          tooltip={
-            <EntityMarkdownDescription>
-              {t(
-                'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
-              )}
-            </EntityMarkdownDescription>
-          }
-        >
-          <IconHelp size={18} />
-        </Tooltip>
+        <TooltipContainer description={t(TEMPERATURE_TOOLTIP)} />
       </div>
       <div className="relative px-5">
         {disabled && <DisableOverlay />}

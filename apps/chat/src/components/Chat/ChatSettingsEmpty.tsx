@@ -11,6 +11,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 import { ModelDescription } from './ModelDescription';
+import { CONVERSATION_SETTINGS_SUB_TITLE, CONVERSATION_SETTINGS_TITLE } from "@/src/constants/chat";
 
 interface Props {
   isModels: boolean;
@@ -60,25 +61,34 @@ export const ChatSettingsEmpty = ({
             </div>
           ) : (
             <>
-              {appName && (
-                <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
-                  <h4
-                    data-qa="app-name"
-                    className="w-full whitespace-pre text-center text-xl font-semibold"
-                  >
-                    {isolatedModelId && modelsMap[isolatedModelId] ? (
-                      <ModelDescription
-                        model={modelsMap[isolatedModelId] as DialAIEntityModel}
-                        className="justify-center"
-                        hideMoreInfo
-                        isShortDescription
-                      />
-                    ) : (
-                      appName
-                    )}
-                  </h4>
-                </div>
-              )}
+              {/*{appName && (*/}
+              {/*  <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">*/}
+              {/*    <h4*/}
+              {/*      data-qa="app-name"*/}
+              {/*      className="w-full whitespace-pre text-center text-xl font-semibold"*/}
+              {/*    >*/}
+              {/*      {isolatedModelId && modelsMap[isolatedModelId] ? (*/}
+              {/*        <ModelDescription*/}
+              {/*          model={modelsMap[isolatedModelId] as DialAIEntityModel}*/}
+              {/*          className="justify-center"*/}
+              {/*          hideMoreInfo*/}
+              {/*          isShortDescription*/}
+              {/*        />*/}
+              {/*      ) : (*/}
+              {/*        appName*/}
+              {/*      )}*/}
+              {/*    </h4>*/}
+              {/*  </div>*/}
+              {/*)}*/}
+              <div className="pt-4" style={{ paddingBottom: '20px'}}>
+                <h4
+                  data-qa="conversation-settings-title"
+                  className="w-full whitespace-pre text-center text-xl font-semibold mb-4"
+                >
+                  {CONVERSATION_SETTINGS_TITLE}
+                </h4>
+                <div className="text-center">{CONVERSATION_SETTINGS_SUB_TITLE}</div>
+              </div>
             </>
           )}
 
