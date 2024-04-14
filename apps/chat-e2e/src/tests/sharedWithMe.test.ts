@@ -109,8 +109,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open share link by another user and verify chat stays under Shared with me and is selected',
       async () => {
-        await additionalShareUserDialHomePage.openHomePage(
-          { iconsToBeLoaded: [defaultModel!.iconUrl] },
+        await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareByLinkResponse.invitationLink,
           ),
@@ -673,34 +672,29 @@ dialSharedWithMeTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
+        const sharedFolderEntity = sharedEntities.resources.find(
+          (e) => e.name === sharedFolderName,
+        );
         expect
-          .soft(
-            sharedEntities.resources.find((e) => e.name === sharedFolderName),
-            ExpectedMessages.folderIsShared,
-          )
+          .soft(sharedFolderEntity, ExpectedMessages.folderIsShared)
           .toBeDefined();
 
-        const sharedWithMeItems: BackendDataEntity[] = [];
-        for (const sharedEntity of sharedEntities.resources) {
-          const sharedItems = await additionalUserItemApiHelper.listItem(
-            sharedEntity.url,
-          );
-          sharedWithMeItems.push(...sharedItems);
+        const sharedItems = await additionalUserItemApiHelper.listItem(
+          sharedFolderEntity!.url,
+        );
+
+        for (const conversation of [
+          sharedConversation,
+          singleConversation,
+          conversationInFolder.conversations[0],
+        ]) {
+          expect
+            .soft(
+              sharedItems.find((i) => i.url === conversation.id),
+              ExpectedMessages.conversationIsShared,
+            )
+            .toBeDefined();
         }
-        expect
-          .soft(
-            sharedWithMeItems.find(
-              (i) => i.url === movedConversationInFolder.id,
-            ),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeDefined();
-        expect
-          .soft(
-            sharedWithMeItems.find((i) => i.url === singleConversation.id),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeDefined();
       },
     );
   },
@@ -714,6 +708,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalUserItemApiHelper,
+    itemApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2759');
@@ -745,6 +740,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Move shared conversation out of folder',
       async () => {
+        const sharedConversationToDelete = JSON.parse(
+          JSON.stringify(sharedConversation),
+        );
         sharedConversation.id = sharedConversation.id.replace(
           `/${sharedFolderName}`,
           '',
@@ -754,6 +752,7 @@ dialSharedWithMeTest(
           '',
         );
         await dataInjector.updateConversations([sharedConversation]);
+        await itemApiHelper.deleteConversation(sharedConversationToDelete);
       },
     );
 
@@ -762,26 +761,19 @@ dialSharedWithMeTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
+        const sharedFolderEntity = sharedEntities.resources.find(
+          (e) => e.name === sharedFolderName,
+        );
         expect
-          .soft(
-            sharedEntities.resources.find((e) => e.name === sharedFolderName),
-            ExpectedMessages.folderIsShared,
-          )
+          .soft(sharedFolderEntity, ExpectedMessages.folderIsShared)
           .toBeDefined();
 
-        const sharedWithMeItems: BackendDataEntity[] = [];
-        for (const sharedEntity of sharedEntities.resources) {
-          const sharedItems = await additionalUserItemApiHelper.listItem(
-            sharedEntity.url,
-          );
-          sharedWithMeItems.push(...sharedItems);
-        }
+        const sharedItems = await additionalUserItemApiHelper.listItem(
+          sharedFolderEntity!.url,
+        );
         expect
-          .soft(
-            sharedWithMeItems.find((i) => i.url === sharedConversation.id),
-            ExpectedMessages.conversationIsNotShared,
-          )
-          .toBeUndefined();
+          .soft(sharedItems.length, ExpectedMessages.conversationIsNotShared)
+          .toBe(0);
       },
     );
   },

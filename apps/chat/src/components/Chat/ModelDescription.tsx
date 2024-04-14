@@ -30,7 +30,7 @@ export const ModelDescription = ({
       {!hideMoreInfo && <span>{t('More info')}</span>}
       <div
         className={classNames('flex items-center gap-2', className)}
-        data-qa="info-app"
+        data-qa="entity-info"
       >
         <ModelIcon entity={model} entityId={model.id} size={24} />
         <span>{getOpenAIEntityFullName(model)}</span>
@@ -38,7 +38,7 @@ export const ModelDescription = ({
       {model.description && (
         <span
           className="whitespace-pre-wrap text-xs text-secondary"
-          data-qa="app-descr"
+          data-qa="entity-descr"
         >
           <EntityMarkdownDescription isShortDescription={isShortDescription}>
             {model.description}
