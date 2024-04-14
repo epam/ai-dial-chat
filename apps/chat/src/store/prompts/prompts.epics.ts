@@ -315,6 +315,7 @@ const deletePromptsEpic: AppEpic = (action$) =>
       zip(
         Array.from(promptIds).map((id) =>
           PromptService.deletePrompt(getPromptInfoFromId(id)).pipe(
+            map(() => null),
             catchError((err) => {
               const { name } = getPromptInfoFromId(id);
 

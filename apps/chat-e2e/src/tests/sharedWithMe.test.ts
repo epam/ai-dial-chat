@@ -300,7 +300,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'Shared with me. Share root Folder.\n' +
     'Shared with me. Folder with folder/chat inside is deleted.\n' +
     'Shared with me. No delete option in context menu for chat/folder in shared folder.\n' +

@@ -872,6 +872,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               ConversationService.deleteConversation(
                 getConversationInfoFromId(id),
               ).pipe(
+                map(() => null),
                 catchError((err) => {
                   const { name } = getConversationInfoFromId(id);
                   !suppressErrorMessage &&
@@ -881,8 +882,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               ),
             ),
           ).pipe(
-            switchMap((failedNames) =>
-              concat(
+            switchMap((failedNames) => {
+              return concat(
                 iif(
                   () =>
                     failedNames.filter(Boolean).length > 0 &&
@@ -901,8 +902,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                     conversationIds,
                   }),
                 ),
-              ),
-            ),
+              );
+            }),
           ),
         );
       },
