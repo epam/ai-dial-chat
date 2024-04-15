@@ -635,7 +635,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Shared icon appears in chat folder and does not for other items in the structure.\n' +
     `Shared icon appears in chat if it's located in shared folder.\n` +
     'Shared icon appears in chat in not shared folder.\n' +
