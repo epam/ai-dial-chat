@@ -681,6 +681,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
+              name="rename-input"
             />
           </div>
         ) : (
