@@ -223,6 +223,17 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
             ),
           );
 
+          if (!conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  shouldUploadConversationsForCompare: true,
+                }),
+              ),
+            );
+          }
+
           return concat(...actions);
         }),
       ),
