@@ -3,6 +3,7 @@ export enum Attributes {
   class = 'class',
   hidden = 'hidden',
   placeholder = 'placeholder',
+  name = 'name',
   alt = 'alt',
   src = 'src',
   disabled = 'disabled',

@@ -746,10 +746,7 @@ dialTest(
         const newFolderName = GeneratorUtil.randomString(7);
         await folderConversations.openFolderDropdownMenu(nestedFolders[1].name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.editFolderNameWithEnter(
-          nestedFolders[1].name,
-          newFolderName,
-        );
+        await folderConversations.editFolderNameWithEnter(newFolderName);
 
         expect
           .soft(

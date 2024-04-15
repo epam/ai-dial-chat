@@ -119,9 +119,12 @@ export class ChatBar extends SideBar {
     });
   }
 
-  public async dragAndDropFolderToRootLevel(folderName: string) {
+  public async dragAndDropFolderToRootLevel(
+    folderName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     const folder =
       await this.getFolderConversations().getFolderByName(folderName);
-    await this.dragFolderToRoot(folder);
+    await this.dragFolderToRoot(folder, { isHttpMethodTriggered });
   }
 }

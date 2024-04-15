@@ -913,6 +913,7 @@ dialTest(
       async () => {
         await chatBar.dragAndDropFolderToRootLevel(
           nestedFolders[levelsCount].name,
+          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),

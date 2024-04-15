@@ -547,10 +547,7 @@ dialSharedWithMeTest(
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
 
-        await folderConversations.editFolderName(
-          nestedFolders[nestedLevel - 1].name,
-          updatedFolderName,
-        );
+        await folderConversations.editFolderName(updatedFolderName);
         await page.keyboard.press(keys.enter);
         if (await confirmationDialog.isVisible()) {
           await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
