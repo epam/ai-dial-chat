@@ -101,10 +101,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderPrompts.editFolderNameWithEnter(
-      ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
-      newName,
-    );
+    await folderPrompts.editFolderNameWithEnter(newName);
     expect
       .soft(
         await folderPrompts.getFolderByName(newName).isVisible(),
@@ -145,10 +142,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    const folderInput = await folderPrompts.editFolderName(
-      ExpectedConstants.newFolderWithIndexTitle(1),
-      newName,
-    );
+    const folderInput = await folderPrompts.editFolderName(newName);
     await folderInput.clickCancelButton();
     expect
       .soft(
@@ -183,10 +177,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await folderPrompts.openFolderDropdownMenu(promptInFolder.folders.name);
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderPrompts.editFolderNameWithTick(
-      promptInFolder.folders.name,
-      newName,
-    );
+    await folderPrompts.editFolderNameWithTick(newName);
     expect
       .soft(
         await folderPrompts.getFolderByName(newName).isVisible(),
