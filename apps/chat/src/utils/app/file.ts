@@ -1,3 +1,5 @@
+import { TFunction } from 'next-i18next';
+
 import { Attachment, Conversation } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, DialLink } from '@/src/types/files';
@@ -230,6 +232,23 @@ export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
     .map((mimeType) => getExtensionsListForMimeType(mimeType))
     .flat()
     .map((type) => `.${type}`);
+};
+
+export const getShortExtentionsListFromMimeType = (
+  mimeTypes: string[],
+  t: TFunction,
+) => {
+  return mimeTypes
+    .map((mimeType) => {
+      if (mimeType.endsWith('/*')) {
+        return t(mimeType.replace('/*', 's'));
+      }
+
+      return getExtensionsListForMimeType(mimeType)
+        .flat()
+        .map((type) => `.${type}`);
+    })
+    .flat();
 };
 
 export const getFileNameWithoutExtension = (filename: string) =>
