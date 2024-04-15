@@ -354,7 +354,7 @@ export const ChatMessageContent = ({
                   undefined
                 }
                 animate={isShowResponseLoader}
-                size={chatIconSize}
+                size={chatIconSize} isSmallIconSize={false}
               />
             ) : (
               <IconUser size={chatIconSize} />

@@ -32,7 +32,7 @@ export const ModelDescription = ({
         className={classNames('flex items-center gap-2', className)}
         data-qa="info-app"
       >
-        <ModelIcon entity={model} entityId={model.id} size={24} />
+        <ModelIcon entity={model} entityId={model.id} size={24} isSmallIconSize={false} />
         <span>{getOpenAIEntityFullName(model)}</span>
       </div>
       {model.description && (

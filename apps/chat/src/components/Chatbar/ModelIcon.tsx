@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import SVG from 'react-inlinesvg';
 
 import classNames from 'classnames';
@@ -9,6 +9,11 @@ import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
 
 import Tooltip from '@/src/components/Common/Tooltip';
+import {
+  MODEL_ICON_SIZE,
+  MODEL_ICON_SIZE_DEFAULT,
+  ModelId
+} from "@/src/constants/chat";
 
 interface Props {
   entityId: string;
@@ -17,6 +22,8 @@ interface Props {
   animate?: boolean;
   isCustomTooltip?: boolean;
   isInvalid?: boolean;
+  isSmallIconSize?: boolean;
+  boxSize?: number;
 }
 
 const ModelIconTemplate = memo(
@@ -26,6 +33,7 @@ const ModelIconTemplate = memo(
     animate,
     entityId,
     isInvalid,
+    boxSize = MODEL_ICON_SIZE_DEFAULT.small,
   }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
       entity?.type === EntityType.Addon
@@ -40,20 +48,20 @@ const ModelIconTemplate = memo(
           isInvalid ? 'text-secondary' : 'text-primary',
           animate && 'animate-bounce',
         )}
-        style={{ height: `${size}px`, width: `${size}px` }}
+        style={{  width: `${boxSize}px` }}
       >
         <SVG
           key={entityId}
           src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
-          height={size}
+          height='auto'
           description={description}
         >
           <SVG
             src={fallbackUrl}
             width={size}
-            height={size}
+            height='auto'
             description={description}
           />
         </SVG>
@@ -66,11 +74,20 @@ ModelIconTemplate.displayName = 'ModelIconTemplate';
 export const ModelIcon = ({
   entity,
   entityId,
-  size,
   animate,
   isCustomTooltip,
   isInvalid,
+  isSmallIconSize = true
 }: Props) => {
+  const modelIconWidth = isSmallIconSize ? MODEL_ICON_SIZE.small : MODEL_ICON_SIZE.large;
+  const modelIconWidthDefault = isSmallIconSize ? MODEL_ICON_SIZE_DEFAULT.small : MODEL_ICON_SIZE_DEFAULT.large
+
+  const iconSize = useMemo(
+    () =>
+      modelIconWidth?.[entityId as ModelId] || modelIconWidthDefault,
+    [entityId, isSmallIconSize],
+  );
+
   return (
     <Tooltip
       hideTooltip={isCustomTooltip}
@@ -80,7 +97,8 @@ export const ModelIcon = ({
       <ModelIconTemplate
         entity={entity}
         entityId={entityId}
-        size={size}
+        size={iconSize}
+        boxSize={modelIconWidthDefault}
         animate={animate}
         isInvalid={isInvalid}
       />
