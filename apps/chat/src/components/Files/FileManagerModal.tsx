@@ -10,7 +10,7 @@ import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
 import {
   getDialFilesWithInvalidFileType,
-  getExtensionsListForMimeTypes,
+  getShortExtentionsListFromMimeType,
 } from '@/src/utils/app/file';
 import { getFileRootId, isRootId } from '@/src/utils/app/id';
 
@@ -38,7 +38,7 @@ interface Props {
   isOpen: boolean;
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
-  allowedTypesLabel?: string;
+  allowedTypesLabel?: string | null;
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
@@ -106,12 +106,28 @@ export const FileManagerModal = ({
       name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [files, searchQuery]);
+
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return getExtensionsListForMimeTypes(allowedTypes);
+
+    return getShortExtentionsListFromMimeType(allowedTypes, t);
   }, [allowedTypes, t]);
+
+  const typesLabel = useMemo(() => {
+    if (allowedTypesLabel) {
+      return allowedTypesLabel;
+    }
+    if (
+      allowedTypes.length === 1 &&
+      allowedTypes[0].endsWith('/*') &&
+      !allowedTypes[0].startsWith('*/')
+    ) {
+      return t(allowedTypes[0].replace('/*', 's'));
+    }
+  }, [allowedTypes, allowedTypesLabel, t]);
+
   const showSpinner = folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
@@ -292,7 +308,7 @@ export const FileManagerModal = ({
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
               allowedExtensions:
-                allowedTypesLabel ||
+                typesLabel ||
                 allowedExtensions.join(', ') ||
                 'no available extensions',
             },
@@ -448,7 +464,7 @@ export const FileManagerModal = ({
           uploadFolderId={uploadFolderId}
           isOpen
           allowedTypes={allowedTypes}
-          allowedTypesLabel={allowedTypesLabel}
+          allowedTypesLabel={typesLabel}
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}
