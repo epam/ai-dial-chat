@@ -78,6 +78,7 @@ dialTest(
     conversationData,
     dataInjector,
     conversationDropdownMenu,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1625');
@@ -102,14 +103,16 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
+        await localStorageManager.setSelectedConversation(secondConversation);
       },
     );
 
     await dialTest.step(
-      'Open app and verify new conversation with index 3 is created automatically',
+      'Create new conversation and verify it has index 3',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chatBar.createNewConversation();
         await expect
           .soft(
             conversations.getConversationByName(thirdConversationName),
