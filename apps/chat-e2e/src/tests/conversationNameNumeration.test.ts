@@ -109,9 +109,7 @@ dialTest(
       'Open app and verify new conversation with index 3 is created automatically',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await expect
           .soft(
             conversations.getConversationByName(thirdConversationName),
