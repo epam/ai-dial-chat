@@ -269,10 +269,7 @@ dialSharedWithMeTest(
           conversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditConversationNameMode(
-          conversation.name,
-          updatedName,
-        );
+        await conversations.openEditConversationNameMode(updatedName);
         await page.keyboard.press(keys.enter);
 
         expect

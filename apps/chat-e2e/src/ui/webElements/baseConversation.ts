@@ -38,8 +38,8 @@ export class BaseConversation extends SideBarEntities {
     await this.openEntityDropdownMenu(this.entitySelector, name, index);
   }
 
-  public async editConversationNameWithTick(name: string, newName: string) {
-    const input = await this.openEditConversationNameMode(name, newName);
+  public async editConversationNameWithTick(newName: string) {
+    const input = await this.openEditConversationNameMode(newName);
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
@@ -50,8 +50,8 @@ export class BaseConversation extends SideBarEntities {
     await input.clickTickButton();
   }
 
-  public async editConversationNameWithEnter(name: string, newName: string) {
-    await this.openEditConversationNameMode(name, newName);
+  public async editConversationNameWithEnter(newName: string) {
+    await this.openEditConversationNameMode(newName);
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
@@ -62,8 +62,8 @@ export class BaseConversation extends SideBarEntities {
     await this.page.keyboard.press(keys.enter);
   }
 
-  public async openEditConversationNameMode(name: string, newName: string) {
-    return this.openEditEntityNameMode(this.entitySelector, name, newName);
+  public async openEditConversationNameMode(newName: string) {
+    return this.openEditEntityNameMode(this.entitySelector, newName);
   }
 
   public async selectMenuOption(option: MenuOptions) {

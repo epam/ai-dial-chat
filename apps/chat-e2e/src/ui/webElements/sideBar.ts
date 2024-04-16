@@ -155,9 +155,12 @@ export class SideBar extends BaseElement {
     );
   }
 
-  public async dragAndDropEntityFromFolder(entityLocator: Locator) {
+  public async dragAndDropEntityFromFolder(
+    entityLocator: Locator,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     await this.dragEntityFromFolder(entityLocator);
-    if (isApiStorageType) {
+    if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) => {
         return (
           resp.request().method() === 'PUT' ||

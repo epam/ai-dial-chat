@@ -9,8 +9,8 @@ export class Prompts extends SideBarEntities {
     super(page, PromptBarSelectors.prompts, PromptBarSelectors.prompt);
   }
 
-  getPromptInput(name: string): Input {
-    return this.getEntityInput(this.entitySelector, name);
+  getPromptInput(): Input {
+    return this.getEntityInput(this.entitySelector);
   }
 
   public getPromptByName(name: string, index?: number) {

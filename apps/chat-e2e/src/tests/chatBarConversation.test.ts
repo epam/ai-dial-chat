@@ -11,6 +11,7 @@ import {
   ModelIds,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import { Input } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
@@ -33,24 +34,58 @@ dialTest.beforeAll(async () => {
 
 dialTest(
   'Chat name equals to the first message\n' +
-    'Chat sorting. Today for newly created chat',
-  async ({ dialHomePage, conversations, chat, setTestIds }) => {
-    setTestIds('EPMRTC-583', 'EPMRTC-776');
-    await dialHomePage.openHomePage({
-      iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
-    });
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    const messageToSend = 'Hi';
-    await chat.sendRequestWithButton(messageToSend);
-    await conversations.getConversationByName(messageToSend).waitFor();
+    'Chat sorting. Today for newly created chat.\n' +
+    'A dot at the end is removed if chat was named automatically\n' +
+    'Chat name: restricted special characters are removed from chat name if to name automatically',
+  async ({ dialHomePage, conversations, chat, chatMessages, setTestIds }) => {
+    setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
+    const messageToSend = `.Hi${ExpectedConstants.prohibitedNameSymbols}...`;
+    const expectedConversationName = '.Hi';
 
-    const todayConversations = await conversations.getTodayConversations();
-    expect
-      .soft(
-        todayConversations.includes(messageToSend),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeTruthy();
+    await dialTest.step(
+      'Send request with prohibited symbols and verify they are not displayed in conversation name',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+        });
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await chat.sendRequestWithButton(messageToSend);
+
+        await expect
+          .soft(
+            conversations.getConversationByName(expectedConversationName),
+            ExpectedMessages.conversationNameUpdated,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Verify request is fully displayed in chat history',
+      async () => {
+        expect
+          .soft(
+            await chatMessages.getChatMessage(1).textContent(),
+            ExpectedMessages.messageContentIsValid,
+          )
+          .toBe(messageToSend);
+      },
+    );
+
+    await dialTest.step(
+      'Verify conversation is placed in Today section',
+      async () => {
+        const todayConversations = await conversations.getTodayConversations();
+        expect
+          .soft(
+            todayConversations.includes(expectedConversationName),
+            ExpectedMessages.conversationOfToday,
+          )
+          .toBeTruthy();
+      },
+    );
   },
 );
 
@@ -125,10 +160,8 @@ dialTest(
     await dialTest.step(
       'Set new conversation name, cancel edit and verify conversation with initial name shown',
       async () => {
-        const nameInput = await conversations.openEditConversationNameMode(
-          conversation.name,
-          newName,
-        );
+        const nameInput =
+          await conversations.openEditConversationNameMode(newName);
         await nameInput.clickCancelButton();
         expect
           .soft(
@@ -173,10 +206,7 @@ dialTest(
       ExpectedConstants.newConversationTitle,
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithTick(
-      ExpectedConstants.newConversationTitle,
-      newName,
-    );
+    await conversations.editConversationNameWithTick(newName);
     expect
       .soft(
         await conversations.getConversationByName(newName).isVisible(),
@@ -203,6 +233,7 @@ dialTest(
 
 dialTest(
   'Rename chat after starting the conversation.\n' +
+    'Chat name: spaces in the middle of chat name stay.\n' +
     'Long Chat name is cut in chat header. Named manually.\n' +
     'Tooltip shows full long chat name in chat header. Named manually.\n' +
     'Long chat name is cut in chat header. Named automatically by the system.\n' +
@@ -221,12 +252,13 @@ dialTest(
   }) => {
     setTestIds(
       'EPMRTC-585',
+      'EPMRTC-3084',
       'EPMRTC-821',
       'EPMRTC-822',
       'EPMRTC-818',
       'EPMRTC-820',
     );
-    const newName = GeneratorUtil.randomString(60);
+    const newNameWithMiddleSpaces = `${GeneratorUtil.randomString(30)}   ${GeneratorUtil.randomString(30)}`;
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);
@@ -235,16 +267,13 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithEnter(
-      conversation.name,
-      newName,
-    );
-    expect
+    await conversations.editConversationNameWithEnter(newNameWithMiddleSpaces);
+    await expect
       .soft(
-        await conversations.getConversationByName(newName).isVisible(),
+        await conversations.getConversationByName(newNameWithMiddleSpaces),
         ExpectedMessages.conversationNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     const isChatHeaderTitleTruncated =
       await chatHeader.chatTitle.isElementWidthTruncated();
@@ -262,7 +291,7 @@ dialTest(
         tooltipChatHeaderTitle,
         ExpectedMessages.headerTitleCorrespondRequest,
       )
-      .toBe(newName);
+      .toBe(newNameWithMiddleSpaces);
 
     const isTooltipChatHeaderTitleTruncated =
       await tooltip.isElementWidthTruncated();
@@ -303,43 +332,121 @@ dialTest(
 
 dialTest(
   'Menu for conversation with history.\n' +
+    'Error message appears if to add a dot to the end of chat name.\n' +
+    'Chat name: restricted special characters are not allowed to be entered while renaming manually.\n' +
+    'Chat name can not be blank.\n' +
+    'Spaces at the beginning or end of chat name are removed.\n' +
     'Special characters are allowed in chat name',
   async ({
     dialHomePage,
     conversations,
     conversationDropdownMenu,
-    conversationData,
-    localStorageManager,
-    dataInjector,
+    chat,
+    errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-595', 'EPMRTC-1276');
-    const conversation = conversationData.prepareDefaultConversation(
-      gpt35Model,
-      '!@$^&()_[] "\'.<>-`~',
+    setTestIds(
+      'EPMRTC-595',
+      'EPMRTC-2855',
+      'EPMRTC-2895',
+      'EPMRTC-586',
+      'EPMRTC-1574',
+      'EPMRTC-1276',
     );
-    await dataInjector.createConversations([conversation]);
-    await localStorageManager.setSelectedConversation(conversation);
+    let input: Input;
+    const specialSymbolsName = `(\`~!@#$^*-_+[]'|<>.?")`;
+    const newNameWithEndDot = 'updated folder name.';
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
-    await conversations.getConversationByName(conversation.name).waitFor();
-    await conversations.openConversationDropdownMenu(conversation.name);
-    const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
-    expect
-      .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([
-        MenuOptions.rename,
-        MenuOptions.compare,
-        MenuOptions.duplicate,
-        MenuOptions.replay,
-        MenuOptions.playback,
-        MenuOptions.export,
-        MenuOptions.moveTo,
-        MenuOptions.share,
-        MenuOptions.publish,
-        MenuOptions.delete,
-      ]);
+    await dialTest.step(
+      'Start editing conversation to name with dot at the end and verify error message shown',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await conversations.openConversationDropdownMenu(
+          ExpectedConstants.newConversationTitle,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        input =
+          await conversations.openEditConversationNameMode(newNameWithEndDot);
+        await input.clickTickButton();
+
+        const errorMessage = await errorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
+          .toBe(ExpectedConstants.nameWithDotErrorMessage);
+      },
+    );
+
+    await dialTest.step(
+      'Start typing prohibited symbols and verify they are not displayed in text input',
+      async () => {
+        await input.click();
+        await input.editValue(ExpectedConstants.prohibitedNameSymbols);
+        const inputContent = await input.getElementContent();
+        expect
+          .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
+          .toBe('');
+      },
+    );
+
+    await dialTest.step(
+      'Set empty conversation name or spaces and verify initial name is preserved',
+      async () => {
+        const name = GeneratorUtil.randomArrayElement(['', '   ']);
+        input = await conversations.openEditConversationNameMode(name);
+        await input.clickTickButton();
+        await expect
+          .soft(
+            conversations.getConversationByName(
+              ExpectedConstants.newConversationTitle,
+            ),
+            ExpectedMessages.conversationNameNotUpdated,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Verify renaming conversation to the name with special symbols is successful',
+      async () => {
+        await conversations.openConversationDropdownMenu(
+          ExpectedConstants.newConversationTitle,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await conversations.editConversationNameWithTick(specialSymbolsName);
+        await expect
+          .soft(
+            await conversations.getConversationByName(specialSymbolsName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Send new request to conversation and verify context menu options',
+      async () => {
+        await chat.sendRequestWithButton('1+2');
+        await conversations.openConversationDropdownMenu(specialSymbolsName);
+        const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
+          .toEqual([
+            MenuOptions.rename,
+            MenuOptions.compare,
+            MenuOptions.duplicate,
+            MenuOptions.replay,
+            MenuOptions.playback,
+            MenuOptions.export,
+            MenuOptions.moveTo,
+            MenuOptions.share,
+            MenuOptions.publish,
+            MenuOptions.delete,
+          ]);
+      },
+    );
   },
 );
 
@@ -1122,6 +1229,178 @@ dialTest(
         expect
           .soft(isEmptyFolderVisible, ExpectedMessages.folderIsNotVisible)
           .toBeFalsy();
+      },
+    );
+  },
+);
+
+dialTest(
+  'Chat name with smiles.\n' + 'Chat name with hieroglyph, specific letters',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    conversationData,
+    dataInjector,
+    chatMessages,
+    chat,
+    localStorageManager,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2849', 'EPMRTC-2959');
+    const updatedConversationName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
+    let conversation: Conversation;
+
+    await dialTest.step('Prepare new conversation', async () => {
+      conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+      await localStorageManager.setSelectedConversation(conversation);
+    });
+
+    await dialTest.step(
+      'Rename conversation to name with emoticons and hieroglyphs',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await conversations.editConversationNameWithTick(
+          updatedConversationName,
+        );
+        await expect
+          .soft(
+            await conversations.getConversationByName(updatedConversationName),
+            ExpectedMessages.conversationNameUpdated,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Send request to chat and verify response received',
+      async () => {
+        await chat.sendRequestWithButton('1+2');
+        const messagesCount =
+          await chatMessages.chatMessages.getElementsCount();
+        expect
+          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+          .toBe(conversation.messages.length + 2);
+      },
+    );
+  },
+);
+
+const longRequest =
+  'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+const testRequestMap = new Map([
+  [
+    `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
+    'how are you',
+  ],
+  ['first\nsecond\nthird', 'first'],
+  [longRequest, longRequest.substring(0, 160)],
+]);
+for (const [request, expectedConversationName] of testRequestMap.entries()) {
+  dialTest(
+    'Chat name: tab is changed to space if to use it in chat name.\n' +
+      'Chat name: ASCII control characters %00-%1F are changed to space if to use them in chat name.\n' +
+      'The first and only row from the first message is used as chat name.\n' +
+      'The first 160 symbols from the first message is used as chat name' +
+      ` for ${expectedConversationName}`,
+    async ({
+      dialHomePage,
+      conversations,
+      sendMessage,
+      chatMessages,
+      setTestIds,
+    }) => {
+      setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853', 'EPMRTC-2961');
+
+      await dialTest.step(
+        'Send request to chat and verify control chars are replaced with spaces',
+        async () => {
+          await dialHomePage.openHomePage();
+          await dialHomePage.waitForPageLoaded({
+            isNewConversationVisible: true,
+          });
+          await sendMessage.send(request);
+
+          await expect
+            .soft(
+              conversations.getConversationByName(expectedConversationName),
+              ExpectedMessages.conversationNameUpdated,
+            )
+            .toBeVisible();
+          expect
+            .soft(
+              await chatMessages.getChatMessage(1).textContent(),
+              ExpectedMessages.messageContentIsValid,
+            )
+            .toBe(request);
+        },
+      );
+    },
+  );
+}
+
+dialTest(
+  'Chat name: restricted special characters are removed from chat name if to name automatically via updating the 1st message',
+  async ({
+    dialHomePage,
+    conversations,
+    chatHeader,
+    conversationData,
+    dataInjector,
+    chatMessages,
+    localStorageManager,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2958');
+    const updatedRequest = `Chat"${ExpectedConstants.prohibitedNameSymbols}name.....`;
+    const expectedConversationName = `Chat"${' '.repeat(ExpectedConstants.prohibitedNameSymbols.length)}name`;
+    let conversation: Conversation;
+
+    await dialTest.step('Prepare new conversation', async () => {
+      conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+      await localStorageManager.setSelectedConversation(conversation);
+    });
+
+    await dialTest.step(
+      'Edit first chat request to contain restricted symbols and verify request is fully displayed in chat history',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatMessages.openEditMessageMode(1);
+        await chatMessages.editMessage(
+          conversation.messages[0].content,
+          updatedRequest,
+        );
+        expect
+          .soft(
+            await chatMessages.getChatMessage(1).textContent(),
+            ExpectedMessages.messageContentIsValid,
+          )
+          .toBe(updatedRequest);
+      },
+    );
+
+    await dialTest.step(
+      'Verify conversation name is updated on side bar, header and restricted symbols are removed from the name',
+      async () => {
+        await expect
+          .soft(
+            conversations.getConversationByName(expectedConversationName),
+            ExpectedMessages.conversationNameUpdated,
+          )
+          .toBeVisible();
+
+        expect
+          .soft(
+            await chatHeader.chatTitle.getElementInnerContent(),
+            ExpectedMessages.headerTitleIsValid,
+          )
+          .toBe(expectedConversationName);
       },
     );
   },
