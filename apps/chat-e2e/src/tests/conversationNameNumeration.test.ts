@@ -1,21 +1,25 @@
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  ModelIds,
 } from '@/src/testData';
 import { Input } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
+let defaultModel: DialAIEntityModel;
+dialTest.beforeAll(async () => {
+  defaultModel = ModelsUtil.getDefaultModel()!;
+});
+
 dialTest(
-  'Default chat numeration.\n' +
-    'Chat numeration continues after 999.\n' +
-    'Renamed chats are not counted into default chat numeration.\n' +
-    'Deleted chats are not counted into default chat numeration',
+  'Default chat numeration.\n' + 'Chat numeration continues after 999',
   async ({
     dialHomePage,
     conversations,
@@ -23,11 +27,9 @@ dialTest(
     conversationData,
     localStorageManager,
     dataInjector,
-    conversationDropdownMenu,
-    confirmationDialog,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1624', 'EPMRTC-2955', 'EPMRTC-1625', 'EPMRTC-1626');
+    setTestIds('EPMRTC-1624', 'EPMRTC-2955');
     let conversation: Conversation;
     const initConversationIndex = 999;
     const initialConversationName =
@@ -37,7 +39,7 @@ dialTest(
       'Prepare new conversation with index 999 in name',
       async () => {
         conversation = conversationData.prepareDefaultConversation(
-          ModelsUtil.getDefaultModel(),
+          defaultModel,
           initialConversationName,
         );
         await dataInjector.createConversations([conversation]);
@@ -65,25 +67,55 @@ dialTest(
         }
       },
     );
+  },
+);
+
+dialTest(
+  'Renamed chats are not counted into default chat numeration',
+  async ({
+    dialHomePage,
+    conversations,
+    chatBar,
+    conversationData,
+    dataInjector,
+    conversationDropdownMenu,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1625');
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
+    const thirdConversationName =
+      ExpectedConstants.newConversationWithIndexTitle(3);
 
     await dialTest.step(
-      'Rename initial conversation, create a new one and verify name is incremented with latest index',
+      'Prepare new conversations with index 2 in the name and random name',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          initialConversationName,
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        firstConversation = conversationData.prepareDefaultConversation(
+          defaultModel,
           GeneratorUtil.randomString(7),
         );
-        await chatBar.createNewConversation();
+        conversationData.resetData();
+        secondConversation = conversationData.prepareDefaultConversation(
+          defaultModel,
+          ExpectedConstants.newConversationWithIndexTitle(2),
+        );
+        await dataInjector.createConversations([
+          firstConversation,
+          secondConversation,
+        ]);
+      },
+    );
+
+    await dialTest.step(
+      'Open app and verify new conversation with index 3 is created automatically',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
         await expect
           .soft(
-            conversations.getConversationByName(
-              ExpectedConstants.newConversationWithIndexTitle(
-                initConversationIndex + 3,
-              ),
-            ),
+            conversations.getConversationByName(thirdConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -93,11 +125,7 @@ dialTest(
     await dialTest.step(
       'Rename created conversation, create a new one and verify it is re-created with the same index',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(
-            initConversationIndex + 3,
-          ),
-        );
+        await conversations.openConversationDropdownMenu(thirdConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.editConversationNameWithTick(
           GeneratorUtil.randomString(7),
@@ -105,50 +133,55 @@ dialTest(
         await chatBar.createNewConversation();
         await expect
           .soft(
-            conversations.getConversationByName(
-              ExpectedConstants.newConversationWithIndexTitle(
-                initConversationIndex + 3,
-              ),
-            ),
+            conversations.getConversationByName(thirdConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
       },
     );
+  },
+);
+
+dialTest(
+  'Deleted chats are not counted into default chat numeration',
+  async ({
+    dialHomePage,
+    conversations,
+    chatBar,
+    conversationData,
+    dataInjector,
+    conversationDropdownMenu,
+    localStorageManager,
+    confirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1626');
+    const latestIndex = 3;
 
     await dialTest.step(
-      'Rename created conversation, create a new one and verify it is re-created with the same index',
+      'Prepare new conversations with indexes 1-3 in the name',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(
-            initConversationIndex + 3,
-          ),
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
-          GeneratorUtil.randomString(7),
-        );
-        await chatBar.createNewConversation();
-        await expect
-          .soft(
-            conversations.getConversationByName(
-              ExpectedConstants.newConversationWithIndexTitle(
-                initConversationIndex + 3,
-              ),
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        const conversations: Conversation[] = [];
+        for (let i = 1; i <= latestIndex; i++) {
+          const conversation = conversationData.prepareDefaultConversation(
+            defaultModel,
+            ExpectedConstants.newConversationWithIndexTitle(i),
+          );
+          conversations.push(conversation);
+          conversationData.resetData();
+        }
+        await dataInjector.createConversations(conversations);
+        await localStorageManager.setSelectedConversation(conversations[0]);
       },
     );
 
     await dialTest.step(
-      'Delete conversation with highest index, create a new one and verify name is incremented with latest index',
+      'Delete conversation with index 1, create a new one and verify name is incremented with latest index',
       async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(
-            initConversationIndex + 1,
-          ),
+          ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -156,9 +189,7 @@ dialTest(
         await expect
           .soft(
             conversations.getConversationByName(
-              ExpectedConstants.newConversationWithIndexTitle(
-                initConversationIndex + 4,
-              ),
+              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 1),
             ),
             ExpectedMessages.conversationIsVisible,
           )
@@ -191,7 +222,7 @@ dialTest(
         folderConversation =
           conversationData.prepareDefaultConversationInFolder(
             GeneratorUtil.randomString(7),
-            ModelsUtil.getDefaultModel(),
+            defaultModel,
             initConversationName,
           );
         await dataInjector.createConversations(
@@ -265,7 +296,7 @@ dialTest(
       'Prepare new conversation with name "test"',
       async () => {
         conversation = conversationData.prepareDefaultConversation(
-          ModelsUtil.getDefaultModel(),
+          defaultModel,
           requestBasedConversationName,
         );
         await dataInjector.createConversations([conversation]);
@@ -335,7 +366,7 @@ dialTest(
       'Prepare two conversations inside folder and one in the root with equal name',
       async () => {
         firstFolderConversation = conversationData.prepareDefaultConversation(
-          ModelsUtil.getDefaultModel(),
+          defaultModel,
           duplicatedName,
         );
         conversationData.resetData();
@@ -348,7 +379,7 @@ dialTest(
         ]);
         conversationData.resetData();
         rootConversation = conversationData.prepareDefaultConversation(
-          ModelsUtil.getDefaultModel(),
+          defaultModel,
           duplicatedName,
         );
 
