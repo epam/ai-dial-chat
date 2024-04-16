@@ -12,6 +12,8 @@ RUN npm ci
 # ---- Build ----
 FROM build_dependencies AS build
 COPY . .
+RUN npm install -g nx
+RUN nx reset
 RUN npm run build
 
 # ---- Only required dependencies ----

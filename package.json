@@ -3,6 +3,8 @@
   "version": "0.9.0-rc",
   "private": true,
   "scripts": {
+    "start": "nx serve chat",
+    "start:debug": "nx serve chat --configuration=development",
     "nx": "nx",
     "postinstall": "node tools/patch-nextjs.js",
     "graph": "nx graph",
