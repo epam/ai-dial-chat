@@ -7,7 +7,6 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
-  ModelIds,
 } from '@/src/testData';
 import { Input } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
