@@ -35,12 +35,15 @@ export class PromptBar extends SideBar {
   public async dragAndDropPromptFromFolder(
     folderName: string,
     promptName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderPrompt = await this.getFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
-    await this.dragAndDropEntityFromFolder(folderPrompt);
+    await this.dragAndDropEntityFromFolder(folderPrompt, {
+      isHttpMethodTriggered,
+    });
   }
 
   public async drugPromptToFolder(folderName: string, promptName: string) {

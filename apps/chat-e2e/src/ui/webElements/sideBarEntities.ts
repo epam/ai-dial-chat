@@ -18,11 +18,11 @@ export class SideBarEntities extends BaseElement {
 
   private entityInput!: Input;
 
-  getEntityInput(selector: string, name: string): Input {
+  getEntityInput(selector: string): Input {
     if (!this.entityInput) {
       this.entityInput = new Input(
         this.page,
-        `${selector} >> ${SideBarSelectors.renameDefaultNameInput(name)}`,
+        `${selector} >> ${SideBarSelectors.renameInput}`,
       );
     }
     return this.entityInput;
@@ -92,12 +92,8 @@ export class SideBarEntities extends BaseElement {
     await this.getDropdownMenu().waitForState();
   }
 
-  protected async openEditEntityNameMode(
-    selector: string,
-    name: string,
-    newName: string,
-  ) {
-    const input = await this.getEntityInput(selector, name);
+  protected async openEditEntityNameMode(selector: string, newName: string) {
+    const input = await this.getEntityInput(selector);
     await input.editValue(newName);
     return input;
   }

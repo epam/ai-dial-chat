@@ -1533,10 +1533,7 @@ dialTest(
           1,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
-          updatedRequestContent,
-          newLeftChatName,
-        );
+        await conversations.editConversationNameWithTick(newLeftChatName);
 
         const chatTitle = await leftChatHeader.chatTitle.getElementContent();
         expect

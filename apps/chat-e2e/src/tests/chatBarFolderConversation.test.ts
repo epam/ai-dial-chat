@@ -142,7 +142,6 @@ dialTest(
       'EPMRTC-575',
     );
     const newNameWithEndDot = 'updated folder name.';
-    const prohibitedSymbols = `=,:;{}/%&`;
     let folderInput: Input;
 
     await dialTest.step('Start editing folder and cancel', async () => {
@@ -188,7 +187,7 @@ dialTest(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
         await folderInput.click();
-        await folderInput.editValue(prohibitedSymbols);
+        await folderInput.editValue(ExpectedConstants.prohibitedNameSymbols);
         const inputContent = await folderInput.getElementContent();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
@@ -199,7 +198,9 @@ dialTest(
     await dialTest.step(
       'Paste prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await sendMessage.fillRequestData(prohibitedSymbols);
+        await sendMessage.fillRequestData(
+          ExpectedConstants.prohibitedNameSymbols,
+        );
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusC);
         await folderInput.click();
@@ -651,7 +652,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Create a new folder and rename to name with special symbols',
+      'Rename folder to name with special symbols',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();

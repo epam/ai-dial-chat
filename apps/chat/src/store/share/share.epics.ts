@@ -257,14 +257,19 @@ const acceptInvitationEpic: AppEpic = (action$) =>
           ShareService.getShareDetails({
             invitationId: payload.invitationId,
           }).pipe(
-            switchMap((data) =>
-              of(
+            switchMap((data) => {
+              const acceptedIds = data.resources.filter(
+                (resource) =>
+                  isPromptId(resource.url) || isConversationId(resource.url),
+              );
+
+              return of(
                 ShareActions.acceptShareInvitationSuccess({
-                  acceptedId: ApiUtils.decodeApiUrl(data.resources[0].url),
+                  acceptedId: ApiUtils.decodeApiUrl(acceptedIds[0].url),
                   isFolder: isFolderId(data.resources[0].url),
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
         catchError((err) => {
