@@ -325,7 +325,7 @@ export const FileManagerModal = ({
 
         {showSpinner ? (
           <div className="flex items-center justify-center py-10">
-            <Spinner />
+            <Spinner size={30} />
           </div>
         ) : (
           <div className="group/modal flex flex-col gap-2 overflow-auto">
