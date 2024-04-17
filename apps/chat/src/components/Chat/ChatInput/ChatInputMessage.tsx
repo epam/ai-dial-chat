@@ -400,7 +400,7 @@ export const ChatInputMessage = ({
         />
         {canAttach && (
           <>
-            <div className="absolute left-4 top-[calc(50%_-_12px)] rounded disabled:cursor-not-allowed">
+            <div className="absolute left-4 top-[calc(50%_-_12px)] cursor-pointer rounded disabled:cursor-not-allowed">
               <AttachButton
                 selectedFilesIds={attachedFilesIds}
                 onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
