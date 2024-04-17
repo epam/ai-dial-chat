@@ -565,6 +565,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
+            name="rename-input"
             onChange={(e) =>
               setRenameValue(
                 e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
