@@ -586,7 +586,7 @@ dialTest(
       'Delete all prompts and folders, import exported prompt and verify folder structure with 3rd level prompt are displayed',
       async () => {
         await promptBar.deleteAllEntities();
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
@@ -642,7 +642,7 @@ dialTest(
           nestedFolders[levelsCount - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
