@@ -882,8 +882,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               ),
             ),
           ).pipe(
-            switchMap((failedNames) => {
-              return concat(
+            switchMap((failedNames) =>
+              concat(
                 iif(
                   () =>
                     failedNames.filter(Boolean).length > 0 &&
@@ -902,8 +902,8 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                     conversationIds,
                   }),
                 ),
-              );
-            }),
+              ),
+            ),
           ),
         );
       },
