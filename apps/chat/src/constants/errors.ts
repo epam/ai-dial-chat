@@ -10,7 +10,7 @@ export const errorsMessages = {
   contentFiltering:
     'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
   unsupportedConversationsDataFormat:
-    'Import of prompts failed because of unsupported data format',
+    'Import of conversations failed because of unsupported data format',
   unsupportedPromptsDataFormat:
     'Import of prompts failed because of unsupported data format',
   localStorageQuotaExceeded:
