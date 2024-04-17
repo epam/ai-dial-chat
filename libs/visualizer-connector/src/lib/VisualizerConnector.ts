@@ -90,6 +90,7 @@ export class VisualizerConnector {
     iframe.src = this.options.domain;
     iframe.allow = 'clipboard-write';
 
+    iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-scripts');
     iframe.sandbox.add('allow-modals');
     iframe.sandbox.add('allow-forms');
