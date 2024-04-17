@@ -132,11 +132,9 @@ export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
 ): { filesWithNotAllowedSymbols: T[]; filesWithDotInTheEnd: T[] } => ({
   filesWithNotAllowedSymbols: files.filter(({ name }) =>
-    getFileNameWithoutExtension(name).match(notAllowedSymbolsRegex),
+    name.match(notAllowedSymbolsRegex),
   ),
-  filesWithDotInTheEnd: files.filter(({ name }) =>
-    doesHaveDotsInTheEnd(getFileNameWithoutExtension(name)),
-  ),
+  filesWithDotInTheEnd: files.filter(({ name }) => doesHaveDotsInTheEnd(name)),
 });
 
 export const getFilesWithInvalidFileSize = (
