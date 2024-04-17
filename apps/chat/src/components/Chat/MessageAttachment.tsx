@@ -18,6 +18,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { chartType, stopBubbling } from '@/src/constants/chat';
 
@@ -27,6 +28,7 @@ import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
+import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -190,6 +192,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
+  const customRenderers = useAppSelector(
+    SettingsSelectors.selectCustomRenderers,
+  );
+
   useEffect(() => {
     const handleResize = () => {
       if (wasOpened && anchorRef.current) {
@@ -325,10 +331,19 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             (attachment.type === chartType ? (
               <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />
             ) : (
-              <AttachmentUrlRenderer
-                attachmentUrl={mappedAttachmentUrl}
-                attachmentType={attachment.type}
-              />
+              <>
+                <AttachmentUrlRenderer
+                  attachmentUrl={mappedAttachmentUrl}
+                  attachmentType={attachment.type}
+                />
+                {/* TODO create conditional rendering */}
+                {customRenderers && (
+                  <VisualizerRenderer
+                    attachmentUrl={mappedAttachmentUrl}
+                    renderer={customRenderers[0]}
+                  />
+                )}
+              </>
             ))}
           {mappedAttachmentReferenceUrl && (
             <a

@@ -294,6 +294,9 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
+  const customRenderers =
+    process.env.CUSTOM_RENDERERS && JSON.parse(process.env.CUSTOM_RENDERERS);
+
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
     codeWarning: process.env.CODE_GENERATION_WARNING ?? '',
@@ -332,6 +335,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
+    customRenderers: customRenderers || [],
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

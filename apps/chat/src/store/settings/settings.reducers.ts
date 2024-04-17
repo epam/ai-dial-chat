@@ -2,6 +2,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import { CustomRenderer } from '@/src/types/custom-renderes';
 import { StorageType } from '@/src/types/storage';
 
 import { RootState } from '..';
@@ -22,6 +23,7 @@ export interface SettingsState {
   storageType: StorageType;
   themesHostDefined: boolean;
   isolatedModelId?: string;
+  customRenderers?: CustomRenderer[];
 }
 
 const initialState: SettingsState = {
@@ -37,6 +39,7 @@ const initialState: SettingsState = {
   defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
+  customRenderers: [],
 };
 
 export const settingsSlice = createSlice({
@@ -204,6 +207,10 @@ const selectThemeHostDefined = createSelector([rootSelector], (state) => {
   return state.themesHostDefined;
 });
 
+const selectCustomRenderers = createSelector([rootSelector], (state) => {
+  return state.customRenderers;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -223,4 +230,5 @@ export const SettingsSelectors = {
   selectThemeHostDefined,
   selectIsIsolatedView,
   selectIsolatedModelId,
+  selectCustomRenderers,
 };
