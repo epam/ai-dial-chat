@@ -123,19 +123,21 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/{}%&\\\t\x00-\x1F';
+export const notAllowedSymbols = ':;,=/{}%&\\';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)`,
+  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)|[\x00-\x1F]`,
   'gm',
 );
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
-): T[] => {
-  return files.filter(
-    ({ name }) =>
-      name.match(notAllowedSymbolsRegex) || doesHaveDotsInTheEnd(name),
-  );
-};
+): { filesWithNotAllowedSymbols: T[]; filesWithDotInTheEnd: T[] } => ({
+  filesWithNotAllowedSymbols: files.filter(({ name }) =>
+    getFileNameWithoutExtension(name).match(notAllowedSymbolsRegex),
+  ),
+  filesWithDotInTheEnd: files.filter(({ name }) =>
+    doesHaveDotsInTheEnd(getFileNameWithoutExtension(name)),
+  ),
+});
 
 export const getFilesWithInvalidFileSize = (
   files: File[],

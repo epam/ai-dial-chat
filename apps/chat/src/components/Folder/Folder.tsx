@@ -25,7 +25,6 @@ import {
   isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
-  trimEndDots,
 } from '@/src/utils/app/common';
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
@@ -104,6 +103,7 @@ export interface FolderProps<T, P = unknown> {
   allFoldersWithoutFilters?: FolderInterface[];
   allItemsWithoutFilters?: T[];
   folderClassName?: string;
+  skipFolderRenameValidation?: boolean;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -135,6 +135,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   highlightTemporaryFolders,
   withBorderHighlight = true,
   folderClassName,
+  skipFolderRenameValidation = false,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -265,34 +266,36 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
-    if (
-      !isEntityNameOnSameLevelUnique(
-        newName,
-        currentFolder,
-        allFoldersWithoutFilters,
-      )
-    ) {
-      dispatch(
-        UIActions.showErrorToast(
-          t(
-            'Folder with name "{{folderName}}" already exists in this folder.',
-            {
-              ns: 'folder',
-              folderName: newName,
-            },
+    if (!skipFolderRenameValidation) {
+      if (
+        !isEntityNameOnSameLevelUnique(
+          newName,
+          currentFolder,
+          allFoldersWithoutFilters,
+        )
+      ) {
+        dispatch(
+          UIActions.showErrorToast(
+            t(
+              'Folder with name "{{folderName}}" already exists in this folder.',
+              {
+                ns: 'folder',
+                folderName: newName,
+              },
+            ),
           ),
-        ),
-      );
-      return;
-    }
+        );
+        return;
+      }
 
-    if (doesHaveDotsInTheEnd(newName)) {
-      dispatch(
-        UIActions.showErrorToast(
-          t('Using a dot at the end of a name is not permitted.'),
-        ),
-      );
-      return;
+      if (doesHaveDotsInTheEnd(newName)) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the end of a name is not permitted.'),
+          ),
+        );
+        return;
+      }
     }
 
     if (currentFolder.isShared && newName !== currentFolder.name) {
@@ -303,7 +306,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
 
     if (newName && newName !== currentFolder.name) {
-      onRenameFolder(trimEndDots(newName), currentFolder.id);
+      onRenameFolder(newName, currentFolder.id);
     }
     setRenameValue('');
     setIsRenaming(false);
@@ -311,6 +314,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, [
     onRenameFolder,
     renameValue,
+    skipFolderRenameValidation,
     currentFolder,
     allFoldersWithoutFilters,
     dispatch,
