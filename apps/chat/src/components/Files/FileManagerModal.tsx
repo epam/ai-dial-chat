@@ -10,9 +10,9 @@ import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
 import {
   getDialFilesWithInvalidFileType,
-  getExtensionsListForMimeTypes,
+  getShortExtentionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getRootId, isRootId } from '@/src/utils/app/id';
+import { getFileRootId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -38,7 +38,7 @@ interface Props {
   isOpen: boolean;
   initialSelectedFilesIds?: string[];
   allowedTypes?: string[];
-  allowedTypesLabel?: string;
+  allowedTypesLabel?: string | null;
   maximumAttachmentsAmount?: number;
   headerLabel: string;
   customButtonLabel?: string;
@@ -77,7 +77,7 @@ export const FileManagerModal = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
-    getRootId(),
+    getFileRootId(),
   );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
@@ -95,7 +95,7 @@ export const FileManagerModal = ({
   } = useHandleFileFolders(
     folders,
     openedFoldersIds,
-    getRootId(),
+    getFileRootId(),
     setErrorMessage,
     setOpenedFoldersIds,
     setIsAllFilesOpened,
@@ -106,12 +106,28 @@ export const FileManagerModal = ({
       name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [files, searchQuery]);
+
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return getExtensionsListForMimeTypes(allowedTypes);
+
+    return getShortExtentionsListFromMimeType(allowedTypes, t);
   }, [allowedTypes, t]);
+
+  const typesLabel = useMemo(() => {
+    if (allowedTypesLabel) {
+      return allowedTypesLabel;
+    }
+    if (
+      allowedTypes.length === 1 &&
+      allowedTypes[0].endsWith('/*') &&
+      !allowedTypes[0].startsWith('*/')
+    ) {
+      return t(allowedTypes[0].replace('/*', 's'));
+    }
+  }, [allowedTypes, allowedTypesLabel, t]);
+
   const showSpinner = folders.length === 0 && areFoldersLoading;
 
   useEffect(() => {
@@ -292,7 +308,7 @@ export const FileManagerModal = ({
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
               allowedExtensions:
-                allowedTypesLabel ||
+                typesLabel ||
                 allowedExtensions.join(', ') ||
                 'no available extensions',
             },
@@ -323,7 +339,7 @@ export const FileManagerModal = ({
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
                 className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
-                onClick={() => handleToggleFolder(getRootId())}
+                onClick={() => handleToggleFolder(getFileRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
                 {t('All files')}
@@ -448,7 +464,7 @@ export const FileManagerModal = ({
           uploadFolderId={uploadFolderId}
           isOpen
           allowedTypes={allowedTypes}
-          allowedTypesLabel={allowedTypesLabel}
+          allowedTypesLabel={typesLabel}
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
           onClose={() => setIsUploadFromDeviceOpened(false)}

@@ -112,9 +112,8 @@ export const ChatHeader = ({
             tooltip={conversation.name}
             triggerClassName={classNames(
               'truncate text-center',
-              isChatFullWidth
-                ? 'flex h-full max-w-full items-center justify-center lg:max-w-[90%]'
-                : '',
+              isChatFullWidth &&
+                'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
             )}
           >
             <span

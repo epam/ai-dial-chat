@@ -347,6 +347,7 @@ export const MessageMobileButtons = ({
   }
 
   return (
+    !editDisabled &&
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>

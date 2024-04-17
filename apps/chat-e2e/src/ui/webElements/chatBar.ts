@@ -106,6 +106,7 @@ export class ChatBar extends SideBar {
     folderName: string,
     folderConversationName: string,
     conversationName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderConversation = this.getFolderConversations().getFolderEntity(
       folderName,
@@ -113,12 +114,17 @@ export class ChatBar extends SideBar {
     );
     const conversation =
       this.getConversations().getConversationByName(conversationName);
-    await this.dragAndDropEntityToFolder(conversation, folderConversation);
+    await this.dragAndDropEntityToFolder(conversation, folderConversation, {
+      isHttpMethodTriggered,
+    });
   }
 
-  public async dragAndDropFolderToRootLevel(folderName: string) {
+  public async dragAndDropFolderToRootLevel(
+    folderName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     const folder =
       await this.getFolderConversations().getFolderByName(folderName);
-    await this.dragFolderToRoot(folder);
+    await this.dragFolderToRoot(folder, { isHttpMethodTriggered });
   }
 }

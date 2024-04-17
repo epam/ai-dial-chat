@@ -110,8 +110,8 @@ export const ChatMessage: FC<Props> = memo(
     );
 
     if (
-      (!isSmallScreen() || isEditing || isOverlay) &&
-      !(isMobile() && isOverlay) // skip if overlay on mobile
+      (!isSmallScreen() || isOverlay) &&
+      !(isMobile() && isOverlay) // skip if overlay or mobile
     ) {
       return (
         <>
@@ -141,6 +141,7 @@ export const ChatMessage: FC<Props> = memo(
     return (
       <>
         <Menu
+          isTriggerEnabled={!isEditing}
           placement="top-start"
           listClassName="context-menu-chat bg-layer-3"
           shouldFlip={false}
@@ -151,7 +152,7 @@ export const ChatMessage: FC<Props> = memo(
           }}
           type="contextMenu"
           className="w-full text-start"
-          dismissIfScroll
+          enableAncestorScroll
           noFocusReturn
           trigger={
             <ChatMessageContent
@@ -161,6 +162,7 @@ export const ChatMessage: FC<Props> = memo(
               isEditing={isEditing}
               toggleEditing={toggleEditing}
               message={message}
+              onEdit={onEdit}
               onClick={(e, messageRef) => {
                 const rect = messageRef.current!.getBoundingClientRect();
                 setClientY(e.clientY - rect.y);

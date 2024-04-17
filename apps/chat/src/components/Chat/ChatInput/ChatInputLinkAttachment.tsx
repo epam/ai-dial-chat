@@ -10,7 +10,7 @@ interface Props {
 
 export const ChatInputLinkAttachment = ({ link, onUnselect }: Props) => {
   return (
-    <div className="flex gap-3 rounded border border-primary bg-layer-1 p-3">
+    <div className="flex gap-3 rounded border border-primary bg-layer-1 px-3 py-2">
       <IconLink className="shrink-0 text-secondary" size={18} />
 
       <div className="flex grow justify-between gap-3 overflow-hidden">

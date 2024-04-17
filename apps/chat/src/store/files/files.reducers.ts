@@ -6,9 +6,11 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
   getParentAndChildFolders,
+  getParentAndCurrentFoldersById,
   sortByName,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getFileRootId } from '@/src/utils/app/id';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -60,7 +62,7 @@ export const filesSlice = createSlice({
         id: payload.id,
         name: payload.name,
         relativePath: payload.relativePath,
-        folderId: constructPath(getRootId(), payload.relativePath),
+        folderId: constructPath(getFileRootId(), payload.relativePath),
 
         status: UploadStatus.LOADING,
         percent: 0,
@@ -224,7 +226,7 @@ export const filesSlice = createSlice({
         parentId?: string;
       }>,
     ) => {
-      const rootFileId = getRootId();
+      const rootFileId = getFileRootId();
       const folderName = getNextDefaultName(
         DEFAULT_FOLDER_NAME,
         state.folders.filter(
@@ -241,7 +243,7 @@ export const filesSlice = createSlice({
         addGeneratedFolderId({
           name: folderName,
           type: FolderType.File,
-          folderId: payload.parentId || getRootId(),
+          folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
         }),
       );
@@ -396,6 +398,16 @@ const selectFoldersWithSearchTerm = createSelector(
     return getParentAndChildFolders(folders, filtered);
   },
 );
+const hasExternalParent = createSelector(
+  [selectFolders, (_state: RootState, folderId: string) => folderId],
+  (folders, folderId) => {
+    if (!folderId.startsWith(getFileRootId())) {
+      return true;
+    }
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => isEntityExternal(folder));
+  },
+);
 
 export const FilesSelectors = {
   selectFiles,
@@ -408,6 +420,7 @@ export const FilesSelectors = {
   selectNewAddedFolderId,
   selectFilesByIds,
   selectFoldersWithSearchTerm,
+  hasExternalParent,
 };
 
 export const FilesActions = filesSlice.actions;
