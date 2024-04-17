@@ -259,8 +259,6 @@ export const PreUploadDialog = ({
       return;
     }
 
-    return;
-
     onUploadFiles(selectedFiles, folderPath);
 
     onClose(true);
@@ -272,6 +270,7 @@ export const PreUploadDialog = ({
     onClose,
     onUploadFiles,
     selectedFiles,
+    selectedFolderId,
     t,
   ]);
 
