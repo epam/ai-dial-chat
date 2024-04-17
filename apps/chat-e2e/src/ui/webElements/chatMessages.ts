@@ -344,12 +344,17 @@ export class ChatMessages extends BaseElement {
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
   public async openEditMessageMode(message: string | number) {
+    const editIcon = await this.waitForEditMessageIcon(message);
+    await editIcon.click();
+  }
+
+  public async waitForEditMessageIcon(message: string | number) {
     const chatMessage = this.getChatMessage(message);
     await chatMessage.scrollIntoViewIfNeeded();
     await chatMessage.hover();
     const editIcon = this.messageEditIcon(chatMessage);
     await editIcon.waitFor();
-    await editIcon.click();
+    return editIcon;
   }
 
   public async editMessage(oldMessage: string, newMessage: string) {

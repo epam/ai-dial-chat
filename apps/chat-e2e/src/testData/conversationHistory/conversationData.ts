@@ -288,10 +288,14 @@ export class ConversationData extends FolderData {
 
   public prepareConversationsForNestedFolders(
     nestedFolders: FolderInterface[],
+    name?: string,
   ) {
     const nestedConversations: Conversation[] = [];
     for (const item of nestedFolders) {
-      const nestedConversation = this.prepareDefaultConversation();
+      const nestedConversation = this.prepareDefaultConversation(
+        undefined,
+        name,
+      );
       nestedConversations.push(nestedConversation);
       nestedConversation.folderId = item.folderId;
       nestedConversation.id = `${item.folderId}/${nestedConversation.id}`;

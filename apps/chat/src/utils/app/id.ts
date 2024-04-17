@@ -6,14 +6,14 @@ import { splitEntityId } from './folders';
 import { EnumMapper } from './mappers';
 
 export const getRootId = ({
+  featureType,
   id,
-  featureType = FeatureType.File,
   bucket,
 }: {
+  featureType: FeatureType;
   id?: string;
-  featureType?: FeatureType;
   bucket?: string;
-} = {}) => {
+}) => {
   const splittedEntityId = id ? splitEntityId(id) : undefined;
 
   return constructPath(

@@ -293,10 +293,6 @@ dialTest(
         await dialHomePage.importFile(folderConversationData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations.expandFolder(
-          conversationsInFolder.folders.name,
-        );
         await folderConversations.selectFolderEntity(
           conversationsInFolder.folders.name,
           importedFolderConversation.name,
@@ -353,10 +349,6 @@ dialTest(
       async () => {
         await dialHomePage.importFile(newFolderConversationData, () =>
           chatBar.importButton.click(),
-        );
-
-        await folderConversations.expandFolder(
-          importedNewFolderConversation.folders.name,
         );
         await folderConversations.selectFolderEntity(
           importedNewFolderConversation.folders.name,
@@ -715,7 +707,7 @@ dialTest(
           nestedFolders[levelsCount - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
@@ -921,6 +913,7 @@ dialTest(
       async () => {
         await chatBar.dragAndDropFolderToRootLevel(
           nestedFolders[levelsCount].name,
+          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
@@ -929,7 +922,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify imported conversations is in 3rd level folder, under ther 2nd level folder',
+      'Verify imported conversations is in 3rd level folder, under the 2nd level folder',
       async () => {
         await folderConversations.expandFolder(
           nestedFolders[levelsCount].name,

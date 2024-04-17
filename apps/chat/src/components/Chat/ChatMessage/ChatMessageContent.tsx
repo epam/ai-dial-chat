@@ -1,4 +1,4 @@
-import { IconUser } from '@tabler/icons-react';
+import { IconPaperclip, IconUser } from '@tabler/icons-react';
 import {
   MouseEvent,
   RefObject,
@@ -374,7 +374,7 @@ export const ChatMessageContent = ({
         >
           {isUser ? (
             isEditing ? (
-              <div data-no-context-menu className="flex w-full flex-col gap-3">
+              <div className="flex w-full flex-col gap-3">
                 <div
                   className={classNames(
                     'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
@@ -412,14 +412,22 @@ export const ChatMessageContent = ({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha">
-                    <AttachButton
-                      selectedFilesIds={newEditableAttachmentsIds}
-                      onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                      onUploadFromDevice={handleUploadFromDevice}
-                      onAddLinkToMessage={handleAddLinkToMessage}
-                    />
-                  </div>
+                  <AttachButton
+                    TriggerCustomRenderer={
+                      <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
+                        <IconPaperclip
+                          strokeWidth="1.5"
+                          size={24}
+                          width={24}
+                          height={24}
+                        />
+                      </div>
+                    }
+                    selectedFilesIds={newEditableAttachmentsIds}
+                    onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                    onUploadFromDevice={handleUploadFromDevice}
+                    onAddLinkToMessage={handleAddLinkToMessage}
+                  />
                   <div className="relative flex gap-3">
                     <button
                       className="button button-secondary"
