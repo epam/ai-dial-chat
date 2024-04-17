@@ -672,7 +672,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           of(ImportExportActions.importPromptsFail()),
           of(
             UIActions.showErrorToast(
-              translate(errorsMessages.unsupportedDataFormat, {
+              translate(errorsMessages.unsupportedPromptsDataFormat, {
                 ns: 'common',
               }),
             ),
