@@ -224,11 +224,11 @@ export const PreUploadDialog = ({
       }
     }
 
-    const attachmentsNames = files
+    const attachmentsSameLevelNames = files
       .filter((file) => file.folderId === selectedFolderId)
       .map((file) => file.name);
     const localIncorrectSameNameFiles = selectedFiles
-      .filter((file) => attachmentsNames.includes(file.name))
+      .filter((file) => attachmentsSameLevelNames.includes(file.name))
       .map((file) => file.name);
 
     if (localIncorrectSameNameFiles.length > 0) {
