@@ -103,7 +103,7 @@ export const importExportSlice = createSlice({
       state.operation = Operation.Importing;
     },
     importStop: (state) => state,
-    importFail: (state) => state,
+    importFail: (state, _action: PayloadAction<FeatureType>) => state,
     uploadConversationAttachments: (
       state,
       {

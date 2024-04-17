@@ -54,7 +54,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
             return;
           }
 
-          toast.error(errorsMessages.unsupportedDataFormat);
+          toast.error(errorsMessages.unsupportedConversationsDataFormat);
         }}
       />
       <Renderer
