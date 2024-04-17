@@ -626,7 +626,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
 
-        page.route(API.chatHost, async (route) => {
+        await page.route(API.chatHost, async (route) => {
           const request = route.request();
           const postData = await request.postDataJSON();
 
@@ -1533,10 +1533,7 @@ dialTest(
           1,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
-          updatedRequestContent,
-          newLeftChatName,
-        );
+        await conversations.editConversationNameWithTick(newLeftChatName);
 
         const chatTitle = await leftChatHeader.chatTitle.getElementContent();
         expect

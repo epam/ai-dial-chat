@@ -68,6 +68,7 @@ export enum ExpectedMessages {
   infoAppIsValid = 'More info application is valid',
   infoAppDescriptionIsValid = 'More info application description is valid',
   entityHasDescription = 'Entity has description',
+  entityDescriptionIsValid = 'Entity description is valid',
   entityDescriptionHasFullWidth = 'Entity description has full width',
   descriptionLinkIsBlue = 'Description link color is blue',
   descriptionLinkOpened = 'Description link is opened in a new window',
@@ -141,6 +142,7 @@ export enum ExpectedMessages {
   replayAsOptionNotVisible = 'Replay As Is option is not visible',
   entitiesIconsCountIsValid = 'Entities icons number is valid',
   entityIconIsValid = 'Entity icon is valid',
+  entityNameIsValid = 'Entity name is valid',
   addonsIconsCountIsValid = 'Addons icons number is valid',
   addonIconIsValid = 'Addon icon is valid',
   draggableAreaColorIsValid = 'Draggable area background color is valid',
@@ -219,4 +221,7 @@ export enum ExpectedMessages {
   stageIsVisibleInResponse = 'Stage is visible in message response',
   codeIsVisibleInResponse = 'Code is visible in message response',
   duplicateButtonIsNotVisible = 'Duplicate button is not visible',
+  notAllowedNameErrorShown = 'Not allowed name error toast is shown',
+  charactersAreNotDisplayed = 'Characters are not displayed',
+  errorToastIsShown = 'Error toast is shown',
 }

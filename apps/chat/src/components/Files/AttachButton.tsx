@@ -30,6 +30,7 @@ interface Props {
     folderPath: string | undefined,
   ) => void;
   onAddLinkToMessage: (link: DialLink) => void;
+  TriggerCustomRenderer?: JSX.Element;
 }
 
 export const AttachButton = ({
@@ -37,6 +38,7 @@ export const AttachButton = ({
   onSelectAlreadyUploaded,
   onUploadFromDevice,
   onAddLinkToMessage,
+  TriggerCustomRenderer,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
@@ -112,6 +114,7 @@ export const AttachButton = ({
     <>
       <ContextMenu
         menuItems={menuItems}
+        TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
         triggerTooltip={t('Attach files') || ''}

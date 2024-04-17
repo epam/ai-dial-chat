@@ -35,12 +35,15 @@ export class PromptBar extends SideBar {
   public async dragAndDropPromptFromFolder(
     folderName: string,
     promptName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderPrompt = await this.getFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
-    await this.dragAndDropEntityFromFolder(folderPrompt);
+    await this.dragAndDropEntityFromFolder(folderPrompt, {
+      isHttpMethodTriggered,
+    });
   }
 
   public async drugPromptToFolder(folderName: string, promptName: string) {
@@ -53,22 +56,28 @@ export class PromptBar extends SideBar {
     folderName: string,
     folderPromptName: string,
     promptName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderPrompt = this.getFolderPrompts().getFolderEntity(
       folderName,
       folderPromptName,
     );
     const prompt = this.getPrompts().getPromptByName(promptName);
-    await this.dragAndDropEntityToFolder(prompt, folderPrompt);
+    await this.dragAndDropEntityToFolder(prompt, folderPrompt, {
+      isHttpMethodTriggered,
+    });
   }
 
   public async drugAndDropFolderToFolder(
     folderNameToMove: string,
     folderNameToMoveTo: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderPrompts = this.getFolderPrompts();
     const folderToMove = folderPrompts.getFolderByName(folderNameToMove);
     const folderToMoveTo = folderPrompts.getFolderByName(folderNameToMoveTo);
-    await this.dragAndDropEntityToFolder(folderToMove, folderToMoveTo);
+    await this.dragAndDropEntityToFolder(folderToMove, folderToMoveTo, {
+      isHttpMethodTriggered,
+    });
   }
 }
