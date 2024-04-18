@@ -133,7 +133,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
       withCopyToClipboard(CopyTableType.CSV, (table) => {
         const csv = Array.from(table.rows).map((row) => {
           const rowArray = Array.from(row.cells).map((cell) =>
-            cell.textContent ? cell.textContent.trim() : '',
+            cell.textContent ? `"${cell.textContent.replace(/"/g, '""')}"` : '',
           );
 
           return rowArray.join(',');
