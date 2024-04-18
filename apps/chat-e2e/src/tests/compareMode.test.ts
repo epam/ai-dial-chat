@@ -59,7 +59,7 @@ dialTest(
 
 dialTest(
   'Check the list of available conversations.\n' +
-    'Chat icon is shown in Select conversation drop down list  in compare mode',
+    'Chat icon is shown in Select conversation drop down list in compare mode',
   async ({
     dialHomePage,
     setTestIds,

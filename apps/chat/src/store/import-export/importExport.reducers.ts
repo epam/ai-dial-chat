@@ -7,6 +7,7 @@ import { FolderInterface } from '@/src/types/folder';
 import {
   LatestExportFormat,
   Operation,
+  PromptsHistory,
   SupportedExportFormats,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
@@ -81,6 +82,8 @@ export const importExportSlice = createSlice({
     },
     exportConversationSuccess: (state) => state,
     exportConversations: (state) => state,
+    exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
+    exportPrompts: (state) => state,
     exportLocalStorageChats: (state) => state,
     exportLocalStoragePrompts: (state) => state,
     exportCancel: (state) => state,
@@ -154,7 +157,10 @@ export const importExportSlice = createSlice({
     ) => {
       state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
     },
-    importPrompts: (state) => {
+    importPrompts: (
+      state,
+      _action: PayloadAction<{ promptsHistory: PromptsHistory }>,
+    ) => {
       state.status = UploadStatus.LOADING;
       state.operation = Operation.Importing;
     },

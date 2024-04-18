@@ -13,8 +13,6 @@ import {
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { EntityStorage } from '@/src/types/storage';
 
-import { resetShareEntity } from '@/src/constants/chat';
-
 import { constructPath } from '../../../file';
 import { splitEntityId } from '../../../folders';
 import { getRootId } from '../../../id';
@@ -36,7 +34,6 @@ export abstract class ApiEntityStorage<
       name: folder.name,
       folderId: constructPath(apiKey, bucket, parentPath),
       type: EnumMapper.getFolderTypeByApiKey(this.getStorageKey()),
-      ...resetShareEntity,
     };
   }
 
@@ -50,7 +47,6 @@ export abstract class ApiEntityStorage<
       id,
       lastActivityDate: entity.updatedAt,
       folderId: constructPath(apiKey, bucket, parentPath),
-      ...resetShareEntity,
     } as unknown as TEntityInfo;
   }
 
@@ -134,10 +130,7 @@ export abstract class ApiEntityStorage<
       return ApiUtils.request(this.getEntityUrl(info)).pipe(
         map((entity: TEntity) => {
           return {
-            ...this.mergeGetResult(info, {
-              ...entity,
-              ...resetShareEntity,
-            }),
+            ...this.mergeGetResult(info, entity),
             status: UploadStatus.LOADED,
           };
         }),
