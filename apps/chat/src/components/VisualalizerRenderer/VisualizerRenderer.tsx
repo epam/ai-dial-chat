@@ -15,7 +15,6 @@ export const VisualizerRenderer = ({ attachmentUrl, renderer }: Props) => {
 
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
-
   useEffect(() => {
     if (!visualizer.current) {
       visualizer.current = new VisualizerConnector(
@@ -27,19 +26,13 @@ export const VisualizerRenderer = ({ attachmentUrl, renderer }: Props) => {
         },
       );
     }
-  });
 
-  useEffect(() => {
-    visualizer.current?.send(
-      VisualizerConnectorRequests.sendVisualizeData,
-      {
-        attachmentData: {
-          message: 'Hello, I am a message from the chat!',
-          attachmentUrl: `${attachmentUrl}`,
-        },
+    visualizer.current.send(VisualizerConnectorRequests.sendVisualizeData, {
+      attachmentData: {
+        message: 'Hello, I am a message from the chat!',
+        attachmentUrl: `${attachmentUrl}`,
       },
-      false,
-    );
+    });
   });
 
   return (

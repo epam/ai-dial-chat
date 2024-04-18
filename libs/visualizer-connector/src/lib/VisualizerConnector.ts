@@ -1,11 +1,7 @@
-import { DeferredRequest } from './utils/DeferredRequest';
-import { Task } from './utils/Task';
 import { setStyles } from './utils/styleUtils';
 
 import {
   Styles,
-  VisualizerConnectorEvents,
-  VisualizerConnectorRequest,
   VisualizerConnectorRequests,
   VisualizerOptions,
 } from '@epam/ai-dial-shared';
@@ -41,11 +37,6 @@ export class VisualizerConnector {
   protected loader: HTMLElement;
   protected loaderDisplayCss = 'none';
 
-  protected iframeInteraction: Task;
-
-  protected requests: DeferredRequest[];
-  // protected subscriptions: Subscription[];
-
   protected options: VisualizerOptions;
 
   /**
@@ -58,10 +49,7 @@ export class VisualizerConnector {
 
     this.root = this.getRoot(root);
 
-    this.requests = [];
     this.subscriptions = [];
-
-    this.iframeInteraction = new Task();
 
     this.iframe = this.initIframe();
 
@@ -71,13 +59,9 @@ export class VisualizerConnector {
       options?.loaderInnerHTML,
     );
 
-    this.root.appendChild(this.loader);
     this.root.appendChild(this.iframe);
 
     setStyles(this.root, { position: 'relative' });
-
-    // this.showLoader();
-    window.addEventListener('message', this.process);
   }
 
   /**
@@ -161,14 +145,6 @@ export class VisualizerConnector {
   }
 
   /**
-   * Displays if iframe ready to interact
-   * @returns {Promise<boolean>} if the promise resolved -> iframe ready to interact
-   */
-  public async ready(): Promise<boolean> {
-    return this.iframeInteraction.ready();
-  }
-
-  /**
    * If user provides reference to container ? returns the container : query the selector and return reference to container
    * @param {HTMLElement | string} root reference to parent container or selector where iframe should be placed
    * @returns {HTMLElement} reference to container where iframe would be placed
@@ -190,107 +166,24 @@ export class VisualizerConnector {
   }
 
   /**
-   * Callback to post message event, contains mapping event to this.requests, mapping event to this.subscriptions
-   * If event.data.type === '{visualizerName}/READY' means that Visualizer ready to receive message -> this.iframeInteraction.complete()
-   * @param event {MessageEvent} post message event
-   */
-  protected process = (
-    event: MessageEvent<VisualizerConnectorRequest>,
-  ): void => {
-    if (
-      event.data.type ===
-      `${this.options.visualizerName}/${VisualizerConnectorEvents.initReady}`
-    ) {
-      this.showLoader();
-      return;
-    }
-    if (
-      event.data.type ===
-      `${this.options.visualizerName}/${VisualizerConnectorEvents.ready}`
-    ) {
-      this.setVisualizerOptions(this.options);
-      this.hideLoader();
-      return;
-    }
-    if (
-      event.data.type ===
-      `${this.options.visualizerName}/${VisualizerConnectorEvents.readyToInteract}`
-    ) {
-      this.iframeInteraction.complete();
-      return;
-    }
-
-    if (!event.data?.type) return;
-
-    // Try to map event, because type doesn't have requestId
-    if (!event.data?.requestId) {
-      this.processEvent(event.data.type, event.data?.payload);
-
-      return;
-    }
-
-    for (const request of this.requests) {
-      if (request.match(event.data.type, event.data.requestId)) {
-        request.reply(event.data?.payload);
-        break;
-      }
-    }
-
-    // if request was replied -> should delete it from this.requests
-    this.requests = this.requests.filter((request) => !request.isReplied);
-  };
-
-  /**
-   * Going through all event callbacks and call it if eventType is the same as in subscription
-   * @param eventType {string} Name of event that DIAL send
-   * @param payload {unknown} Payload of event
-   */
-  protected processEvent(eventType: string, payload?: unknown): void {
-    for (const subscription of this.subscriptions) {
-      if (subscription.eventType === eventType) {
-        subscription.callback(payload);
-      }
-    }
-  }
-
-  /**
-   * Creates DeferredRequests, put into the this.requests
-   * We don't put something into the this.requests until `this.ready()`
+   Sends post message to the visualizer
    * @param type Request name
    * @param payload Request payload
-   * @param waitForReady Is this request should wait for Visualizer ready (default: true)
-   * @returns {Promise<unknown>} Return promise with response payload when resolved
    */
-  public async send(
-    type: VisualizerConnectorRequests,
-    payload?: unknown,
-    waitForReady = true,
-  ): Promise<unknown> {
-    if (waitForReady) {
-      await this.iframeInteraction.ready();
-    }
-
+  public send(type: VisualizerConnectorRequests, payload?: unknown): void {
     if (!this.iframe.contentWindow) {
       throw new Error(
         '[VisualizerConnector] There is no content window to send requests',
       );
     }
 
-    const request = new DeferredRequest(
-      `${this.options.visualizerName}/${type}`,
-      {
-        payload,
-        timeout: this.options?.requestTimeout,
-      },
-    );
-    this.requests.push(request);
-
     this.iframe.contentWindow.postMessage(
-      request.toPostMessage(),
+      {
+        type,
+        payload,
+      },
       this.options.domain,
     );
-
-    return request.promise;
   }
 
   /**
@@ -317,19 +210,13 @@ export class VisualizerConnector {
    * @param options {VisualizerOptions} Options that should be set into the Visualizer
    */
   public async setVisualizerOptions(options: VisualizerOptions) {
-    await this.send(
-      VisualizerConnectorRequests.setVisualizerOptions,
-      options,
-      false,
-    );
+    await this.send(VisualizerConnectorRequests.setVisualizerOptions, options);
   }
 
   /**
    * Destroys Visualizer
    */
   destroy() {
-    window.removeEventListener('message', this.process);
-    this.iframeInteraction.fail('Chat Visualizer destroyed');
     this.root.removeChild(this.iframe);
   }
 }
