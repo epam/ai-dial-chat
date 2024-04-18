@@ -695,15 +695,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{conversationName}}', {
+          heading={t('Confirm unsharing: {{conversationName}}', {
             conversationName: conversation.name,
           })}
           description={
-            t(
-              'Are you sure that you want to revoke access to this conversation?',
-            ) || ''
+            t('Are you sure that you want to unshare this conversation?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);
