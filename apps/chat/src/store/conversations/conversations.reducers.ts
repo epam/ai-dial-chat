@@ -9,7 +9,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
-import { isEntityExternal } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import {
@@ -18,7 +18,7 @@ import {
   LikeState,
   Message,
 } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -33,10 +33,6 @@ import uniq from 'lodash-es/uniq';
 export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
-  conversationsToMigrateCount: 0,
-  migratedConversationsCount: 0,
-  isChatsBackedUp: false,
-  failedMigratedConversations: [],
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
@@ -63,60 +59,13 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    migrateConversationsIfRequired: (state) => state,
-    initConversationsMigration: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        conversationsToMigrateCount: number;
-      }>,
-    ) => {
-      state.conversationsToMigrateCount = payload.conversationsToMigrateCount;
-    },
-    migrateConversationFinish: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        migratedConversationsCount: number;
-      }>,
-    ) => {
-      state.migratedConversationsCount = payload.migratedConversationsCount;
-    },
-    setFailedMigratedConversations: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        failedMigratedConversations: Conversation[];
-      }>,
-    ) => {
-      state.failedMigratedConversations = payload.failedMigratedConversations;
-    },
-    setIsChatsBackedUp: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        isChatsBackedUp: boolean;
-      }>,
-    ) => {
-      state.isChatsBackedUp = payload.isChatsBackedUp;
-    },
-    skipFailedMigratedConversations: (
-      state,
-      _action: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
-    ) => state,
     initSelectedConversations: (state) => state,
-    getSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
-    initFoldersAndConversationsSuccess: (state) => state,
+    initFoldersAndConversationsSuccess: (state) => {
+      state.conversationsLoaded = true;
+    },
+    getSelectedConversations: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
-    recreateConversation: (
-      state,
-      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
-    ) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {
         state.isMessageSending = false;
@@ -134,6 +83,10 @@ export const conversationsSlice = createSlice({
         return conv;
       });
     },
+    recreateConversation: (
+      state,
+      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
+    ) => state,
     recreateConversationFail: (
       state,
       {
@@ -156,9 +109,10 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
+
       if (payload.newId !== payload.oldConversation.id) {
         state.selectedConversationsIds = state.selectedConversationsIds.map(
-          (cid) => (cid === payload.newId ? payload.oldConversation.id! : cid),
+          (id) => (id === payload.newId ? payload.oldConversation.id! : id),
         );
       }
     },
@@ -167,7 +121,6 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         id: string;
         values: Partial<Conversation>;
-        isImportFinish?: boolean;
       }>,
     ) => state,
     updateConversationSuccess: (
@@ -187,13 +140,14 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
+
       if (
         payload.id &&
         payload.conversation.id &&
         payload.id !== payload.conversation.id
       ) {
         state.selectedConversationsIds = state.selectedConversationsIds.map(
-          (cid) => (cid === payload.id ? payload.conversation.id! : cid),
+          (id) => (id === payload.id ? payload.conversation.id! : id),
         );
       }
     },
@@ -211,9 +165,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ conversationIds: string[] }>,
     ) => {
-      const newSelectedIds = uniq(payload.conversationIds);
-
-      state.selectedConversationsIds = newSelectedIds;
+      state.selectedConversationsIds = uniq(payload.conversationIds);
     },
     unselectConversations: (
       state,
@@ -290,7 +242,6 @@ export const conversationsSlice = createSlice({
         return folder;
       });
     },
-
     deleteConversations: (
       state,
       _action: PayloadAction<{
@@ -300,14 +251,15 @@ export const conversationsSlice = createSlice({
     ) => state,
     deleteConversationsComplete: (
       state,
-      { payload }: PayloadAction<{ deleteIds: Set<string> }>,
+      { payload }: PayloadAction<{ conversationIds: Set<string> }>,
     ) => {
       state.conversations = state.conversations.filter(
-        (conv) => !payload.deleteIds.has(conv.id),
+        (conv) => !payload.conversationIds.has(conv.id),
       );
       state.selectedConversationsIds = state.selectedConversationsIds.filter(
-        (id) => !payload.deleteIds.has(id),
+        (id) => !payload.conversationIds.has(id),
       );
+      state.conversationsLoaded = true;
     },
     uploadConversationsByIds: (
       state,
@@ -334,7 +286,7 @@ export const conversationsSlice = createSlice({
           ...conv,
           isMessageStreaming: false, // we shouldn't try to continue stream after upload
         })),
-        state.conversations.filter((conv) => !payload.setIds.has(conv.id)),
+        state.conversations,
       );
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
@@ -367,11 +319,12 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.conversations = state.conversations.concat(newConversation);
-      state.selectedConversationsIds = idToReplaceWithNewOne
-        ? state.selectedConversationsIds.map((id) =>
-            id === idToReplaceWithNewOne ? newConversation.id : id,
-          )
-        : [newConversation.id];
+      state.selectedConversationsIds =
+        idToReplaceWithNewOne && state.selectedConversationsIds.length > 1
+          ? state.selectedConversationsIds.map((id) =>
+              id === idToReplaceWithNewOne ? newConversation.id : id,
+            )
+          : [newConversation.id];
 
       state.areSelectedConversationsLoaded = true;
     },
@@ -396,19 +349,15 @@ export const conversationsSlice = createSlice({
       );
       state.folders = combineEntities(payload.folders, state.folders);
     },
-    // TODO: refactor this method - use only for direct write without any combination
     setConversations: (
       state,
       {
         payload,
       }: PayloadAction<{
         conversations: ConversationInfo[];
-        ignoreCombining?: boolean;
       }>,
     ) => {
-      state.conversations = payload.ignoreCombining
-        ? payload.conversations
-        : combineEntities(state.conversations, payload.conversations);
+      state.conversations = payload.conversations;
       state.conversationsLoaded = true;
     },
     addConversations: (
@@ -417,40 +366,31 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         conversations: ConversationInfo[];
-        selectAdded?: boolean;
       }>,
     ) => {
       state.conversations = combineEntities(
         payload.conversations,
         state.conversations,
       );
-      if (payload.selectAdded) {
-        state.selectedConversationsIds = payload.conversations.map(
-          ({ id }) => id,
-        );
-        state.areSelectedConversationsLoaded = true;
-      }
     },
     clearConversations: (state) => {
       state.conversationsLoaded = false;
       state.areSelectedConversationsLoaded = false;
     },
     clearConversationsSuccess: (state) => {
-      state.conversations = state.conversations.filter(
-        (conv) =>
-          isEntityExternal(conv) ||
-          ConversationsSelectors.hasExternalParent(
-            { conversations: state },
-            conv.folderId,
-          ),
+      state.conversations = state.conversations.filter((conv) =>
+        isEntityOrParentsExternal(
+          { conversations: state },
+          conv,
+          FeatureType.Chat,
+        ),
       );
-      state.folders = state.folders.filter(
-        (folder) =>
-          isEntityExternal(folder) ||
-          ConversationsSelectors.hasExternalParent(
-            { conversations: state },
-            folder.folderId,
-          ),
+      state.folders = state.folders.filter((folder) =>
+        isEntityOrParentsExternal(
+          { conversations: state },
+          folder,
+          FeatureType.Chat,
+        ),
       );
     },
     createFolder: (
@@ -518,7 +458,6 @@ export const conversationsSlice = createSlice({
     deleteAllTemporaryFolders: (state) => {
       state.temporaryFolders = [];
     },
-
     renameTemporaryFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string; name: string }>,
@@ -574,7 +513,7 @@ export const conversationsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = combineEntities(payload.folders, state.folders);
+      state.folders = combineEntities(state.folders, payload.folders);
     },
     setSearchTerm: (
       state,
@@ -715,45 +654,14 @@ export const conversationsSlice = createSlice({
     playbackCancel: (state) => {
       state.isPlaybackPaused = true;
     },
-
     uploadConversationsWithFolders: (
       state,
-      { payload }: PayloadAction<{ paths: (string | undefined)[] }>,
+      { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
       state.foldersStatus = UploadStatus.LOADING;
       state.loadingFolderIds = state.loadingFolderIds.concat(
-        payload.paths as string[],
+        payload.ids as string[],
       );
-    },
-    uploadFoldersSuccess: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        paths: Set<string | undefined>;
-        folders: FolderInterface[];
-        allLoaded?: boolean;
-      }>,
-    ) => {
-      state.loadingFolderIds = state.loadingFolderIds.filter(
-        (id) => !payload.paths.has(id),
-      );
-      state.foldersStatus = UploadStatus.LOADED;
-      state.folders = combineEntities(state.folders, payload.folders).map(
-        (f) =>
-          payload.paths.has(f.id)
-            ? {
-                ...f,
-                status: UploadStatus.LOADED,
-              }
-            : f,
-      );
-      if (payload.allLoaded) {
-        state.conversationsLoaded = true;
-      }
-      state.foldersStatus = payload.allLoaded
-        ? UploadStatus.ALL_LOADED
-        : UploadStatus.LOADED;
     },
     uploadFoldersFail: (
       state,
@@ -768,6 +676,9 @@ export const conversationsSlice = createSlice({
       );
       state.foldersStatus = UploadStatus.FAILED;
     },
+    initConversationsRecursive: (state) => {
+      state.conversationsStatus = UploadStatus.LOADING;
+    },
     uploadConversationsWithFoldersRecursive: (
       state,
       {
@@ -779,34 +690,8 @@ export const conversationsSlice = createSlice({
       state.conversationsStatus = UploadStatus.LOADING;
       state.conversationsLoaded = !!payload?.noLoader;
     },
-    uploadConversationsSuccess: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        paths: Set<string | undefined>;
-        conversations: ConversationInfo[];
-      }>,
-    ) => {
-      const conversationMap = state.conversations.reduce((map, conv) => {
-        map.set(conv.id, conv);
-        return map;
-      }, new Map<string, ConversationInfo>());
-
-      const ids = new Set(payload.conversations.map((c) => c.id));
-
-      state.conversations = combineEntities(
-        state.conversations,
-        payload.conversations.map((conv) =>
-          ids.has(conv.id)
-            ? {
-                ...conversationMap.get(conv.id),
-                ...conv,
-              }
-            : conv,
-        ),
-      );
-      state.conversationsStatus = UploadStatus.LOADED;
+    uploadConversationsWithFoldersRecursiveSuccess: (state) => {
+      state.conversationsLoaded = true;
     },
     uploadConversationsFail: (state) => {
       state.conversationsStatus = UploadStatus.FAILED;
@@ -851,6 +736,33 @@ export const conversationsSlice = createSlice({
       state.chartLoading = false;
     },
     cleanupIsolatedConversation: (state) => state,
+    uploadChildConversationsWithFoldersSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        parentIds: string[];
+        folders: FolderInterface[];
+        conversations: ConversationInfo[];
+      }>,
+    ) => {
+      state.loadingFolderIds = state.loadingFolderIds.filter(
+        (id) => !payload.parentIds.includes(id),
+      );
+      state.folders = combineEntities(
+        state.folders,
+        payload.folders.map((folder) => ({
+          ...folder,
+          status: payload.parentIds.includes(folder.id)
+            ? UploadStatus.LOADED
+            : undefined,
+        })),
+      );
+      state.conversations = combineEntities(
+        state.conversations,
+        payload.conversations,
+      );
+    },
   },
 });
 
