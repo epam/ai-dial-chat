@@ -626,7 +626,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
 
-        page.route(API.chatHost, async (route) => {
+        await page.route(API.chatHost, async (route) => {
           const request = route.request();
           const postData = await request.postDataJSON();
 
