@@ -56,7 +56,7 @@ export class SideBar extends BaseElement {
   );
 
   public foldersSeparator = this.getChildElementBySelector(
-    SideBarSelectors.folderSeparator,
+    `${SideBarSelectors.pinnedEntities} ~ * ${SideBarSelectors.folderSeparator}`,
   );
 
   public async hoverOverNewEntity() {
@@ -119,7 +119,10 @@ export class SideBar extends BaseElement {
     );
   }
 
-  public async dragFolderToRoot(folderLocator: Locator) {
+  public async dragFolderToRoot(
+    folderLocator: Locator,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     await folderLocator.hover();
     await this.page.mouse.down();
     const draggableBounding = await this.foldersSeparator
@@ -129,7 +132,7 @@ export class SideBar extends BaseElement {
       draggableBounding!.x + draggableBounding!.width / 2,
       draggableBounding!.y + draggableBounding!.height / 2,
     );
-    if (isApiStorageType) {
+    if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'POST',
       );
@@ -170,8 +173,16 @@ export class SideBar extends BaseElement {
   public async dragAndDropEntityToFolder(
     entityLocator: Locator,
     folderLocator: Locator,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     await this.dragEntityToFolder(entityLocator, folderLocator);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
     await this.page.mouse.up();
   }
 }

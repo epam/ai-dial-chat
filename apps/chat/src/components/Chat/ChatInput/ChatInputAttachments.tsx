@@ -1,5 +1,6 @@
 import { DialFile, DialLink } from '@/src/types/files';
 
+import Tooltip from '../../Common/Tooltip';
 import { ChatInputFileAttachment } from './ChatInputFileAttachment';
 import { ChatInputLinkAttachment } from './ChatInputLinkAttachment';
 
@@ -26,19 +27,29 @@ export const ChatInputAttachments = ({
   return (
     <>
       {files?.map((file) => (
-        <ChatInputFileAttachment
+        <Tooltip
           key={file.id}
-          file={file}
-          onUnselectFile={onUnselectFile}
-          onRetryFile={onRetryFile}
-        />
+          tooltip={file.name}
+          triggerClassName={'truncate text-center'}
+        >
+          <ChatInputFileAttachment
+            file={file}
+            onUnselectFile={onUnselectFile}
+            onRetryFile={onRetryFile}
+          />
+        </Tooltip>
       ))}
       {links?.map((link, index) => (
-        <ChatInputLinkAttachment
+        <Tooltip
           key={index}
-          link={link}
-          onUnselect={onUnselectLink && (() => onUnselectLink(index))}
-        />
+          tooltip={link.title || link.href}
+          triggerClassName={'truncate text-center'}
+        >
+          <ChatInputLinkAttachment
+            link={link}
+            onUnselect={onUnselectLink && (() => onUnselectLink(index))}
+          />
+        </Tooltip>
       ))}
     </>
   );

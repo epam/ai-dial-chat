@@ -1,4 +1,4 @@
-import { IconUser } from '@tabler/icons-react';
+import { IconPaperclip, IconUser } from '@tabler/icons-react';
 import {
   MouseEvent,
   RefObject,
@@ -194,13 +194,6 @@ export const ChatMessageContent = ({
     [],
   );
 
-  useEffect(() => {
-    if (shouldScroll) {
-      anchorRef.current?.scrollIntoView({ block: 'end' });
-      setShouldScroll(false);
-    }
-  }, [shouldScroll]);
-
   const handleToggleEditing = useCallback(
     (value?: boolean) => {
       toggleEditing(value ?? !isEditing);
@@ -208,6 +201,19 @@ export const ChatMessageContent = ({
     },
     [isEditing, toggleEditing],
   );
+
+  useEffect(() => {
+    if (isEditing) {
+      setShouldScroll(true);
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (shouldScroll) {
+      anchorRef.current?.scrollIntoView({ block: 'end' });
+      setShouldScroll(false);
+    }
+  }, [shouldScroll]);
 
   const handleEditMessage = useCallback(() => {
     if (isSubmitAllowed) {
@@ -406,14 +412,22 @@ export const ChatMessageContent = ({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha">
-                    <AttachButton
-                      selectedFilesIds={newEditableAttachmentsIds}
-                      onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                      onUploadFromDevice={handleUploadFromDevice}
-                      onAddLinkToMessage={handleAddLinkToMessage}
-                    />
-                  </div>
+                  <AttachButton
+                    TriggerCustomRenderer={
+                      <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
+                        <IconPaperclip
+                          strokeWidth="1.5"
+                          size={24}
+                          width={24}
+                          height={24}
+                        />
+                      </div>
+                    }
+                    selectedFilesIds={newEditableAttachmentsIds}
+                    onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                    onUploadFromDevice={handleUploadFromDevice}
+                    onAddLinkToMessage={handleAddLinkToMessage}
+                  />
                   <div className="relative flex gap-3">
                     <button
                       className="button button-secondary"
@@ -436,10 +450,7 @@ export const ChatMessageContent = ({
                     >
                       {t('Save & Submit')}
                     </button>
-                    <div
-                      ref={anchorRef}
-                      className="absolute bottom-[-120px]"
-                    ></div>
+                    <div ref={anchorRef} className="absolute bottom-0"></div>
                   </div>
                 </div>
               </div>
@@ -465,7 +476,7 @@ export const ChatMessageContent = ({
                   />
                   <div
                     ref={anchorRef}
-                    className="absolute bottom-[-160px]"
+                    className="absolute bottom-[-140px]"
                   ></div>
                 </div>
                 {showUserButtons && !isConversationInvalid && (

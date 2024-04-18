@@ -13,16 +13,16 @@ import { useTranslation } from 'next-i18next';
 
 import {
   constructPath,
-  getExtensionsListForMimeTypes,
   getFileNameExtension,
   getFileNameWithoutExtension,
   getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
+  getShortExtentionsListFromMimeType,
   notAllowedSymbols,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getFileRootId } from '@/src/utils/app/id';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -79,7 +79,7 @@ export const PreUploadDialog = ({
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(
-    uploadFolderId || getRootId(),
+    uploadFolderId || getFileRootId(),
   );
 
   const headingId = useId();
@@ -97,7 +97,8 @@ export const PreUploadDialog = ({
     if (allowedTypes.includes('*/*')) {
       return [t('all')];
     }
-    return getExtensionsListForMimeTypes(allowedTypes);
+
+    return getShortExtentionsListFromMimeType(allowedTypes, t);
   }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(
@@ -151,7 +152,7 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: constructPath(getRootId(), folderPath, file.name),
+              id: constructPath(getFileRootId(), folderPath, file.name),
               name: file.name,
             };
           }),
@@ -250,7 +251,7 @@ export const PreUploadDialog = ({
                 ...file,
                 name: e.target.value + formatFile,
                 id: constructPath(
-                  getRootId(),
+                  getFileRootId(),
                   folderPath,
                   e.target.value + formatFile,
                 ),
@@ -281,7 +282,9 @@ export const PreUploadDialog = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(
-        FilesActions.getFiles({ id: constructPath(getRootId(), folderPath) }),
+        FilesActions.getFiles({
+          id: constructPath(getFileRootId(), folderPath),
+        }),
       );
     }
   }, [dispatch, folderPath, isOpen]);
@@ -298,7 +301,7 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: constructPath(getRootId(), folderPath, file.name),
+          id: constructPath(getFileRootId(), folderPath, file.name),
           folderPath,
         };
       }),
@@ -415,7 +418,7 @@ export const PreUploadDialog = ({
       <SelectFolderModal
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
-        rootFolderId={getRootId()}
+        rootFolderId={getFileRootId()}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);

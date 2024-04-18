@@ -152,6 +152,7 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -174,6 +175,9 @@ dialTest(
           [...nestedConversations, conversationOutsideFolder],
           ...nestedFolders,
         );
+        await localStorageManager.setSelectedConversation(
+          nestedConversations[levelsCount],
+        );
       },
     );
 
@@ -183,10 +187,6 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
-        await chatBar.createNewConversation();
-        for (const nestedFolder of nestedFolders) {
-          await folderConversations.expandFolder(nestedFolder.name);
-        }
         exportedData = await dialHomePage.downloadData(() =>
           chatBar.exportButton.click(),
         );
@@ -293,10 +293,6 @@ dialTest(
         await dialHomePage.importFile(folderConversationData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations.expandFolder(
-          conversationsInFolder.folders.name,
-        );
         await folderConversations.selectFolderEntity(
           conversationsInFolder.folders.name,
           importedFolderConversation.name,
@@ -353,10 +349,6 @@ dialTest(
       async () => {
         await dialHomePage.importFile(newFolderConversationData, () =>
           chatBar.importButton.click(),
-        );
-
-        await folderConversations.expandFolder(
-          importedNewFolderConversation.folders.name,
         );
         await folderConversations.selectFolderEntity(
           importedNewFolderConversation.folders.name,
@@ -715,7 +707,7 @@ dialTest(
           nestedFolders[levelsCount - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
@@ -921,6 +913,7 @@ dialTest(
       async () => {
         await chatBar.dragAndDropFolderToRootLevel(
           nestedFolders[levelsCount].name,
+          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),

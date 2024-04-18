@@ -257,14 +257,19 @@ const acceptInvitationEpic: AppEpic = (action$) =>
           ShareService.getShareDetails({
             invitationId: payload.invitationId,
           }).pipe(
-            switchMap((data) =>
-              of(
+            switchMap((data) => {
+              const acceptedIds = data.resources.filter(
+                (resource) =>
+                  isPromptId(resource.url) || isConversationId(resource.url),
+              );
+
+              return of(
                 ShareActions.acceptShareInvitationSuccess({
-                  acceptedId: ApiUtils.decodeApiUrl(data.resources[0].url),
+                  acceptedId: ApiUtils.decodeApiUrl(acceptedIds[0].url),
                   isFolder: isFolderId(data.resources[0].url),
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
         catchError((err) => {
@@ -495,13 +500,17 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
+          const { needToUploadFolder } =
+            ShareSelectors.selectNeedToUploadFolder(state$.value);
+
           if (
             selectedConv &&
             hasExternalParent(
               state$.value,
               selectedConv.folderId,
               FeatureType.Chat,
-            )
+            ) &&
+            needToUploadFolder
           ) {
             const folderToUpload = payload.resources.folders.find((folder) =>
               selectedConv.folderId.startsWith(`${folder.id}/`),
@@ -548,6 +557,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 })) as FolderInterface[],
               }),
             );
+
+          actions.push(ShareActions.resetNeedToUploadFolder());
         }
       }
       if (payload.featureType === FeatureType.Prompt) {
@@ -590,13 +601,20 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .filter(Boolean) as AnyAction[]),
             );
         } else {
+          const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
+            state$.value,
+          );
+
           payload.resources.entities.length &&
             actions.push(
               PromptsActions.addPrompts({
-                prompts: payload.resources.entities.map((res) => ({
-                  ...res,
-                  sharedWithMe: true,
-                })) as Prompt[],
+                prompts: payload.resources.entities
+                  // do not override selected prompt
+                  .filter((res) => res.id !== selectedPrompt?.id)
+                  .map((res) => ({
+                    ...res,
+                    sharedWithMe: true,
+                  })) as Prompt[],
               }),
             );
           payload.resources.folders.length &&
