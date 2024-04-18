@@ -427,22 +427,25 @@ export const ChatMessageContent = ({
                       : 'justify-between',
                   )}
                 >
-                  <AttachButton
-                    TriggerCustomRenderer={
-                      <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
-                        <IconPaperclip
-                          strokeWidth="1.5"
-                          size={24}
-                          width={24}
-                          height={24}
-                        />
-                      </div>
-                    }
-                    selectedFilesIds={newEditableAttachmentsIds}
-                    onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                    onUploadFromDevice={handleUploadFromDevice}
-                    onAddLinkToMessage={handleAddLinkToMessage}
-                  />
+                  <div className="size-[34px]">
+                    <AttachButton
+                      contextMenuPlacement="bottom-start"
+                      TriggerCustomRenderer={
+                        <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
+                          <IconPaperclip
+                            strokeWidth="1.5"
+                            size={24}
+                            width={24}
+                            height={24}
+                          />
+                        </div>
+                      }
+                      selectedFilesIds={newEditableAttachmentsIds}
+                      onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                      onUploadFromDevice={handleUploadFromDevice}
+                      onAddLinkToMessage={handleAddLinkToMessage}
+                    />
+                  </div>
                   <div className="relative flex gap-3">
                     <button
                       className="button button-secondary"
