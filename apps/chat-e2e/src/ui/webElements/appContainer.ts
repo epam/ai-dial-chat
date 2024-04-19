@@ -35,14 +35,14 @@ export class AppContainer extends BaseElement {
 
   getBanner(): Banner {
     if (!this.banner) {
-      this.banner = new Banner(this.page);
+      this.banner = new Banner(this.page, this.rootLocator);
     }
     return this.banner;
   }
 
   getChat(): Chat {
     if (!this.chat) {
-      this.chat = new Chat(this.page);
+      this.chat = new Chat(this.page, this.rootLocator);
     }
     return this.chat;
   }

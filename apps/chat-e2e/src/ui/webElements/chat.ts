@@ -10,13 +10,13 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export const PROMPT_APPLY_DELAY = 500;
 
 export class Chat extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chat);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.chat, parentLocator);
   }
 
   private chatHeader!: ChatHeader;

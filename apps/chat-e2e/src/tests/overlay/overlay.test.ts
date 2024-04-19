@@ -1,21 +1,15 @@
 import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
-import { ChatSelectors, HeaderSelectors } from '@/src/ui/selectors';
+import { OverlayHomePage } from '@/src/ui/pages/overlayHomePage';
+import { OverlayLoginPage } from '@/src/ui/pages/overlayLoginPage';
 import test, { expect } from '@playwright/test';
 
 const usernames = process.env.E2E_OVERLAY_USERNAME!.split(',');
 
-test('Overlay test', async ({ page, context }) => {
-  await page.goto('/cases/overlay');
-  await page.waitForLoadState();
-
-  const frame = page.frameLocator('[name="overlay"]');
-  await frame.getByText('Login').waitFor();
-
-  const [newPage] = await Promise.all([
-    context.waitForEvent('page'),
-    await frame.getByText('Login').click(),
-  ]);
+test('Overlay test', async ({ page }) => {
+  const overlayLoginPage = new OverlayLoginPage(page);
+  await overlayLoginPage.navigateToUrl('/cases/overlay');
+  const newPage = await overlayLoginPage.clickLoginButton();
 
   const loginPage = new LoginPage(newPage);
   await newPage.waitForLoadState();
@@ -27,6 +21,14 @@ test('Overlay test', async ({ page, context }) => {
   await auth0Form.setCredentials(usernames[0], process.env.E2E_PASSWORD!);
   await auth0Form.loginButton.click();
 
-  await expect.soft(frame.locator(ChatSelectors.chat)).toBeVisible();
-  await expect.soft(frame.locator(HeaderSelectors.banner)).toBeVisible();
+  const overlayHomePage = new OverlayHomePage(page);
+  const overlayContainer = overlayHomePage.getOverlayContainer();
+  const overlayChat = overlayContainer.getChat();
+
+  await expect.soft(overlayChat.getElementLocator()).toBeVisible();
+  await expect
+    .soft(overlayContainer.getBanner().getElementLocator())
+    .toBeVisible();
+
+  await overlayChat.sendRequestWithButton('1+2');
 });
