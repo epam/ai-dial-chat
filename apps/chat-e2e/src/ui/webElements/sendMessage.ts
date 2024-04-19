@@ -27,6 +27,10 @@ export class SendMessage extends BaseElement {
     ChatSelectors.messageSpinner,
   );
 
+  public scrollDownButton = this.getChildElementBySelector(
+    ChatSelectors.scrollDownButton,
+  );
+
   public async send(message: string) {
     await this.fillRequestData(message);
     await this.sendMessageButton.click();
