@@ -21,17 +21,13 @@ import { Prompt } from '@/src/types/prompt';
 import { MigrationStorageKeys } from '@/src/types/storage';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+  MigrationActions,
+  MigrationSelectors,
+} from '@/src/store/migration/migration.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -180,10 +176,10 @@ export const MigrationFailedWindow = ({
   );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isPromptsBackedUp = useAppSelector(
-    PromptsSelectors.selectIsPromptsBackedUp,
+    MigrationSelectors.selectIsPromptsBackedUp,
   );
   const isChatsBackedUp = useAppSelector(
-    ConversationsSelectors.selectIsChatsBackedUp,
+    MigrationSelectors.selectIsChatsBackedUp,
   );
 
   useEffect(() => {
@@ -215,22 +211,22 @@ export const MigrationFailedWindow = ({
     dispatch(UIActions.setShowSelectToMigrateWindow(false));
 
     dispatch(
-      ConversationsActions.skipFailedMigratedConversations({
+      MigrationActions.skipFailedMigratedConversations({
         idsToMarkAsMigrated: failedMigratedConversationIds.filter(
           (id) => !conversationsToRetryIds.includes(id),
         ),
       }),
     );
     dispatch(
-      PromptsActions.skipFailedMigratedPrompts({
+      MigrationActions.skipFailedMigratedPrompts({
         idsToMarkAsMigrated: failedMigratedPromptIds.filter(
           (id) => !promptsToRetryIds.includes(id),
         ),
       }),
     );
 
-    dispatch(ConversationsActions.migrateConversationsIfRequired());
-    dispatch(PromptsActions.migratePromptsIfRequired());
+    dispatch(MigrationActions.migrateConversationsIfRequired());
+    dispatch(MigrationActions.migratePromptsIfRequired());
   }, [
     conversationsToRetryIds,
     dispatch,

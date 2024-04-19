@@ -95,6 +95,7 @@ export const ChatMessageContent = ({
   onRegenerate,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -106,9 +107,14 @@ export const ChatMessageContent = ({
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
-  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const canAttachFiles = useAppSelector(
+    ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachLinks = useAppSelector(
+    ConversationsSelectors.selectCanAttachLink,
+  );
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
@@ -116,6 +122,8 @@ export const ChatMessageContent = ({
 
   const anchorRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
+
+  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
@@ -411,23 +419,33 @@ export const ChatMessageContent = ({
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <AttachButton
-                    TriggerCustomRenderer={
-                      <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
-                        <IconPaperclip
-                          strokeWidth="1.5"
-                          size={24}
-                          width={24}
-                          height={24}
-                        />
-                      </div>
-                    }
-                    selectedFilesIds={newEditableAttachmentsIds}
-                    onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                    onUploadFromDevice={handleUploadFromDevice}
-                    onAddLinkToMessage={handleAddLinkToMessage}
-                  />
+                <div
+                  className={classNames(
+                    'flex items-center',
+                    !canAttachFiles && !canAttachLinks
+                      ? 'justify-end'
+                      : 'justify-between',
+                  )}
+                >
+                  <div className="size-[34px]">
+                    <AttachButton
+                      contextMenuPlacement="bottom-start"
+                      TriggerCustomRenderer={
+                        <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
+                          <IconPaperclip
+                            strokeWidth="1.5"
+                            size={24}
+                            width={24}
+                            height={24}
+                          />
+                        </div>
+                      }
+                      selectedFilesIds={newEditableAttachmentsIds}
+                      onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+                      onUploadFromDevice={handleUploadFromDevice}
+                      onAddLinkToMessage={handleAddLinkToMessage}
+                    />
+                  </div>
                   <div className="relative flex gap-3">
                     <button
                       className="button button-secondary"

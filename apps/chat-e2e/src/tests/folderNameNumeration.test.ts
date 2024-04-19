@@ -38,7 +38,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(1002);
 
     await dialTest.step(
-      'Create conversation inside folder with default name and 3 digits digits',
+      'Create conversation inside folder with default name and 3 digits',
       async () => {
         folderConversation =
           conversationData.prepareDefaultConversationInFolder(
@@ -92,6 +92,9 @@ dialTest(
         await folderConversations.openFolderDropdownMenu(initialFolderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
+        await folderConversations
+          .getFolderByName(initialFolderName)
+          .waitFor({ state: 'hidden' });
 
         await chatBar.createNewFolder();
         await expect

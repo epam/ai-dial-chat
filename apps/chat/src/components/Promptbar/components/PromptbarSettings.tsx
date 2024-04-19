@@ -54,9 +54,8 @@ export function PromptbarSettings() {
         name: t('Import prompts'),
         onClick: (promptsJSON: unknown) => {
           const typedJson = promptsJSON as { content: unknown };
-          dispatch(ImportExportActions.importPrompts());
           dispatch(
-            PromptsActions.importPrompts({
+            ImportExportActions.importPrompts({
               promptsHistory: typedJson.content as PromptsHistory,
             }),
           );
@@ -71,7 +70,7 @@ export function PromptbarSettings() {
         dataQa: 'export',
         Icon: IconFileArrowRight,
         onClick: () => {
-          dispatch(PromptsActions.exportPrompts());
+          dispatch(ImportExportActions.exportPrompts());
         },
       },
       {

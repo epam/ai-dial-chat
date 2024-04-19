@@ -35,6 +35,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -198,7 +199,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       typedEvent.stopPropagation();
 
       dispatch(
-        PromptsActions.exportPrompt({
+        ImportExportActions.exportPrompt({
           id: prompt.id,
         }),
       );

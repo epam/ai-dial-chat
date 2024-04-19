@@ -300,7 +300,7 @@ export default function ItemContextMenu({
             getRootId({
               featureType,
             }),
-          ) || entity.sharedWithMe,
+          ) || !!entity.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,
       },

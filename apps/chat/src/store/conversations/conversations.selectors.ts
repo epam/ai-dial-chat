@@ -53,6 +53,19 @@ export const selectConversations = createSelector(
   (state) => state.conversations,
 );
 
+export const selectExternalConversations = createSelector(
+  [(state: RootState) => state, selectConversations],
+  (state, conversations) =>
+    conversations.filter((conversation) =>
+      isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+    ),
+);
+
+export const selectPublishedOrSharedByMeConversations = createSelector(
+  [selectConversations],
+  (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
+);
+
 export const selectFilteredConversations = createSelector(
   [
     selectConversations,
@@ -596,14 +609,6 @@ export const areConversationsUploaded = createSelector(
   },
 );
 
-export const selectConversationsToMigrateAndMigratedCount = createSelector(
-  [rootSelector],
-  (state) => ({
-    conversationsToMigrateCount: state.conversationsToMigrateCount,
-    migratedConversationsCount: state.migratedConversationsCount,
-  }),
-);
-
 export const selectFoldersStatus = createSelector([rootSelector], (state) => {
   return state.foldersStatus;
 });
@@ -643,11 +648,6 @@ export const selectLoadingFolderIds = createSelector(
   },
 );
 
-export const selectFailedMigratedConversations = createSelector(
-  [rootSelector],
-  (state) => state.failedMigratedConversations,
-);
-
 export const selectIsCompareLoading = createSelector(
   [rootSelector],
   (state) => {
@@ -660,11 +660,6 @@ export const selectIsActiveNewConversationRequest = createSelector(
   (state) => {
     return state.isActiveNewConversationRequest;
   },
-);
-
-export const selectIsChatsBackedUp = createSelector(
-  [rootSelector],
-  (state) => state.isChatsBackedUp,
 );
 
 export const selectIsMessageSending = createSelector(

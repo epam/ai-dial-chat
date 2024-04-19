@@ -17,6 +17,8 @@ import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
 import { ImportExportEpics } from './import-export/importExport.epics';
 import { importExportSlice } from './import-export/importExport.reducers';
+import { MigrationEpics } from './migration/migration.epics';
+import { migrationSlice } from './migration/migration.reducers';
 import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
 import { OverlayEpics } from './overlay/overlay.epics';
@@ -41,6 +43,7 @@ export const rootEpic = combineEpics(
   FilesEpics,
   ImportExportEpics,
   ShareEpics,
+  MigrationEpics,
 );
 
 const reducer = {
@@ -55,6 +58,7 @@ const reducer = {
   auth: authSlice.reducer,
   importExport: importExportSlice.reducer,
   share: shareSlice.reducer,
+  migration: migrationSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any

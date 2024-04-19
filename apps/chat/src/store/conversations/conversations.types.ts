@@ -1,16 +1,12 @@
 import { PlotParams } from 'react-plotly.js';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
 export interface ConversationsState {
-  conversationsToMigrateCount: number;
-  migratedConversationsCount: number;
-  isChatsBackedUp: boolean;
-  failedMigratedConversations: Conversation[];
-  conversations: (ConversationInfo | Conversation)[];
+  conversations: ConversationInfo[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];

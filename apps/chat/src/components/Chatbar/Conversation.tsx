@@ -209,7 +209,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string, deleteShareIcon?: boolean) => {
+    (name: string) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -217,7 +217,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
-              isShared: deleteShareIcon ? false : conversation.isShared,
+              isShared: false,
             },
           }),
         );
@@ -228,7 +228,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       setIsRenaming(false);
     },
-    [conversation.id, conversation.isShared, dispatch],
+    [conversation.id, dispatch],
   );
 
   const handleRename = useCallback(() => {
@@ -565,6 +565,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
+            name="rename-input"
             onChange={(e) =>
               setRenameValue(
                 e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
