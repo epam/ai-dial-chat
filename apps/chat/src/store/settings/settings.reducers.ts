@@ -24,6 +24,7 @@ export interface SettingsState {
   themesHostDefined: boolean;
   isolatedModelId?: string;
   customRenderers?: CustomRenderer[];
+  customAttachmentsTypes?: string[];
 }
 
 const initialState: SettingsState = {
@@ -40,6 +41,7 @@ const initialState: SettingsState = {
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],
+  customAttachmentsTypes: ['image/png'],
 };
 
 export const settingsSlice = createSlice({
@@ -211,6 +213,10 @@ const selectCustomRenderers = createSelector([rootSelector], (state) => {
   return state.customRenderers;
 });
 
+const selectCustomAttachmentsTypes = createSelector([rootSelector], (state) => {
+  return new Set(state.customAttachmentsTypes);
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -231,4 +237,5 @@ export const SettingsSelectors = {
   selectIsIsolatedView,
   selectIsolatedModelId,
   selectCustomRenderers,
+  selectCustomAttachmentsTypes,
 };

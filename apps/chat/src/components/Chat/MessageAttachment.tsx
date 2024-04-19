@@ -10,6 +10,7 @@ import classNames from 'classnames';
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
 import { Attachment } from '@/src/types/chat';
+import { CustomRenderer } from '@/src/types/custom-renderes';
 import { ImageMIMEType, MIMEType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -185,16 +186,53 @@ interface Props {
   isInner?: boolean;
 }
 
+const AttachmentUrlRendererComponent = ({
+  mappedAttachmentUrl,
+  attachmentType,
+}: {
+  mappedAttachmentUrl: string;
+  attachmentType: string;
+}) => {
+  const customRenderers = useAppSelector(
+    SettingsSelectors.selectCustomRenderers,
+  );
+  const customAttachmentsTypes = useAppSelector(
+    SettingsSelectors.selectCustomAttachmentsTypes,
+  );
+
+  const mappedRenderers = useMemo(() => {
+    const renderers: Record<string, CustomRenderer[]> = {};
+    customRenderers?.forEach((rendererConfig) => {
+      renderers[rendererConfig.ContentType] = !renderers[
+        rendererConfig.ContentType
+      ]
+        ? [rendererConfig]
+        : renderers[rendererConfig.ContentType].concat(rendererConfig);
+    });
+
+    return { ...renderers };
+  }, [customRenderers]);
+
+  return customAttachmentsTypes?.has(attachmentType) &&
+    mappedRenderers[attachmentType]?.length ? (
+    <VisualizerRenderer
+      attachmentUrl={mappedAttachmentUrl}
+      renderer={mappedRenderers[attachmentType][0]}
+    />
+  ) : (
+    <AttachmentUrlRenderer
+      attachmentUrl={mappedAttachmentUrl}
+      attachmentType={attachmentType}
+    />
+  );
+};
+
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
   const [wasOpened, setWasOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
-
-  const customRenderers = useAppSelector(
-    SettingsSelectors.selectCustomRenderers,
-  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -331,19 +369,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             (attachment.type === chartType ? (
               <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />
             ) : (
-              <>
-                <AttachmentUrlRenderer
-                  attachmentUrl={mappedAttachmentUrl}
-                  attachmentType={attachment.type}
-                />
-                {/* TODO create conditional rendering */}
-                {customRenderers && (
-                  <VisualizerRenderer
-                    attachmentUrl={mappedAttachmentUrl}
-                    renderer={customRenderers[0]}
-                  />
-                )}
-              </>
+              <AttachmentUrlRendererComponent
+                attachmentType={attachment.type}
+                mappedAttachmentUrl={mappedAttachmentUrl}
+              />
             ))}
           {mappedAttachmentReferenceUrl && (
             <a
