@@ -1,3 +1,4 @@
+import { Placement } from '@floating-ui/react';
 import {
   IconFileDescription,
   IconLink,
@@ -30,6 +31,8 @@ interface Props {
     folderPath: string | undefined,
   ) => void;
   onAddLinkToMessage: (link: DialLink) => void;
+  TriggerCustomRenderer?: JSX.Element;
+  contextMenuPlacement?: Placement;
 }
 
 export const AttachButton = ({
@@ -37,6 +40,8 @@ export const AttachButton = ({
   onSelectAlreadyUploaded,
   onUploadFromDevice,
   onAddLinkToMessage,
+  TriggerCustomRenderer,
+  contextMenuPlacement,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
@@ -111,7 +116,9 @@ export const AttachButton = ({
   return (
     <>
       <ContextMenu
+        placement={contextMenuPlacement}
         menuItems={menuItems}
+        TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
         triggerTooltip={t('Attach files') || ''}

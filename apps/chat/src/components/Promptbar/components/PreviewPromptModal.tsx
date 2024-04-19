@@ -7,10 +7,8 @@ import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -87,7 +85,9 @@ export const PreviewPromptModal = ({
                 <button
                   onClick={() => {
                     dispatch(
-                      PromptsActions.exportPrompt({ id: selectedPrompt?.id }),
+                      ImportExportActions.exportPrompt({
+                        id: selectedPrompt?.id,
+                      }),
                     );
                   }}
                   className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"

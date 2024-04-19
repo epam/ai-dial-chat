@@ -51,7 +51,7 @@ export class SendMessage extends BaseElement {
     await this.page.keyboard.press(keys.ctrlPlusV);
   }
 
-  private async fillRequestData(message: string) {
+  public async fillRequestData(message: string) {
     await this.messageInput.waitForState();
     await this.sendMessageButton.waitForState();
     await this.messageInput.fillInInput(message);

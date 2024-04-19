@@ -266,6 +266,7 @@ dialTest(
     await promptBar.dragAndDropPromptFromFolder(
       promptInFolder.folders.name,
       promptInFolder.prompts[0].name,
+      { isHttpMethodTriggered: true },
     );
     expect
       .soft(

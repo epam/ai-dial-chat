@@ -913,6 +913,7 @@ dialTest(
       async () => {
         await chatBar.dragAndDropFolderToRootLevel(
           nestedFolders[levelsCount].name,
+          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
@@ -921,7 +922,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify imported conversations is in 3rd level folder, under ther 2nd level folder',
+      'Verify imported conversations is in 3rd level folder, under the 2nd level folder',
       async () => {
         await folderConversations.expandFolder(
           nestedFolders[levelsCount].name,
