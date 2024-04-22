@@ -1,3 +1,4 @@
+import { Placement } from '@floating-ui/react';
 import {
   IconFileDescription,
   IconLink,
@@ -31,6 +32,7 @@ interface Props {
   ) => void;
   onAddLinkToMessage: (link: DialLink) => void;
   TriggerCustomRenderer?: JSX.Element;
+  contextMenuPlacement?: Placement;
 }
 
 export const AttachButton = ({
@@ -39,6 +41,7 @@ export const AttachButton = ({
   onUploadFromDevice,
   onAddLinkToMessage,
   TriggerCustomRenderer,
+  contextMenuPlacement,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
@@ -113,6 +116,7 @@ export const AttachButton = ({
   return (
     <>
       <ContextMenu
+        placement={contextMenuPlacement}
         menuItems={menuItems}
         TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
