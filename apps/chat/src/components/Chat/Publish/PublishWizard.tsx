@@ -17,11 +17,7 @@ import {
   validatePublishingFileRenaming,
 } from '@/src/utils/app/file';
 import { getFileRootId } from '@/src/utils/app/id';
-import {
-  getAttachments,
-  getPublishActionByType,
-  isPublishVersionUnique,
-} from '@/src/utils/app/share';
+import { getAttachments, isPublishVersionUnique } from '@/src/utils/app/share';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ShareEntity } from '@/src/types/common';
@@ -35,6 +31,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
@@ -76,7 +73,6 @@ export default function PublishWizard({
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
-  const publishAction = getPublishActionByType(type);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState<string>(entity.name);
@@ -178,34 +174,28 @@ export default function PublishWizard({
       if (!isVersionUnique) return;
 
       dispatch(
-        publishAction({
-          id: entity.id,
-          name: trimmedName,
-          path: trimmedPath,
-          version: trimmedVersion,
-          fileNameMapping: new Map( // invert mapping
-            Array.from(newFileNames.current, (entry) => [entry[1], entry[0]]),
-          ),
-          targetAudienceFilters: {
-            userGroups,
-            other: otherTargetAudienceFilters,
-          },
+        PublicationActions.publish({
+          sourceUrl: entity.id,
+          targetFolder: trimmedPath,
+          targetUrl: `${entity.id.split('/')[0]}/public/${trimmedPath}/${trimmedName}`,
         }),
+        // publishAction({
+        //   id: entity.id,
+        //   name: trimmedName,
+        //   path: trimmedPath,
+        //   version: trimmedVersion,
+        //   fileNameMapping: new Map( // invert mapping
+        //     Array.from(newFileNames.current, (entry) => [entry[1], entry[0]]),
+        //   ),
+        //   targetAudienceFilters: {
+        //     userGroups,
+        //     other: otherTargetAudienceFilters,
+        //   },
+        // }),
       );
       onClose();
     },
-    [
-      dispatch,
-      entity.id,
-      isVersionUnique,
-      name,
-      onClose,
-      path,
-      publishAction,
-      version,
-      userGroups,
-      otherTargetAudienceFilters,
-    ],
+    [dispatch, entity.id, isVersionUnique, name, onClose, path, version],
   );
 
   const handleBlur = useCallback(() => {

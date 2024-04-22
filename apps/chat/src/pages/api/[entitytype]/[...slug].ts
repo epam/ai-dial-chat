@@ -56,6 +56,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
+  console.log(token);
+
   try {
     if (req.method === 'GET') {
       return await handleGetRequest(req, token, res);
