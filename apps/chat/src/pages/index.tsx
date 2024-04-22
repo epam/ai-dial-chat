@@ -273,11 +273,17 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
+    ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+    : 'frame-ancestors none';
+
+  const frameSrcDirective = process.env.ALLOWED_VISUALIZERS_IFRAME_ORIGINS
+    ? 'frame-src ' + process.env.ALLOWED_VISUALIZERS_IFRAME_ORIGINS
+    : 'frame-src none';
+
   res.setHeader(
     'Content-Security-Policy',
-    process.env.ALLOWED_IFRAME_ORIGINS
-      ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-      : 'frame-ancestors none',
+    ancestorsDirective + '; ' + frameSrcDirective,
   );
 
   const session = await getServerSession(req, res, authOptions);
@@ -295,7 +301,8 @@ export const getServerSideProps: GetServerSideProps = async ({
   }
 
   const customRenderers =
-    process.env.CUSTOM_RENDERERS && JSON.parse(process.env.CUSTOM_RENDERERS);
+    process.env.CUSTOM_VISUALIZERS &&
+    JSON.parse(process.env.CUSTOM_VISUALIZERS);
 
   const customAttachmentsTypes = (process.env.CUSTOM_CONTENT_TYPES || '').split(
     ',',
