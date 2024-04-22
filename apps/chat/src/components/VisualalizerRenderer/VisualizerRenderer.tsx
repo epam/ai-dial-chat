@@ -11,9 +11,14 @@ import { VisualizerConnector } from '@epam/visualizer-connector';
 interface Props {
   attachmentUrl: string;
   renderer: CustomRenderer;
+  mimeType: string;
 }
 
-export const VisualizerRenderer = ({ attachmentUrl, renderer }: Props) => {
+export const VisualizerRenderer = ({
+  attachmentUrl,
+  renderer,
+  mimeType,
+}: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
 
@@ -34,15 +39,22 @@ export const VisualizerRenderer = ({ attachmentUrl, renderer }: Props) => {
   }, [Title, rendererUrl]);
 
   useEffect(() => {
-    if (ready && visualizer.current) {
-      visualizer.current.send(VisualizerConnectorRequests.sendVisualizeData, {
-        attachmentData: {
-          message: 'Hello, I am a message from the chat!',
-          attachmentUrl: `${attachmentUrl}`,
-        },
+    const sendMessage = async (visualizer: VisualizerConnector) => {
+      await visualizer.ready();
+
+      const visualizerData = {
+        message: 'Hello, I am a message from the chat!',
+      };
+
+      visualizer.send(VisualizerConnectorRequests.sendVisualizeData, {
+        mimeType,
+        visualizerData,
       });
+    };
+    if (ready && visualizer.current) {
+      sendMessage(visualizer.current);
     }
-  }, [ready, attachmentUrl]);
+  }, [ready, attachmentUrl, mimeType]);
 
   useEffect(() => {
     const postMessageListener = (event: MessageEvent<any>) => {

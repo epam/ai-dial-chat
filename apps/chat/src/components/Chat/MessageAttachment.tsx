@@ -218,6 +218,7 @@ const AttachmentUrlRendererComponent = ({
     <VisualizerRenderer
       attachmentUrl={mappedAttachmentUrl}
       renderer={mappedRenderers[attachmentType][0]}
+      mimeType={attachmentType}
     />
   ) : (
     <AttachmentUrlRenderer

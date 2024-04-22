@@ -1,6 +1,6 @@
 import { Styles } from './overlay';
 
-export interface VisualizerOptions {
+export interface VisualizerConnectorOptions {
   domain: string;
   hostDomain: string;
   visualizerName: string;

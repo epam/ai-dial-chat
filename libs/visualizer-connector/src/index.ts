@@ -1,3 +1,3 @@
 export * from './lib/VisualizerConnector';
 
-export { Feature, type VisualizerOptions } from '@epam/ai-dial-shared';
+export { Feature, type VisualizerConnectorOptions } from '@epam/ai-dial-shared';

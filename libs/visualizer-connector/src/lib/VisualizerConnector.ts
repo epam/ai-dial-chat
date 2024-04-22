@@ -5,9 +5,9 @@ import { setStyles } from './utils/styleUtils';
 import {
   Styles,
   VisualizerConnectorEvents,
+  VisualizerConnectorOptions,
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
-  VisualizerOptions,
 } from '@epam/ai-dial-shared';
 
 const defaultLoaderSVG = `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -23,9 +23,9 @@ const defaultLoaderSVG = `<svg width="48" height="48" viewBox="0 0 48 48" fill="
 </svg>
 `;
 
-export interface AttachmentData {
-  mimeType: string;
-  visualizerData: unknown;
+export interface VisualizerOptions {
+  //TODO define exact list of the options (theme, etc.)
+  options: unknown;
 }
 
 interface Subscription {
@@ -45,14 +45,14 @@ export class VisualizerConnector {
 
   protected requests: DeferredRequest[];
 
-  protected options: VisualizerOptions;
+  protected options: VisualizerConnectorOptions;
 
   /**
    * Creates a VisualizerConnector
    * @param root {HTMLElement | string} reference or selector to parent container where the iframe should be placed
-   * @param options {VisualizerOptions} visualizer options ( hostDomain, etc.)
+   * @param options {VisualizerConnectorOptions} visualizer options ( hostDomain, etc.)
    */
-  constructor(root: HTMLElement | string, options: VisualizerOptions) {
+  constructor(root: HTMLElement | string, options: VisualizerConnectorOptions) {
     this.options = options;
 
     this.root = this.getRoot(root);
@@ -200,7 +200,6 @@ export class VisualizerConnector {
       event.data.type ===
       `${this.options.visualizerName}/${VisualizerConnectorEvents.ready}`
     ) {
-      this.iframe.contentWindow && this.setVisualizerOptions(this.options);
       this.hideLoader();
       return;
     }
@@ -213,7 +212,6 @@ export class VisualizerConnector {
     }
 
     if (!event.data?.type) return;
-
     // Try to map event, because type doesn't have requestId
     if (!event.data?.requestId) {
       this.processEvent(event.data.type, event.data?.payload);
@@ -253,20 +251,36 @@ export class VisualizerConnector {
    * @param waitForReady Is this request should wait for Visualizer ready (default: true)
    * @returns {Promise<unknown>} Return promise with response payload when resolved
    */
-  public send(type: VisualizerConnectorRequests, payload?: unknown): void {
+  public async send(
+    type: VisualizerConnectorRequests,
+    payload?: unknown,
+    waitForReady = true,
+  ): Promise<unknown> {
+    if (waitForReady) {
+      await this.iframeInteraction.ready();
+    }
+
     if (!this.iframe.contentWindow) {
       throw new Error(
         '[VisualizerConnector] There is no content window to send requests',
       );
     }
 
-    this.iframe.contentWindow.postMessage(
+    const request = new DeferredRequest(
+      `${this.options.visualizerName}/${type}`,
       {
-        type,
         payload,
+        timeout: this.options?.requestTimeout,
       },
+    );
+    this.requests.push(request);
+
+    this.iframe.contentWindow.postMessage(
+      request.toPostMessage(),
       this.options.domain,
     );
+
+    return request.promise;
   }
 
   /**
@@ -289,7 +303,15 @@ export class VisualizerConnector {
   }
 
   /**
-   * Send to Visualizer options (hostDomain, etc.)
+   * Sets Visualizer options (hostDomain,loaderStyles, etc.)
+   * @param options {VisualizerConnectorOptions} Options that should be set into the Visualizer
+   */
+  public setVisualizerConnectorOptions(options: VisualizerConnectorOptions) {
+    this.options = options;
+  }
+
+  /**
+   * Send to Visualizer options (theme, etc.)
    * @param options {VisualizerOptions} Options that should be set into the Visualizer
    */
   public async setVisualizerOptions(options: VisualizerOptions) {
