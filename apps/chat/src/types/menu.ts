@@ -1,3 +1,4 @@
+import { Placement } from '@floating-ui/react';
 import { TablerIconsProps } from '@tabler/icons-react';
 import { FC, MouseEventHandler } from 'react';
 
@@ -47,4 +48,5 @@ export interface ContextMenuProps extends MenuProps {
   triggerTooltip?: string;
   TriggerCustomRenderer?: JSX.Element;
   isLoading?: boolean;
+  placement?: Placement;
 }
