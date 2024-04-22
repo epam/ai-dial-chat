@@ -54,6 +54,15 @@ export interface PublicationsListModel {
   publications: PublicationInfo[];
 }
 
+export interface PublishedByMeItem {
+  name: string;
+  parentPath: string;
+  bucket: string;
+  url: string;
+  nodeType: BackendDataNodeType;
+  resourceType: BackendResourceType;
+}
+
 export interface PublishedItem {
   name: string;
   parentPath: string;

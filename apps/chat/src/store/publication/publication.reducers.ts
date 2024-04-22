@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { BackendResourceType } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -69,6 +70,11 @@ export const publicationSlice = createSlice({
       state.publishedConversations = payload.publishedConversations;
     },
     uploadPublishedConversationsFail: (state) => state,
+    uploadPublishedByMeItems: (
+      state,
+      _action: PayloadAction<{ resourceTypes: BackendResourceType[] }>,
+    ) => state,
+    uploadPublishedByMeItemsFail: (state) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,
     approvePublicationFail: (state) => state,

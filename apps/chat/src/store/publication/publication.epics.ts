@@ -1,4 +1,12 @@
-import { catchError, filter, ignoreElements, map, of, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  filter,
+  ignoreElements,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -6,6 +14,7 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { translate } from '@/src/utils/app/translation';
 
+import { BackendResourceType } from '@/src/types/common';
 import { PublicationRequest } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
@@ -155,6 +164,46 @@ const uploadPublishedConversationsFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const uploadPublishedByMeItemsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadPublishedByMeItems.match),
+    switchMap(({ payload }) =>
+      PublicationService.getPublishedByMeItems(payload.resourceTypes).pipe(
+        switchMap((items) => {
+          if (payload.resourceTypes.includes(BackendResourceType.PROMPT)) {
+            // update prompts
+          }
+
+          if (
+            payload.resourceTypes.includes(BackendResourceType.CONVERSATION)
+          ) {
+            // update conversations
+          }
+
+          if (payload.resourceTypes.includes(BackendResourceType.FILE)) {
+            // update files
+          }
+
+          return EMPTY;
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.uploadPublishedConversationsFail());
+        }),
+      ),
+    ),
+  );
+
+const uploadPublishedByMeItemsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadPublishedByMeItemsFail.match),
+    map(() =>
+      UIActions.showErrorToast(
+        translate(errorsMessages.publishingByMeItemsUploadingFailed),
+      ),
+    ),
+  );
+
 const approvePublicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.approvePublication.match),
@@ -214,6 +263,8 @@ export const PublicationEpics = combineEpics(
   deletePublicationFailEpic,
   uploadPublishedConversationsEpic,
   uploadPublishedConversationsFailEpic,
+  uploadPublishedByMeItemsEpic,
+  uploadPublishedByMeItemsFailEpic,
   approvePublicationEpic,
   approvePublicationFailEpic,
   rejectPublicationEpic,

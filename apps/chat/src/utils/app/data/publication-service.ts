@@ -1,9 +1,11 @@
 import { Observable } from 'rxjs';
 
+import { BackendResourceType } from '@/src/types/common';
 import {
   Publication,
   PublicationRequest,
   PublicationsListModel,
+  PublishedByMeItem,
   PublishedItem,
 } from '@/src/types/publication';
 
@@ -52,6 +54,15 @@ export class PublicationService {
     });
     const resultQuery = query.toString();
     return ApiUtils.request(`api/publication/publishedListing?${resultQuery}`);
+  }
+
+  public static getPublishedByMeItems(
+    resourceTypes: BackendResourceType[],
+  ): Observable<PublishedByMeItem[]> {
+    return ApiUtils.request('api/publication/resourceListing', {
+      method: 'POST',
+      body: JSON.stringify({ resourceTypes }),
+    });
   }
 
   public static approvePublication(url: string): Observable<Publication> {
