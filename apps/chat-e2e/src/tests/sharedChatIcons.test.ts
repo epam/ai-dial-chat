@@ -896,7 +896,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select Unshare option from menu for shared folder, click Revoke and verify arrow icon disappears',
+      'Select Unshare option from menu for shared folder, click Unshare and verify arrow icon disappears',
       async () => {
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
