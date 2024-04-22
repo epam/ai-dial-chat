@@ -23,6 +23,9 @@ export interface PublicationRequest {
 
 enum PublicationStatus {
   PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  REQUESTED_FOR_DELETION = 'REQUESTED_FOR_DELETION',
 }
 
 export interface PublicationResource {
