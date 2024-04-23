@@ -924,15 +924,10 @@ dialTest(
     await dialTest.step(
       'Verify imported conversations is in 3rd level folder, under the 2nd level folder',
       async () => {
-        await folderConversations.expandFolder(
-          nestedFolders[levelsCount].name,
-          { isHttpMethodTriggered: true },
-          1,
-        );
         await folderConversations
-          .getFolderEntity(
+          .getNestedFolder(
+            nestedFolders[levelsCount - 1].name,
             nestedFolders[levelsCount].name,
-            thirdLevelFolderConversation.name,
           )
           .waitFor();
 

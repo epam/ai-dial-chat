@@ -73,7 +73,7 @@ export const ExpectedConstants = {
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
-  revokeAccessTo: (name: string) => `Confirm revoking access to: ${name}`,
+  revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',
@@ -230,7 +230,8 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
-  ANTHROPIC_CLAUDE_V3 = 'anthropic.claude-v3',
+  ANTHROPIC_CLAUDE_V3_SONNET = 'anthropic.claude-v3-sonnet',
+  ANTHROPIC_CLAUDE_V3_HAIKU = 'anthropic.claude-v3-haiku',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
