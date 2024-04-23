@@ -27,6 +27,8 @@ import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
 import { PublicationEpics } from './publication/publication.epics';
 import { publicationSlice } from './publication/publication.reducers';
+import { ServiceEpics } from './service/service.epic';
+import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
 import { SettingsState, settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
@@ -45,6 +47,7 @@ export const rootEpic = combineEpics(
   FilesEpics,
   ImportExportEpics,
   ShareEpics,
+  ServiceEpics,
   MigrationEpics,
   PublicationEpics,
 );
@@ -61,6 +64,7 @@ const reducer = {
   auth: authSlice.reducer,
   importExport: importExportSlice.reducer,
   share: shareSlice.reducer,
+  service: serviceSlice.reducer,
   migration: migrationSlice.reducer,
   publication: publicationSlice.reducer,
 };
