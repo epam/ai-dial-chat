@@ -35,6 +35,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -198,7 +199,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       typedEvent.stopPropagation();
 
       dispatch(
-        PromptsActions.exportPrompt({
+        ImportExportActions.exportPrompt({
           id: prompt.id,
         }),
       );
@@ -421,14 +422,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{promptName}}', {
+          heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}
           description={
-            t('Are you sure that you want to revoke access to this prompt?') ||
-            ''
+            t('Are you sure that you want to unshare this prompt?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);

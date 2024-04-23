@@ -59,7 +59,7 @@ dialTest(
 
 dialTest(
   'Check the list of available conversations.\n' +
-    'Chat icon is shown in Select conversation drop down list  in compare mode',
+    'Chat icon is shown in Select conversation drop down list in compare mode',
   async ({
     dialHomePage,
     setTestIds,
@@ -626,7 +626,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
 
-        page.route(API.chatHost, async (route) => {
+        await page.route(API.chatHost, async (route) => {
           const request = route.request();
           const postData = await request.postDataJSON();
 

@@ -320,7 +320,8 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
     filter(
       (action) =>
         ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedConversationListings.match(action),
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
@@ -347,8 +348,9 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        PromptsActions.initPromptsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        PromptsActions.initFoldersAndPromptsSuccess.match(action) ||
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedPromptListings.match(action),
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
@@ -500,17 +502,13 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          const { needToUploadFolder } =
-            ShareSelectors.selectNeedToUploadFolder(state$.value);
-
           if (
             selectedConv &&
             hasExternalParent(
               state$.value,
               selectedConv.folderId,
               FeatureType.Chat,
-            ) &&
-            needToUploadFolder
+            )
           ) {
             const folderToUpload = payload.resources.folders.find((folder) =>
               selectedConv.folderId.startsWith(`${folder.id}/`),
@@ -557,8 +555,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 })) as FolderInterface[],
               }),
             );
-
-          actions.push(ShareActions.resetNeedToUploadFolder());
         }
       }
       if (payload.featureType === FeatureType.Prompt) {
@@ -856,7 +852,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             of(
               ConversationsActions.setConversations({
                 conversations: newConversations,
-                ignoreCombining: true,
               }),
             ),
             ...actions,
@@ -877,7 +872,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           of(
             ConversationsActions.setConversations({
               conversations: newConversations,
-              ignoreCombining: true,
             }),
           ),
           ...actions,
@@ -891,7 +885,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           return of(
             PromptsActions.setPrompts({
               prompts: prompts.filter((item) => item.id !== payload.resourceId),
-              ignoreCombining: true,
             }),
           );
         }
@@ -912,7 +905,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
               prompts: prompts.filter(
                 (p) => !p.id.startsWith(`${payload.resourceId}/`),
               ),
-              ignoreCombining: true,
             }),
           ),
         );

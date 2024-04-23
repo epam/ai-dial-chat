@@ -922,14 +922,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{folderName}}', {
+          heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}
           description={
-            t('Are you sure that you want to revoke access to this folder?') ||
-            ''
+            t('Are you sure that you want to unshare this folder?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);

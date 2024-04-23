@@ -209,7 +209,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string, deleteShareIcon?: boolean) => {
+    (name: string) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -217,7 +217,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
-              isShared: deleteShareIcon ? false : conversation.isShared,
+              isShared: false,
             },
           }),
         );
@@ -228,7 +228,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       setIsRenaming(false);
     },
-    [conversation.id, conversation.isShared, dispatch],
+    [conversation.id, dispatch],
   );
 
   const handleRename = useCallback(() => {
@@ -695,15 +695,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{conversationName}}', {
+          heading={t('Confirm unsharing: {{conversationName}}', {
             conversationName: conversation.name,
           })}
           description={
-            t(
-              'Are you sure that you want to revoke access to this conversation?',
-            ) || ''
+            t('Are you sure that you want to unshare this conversation?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);
