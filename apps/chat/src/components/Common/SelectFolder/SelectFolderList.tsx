@@ -57,7 +57,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         {t(rootFolderName)}
       </button>
       {isAllEntitiesOpened && (
-        <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
+        <div className="flex flex-col gap-0.5 overflow-auto">
           {folderProps.allFolders.length ? (
             <div className="flex flex-col gap-1 overflow-auto">
               {folderProps.allFolders.map((folder) => {
@@ -83,7 +83,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
               })}
             </div>
           ) : (
-            <div className="flex grow items-center justify-center">
+            <div className="flex grow items-center justify-center py-10">
               <NoResultsFound />
             </div>
           )}
