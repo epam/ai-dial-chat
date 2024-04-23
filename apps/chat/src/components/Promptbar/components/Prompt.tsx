@@ -422,14 +422,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{promptName}}', {
+          heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}
           description={
-            t('Are you sure that you want to revoke access to this prompt?') ||
-            ''
+            t('Are you sure that you want to unshare this prompt?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);

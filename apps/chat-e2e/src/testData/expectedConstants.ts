@@ -73,7 +73,7 @@ export const ExpectedConstants = {
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
-  revokeAccessTo: (name: string) => `Confirm revoking access to: ${name}`,
+  revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',
