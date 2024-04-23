@@ -131,32 +131,31 @@ const deletePublicationFailEpic: AppEpic = (action$) =>
     ),
   );
 
-// TODO: decide do we need refactor to epic which will work with prompts/conversations depends on published data
-const uploadPublishedConversationsEpic: AppEpic = (action$) =>
+const uploadPublishedItemsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublishedConversations.match),
-    switchMap(() =>
-      PublicationService.getPublishedConversations('', {
+    filter(PublicationActions.uploadPublishedItems.match),
+    switchMap(({ payload }) =>
+      PublicationService.getPublishedItems('', payload.featureType, {
         recursive: true,
       }).pipe(
         switchMap((publications) =>
           of(
-            PublicationActions.uploadPublishedConversationsSuccess({
-              publishedConversations: publications,
+            PublicationActions.uploadPublishedItemsSuccess({
+              publishedItems: publications,
             }),
           ),
         ),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadPublishedConversationsFail());
+          return of(PublicationActions.uploadPublishedItemsFail());
         }),
       ),
     ),
   );
 
-const uploadPublishedConversationsFailEpic: AppEpic = (action$) =>
+const uploadPublishedItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublishedConversationsFail.match),
+    filter(PublicationActions.uploadPublishedItemsFail.match),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publishedConversationsUploadFailed),
@@ -188,7 +187,7 @@ const uploadPublishedByMeItemsEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadPublishedConversationsFail());
+          return of(PublicationActions.uploadPublishedByMeItemsFail());
         }),
       ),
     ),
@@ -220,7 +219,7 @@ const approvePublicationEpic: AppEpic = (action$) =>
 
 const approvePublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(PublicationActions.uploadPublishedConversationsFail.match),
+    filter(PublicationActions.approvePublicationFail.match),
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationApproveFailed),
@@ -261,8 +260,8 @@ export const PublicationEpics = combineEpics(
   uploadPublicationFailEpic,
   deletePublicationEpic,
   deletePublicationFailEpic,
-  uploadPublishedConversationsEpic,
-  uploadPublishedConversationsFailEpic,
+  uploadPublishedItemsEpic,
+  uploadPublishedItemsFailEpic,
   uploadPublishedByMeItemsEpic,
   uploadPublishedByMeItemsFailEpic,
   approvePublicationEpic,

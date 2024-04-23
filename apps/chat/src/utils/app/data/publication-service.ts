@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { BackendResourceType } from '@/src/types/common';
+import { ApiKeys, BackendResourceType } from '@/src/types/common';
 import {
   Publication,
   PublicationRequest,
@@ -44,16 +44,18 @@ export class PublicationService {
     });
   }
 
-  public static getPublishedConversations(
+  public static getPublishedItems(
     parentPath: string,
+    entityType: ApiKeys,
     options?: Partial<{ recursive: boolean }>,
   ): Observable<PublishedItem[]> {
     const query = new URLSearchParams({
-      ...(parentPath && { parentPath: parentPath }),
       ...(options?.recursive && { recursive: String(options.recursive) }),
     });
     const resultQuery = query.toString();
-    return ApiUtils.request(`api/publication/publishedListing?${resultQuery}`);
+    return ApiUtils.request(
+      `api/publication/${entityType}/public/${parentPath}?${resultQuery}`,
+    );
   }
 
   public static getPublishedByMeItems(

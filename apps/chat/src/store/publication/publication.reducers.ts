@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { BackendResourceType } from '@/src/types/common';
+import { ApiKeys, BackendResourceType } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -12,12 +12,12 @@ import { RootState } from '../index';
 
 export interface PublicationState {
   publications: PublicationInfo[];
-  publishedConversations: PublishedItem[];
+  publishedItems: PublishedItem[];
 }
 
 const initialState: PublicationState = {
   publications: [],
-  publishedConversations: [],
+  publishedItems: [],
 };
 
 export const publicationSlice = createSlice({
@@ -62,14 +62,17 @@ export const publicationSlice = createSlice({
       );
     },
     deletePublicationFail: (state) => state,
-    uploadPublishedConversations: (state) => state,
-    uploadPublishedConversationsSuccess: (
+    uploadPublishedItems: (
       state,
-      { payload }: PayloadAction<{ publishedConversations: PublishedItem[] }>,
+      _action: PayloadAction<{ featureType: ApiKeys }>,
+    ) => state,
+    uploadPublishedItemsSuccess: (
+      state,
+      { payload }: PayloadAction<{ publishedItems: PublishedItem[] }>,
     ) => {
-      state.publishedConversations = payload.publishedConversations;
+      state.publishedItems = payload.publishedItems;
     },
-    uploadPublishedConversationsFail: (state) => state,
+    uploadPublishedItemsFail: (state) => state,
     uploadPublishedByMeItems: (
       state,
       _action: PayloadAction<{ resourceTypes: BackendResourceType[] }>,
