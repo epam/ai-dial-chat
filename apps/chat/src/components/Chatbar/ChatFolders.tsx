@@ -190,7 +190,7 @@ const ChatFolderTemplate = ({
           dispatch(
             ConversationsActions.updateFolder({
               folderId,
-              values: { name },
+              values: { name, isShared: false },
             }),
           );
         }}

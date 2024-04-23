@@ -17,12 +17,16 @@ import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
 import { ImportExportEpics } from './import-export/importExport.epics';
 import { importExportSlice } from './import-export/importExport.reducers';
+import { MigrationEpics } from './migration/migration.epics';
+import { migrationSlice } from './migration/migration.reducers';
 import { ModelsEpics } from './models/models.epics';
 import { modelsSlice } from './models/models.reducers';
 import { OverlayEpics } from './overlay/overlay.epics';
 import { overlaySlice } from './overlay/overlay.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
+import { ServiceEpics } from './service/service.epic';
+import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
 import { SettingsState, settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
@@ -41,6 +45,8 @@ export const rootEpic = combineEpics(
   FilesEpics,
   ImportExportEpics,
   ShareEpics,
+  ServiceEpics,
+  MigrationEpics,
 );
 
 const reducer = {
@@ -55,6 +61,8 @@ const reducer = {
   auth: authSlice.reducer,
   importExport: importExportSlice.reducer,
   share: shareSlice.reducer,
+  service: serviceSlice.reducer,
+  migration: migrationSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any

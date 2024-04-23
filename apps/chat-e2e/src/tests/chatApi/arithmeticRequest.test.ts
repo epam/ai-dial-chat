@@ -28,6 +28,7 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.AI21_JUMBO, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V2, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V21, isSysPromptAllowed: true },
+  { modelId: ModelIds.ANTHROPIC_CLAUDE_V3, isSysPromptAllowed: true },
   {
     modelId: ModelIds.ANTHROPIC_CLAUDE_INSTANT_V1,
     isSysPromptAllowed: true,
