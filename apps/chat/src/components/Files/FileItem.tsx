@@ -224,13 +224,13 @@ export const FileItem = ({
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{fileName}}', {
+          heading={t('Confirm unsharing: {{fileName}}', {
             fileName: item.name,
           })}
           description={
-            t('Are you sure that you want to revoke access to this file?') || ''
+            t('Are you sure that you want to unshare this file?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);
