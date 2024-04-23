@@ -93,6 +93,7 @@ export const getNewConversationName = (
   conversation: Conversation,
   message: Message,
 ): string => {
+  const convName = prepareEntityName(conversation.name);
   const content = prepareEntityName(message.content);
 
   if (content.length > 0) {
@@ -100,14 +101,10 @@ export const getNewConversationName = (
   } else if (message.custom_content?.attachments?.length) {
     const { title, reference_url } = message.custom_content.attachments[0];
 
-    if (!title && reference_url) {
-      return reference_url;
-    }
-
-    return title;
+    return prepareEntityName(!title && reference_url ? reference_url : title);
   }
 
-  return conversation.name;
+  return convName;
 };
 
 export const getGeneratedConversationId = <T extends ConversationInfo>(

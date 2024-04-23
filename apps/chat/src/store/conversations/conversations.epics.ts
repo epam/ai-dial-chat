@@ -1113,11 +1113,10 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           assistantMessage,
         );
 
-        const newConversationName = prepareEntityName(
+        const newConversationName =
           payload.conversation.replay?.isReplay ||
-            updatedMessages.filter((msg) => msg.role === Role.User).length >
-              1 ||
-            payload.conversation.isNameChanged
+          updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
+          payload.conversation.isNameChanged
             ? payload.conversation.name
             : getNextDefaultName(
                 getNewConversationName(payload.conversation, payload.message),
@@ -1131,8 +1130,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                   0,
                 ),
                 true,
-              ),
-        );
+              );
 
         const updatedConversation: Conversation = regenerateConversationId({
           ...payload.conversation,
