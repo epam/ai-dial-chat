@@ -37,7 +37,6 @@ import { combineEpics } from 'redux-observable';
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
   combineEntities,
-  prepareEntityName,
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
