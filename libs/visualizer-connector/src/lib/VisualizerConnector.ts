@@ -207,6 +207,7 @@ export class VisualizerConnector {
       event.data.type ===
       `${this.options.visualizerName}/${VisualizerConnectorEvents.readyToInteract}`
     ) {
+      this.hideLoader();
       this.iframeInteraction.complete();
       return;
     }
