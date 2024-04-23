@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { IconRefresh } from '@tabler/icons-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CustomRenderer } from '@/src/types/custom-renderes';
 
@@ -25,6 +26,22 @@ export const VisualizerRenderer = ({
   const [ready, setReady] = useState<boolean>();
   const { Url: rendererUrl, Title } = renderer;
 
+  const sendMessage = useCallback(
+    async (visualizer: VisualizerConnector) => {
+      await visualizer.ready();
+
+      const visualizerData = {
+        message: 'Hello, I am a message from the chat!',
+      };
+
+      visualizer.send(VisualizerConnectorRequests.sendVisualizeData, {
+        mimeType,
+        visualizerData,
+      });
+    },
+    [mimeType],
+  );
+
   useEffect(() => {
     if (!visualizer.current) {
       visualizer.current = new VisualizerConnector(
@@ -39,22 +56,10 @@ export const VisualizerRenderer = ({
   }, [Title, rendererUrl]);
 
   useEffect(() => {
-    const sendMessage = async (visualizer: VisualizerConnector) => {
-      await visualizer.ready();
-
-      const visualizerData = {
-        message: 'Hello, I am a message from the chat!',
-      };
-
-      visualizer.send(VisualizerConnectorRequests.sendVisualizeData, {
-        mimeType,
-        visualizerData,
-      });
-    };
     if (ready && visualizer.current) {
       sendMessage(visualizer.current);
     }
-  }, [ready, attachmentUrl, mimeType]);
+  }, [ready, attachmentUrl, mimeType, sendMessage]);
 
   useEffect(() => {
     const postMessageListener = (event: MessageEvent<any>) => {
@@ -76,6 +81,12 @@ export const VisualizerRenderer = ({
   return (
     <div ref={iframeContainerRef}>
       <h1>{Title}</h1>
+      <button
+        className="button button-secondary mt-5"
+        onClick={() => visualizer.current && sendMessage(visualizer.current)}
+      >
+        <IconRefresh />
+      </button>
     </div>
   );
 };
