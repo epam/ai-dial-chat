@@ -20,6 +20,7 @@ import {
   getFilesWithInvalidFileType,
   getShortExtentionsListFromMimeType,
   notAllowedSymbols,
+  prepareFileName,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
@@ -152,8 +153,12 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: constructPath(getFileRootId(), folderPath, file.name),
-              name: file.name,
+              id: constructPath(
+                getFileRootId(),
+                folderPath,
+                prepareFileName(file.name),
+              ),
+              name: prepareFileName(file.name),
             };
           }),
         ),
@@ -226,10 +231,12 @@ export const PreUploadDialog = ({
 
     const attachmentsSameLevelNames = files
       .filter((file) => file.folderId === selectedFolderId)
-      .map((file) => file.name);
+      .map((file) => prepareFileName(file.name));
     const localIncorrectSameNameFiles = selectedFiles
-      .filter((file) => attachmentsSameLevelNames.includes(file.name))
-      .map((file) => file.name);
+      .filter((file) =>
+        attachmentsSameLevelNames.includes(prepareFileName(file.name)),
+      )
+      .map((file) => prepareFileName(file.name));
 
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
@@ -283,14 +290,11 @@ export const PreUploadDialog = ({
               const indexDot = file.name.lastIndexOf('.');
               const formatFile =
                 indexDot !== -1 ? file.name.slice(indexDot) : '';
+              const fileName = prepareFileName(e.target.value + formatFile);
               return {
                 ...file,
-                name: e.target.value + formatFile,
-                id: constructPath(
-                  getFileRootId(),
-                  folderPath,
-                  e.target.value + formatFile,
-                ),
+                name: fileName,
+                id: constructPath(getFileRootId(), folderPath, fileName),
               };
             }
 
@@ -337,7 +341,12 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: constructPath(getFileRootId(), folderPath, file.name),
+          name: prepareFileName(file.name),
+          id: constructPath(
+            getFileRootId(),
+            folderPath,
+            prepareFileName(file.name),
+          ),
           folderPath,
         };
       }),
