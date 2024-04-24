@@ -18,10 +18,10 @@ ALLOWED_VISUALIZERS_IFRAME_ORIGINS=http://localhost:8000
 
 Moreover, it needs to be configured some **Visualizer** properties:
 
-- `CUSTOM_CONTENT_TYPES` - list of the content types for which you want to use custom visualizers.
+- `CUSTOM_CONTENT_TYPES` - list of the attachment content types for which you want to use custom visualizers.
 
 ```
-CUSTOM_CONTENT_TYPES='image/png,image/jpg'
+CUSTOM_CONTENT_TYPES='<custom_type_1>, <custom_type_2>'
 ```
 
 - `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties. This properties are : `{ Title, Description, Icon, ContentType, Url }`.
