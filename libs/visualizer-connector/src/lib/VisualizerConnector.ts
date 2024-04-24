@@ -93,7 +93,6 @@ export class VisualizerConnector {
     iframe.sandbox.add('allow-scripts');
     iframe.sandbox.add('allow-modals');
     iframe.sandbox.add('allow-forms');
-    iframe.sandbox.add('allow-popups');
     iframe.sandbox.add('allow-downloads');
 
     iframe.style.height = '100%';
