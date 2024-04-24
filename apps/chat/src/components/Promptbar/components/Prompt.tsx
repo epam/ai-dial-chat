@@ -285,6 +285,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
     [dispatch, prompt],
   );
 
+  const onPromptClick = () => {
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+  };
+
   return (
     <>
       <div
@@ -315,7 +319,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
-          <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
+          <div
+            className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+            onClick={onPromptClick}
+          >
             <Tooltip
               tooltip={t(
                 getEntityNameError(isNameInvalid, isInvalidPath, isExternal),

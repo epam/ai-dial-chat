@@ -2,6 +2,7 @@ import {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -28,6 +29,10 @@ import {
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -136,6 +141,26 @@ export const ChatInputMessage = ({
     isLoading,
   } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
+  const selectedPrompt = useAppSelector(
+    PromptsSelectors.selectSelectedOrNewPrompt,
+  );
+
+  useEffect(() => {
+    if (!selectedPrompt?.id) return;
+
+    dispatch(
+      PromptsActions.uploadPrompt({
+        promptId: selectedPrompt.id,
+      }),
+    );
+  }, [selectedPrompt?.id]);
+
+  useEffect(() => {
+    if (!selectedPrompt?.content) return;
+
+    setContent(selectedPrompt?.content);
+  }, [selectedPrompt?.content]);
+
   const isInputEmpty = useMemo(() => {
     return (
       content.trim().length === 0 &&
@@ -185,6 +210,7 @@ export const ChatInputMessage = ({
     }
 
     dispatch(ConversationsActions.setIsMessageSending(true));
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
 
     onSend({
       role: Role.User,
