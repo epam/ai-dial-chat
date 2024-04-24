@@ -35,6 +35,7 @@ const modelsForArithmeticRequest: {
     isSysPromptAllowed: true,
   },
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
+  { modelId: ModelIds.GEMINI_PRO_1_5, isSysPromptAllowed: true },
 );
 
 for (const modelToUse of modelsForArithmeticRequest) {
