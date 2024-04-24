@@ -41,6 +41,7 @@ const modelsForArithmeticRequest: {
     isSysPromptAllowed: true,
   },
   { modelId: ModelIds.DATABRICKS_LLAMA_2_70B_CHAT, isSysPromptAllowed: true },
+  { modelId: ModelIds.MISTRAL_LARGE, isSysPromptAllowed: true },
 );
 
 for (const modelToUse of modelsForArithmeticRequest) {
