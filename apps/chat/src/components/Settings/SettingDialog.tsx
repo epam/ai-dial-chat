@@ -107,6 +107,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       dispatch(UIActions.deleteCustomLogo());
     }
 
+    setLocalLogoFile(undefined);
     onClose();
   }, [
     dispatch,

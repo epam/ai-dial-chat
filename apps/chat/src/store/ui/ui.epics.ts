@@ -254,7 +254,7 @@ const setCustomLogoEpic: AppEpic = (action$) =>
 const deleteCustomLogoEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.deleteCustomLogo.match),
-    switchMap(() => DataService.setCustomLogo()),
+    switchMap(() => DataService.setCustomLogo('')),
     ignoreElements(),
   );
 
