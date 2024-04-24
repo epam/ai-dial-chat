@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -25,6 +25,27 @@ interface ModelsDialogProps {
   isOpen: boolean;
   onModelSelect: (selectedModelId: string, rearrange?: boolean) => void;
   onClose: () => void;
+}
+
+interface Model {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  description: string;
+  iconUrl: string;
+  type: EntityType;
+  limits?: {
+    maxRequestTokens: number;
+    maxResponseTokens: number;
+    maxTotalTokens: number;
+    isMaxRequestTokensCustom: boolean;
+  };
+  features: {
+    systemPrompt: boolean;
+    truncatePrompt: boolean;
+    urlAttachments: boolean;
+  };
+  inputAttachmentTypes?: string[];
 }
 
 const getFilteredEntities = (
@@ -62,6 +83,28 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
     useState<DialAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const countEntityTypes = (models: Model[]): Record<EntityType, number> => {
+    const counts: Record<EntityType, number> = {
+      model: 0,
+      assistant: 0,
+      application: 0,
+      addon: 0,
+    };
+
+    models.forEach((model) => {
+      if (counts[model.type] !== undefined) {
+        counts[model.type]++;
+      }
+    });
+
+    return counts;
+  };
+
+  const typeCounts = useMemo(
+    () => countEntityTypes(models as Model[]),
+    [models],
+  );
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(
@@ -164,22 +207,22 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           }}
           data-qa="models-tab"
         >
-          {t('Models')}
+          {`${t('Models')} (${typeCounts.model})`}
         </button>
-        <button
-          className={classNames(
-            'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
-            entityTypes.includes(EntityType.Assistant)
-              ? 'border-accent-primary bg-accent-primary-alpha'
-              : 'border-primary bg-layer-4 hover:border-transparent',
-          )}
-          onClick={() => {
-            handleFilterType(EntityType.Assistant);
-          }}
-          data-qa="assistants-tab"
-        >
-          {t('Assistants')}
-        </button>
+        {/*<button*/}
+        {/*  className={classNames(*/}
+        {/*    'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',*/}
+        {/*    entityTypes.includes(EntityType.Assistant)*/}
+        {/*      ? 'border-accent-primary bg-accent-primary-alpha'*/}
+        {/*      : 'border-primary bg-layer-4 hover:border-transparent',*/}
+        {/*  )}*/}
+        {/*  onClick={() => {*/}
+        {/*    handleFilterType(EntityType.Assistant);*/}
+        {/*  }}*/}
+        {/*  data-qa="assistants-tab"*/}
+        {/*>*/}
+        {/*  {`${t('Assistants')} (${typeCounts.assistant})`}*/}
+        {/*</button>*/}
         <button
           className={classNames(
             'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
@@ -192,7 +235,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           }}
           data-qa="applications-tab"
         >
-          {t('Applications')}
+          {`${t('Applications')} (${typeCounts.application})`}
         </button>
       </div>
 
