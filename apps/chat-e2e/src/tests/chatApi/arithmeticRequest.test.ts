@@ -75,7 +75,7 @@ for (const modelToUse of modelsForArithmeticRequest) {
       expect
         .soft(
           result,
-          `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}`,
+          `${ExpectedMessages.responseTextIsValid}${modelToUse.modelId}, respBody: '${respBody}'`,
         )
         .toMatch(/\s?3\.?/);
     },
