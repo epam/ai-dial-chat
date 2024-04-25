@@ -2,6 +2,7 @@ import { FloatingOverlay } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -37,7 +38,10 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_ASSISTANT_SUBMODEL_ID,
+  DEFAULT_CONVERSATION_NAME,
+} from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -58,6 +62,11 @@ import { Feature } from '@epam/ai-dial-shared';
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;
+
+enum DocumentId {
+  queryParam = 'question-your-document',
+  modelId = 'rag',
+}
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
@@ -127,6 +136,37 @@ export const ChatView = memo(() => {
   const isNotEmptyConversations = selectedConversations.some(
     (conv) => conv.messages.length > 0,
   );
+
+  const router = useRouter();
+
+  const allConversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const currentChatId = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const currentConversation = allConversations.find(
+    (chat) => chat?.id === currentChatId?.[0],
+  );
+
+  useEffect(() => {
+    if (router?.query?.choice) {
+      const { choice } = router?.query || {};
+      const modelId =
+        choice === DocumentId.queryParam ? DocumentId.modelId : choice;
+
+      if ((currentConversation as any)?.messages) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: selectedConversationsIds[0],
+            values: {
+              model: { id: modelId as string },
+            },
+          }),
+        );
+      }
+    }
+  }, [router.asPath]);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);

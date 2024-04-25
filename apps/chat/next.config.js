@@ -69,7 +69,7 @@ const nextConfig = {
 
   i18n,
   poweredByHeader: false,
-  reactStrictMode: true,
+  reactStrictMode: false,
   experimental: {
     instrumentationHook: true,
   },
