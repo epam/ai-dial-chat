@@ -255,19 +255,19 @@ export default function ItemContextMenu({
         onClick: onUnshare,
         disabled: disableAll,
       },
-      {
-        name: t('Publish'),
-        dataQa: 'publish',
-        display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !entity.isPublished &&
-          !!onPublish &&
-          !isExternal,
-        Icon: IconWorldShare,
-        onClick: onPublish,
-        disabled: disableAll,
-      },
+      // {
+      //   name: t('Publish'),
+      //   dataQa: 'publish',
+      //   display:
+      //     !isEmptyConversation &&
+      //     isPublishingEnabled &&
+      //     !entity.isPublished &&
+      //     !!onPublish &&
+      //     !isExternal,
+      //   Icon: IconWorldShare,
+      //   onClick: onPublish,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Update'),
         dataQa: 'update-publishing',
