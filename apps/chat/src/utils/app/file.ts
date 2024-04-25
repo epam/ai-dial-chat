@@ -86,10 +86,12 @@ export const isAllowedMimeType = (
     return true;
   }
 
-  const [resourceSubset, resourceTypeName] = resourceMimeType.split('/');
+  const [resourceSubset, resourceTypeName] = resourceMimeType
+    .toLowerCase()
+    .split('/');
 
   return allowedMimeTypes.some((allowedMimeType) => {
-    const [subset, name] = allowedMimeType.split('/');
+    const [subset, name] = allowedMimeType.toLowerCase().split('/');
 
     return (
       subset === resourceSubset && (name === '*' || name === resourceTypeName)
@@ -252,10 +254,14 @@ export const getShortExtentionsListFromMimeType = (
 };
 
 export const getFileNameWithoutExtension = (filename: string) =>
-  filename.slice(0, filename.lastIndexOf('.'));
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(0, filename.lastIndexOf('.'))
+    : filename;
 
 export const getFileNameExtension = (filename: string) =>
-  filename.slice(filename.lastIndexOf('.'));
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
+    : '';
 
 export const validatePublishingFileRenaming = (
   files: DialFile[],
@@ -361,3 +367,6 @@ export const getNextFileName = (
 
   return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
 };
+
+export const prepareFileName = (filename: string) =>
+  `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
