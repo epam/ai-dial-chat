@@ -77,7 +77,7 @@ export const ExpectedConstants = {
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',
-  responseContentPattern: /(?<=\{"content":")[^"^\\$]+/g,
+  responseContentPattern: /(?<="content":")[^"^\\$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
