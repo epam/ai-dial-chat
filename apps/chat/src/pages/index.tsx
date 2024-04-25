@@ -190,10 +190,8 @@ export default function Home({ initialState }: HomeProps) {
   return (
     <>
       <Head>
-        <title className="whitespace-pre">
-          {initialState.settings.appName}
-        </title>
-        <meta name="description" content="ChatGPT but better." />
+        <title className="whitespace-pre">{t('Pernod Ricard GPT')}</title>
+        <meta name="description" content="Pernod Ricard GPT" />
         <meta
           name="viewport"
           content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
