@@ -193,7 +193,7 @@ const AttachmentUrlRendererComponent = ({
   mappedAttachmentUrl: string;
   attachmentType: string;
 }) => {
-  const customRenderers = useAppSelector(
+  const customVisualizers = useAppSelector(
     SettingsSelectors.selectCustomRenderers,
   );
   const customAttachmentsTypes = useAppSelector(
@@ -201,20 +201,27 @@ const AttachmentUrlRendererComponent = ({
   );
 
   const mappedRenderers = useMemo(() => {
-    const renderers: Record<string, CustomRenderer[]> = {};
-    customRenderers?.forEach((rendererConfig) => {
-      renderers[rendererConfig.ContentType] = !renderers[
-        rendererConfig.ContentType
-      ]
-        ? [rendererConfig]
-        : renderers[rendererConfig.ContentType].concat(rendererConfig);
-    });
+    return customVisualizers?.reduce(
+      (
+        visualizers: Record<string, CustomRenderer[]>,
+        currentVisualizerConfig,
+      ) => {
+        visualizers[currentVisualizerConfig.ContentType] = !visualizers[
+          currentVisualizerConfig.ContentType
+        ]
+          ? [currentVisualizerConfig]
+          : visualizers[currentVisualizerConfig.ContentType].concat(
+              currentVisualizerConfig,
+            );
 
-    return { ...renderers };
-  }, [customRenderers]);
+        return visualizers;
+      },
+      {} as Record<string, CustomRenderer[]>,
+    );
+  }, [customVisualizers]);
 
   return customAttachmentsTypes?.has(attachmentType) &&
-    mappedRenderers[attachmentType]?.length ? (
+    mappedRenderers?.[attachmentType]?.length ? (
     <VisualizerRenderer
       attachmentUrl={mappedAttachmentUrl}
       renderer={mappedRenderers[attachmentType][0]}

@@ -5,6 +5,7 @@ import { CustomRenderer } from '@/src/types/custom-renderes';
 
 import {
   VisualizerConnectorEvents,
+  VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
 import { VisualizerConnector } from '@epam/visualizer-connector';
@@ -43,15 +44,12 @@ export const VisualizerRenderer = ({
   );
 
   useEffect(() => {
-    if (!visualizer.current) {
-      visualizer.current = new VisualizerConnector(
-        iframeContainerRef.current!,
-        {
-          domain: rendererUrl,
-          hostDomain: window.location.origin,
-          visualizerName: Title,
-        },
-      );
+    if (iframeContainerRef.current && !visualizer.current) {
+      visualizer.current = new VisualizerConnector(iframeContainerRef.current, {
+        domain: rendererUrl,
+        hostDomain: window.location.origin,
+        visualizerName: Title,
+      });
     }
   }, [Title, rendererUrl]);
 
@@ -62,7 +60,9 @@ export const VisualizerRenderer = ({
   }, [ready, attachmentUrl, mimeType, sendMessage]);
 
   useEffect(() => {
-    const postMessageListener = (event: MessageEvent<any>) => {
+    const postMessageListener = (
+      event: MessageEvent<VisualizerConnectorRequest>,
+    ) => {
       if (event.origin !== rendererUrl) return;
 
       if (
@@ -80,7 +80,7 @@ export const VisualizerRenderer = ({
 
   return (
     <div ref={iframeContainerRef}>
-      <h1>{Title}</h1>
+      <h2>{Title}</h2>
       <button
         className="button button-secondary mt-5"
         onClick={() => visualizer.current && sendMessage(visualizer.current)}

@@ -50,7 +50,7 @@ export class VisualizerConnector {
   /**
    * Creates a VisualizerConnector
    * @param root {HTMLElement | string} reference or selector to parent container where the iframe should be placed
-   * @param options {VisualizerConnectorOptions} visualizer options ( hostDomain, etc.)
+   * @param options {VisualizerConnectorOptions} visualizer connector options ( hostDomain, domain etc.) which will be used to create iframe
    */
   constructor(root: HTMLElement | string, options: VisualizerConnectorOptions) {
     this.options = options;

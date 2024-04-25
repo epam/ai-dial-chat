@@ -13,7 +13,7 @@ declare global {
       IS_IFRAME?: string;
       ALLOWED_VISUALIZERS_IFRAME_ORIGINS?: string;
       CUSTOM_VISUALIZERS?: string;
-      CUSTOM_CONTENT_TYPES?: string;
+      CUSTOM_VISUALIZERS_TYPES?: string;
       ENABLED_FEATURES?: string;
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;

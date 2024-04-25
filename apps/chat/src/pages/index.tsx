@@ -301,9 +301,9 @@ export const getServerSideProps: GetServerSideProps = async ({
     process.env.CUSTOM_VISUALIZERS &&
     JSON.parse(process.env.CUSTOM_VISUALIZERS);
 
-  const customAttachmentsTypes = (process.env.CUSTOM_CONTENT_TYPES || '').split(
-    ',',
-  ) as string[];
+  const customAttachmentsTypes = (
+    process.env.CUSTOM_VISUALIZERS_TYPES || ''
+  ).split(',') as string[];
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',

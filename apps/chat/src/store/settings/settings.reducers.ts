@@ -41,7 +41,7 @@ const initialState: SettingsState = {
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],
-  customAttachmentsTypes: ['image/png'],
+  customAttachmentsTypes: [],
 };
 
 export const settingsSlice = createSlice({
