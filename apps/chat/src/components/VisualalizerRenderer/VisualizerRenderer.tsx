@@ -50,11 +50,17 @@ export const VisualizerRenderer = ({
         hostDomain: window.location.origin,
         visualizerName: Title,
       });
+
+      return () => {
+        visualizer.current?.destroy();
+        visualizer.current = null;
+      };
     }
-  }, [Title, rendererUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    if (ready && visualizer.current) {
+    if (ready && !!visualizer.current) {
       sendMessage(visualizer.current);
     }
   }, [ready, attachmentUrl, mimeType, sendMessage]);

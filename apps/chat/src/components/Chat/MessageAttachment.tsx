@@ -186,13 +186,15 @@ interface Props {
   isInner?: boolean;
 }
 
+interface AttachmentUrlRendererComponentProps {
+  mappedAttachmentUrl: string;
+  attachmentType: string;
+}
+
 const AttachmentUrlRendererComponent = ({
   mappedAttachmentUrl,
   attachmentType,
-}: {
-  mappedAttachmentUrl: string;
-  attachmentType: string;
-}) => {
+}: AttachmentUrlRendererComponentProps) => {
   const customVisualizers = useAppSelector(
     SettingsSelectors.selectCustomRenderers,
   );
@@ -242,6 +244,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
+  const customAttachmentsTypes = useAppSelector(
+    SettingsSelectors.selectCustomAttachmentsTypes,
+  );
+
   useEffect(() => {
     const handleResize = () => {
       if (wasOpened && anchorRef.current) {
@@ -270,7 +276,8 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const isOpenable =
     attachment.data ||
     (attachment.url && imageTypes.has(attachment.type)) ||
-    attachment.type === chartType;
+    attachment.type === chartType ||
+    customAttachmentsTypes?.has(attachment.type);
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
     [attachment.url],

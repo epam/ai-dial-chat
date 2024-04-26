@@ -326,5 +326,7 @@ export class VisualizerConnector {
     window.removeEventListener('message', this.process);
     this.iframeInteraction.fail('Chat Visualizer destroyed');
     this.root.removeChild(this.iframe);
+    //TODO check do we need the the same changes in Overlay lib
+    this.root.removeChild(this.loader);
   }
 }
