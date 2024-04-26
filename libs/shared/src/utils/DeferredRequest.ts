@@ -1,4 +1,4 @@
-import { DialLibRequest } from 'src/types/common';
+import { DialLibRequest } from '../types';
 
 const defaultRequestTimeout = 10000;
 

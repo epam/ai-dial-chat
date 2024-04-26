@@ -1,4 +1,4 @@
-import { Styles } from 'src/types';
+import { Styles } from '../types';
 
 /**
  * Add styles to the html element
