@@ -1,4 +1,4 @@
-import { Styles } from './overlay';
+import { DialLibRequest, Styles } from './common';
 
 export interface VisualizerConnectorOptions {
   domain: string;
@@ -11,8 +11,4 @@ export interface VisualizerConnectorOptions {
   requestTimeout?: number;
 }
 
-export interface VisualizerConnectorRequest {
-  type: string;
-  requestId: string;
-  payload?: unknown;
-}
+export type VisualizerConnectorRequest = DialLibRequest;

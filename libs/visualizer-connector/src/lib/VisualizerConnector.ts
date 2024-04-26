@@ -1,13 +1,13 @@
-import { DeferredRequest } from './utils/DeferredRequest';
-import { Task } from './utils/Task';
-import { setStyles } from './utils/styleUtils';
-
 import {
+  DeferredRequest,
   Styles,
+  Task,
   VisualizerConnectorEvents,
   VisualizerConnectorOptions,
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
+  setStyles,
+  visualizerConnectorLibName,
 } from '@epam/ai-dial-shared';
 
 const defaultLoaderSVG = `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -177,7 +177,7 @@ export class VisualizerConnector {
 
       if (!element) {
         throw new Error(
-          `[VisualizerConnector] There is no element with selector ${root} to append iframe`,
+          `[${visualizerConnectorLibName}] There is no element with selector ${root} to append iframe`,
         );
       }
 
@@ -262,7 +262,7 @@ export class VisualizerConnector {
 
     if (!this.iframe.contentWindow) {
       throw new Error(
-        '[VisualizerConnector] There is no content window to send requests',
+        `[${visualizerConnectorLibName}] There is no content window to send requests`,
       );
     }
 
@@ -272,6 +272,7 @@ export class VisualizerConnector {
         payload,
         timeout: this.options?.requestTimeout,
       },
+      visualizerConnectorLibName,
     );
     this.requests.push(request);
 

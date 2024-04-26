@@ -1,3 +1,5 @@
+export const visualizerConnectorLibName = 'VisualizerConnector';
+
 export enum VisualizerConnectorEvents {
   initReady = 'INIT_READY',
   ready = 'READY',
