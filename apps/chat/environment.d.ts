@@ -1,6 +1,12 @@
 export {};
 
 declare global {
+  interface Window {
+    _paq: any[];
+  }
+}
+
+declare global {
   namespace NodeJS {
     interface ProcessEnv {
       DIAL_API_KEY: string;

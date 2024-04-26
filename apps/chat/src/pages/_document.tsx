@@ -39,6 +39,20 @@ export default function Document(props: Props) {
         />
       </Head>
       <body>
+        <Script id="matomo-script" strategy="afterInteractive">
+          {`
+            var _paq = window._paq = window._paq || [];
+            _paq.push(['trackPageView']);
+            _paq.push(['enableLinkTracking']);
+            (function() {
+              var u="//matomo.pernod-ricard.io/";
+              _paq.push(['setTrackerUrl', u+'matomo.php']);
+              _paq.push(['setSiteId', '154']);
+              var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+              g.async=true; g.defer=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+            })();
+          `}
+        </Script>
         <Script id="theme-script" strategy="beforeInteractive">
           {`{try {
             (document.documentElement.className =

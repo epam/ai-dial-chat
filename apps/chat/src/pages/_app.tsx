@@ -1,11 +1,13 @@
 import { IconAlertCircle, IconX } from '@tabler/icons-react';
 import { SessionProvider, SessionProviderProps } from 'next-auth/react';
+import { useEffect } from 'react';
 import toast, { ToastBar, Toaster } from 'react-hot-toast';
 import { Provider } from 'react-redux';
 
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -27,6 +29,20 @@ function App({
   const store = createStore({
     settings: rest.pageProps.initialState?.settings,
   });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      window._paq.push(['trackPageView']);
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router.events]);
 
   return (
     <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
