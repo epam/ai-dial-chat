@@ -21,7 +21,6 @@ import {
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
-import { PublishRequest } from '@/src/types/share';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -183,64 +182,6 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.isActiveNewConversationRequest = true;
-    },
-    publishConversation: (
-      state,
-      { payload }: PayloadAction<PublishRequest>,
-    ) => {
-      state.conversations = state.conversations.map((conv) => {
-        if (conv.id === payload.id) {
-          return {
-            ...conv,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isPublished: true,
-          };
-        }
-
-        return conv;
-      });
-    },
-    publishFolder: (state, { payload }: PayloadAction<PublishRequest>) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isPublished: true,
-          };
-        }
-
-        return folder;
-      });
-    },
-    unpublishConversation: (
-      state,
-      { payload }: PayloadAction<{ id: string }>,
-    ) => {
-      state.conversations = state.conversations.map((conv) => {
-        if (conv.id === payload.id) {
-          return {
-            ...conv,
-            //TODO: unpublish conversation by API
-            isPublished: false,
-          };
-        }
-
-        return conv;
-      });
-    },
-    unpublishFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: unpublish folder by API
-            isPublished: false,
-          };
-        }
-
-        return folder;
-      });
     },
     deleteConversations: (
       state,

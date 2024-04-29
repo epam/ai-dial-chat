@@ -23,10 +23,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -39,8 +36,8 @@ import {
 
 import Folder from '@/src/components/Folder/Folder';
 
-import { ApproveRequiredSection } from '../Chat/Publication/ApproveRequiredSection';
-import CollapsableSection from '../Common/CollapsableSection';
+import { ApproveRequiredSection } from '../Chat/Publish/ApproveRequiredSection';
+import CollapsibleSection from '../Common/CollapsibleSection';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
 
@@ -298,7 +295,7 @@ export const ChatSection = ({
   }
 
   return (
-    <CollapsableSection
+    <CollapsibleSection
       name={t(name)}
       openByDefault={openByDefault}
       dataQa={dataQa}
@@ -324,7 +321,7 @@ export const ChatSection = ({
           ))}
         </div>
       )}
-    </CollapsableSection>
+    </CollapsibleSection>
   );
 };
 

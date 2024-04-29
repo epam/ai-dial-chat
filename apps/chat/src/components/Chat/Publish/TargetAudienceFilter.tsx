@@ -7,7 +7,7 @@ import { TargetAudienceFilter } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
-import { FilterTypeSelect } from './FilterTypeSelect';
+import { FilterFunctionSelect } from './FilterFunctionSelect';
 import { RegexParamInput } from './RegexParamInput';
 
 interface Props {
@@ -17,15 +17,15 @@ interface Props {
   onChangeFilter: (filter: TargetAudienceFilter) => void;
 }
 
-const filterTypeValues = [
+const getItemLabel = (item: string) => item;
+
+const filterFunctionValues = [
   PublicationFunctions.CONTAIN,
   PublicationFunctions.EQUAL,
   PublicationFunctions.REGEX,
   PublicationFunctions.TRUE,
   PublicationFunctions.FALSE,
 ];
-
-const getItemLabel = (item: string) => item;
 
 export function TargetAudienceFilterComponent({
   id,
@@ -35,47 +35,47 @@ export function TargetAudienceFilterComponent({
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
-  const [filterType, setFilterType] = useState<PublicationFunctions>(
-    initialSelectedFilter?.filterType ?? filterTypeValues[0],
+  const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
+    initialSelectedFilter?.filterFunction ?? filterFunctionValues[0],
   );
-  const [filterParams, setFilteParams] = useState<string[]>([]);
-  const [filterRegexParam, setfilterRegexParam] = useState<string>(
-    (initialSelectedFilter?.filterType === PublicationFunctions.REGEX &&
+  const [filterParams, setFilterParams] = useState<string[]>([]);
+  const [filterRegexParam, setFilterRegexParam] = useState<string>(
+    (initialSelectedFilter?.filterFunction === PublicationFunctions.REGEX &&
       initialSelectedFilter.filterParams[0]) ||
       '',
   );
 
-  const onChangeFilterType = useCallback(
-    (filterType: PublicationFunctions) => {
-      setFilterType(filterType);
-      if (filterType === PublicationFunctions.REGEX) {
+  const onChangeFilterFunction = useCallback(
+    (filterFunction: PublicationFunctions) => {
+      setFilterFunction(filterFunction);
+      if (filterFunction === PublicationFunctions.REGEX) {
         onChangeFilter({
           id,
           name,
-          filterType,
+          filterFunction,
           filterParams: [filterRegexParam],
         });
         return;
       }
-      onChangeFilter({ id, name, filterType, filterParams });
+      onChangeFilter({ id, name, filterFunction, filterParams });
     },
     [filterParams, id, name, onChangeFilter, filterRegexParam],
   );
   const onChangeFilterParams = useCallback(
     (filterParams: string[]) => {
-      setFilteParams(filterParams);
-      onChangeFilter({ id, name, filterType, filterParams });
+      setFilterParams(filterParams);
+      onChangeFilter({ id, name, filterFunction, filterParams });
     },
-    [filterType, id, name, onChangeFilter],
+    [filterFunction, id, name, onChangeFilter],
   );
 
-  const onChangefilterRegexParam = useCallback(
+  const onChangeFilterRegexParam = useCallback(
     (filterRegexParam: string) => {
-      setfilterRegexParam(filterRegexParam);
+      setFilterRegexParam(filterRegexParam);
       onChangeFilter({
         id,
         name,
-        filterType: PublicationFunctions.REGEX,
+        filterFunction: PublicationFunctions.REGEX,
         filterParams: [filterRegexParam],
       });
     },
@@ -87,16 +87,16 @@ export function TargetAudienceFilterComponent({
       className="flex flex-col gap-1 sm:flex-row"
       data-qa={`publish-audience-filter-${id}`}
     >
-      <FilterTypeSelect
-        filterTypes={filterTypeValues}
-        selectedType={filterType}
-        onChangeFilterType={onChangeFilterType}
+      <FilterFunctionSelect
+        filterFunctions={filterFunctionValues}
+        selectedFilterFunction={filterFunction}
+        onChangeFilterFunction={onChangeFilterFunction}
         id={id}
       />
-      {filterType === PublicationFunctions.REGEX ? (
+      {filterFunction === PublicationFunctions.REGEX ? (
         <RegexParamInput
           regEx={filterRegexParam}
-          onRegExChange={onChangefilterRegexParam}
+          onRegExChange={onChangeFilterRegexParam}
         />
       ) : (
         <MultipleComboBox

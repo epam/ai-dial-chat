@@ -35,7 +35,7 @@ import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 
-import CollapsableSection from '../../Common/CollapsableSection';
+import CollapsibleSection from '../../Common/CollapsibleSection';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import { ErrorMessage } from '../../Common/ErrorMessage';
 import Modal from '../../Common/Modal';
@@ -180,7 +180,7 @@ export default function PublishWizard({
             trimmedName
           }`,
           rules: otherTargetAudienceFilters.map((filter) => ({
-            function: filter.filterType,
+            function: filter.filterFunction,
             source: filter.id,
             targets: filter.filterParams,
           })),
@@ -344,7 +344,7 @@ export default function PublishWizard({
                   ({ id }) => id === v.id,
                 );
                 return (
-                  <CollapsableSection
+                  <CollapsibleSection
                     name={v.name}
                     dataQa={`filter-${v.id}`}
                     key={`filter-${v.id}-${idx}`}
@@ -357,7 +357,7 @@ export default function PublishWizard({
                       initialSelectedFilter={initialSelectedFilter}
                       onChangeFilter={handleOnChangeFilters}
                     />
-                  </CollapsableSection>
+                  </CollapsibleSection>
                 );
               })}
             </section>

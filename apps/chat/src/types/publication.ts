@@ -83,3 +83,13 @@ export interface PublishedList {
   resourceType: BackendResourceType;
   items?: PublishedItem[];
 }
+
+export interface TargetAudienceFilterItem {
+  id: string;
+  name: string;
+}
+
+export interface TargetAudienceFilter extends TargetAudienceFilterItem {
+  filterFunction: PublicationFunctions;
+  filterParams: string[];
+}

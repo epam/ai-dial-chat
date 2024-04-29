@@ -4,12 +4,12 @@ import classNames from 'classnames';
 
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
-interface CollapsableSectionProps {
+interface CollapsibleSectionProps {
   name: string;
   openByDefault?: boolean;
   isHighlighted?: boolean;
-  carentIconSize?: number;
-  carentIconHidden?: boolean;
+  currentIconSize?: number;
+  currentIconHidden?: boolean;
   children: ReactNode | ReactNode[];
   dataQa?: string;
   onToggle?: (isOpen: boolean) => void;
@@ -17,18 +17,18 @@ interface CollapsableSectionProps {
   showOnHoverOnly?: boolean;
 }
 
-export default function CollapsableSection({
+export default function CollapsibleSection({
   name,
   openByDefault = true,
   isHighlighted = false,
   children,
-  carentIconSize = 10,
-  carentIconHidden,
+  currentIconSize = 10,
+  currentIconHidden,
   dataQa,
   onToggle,
   className,
   showOnHoverOnly,
-}: CollapsableSectionProps) {
+}: CollapsibleSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
   const handleClick = useCallback(() => {
     onToggle && onToggle(!isOpened);
@@ -52,8 +52,8 @@ export default function CollapsableSection({
       >
         <CaretIconComponent
           isOpen={isOpened}
-          size={carentIconSize}
-          hidden={carentIconHidden}
+          size={currentIconSize}
+          hidden={currentIconHidden}
           showOnHoverOnly={showOnHoverOnly}
         />
         {name}

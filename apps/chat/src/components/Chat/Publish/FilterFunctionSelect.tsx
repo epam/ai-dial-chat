@@ -12,23 +12,23 @@ import { Menu, MenuItem } from '../../Common/DropdownMenu';
 
 interface FilterTypeProps {
   id: string;
-  filterTypes: string[];
-  selectedType: string;
-  onChangeFilterType: (filterType: PublicationFunctions) => void;
+  filterFunctions: string[];
+  selectedFilterFunction: string;
+  onChangeFilterFunction: (filterType: PublicationFunctions) => void;
 }
 
-export function FilterTypeSelect({
+export function FilterFunctionSelect({
   id,
-  filterTypes,
-  selectedType,
-  onChangeFilterType,
+  filterFunctions,
+  selectedFilterFunction,
+  onChangeFilterFunction,
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const { t } = useTranslation(Translation.SideBar);
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
-    onChangeFilterType(e.currentTarget.value as PublicationFunctions);
+    onChangeFilterFunction(e.currentTarget.value as PublicationFunctions);
     setIsOpen(false);
   };
 
@@ -42,7 +42,7 @@ export function FilterTypeSelect({
         onOpenChange={setIsOpen}
         trigger={
           <div className="flex w-full items-center justify-between gap-2">
-            {selectedType}
+            {selectedFilterFunction}
             <IconChevronDown
               data-qa={`open-filter-dropdown-${id}`}
               className={classNames(
@@ -56,7 +56,7 @@ export function FilterTypeSelect({
         }
       >
         <div className="bg-layer-3">
-          {filterTypes.map((filterType) => (
+          {filterFunctions.map((filterType) => (
             <MenuItem
               key={filterType}
               className="max-w-[350px] hover:bg-accent-primary-alpha"

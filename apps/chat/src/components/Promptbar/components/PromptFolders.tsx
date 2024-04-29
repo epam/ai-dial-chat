@@ -34,7 +34,7 @@ import {
 
 import Folder from '@/src/components/Folder/Folder';
 
-import CollapsableSection from '../../Common/CollapsableSection';
+import CollapsibleSection from '../../Common/CollapsibleSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
 
@@ -279,7 +279,7 @@ export const PromptSection = ({
   }
 
   return (
-    <CollapsableSection
+    <CollapsibleSection
       name={t(name)}
       openByDefault={openByDefault}
       dataQa={dataQa}
@@ -303,7 +303,7 @@ export const PromptSection = ({
           ))}
         </div>
       )}
-    </CollapsableSection>
+    </CollapsibleSection>
   );
 };
 

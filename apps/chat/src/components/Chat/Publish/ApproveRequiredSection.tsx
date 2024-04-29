@@ -27,7 +27,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ConversationComponent } from '../../Chatbar/Conversation';
 import CaretIconComponent from '../../Common/CaretIconComponent';
-import CollapsableSection from '../../Common/CollapsableSection';
+import CollapsibleSection from '../../Common/CollapsibleSection';
 import Folder from '../../Folder/Folder';
 
 export const PublicationItem = ({
@@ -169,7 +169,7 @@ export const ApproveRequiredSection = ({
   ]);
 
   return (
-    <CollapsableSection
+    <CollapsibleSection
       name={t(name)}
       openByDefault={openByDefault}
       dataQa={dataQa}
@@ -185,6 +185,6 @@ export const ApproveRequiredSection = ({
       {!!requestedForDeletionPublications.length && (
         <div>RequestedForDeletion</div>
       )}
-    </CollapsableSection>
+    </CollapsibleSection>
   );
 };
