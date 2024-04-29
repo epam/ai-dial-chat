@@ -158,7 +158,6 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
-        PromptsActions.unpublishFolder.match(action) ||
         PromptsActions.setFolders.match(action),
     ),
     map(() => ({

@@ -1747,7 +1747,6 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.addFolders.match(action) ||
-        ConversationsActions.unpublishFolder.match(action) ||
         ConversationsActions.setFolders.match(action),
     ),
     map(() => ({
