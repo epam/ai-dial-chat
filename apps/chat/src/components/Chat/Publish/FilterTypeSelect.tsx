@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FiltersTypes } from '@/src/types/share';
+import { PublicationFunctions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
@@ -14,7 +14,7 @@ interface FilterTypeProps {
   id: string;
   filterTypes: string[];
   selectedType: string;
-  onChangeFilterType: (filterType: FiltersTypes) => void;
+  onChangeFilterType: (filterType: PublicationFunctions) => void;
 }
 
 export function FilterTypeSelect({
@@ -28,7 +28,7 @@ export function FilterTypeSelect({
   const { t } = useTranslation(Translation.SideBar);
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
-    onChangeFilterType(e.currentTarget.value as FiltersTypes);
+    onChangeFilterType(e.currentTarget.value as PublicationFunctions);
     setIsOpen(false);
   };
 

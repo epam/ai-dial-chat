@@ -82,7 +82,13 @@ import {
   RateBody,
   Role,
 } from '@/src/types/chat';
-import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
+import {
+  ApiKeys,
+  BackendResourceType,
+  EntityType,
+  FeatureType,
+  UploadStatus,
+} from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 
@@ -101,6 +107,7 @@ import { defaultReplay } from '@/src/constants/replay';
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
+import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   ConversationsActions,
@@ -269,6 +276,16 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
+            of(
+              PublicationActions.uploadPublishedItems({
+                featureType: ApiKeys.Conversations,
+              }),
+            ),
+            of(
+              PublicationActions.uploadPublishedByMeItems({
+                resourceTypes: [BackendResourceType.CONVERSATION],
+              }),
+            ),
           );
         }),
         catchError((err) => {

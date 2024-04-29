@@ -73,7 +73,7 @@ const allProviders: (Provider | boolean)[] = [
           audience: process.env.AUTH_AUTH0_AUDIENCE,
           scope:
             process.env.AUTH_AUTH0_SCOPE ||
-            'openid email profile offline_access',
+            'openid email profile offline_access role roles title',
         },
       },
       token: tokenConfig,

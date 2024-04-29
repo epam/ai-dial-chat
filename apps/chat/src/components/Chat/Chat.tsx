@@ -34,6 +34,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -52,6 +53,7 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
+import { ApprovePublication } from './Publish/Approve';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -932,6 +934,13 @@ export function Chat() {
   const activeModel = useAppSelector((state) =>
     ModelsSelectors.selectModel(state, isolatedModelId || ''),
   );
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
+
+  if (selectedPublication && !selectedConversationsIds.length) {
+    return <ApprovePublication publication={selectedPublication} />;
+  }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
     return (

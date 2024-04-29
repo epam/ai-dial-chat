@@ -23,17 +23,23 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_APPROVE_REQUIRED_NAME,
   PUBLISHING_FOLDER_NAME,
 } from '@/src/constants/folders';
 
 import Folder from '@/src/components/Folder/Folder';
 
+import { ApproveRequiredSection } from '../Chat/Publication/ApproveRequiredSection';
 import CollapsableSection from '../Common/CollapsableSection';
 import { BetweenFoldersLine } from '../Sidebar/BetweenFoldersLine';
 import { ConversationComponent } from './Conversation';
@@ -324,20 +330,30 @@ export const ChatSection = ({
 
 export function ChatFolders() {
   const { t } = useTranslation(Translation.SideBar);
+
   const isFilterEmpty = useAppSelector(
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
   const commonItemFilter = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
-
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
   );
-
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
+  const publicationItems = useAppSelector(
+    PublicationSelectors.selectPublications,
+  );
+
+  const toApproveFolderItem = {
+    hidden: !publicationItems.length,
+    name: t(PUBLISHING_APPROVE_REQUIRED_NAME),
+    displayRootFiles: true,
+    dataQa: 'approve-required',
+    openByDefault: true,
+  };
 
   const folderItems: FolderSectionProps[] = useMemo(
     () =>
@@ -374,6 +390,9 @@ export function ChatFolders() {
       className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="chat-folders"
     >
+      {!toApproveFolderItem.hidden && (
+        <ApproveRequiredSection {...toApproveFolderItem} />
+      )}
       {folderItems.map((itemProps) => (
         <ChatSection key={itemProps.name} {...itemProps} />
       ))}

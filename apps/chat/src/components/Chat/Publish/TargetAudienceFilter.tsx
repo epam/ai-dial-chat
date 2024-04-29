@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { FiltersTypes, TargetAudienceFilter } from '@/src/types/share';
+import { PublicationFunctions } from '@/src/types/publication';
+import { TargetAudienceFilter } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
@@ -17,10 +18,11 @@ interface Props {
 }
 
 const filterTypeValues = [
-  FiltersTypes.Contains,
-  FiltersTypes.NotContains,
-  FiltersTypes.Equals,
-  FiltersTypes.Regex,
+  PublicationFunctions.CONTAIN,
+  PublicationFunctions.EQUAL,
+  PublicationFunctions.REGEX,
+  PublicationFunctions.TRUE,
+  PublicationFunctions.FALSE,
 ];
 
 const getItemLabel = (item: string) => item;
@@ -33,20 +35,20 @@ export function TargetAudienceFilterComponent({
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
-  const [filterType, setFilterType] = useState<FiltersTypes>(
+  const [filterType, setFilterType] = useState<PublicationFunctions>(
     initialSelectedFilter?.filterType ?? filterTypeValues[0],
   );
   const [filterParams, setFilteParams] = useState<string[]>([]);
   const [filterRegexParam, setfilterRegexParam] = useState<string>(
-    (initialSelectedFilter?.filterType === FiltersTypes.Regex &&
+    (initialSelectedFilter?.filterType === PublicationFunctions.REGEX &&
       initialSelectedFilter.filterParams[0]) ||
       '',
   );
 
   const onChangeFilterType = useCallback(
-    (filterType: FiltersTypes) => {
+    (filterType: PublicationFunctions) => {
       setFilterType(filterType);
-      if (filterType === FiltersTypes.Regex) {
+      if (filterType === PublicationFunctions.REGEX) {
         onChangeFilter({
           id,
           name,
@@ -73,7 +75,7 @@ export function TargetAudienceFilterComponent({
       onChangeFilter({
         id,
         name,
-        filterType: FiltersTypes.Regex,
+        filterType: PublicationFunctions.REGEX,
         filterParams: [filterRegexParam],
       });
     },
@@ -91,7 +93,7 @@ export function TargetAudienceFilterComponent({
         onChangeFilterType={onChangeFilterType}
         id={id}
       />
-      {filterType === FiltersTypes.Regex ? (
+      {filterType === PublicationFunctions.REGEX ? (
         <RegexParamInput
           regEx={filterRegexParam}
           onRegExChange={onChangefilterRegexParam}

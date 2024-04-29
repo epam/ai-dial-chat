@@ -1,58 +1,68 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { ApiKeys, BackendResourceType } from '@/src/types/common';
+import { ApiKeys, BackendResourceType, UploadStatus } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
-  PublicationsListModel,
+  PublicationRule,
   PublishedItem,
 } from '@/src/types/publication';
 
-import { RootState } from '../index';
+import * as PublicationSelectors from './publication.selectors';
+
+export { PublicationSelectors };
 
 export interface PublicationState {
-  publications: PublicationInfo[];
+  publications: (PublicationInfo & Partial<Publication>)[];
+  selectedPublication: Publication | null;
   publishedItems: PublishedItem[];
 }
 
 const initialState: PublicationState = {
   publications: [],
   publishedItems: [],
+  selectedPublication: null,
 };
 
 export const publicationSlice = createSlice({
   name: 'publication',
   initialState,
   reducers: {
+    init: (state) => state,
     publish: (
       state,
       _action: PayloadAction<{
         targetUrl: string;
         targetFolder: string;
         sourceUrl: string;
+        rules: PublicationRule[];
       }>,
     ) => state,
     publishSuccess: (state, { payload }: PayloadAction<Publication>) => {
       state.publications = state.publications.concat(payload);
     },
     publishFail: (state) => state,
-    uploadPublications: (state, _action: PayloadAction<{ url: string }>) =>
+    uploadPublications: (
       state,
+      _action: PayloadAction<{ url?: string; asAdmin: boolean }>,
+    ) => state,
     uploadPublicationsSuccess: (
       state,
-      { payload }: PayloadAction<PublicationsListModel>,
+      { payload }: PayloadAction<{ publications: PublicationInfo[] }>,
     ) => {
-      state.publications = state.publications.concat(payload.publications);
+      state.publications = payload.publications;
     },
     uploadPublicationsFail: (state) => state,
     uploadPublication: (state, _action: PayloadAction<{ url: string }>) =>
       state,
     uploadPublicationSuccess: (
       state,
-      { payload }: PayloadAction<Publication>,
+      { payload }: PayloadAction<{ publication: Publication }>,
     ) => {
       state.publications = state.publications.map((p) =>
-        p.url === payload.url ? { ...payload, ...p } : p,
+        p.url === payload.publication.url
+          ? { ...payload.publication, ...p, uploadStatus: UploadStatus.LOADED }
+          : p,
       );
     },
     uploadPublicationFail: (state) => state,
@@ -68,9 +78,9 @@ export const publicationSlice = createSlice({
     ) => state,
     uploadPublishedItemsSuccess: (
       state,
-      { payload }: PayloadAction<{ publishedItems: PublishedItem[] }>,
+      { payload }: PayloadAction<{ publishedItems: PublishedItem }>,
     ) => {
-      state.publishedItems = payload.publishedItems;
+      state.publishedItems = payload.publishedItems.items || [];
     },
     uploadPublishedItemsFail: (state) => state,
     uploadPublishedByMeItems: (
@@ -80,15 +90,33 @@ export const publicationSlice = createSlice({
     uploadPublishedByMeItemsFail: (state) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,
+    approvePublicationSuccess: (
+      state,
+      { payload }: PayloadAction<{ url: string }>,
+    ) => {
+      state.publications = state.publications.filter(
+        (p) => p.url !== payload.url,
+      );
+    },
     approvePublicationFail: (state) => state,
     rejectPublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,
+    rejectPublicationSuccess: (
+      state,
+      { payload }: PayloadAction<{ url: string }>,
+    ) => {
+      state.publications = state.publications.filter(
+        (p) => p.url !== payload.url,
+      );
+    },
     rejectPublicationFail: (state) => state,
+    selectPublication: (
+      state,
+      { payload }: PayloadAction<{ publication: Publication }>,
+    ) => {
+      state.selectedPublication = payload.publication;
+    },
   },
 });
-
-const rootSelector = (state: RootState): PublicationState => state.publication;
-
-export const PublicationSelectors = {};
 
 export const PublicationActions = publicationSlice.actions;

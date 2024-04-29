@@ -1,6 +1,6 @@
 import { BackendDataNodeType, BackendResourceType } from './common';
 
-enum PublicationFunctions {
+export enum PublicationFunctions {
   EQUAL = 'EQUAL',
   CONTAIN = 'CONTAIN',
   REGEX = 'REGEX',
@@ -8,7 +8,7 @@ enum PublicationFunctions {
   TRUE = 'TRUE',
 }
 
-interface PublicationRule {
+export interface PublicationRule {
   source: string;
   function: PublicationFunctions;
   targets: string[];
@@ -21,7 +21,7 @@ export interface PublicationRequest {
   rules?: PublicationRule[];
 }
 
-enum PublicationStatus {
+export enum PublicationStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',

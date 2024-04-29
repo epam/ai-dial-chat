@@ -16,18 +16,16 @@ import {
   constructPath,
   validatePublishingFileRenaming,
 } from '@/src/utils/app/file';
+import { splitEntityId } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
-import { getAttachments, isPublishVersionUnique } from '@/src/utils/app/share';
+import { getAttachments } from '@/src/utils/app/share';
 import { onBlur } from '@/src/utils/app/style-helpers';
+import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
-import {
-  SharingType,
-  TargetAudienceFilter,
-  UserGroup,
-} from '@/src/types/share';
+import { SharingType, TargetAudienceFilter } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -44,7 +42,6 @@ import Modal from '../../Common/Modal';
 import Tooltip from '../../Common/Tooltip';
 import { PublishAttachment } from './PublishAttachment';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
-import { UserGroupFilter } from './UserGroupFilter';
 
 interface Props {
   entity: ShareEntity;
@@ -83,15 +80,15 @@ export default function PublishWizard({
 
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
-  const [version, setVersion] = useState<string>('');
-  const isVersionUnique = useAppSelector((state) =>
-    isPublishVersionUnique(type)(state, entity.id, version.trim()),
-  );
+  // const [version, setVersion] = useState<string>('');
+  // const isVersionUnique = useAppSelector((state) =>
+  // isPublishVersionUnique(type)(state, entity.id, version.trim()),
+  // );
 
   const files = useAppSelector((state) =>
     getAttachments(type)(state, entity.id),
   );
-  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
+  // const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
@@ -103,12 +100,12 @@ export default function PublishWizard({
     [],
   );
 
-  const versionOnChangeHandler = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setVersion(e.target.value);
-    },
-    [],
-  );
+  // const versionOnChangeHandler = useCallback(
+  //   (e: ChangeEvent<HTMLInputElement>) => {
+  //     setVersion(e.target.value);
+  //   },
+  //   [],
+  // );
 
   const handleStartFileRename = useCallback((file: DialFile) => {
     setRenamingFile(file);
@@ -164,43 +161,39 @@ export default function PublishWizard({
       setSubmitted(true);
 
       const trimmedName = name?.trim();
-      const trimmedVersion = version?.trim();
+      // const trimmedVersion = version?.trim();
       const trimmedPath = path?.trim();
 
-      if (!trimmedName || !trimmedVersion) {
+      if (!trimmedName) {
         return;
       }
 
-      if (!isVersionUnique) return;
+      // if (!isVersionUnique) return;
 
       dispatch(
         PublicationActions.publish({
           sourceUrl: entity.id,
-          targetFolder: trimmedPath,
-          targetUrl: `${entity.id.split('/')[0]}/public/${trimmedPath}/${trimmedName}`,
+          targetFolder: trimmedPath + '/',
+          targetUrl: `${entity.id.split('/')[0]}/public/${trimmedPath ? `${trimmedPath}/` : ''}${
+            parseConversationApiKey(splitEntityId(entity.id).name).model.id +
+            '__' +
+            trimmedName
+          }`,
+          rules: otherTargetAudienceFilters.map((filter) => ({
+            function: filter.filterType,
+            source: filter.id,
+            targets: filter.filterParams,
+          })),
         }),
-        // publishAction({
-        //   id: entity.id,
-        //   name: trimmedName,
-        //   path: trimmedPath,
-        //   version: trimmedVersion,
-        //   fileNameMapping: new Map( // invert mapping
-        //     Array.from(newFileNames.current, (entry) => [entry[1], entry[0]]),
-        //   ),
-        //   targetAudienceFilters: {
-        //     userGroups,
-        //     other: otherTargetAudienceFilters,
-        //   },
-        // }),
       );
       onClose();
     },
-    [dispatch, entity.id, isVersionUnique, name, onClose, path, version],
+    [dispatch, entity.id, name, onClose, otherTargetAudienceFilters, path],
   );
 
-  const handleBlur = useCallback(() => {
-    setSubmitted(true);
-  }, []);
+  // const handleBlur = useCallback(() => {
+  //   setSubmitted(true);
+  // }, []);
 
   const inputClassName = classNames('input-form mx-0 py-2', 'peer', {
     'input-invalid submitted': submitted,
@@ -276,7 +269,7 @@ export default function PublishWizard({
                 </button>
               </div>
 
-              <div>
+              {/* <div>
                 <label
                   className="mb-1 flex text-xs text-secondary"
                   htmlFor="requestVersion"
@@ -307,7 +300,7 @@ export default function PublishWizard({
                     )}
                   </div>
                 )}
-              </div>
+              </div> */}
             </section>
 
             <section className="flex flex-col px-5 py-4">
@@ -331,7 +324,7 @@ export default function PublishWizard({
                 </Tooltip>
               </h2>
 
-              <CollapsableSection
+              {/* <CollapsableSection
                 name={t('User Group')}
                 dataQa="filter-user-group"
                 openByDefault={false}
@@ -341,14 +334,11 @@ export default function PublishWizard({
                   onChangeUserGroups={setUserGroups}
                   initialSelectedUserGroups={userGroups}
                 />
-              </CollapsableSection>
+              </CollapsableSection> */}
 
               {[
-                { id: 'JobTitle', name: 'Job Title' },
-                { id: 'AssignedProjects', name: 'Assigned Projects' },
-                { id: 'filter4', name: 'Filter 4' },
-                { id: 'filter5', name: 'Filter 5' },
-                { id: 'filter6', name: 'Filter 6' },
+                { id: 'title', name: 'Title' },
+                { id: 'roles', name: 'Roles' },
               ].map((v, idx) => {
                 const initialSelectedFilter = otherTargetAudienceFilters.find(
                   ({ id }) => id === v.id,

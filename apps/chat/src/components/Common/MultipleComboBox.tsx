@@ -109,7 +109,7 @@ export function MultipleComboBox<T>({
     selectedItems,
     addSelectedItem,
   } = useMultipleSelection({
-    selectedItems: initialSelectedItems,
+    selectedItems: initialSelectedItems || [],
     onStateChange({ selectedItems: newSelectedItems, type }) {
       switch (type) {
         case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
@@ -197,120 +197,118 @@ export function MultipleComboBox<T>({
   }, [isOpen, update, refs.floating, refs.reference]);
 
   return (
-    <>
-      <div className="relative w-full" data-qa="multiple-combobox">
-        <div className="flex w-full flex-col gap-1">
-          {label && (
-            <label htmlFor="option-input" {...getLabelProps()}>
-              {label}
-            </label>
-          )}
-          <div
-            ref={refs.reference as RefObject<HTMLDivElement>}
-            onClick={() => {
-              if (!inputRef.current) {
-                return;
-              }
-              inputRef.current.focus();
-            }}
-            className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
-          >
-            {selectedItems &&
-              selectedItems.map((selectedItemForRender, index) => {
-                return (
-                  <span
-                    className="flex items-center gap-2 rounded bg-accent-primary-alpha px-3 py-1.5"
-                    key={`selected-item-${getItemLabel(
-                      selectedItemForRender,
-                    )}-${index}`}
-                    {...getSelectedItemProps({
-                      selectedItem: selectedItemForRender,
-                      index,
-                    })}
-                  >
-                    {selectedItemRow ? (
-                      createElement(selectedItemRow, {
-                        item: selectedItemForRender,
-                      })
-                    ) : (
-                      <span className="max-w-[150px] truncate break-all text-xs">
-                        {getItemLabel(selectedItemForRender)}
-                      </span>
-                    )}
-                    <span
-                      data-qa={`unselect-item-${getItemValue(
-                        selectedItemForRender,
-                      )}`}
-                      className="cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSelectedItem(selectedItemForRender);
-                      }}
-                    >
-                      <IconX size={14} className="text-secondary" />
+    <div className="relative w-full" data-qa="multiple-combobox">
+      <div className="flex w-full flex-col gap-1">
+        {label && (
+          <label htmlFor="option-input" {...getLabelProps()}>
+            {label}
+          </label>
+        )}
+        <div
+          ref={refs.reference as RefObject<HTMLDivElement>}
+          onClick={() => {
+            if (!inputRef.current) {
+              return;
+            }
+            inputRef.current.focus();
+          }}
+          className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
+        >
+          {selectedItems &&
+            selectedItems.map((selectedItemForRender, index) => {
+              return (
+                <span
+                  className="flex items-center gap-2 rounded bg-accent-primary-alpha px-3 py-1.5"
+                  key={`selected-item-${getItemLabel(
+                    selectedItemForRender,
+                  )}-${index}`}
+                  {...getSelectedItemProps({
+                    selectedItem: selectedItemForRender,
+                    index,
+                  })}
+                >
+                  {selectedItemRow ? (
+                    createElement(selectedItemRow, {
+                      item: selectedItemForRender,
+                    })
+                  ) : (
+                    <span className="max-w-[150px] truncate break-all text-xs">
+                      {getItemLabel(selectedItemForRender)}
                     </span>
+                  )}
+                  <span
+                    data-qa={`unselect-item-${getItemValue(
+                      selectedItemForRender,
+                    )}`}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSelectedItem(selectedItemForRender);
+                    }}
+                  >
+                    <IconX size={14} className="text-secondary" />
                   </span>
-                );
-              })}
+                </span>
+              );
+            })}
 
-            <input
-              name="option-input"
-              disabled={disabled}
-              placeholder={selectedItems.length ? '' : placeholder || ''}
-              className={classNames(
-                'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
-                selectedItems.length ? 'pl-1' : 'pl-2',
-              )}
-              {...getInputProps({
-                ...getDropdownProps({
-                  preventKeyAction: isOpen,
-                }),
-                ref: inputRef,
-              })}
-            />
-          </div>
-
-          <ul
+          <input
+            name="option-input"
+            disabled={disabled}
+            placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
-              'z-10 max-h-80 overflow-auto rounded bg-layer-3',
-              !isOpen && 'hidden',
+              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
+              selectedItems.length ? 'pl-1' : 'pl-2',
             )}
-            {...getMenuProps(
-              { ref: refs.floating as RefObject<HTMLUListElement> },
-              { suppressRefError: true },
-            )}
-            style={{
-              position: strategy,
-              top: y ?? '',
-              left: x ?? '',
-              width: `${floatingWidth}px`,
-            }}
-          >
-            {true &&
-              (displayedItems?.length > 0
-                ? displayedItems.map((item, index) => (
-                    <li
-                      className={classNames(
-                        'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
-                        highlightedIndex === index && 'bg-accent-primary-alpha',
-                        selectedItem === item && 'bg-accent-primary-alpha',
-                      )}
-                      key={`${getItemValue(item)}${index}`}
-                      {...getItemProps({ item, index })}
-                    >
-                      {itemRow
-                        ? createElement(itemRow, { item })
-                        : getItemLabel(item)}
-                    </li>
-                  ))
-                : !!inputValue?.length && (
-                    <li className="px-3 py-2">
-                      {notFoundPlaceholder || t('No available items')}
-                    </li>
-                  ))}
-          </ul>
+            {...getInputProps({
+              ...getDropdownProps({
+                preventKeyAction: isOpen,
+                ref: inputRef,
+              }),
+            })}
+          />
         </div>
+
+        <ul
+          className={classNames(
+            'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+            !isOpen && 'hidden',
+          )}
+          {...getMenuProps(
+            { ref: refs.floating as RefObject<HTMLUListElement> },
+            { suppressRefError: true },
+          )}
+          style={{
+            position: strategy,
+            top: y ?? '',
+            left: x ?? '',
+            width: `${floatingWidth}px`,
+          }}
+        >
+          {true &&
+            (displayedItems?.length > 0
+              ? displayedItems.map((item, index) => (
+                  <li
+                    className={classNames(
+                      'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
+                      highlightedIndex === index && 'bg-accent-primary-alpha',
+                      selectedItem === item && 'bg-accent-primary-alpha',
+                    )}
+                    key={`${getItemValue(item)}${index}`}
+                    {...getItemProps({ item, index })}
+                  >
+                    {itemRow
+                      ? createElement(itemRow, { item })
+                      : getItemLabel(item)}
+                  </li>
+                ))
+              : !!inputValue?.length && (
+                  <li className="px-3 py-2">
+                    {notFoundPlaceholder || t('No available items')}
+                  </li>
+                ))}
+        </ul>
       </div>
-    </>
+    </div>
   );
 }

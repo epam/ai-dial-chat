@@ -8,8 +8,10 @@ import {
   PublishedByMeItem,
   PublishedItem,
 } from '@/src/types/publication';
+import { UIStorageKeys } from '@/src/types/storage';
 
 import { ApiUtils } from '../../server/api';
+import { BrowserStorage } from './storages/browser-storage';
 
 export class PublicationService {
   public static publish(
@@ -44,11 +46,11 @@ export class PublicationService {
     });
   }
 
-  public static getPublishedItems(
+  public static getPublishedWithMeItems(
     parentPath: string,
     entityType: ApiKeys,
     options?: Partial<{ recursive: boolean }>,
-  ): Observable<PublishedItem[]> {
+  ): Observable<PublishedItem> {
     const query = new URLSearchParams({
       ...(options?.recursive && { recursive: String(options.recursive) }),
     });
@@ -79,5 +81,18 @@ export class PublicationService {
       method: 'POST',
       body: JSON.stringify({ url }),
     });
+  }
+
+  public static getSelectedConversationsId(): Observable<string | null> {
+    return BrowserStorage.getData(UIStorageKeys.SelectedPublicationId, null);
+  }
+
+  public static setSelectedPublicationId(
+    selectedPublicationId: string,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.SelectedPublicationId,
+      selectedPublicationId,
+    );
   }
 }

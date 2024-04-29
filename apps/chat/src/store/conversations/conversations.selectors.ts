@@ -96,6 +96,13 @@ export const selectFolders = createSelector(
   },
 );
 
+export const selectPublicationFolders = createSelector(
+  [rootSelector],
+  (state: ConversationsState) => {
+    return state.folders.filter((f) => f.isPublicationFolder);
+  },
+);
+
 export const selectEmptyFolderIds = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {

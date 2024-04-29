@@ -51,59 +51,55 @@ export const ChatSettingsEmpty = ({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
-    <>
-      <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
-        <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-          {!isModels ? (
-            <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
-              <Spinner size={16} className="mx-auto" />
-            </div>
-          ) : (
-            <>
-              {appName && (
-                <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
-                  <h4
-                    data-qa="app-name"
-                    className="w-full whitespace-pre text-center text-xl font-semibold"
-                  >
-                    {isolatedModelId && modelsMap[isolatedModelId] ? (
-                      <ModelDescription
-                        model={modelsMap[isolatedModelId] as DialAIEntityModel}
-                        className="justify-center"
-                        hideMoreInfo
-                        isShortDescription
-                      />
-                    ) : (
-                      appName
-                    )}
-                  </h4>
-                </div>
-              )}
-            </>
-          )}
+    <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
+      <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
+        {!isModels ? (
+          <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+            <Spinner size={16} className="mx-auto" />
+          </div>
+        ) : (
+          <>
+            {appName && (
+              <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+                <h4
+                  data-qa="app-name"
+                  className="w-full whitespace-pre text-center text-xl font-semibold"
+                >
+                  {isolatedModelId && modelsMap[isolatedModelId] ? (
+                    <ModelDescription
+                      model={modelsMap[isolatedModelId] as DialAIEntityModel}
+                      className="justify-center"
+                      hideMoreInfo
+                      isShortDescription
+                    />
+                  ) : (
+                    appName
+                  )}
+                </h4>
+              </div>
+            )}
+          </>
+        )}
 
-          {isShowSettings && isModels && (
-            <>
-              <ConversationSettings
-                conversation={conversation}
-                modelId={conversation.model.id}
-                assistantModelId={conversation.assistantModelId}
-                prompt={conversation.prompt}
-                selectedAddons={conversation.selectedAddons}
-                temperature={conversation.temperature}
-                prompts={prompts}
-                onChangePrompt={onChangePrompt}
-                onChangeTemperature={onChangeTemperature}
-                onSelectAssistantSubModel={onSelectAssistantSubModel}
-                onSelectModel={onSelectModel}
-                onChangeAddon={onChangeAddon}
-                onApplyAddons={handleOnApplyAddons}
-                debounceSystemPromptChanges
-              />
-            </>
-          )}
-        </div>
+        {isShowSettings && isModels && (
+          <ConversationSettings
+            conversation={conversation}
+            modelId={conversation.model.id}
+            assistantModelId={conversation.assistantModelId}
+            prompt={conversation.prompt}
+            selectedAddons={conversation.selectedAddons}
+            temperature={conversation.temperature}
+            prompts={prompts}
+            onChangePrompt={onChangePrompt}
+            onChangeTemperature={onChangeTemperature}
+            onSelectAssistantSubModel={onSelectAssistantSubModel}
+            onSelectModel={onSelectModel}
+            onChangeAddon={onChangeAddon}
+            onApplyAddons={handleOnApplyAddons}
+            debounceSystemPromptChanges
+          />
+        )}
       </div>
-    </>
+    </div>
   );
 };

@@ -5,6 +5,7 @@ import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { UIStorageKeys } from '@/src/types/storage';
 
 import { DataService } from './data-service';
+import { PublicationService } from './publication-service';
 import { BrowserStorage } from './storages/browser-storage';
 
 export class ConversationService {

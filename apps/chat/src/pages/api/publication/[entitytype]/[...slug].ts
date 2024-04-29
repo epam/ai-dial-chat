@@ -51,6 +51,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
 
+  const { recursive = false } = req.query as {
+    recursive?: string;
+  };
+
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   const token = await getToken({ req });
@@ -59,7 +63,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const proxyRes = await fetch(url, {
+    const proxyRes = await fetch(`${url}/?recursive=${recursive}`, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
     });
 
@@ -69,6 +73,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         json = await proxyRes.json();
       } catch (err) {
         json = undefined;
+      }
+
+      if (proxyRes.status === 403) {
+        return res.status(200).send({ publications: [] });
       }
 
       throw new DialAIError(

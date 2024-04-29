@@ -1,4 +1,5 @@
 import { BackendResourceType } from './common';
+import { PublicationFunctions } from './publication';
 
 export interface ShareInterface {
   isShared?: boolean;
@@ -43,7 +44,7 @@ export interface InvitationDetails {
 }
 
 export interface TargetAudienceFilter extends TargetAudienceFilterItem {
-  filterType: FiltersTypes;
+  filterType: PublicationFunctions;
   filterParams: string[];
 }
 
