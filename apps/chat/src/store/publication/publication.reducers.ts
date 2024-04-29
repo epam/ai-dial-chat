@@ -38,9 +38,6 @@ export const publicationSlice = createSlice({
         rules: PublicationRule[];
       }>,
     ) => state,
-    publishSuccess: (state, { payload }: PayloadAction<Publication>) => {
-      state.publications = state.publications.concat(payload);
-    },
     publishFail: (state) => state,
     uploadPublications: (
       state,

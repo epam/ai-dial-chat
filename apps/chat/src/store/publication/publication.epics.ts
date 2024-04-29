@@ -64,13 +64,11 @@ const publishEpic: AppEpic = (action$) =>
       };
 
       return PublicationService.publish(publicationRequestInfo).pipe(
-        switchMap((publication) =>
-          of(PublicationActions.publishSuccess(publication)),
-        ),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.publishFail());
         }),
+        ignoreElements(),
       );
     }),
   );

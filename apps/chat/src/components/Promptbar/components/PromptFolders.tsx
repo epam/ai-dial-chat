@@ -12,7 +12,7 @@ import {
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { FeatureType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -23,17 +23,20 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
+  PUBLISHING_APPROVE_REQUIRED_NAME,
   PUBLISHING_FOLDER_NAME,
 } from '@/src/constants/folders';
 
 import Folder from '@/src/components/Folder/Folder';
 
+import { ApproveRequiredSection } from '../../Chat/Publish/ApproveRequiredSection';
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import { BetweenFoldersLine } from '../../Sidebar/BetweenFoldersLine';
 import { PromptComponent } from './Prompt';
@@ -309,6 +312,7 @@ export const PromptSection = ({
 
 export function PromptFolders() {
   const { t } = useTranslation(Translation.PromptBar);
+
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
   );
@@ -318,10 +322,23 @@ export function PromptFolders() {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
-
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
   );
+  const publicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      BackendResourceType.PROMPT,
+    ),
+  );
+
+  const toApproveFolderItem = {
+    hidden: !publicationItems.length,
+    name: t(PUBLISHING_APPROVE_REQUIRED_NAME),
+    displayRootFiles: true,
+    dataQa: 'approve-required',
+    openByDefault: true,
+  };
 
   const folderItems: FolderSectionProps[] = useMemo(
     () =>
@@ -365,6 +382,9 @@ export function PromptFolders() {
       className="flex w-full flex-col gap-0.5 divide-y divide-tertiary empty:hidden"
       data-qa="prompt-folders"
     >
+      {!toApproveFolderItem.hidden && (
+        <ApproveRequiredSection {...toApproveFolderItem} />
+      )}
       {folderItems.map((itemProps) => (
         <PromptSection key={itemProps.name} {...itemProps} />
       ))}

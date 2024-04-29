@@ -13,7 +13,7 @@ import {
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -340,8 +340,11 @@ export function ChatFolders() {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
-  const publicationItems = useAppSelector(
-    PublicationSelectors.selectPublications,
+  const publicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      BackendResourceType.CONVERSATION,
+    ),
   );
 
   const toApproveFolderItem = {

@@ -48,6 +48,7 @@ export interface PublicationInfo {
   targetUrl: string;
   status: PublicationStatus;
   createdAt: number;
+  resourceTypes: BackendResourceType[];
 }
 
 export interface PublicationsListModel {

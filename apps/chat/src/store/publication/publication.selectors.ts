@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { BackendResourceType } from '@/src/types/common';
 import { PublicationStatus } from '@/src/types/publication';
 
 import { RootState } from '../index';
@@ -10,6 +11,15 @@ const rootSelector = (state: RootState): PublicationState => state.publication;
 export const selectPublications = createSelector([rootSelector], (state) => {
   return state.publications;
 });
+
+export const selectFilteredPublications = createSelector(
+  [rootSelector, (_state, resourceType: BackendResourceType) => resourceType],
+  (state, resourceType) => {
+    return state.publications.filter((p) =>
+      p.resourceTypes.includes(resourceType),
+    );
+  },
+);
 
 export const selectPendingPublications = createSelector(
   [selectPublications],
