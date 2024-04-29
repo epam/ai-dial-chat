@@ -52,6 +52,22 @@ function generateUrlsCssVariables(
   return cssContent;
 }
 
+function generateFontCssVariables(
+  variables: Record<string, string> | undefined,
+) {
+  if (!variables) {
+    return '';
+  }
+
+  let cssContent = '';
+  Object.entries(variables).forEach(([variable, value]) => {
+    const compiledValue = value;
+
+    cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
+  });
+  return cssContent;
+}
+
 function wrapCssContents(wrapper: string, contents: string[]): string {
   return `${wrapper} {\n ${contents.join('')}\n }\n`;
 }
@@ -103,6 +119,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateFontCssVariables(theme.fontFamily),
         ]),
       ),
       generateUrlsCssVariables({

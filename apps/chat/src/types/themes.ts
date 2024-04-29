@@ -2,6 +2,7 @@ export interface Theme {
   displayName: string;
   colors: Record<string, string>;
   'app-logo': string;
+  fontFamily: Record<string, string>;
   id: string;
 }
 
