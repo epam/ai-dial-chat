@@ -2,6 +2,7 @@ import { IconX } from '@tabler/icons-react';
 import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -113,6 +114,7 @@ export const ConversationSettings = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const router = useRouter();
 
   const model = useMemo(
     () => (modelId ? modelsMap[modelId] : undefined),
@@ -132,6 +134,13 @@ export const ConversationSettings = ({
 
   const isPlayback = conversation.playback?.isPlayback;
 
+  const changeTalkToParam = (modelId: string) => {
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, talkto: modelId },
+    });
+  };
+
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
       <div
@@ -145,7 +154,10 @@ export const ConversationSettings = ({
             unavailableModelId={
               !model?.id && !isPseudoModel(modelId) ? modelId : undefined
             }
-            onModelSelect={onSelectModel}
+            onModelSelect={(modelId: string) => {
+              onSelectModel(modelId);
+              changeTalkToParam(modelId);
+            }}
           />
         </div>
         <div

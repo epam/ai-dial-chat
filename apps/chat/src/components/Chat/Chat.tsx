@@ -149,13 +149,24 @@ export const ChatView = memo(() => {
     (chat) => chat?.id === currentChatId?.[0],
   );
 
-  useEffect(() => {
-    if (router?.query?.choice) {
-      const { choice } = router?.query || {};
-      const modelId =
-        choice === DocumentId.queryParam ? DocumentId.modelId : choice;
+  const modelIds = useMemo(
+    () => [...models.map((model) => model.id)],
+    [models],
+  );
 
-      if ((currentConversation as any)?.messages) {
+  useEffect(() => {
+    const { talkto } = router?.query || {};
+
+    if (modelIds?.length > 0 && talkto) {
+      modelIds.push(DocumentId.queryParam);
+
+      const modelId =
+        talkto === DocumentId.queryParam ? DocumentId.modelId : talkto;
+
+      if (
+        (currentConversation as any)?.messages &&
+        modelIds?.includes(talkto as string)
+      ) {
         dispatch(
           ConversationsActions.updateConversation({
             id: selectedConversationsIds[0],
@@ -166,7 +177,7 @@ export const ChatView = memo(() => {
         );
       }
     }
-  }, [router.asPath]);
+  }, [router.asPath, modelIds]);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
