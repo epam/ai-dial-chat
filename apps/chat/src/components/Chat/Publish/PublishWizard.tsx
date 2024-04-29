@@ -25,7 +25,8 @@ import { parseConversationApiKey } from '@/src/utils/server/api';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
-import { SharingType, TargetAudienceFilter } from '@/src/types/share';
+import { TargetAudienceFilter } from '@/src/types/publication';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';

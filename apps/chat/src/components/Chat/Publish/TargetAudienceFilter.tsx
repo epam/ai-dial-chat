@@ -2,8 +2,10 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { PublicationFunctions } from '@/src/types/publication';
-import { TargetAudienceFilter } from '@/src/types/share';
+import {
+  PublicationFunctions,
+  TargetAudienceFilter,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
