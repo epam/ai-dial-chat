@@ -2,15 +2,12 @@ import { ClipboardEvent, MouseEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getUnpublishActionByType } from '@/src/utils/app/share';
-
 import { Entity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
-
+// import { useAppDispatch } from '@/src/store/hooks';
 import Modal from '../Common/Modal';
 
 interface Props {
@@ -24,11 +21,11 @@ export default function UnpublishModal({
   entity,
   isOpen,
   onClose,
-  type,
+  // type,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
-  const dispatch = useAppDispatch();
-  const unpublishAction = getUnpublishActionByType(type);
+  // const dispatch = useAppDispatch();
+  // const unpublishAction = getUnpublishActionByType(type);
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -44,10 +41,10 @@ export default function UnpublishModal({
       e.preventDefault();
       e.stopPropagation();
 
-      dispatch(unpublishAction({ id: entity.id }));
+      // dispatch(unpublishAction({ id: entity.id }));
       onClose();
     },
-    [dispatch, entity.id, onClose, unpublishAction],
+    [onClose],
   );
 
   return (
