@@ -30,6 +30,8 @@ import CaretIconComponent from '../../Common/CaretIconComponent';
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import Folder from '../../Folder/Folder';
 
+import { uniqBy } from 'lodash-es';
+
 export const PublicationItem = ({
   publication,
   status,
@@ -54,6 +56,17 @@ export const PublicationItem = ({
 
   const PublicationIcon =
     status === PublicationStatus.PENDING ? IconClipboard : IconClipboardX;
+  const rootFolders =
+    uniqBy(
+      publication.resources?.map((resource) => {
+        const folders = publicationFolders.filter((f) =>
+          resource?.reviewUrl.startsWith(f.id),
+        );
+
+        return folders.find((f) => isRootId(f.folderId));
+      }),
+      'id',
+    ) ?? [];
 
   return (
     <>
@@ -91,23 +104,28 @@ export const PublicationItem = ({
           </div>
         </div>
       </div>
-      {!!publication.resources &&
-        isOpen &&
-        publication.resources.map((p) => {
-          const folders = publicationFolders.filter((f) =>
-            p.reviewUrl.startsWith(f.folderId),
-          );
-          const rootFolder = folders.find((f) => isRootId(f.folderId));
-
+      {isOpen &&
+        rootFolders.map((rootFolder, index) => {
           if (!rootFolder) {
-            return null;
+            const resource = publication.resources?.[index];
+            return (
+              <ConversationComponent
+                level={1}
+                key={resource?.reviewUrl}
+                item={conversations.find((c) => c.id === resource?.reviewUrl)!}
+              />
+            );
           }
+
+          const folders = publicationFolders.filter((f) =>
+            publication.resources?.[index]?.reviewUrl.startsWith(f.folderId),
+          );
 
           return (
             <Folder
               readonly
               level={1}
-              key={p.reviewUrl}
+              key={publication.resources?.[index]?.reviewUrl}
               currentFolder={rootFolder}
               allFolders={folders}
               searchTerm={searchTerm}
@@ -133,39 +151,38 @@ export const ApproveRequiredSection = ({
 }: Omit<FolderSectionProps, 'filters'>) => {
   const { t } = useTranslation(Translation.SideBar);
 
-  const pendingPublications = useAppSelector(
-    PublicationSelectors.selectPendingPublications,
-  );
-  const requestedForDeletionPublications = useAppSelector(
-    PublicationSelectors.selectRequestedForDeletionPublications,
-  );
-  const selectedFoldersIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsFoldersIds,
+  const publications = useAppSelector(PublicationSelectors.selectPublications);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
   );
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
   );
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   useEffect(() => {
-    // const shouldBeHighlighted =
-    //   rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
-    //   (!!displayRootFiles &&
-    //     sortedRootConversations.some((conv) =>
-    //       selectedConversationsIds.includes(conv.id),
-    //     ));
-    // if (isSectionHighlighted !== shouldBeHighlighted) {
-    //   setIsSectionHighlighted(shouldBeHighlighted);
-    // }
+    const publicationReviewIds = publications.flatMap((p) =>
+      p.resources?.map((r) => r.reviewUrl),
+    );
+    const shouldBeHighlighted = !!(
+      (selectedPublication && !selectedConversationsIds.length) ||
+      selectedConversationsIds.some((id) => publicationReviewIds.includes(id))
+    );
+
+    if (isSectionHighlighted !== shouldBeHighlighted) {
+      setIsSectionHighlighted(shouldBeHighlighted);
+    }
   }, [
     displayRootFiles,
-    // rootFolders,
     isSectionHighlighted,
+    publications,
+    selectedConversations,
     selectedConversationsIds,
-    selectedFoldersIds,
-    // rootConversations,
-    // sortedRootConversations,
+    selectedPublication,
   ]);
 
   return (
@@ -175,16 +192,16 @@ export const ApproveRequiredSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
-      {pendingPublications.map((p) => (
+      {publications.map((p) => (
         <PublicationItem
           status={PublicationStatus.PENDING}
           key={p.url}
           publication={p}
         />
       ))}
-      {!!requestedForDeletionPublications.length && (
+      {/* {!!requestedForDeletionPublications.length && (
         <div>RequestedForDeletion</div>
-      )}
+      )} */}
     </CollapsibleSection>
   );
 };
