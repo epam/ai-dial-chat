@@ -1,5 +1,4 @@
 import { BackendResourceType } from './common';
-import { PublicationFunctions } from './publication';
 
 export interface ShareInterface {
   isShared?: boolean;
