@@ -123,7 +123,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
-          generateFontCssVariables({ 'theme-font': theme.fontFamily }),
+          generateFontCssVariables({ 'theme-font': theme['font-family'] }),
         ]),
       ),
       generateUrlsCssVariables({
