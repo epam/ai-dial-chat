@@ -4,6 +4,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { ThemesConfig } from '@/src/types/themes';
 
+import { inter } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import cssEscape from 'css.escape';
@@ -56,12 +57,15 @@ function generateFontCssVariables(
   variables: Record<string, string> | undefined,
 ) {
   if (!variables) {
-    return '';
+    return `${inter.variable}:${inter.style.fontFamily};\n`;
   }
 
   let cssContent = '';
   Object.entries(variables).forEach(([variable, value]) => {
-    const compiledValue = value;
+    let compiledValue = value;
+    if (!value || !value.length) {
+      compiledValue = inter.style.fontFamily;
+    }
 
     cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
   });
@@ -119,7 +123,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
-          generateFontCssVariables(theme.fontFamily),
+          generateFontCssVariables({ 'theme-font': theme.fontFamily }),
         ]),
       ),
       generateUrlsCssVariables({

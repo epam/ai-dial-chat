@@ -46,7 +46,8 @@ To declare new theme you should create an object inside your themes property and
       "colors": {
         // Semantic colors which commonly used across entire application.
         // See default configuration to check available colors
-      }
+      },
+      "fontFamily":"Inter" //Font for the theme
     },
     // Other themes
   ],
@@ -67,6 +68,7 @@ Below is the default configuration for the theme. This configuration includes th
       "displayName": "Light",
       "id": "light",
       "app-logo": "logo.svg",
+      "fontFamily": "",
       "colors": {
         "bg-layer-0": "#FCFCFC",
         "bg-layer-1": "#EAEDF0",
@@ -110,6 +112,7 @@ Below is the default configuration for the theme. This configuration includes th
       "displayName": "Dark",
       "id": "dark",
       "app-logo": "logo-dark.svg",
+      "fontFamily": "",
       "colors": {
         "bg-layer-0": "#000000",
         "bg-layer-1": "#090D13",
