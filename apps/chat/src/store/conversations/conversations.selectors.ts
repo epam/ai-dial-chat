@@ -452,6 +452,17 @@ export const selectCanAttachLink = createSelector(
   },
 );
 
+export const selectCanAttachFolders = createSelector(
+  [selectSelectedConversationsModels],
+  (models) => {
+    if (models.length === 0) {
+      return false;
+    }
+
+    return models.every((model) => model?.features?.folderAttachments);
+  },
+);
+
 export const selectCanAttachFile = createSelector(
   [
     (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),

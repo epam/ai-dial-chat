@@ -19,6 +19,7 @@ import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
@@ -72,6 +73,9 @@ export const FileManagerModal = ({
   );
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
+  );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
   );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
@@ -378,6 +382,7 @@ export const FileManagerModal = ({
                               onItemEvent={handleItemCallback}
                               withBorderHighlight={false}
                               featureType={FeatureType.File}
+                              canAttachFolders={canAttachFolders}
                             />
                           </div>
                         );

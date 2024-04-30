@@ -1,6 +1,7 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconFolder, IconX } from '@tabler/icons-react';
+import { IconCheck, IconFolder, IconX } from '@tabler/icons-react';
 import {
+  ChangeEvent,
   DragEvent,
   FC,
   Fragment,
@@ -33,7 +34,10 @@ import {
   getFoldersDepth,
   sortByName,
 } from '@/src/utils/app/folders';
-import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import {
+  hasParentWithAttribute,
+  hasParentWithFloatingOverlay,
+} from '@/src/utils/app/modals';
 import {
   getDragImage,
   getEntityMoveType,
@@ -104,6 +108,7 @@ export interface FolderProps<T, P = unknown> {
   allItemsWithoutFilters?: T[];
   folderClassName?: string;
   skipFolderRenameValidation?: boolean;
+  canAttachFolders?: boolean;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -136,6 +141,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   withBorderHighlight = true,
   folderClassName,
   skipFolderRenameValidation = false,
+  canAttachFolders = false,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -165,6 +171,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
+  const [isSelected, setIsSelected] = useState(true);
+
+  const handleToggleFolder = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    //e.preventDefault();
+    e.stopPropagation();
+    setIsSelected((value) => !value);
+    //onEvent?.(FileItemEventIds.Toggle, item.id);
+    return;
+  }, []);
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -641,7 +656,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     >
       <div
         className={classNames(
-          'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group/folder-item group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           !withBorderHighlight && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
           isHighlighted && withBorderHighlight && 'border-accent-primary',
@@ -665,13 +680,47 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             !hasChildElements ? (
               <Spinner />
             ) : (
-              <ShareIcon
-                {...currentFolder}
-                isHighlighted
-                featureType={featureType}
-              >
-                <IconFolder size={18} className="mr-1 text-secondary" />
-              </ShareIcon>
+              <>
+                {!isSelected && (
+                  <ShareIcon
+                    {...currentFolder}
+                    isHighlighted
+                    featureType={featureType}
+                    containerClassName={
+                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                    }
+                  >
+                    <IconFolder
+                      size={18}
+                      className={classNames(
+                        'mr-1 text-secondary',
+                        canAttachFolders && 'group-hover/folder-item:hidden',
+                      )}
+                    />
+                  </ShareIcon>
+                )}
+                {canAttachFolders &&
+                  !loadingFolderIds.includes(currentFolder.id) && (
+                    <div
+                      className={classNames(
+                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                        isSelected ? 'flex' : 'hidden',
+                      )}
+                      data-item-checkbox
+                    >
+                      <input
+                        className="checkbox peer size-[18px] bg-layer-3"
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={handleToggleFolder}
+                      />
+                      <IconCheck
+                        size={18}
+                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                      />
+                    </div>
+                  )}
+              </>
             )}
 
             <input
@@ -690,12 +739,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           </div>
         ) : (
           <div
-            className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3"
+            className="group/button group/folder-item flex size-full cursor-pointer items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 24}px`,
             }}
-            onClick={() => {
-              onClickFolder(currentFolder.id);
+            onClick={(e) => {
+              if (
+                !hasParentWithAttribute(
+                  e.target as HTMLDivElement,
+                  'data-item-checkbox',
+                )
+              ) {
+                onClickFolder(currentFolder.id);
+              }
             }}
             draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
             onDragStart={(e) => handleDragStart(e, currentFolder)}
@@ -714,13 +770,47 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             !hasChildElements ? (
               <Spinner className="mr-1" />
             ) : (
-              <ShareIcon
-                {...currentFolder}
-                isHighlighted={isContextMenu}
-                featureType={featureType}
-              >
-                <IconFolder size={18} className="mr-1 text-secondary" />
-              </ShareIcon>
+              <>
+                {!isSelected && (
+                  <ShareIcon
+                    {...currentFolder}
+                    isHighlighted={isContextMenu}
+                    featureType={featureType}
+                    containerClassName={
+                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                    }
+                  >
+                    <IconFolder
+                      size={18}
+                      className={classNames(
+                        'mr-1 text-secondary',
+                        canAttachFolders && 'group-hover/folder-item:hidden',
+                      )}
+                    />
+                  </ShareIcon>
+                )}
+                {canAttachFolders &&
+                  !loadingFolderIds.includes(currentFolder.id) && (
+                    <div
+                      className={classNames(
+                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                        isSelected ? 'flex' : 'hidden',
+                      )}
+                      data-item-checkbox
+                    >
+                      <input
+                        className="checkbox peer size-[18px] bg-layer-3"
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={handleToggleFolder}
+                      />
+                      <IconCheck
+                        size={18}
+                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                      />
+                    </div>
+                  )}
+              </>
             )}
             <div
               className={classNames(
@@ -742,8 +832,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       : 'text-secondary'),
                   isNameOrPathInvalid
                     ? 'text-secondary'
-                    : highlightedFolders?.includes(currentFolder.id) &&
-                        featureType
+                    : (highlightedFolders?.includes(currentFolder.id) &&
+                          featureType) ||
+                        isSelected
                       ? 'text-accent-primary'
                       : 'text-primary',
                 )}
@@ -856,6 +947,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     maxDepth={maxDepth}
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
+                    canAttachFolders={canAttachFolders}
                   />
                 </Fragment>
               );
