@@ -6,6 +6,8 @@ import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
 
+import { inter } from '../../_app';
+
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
 
@@ -48,6 +50,25 @@ function generateUrlsCssVariables(
       compiledValue = `${process.env.THEMES_CONFIG_HOST}/${value}`;
     }
     cssContent += `--${cssEscape(variable)}: url('${compiledValue}');\n`;
+  });
+  return cssContent;
+}
+
+function generateFontCssVariables(
+  variables: Record<string, string | undefined> | undefined,
+) {
+  if (!variables) {
+    return `${inter.variable}:${inter.style.fontFamily};\n`;
+  }
+
+  let cssContent = '';
+  Object.entries(variables).forEach(([variable, value]) => {
+    let compiledValue = value;
+    if (!value || !value.length) {
+      compiledValue = inter.style.fontFamily;
+    }
+
+    cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
   });
   return cssContent;
 }
@@ -103,6 +124,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateFontCssVariables({ 'theme-font': theme['font-family'] }),
         ]),
       ),
       generateUrlsCssVariables({
