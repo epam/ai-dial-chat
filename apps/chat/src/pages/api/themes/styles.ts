@@ -55,7 +55,7 @@ function generateUrlsCssVariables(
 }
 
 function generateFontCssVariables(
-  variables: Record<string, string> | undefined,
+  variables: Record<string, string | undefined> | undefined,
 ) {
   if (!variables) {
     return `${inter.variable}:${inter.style.fontFamily};\n`;

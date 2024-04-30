@@ -17,7 +17,7 @@ import '@/src/styles/globals.css';
 export const inter = Inter({
   subsets: ['latin'],
   weight: 'variable',
-  variable: '--theme-font',
+  variable: '--font-inter',
 });
 
 function App({
@@ -31,7 +31,7 @@ function App({
   return (
     <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
       <Provider store={store}>
-        <div className="font">
+        <div className={`${inter.variable} font`}>
           <Toaster toastOptions={{ duration: 9000 }}>
             {(t) => (
               <ToastBar
