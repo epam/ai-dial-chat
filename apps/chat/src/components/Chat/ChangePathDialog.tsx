@@ -181,7 +181,7 @@ export const ChangePathDialog = ({
       isOpen={isOpen}
       modalDataQa="change-path-dialog"
       onClose={() => onClose(undefined)}
-      title="Change path"
+      title={t('Change path')}
     >
       <SelectFolderHeader
         handleSearch={handleSearch}

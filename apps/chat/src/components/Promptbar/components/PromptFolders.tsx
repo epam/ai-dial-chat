@@ -383,7 +383,10 @@ export function PromptFolders() {
       data-qa="prompt-folders"
     >
       {!toApproveFolderItem.hidden && (
-        <ApproveRequiredSection {...toApproveFolderItem} />
+        <ApproveRequiredSection
+          resourceType={BackendResourceType.PROMPT}
+          {...toApproveFolderItem}
+        />
       )}
       {folderItems.map((itemProps) => (
         <PromptSection key={itemProps.name} {...itemProps} />

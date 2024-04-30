@@ -391,7 +391,10 @@ export function ChatFolders() {
       data-qa="chat-folders"
     >
       {!toApproveFolderItem.hidden && (
-        <ApproveRequiredSection {...toApproveFolderItem} />
+        <ApproveRequiredSection
+          resourceType={BackendResourceType.CONVERSATION}
+          {...toApproveFolderItem}
+        />
       )}
       {folderItems.map((itemProps) => (
         <ChatSection key={itemProps.name} {...itemProps} />

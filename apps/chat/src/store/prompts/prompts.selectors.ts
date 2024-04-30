@@ -295,7 +295,10 @@ export const selectTemporaryAndFilteredFolders = createSelector(
       (folder) => folder.name.includes(searchTerm.toLowerCase()),
     );
 
-    return getParentAndChildFolders(allFolders, filtered);
+    return getParentAndChildFolders(
+      [...allFolders, ...temporaryFolders],
+      filtered,
+    );
   },
 );
 

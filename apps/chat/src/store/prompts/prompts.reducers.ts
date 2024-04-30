@@ -219,7 +219,7 @@ export const promptsSlice = createSlice({
         id,
         name: folderName,
         type: FolderType.Prompt,
-        folderId: payload.relativePath,
+        folderId: payload.relativePath || getPromptRootId(),
         temporary: true,
       });
       state.newAddedFolderId = id;

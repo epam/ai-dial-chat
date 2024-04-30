@@ -1,15 +1,18 @@
 import { IconClipboard, IconClipboardX } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { isRootId } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
-import { FolderSectionProps } from '@/src/types/folder';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import {
   Publication,
   PublicationInfo,
+  PublicationResource,
   PublicationStatus,
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -30,14 +33,12 @@ import CaretIconComponent from '../../Common/CaretIconComponent';
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import Folder from '../../Folder/Folder';
 
-import { uniqBy } from 'lodash-es';
+import { some, uniqBy } from 'lodash-es';
 
-export const PublicationItem = ({
-  publication,
-  status,
+const PublicationResources = ({
+  resources,
 }: {
-  publication: PublicationInfo & Partial<Publication>;
-  status: PublicationStatus;
+  resources: PublicationResource[];
 }) => {
   const dispatch = useAppDispatch();
 
@@ -51,22 +52,83 @@ export const PublicationItem = ({
     ConversationsSelectors.selectPublicationFolders,
   );
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const highlightedFolders = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsFoldersIds,
+  );
+
+  const resourceUrls = useMemo(
+    () => resources.map((r) => r.reviewUrl),
+    [resources],
+  );
+  const conversationsToDisplay = useMemo(() => {
+    return conversations.filter(
+      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
+    );
+  }, [conversations, resourceUrls]);
+
+  const rootFolders = useMemo(() => {
+    const folders = resources.map((resource) => {
+      const relevantFolders = publicationFolders.filter((folder) =>
+        resource.reviewUrl.startsWith(folder.id),
+      );
+
+      return relevantFolders.find((folder) => isRootId(folder.folderId));
+    });
+
+    const existingFolders = folders.filter(Boolean) as FolderInterface[];
+
+    return uniqBy(existingFolders, 'id');
+  }, [publicationFolders, resources]);
+
+  return (
+    <>
+      {rootFolders.filter(Boolean).map((f) => {
+        return (
+          <Folder
+            readonly
+            level={1}
+            key={f.id}
+            currentFolder={f}
+            allFolders={rootFolders}
+            searchTerm={searchTerm}
+            openedFoldersIds={openedFoldersIds}
+            allItems={conversations}
+            itemComponent={ConversationComponent}
+            onClickFolder={(folderId: string) => {
+              dispatch(ConversationsActions.toggleFolder({ id: folderId }));
+            }}
+            featureType={FeatureType.Chat}
+            highlightedFolders={highlightedFolders}
+          />
+        );
+      })}
+      {conversationsToDisplay.map((c) => (
+        <ConversationComponent key={c.id} item={c} level={1} />
+      ))}
+    </>
+  );
+};
+
+const PublicationItem = ({
+  publication,
+  status,
+}: {
+  publication: PublicationInfo & Partial<Publication>;
+  status: PublicationStatus;
+}) => {
+  const dispatch = useAppDispatch();
+
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
+  const selectedConversationIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
 
   const [isOpen, setIsOpen] = useState(false);
 
   const PublicationIcon =
     status === PublicationStatus.PENDING ? IconClipboard : IconClipboardX;
-  const rootFolders =
-    uniqBy(
-      publication.resources?.map((resource) => {
-        const folders = publicationFolders.filter((f) =>
-          resource?.reviewUrl.startsWith(f.id),
-        );
-
-        return folders.find((f) => isRootId(f.folderId));
-      }),
-      'id',
-    ) ?? [];
 
   return (
     <>
@@ -91,67 +153,50 @@ export const PublicationItem = ({
             }),
           );
         }}
-        className="group relative flex h-[30px] items-center rounded hover:bg-accent-primary-alpha"
+        className={classNames(
+          'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          selectedPublication?.url === publication.url &&
+            !selectedConversationIds.length
+            ? 'border-l-accent-primary bg-accent-primary-alpha'
+            : 'border-l-transparent',
+        )}
       >
         <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
           <CaretIconComponent isOpen={isOpen} />
-          <PublicationIcon width={18} height={18} />
+          <PublicationIcon className="text-secondary" width={18} height={18} />
           <div
-            className="relative max-h-5 flex-1 truncate break-all text-left"
+            className={classNames(
+              'relative max-h-5 flex-1 truncate break-all text-left',
+              some(publication.resources, (r) =>
+                some(selectedConversationIds, (id) =>
+                  id.startsWith(r.reviewUrl),
+                ),
+              ) && 'text-accent-secondary',
+            )}
             data-qa="folder-name"
           >
             {publication.url.split('/').slice(-1).shift()}
           </div>
         </div>
       </div>
-      {isOpen &&
-        rootFolders.map((rootFolder, index) => {
-          if (!rootFolder) {
-            const resource = publication.resources?.[index];
-            return (
-              <ConversationComponent
-                level={1}
-                key={resource?.reviewUrl}
-                item={conversations.find((c) => c.id === resource?.reviewUrl)!}
-              />
-            );
-          }
-
-          const folders = publicationFolders.filter((f) =>
-            publication.resources?.[index]?.reviewUrl.startsWith(f.folderId),
-          );
-
-          return (
-            <Folder
-              readonly
-              level={1}
-              key={publication.resources?.[index]?.reviewUrl}
-              currentFolder={rootFolder}
-              allFolders={folders}
-              searchTerm={searchTerm}
-              openedFoldersIds={openedFoldersIds}
-              allItems={conversations}
-              itemComponent={ConversationComponent}
-              onClickFolder={(folderId: string) => {
-                dispatch(ConversationsActions.toggleFolder({ id: folderId }));
-              }}
-              featureType={FeatureType.Chat}
-            />
-          );
-        })}
+      {isOpen && publication.resources && (
+        <PublicationResources resources={publication.resources} />
+      )}
     </>
   );
 };
 
 export const ApproveRequiredSection = ({
   name,
+  resourceType,
   displayRootFiles,
   openByDefault = false,
   dataQa,
-}: Omit<FolderSectionProps, 'filters'>) => {
+}: Omit<FolderSectionProps, 'filters'> & {
+  resourceType: BackendResourceType;
+}) => {
   const { t } = useTranslation(Translation.SideBar);
 
-  const publications = useAppSelector(PublicationSelectors.selectPublications);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
@@ -161,11 +206,14 @@ export const ApproveRequiredSection = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
+  const publicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectFilteredPublications(state, resourceType),
+  );
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   useEffect(() => {
-    const publicationReviewIds = publications.flatMap((p) =>
+    const publicationReviewIds = publicationItems.flatMap((p) =>
       p.resources?.map((r) => r.reviewUrl),
     );
     const shouldBeHighlighted = !!(
@@ -179,7 +227,7 @@ export const ApproveRequiredSection = ({
   }, [
     displayRootFiles,
     isSectionHighlighted,
-    publications,
+    publicationItems,
     selectedConversations,
     selectedConversationsIds,
     selectedPublication,
@@ -192,16 +240,13 @@ export const ApproveRequiredSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
-      {publications.map((p) => (
+      {publicationItems.map((p) => (
         <PublicationItem
           status={PublicationStatus.PENDING}
           key={p.url}
           publication={p}
         />
       ))}
-      {/* {!!requestedForDeletionPublications.length && (
-        <div>RequestedForDeletion</div>
-      )} */}
     </CollapsibleSection>
   );
 };
