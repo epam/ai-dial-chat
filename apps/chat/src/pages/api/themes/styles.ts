@@ -4,8 +4,9 @@ import { logger } from '@/src/utils/server/logger';
 
 import { ThemesConfig } from '@/src/types/themes';
 
-import { inter } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+
+import { inter } from '../../_app';
 
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
