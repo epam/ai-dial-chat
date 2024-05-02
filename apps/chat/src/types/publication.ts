@@ -41,6 +41,7 @@ export interface Publication {
   createdAt: number;
   resources: PublicationResource[];
   rules?: PublicationRule[];
+  resourceTypes: BackendResourceType[];
 }
 
 export interface PublicationInfo {

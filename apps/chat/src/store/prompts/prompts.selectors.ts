@@ -383,3 +383,10 @@ export const selectDuplicatedPrompt = createSelector(
     });
   },
 );
+
+export const selectPublicationFolders = createSelector(
+  [rootSelector],
+  (state: PromptsState) => {
+    return state.folders.filter((f) => f.isPublicationFolder);
+  },
+);

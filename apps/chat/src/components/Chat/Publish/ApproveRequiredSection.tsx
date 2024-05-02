@@ -23,10 +23,16 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
+import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { PromptComponent } from '../../Promptbar/components/Prompt';
 
 import { ConversationComponent } from '../../Chatbar/Conversation';
 import CaretIconComponent from '../../Common/CaretIconComponent';
@@ -35,7 +41,78 @@ import Folder from '../../Folder/Folder';
 
 import { some, uniqBy } from 'lodash-es';
 
-const PublicationResources = ({
+const PromptPublicationResources = ({
+  resources,
+}: {
+  resources: PublicationResource[];
+}) => {
+  const dispatch = useAppDispatch();
+
+  const openedFoldersIds = useAppSelector((state) =>
+    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
+  );
+  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const publicationFolders = useAppSelector(
+    PromptsSelectors.selectPublicationFolders,
+  );
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const highlightedFolders = useAppSelector(
+    PromptsSelectors.selectSelectedPromptFoldersIds,
+  );
+
+  const resourceUrls = useMemo(
+    () => resources.map((r) => r.reviewUrl),
+    [resources],
+  );
+  const promptsToDisplay = useMemo(() => {
+    return prompts.filter(
+      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
+    );
+  }, [prompts, resourceUrls]);
+  const rootFolders = useMemo(() => {
+    const folders = resources.map((resource) => {
+      const relevantFolders = publicationFolders.filter((folder) =>
+        resource.reviewUrl.startsWith(folder.id),
+      );
+
+      return relevantFolders.find((folder) => isRootId(folder.folderId));
+    });
+
+    const existingFolders = folders.filter(Boolean) as FolderInterface[];
+
+    return uniqBy(existingFolders, 'id');
+  }, [publicationFolders, resources]);
+
+  return (
+    <>
+      {rootFolders.filter(Boolean).map((f) => {
+        return (
+          <Folder
+            readonly
+            level={1}
+            key={f.id}
+            currentFolder={f}
+            allFolders={rootFolders}
+            searchTerm={searchTerm}
+            openedFoldersIds={openedFoldersIds}
+            allItems={prompts}
+            itemComponent={PromptComponent}
+            onClickFolder={(folderId: string) => {
+              dispatch(PromptsActions.toggleFolder({ id: folderId }));
+            }}
+            featureType={FeatureType.Prompt}
+            highlightedFolders={highlightedFolders}
+          />
+        );
+      })}
+      {promptsToDisplay.map((p) => (
+        <PromptComponent key={p.id} item={p} level={1} />
+      ))}
+    </>
+  );
+};
+
+const ConversationPublicationResources = ({
   resources,
 }: {
   resources: PublicationResource[];
@@ -65,7 +142,6 @@ const PublicationResources = ({
       (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
     );
   }, [conversations, resourceUrls]);
-
   const rootFolders = useMemo(() => {
     const folders = resources.map((resource) => {
       const relevantFolders = publicationFolders.filter((folder) =>
@@ -112,9 +188,11 @@ const PublicationResources = ({
 const PublicationItem = ({
   publication,
   status,
+  resourceType,
 }: {
   publication: PublicationInfo & Partial<Publication>;
   status: PublicationStatus;
+  resourceType: BackendResourceType;
 }) => {
   const dispatch = useAppDispatch();
 
@@ -129,9 +207,13 @@ const PublicationItem = ({
 
   const PublicationIcon =
     status === PublicationStatus.PENDING ? IconClipboard : IconClipboardX;
+  const ResourcesComponent =
+    resourceType === BackendResourceType.CONVERSATION
+      ? ConversationPublicationResources
+      : PromptPublicationResources;
 
   return (
-    <>
+    <div className="flex flex-col gap-1">
       <div
         onClick={() => {
           setIsOpen(true);
@@ -171,7 +253,7 @@ const PublicationItem = ({
                 some(selectedConversationIds, (id) =>
                   id.startsWith(r.reviewUrl),
                 ),
-              ) && 'text-accent-secondary',
+              ) && 'text-accent-primary',
             )}
             data-qa="folder-name"
           >
@@ -180,9 +262,9 @@ const PublicationItem = ({
         </div>
       </div>
       {isOpen && publication.resources && (
-        <PublicationResources resources={publication.resources} />
+        <ResourcesComponent resources={publication.resources} />
       )}
-    </>
+    </div>
   );
 };
 
@@ -242,6 +324,7 @@ export const ApproveRequiredSection = ({
     >
       {publicationItems.map((p) => (
         <PublicationItem
+          resourceType={resourceType}
           status={PublicationStatus.PENDING}
           key={p.url}
           publication={p}

@@ -21,6 +21,7 @@ import {
   getParentFolderIdsFromEntityId,
   splitEntityId,
 } from '@/src/utils/app/folders';
+import { isConversationId, isPromptId } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { parseConversationApiKey } from '@/src/utils/server/api';
 
@@ -37,6 +38,7 @@ import { AppEpic } from '@/src/types/store';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { ConversationsActions } from '../conversations/conversations.reducers';
+import { PromptsActions } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { PublicationActions } from './publication.reducers';
 
@@ -131,6 +133,20 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               const parsedApiKey = parseConversationApiKey(
                 splitEntityId(resource.reviewUrl).name,
               );
+
+              if (isPromptId(resource.reviewUrl)) {
+                return of(
+                  PromptsActions.addPrompts({
+                    prompts: [
+                      {
+                        id: resource.reviewUrl,
+                        folderId: getFolderIdFromEntityId(resource.reviewUrl),
+                        name: parsedApiKey.name,
+                      },
+                    ],
+                  }),
+                );
+              }
 
               return of(
                 ConversationsActions.addConversations({
