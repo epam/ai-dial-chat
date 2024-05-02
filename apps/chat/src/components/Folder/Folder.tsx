@@ -71,6 +71,7 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
+import { FileItemEventIds } from '../Files/FileItem';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -99,6 +100,7 @@ export interface FolderProps<T, P = unknown> {
   onClickFolder: (folderId: string) => void;
   featureType: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
+  onFolderEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
   maxDepth?: number;
@@ -134,6 +136,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   onAddFolder,
   onFileUpload,
   onItemEvent,
+  onFolderEvent,
   featureType,
   readonly = false,
   maxDepth,
@@ -171,13 +174,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
-  const [isSelected, setIsSelected] = useState(true);
+  const [isSelected, setIsSelected] = useState(false);
 
   const handleToggleFolder = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     //e.preventDefault();
     e.stopPropagation();
     setIsSelected((value) => !value);
-    //onEvent?.(FileItemEventIds.Toggle, item.id);
+    onFolderEvent?.(FileItemEventIds.Toggle, currentFolder.id);
     return;
   }, []);
 
@@ -948,6 +951,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
                     canAttachFolders={canAttachFolders}
+                    onFolderEvent={onFolderEvent}
                   />
                 </Fragment>
               );

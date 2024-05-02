@@ -89,7 +89,11 @@ export const FileManagerModal = ({
   const [selectedFilesIds, setSelectedFilesIds] = useState(
     initialSelectedFilesIds,
   );
+  const [selectedFolderIds, setSelectedFolderIds] = useState(
+    initialSelectedFilesIds,
+  );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
+  const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
 
   const {
     handleRenameFolder,
@@ -166,12 +170,13 @@ export const FileManagerModal = ({
   );
 
   const handleStartDeleteMultipleFiles = useCallback(() => {
-    if (!selectedFilesIds.length) {
+    if (!selectedFilesIds.length && !selectedFolderIds.length) {
       return;
     }
 
     setDeletingFileIds(selectedFilesIds);
-  }, [selectedFilesIds]);
+    setDeletingFolderIds(selectedFolderIds);
+  }, [selectedFilesIds, selectedFolderIds]);
 
   const handleItemCallback = useCallback(
     (eventId: string, data: unknown) => {
@@ -204,6 +209,26 @@ export const FileManagerModal = ({
     },
     [dispatch],
   );
+
+  const handleFolderCallback = useCallback((eventId: string, data: unknown) => {
+    if (typeof data !== 'string') {
+      return;
+    }
+
+    switch (eventId) {
+      case FileItemEventIds.Toggle:
+        setSelectedFolderIds((oldValues) => {
+          if (oldValues.includes(data)) {
+            return oldValues.filter((oldValue) => oldValue !== data);
+          }
+
+          return oldValues.concat(data);
+        });
+        break;
+      default:
+        break;
+    }
+  }, []);
 
   const handleAttachFiles = useCallback(() => {
     if (selectedFilesIds.length > maximumAttachmentsAmount) {
@@ -273,15 +298,29 @@ export const FileManagerModal = ({
   );
 
   const handleDeleteMultipleFiles = useCallback(() => {
-    if (!deletingFileIds.length) {
+    if (!deletingFileIds.length && !deletingFolderIds.length) {
       return;
     }
-
-    dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
-    if (selectedFilesIds === deletingFileIds) {
-      setSelectedFilesIds([]);
+    if (deletingFileIds.length) {
+      dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
+      if (selectedFilesIds === deletingFileIds) {
+        setSelectedFilesIds([]);
+      }
     }
-  }, [deletingFileIds, dispatch, selectedFilesIds]);
+    if (deletingFolderIds.length) {
+      // TODO: implement
+      // dispatch(FilesActions.deleteFolderList({ folderIds: deletingFolderIds }));
+      if (selectedFolderIds === deletingFolderIds) {
+        setSelectedFolderIds([]);
+      }
+    }
+  }, [
+    deletingFileIds,
+    deletingFolderIds,
+    dispatch,
+    selectedFilesIds,
+    selectedFolderIds,
+  ]);
 
   const handleDownloadMultipleFiles = useCallback(() => {
     if (!selectedFilesIds.length) {
@@ -380,6 +419,7 @@ export const FileManagerModal = ({
                               onRenameFolder={handleRenameFolder}
                               skipFolderRenameValidation
                               onItemEvent={handleItemCallback}
+                              onFolderEvent={handleFolderCallback}
                               withBorderHighlight={false}
                               featureType={FeatureType.File}
                               canAttachFolders={canAttachFolders}
@@ -415,26 +455,27 @@ export const FileManagerModal = ({
       </div>
       <div className="flex items-center justify-between border-t border-primary px-6 py-4">
         <div className="flex items-center justify-center gap-2">
-          {selectedFilesIds.length > 0 ? (
-            <>
-              <button
-                onClick={handleStartDeleteMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-              >
-                <Tooltip tooltip="Delete files" isTriggerClickable>
-                  <IconTrash size={24} />
-                </Tooltip>
-              </button>
-              <button
-                onClick={handleDownloadMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-              >
-                <Tooltip tooltip="Download files" isTriggerClickable>
-                  <IconDownload size={24} />
-                </Tooltip>
-              </button>
-            </>
-          ) : (
+          {(selectedFilesIds.length > 0 || selectedFolderIds.length > 0) && (
+            <button
+              onClick={handleStartDeleteMultipleFiles}
+              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+            >
+              <Tooltip tooltip="Delete files" isTriggerClickable>
+                <IconTrash size={24} />
+              </Tooltip>
+            </button>
+          )}
+          {selectedFilesIds.length > 0 && (
+            <button
+              onClick={handleDownloadMultipleFiles}
+              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+            >
+              <Tooltip tooltip="Download files" isTriggerClickable>
+                <IconDownload size={24} />
+              </Tooltip>
+            </button>
+          )}
+          {selectedFilesIds.length === 0 && selectedFolderIds.length === 0 && (
             <button
               onClick={handleNewFolder}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
@@ -457,7 +498,9 @@ export const FileManagerModal = ({
             <button
               onClick={handleAttachFiles}
               className="button button-primary"
-              disabled={selectedFilesIds.length === 0}
+              disabled={
+                selectedFilesIds.length === 0 || selectedFolderIds.length === 0
+              }
             >
               {customButtonLabel}
             </button>
@@ -480,13 +523,38 @@ export const FileManagerModal = ({
       )}
 
       <ConfirmDialog
-        isOpen={!!deletingFileIds.length}
+        isOpen={!!deletingFileIds.length || !!deletingFolderIds.length}
         heading={t(
-          `Confirm deleting file${deletingFileIds.length > 1 ? 's' : ''}`,
+          [
+            'Confirm deleting ',
+            deletingFolderIds.length > 0
+              ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+              : '',
+            deletingFileIds.length > 0 && deletingFolderIds.length > 0
+              ? ' and '
+              : '',
+            deletingFileIds.length > 0
+              ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+              : '',
+          ].join(''),
         )}
         description={
           t(
-            `Are you sure that you want to delete ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
+            [
+              'Are you sure that you want to delete ',
+              deletingFileIds.length + deletingFolderIds.length > 1
+                ? 'these '
+                : 'this ',
+              deletingFolderIds.length > 0
+                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+                : '',
+              deletingFileIds.length > 0 && deletingFolderIds.length > 0
+                ? ' and '
+                : '',
+              deletingFileIds.length > 0
+                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+                : '',
+            ].join(''),
           ) || ''
         }
         confirmLabel={t('Delete')}
@@ -496,6 +564,7 @@ export const FileManagerModal = ({
             handleDeleteMultipleFiles();
           }
           setDeletingFileIds([]);
+          setDeletingFolderIds([]);
         }}
       />
     </Modal>
