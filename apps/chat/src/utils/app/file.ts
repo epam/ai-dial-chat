@@ -86,10 +86,12 @@ export const isAllowedMimeType = (
     return true;
   }
 
-  const [resourceSubset, resourceTypeName] = resourceMimeType.split('/');
+  const [resourceSubset, resourceTypeName] = resourceMimeType
+    .toLowerCase()
+    .split('/');
 
   return allowedMimeTypes.some((allowedMimeType) => {
-    const [subset, name] = allowedMimeType.split('/');
+    const [subset, name] = allowedMimeType.toLowerCase().split('/');
 
     return (
       subset === resourceSubset && (name === '*' || name === resourceTypeName)
@@ -123,19 +125,19 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/{}%&\\\t\x00-\x1F';
+export const notAllowedSymbols = ':;,=/{}%&\\';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)`,
+  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)|[\x00-\x1F]`,
   'gm',
 );
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
-): T[] => {
-  return files.filter(
-    ({ name }) =>
-      name.match(notAllowedSymbolsRegex) || doesHaveDotsInTheEnd(name),
-  );
-};
+): { filesWithNotAllowedSymbols: T[]; filesWithDotInTheEnd: T[] } => ({
+  filesWithNotAllowedSymbols: files.filter(({ name }) =>
+    name.match(notAllowedSymbolsRegex),
+  ),
+  filesWithDotInTheEnd: files.filter(({ name }) => doesHaveDotsInTheEnd(name)),
+});
 
 export const getFilesWithInvalidFileSize = (
   files: File[],
@@ -252,10 +254,14 @@ export const getShortExtentionsListFromMimeType = (
 };
 
 export const getFileNameWithoutExtension = (filename: string) =>
-  filename.slice(0, filename.lastIndexOf('.'));
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(0, filename.lastIndexOf('.'))
+    : filename;
 
 export const getFileNameExtension = (filename: string) =>
-  filename.slice(filename.lastIndexOf('.'));
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
+    : '';
 
 export const validatePublishingFileRenaming = (
   files: DialFile[],
@@ -361,3 +367,6 @@ export const getNextFileName = (
 
   return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
 };
+
+export const prepareFileName = (filename: string) =>
+  `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
