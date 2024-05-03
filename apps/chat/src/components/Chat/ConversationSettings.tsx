@@ -134,13 +134,6 @@ export const ConversationSettings = ({
 
   const isPlayback = conversation.playback?.isPlayback;
 
-  const changeTalkToParam = (modelId: string) => {
-    router.push({
-      pathname: router.pathname,
-      query: { ...router.query, talkto: modelId },
-    });
-  };
-
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
       <div
@@ -156,7 +149,6 @@ export const ConversationSettings = ({
             }
             onModelSelect={(modelId: string) => {
               onSelectModel(modelId);
-              changeTalkToParam(modelId);
             }}
           />
         </div>

@@ -185,7 +185,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       <div className="px-3 md:px-5">
         <input
           name="titleInput"
-          placeholder={t('Search model, assistant or application') || ''}
+          placeholder={t('Search model or application') || ''}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);

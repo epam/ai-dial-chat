@@ -24,7 +24,7 @@ export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
 export const TALK_TO_TOOLTIP =
   'Choice of available models and applications you can use. Below is the list of latest models you have interacted with. You may click on “See full list…” for a complete list of available models and applications';
 export const SYSTEM_PROMPT_TOOLTIP =
-  'Prompt that will always be executed in addition to your written prompts. Used to give more instructions or personality for this conversation, for instance “Act as a senior project manager and answer in a concise way';
+  'Prompt that will always be executed in addition to your written prompts. Used to give more instructions or personality for this conversation, for instance “Act as a senior project manager and answer in a concise way“';
 export const TEMPERATURE_TOOLTIP =
   'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.';
 

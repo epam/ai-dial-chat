@@ -38,10 +38,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
-  DEFAULT_CONVERSATION_NAME,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -164,7 +161,7 @@ export const ChatView = memo(() => {
         talkto === DocumentId.queryParam ? DocumentId.modelId : talkto;
 
       if (
-        (currentConversation as any)?.messages &&
+        (currentConversation as any)?.id !== modelId &&
         modelIds?.includes(talkto as string)
       ) {
         dispatch(
@@ -177,7 +174,7 @@ export const ChatView = memo(() => {
         );
       }
     }
-  }, [router.asPath, modelIds]);
+  }, [router.asPath]);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
