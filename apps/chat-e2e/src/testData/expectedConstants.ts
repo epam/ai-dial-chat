@@ -6,6 +6,7 @@ export const ExpectedConstants = {
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,
+  entityWithIndexTitle: (name: string, index: number) => `${name} ${index}`,
   newPromptTitle: (index: number) => `Prompt ${index}`,
   promptPlaceholder: (variable: string) => `Enter a value for ${variable}...`,
   newFolderTitle: 'New folder',

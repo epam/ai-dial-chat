@@ -51,7 +51,8 @@ export class PromptData extends FolderData {
   ): FolderPrompt {
     const prompt = this.preparePrompt(content, description);
     const folder = this.prepareFolder();
-    prompt.folderId = folder.id;
+    prompt.folderId = folder.folderId;
+    prompt.id = `${folder.folderId}/${prompt.id}`;
     return { prompts: [prompt], folders: folder };
   }
 

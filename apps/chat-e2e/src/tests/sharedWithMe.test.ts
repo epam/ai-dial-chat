@@ -1485,8 +1485,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectMenuOption(
+        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
           MenuOptions.replay,
+          { triggeredHttpMethod: 'POST' },
         );
         await additionalShareUserConversations
           .getConversationByName(
@@ -1549,8 +1550,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectMenuOption(
+        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
           MenuOptions.playback,
+          { triggeredHttpMethod: 'POST' },
         );
         await additionalShareUserConversations
           .getConversationByName(

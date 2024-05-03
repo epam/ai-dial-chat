@@ -305,14 +305,15 @@ dialTest(
 );
 
 dialTest(
-  'Menu for New conversation',
+  'Menu for New conversation.\n' +
+    'Duplicate item is not available for chat without history',
   async ({
     dialHomePage,
     conversations,
     conversationDropdownMenu,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-594');
+    setTestIds('EPMRTC-594', 'EPMRTC-3054');
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await conversations.openConversationDropdownMenu(
