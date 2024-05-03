@@ -352,6 +352,11 @@ export const selectIsNewPromptCreating = createSelector(
   (state) => state.isNewPromptCreating,
 );
 
+export const selectIsPromptContentCopying = createSelector(
+  [rootSelector],
+  (state) => state.isPromptContentCopying,
+);
+
 export const selectIsPromptsBackedUp = createSelector(
   [rootSelector],
   (state) => state.isPromptsBackedUp,

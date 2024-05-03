@@ -287,6 +287,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
   const onPromptClick = () => {
     dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+    dispatch(PromptsActions.setIsPromptContentCopying(true));
+
+    dispatch(
+      PromptsActions.uploadPrompt({
+        promptId: prompt.id,
+      }),
+    );
   };
 
   return (
@@ -319,10 +326,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
-          <div
-            className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-            onClick={onPromptClick}
-          >
+          <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
             <Tooltip
               tooltip={t(
                 getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -333,7 +337,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
                 isNameOrPathInvalid && 'text-secondary',
               )}
             >
-              {prompt.name}
+              <span
+                style={{ display: 'inline-block', width: 'calc(100% - 20px)' }}
+                onClick={onPromptClick}
+              >
+                {prompt.name}
+              </span>
             </Tooltip>
           </div>
         </div>

@@ -42,6 +42,7 @@ const initialState: PromptsState = {
   isPromptLoading: false,
   loadingFolderIds: [],
   isNewPromptCreating: false,
+  isPromptContentCopying: false,
 };
 
 export const promptsSlice = createSlice({
@@ -115,6 +116,9 @@ export const promptsSlice = createSlice({
     },
     setIsNewPromptCreating: (state, { payload }: PayloadAction<boolean>) => {
       state.isNewPromptCreating = payload;
+    },
+    setIsPromptContentCopying: (state, { payload }: PayloadAction<boolean>) => {
+      state.isPromptContentCopying = payload;
     },
     saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
       state,

@@ -144,26 +144,47 @@ export const ChatInputMessage = ({
   const selectedPrompt = useAppSelector(
     PromptsSelectors.selectSelectedOrNewPrompt,
   );
+  const isPromptContentCopying = useAppSelector(
+    PromptsSelectors.selectIsPromptContentCopying,
+  );
+
+  const isPromptHasVariable = (text: string) => {
+    const regex = /\{\{.*?\}\}/;
+
+    return regex.test(text);
+  };
+
+  const findActivePromptIndex = (activePromptId: string) =>
+    filteredPrompts.findIndex((prompt) => prompt.id === activePromptId);
+
+  const clearPromptCopying = () => {
+    dispatch(PromptsActions.setIsPromptContentCopying(false));
+    dispatch(PromptsActions.setSelectedPrompt({ promptId: null }));
+  };
 
   useEffect(() => {
-    if (!selectedPrompt?.id) return;
+    if (selectedPrompt?.content && isPromptContentCopying) {
+      const isVariable = isPromptHasVariable(selectedPrompt?.content);
+      const activeIndex = findActivePromptIndex(selectedPrompt.id);
 
-    dispatch(
-      PromptsActions.uploadPrompt({
-        promptId: selectedPrompt.id,
-      }),
-    );
-  }, [selectedPrompt?.id]);
+      if (isVariable) {
+        setIsModalVisible(true);
+        setActivePromptIndex(activeIndex);
+      } else {
+        setContent(selectedPrompt?.content);
+      }
+    }
+  }, [selectedPrompt?.content, isPromptContentCopying]);
 
   useEffect(() => {
-    if (!selectedPrompt?.content) return;
-
-    setContent(selectedPrompt?.content);
-  }, [selectedPrompt?.content]);
+    if (selectedPrompt?.content && content === selectedPrompt?.content) {
+      clearPromptCopying();
+    }
+  }, [content, selectedPrompt?.content]);
 
   const isInputEmpty = useMemo(() => {
     return (
-      content.trim().length === 0 &&
+      content?.trim().length === 0 &&
       selectedFiles.length === 0 &&
       !selectedDialLinks.length
     );
@@ -273,6 +294,7 @@ export const ChatInputMessage = ({
       }
 
       setContent(newContent);
+      clearPromptCopying();
 
       if (textareaRef && textareaRef.current) {
         textareaRef.current.focus();
@@ -472,7 +494,10 @@ export const ChatInputMessage = ({
           <PromptVariablesDialog
             prompt={filteredPrompts[activePromptIndex]}
             onSubmit={handlePromptApply}
-            onClose={() => setIsModalVisible(false)}
+            onClose={() => {
+              setIsModalVisible(false);
+              clearPromptCopying();
+            }}
           />
         )}
       </div>

@@ -20,4 +20,5 @@ export interface PromptsState {
   isPromptLoading: boolean;
   loadingFolderIds: string[];
   isNewPromptCreating: boolean;
+  isPromptContentCopying: boolean;
 }
