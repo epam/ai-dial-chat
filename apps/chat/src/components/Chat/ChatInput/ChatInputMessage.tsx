@@ -86,6 +86,7 @@ export const ChatInputMessage = ({
   );
   const canAttach = useAppSelector(ConversationsSelectors.selectCanAttachFile);
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const selectedFolders = useAppSelector(FilesSelectors.selectSelectedFolders);
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
   );
@@ -138,11 +139,17 @@ export const ChatInputMessage = ({
 
   const isInputEmpty = useMemo(() => {
     return (
-      content.trim().length === 0 &&
-      selectedFiles.length === 0 &&
+      !content.trim().length &&
+      !selectedFiles.length &&
+      !selectedFolders.length &&
       !selectedDialLinks.length
     );
-  }, [content, selectedDialLinks.length, selectedFiles.length]);
+  }, [
+    content,
+    selectedDialLinks.length,
+    selectedFiles.length,
+    selectedFolders.length,
+  ]);
   const isSendDisabled =
     isReplay ||
     isError ||
@@ -189,7 +196,11 @@ export const ChatInputMessage = ({
     onSend({
       role: Role.User,
       content,
-      custom_content: getUserCustomContent(selectedFiles, selectedDialLinks),
+      custom_content: getUserCustomContent(
+        selectedFiles,
+        selectedFolders,
+        selectedDialLinks,
+      ),
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
@@ -205,6 +216,7 @@ export const ChatInputMessage = ({
     onSend,
     content,
     selectedFiles,
+    selectedFolders,
     selectedDialLinks,
     setContent,
     textareaRef,
@@ -408,10 +420,13 @@ export const ChatInputMessage = ({
                 onAddLinkToMessage={handleAddLinkToMessage}
               />
             </div>
-            {(selectedFiles.length > 0 || selectedDialLinks.length > 0) && (
+            {(selectedFiles.length > 0 ||
+              selectedDialLinks.length > 0 ||
+              selectedFolders.length > 0) && (
               <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
                 <ChatInputAttachments
                   files={selectedFiles}
+                  folders={selectedFolders}
                   links={selectedDialLinks}
                   onUnselectFile={handleUnselectFile}
                   onRetryFile={handleRetry}

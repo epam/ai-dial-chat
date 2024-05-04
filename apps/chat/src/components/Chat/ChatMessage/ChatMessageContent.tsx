@@ -230,6 +230,7 @@ export const ChatMessageContent = ({
 
     const attachments = getUserCustomContent(
       newEditableAttachments,
+      [], // TODO
       selectedDialLinks,
     );
     const isAttachmentsSame = isEqual(
@@ -410,6 +411,7 @@ export const ChatMessageContent = ({
                     <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
                       <ChatInputAttachments
                         files={newEditableAttachments}
+                        folders={[]} //TODO
                         links={selectedDialLinks}
                         onUnselectFile={handleUnselectFile}
                         onRetryFile={handleRetry}

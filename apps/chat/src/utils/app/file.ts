@@ -42,9 +42,10 @@ export const getFileName = (path: string | undefined): string | undefined => {
 
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
+  folders?: FolderInterface[],
   links?: DialLink[],
 ): { attachments: Attachment[] } | undefined => {
-  if (!files?.length && !links?.length) {
+  if (!files?.length && !links?.length && !folders?.length) {
     return undefined;
   }
 
@@ -62,6 +63,14 @@ export const getUserCustomContent = (
       }),
     );
 
+  const folderAttachments: Attachment[] | undefined = folders?.map(
+    (folder: FolderInterface) => ({
+      type: FOLDER_ATTACHMENT_CONTENT_TYPE,
+      title: folder.name ?? folder.id,
+      url: ApiUtils.encodeApiUrl(`${folder.id}`), //TODO: metadata url
+    }),
+  );
+
   const linksAttachments: Attachment[] | undefined = links?.map(
     (link): Attachment => ({
       title: link.title ?? link.href,
@@ -73,7 +82,9 @@ export const getUserCustomContent = (
 
   return {
     attachments: (
-      [filesAttachments, linksAttachments].filter(Boolean) as Attachment[][]
+      [folderAttachments, filesAttachments, linksAttachments].filter(
+        Boolean,
+      ) as Attachment[][]
     ).flat(),
   };
 };
@@ -370,3 +381,6 @@ export const getNextFileName = (
 
 export const prepareFileName = (filename: string) =>
   `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
+
+export const FOLDER_ATTACHMENT_CONTENT_TYPE =
+  'application/vnd.dial.metadata+json';

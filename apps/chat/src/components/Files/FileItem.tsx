@@ -29,6 +29,7 @@ export enum FileItemEventIds {
   Cancel = 'cancel',
   Retry = 'retry',
   Toggle = 'toggle',
+  ToggleFolder = 'toggleFolder',
   Delete = 'delete',
 }
 

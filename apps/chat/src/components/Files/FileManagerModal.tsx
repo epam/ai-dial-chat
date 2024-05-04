@@ -12,7 +12,7 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtentionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getFileRootId, isRootId } from '@/src/utils/app/id';
+import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -87,10 +87,10 @@ export const FileManagerModal = ({
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilesIds, setSelectedFilesIds] = useState(
-    initialSelectedFilesIds,
+    initialSelectedFilesIds.filter((id) => !isFolderId(id)),
   );
   const [selectedFolderIds, setSelectedFolderIds] = useState(
-    initialSelectedFilesIds,
+    initialSelectedFilesIds.filter((id) => isFolderId(id)),
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
   const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
@@ -197,6 +197,15 @@ export const FileManagerModal = ({
             return oldValues.concat(data);
           });
           break;
+        case FileItemEventIds.ToggleFolder:
+          setSelectedFolderIds((oldValues) => {
+            if (oldValues.includes(data)) {
+              return oldValues.filter((oldValue) => oldValue !== data);
+            }
+
+            return oldValues.concat(data);
+          });
+          break;
         case FileItemEventIds.Cancel:
           dispatch(FilesActions.deleteFile({ fileId: data }));
           break;
@@ -209,26 +218,6 @@ export const FileManagerModal = ({
     },
     [dispatch],
   );
-
-  const handleFolderCallback = useCallback((eventId: string, data: unknown) => {
-    if (typeof data !== 'string') {
-      return;
-    }
-
-    switch (eventId) {
-      case FileItemEventIds.Toggle:
-        setSelectedFolderIds((oldValues) => {
-          if (oldValues.includes(data)) {
-            return oldValues.filter((oldValue) => oldValue !== data);
-          }
-
-          return oldValues.concat(data);
-        });
-        break;
-      default:
-        break;
-    }
-  }, []);
 
   const handleAttachFiles = useCallback(() => {
     if (selectedFilesIds.length > maximumAttachmentsAmount) {
@@ -263,13 +252,14 @@ export const FileManagerModal = ({
       return;
     }
 
-    onClose(selectedFilesIds);
+    onClose([...selectedFolderIds, ...selectedFilesIds]);
   }, [
     allowedTypes,
     files,
     maximumAttachmentsAmount,
     onClose,
     selectedFilesIds,
+    selectedFolderIds,
     t,
   ]);
 
@@ -411,6 +401,7 @@ export const FileManagerModal = ({
                               allItems={filteredFiles}
                               additionalItemData={{
                                 selectedFilesIds,
+                                selectedFolderIds,
                               }}
                               itemComponent={FileItem}
                               onClickFolder={handleFolderSelect}
@@ -419,7 +410,6 @@ export const FileManagerModal = ({
                               onRenameFolder={handleRenameFolder}
                               skipFolderRenameValidation
                               onItemEvent={handleItemCallback}
-                              onFolderEvent={handleFolderCallback}
                               withBorderHighlight={false}
                               featureType={FeatureType.File}
                               canAttachFolders={canAttachFolders}
@@ -499,7 +489,7 @@ export const FileManagerModal = ({
               onClick={handleAttachFiles}
               className="button button-primary"
               disabled={
-                selectedFilesIds.length === 0 || selectedFolderIds.length === 0
+                selectedFilesIds.length === 0 && selectedFolderIds.length === 0
               }
             >
               {customButtonLabel}

@@ -100,7 +100,6 @@ export interface FolderProps<T, P = unknown> {
   onClickFolder: (folderId: string) => void;
   featureType: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
-  onFolderEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
   maxDepth?: number;
@@ -136,7 +135,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   onAddFolder,
   onFileUpload,
   onItemEvent,
-  onFolderEvent,
   featureType,
   readonly = false,
   maxDepth,
@@ -176,13 +174,23 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const [isSelected, setIsSelected] = useState(false);
 
-  const handleToggleFolder = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    //e.preventDefault();
-    e.stopPropagation();
-    setIsSelected((value) => !value);
-    onFolderEvent?.(FileItemEventIds.Toggle, currentFolder.id);
-    return;
-  }, []);
+  const handleToggleFolder = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      e.stopPropagation();
+      setIsSelected((value) => !value);
+      onItemEvent?.(FileItemEventIds.ToggleFolder, `${currentFolder.id}/`);
+      return;
+    },
+    [currentFolder.id, onItemEvent],
+  );
+
+  useEffect(() => {
+    setIsSelected(
+      ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+        `${currentFolder.id}/`,
+      ),
+    );
+  }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -951,7 +959,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
                     canAttachFolders={canAttachFolders}
-                    onFolderEvent={onFolderEvent}
                   />
                 </Fragment>
               );
