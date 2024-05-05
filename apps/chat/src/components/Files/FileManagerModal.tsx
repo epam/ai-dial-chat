@@ -12,6 +12,7 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtentionsListFromMimeType,
 } from '@/src/utils/app/file';
+import { getParentAndCurrentFolderIdsById } from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
@@ -34,6 +35,9 @@ import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
+
+import { trimEnd } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 
 interface Props {
   isOpen: boolean;
@@ -94,6 +98,22 @@ export const FileManagerModal = ({
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
   const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
+
+  const hightlightFolderIds = useMemo(() => {
+    return uniq(
+      selectedFolderIds
+        .flatMap((folderId) =>
+          getParentAndCurrentFolderIdsById(folders, trimEnd(folderId, '/')),
+        )
+        .concat(
+          files
+            .filter((f) => selectedFilesIds.includes(f.id))
+            .flatMap((f) =>
+              getParentAndCurrentFolderIdsById(folders, f.folderId),
+            ),
+        ),
+    );
+  }, [files, folders, selectedFilesIds, selectedFolderIds]);
 
   const {
     handleRenameFolder,
@@ -392,7 +412,7 @@ export const FileManagerModal = ({
                               searchTerm={searchQuery}
                               currentFolder={folder}
                               allFolders={folders}
-                              highlightedFolders={[]}
+                              highlightedFolders={hightlightFolderIds}
                               isInitialRenameEnabled
                               newAddedFolderId={newFolderId}
                               displayCaretAlways
