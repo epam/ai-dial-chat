@@ -84,7 +84,6 @@ import {
 } from '@/src/types/chat';
 import {
   ApiKeys,
-  BackendResourceType,
   EntityType,
   FeatureType,
   UploadStatus,
@@ -277,13 +276,8 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
             of(
-              PublicationActions.uploadPublishedItems({
+              PublicationActions.uploadPublishedWithMeItems({
                 featureType: ApiKeys.Conversations,
-              }),
-            ),
-            of(
-              PublicationActions.uploadPublishedByMeItems({
-                resourceTypes: [BackendResourceType.CONVERSATION],
               }),
             ),
           );

@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { ApiKeys, BackendResourceType, UploadStatus } from '@/src/types/common';
+import { ApiKeys, UploadStatus } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -32,9 +32,8 @@ export const publicationSlice = createSlice({
     publish: (
       state,
       _action: PayloadAction<{
-        targetUrl: string;
+        resources: { sourceUrl: string; targetUrl: string }[];
         targetFolder: string;
-        sourceUrl: string;
         rules: PublicationRule[];
       }>,
     ) => state,
@@ -69,22 +68,17 @@ export const publicationSlice = createSlice({
       );
     },
     deletePublicationFail: (state) => state,
-    uploadPublishedItems: (
+    uploadPublishedWithMeItems: (
       state,
       _action: PayloadAction<{ featureType: ApiKeys }>,
     ) => state,
-    uploadPublishedItemsSuccess: (
+    uploadPublishedWithMeItemsSuccess: (
       state,
       { payload }: PayloadAction<{ publishedItems: PublishedItem }>,
     ) => {
       state.publishedItems = payload.publishedItems.items || [];
     },
-    uploadPublishedItemsFail: (state) => state,
-    uploadPublishedByMeItems: (
-      state,
-      _action: PayloadAction<{ resourceTypes: BackendResourceType[] }>,
-    ) => state,
-    uploadPublishedByMeItemsFail: (state) => state,
+    uploadPublishedWithMeItemsFail: (state) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,
     approvePublicationSuccess: (

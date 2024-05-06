@@ -292,7 +292,8 @@ export const getServerSideProps: GetServerSideProps = async ({
     };
   }
 
-  console.log(await getToken({ req }));
+  const token = await getToken({ req });
+  console.log(token);
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',

@@ -26,7 +26,7 @@ import { getAttachments } from '@/src/utils/app/share';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { parseConversationApiKey } from '@/src/utils/server/api';
 
-import { ShareEntity } from '@/src/types/common';
+import { ApiKeys, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { TargetAudienceFilter } from '@/src/types/publication';
@@ -174,26 +174,65 @@ export default function PublishWizard({
       }
 
       // if (!isVersionUnique) return;
+      if (type === SharingType.Conversation) {
+        dispatch(
+          PublicationActions.publish({
+            targetFolder: trimmedPath + '/',
+            resources: [
+              {
+                sourceUrl: entity.id,
+                targetUrl: `${ApiKeys.Conversations}/public/${trimmedPath ? `${trimmedPath}/` : ''}${
+                  parseConversationApiKey(splitEntityId(entity.id).name).model
+                    .id +
+                  '__' +
+                  trimmedName
+                }`,
+              },
+              ...files.map((file) => ({
+                sourceUrl: file.id,
+                targetUrl: `${ApiKeys.Files}/public/${trimmedPath ? `${trimmedPath}/` : ''}${
+                  file.name
+                }`,
+              })),
+            ],
+            rules: otherTargetAudienceFilters.map((filter) => ({
+              function: filter.filterFunction,
+              source: filter.id,
+              targets: filter.filterParams,
+            })),
+          }),
+        );
+      } else {
+        dispatch(
+          PublicationActions.publish({
+            resources: [
+              {
+                sourceUrl: entity.id,
+                targetUrl: `${ApiKeys.Prompts}/public/${trimmedPath ? `${trimmedPath}/` : ''}${trimmedName}`,
+              },
+            ],
+            targetFolder: trimmedPath + '/',
+            rules: otherTargetAudienceFilters.map((filter) => ({
+              function: filter.filterFunction,
+              source: filter.id,
+              targets: filter.filterParams,
+            })),
+          }),
+        );
+      }
 
-      dispatch(
-        PublicationActions.publish({
-          sourceUrl: entity.id,
-          targetFolder: trimmedPath + '/',
-          targetUrl: `${entity.id.split('/')[0]}/public/${trimmedPath ? `${trimmedPath}/` : ''}${
-            parseConversationApiKey(splitEntityId(entity.id).name).model.id +
-            '__' +
-            trimmedName
-          }`,
-          rules: otherTargetAudienceFilters.map((filter) => ({
-            function: filter.filterFunction,
-            source: filter.id,
-            targets: filter.filterParams,
-          })),
-        }),
-      );
       onClose();
     },
-    [dispatch, entity.id, name, onClose, otherTargetAudienceFilters, path],
+    [
+      dispatch,
+      entity.id,
+      files,
+      name,
+      onClose,
+      otherTargetAudienceFilters,
+      path,
+      type,
+    ],
   );
 
   // const handleBlur = useCallback(() => {

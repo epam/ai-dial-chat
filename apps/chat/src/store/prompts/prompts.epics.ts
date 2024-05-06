@@ -44,7 +44,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { ApiKeys, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -52,6 +52,7 @@ import { AppEpic } from '@/src/types/store';
 import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
+import { PublicationActions } from '../publication/publication.reducers';
 import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
@@ -83,6 +84,11 @@ const initEpic: AppEpic = (action$) =>
               }),
             ),
             of(PromptsActions.initFoldersAndPromptsSuccess()),
+            of(
+              PublicationActions.uploadPublishedWithMeItems({
+                featureType: ApiKeys.Prompts,
+              }),
+            ),
           );
         }),
       ),

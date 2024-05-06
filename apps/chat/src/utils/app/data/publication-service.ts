@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { ApiKeys, BackendResourceType } from '@/src/types/common';
 import {
@@ -11,6 +11,7 @@ import {
 import { UIStorageKeys } from '@/src/types/storage';
 
 import { ApiUtils } from '../../server/api';
+import { isFolderId } from '../id';
 import { BrowserStorage } from './storages/browser-storage';
 
 export class PublicationService {
@@ -28,21 +29,37 @@ export class PublicationService {
   ): Observable<PublicationsListModel> {
     return ApiUtils.request('api/publication/listing', {
       method: 'POST',
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({
+        url: `${ApiUtils.encodeApiUrl(url)}${isFolderId(url) ? '/' : ''}`,
+      }),
     });
   }
 
   public static getPublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/details', {
       method: 'POST',
-      body: JSON.stringify({ url }),
-    });
+      body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
+    }).pipe(
+      map((publication: Publication) => {
+        const decodedResources = publication.resources.map((r) => ({
+          ...r,
+          targetUrl: ApiUtils.decodeApiUrl(r.targetUrl),
+          reviewUrl: ApiUtils.decodeApiUrl(r.reviewUrl),
+          sourceUrl: ApiUtils.decodeApiUrl(r.sourceUrl),
+        }));
+
+        return {
+          ...publication,
+          resources: decodedResources,
+        };
+      }),
+    );
   }
 
   public static deletePublication(url: string): Observable<void> {
     return ApiUtils.request('api/publication/delete', {
       method: 'POST',
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
 
@@ -72,14 +89,14 @@ export class PublicationService {
   public static approvePublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/approve', {
       method: 'POST',
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
 
   public static rejectPublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/reject', {
       method: 'POST',
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
 
