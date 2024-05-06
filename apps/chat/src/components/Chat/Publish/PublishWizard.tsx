@@ -12,6 +12,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { prepareEntityName } from '@/src/utils/app/common';
 import {
   constructPath,
   validatePublishingFileRenaming,
@@ -165,11 +166,11 @@ export default function PublishWizard({
 
       setSubmitted(true);
 
-      const trimmedName = name?.trim();
+      const preparedName = prepareEntityName(name);
       // const trimmedVersion = version?.trim();
       const trimmedPath = path?.trim();
 
-      if (!trimmedName) {
+      if (!preparedName) {
         return;
       }
 
@@ -185,7 +186,7 @@ export default function PublishWizard({
                   parseConversationApiKey(splitEntityId(entity.id).name).model
                     .id +
                   '__' +
-                  trimmedName
+                  preparedName
                 }`,
               },
               ...files.map((file) => ({
@@ -208,7 +209,7 @@ export default function PublishWizard({
             resources: [
               {
                 sourceUrl: entity.id,
-                targetUrl: `${ApiKeys.Prompts}/public/${trimmedPath ? `${trimmedPath}/` : ''}${trimmedName}`,
+                targetUrl: `${ApiKeys.Prompts}/public/${trimmedPath ? `${trimmedPath}/` : ''}${preparedName}`,
               },
             ],
             targetFolder: trimmedPath + '/',

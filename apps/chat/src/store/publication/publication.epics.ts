@@ -25,6 +25,7 @@ import {
 import { isConversationId, isPromptId, isRootId } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import {
+  ApiUtils,
   parseConversationApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
@@ -61,7 +62,10 @@ const publishEpic: AppEpic = (action$) =>
       const publicationRequestInfo: PublicationRequest = {
         url: `publications/${BucketService.getBucket()}/`,
         targetUrl: `public/${payload.targetFolder}`,
-        resources: payload.resources,
+        resources: payload.resources.map((r) => ({
+          sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
+          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+        })),
         rules: payload.rules,
       };
 
