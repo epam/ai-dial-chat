@@ -8,12 +8,12 @@ DIAL Visualizer Connector is a library for connecting custom visualizers - appli
 
 ## Prerequisites
 
-Your Dial Chat application should configure hosts where your custom visualizers hosted. You could do this with `ALLOWED_VISUALIZERS_IFRAME_ORIGINS` env variable
+Your Dial Chat application should configure hosts where your custom visualizers hosted. You could do this with `ALLOWED_IFRAME_SOURCES` env variable
 
 \_Note: For development purposes you can set `*`\_
 
 ```
-ALLOWED_VISUALIZERS_IFRAME_ORIGINS=http://localhost:8000
+ALLOWED_IFRAME_SOURCES=http://localhost:8000
 ```
 
 Moreover, it needs to be configured some **Visualizer** properties:

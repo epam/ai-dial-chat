@@ -1,5 +1,5 @@
 import { IconRefresh } from '@tabler/icons-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CustomRenderer } from '@/src/types/custom-renderes';
 
@@ -8,7 +8,7 @@ import {
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
-import { VisualizerConnector } from '@epam/visualizer-connector';
+import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
   attachmentUrl: string;
@@ -26,21 +26,25 @@ export const VisualizerRenderer = ({
 
   const [ready, setReady] = useState<boolean>();
   const { Url: rendererUrl, Title } = renderer;
+  //This is for the MVP only.
+  //TODO should be changed to get visualizer data like for the Plotly (TBD);
+  const visualizerData: Record<string, unknown> = useMemo(
+    () => ({
+      dataToRender: attachmentUrl,
+    }),
+    [attachmentUrl],
+  );
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {
       await visualizer.ready();
-
-      const visualizerData = {
-        message: 'Hello, I am a message from the chat!',
-      };
 
       visualizer.send(VisualizerConnectorRequests.sendVisualizeData, {
         mimeType,
         visualizerData,
       });
     },
-    [mimeType],
+    [mimeType, visualizerData],
   );
 
   useEffect(() => {
@@ -56,8 +60,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [rendererUrl, Title]);
 
   useEffect(() => {
     if (ready && !!visualizer.current) {
@@ -86,13 +89,15 @@ export const VisualizerRenderer = ({
 
   return (
     <div ref={iframeContainerRef}>
-      <h2>{Title}</h2>
-      <button
-        className="button button-secondary mt-5"
-        onClick={() => visualizer.current && sendMessage(visualizer.current)}
-      >
-        <IconRefresh />
-      </button>
+      <div className="flex flex-row justify-between pr-10">
+        <h2>{Title}</h2>
+        <button
+          className="button button-secondary"
+          onClick={() => visualizer.current && sendMessage(visualizer.current)}
+        >
+          <IconRefresh size={18} />
+        </button>
+      </div>
     </div>
   );
 };

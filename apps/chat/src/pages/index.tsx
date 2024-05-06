@@ -274,8 +274,8 @@ export const getServerSideProps: GetServerSideProps = async ({
     ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
     : 'frame-ancestors none';
 
-  const frameSrcDirective = process.env.ALLOWED_VISUALIZERS_IFRAME_ORIGINS
-    ? 'frame-src ' + process.env.ALLOWED_VISUALIZERS_IFRAME_ORIGINS
+  const frameSrcDirective = process.env.ALLOWED_IFRAME_SOURCES
+    ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
     : 'frame-src none';
 
   res.setHeader(
