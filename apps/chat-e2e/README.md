@@ -10,7 +10,7 @@ When run tests on CI, `E2E_USERNAME` and `E2E_PASSWORD` CI variable should be se
 
 ## Run tests locally
 
-Run `nx run chat-e2e:e2e` to execute chat and overlay sandbox tests locally.
+Run `nx e2e chat-e2e` to execute chat and overlay sandbox tests locally.
 Installation of default browsers may be required, when run for the 1st time.
 
 Local version of application is automatically started before execution the tests on `http://localhost:3000`.
@@ -47,7 +47,7 @@ Image version should correspond Playwright version.
 
 ## Run tests on CI
 
-Config file used for CI pipeline: `chat.playwright.config.ts`.
+Config files used for CI pipeline: `chat.playwright.config.ts` and `overlay.playwright.config.ts`
 
 `nx e2e chat-e2e --configuration=production` command is used to trigger tests on CI.
 
