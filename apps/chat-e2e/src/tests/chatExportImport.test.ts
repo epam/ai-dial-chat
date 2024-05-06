@@ -10,6 +10,7 @@ import {
   Import,
   MenuOptions,
   ModelIds,
+  ScrollState,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -368,7 +369,8 @@ dialTest(
 dialTest(
   'Continue working with imported file. Regenerate response.\n' +
     'Continue working with imported file. Send a message.\n' +
-    'Continue working with imported file. Edit a message',
+    'Continue working with imported file. Edit a message.\n' +
+    'Position of user-message stays at the top if to click on edit',
   async ({
     dialHomePage,
     setTestIds,
@@ -378,7 +380,7 @@ dialTest(
     conversations,
     chatBar,
   }) => {
-    setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925');
+    setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925', 'EPMRTC-3075');
     let importedRootConversation: Conversation;
     const requests = ['1+2', '2+3', '3+4'];
 
@@ -430,10 +432,33 @@ dialTest(
     );
 
     await dialTest.step(
+      'Open 1st request edit mode and verify text area stays at the top, control buttons are visible',
+      async () => {
+        await chatMessages.openEditMessageMode(1);
+        const scrollPosition =
+          await chat.scrollableArea.getVerticalScrollPosition();
+        expect
+          .soft(scrollPosition, ExpectedMessages.scrollPositionIsCorrect)
+          .toBe(ScrollState.top);
+        await expect
+          .soft(
+            chatMessages.saveAndSubmit.getElementLocator(),
+            ExpectedMessages.buttonIsEnabled,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            chatMessages.cancel.getElementLocator(),
+            ExpectedMessages.buttonIsEnabled,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
       'Edit 1st request in chat and verify 1st response is regenerated',
       async () => {
         const updatedMessage = '6+7';
-        await chatMessages.openEditMessageMode(1);
         await chatMessages.editMessage(requests[0], updatedMessage);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
