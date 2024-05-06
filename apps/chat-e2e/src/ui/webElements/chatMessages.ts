@@ -69,23 +69,40 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
   }
 
-  public async openChatMessageAttachment(
+  public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
   ) {
-    const messageAttachment =
-      this.getChatMessage(message).getByTitle(attachmentTitle);
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) =>
-          resp.request().method() === 'GET' &&
-          resp.url().includes(attachmentTitle),
-        { timeout: config.use!.actionTimeout! * 2 },
-      );
+    const isCollapsed = await this.getChatMessage(message)
+      .locator(ChatSelectors.attachmentCollapsed)
+      .isVisible();
+    if (isCollapsed) {
+      const messageAttachment =
+        this.getChatMessage(message).getByTitle(attachmentTitle);
+      if (isApiStorageType) {
+        const respPromise = this.page.waitForResponse(
+          (resp) =>
+            resp.request().method() === 'GET' &&
+            resp.url().includes(attachmentTitle),
+          { timeout: config.use!.actionTimeout! * 2 },
+        );
+        await messageAttachment.click();
+        return respPromise;
+      }
       await messageAttachment.click();
-      return respPromise;
     }
-    await messageAttachment.click();
+  }
+
+  public async collapseChatMessageAttachment(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    const isExpanded = await this.getChatMessage(message)
+      .locator(ChatSelectors.attachmentExpanded)
+      .isVisible();
+    if (isExpanded) {
+      await this.getChatMessage(message).getByTitle(attachmentTitle).click();
+    }
   }
 
   public async getChatMessageAttachmentUrl(message: string | number) {
@@ -320,6 +337,32 @@ export class ChatMessages extends BaseElement {
     stageIndex: number,
   ) {
     return this.messageStage(messagesIndex, stageIndex).isVisible();
+  }
+
+  public async isMessageStageOpened(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex)
+      .locator(ChatSelectors.openedStage)
+      .isVisible();
+  }
+
+  public async openMessageStage(messagesIndex: number, stageIndex: number) {
+    const isStageOpened = await this.isMessageStageOpened(
+      messagesIndex,
+      stageIndex,
+    );
+    if (!isStageOpened) {
+      await this.messageStage(messagesIndex, stageIndex).click();
+    }
+  }
+
+  public async closeMessageStage(messagesIndex: number, stageIndex: number) {
+    const isStageOpened = await this.isMessageStageOpened(
+      messagesIndex,
+      stageIndex,
+    );
+    if (isStageOpened) {
+      await this.messageStage(messagesIndex, stageIndex).click();
+    }
   }
 
   public getChatMessageTextarea(message: string) {
