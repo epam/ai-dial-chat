@@ -73,11 +73,11 @@ export const ExpectedConstants = {
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
-  revokeAccessTo: (name: string) => `Confirm revoking access to: ${name}`,
+  revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',
-  responseContentPattern: /(?<=\{"content":")[^"^\\$]+/g,
+  responseContentPattern: /(?<="content":")[^"^\\$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
@@ -234,6 +234,7 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_V3_HAIKU = 'anthropic.claude-v3-haiku',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
+  GEMINI_PRO_1_5 = 'gemini-1.5-pro-preview-0409',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
   GEMINI_PRO = 'gemini-pro',
   META_LLAMA_2 = 'meta.llama2',
@@ -241,6 +242,9 @@ export enum ModelIds {
   LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
   COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
   MISTRAL_LARGE = 'mistral-large-azure',
+  DATABRICKS_DBRX_INSTRUCT = 'databricks-dbrx-instruct',
+  DATABRICKS_MIXTRAL_8X7B_INSTRUCT = 'databricks-mixtral-8x7b-instruct',
+  DATABRICKS_LLAMA_2_70B_CHAT = 'databricks-llama-2-70b-chat',
 }
 
 export enum AddonIds {

@@ -352,7 +352,7 @@ export const MessageMobileButtons = ({
     !isConversationInvalid && (
       <>
         <MenuItem
-          className="hover:text-accent-primary focus:visible disabled:cursor-not-allowed group-hover:visible"
+          className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
           onClick={() => toggleEditing(!isEditing)}
           disabled={editDisabled}
           item={
@@ -363,7 +363,7 @@ export const MessageMobileButtons = ({
           }
         />
         <MenuItem
-          className="hover:text-accent-primary focus:visible group-hover:visible"
+          className="hover:bg-accent-primary-alpha focus:visible group-hover:visible"
           onClick={onDelete}
           item={
             <div className="flex items-center gap-3">

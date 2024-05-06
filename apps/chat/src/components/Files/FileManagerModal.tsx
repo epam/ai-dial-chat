@@ -324,8 +324,8 @@ export const FileManagerModal = ({
         <ErrorMessage error={errorMessage} />
 
         {showSpinner ? (
-          <div className="flex min-h-[300px] items-center justify-center">
-            <Spinner />
+          <div className="flex items-center justify-center py-10">
+            <Spinner size={30} />
           </div>
         ) : (
           <div className="group/modal flex flex-col gap-2 overflow-auto">
@@ -345,7 +345,7 @@ export const FileManagerModal = ({
                 {t('All files')}
               </button>
               {isAllFilesOpened && (
-                <div className="flex min-h-[250px] flex-col gap-0.5 overflow-auto">
+                <div className="flex flex-col gap-0.5 overflow-auto">
                   {(folders.length !== 0 || filteredFiles.length !== 0) && (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {
@@ -374,6 +374,7 @@ export const FileManagerModal = ({
                               onAddFolder={handleAddFolder}
                               onFileUpload={handleUploadFile}
                               onRenameFolder={handleRenameFolder}
+                              skipFolderRenameValidation
                               onItemEvent={handleItemCallback}
                               withBorderHighlight={false}
                               featureType={FeatureType.File}
