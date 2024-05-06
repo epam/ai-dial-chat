@@ -14,7 +14,7 @@ import { HomeProps } from '.';
 import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
 
-const inter = Inter({
+export const inter = Inter({
   subsets: ['latin'],
   weight: 'variable',
   variable: '--font-inter',

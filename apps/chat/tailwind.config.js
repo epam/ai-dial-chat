@@ -77,7 +77,7 @@ module.exports = {
         DEFAULT: '0 0 4px 0 var(--bg-blackout, #090D13B3)',
       },
       fontFamily: {
-        DEFAULT: ['var(--font-inter)'],
+        DEFAULT: ['var(--theme-font, var(--font-inter))'],
       },
       fontSize: {
         xxs: '10px',
