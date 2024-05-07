@@ -224,4 +224,8 @@ export enum ExpectedMessages {
   notAllowedNameErrorShown = 'Not allowed name error toast is shown',
   charactersAreNotDisplayed = 'Characters are not displayed',
   errorToastIsShown = 'Error toast is shown',
+  scrollDownButtonIsNotVisible = 'Scroll down button is not visible',
+  scrollDownButtonIsVisible = 'Scroll down button is visible',
+  scrollPositionIsCorrect = 'Scroll position is correct',
+  elementPositionIsCorrect = 'Element position is correct',
 }

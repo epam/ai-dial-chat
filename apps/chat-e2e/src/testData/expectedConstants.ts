@@ -269,3 +269,9 @@ export enum ResultFolder {
   htmlReport = 'html-report',
   testResults = 'test-results',
 }
+
+export enum ScrollState {
+  top = 'top',
+  middle = 'middle',
+  bottom = 'bottom',
+}
