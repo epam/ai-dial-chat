@@ -201,7 +201,7 @@ dialTest(
             ),
         );
         await dialHomePage.throttleAPIResponse('**/*');
-        await uploadFromDeviceModal.uploadFile();
+        await uploadFromDeviceModal.uploadButton.click();
       },
     );
 
