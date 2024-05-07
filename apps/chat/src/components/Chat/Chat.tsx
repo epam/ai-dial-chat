@@ -695,6 +695,7 @@ export const ChatView = memo(() => {
                     }}
                     ref={setChatContainerRef}
                     className="h-full overflow-x-hidden"
+                    data-qa="scrollable-area"
                   >
                     <div className="flex max-h-full w-full">
                       {selectedConversations.map(
