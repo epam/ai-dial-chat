@@ -27,6 +27,8 @@ export const ChatSelectors = {
   messageIcon: '[data-qa="message-icon"]',
   messageContent: '[data-qa="message-content"]',
   messageStage: '[data-qa="message-stage"]',
+  openedStage: '[data-qa="stage-opened"]',
+  closedStage: '[data-qa="stage-closed"]',
   stageLoader: '.animate-spin',
   loadingCursor: '[data-qa="loading-cursor"]',
   temperatureSlider: '[data-qa="temp-slider"]',
@@ -93,4 +95,8 @@ export const ChatSelectors = {
   conversationNotFound: '[data-qa="not-found"]',
   codeblock: '.codeblock',
   duplicate: '[data-qa="duplicate"]',
+  scrollDownButton: '[data-qa="scroll-down-button"]',
+  chatScrollableArea: '[data-qa="scrollable-area"]',
+  attachmentExpanded: '[data-qa="attachment-expanded"]',
+  attachmentCollapsed: '[data-qa="attachment-collapsed"]',
 };

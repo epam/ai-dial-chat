@@ -872,7 +872,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
 
         await additionalShareUserChatMessages.getChatMessage(2).waitFor();
-        await additionalShareUserChatMessages.openChatMessageAttachment(
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
@@ -1143,7 +1143,7 @@ dialSharedWithMeTest(
           dalleConversation.name,
         );
         await additionalShareUserChatMessages.getChatMessage(2).waitFor();
-        await additionalShareUserChatMessages.openChatMessageAttachment(
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
