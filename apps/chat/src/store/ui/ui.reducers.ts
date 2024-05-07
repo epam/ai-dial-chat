@@ -48,6 +48,7 @@ const initialState: UIState = {
   promptbarWidth: SIDEBAR_MIN_WIDTH,
   isChatFullWidth: false,
   showSelectToMigrateWindow: false,
+  customLogo: '',
 };
 
 export const uiSlice = createSlice({
@@ -107,7 +108,7 @@ export const uiSlice = createSlice({
       state.customLogo = payload.logo;
     },
     deleteCustomLogo: (state) => {
-      state.customLogo = undefined;
+      state.customLogo = '';
     },
     showToast: (
       state,
