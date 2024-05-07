@@ -240,6 +240,8 @@ export enum ModelIds {
   META_LLAMA_2 = 'meta.llama2',
   LLAMA2_13B_CHAT_V1 = 'meta.llama2-13b-chat-v1',
   LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
+  LLAMA3_8B_INSTRUCT_V1 = 'meta.llama3-8b-instruct-v1',
+  LLAMA3_70B_INSTRUCT_V1 = 'meta.llama3-70b-instruct-v1',
   COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
   MISTRAL_LARGE = 'mistral-large-azure',
   DATABRICKS_DBRX_INSTRUCT = 'databricks-dbrx-instruct',
