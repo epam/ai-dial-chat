@@ -44,6 +44,7 @@ export const ExpectedConstants = {
     'Renaming will stop sharing and other users will no longer see this conversation.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
+  sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
   stopGeneratingTooltip: 'Stop generating',
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
@@ -140,6 +141,11 @@ export enum FilterMenuOptions {
 export enum AccountMenuOptions {
   settings = 'Settings',
   logout = 'Log out',
+}
+
+export enum UploadMenuOptions {
+  attachUploadedFiles = 'Attach uploaded files',
+  uploadFromDevice = 'Upload from device',
 }
 
 export const Chronology = {

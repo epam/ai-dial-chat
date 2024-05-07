@@ -453,6 +453,7 @@ export const FileManagerModal = ({
               onClick={handleAttachFiles}
               className="button button-primary"
               disabled={selectedFilesIds.length === 0}
+              data-qa="attach-files"
             >
               {customButtonLabel}
             </button>

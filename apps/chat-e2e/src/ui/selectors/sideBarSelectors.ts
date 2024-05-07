@@ -9,7 +9,6 @@ export const SideBarSelectors = {
   folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',
   renameInput: `${Tags.input}[${Attributes.name}="rename-input"]`,
-  dropdownMenu: '[data-qa="dropdown-menu"]',
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',
@@ -20,7 +19,6 @@ export const SideBarSelectors = {
   bottomPanel: '[data-qa="bottom-panel"]',
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   search: '[data-qa="search"]',
-  filterMenuTrigger: '[data-qa="menu-trigger"]',
   folderSeparator: '.h-1',
   pinnedEntities: '[data-qa^="pinned"]',
 };

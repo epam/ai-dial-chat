@@ -1,5 +1,5 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ModalSelectors } from '@/src/ui/selectors';
+import { ShareModalSelectors } from '@/src/ui/selectors';
 import { Dialog } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
@@ -15,7 +15,9 @@ export class ConfirmationDialog extends BaseElement {
     this.page,
     Dialog.confirmationMessage,
   );
-  public entityName = this.getChildElementBySelector(ModalSelectors.entityName);
+  public entityName = this.getChildElementBySelector(
+    ShareModalSelectors.entityName,
+  );
 
   public async cancelDialog() {
     await this.cancelButton.click();

@@ -457,6 +457,7 @@ export const PreUploadDialog = ({
           className="button button-primary"
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
+          data-qa="upload"
         >
           {customUploadButtonLabel ? customUploadButtonLabel : t('Upload')}
         </button>

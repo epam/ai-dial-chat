@@ -112,9 +112,10 @@ export const FileItem = ({
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
+      data-qa="attached-file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary">
+        <div className="text-secondary" data-qa="attached-file-icon">
           {!isSelected && item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
