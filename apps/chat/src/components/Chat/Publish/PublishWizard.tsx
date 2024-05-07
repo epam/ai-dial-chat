@@ -178,7 +178,7 @@ export default function PublishWizard({
       if (type === SharingType.Conversation) {
         dispatch(
           PublicationActions.publish({
-            targetFolder: trimmedPath + '/',
+            targetFolder: trimmedPath,
             resources: [
               {
                 sourceUrl: entity.id,

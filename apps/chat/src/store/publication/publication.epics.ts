@@ -1,4 +1,5 @@
 import {
+  EMPTY,
   Observable,
   catchError,
   concat,
@@ -66,7 +67,7 @@ const publishEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       const publicationRequestInfo: PublicationRequest = {
         url: `publications/${BucketService.getBucket()}/`,
-        targetUrl: `public/${payload.targetFolder}`,
+        targetUrl: `public/${ApiUtils.encodeApiUrl(payload.targetFolder)}/`,
         resources: payload.resources.map((r) => ({
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
@@ -272,87 +273,115 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$) =>
         mergeMap((publications) => {
           const actions: Observable<AnyAction>[] = [];
 
-          if (
-            payload.featureType === ApiKeys.Conversations &&
-            publications.items
-          ) {
-            actions.push(
-              ...publications.items.map((item) => {
-                if (item.nodeType === BackendDataNodeType.FOLDER) {
-                  const newUrl = item.url.slice(0, -1);
+          if (!publications.items) {
+            return EMPTY;
+          }
 
-                  return of(
-                    ConversationsActions.addFolders({
-                      folders: [
-                        {
-                          name: item.name,
-                          id: newUrl,
-                          folderId: getFolderIdFromEntityId(newUrl),
-                          publishedWithMe: true,
-                          type: FolderType.Chat,
-                        },
-                      ],
+          if (payload.featureType === ApiKeys.Conversations) {
+            const folderTypeEntities = publications.items.filter(
+              (item) => item.nodeType === BackendDataNodeType.FOLDER,
+            );
+
+            if (folderTypeEntities.length) {
+              actions.push(
+                of(
+                  ConversationsActions.addFolders({
+                    folders: folderTypeEntities.map((item) => {
+                      const newUrl = ApiUtils.decodeApiUrl(
+                        item.url.slice(0, -1),
+                      );
+
+                      return {
+                        name: item.name,
+                        id: newUrl,
+                        folderId: getFolderIdFromEntityId(newUrl),
+                        publishedWithMe: true,
+                        type: FolderType.Chat,
+                      };
                     }),
-                  );
-                }
+                  }),
+                ),
+              );
+            }
 
-                const parsedApiKey = parseConversationApiKey(
-                  splitEntityId(item.url).name,
-                );
+            const itemTypeEntities = publications.items.filter(
+              (item) => item.nodeType === BackendDataNodeType.ITEM,
+            );
 
-                return of(
+            if (itemTypeEntities) {
+              actions.push(
+                of(
                   ConversationsActions.addConversations({
-                    conversations: [
-                      {
-                        id: item.url,
-                        folderId: getFolderIdFromEntityId(item.url),
+                    conversations: itemTypeEntities.map((item) => {
+                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+                      const parsedApiKey = parseConversationApiKey(
+                        splitEntityId(decodedUrl).name,
+                      );
+
+                      return {
+                        id: decodedUrl,
+                        folderId: getFolderIdFromEntityId(decodedUrl),
                         model: parsedApiKey.model,
                         name: parsedApiKey.name,
                         publishedWithMe: true,
-                      },
-                    ],
-                  }),
-                );
-              }),
-            );
-          } else if (
-            payload.featureType === ApiKeys.Prompts &&
-            publications.items
-          ) {
-            actions.push(
-              ...publications.items.map((item) => {
-                if (item.nodeType === BackendDataNodeType.FOLDER) {
-                  const newUrl = item.url.slice(0, -1);
-
-                  return of(
-                    PromptsActions.addFolders({
-                      folders: [
-                        {
-                          name: item.name,
-                          id: newUrl,
-                          folderId: getFolderIdFromEntityId(newUrl),
-                          publishedWithMe: true,
-                          type: FolderType.Prompt,
-                        },
-                      ],
+                      };
                     }),
-                  );
-                }
-
-                return of(
-                  PromptsActions.addPrompts({
-                    prompts: [
-                      {
-                        id: item.url,
-                        folderId: getFolderIdFromEntityId(item.url),
-                        name: splitEntityId(item.url).name,
-                        publishedWithMe: true,
-                      },
-                    ],
                   }),
-                );
-              }),
+                ),
+              );
+            }
+          } else if (payload.featureType === ApiKeys.Prompts) {
+            const folderTypeEntities = publications.items.filter(
+              (item) => item.nodeType === BackendDataNodeType.FOLDER,
             );
+
+            if (folderTypeEntities.length) {
+              actions.push(
+                of(
+                  PromptsActions.addFolders({
+                    folders: folderTypeEntities.map((item) => {
+                      const newUrl = ApiUtils.decodeApiUrl(
+                        item.url.slice(0, -1),
+                      );
+
+                      return {
+                        name: item.name,
+                        id: newUrl,
+                        folderId: getFolderIdFromEntityId(newUrl),
+                        publishedWithMe: true,
+                        type: FolderType.Prompt,
+                      };
+                    }),
+                  }),
+                ),
+              );
+            }
+
+            const itemTypeEntities = publications.items.filter(
+              (item) => item.nodeType === BackendDataNodeType.ITEM,
+            );
+
+            if (itemTypeEntities.length) {
+              actions.push(
+                of(
+                  PromptsActions.addPrompts({
+                    prompts: itemTypeEntities.map((item) => {
+                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+                      const parsedApiKey = parsePromptApiKey(
+                        splitEntityId(decodedUrl).name,
+                      );
+
+                      return {
+                        id: decodedUrl,
+                        folderId: getFolderIdFromEntityId(decodedUrl),
+                        name: parsedApiKey.name,
+                        publishedWithMe: true,
+                      };
+                    }),
+                  }),
+                ),
+              );
+            }
           }
 
           return concat(
