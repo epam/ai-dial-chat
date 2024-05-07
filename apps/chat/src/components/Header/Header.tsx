@@ -35,9 +35,11 @@ const Header = () => {
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const customLogo = useAppSelector(UISelectors.selectCustomLogo);
+
   const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
+
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
