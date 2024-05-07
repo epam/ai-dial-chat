@@ -18,11 +18,6 @@ import {
   validatePublishingFileRenaming,
 } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import {
-  getConversationRootId,
-  getFileRootId,
-  getPromptRootId,
-} from '@/src/utils/app/id';
 import { getAttachments } from '@/src/utils/app/share';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { parseConversationApiKey } from '@/src/utils/server/api';
@@ -454,10 +449,8 @@ export default function PublishWizard({
         depth={depth}
         rootFolderId={
           type === SharingType.Conversation
-            ? getConversationRootId()
-            : type === SharingType.Prompt
-              ? getPromptRootId()
-              : getFileRootId()
+            ? `${ApiKeys.Conversations}/public`
+            : `${ApiKeys.Prompts}/public`
         }
       />
     </Modal>

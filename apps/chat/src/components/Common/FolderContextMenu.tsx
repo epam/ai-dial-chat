@@ -92,7 +92,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Rename'),
-        display: !!onRename && !isExternal,
+        display: (!!onRename && !isExternal) || !!folder.temporary,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -155,12 +155,13 @@ export const FolderContextMenu = ({
       {
         name: t('Delete'),
         display:
-          !!onDelete &&
-          folder.id.startsWith(
-            getRootId({
-              featureType,
-            }),
-          ),
+          (!!onDelete &&
+            folder.id.startsWith(
+              getRootId({
+                featureType,
+              }),
+            )) ||
+          !!folder.temporary,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
