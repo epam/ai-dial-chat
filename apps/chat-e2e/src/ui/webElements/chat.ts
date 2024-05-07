@@ -4,7 +4,8 @@ import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API } from '@/src/testData';
+import { API, ScrollState } from '@/src/testData';
+import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
@@ -13,6 +14,7 @@ import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { Page } from '@playwright/test';
 
 export const PROMPT_APPLY_DELAY = 500;
+export const SCROLL_MOVING_DELAY = 100;
 
 export class Chat extends BaseElement {
   constructor(page: Page) {
@@ -46,6 +48,9 @@ export class Chat extends BaseElement {
     ChatSelectors.notAllowedModel,
   );
   public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
+  public scrollableArea = this.getChildElementBySelector(
+    ChatSelectors.chatScrollableArea,
+  );
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
@@ -256,5 +261,48 @@ export class Chat extends BaseElement {
     );
     await this.duplicate.click();
     await respPromise;
+  }
+
+  public async scrollContent(deltaX: number, deltaY: number) {
+    const chatBounding = await this.getElementBoundingBox();
+    await this.page.mouse.move(
+      chatBounding!.x + chatBounding!.width / 2,
+      chatBounding!.y + chatBounding!.height / 2,
+    );
+    await this.page.mouse.wheel(deltaX, deltaY);
+  }
+
+  public async waitForScrollPosition(state: ScrollState) {
+    let counter = 5;
+    while (counter > 0) {
+      await this.page.waitForTimeout(SCROLL_MOVING_DELAY);
+      counter--;
+      const scrollPosition =
+        await this.getSendMessage().getVerticalScrollPosition();
+      if (scrollPosition === state) {
+        break;
+      }
+    }
+  }
+
+  public async goToContentPosition(state: ScrollState) {
+    const chatBounding = await this.getElementBoundingBox();
+    await this.click({
+      position: {
+        x: chatBounding!.x + chatBounding!.width / 2,
+        y: chatBounding!.y + chatBounding!.height / 2,
+      },
+    });
+    let keyToPress;
+    switch (state) {
+      case ScrollState.top:
+        keyToPress = keys.home;
+        break;
+      case ScrollState.bottom:
+        keyToPress = keys.end;
+        break;
+    }
+    await this.page.keyboard.press(keyToPress!);
+    await this.waitForScrollPosition(state);
   }
 }
