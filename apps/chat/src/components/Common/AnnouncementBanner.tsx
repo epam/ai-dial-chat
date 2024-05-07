@@ -11,8 +11,6 @@ export const AnnouncementsBanner = () => {
   );
   const announcement = useAppSelector(SettingsSelectors.selectAnnouncement);
 
-  return null; //temporary hide announcement
-
   if (
     !announcement ||
     textOfClosedAnnouncement === undefined ||
