@@ -148,10 +148,10 @@ export class DataService {
   }
 
   public static getCustomLogo(): Observable<string | undefined> {
-    return BrowserStorage.getData(UIStorageKeys.CustomLogo, undefined);
+    return BrowserStorage.getData(UIStorageKeys.CustomLogo, '');
   }
 
-  public static setCustomLogo(customLogo?: string): Observable<void> {
+  public static setCustomLogo(customLogo: string): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.CustomLogo, customLogo);
   }
 }
