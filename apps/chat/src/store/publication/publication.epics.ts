@@ -4,6 +4,7 @@ import {
   concat,
   filter,
   ignoreElements,
+  iif,
   map,
   mergeMap,
   of,
@@ -35,9 +36,13 @@ import { FolderType } from '@/src/types/folder';
 import { PublicationRequest } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
-import { ConversationsActions } from '../conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '../conversations/conversations.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
@@ -516,12 +521,7 @@ const rejectPublicationEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       PublicationService.rejectPublication(payload.url).pipe(
         switchMap(() =>
-          concat(
-            of(ConversationsActions.getSelectedConversations()),
-            of(
-              PublicationActions.rejectPublicationSuccess({ url: payload.url }),
-            ),
-          ),
+          of(PublicationActions.rejectPublicationSuccess({ url: payload.url })),
         ),
         catchError((err) => {
           console.error(err);
@@ -541,6 +541,44 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        PublicationActions.rejectPublicationSuccess.match(action) ||
+        PublicationActions.approvePublicationSuccess.match(action),
+    ),
+    switchMap(() => {
+      const publications = PublicationSelectors.selectPublications(
+        state$.value,
+      );
+
+      if (!publications.length) {
+        const conversations = ConversationsSelectors.selectConversations(
+          state$.value,
+        );
+
+        return iif(
+          () => !!conversations.length,
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [conversations[0].id],
+            }),
+          ),
+          of(
+            ConversationsActions.createNewConversations({
+              names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          ),
+        );
+      }
+
+      return of(
+        PublicationActions.uploadPublication({ url: publications[0].url }),
+      );
+    }),
+  );
+
 export const PublicationEpics = combineEpics(
   initEpic,
   publishEpic,
@@ -557,4 +595,5 @@ export const PublicationEpics = combineEpics(
   approvePublicationFailEpic,
   rejectPublicationEpic,
   rejectPublicationFailEpic,
+  resolvePublicationSuccessEpic,
 );
