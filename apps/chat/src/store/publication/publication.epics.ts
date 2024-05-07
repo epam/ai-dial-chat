@@ -124,14 +124,6 @@ const uploadPublicationEpic: AppEpic = (action$) =>
       PublicationService.getPublication(payload.url).pipe(
         switchMap((publication) => {
           const actions: Observable<AnyAction>[] = [];
-          const paths = uniq(
-            publication.resources.flatMap((resource) =>
-              getParentFolderIdsFromEntityId(
-                getFolderIdFromEntityId(resource.reviewUrl),
-              ).filter((p) => p !== resource.reviewUrl),
-            ),
-          );
-
           const promptResources = publication.resources.filter((r) =>
             isPromptId(r.reviewUrl),
           );
@@ -220,15 +212,6 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           }
 
           return concat(
-            of(
-              ConversationsActions.addFolders({
-                folders: paths.map((path) => ({
-                  ...getFolderFromId(path, FolderType.Chat),
-                  status: UploadStatus.LOADED,
-                  isPublicationFolder: true,
-                })),
-              }),
-            ),
             of(PublicationActions.uploadPublicationSuccess({ publication })),
             of(PublicationActions.selectPublication({ publication })),
             ...actions,
