@@ -9,6 +9,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -32,6 +33,9 @@ export const PreviewPromptModal = ({
 
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const selectedPrompt = useAppSelector(PromptsSelectors.selectSelectedPrompt);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -95,18 +99,24 @@ export const PreviewPromptModal = ({
                   <IconFileArrowRight size={24} strokeWidth="1.5" />
                 </button>
               </Tooltip>
-              <Tooltip
-                placement="top"
-                isTriggerClickable
-                tooltip={t('Delete prompt')}
-              >
-                <button
-                  onClick={onDelete}
-                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+              {(!selectedPublication ||
+                (selectedPublication &&
+                  selectedPublication.resources.some((r) =>
+                    selectedPrompt.id.startsWith(r.sourceUrl),
+                  ))) && (
+                <Tooltip
+                  placement="top"
+                  isTriggerClickable
+                  tooltip={t('Delete prompt')}
                 >
-                  <IconTrashX size={24} strokeWidth="1.5" />
-                </button>
-              </Tooltip>
+                  <button
+                    onClick={onDelete}
+                    className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                  >
+                    <IconTrashX size={24} strokeWidth="1.5" />
+                  </button>
+                </Tooltip>
+              )}
             </div>
             <button
               className="button button-primary"

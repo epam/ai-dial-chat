@@ -7,7 +7,6 @@ import {
   IconUpload,
   IconUserShare,
   IconUserX,
-  IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
@@ -29,8 +28,6 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from './ContextMenu';
-
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 
 interface FolderContextMenuProps {
   folder: FolderInterface;
@@ -115,19 +112,19 @@ export const FolderContextMenu = ({
         onClick: onUnshare,
         disabled: disableAll,
       },
-      {
-        name: t('Publish'),
-        dataQa: 'publish',
-        display:
-          !isEmpty &&
-          isPublishingEnabled &&
-          !folder.isPublished &&
-          !!onPublish &&
-          !isExternal,
-        Icon: IconWorldShare,
-        onClick: onPublish,
-        disabled: disableAll,
-      },
+      // {
+      //   name: t('Publish'),
+      //   dataQa: 'publish',
+      //   display:
+      //     !isEmpty &&
+      //     isPublishingEnabled &&
+      //     !folder.isPublished &&
+      //     !!onPublish &&
+      //     !isExternal,
+      //   Icon: IconWorldShare,
+      //   onClick: onPublish,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Update'),
         dataQa: 'update-publishing',
@@ -140,18 +137,18 @@ export const FolderContextMenu = ({
         onClick: onPublishUpdate,
         disabled: disableAll,
       },
-      {
-        name: t('Unpublish'),
-        dataQa: 'unpublish',
-        display:
-          !isEmpty &&
-          isPublishingEnabled &&
-          !!folder.isPublished &&
-          !!onUnpublish,
-        Icon: UnpublishIcon,
-        onClick: onUnpublish,
-        disabled: disableAll,
-      },
+      // {
+      //   name: t('Unpublish'),
+      //   dataQa: 'unpublish',
+      //   display:
+      //     !isEmpty &&
+      //     isPublishingEnabled &&
+      //     !!folder.isPublished &&
+      //     !!onUnpublish,
+      //   Icon: UnpublishIcon,
+      //   onClick: onUnpublish,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Delete'),
         display:
@@ -188,15 +185,16 @@ export const FolderContextMenu = ({
       isExternal,
       disableAll,
       onRename,
+      folder.temporary,
+      folder.isShared,
+      folder.isPublished,
+      folder.id,
+      folder.sharedWithMe,
       isNameInvalid,
       isEmpty,
       isSharingEnabled,
       onShare,
       onUnshare,
-      folder.isShared,
-      folder.isPublished,
-      folder.id,
-      folder.sharedWithMe,
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,

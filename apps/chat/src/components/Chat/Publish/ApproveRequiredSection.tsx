@@ -1,18 +1,15 @@
 import { IconClipboard, IconClipboardX } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isRootId } from '@/src/utils/app/id';
-
-import { BackendResourceType, FeatureType } from '@/src/types/common';
-import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
+import { BackendResourceType } from '@/src/types/common';
+import { FolderSectionProps } from '@/src/types/folder';
 import {
   Publication,
   PublicationInfo,
-  PublicationResource,
   PublicationStatus,
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -23,167 +20,18 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
-import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { PromptComponent } from '../../Promptbar/components/Prompt';
-
-import { ConversationComponent } from '../../Chatbar/Conversation';
 import CaretIconComponent from '../../Common/CaretIconComponent';
 import CollapsibleSection from '../../Common/CollapsibleSection';
-import Folder from '../../Folder/Folder';
+import {
+  ConversationPublicationResources,
+  PromptPublicationResources,
+} from './PublicationResources';
 
-import { some, uniqBy } from 'lodash-es';
-
-const PromptPublicationResources = ({
-  resources,
-}: {
-  resources: PublicationResource[];
-}) => {
-  const dispatch = useAppDispatch();
-
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
-  );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const publicationFolders = useAppSelector(
-    PromptsSelectors.selectPublicationFolders,
-  );
-  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
-  const highlightedFolders = useAppSelector(
-    PromptsSelectors.selectSelectedPromptFoldersIds,
-  );
-
-  const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
-    [resources],
-  );
-  const promptsToDisplay = useMemo(() => {
-    return prompts.filter(
-      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
-    );
-  }, [prompts, resourceUrls]);
-  const rootFolders = useMemo(() => {
-    const folders = resources.map((resource) => {
-      const relevantFolders = publicationFolders.filter((folder) =>
-        resource.reviewUrl.startsWith(folder.id),
-      );
-
-      return relevantFolders.find((folder) => isRootId(folder.folderId));
-    });
-
-    const existingFolders = folders.filter(Boolean) as FolderInterface[];
-
-    return uniqBy(existingFolders, 'id');
-  }, [publicationFolders, resources]);
-
-  return (
-    <>
-      {rootFolders.filter(Boolean).map((f) => {
-        return (
-          <Folder
-            readonly
-            level={1}
-            key={f.id}
-            currentFolder={f}
-            allFolders={rootFolders}
-            searchTerm={searchTerm}
-            openedFoldersIds={openedFoldersIds}
-            allItems={prompts}
-            itemComponent={PromptComponent}
-            onClickFolder={(folderId: string) => {
-              dispatch(PromptsActions.toggleFolder({ id: folderId }));
-            }}
-            featureType={FeatureType.Prompt}
-            highlightedFolders={highlightedFolders}
-          />
-        );
-      })}
-      {promptsToDisplay.map((p) => (
-        <PromptComponent key={p.id} item={p} level={1} />
-      ))}
-    </>
-  );
-};
-
-const ConversationPublicationResources = ({
-  resources,
-}: {
-  resources: PublicationResource[];
-}) => {
-  const dispatch = useAppDispatch();
-
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
-  );
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
-  const publicationFolders = useAppSelector(
-    ConversationsSelectors.selectPublicationFolders,
-  );
-  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const highlightedFolders = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsFoldersIds,
-  );
-
-  const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
-    [resources],
-  );
-  const conversationsToDisplay = useMemo(() => {
-    return conversations.filter(
-      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
-    );
-  }, [conversations, resourceUrls]);
-  const rootFolders = useMemo(() => {
-    const folders = resources.map((resource) => {
-      const relevantFolders = publicationFolders.filter((folder) =>
-        resource.reviewUrl.startsWith(folder.id),
-      );
-
-      return relevantFolders.find((folder) => isRootId(folder.folderId));
-    });
-
-    const existingFolders = folders.filter(Boolean) as FolderInterface[];
-
-    return uniqBy(existingFolders, 'id');
-  }, [publicationFolders, resources]);
-
-  return (
-    <>
-      {rootFolders.filter(Boolean).map((f) => {
-        return (
-          <Folder
-            readonly
-            level={1}
-            key={f.id}
-            currentFolder={f}
-            allFolders={rootFolders}
-            searchTerm={searchTerm}
-            openedFoldersIds={openedFoldersIds}
-            allItems={conversations}
-            itemComponent={ConversationComponent}
-            onClickFolder={(folderId: string) => {
-              dispatch(ConversationsActions.toggleFolder({ id: folderId }));
-            }}
-            featureType={FeatureType.Chat}
-            highlightedFolders={highlightedFolders}
-          />
-        );
-      })}
-      {conversationsToDisplay.map((c) => (
-        <ConversationComponent key={c.id} item={c} level={1} />
-      ))}
-    </>
-  );
-};
+import { some } from 'lodash-es';
 
 const PublicationItem = ({
   publication,
@@ -299,7 +147,9 @@ export const ApproveRequiredSection = ({
       p.resources?.map((r) => r.reviewUrl),
     );
     const shouldBeHighlighted = !!(
-      (selectedPublication && !selectedConversationsIds.length) ||
+      (selectedPublication &&
+        !selectedConversationsIds.length &&
+        selectedPublication.resourceTypes.includes(resourceType)) ||
       selectedConversationsIds.some((id) => publicationReviewIds.includes(id))
     );
 
@@ -310,6 +160,7 @@ export const ApproveRequiredSection = ({
     displayRootFiles,
     isSectionHighlighted,
     publicationItems,
+    resourceType,
     selectedConversations,
     selectedConversationsIds,
     selectedPublication,

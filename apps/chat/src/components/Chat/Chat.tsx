@@ -939,7 +939,7 @@ export function Chat() {
     PublicationSelectors.selectSelectedPublication,
   );
 
-  if (selectedPublication && !selectedConversationsIds.length) {
+  if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return <ApprovePublication publication={selectedPublication} />;
   }
 

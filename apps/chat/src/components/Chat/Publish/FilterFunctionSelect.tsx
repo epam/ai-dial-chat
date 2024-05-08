@@ -15,6 +15,7 @@ interface FilterTypeProps {
   filterFunctions: string[];
   selectedFilterFunction: string;
   onChangeFilterFunction: (filterType: PublicationFunctions) => void;
+  readonly?: boolean;
 }
 
 export function FilterFunctionSelect({
@@ -22,6 +23,7 @@ export function FilterFunctionSelect({
   filterFunctions,
   selectedFilterFunction,
   onChangeFilterFunction,
+  readonly,
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,36 +39,45 @@ export function FilterFunctionSelect({
       data-qa={`filter-selector-${id}`}
       className="h-[38px] w-full max-w-[140px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary"
     >
-      <Menu
-        className="flex w-full items-center px-3"
-        onOpenChange={setIsOpen}
-        trigger={
-          <div className="flex w-full items-center justify-between gap-2">
-            {selectedFilterFunction}
-            <IconChevronDown
-              data-qa={`open-filter-dropdown-${id}`}
-              className={classNames(
-                'shrink-0 text-primary transition-all',
-                isOpen && 'rotate-180',
-              )}
-              width={18}
-              height={18}
-            />
+      {!readonly ? (
+        <Menu
+          className="flex w-full items-center px-3"
+          onOpenChange={setIsOpen}
+          trigger={
+            <div className="flex w-full items-center justify-between gap-2">
+              {selectedFilterFunction}
+              <IconChevronDown
+                data-qa={`open-filter-dropdown-${id}`}
+                className={classNames(
+                  'shrink-0 text-primary transition-all',
+                  isOpen && 'rotate-180',
+                )}
+                width={18}
+                height={18}
+              />
+            </div>
+          }
+        >
+          <div className="bg-layer-3">
+            {filterFunctions.map((filterType) => (
+              <MenuItem
+                key={filterType}
+                className="max-w-[350px] hover:bg-accent-primary-alpha"
+                item={t(filterType)}
+                value={filterType}
+                onClick={onChangeHandler}
+              />
+            ))}
           </div>
-        }
-      >
-        <div className="bg-layer-3">
-          {filterFunctions.map((filterType) => (
-            <MenuItem
-              key={filterType}
-              className="max-w-[350px] hover:bg-accent-primary-alpha"
-              item={t(filterType)}
-              value={filterType}
-              onClick={onChangeHandler}
-            />
-          ))}
-        </div>
-      </Menu>
+        </Menu>
+      ) : (
+        <button
+          className="flex h-[34px] max-w-[350px] items-center px-3"
+          disabled
+        >
+          {selectedFilterFunction}
+        </button>
+      )}
     </div>
   );
 }

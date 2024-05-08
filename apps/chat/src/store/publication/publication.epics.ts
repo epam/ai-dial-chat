@@ -24,7 +24,12 @@ import {
   getParentFolderIdsFromEntityId,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { isConversationId, isPromptId, isRootId } from '@/src/utils/app/id';
+import {
+  isConversationId,
+  isFileId,
+  isPromptId,
+  isRootId,
+} from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -44,6 +49,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
+import { FilesActions } from '../files/files.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
@@ -65,9 +71,12 @@ const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publish.match),
     switchMap(({ payload }) => {
+      const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
+      const targetFolderSuffix = payload.targetFolder ? '/' : '';
+
       const publicationRequestInfo: PublicationRequest = {
         url: `publications/${BucketService.getBucket()}/`,
-        targetUrl: `public/${ApiUtils.encodeApiUrl(payload.targetFolder)}/`,
+        targetUrl: `public/${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
@@ -150,7 +159,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                     folders: promptPaths.map((path) => ({
                       ...getFolderFromId(path, FolderType.Prompt),
                       status: UploadStatus.LOADED,
-                      publishedWithMe: true,
+                      isPublicationFolder: true,
                     })),
                   }),
                 ),
@@ -181,8 +190,8 @@ const uploadPublicationEpic: AppEpic = (action$) =>
             const conversationPaths = uniq(
               conversationResources.flatMap((resource) =>
                 getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(resource.targetUrl),
-                ).filter((p) => p !== resource.targetUrl),
+                  getFolderIdFromEntityId(resource.reviewUrl),
+                ).filter((p) => p !== resource.reviewUrl),
               ),
             );
 
@@ -193,7 +202,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                     folders: conversationPaths.map((path) => ({
                       ...getFolderFromId(path, FolderType.Chat),
                       status: UploadStatus.LOADED,
-                      publishedWithMe: true,
+                      isPublicationFolder: true,
                     })),
                   }),
                 ),
@@ -211,6 +220,46 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         name: parsedApiKey.name,
                       };
                     }),
+                  }),
+                ),
+              ),
+            );
+          }
+
+          const fileResources = publication.resources.filter((r) =>
+            isFileId(r.reviewUrl),
+          );
+
+          if (fileResources.length) {
+            const filePaths = uniq(
+              conversationResources.flatMap((resource) =>
+                getParentFolderIdsFromEntityId(
+                  getFolderIdFromEntityId(resource.reviewUrl),
+                ).filter((p) => p !== resource.reviewUrl),
+              ),
+            );
+
+            actions.push(
+              concat(
+                of(
+                  FilesActions.getFoldersSuccess({
+                    folders: filePaths.map((path) => ({
+                      ...getFolderFromId(path, FolderType.File),
+                      status: UploadStatus.LOADED,
+                      isPublicationFolder: true,
+                    })),
+                  }),
+                ),
+                of(
+                  FilesActions.getFilesSuccess({
+                    files: fileResources.map((file) => ({
+                      id: file.reviewUrl,
+                      folderId: getFolderIdFromEntityId(file.reviewUrl),
+                      name: splitEntityId(file.targetUrl).name,
+                      contentLength: 0,
+                      contentType: '',
+                      isPublicationFile: true,
+                    })),
                   }),
                 ),
               ),

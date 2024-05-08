@@ -76,6 +76,7 @@ export interface FolderProps<T, P = unknown> {
     readonly?: boolean;
     additionalItemData?: Record<string, unknown>;
     onEvent?: (eventId: string, data: P) => void;
+    itemComponentClassNames?: string;
   }>;
   allItems?: T[];
   allFolders: FolderInterface[];
@@ -92,7 +93,7 @@ export interface FolderProps<T, P = unknown> {
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
-  onClickFolder: (folderId: string) => void;
+  onClickFolder?: (folderId: string) => void;
   featureType: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
@@ -104,6 +105,8 @@ export interface FolderProps<T, P = unknown> {
   allItemsWithoutFilters?: T[];
   folderClassName?: string;
   skipFolderRenameValidation?: boolean;
+  noCaretIcon?: boolean;
+  itemComponentClassNames?: string;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -136,6 +139,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   withBorderHighlight = true,
   folderClassName,
   skipFolderRenameValidation = false,
+  noCaretIcon = false,
+  itemComponentClassNames,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -695,6 +700,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               paddingLeft: `${level * 24}px`,
             }}
             onClick={() => {
+              if (!onClickFolder) return;
+
               onClickFolder(currentFolder.id);
             }}
             draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
@@ -707,7 +714,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
-              hidden={!hasChildElements && !displayCaretAlways}
+              hidden={(!hasChildElements && !displayCaretAlways) || noCaretIcon}
             />
 
             {loadingFolderIds.includes(currentFolder.id) &&
@@ -829,6 +836,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 <Fragment key={item.id}>
                   <div className="h-1"></div>
                   <Folder
+                    folderClassName={folderClassName}
+                    noCaretIcon={noCaretIcon}
                     readonly={readonly}
                     level={level + 1}
                     searchTerm={searchTerm}
@@ -856,6 +865,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     maxDepth={maxDepth}
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
+                    itemComponentClassNames={itemComponentClassNames}
                   />
                 </Fragment>
               );
@@ -869,6 +879,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   level: level + 1,
                   readonly,
                   additionalItemData,
+                  itemComponentClassNames,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>

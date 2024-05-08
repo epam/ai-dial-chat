@@ -67,6 +67,7 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
+  readonly?: boolean;
 }
 
 export function MultipleComboBox<T>({
@@ -81,6 +82,7 @@ export function MultipleComboBox<T>({
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
+  readonly,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -212,7 +214,10 @@ export function MultipleComboBox<T>({
             }
             inputRef.current.focus();
           }}
-          className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
+          className={classNames(
+            'relative flex w-full flex-wrap gap-1 rounded border border-primary p-1',
+            !readonly && 'focus-within:border-accent-primary',
+          )}
         >
           {selectedItems &&
             selectedItems.map((selectedItemForRender, index) => {
@@ -246,12 +251,13 @@ export function MultipleComboBox<T>({
                       removeSelectedItem(selectedItemForRender);
                     }}
                   >
-                    <IconX size={14} className="text-secondary" />
+                    {!readonly && (
+                      <IconX size={14} className="text-secondary" />
+                    )}
                   </span>
                 </span>
               );
             })}
-
           <input
             name="option-input"
             disabled={disabled}
@@ -259,6 +265,7 @@ export function MultipleComboBox<T>({
             className={classNames(
               'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
               selectedItems.length ? 'pl-1' : 'pl-2',
+              readonly && 'hidden',
             )}
             {...getInputProps({
               ...getDropdownProps({
@@ -285,28 +292,27 @@ export function MultipleComboBox<T>({
             width: `${floatingWidth}px`,
           }}
         >
-          {true &&
-            (displayedItems?.length > 0
-              ? displayedItems.map((item, index) => (
-                  <li
-                    className={classNames(
-                      'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
-                      highlightedIndex === index && 'bg-accent-primary-alpha',
-                      selectedItem === item && 'bg-accent-primary-alpha',
-                    )}
-                    key={`${getItemValue(item)}${index}`}
-                    {...getItemProps({ item, index })}
-                  >
-                    {itemRow
-                      ? createElement(itemRow, { item })
-                      : getItemLabel(item)}
-                  </li>
-                ))
-              : !!inputValue?.length && (
-                  <li className="px-3 py-2">
-                    {notFoundPlaceholder || t('No available items')}
-                  </li>
-                ))}
+          {displayedItems?.length > 0
+            ? displayedItems.map((item, index) => (
+                <li
+                  className={classNames(
+                    'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
+                    highlightedIndex === index && 'bg-accent-primary-alpha',
+                    selectedItem === item && 'bg-accent-primary-alpha',
+                  )}
+                  key={`${getItemValue(item)}${index}`}
+                  {...getItemProps({ item, index })}
+                >
+                  {itemRow
+                    ? createElement(itemRow, { item })
+                    : getItemLabel(item)}
+                </li>
+              ))
+            : !!inputValue?.length && (
+                <li className="px-3 py-2">
+                  {notFoundPlaceholder || t('No available items')}
+                </li>
+              )}
         </ul>
       </div>
     </div>

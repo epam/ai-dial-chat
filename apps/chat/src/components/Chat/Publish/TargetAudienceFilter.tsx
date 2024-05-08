@@ -16,7 +16,8 @@ interface Props {
   id: string;
   name: string;
   initialSelectedFilter?: TargetAudienceFilter;
-  onChangeFilter: (filter: TargetAudienceFilter) => void;
+  onChangeFilter?: (filter: TargetAudienceFilter) => void;
+  readonly?: boolean;
 }
 
 const getItemLabel = (item: string) => item;
@@ -34,6 +35,7 @@ export function TargetAudienceFilterComponent({
   name,
   initialSelectedFilter,
   onChangeFilter,
+  readonly = false,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -49,6 +51,8 @@ export function TargetAudienceFilterComponent({
 
   const onChangeFilterFunction = useCallback(
     (filterFunction: PublicationFunctions) => {
+      if (!onChangeFilter) return;
+
       setFilterFunction(filterFunction);
       if (filterFunction === PublicationFunctions.REGEX) {
         onChangeFilter({
@@ -65,6 +69,8 @@ export function TargetAudienceFilterComponent({
   );
   const onChangeFilterParams = useCallback(
     (filterParams: string[]) => {
+      if (!onChangeFilter) return;
+
       setFilterParams(filterParams);
       onChangeFilter({ id, name, filterFunction, filterParams });
     },
@@ -73,6 +79,8 @@ export function TargetAudienceFilterComponent({
 
   const onChangeFilterRegexParam = useCallback(
     (filterRegexParam: string) => {
+      if (!onChangeFilter) return;
+
       setFilterRegexParam(filterRegexParam);
       onChangeFilter({
         id,
@@ -90,6 +98,7 @@ export function TargetAudienceFilterComponent({
       data-qa={`publish-audience-filter-${id}`}
     >
       <FilterFunctionSelect
+        readonly={readonly}
         filterFunctions={filterFunctionValues}
         selectedFilterFunction={filterFunction}
         onChangeFilterFunction={onChangeFilterFunction}
@@ -97,11 +106,13 @@ export function TargetAudienceFilterComponent({
       />
       {filterFunction === PublicationFunctions.REGEX ? (
         <RegexParamInput
+          readonly={readonly}
           regEx={filterRegexParam}
           onRegExChange={onChangeFilterRegexParam}
         />
       ) : (
         <MultipleComboBox
+          readonly={readonly}
           initialSelectedItems={initialSelectedFilter?.filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
