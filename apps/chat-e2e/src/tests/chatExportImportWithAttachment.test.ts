@@ -241,7 +241,7 @@ dialTest(
       'Open attachment from response and verify image is loaded, attachment url is pointing to import path',
       async () => {
         dalleAttachmentPath = `${conversationPath}/${Attachment.sunImageName}`;
-        await chatMessages.openChatMessageAttachment(
+        await chatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
@@ -315,7 +315,7 @@ dialTest(
       'Open attachment from response and verify image is loaded, attachment url is pointing to import path',
       async () => {
         const stableDiffusionAttachmentPath = `${anotherUserConversationPath}/${Import.importedStableDiffusionAttachmentName}`;
-        await chatMessages.openChatMessageAttachment(
+        await chatMessages.expandChatMessageAttachment(
           4,
           Import.importedStableDiffusionAttachmentName,
         );
