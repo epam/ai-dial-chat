@@ -88,7 +88,7 @@ export const VisualizerRenderer = ({
   }, [Title, rendererUrl]);
 
   return (
-    <div ref={iframeContainerRef}>
+    <div ref={iframeContainerRef} className="h-[400px]">
       <div className="flex flex-row justify-between pr-10">
         <h2>{Title}</h2>
         <button
