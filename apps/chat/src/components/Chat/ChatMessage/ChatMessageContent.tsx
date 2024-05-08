@@ -530,7 +530,8 @@ export const ChatMessageContent = ({
                   )}
                 {!(
                   conversation.isMessageStreaming &&
-                  conversation.playback?.isPlayback
+                  conversation.playback?.isPlayback &&
+                  isLastMessage
                 ) && (
                   <MessageAttachments
                     attachments={message.custom_content?.attachments}
