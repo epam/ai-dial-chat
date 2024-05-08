@@ -35,6 +35,8 @@ const modelsForArithmeticRequest: {
     isSysPromptAllowed: true,
   },
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
+  { modelId: ModelIds.LLAMA3_8B_INSTRUCT_V1, isSysPromptAllowed: true },
+  { modelId: ModelIds.LLAMA3_70B_INSTRUCT_V1, isSysPromptAllowed: true },
   { modelId: ModelIds.DATABRICKS_DBRX_INSTRUCT, isSysPromptAllowed: true },
   {
     modelId: ModelIds.DATABRICKS_MIXTRAL_8X7B_INSTRUCT,
