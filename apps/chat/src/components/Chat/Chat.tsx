@@ -146,10 +146,20 @@ export const ChatView = memo(() => {
     (chat) => chat?.id === currentChatId?.[0],
   );
 
-  const modelIds = useMemo(
-    () => [...models.map((model) => model.id)],
-    [models],
-  );
+  // TODO PGPT-137 Temporary solution.  ModelsIds are hardcoded for now.
+  // const modelIds = useMemo(
+  //   () => [...models.map((model) => model.id)],
+  //   [models],
+  // );
+
+  const modelIds = [
+    'gpt-35-turbo',
+    'gpt-4',
+    'gpt-4-32k',
+    'gpt-4-vision',
+    'dall-e-3',
+    'rag',
+  ];
 
   useEffect(() => {
     const { talkto } = router?.query || {};
