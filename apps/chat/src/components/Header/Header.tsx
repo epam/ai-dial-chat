@@ -119,7 +119,7 @@ const Header = () => {
       <div className="flex grow justify-between">
         <span
           className={classNames(
-            'min-w-[110px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
+            'min-w-[165px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
             { 'bg-contain': customLogoUrl },
           )}
           style={{
