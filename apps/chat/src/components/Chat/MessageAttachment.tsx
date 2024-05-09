@@ -269,6 +269,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             }
           }}
           className="flex grow items-center justify-between overflow-hidden"
+          data-qa={isExpanded ? 'attachment-expanded' : 'attachment-collapsed'}
         >
           <span
             className={classNames(

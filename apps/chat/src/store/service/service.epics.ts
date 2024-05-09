@@ -1,4 +1,4 @@
-import { catchError, concat, filter, of, switchMap } from 'rxjs';
+import { catchError, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
@@ -26,16 +26,7 @@ const reportIssueEpic: AppEpic = (action$) =>
         signal: controller.signal,
         body: JSON.stringify(payload),
       }).pipe(
-        switchMap(() =>
-          concat(
-            of(
-              UIActions.showSuccessToast(
-                translate('API Key requested succesfully'),
-              ),
-            ),
-            of(ServiceActions.requestApiKeySuccess()),
-          ),
-        ),
+        switchMap(() => of(ServiceActions.reportIssueSuccess())),
         catchError(() => of(ServiceActions.reportIssueFail())),
       );
     }),
@@ -77,16 +68,7 @@ const requestApiKeyEpic: AppEpic = (action$) =>
         signal: controller.signal,
         body: JSON.stringify(payload),
       }).pipe(
-        switchMap(() =>
-          concat(
-            of(
-              UIActions.showSuccessToast(
-                translate('API Key requested succesfully'),
-              ),
-            ),
-            of(ServiceActions.requestApiKeySuccess()),
-          ),
-        ),
+        switchMap(() => of(ServiceActions.requestApiKeySuccess())),
         catchError(() => of(ServiceActions.requestApiKeyFail())),
       );
     }),
@@ -97,7 +79,7 @@ const requestApiKeySuccessEpic: AppEpic = (action$) =>
     filter(ServiceActions.requestApiKeySuccess.match),
     switchMap(() =>
       of(
-        UIActions.showSuccessToast(translate('API Key requested succesfully')),
+        UIActions.showSuccessToast(translate('API Key requested successfully')),
       ),
     ),
   );
