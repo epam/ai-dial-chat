@@ -17,11 +17,20 @@ export interface AttachmentData {
   visualizerData: Record<string, unknown>;
 }
 
+/**
+ * Class which creates connector with DIAL CHAT, allows to interact with it (send/receive messages)
+ */
 export class ChatVisualizerConnector {
   protected dialHost: string;
   protected appName: string;
   protected dataCallback: (visualizerData: AttachmentData) => void;
 
+  /**
+   * Creates a ChatVisualizerConnector
+   * @param dialHost {string} DIAL CHAT host
+   * @param appName {string} name of the Visualizer same as in config
+   * @param dataCallback {(visualizerData: AttachmentData) => void} callback to get data that will be used in the Visualizer
+   */
   constructor(
     dialHost: string,
     appName: string,
@@ -35,6 +44,10 @@ export class ChatVisualizerConnector {
     window.addEventListener('message', this.postMessageListener, false);
   }
 
+  /**
+   * Sends response via postMessage to the DIAL CHAT to notify it data received
+   * @param requestParams {PostMessageRequestParams}
+   */
   sendPMResponse(requestParams: PostMessageRequestParams): void {
     const { type, requestId, dialHost, payload } = requestParams;
 
@@ -77,6 +90,9 @@ export class ChatVisualizerConnector {
     }
   }
 
+  /**
+   * Sends 'READY' event via postMessage to the DIAL CHAT to notify that Visualizer loaded
+   */
   public sendReady() {
     window?.parent.postMessage(
       { type: `${this.appName}/${VisualizerConnectorEvents.ready}` },
@@ -84,6 +100,9 @@ export class ChatVisualizerConnector {
     );
   }
 
+  /**
+   * Sends 'READY_TO_INTERACT' event via postMessage to the DIAL CHAT to notify that Visualizer ready to get data
+   */
   public sendReadyToInteract() {
     window?.parent.postMessage(
       { type: `${this.appName}/${VisualizerConnectorEvents.readyToInteract}` },
@@ -91,6 +110,9 @@ export class ChatVisualizerConnector {
     );
   }
 
+  /**
+   * Destroys ChatVisualizerConnector
+   */
   destroy() {
     window.removeEventListener('message', this.postMessageListener);
   }
