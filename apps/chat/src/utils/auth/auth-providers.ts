@@ -4,7 +4,7 @@ import AzureProvider from 'next-auth/providers/azure-ad';
 import CognitoProvider from 'next-auth/providers/cognito';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
-import OktaProvider from "next-auth/providers/okta";
+import OktaProvider from 'next-auth/providers/okta';
 
 import { tokenConfig } from './auth-callbacks';
 import { GitLab } from './custom-gitlab';
@@ -152,7 +152,6 @@ const allProviders: (Provider | boolean)[] = [
       },
       token: tokenConfig,
     }),
-
 ];
 
 export const authProviders = allProviders.filter(Boolean) as Provider[];
