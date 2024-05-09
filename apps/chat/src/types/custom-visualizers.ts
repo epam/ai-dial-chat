@@ -1,4 +1,4 @@
-export interface CustomRenderer {
+export interface CustomVisualizer {
   Title: string;
   Description: string;
   Icon: string;

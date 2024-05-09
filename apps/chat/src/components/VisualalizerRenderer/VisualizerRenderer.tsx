@@ -1,7 +1,7 @@
 import { IconRefresh } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { CustomRenderer } from '@/src/types/custom-renderes';
+import { CustomVisualizer } from '@/src/types/custom-visualizers';
 
 import {
   VisualizerConnectorEvents,
@@ -12,7 +12,7 @@ import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
 interface Props {
   attachmentUrl: string;
-  renderer: CustomRenderer;
+  renderer: CustomVisualizer;
   mimeType: string;
 }
 

@@ -10,7 +10,6 @@ import classNames from 'classnames';
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
 import { Attachment } from '@/src/types/chat';
-import { CustomRenderer } from '@/src/types/custom-renderes';
 import { ImageMIMEType, MIMEType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -195,38 +194,18 @@ const AttachmentUrlRendererComponent = ({
   mappedAttachmentUrl,
   attachmentType,
 }: AttachmentUrlRendererComponentProps) => {
-  const customVisualizers = useAppSelector(
-    SettingsSelectors.selectCustomRenderers,
-  );
-  const customAttachmentsTypes = useAppSelector(
-    SettingsSelectors.selectCustomAttachmentsTypes,
+  const mappedVisualizers = useAppSelector(
+    SettingsSelectors.selectMappedVisualizers,
   );
 
-  const mappedRenderers = useMemo(() => {
-    return customVisualizers?.reduce(
-      (
-        visualizers: Record<string, CustomRenderer[]>,
-        currentVisualizerConfig,
-      ) => {
-        visualizers[currentVisualizerConfig.ContentType] = !visualizers[
-          currentVisualizerConfig.ContentType
-        ]
-          ? [currentVisualizerConfig]
-          : visualizers[currentVisualizerConfig.ContentType].concat(
-              currentVisualizerConfig,
-            );
+  const isCustomAttachmentType = useAppSelector((state) =>
+    SettingsSelectors.selectIsCustomAttachmentType(state, attachmentType),
+  );
 
-        return visualizers;
-      },
-      {} as Record<string, CustomRenderer[]>,
-    );
-  }, [customVisualizers]);
-
-  return customAttachmentsTypes?.has(attachmentType) &&
-    mappedRenderers?.[attachmentType]?.length ? (
+  return mappedVisualizers && isCustomAttachmentType ? (
     <VisualizerRenderer
       attachmentUrl={mappedAttachmentUrl}
-      renderer={mappedRenderers[attachmentType][0]}
+      renderer={mappedVisualizers[attachmentType][0]}
       mimeType={attachmentType}
     />
   ) : (
@@ -244,8 +223,8 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const customAttachmentsTypes = useAppSelector(
-    SettingsSelectors.selectCustomAttachmentsTypes,
+  const isCustomAttachmentType = useAppSelector((state) =>
+    SettingsSelectors.selectIsCustomAttachmentType(state, attachment.type),
   );
 
   useEffect(() => {
@@ -277,7 +256,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     attachment.data ||
     (attachment.url && imageTypes.has(attachment.type)) ||
     attachment.type === chartType ||
-    customAttachmentsTypes?.has(attachment.type);
+    isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
     [attachment.url],
