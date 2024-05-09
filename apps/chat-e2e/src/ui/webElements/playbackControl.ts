@@ -1,24 +1,24 @@
-import { ChatSelectors } from '@/src/ui/selectors';
+import { PlaybackSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class PlaybackControl extends BaseElement {
   constructor(page: Page) {
-    super(page, ChatSelectors.playbackControl);
+    super(page, PlaybackSelectors.playbackControl);
   }
   public playbackMessage = this.getChildElementBySelector(
-    ChatSelectors.playbackMessage,
+    PlaybackSelectors.playbackMessage,
   );
   public playbackNextButton = this.getChildElementBySelector(
-    ChatSelectors.playbackNext,
+    PlaybackSelectors.playbackNext,
   );
   public playbackNextDisabledButton = this.getChildElementBySelector(
-    ChatSelectors.playbackNextDisabled(),
+    PlaybackSelectors.playbackNextDisabled(),
   );
   public playbackPreviousButton = this.getChildElementBySelector(
-    ChatSelectors.playbackPrevious,
+    PlaybackSelectors.playbackPrevious,
   );
   public playbackPreviousDisabledButton = this.getChildElementBySelector(
-    ChatSelectors.playbackPreviousDisabled(),
+    PlaybackSelectors.playbackPreviousDisabled(),
   );
 }

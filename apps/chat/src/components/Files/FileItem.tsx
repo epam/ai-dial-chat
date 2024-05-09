@@ -174,6 +174,7 @@ export const FileItem = ({
             item.status === UploadStatus.FAILED && 'text-error',
             isSelected && 'text-accent-primary',
           )}
+          data-qa="attached-file-name"
         >
           {item.name}
         </span>

@@ -1,7 +1,8 @@
-import { ChatSelectors } from '../selectors';
+import { MessageInputSelectors, SendMessageSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { keys } from '@/src/ui/keyboard';
+import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { PromptList } from '@/src/ui/webElements/promptList';
@@ -9,7 +10,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class SendMessage extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.message, parentLocator);
+    super(page, SendMessageSelectors.message, parentLocator);
   }
 
   private promptList!: PromptList;
@@ -37,19 +38,25 @@ export class SendMessage extends BaseElement {
     return this.inputAttachments;
   }
 
-  public messageInput = this.getChildElementBySelector(ChatSelectors.textarea);
+  public messageInput = this.getChildElementBySelector(
+    MessageInputSelectors.textarea,
+  );
   public sendMessageButton = this.getChildElementBySelector(
-    ChatSelectors.sendMessage,
+    SendMessageSelectors.sendMessage,
   );
   public messageInputSpinner = this.messageInput.getChildElementBySelector(
-    ChatSelectors.messageSpinner,
+    SendMessageSelectors.messageSpinner,
   );
   public attachmentMenuTrigger = this.getChildElementBySelector(
-    ChatSelectors.menuTrigger,
+    MenuSelectors.menuTrigger,
   );
 
   public scrollDownButton = this.getChildElementBySelector(
-    ChatSelectors.scrollDownButton,
+    SendMessageSelectors.scrollDownButton,
+  );
+
+  public stopGenerating = this.getChildElementBySelector(
+    SendMessageSelectors.stopGenerating,
   );
 
   public async send(message?: string) {
