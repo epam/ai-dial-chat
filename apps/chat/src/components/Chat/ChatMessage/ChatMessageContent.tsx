@@ -15,6 +15,7 @@ import classNames from 'classnames';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
+  FOLDER_ATTACHMENT_CONTENT_TYPE,
   getDialFilesFromAttachments,
   getDialLinksFromAttachments,
   getUserCustomContent,
@@ -23,7 +24,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
-import { DialFile, DialLink } from '@/src/types/files';
+import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -109,8 +110,12 @@ export const ChatMessageContent = ({
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const folders = useAppSelector(FilesSelectors.selectFolders);
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
   );
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
@@ -172,14 +177,20 @@ export const ChatMessageContent = ({
       (id) => !mappedUserEditableAttachmentsIds.includes(id),
     );
     const newFiles = newIds
-      .map((id) => files.find((file) => file.id === id))
+      .map(
+        (id) =>
+          files.find((file) => file.id === id) ||
+          (canAttachFolders && folders.find((folder) => folder.id === id)),
+      )
       .filter(Boolean) as DialFile[];
 
     return mappedUserEditableAttachments
       .filter(({ id }) => newEditableAttachmentsIds.includes(id))
       .concat(newFiles);
   }, [
+    canAttachFolders,
     files,
+    folders,
     mappedUserEditableAttachments,
     mappedUserEditableAttachmentsIds,
     newEditableAttachmentsIds,
@@ -410,8 +421,19 @@ export const ChatMessageContent = ({
                     selectedDialLinks.length > 0) && (
                     <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
                       <ChatInputAttachments
-                        files={newEditableAttachments}
-                        folders={[]} //TODO
+                        files={newEditableAttachments.filter(
+                          (f) =>
+                            f.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
+                        )}
+                        folders={
+                          canAttachFolders
+                            ? (newEditableAttachments.filter(
+                                (f) =>
+                                  f.contentType ===
+                                  FOLDER_ATTACHMENT_CONTENT_TYPE,
+                              ) as unknown as FileFolderInterface[])
+                            : undefined
+                        }
                         links={selectedDialLinks}
                         onUnselectFile={handleUnselectFile}
                         onRetryFile={handleRetry}
@@ -442,7 +464,11 @@ export const ChatMessageContent = ({
                           />
                         </div>
                       }
-                      selectedFilesIds={newEditableAttachmentsIds}
+                      selectedFilesIds={newEditableAttachments.map((f) =>
+                        f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
+                          ? `${f.id}/`
+                          : f.id,
+                      )}
                       onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                       onUploadFromDevice={handleUploadFromDevice}
                       onAddLinkToMessage={handleAddLinkToMessage}

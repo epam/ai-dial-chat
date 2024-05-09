@@ -91,10 +91,6 @@ export const ChatInputMessage = ({
     FilesSelectors.selectIsUploadingFilePresent,
   );
 
-  const attachedFilesIds = useAppSelector(
-    FilesSelectors.selectSelectedFilesIds,
-  );
-
   const isMessageError = useAppSelector(
     ConversationsSelectors.selectIsMessagesError,
   );
@@ -414,7 +410,9 @@ export const ChatInputMessage = ({
           <>
             <div className="absolute left-4 top-[calc(50%_-_12px)] cursor-pointer rounded disabled:cursor-not-allowed">
               <AttachButton
-                selectedFilesIds={attachedFilesIds}
+                selectedFilesIds={selectedFiles
+                  .map((f) => f.id)
+                  .concat(selectedFolders.map((f) => `${f.id}/`))}
                 onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                 onUploadFromDevice={handleUploadFromDevice}
                 onAddLinkToMessage={handleAddLinkToMessage}
