@@ -1,19 +1,18 @@
+import { useMemo } from 'react';
+
 import classNames from 'classnames';
 
-import {
-  useConversationsPublicationResources,
-  useFilesPublicationResources,
-  usePromptPublicationResources,
-} from '@/src/hooks/usePublicationResources';
+import { isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { PublicationResource } from '@/src/types/publication';
 
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
-import { FilesActions } from '@/src/store/files/files.reducers';
+import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -32,6 +31,8 @@ import {
 import { FileItem } from '../../Files/FileItem';
 import Folder from '../../Folder/Folder';
 
+import uniqBy from 'lodash-es/uniqBy';
+
 interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
@@ -47,13 +48,38 @@ export const PromptPublicationResources = ({
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
   );
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
-  const {
-    rootFolders,
-    publicationFolders,
-    promptsToDisplay,
-    highlightedFolders,
-    prompts,
-  } = usePromptPublicationResources(resources);
+  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const publicationFolders = useAppSelector(
+    PromptsSelectors.selectPublicationFolders,
+  );
+  const highlightedFolders = useAppSelector(
+    PromptsSelectors.selectSelectedPromptFoldersIds,
+  );
+
+  const resourceUrls = useMemo(
+    () => resources.map((r) => r.reviewUrl),
+    [resources],
+  );
+
+  const promptsToDisplay = useMemo(() => {
+    return prompts.filter(
+      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
+    );
+  }, [prompts, resourceUrls]);
+
+  const rootFolders = useMemo(() => {
+    const folders = resources.map((resource) => {
+      const relevantFolders = publicationFolders.filter((folder) =>
+        resource.reviewUrl.startsWith(folder.id),
+      );
+
+      return relevantFolders.find((folder) => isRootId(folder.folderId));
+    });
+
+    const existingFolders = folders.filter(Boolean) as FolderInterface[];
+
+    return uniqBy(existingFolders, 'id');
+  }, [publicationFolders, resources]);
 
   return (
     <>
@@ -109,14 +135,40 @@ export const ConversationPublicationResources = ({
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
   );
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const {
-    rootFolders,
-    publicationFolders,
-    conversationsToDisplay,
-    highlightedFolders,
-    conversations,
-  } = useConversationsPublicationResources(resources);
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const publicationFolders = useAppSelector(
+    ConversationsSelectors.selectPublicationFolders,
+  );
+  const highlightedFolders = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsFoldersIds,
+  );
 
+  const resourceUrls = useMemo(
+    () => resources.map((r) => r.reviewUrl),
+    [resources],
+  );
+
+  const conversationsToDisplay = useMemo(() => {
+    return conversations.filter(
+      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
+    );
+  }, [conversations, resourceUrls]);
+
+  const rootFolders = useMemo(() => {
+    const folders = resources.map((resource) => {
+      const relevantFolders = publicationFolders.filter((folder) =>
+        resource.reviewUrl.startsWith(folder.id),
+      );
+
+      return relevantFolders.find((folder) => isRootId(folder.folderId));
+    });
+
+    const existingFolders = folders.filter(Boolean) as FolderInterface[];
+
+    return uniqBy(existingFolders, 'id');
+  }, [publicationFolders, resources]);
   return (
     <>
       {rootFolders.filter(Boolean).map((f) => {
@@ -176,8 +228,35 @@ export const FilePublicationResources = ({
   const openedFoldersIds = useAppSelector((state) =>
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
   );
-  const { rootFolders, publicationFolders, filesToDisplay, files } =
-    useFilesPublicationResources(resources);
+  const files = useAppSelector(FilesSelectors.selectFiles);
+  const publicationFolders = useAppSelector(
+    FilesSelectors.selectPublicationFolders,
+  );
+
+  const resourceUrls = useMemo(
+    () => resources.map((r) => r.reviewUrl),
+    [resources],
+  );
+
+  const filesToDisplay = useMemo(() => {
+    return files.filter(
+      (f) => f.folderId.split('/').length === 2 && resourceUrls.includes(f.id),
+    );
+  }, [files, resourceUrls]);
+
+  const rootFolders = useMemo(() => {
+    const folders = resources.map((resource) => {
+      const relevantFolders = publicationFolders.filter((folder) =>
+        resource.reviewUrl.startsWith(folder.id),
+      );
+
+      return relevantFolders.find((folder) => isRootId(folder.folderId));
+    });
+
+    const existingFolders = folders.filter(Boolean) as FolderInterface[];
+
+    return uniqBy(existingFolders, 'id');
+  }, [publicationFolders, resources]);
 
   return (
     <>
