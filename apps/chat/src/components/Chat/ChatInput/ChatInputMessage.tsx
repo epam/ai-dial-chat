@@ -159,7 +159,6 @@ export const ChatInputMessage = ({
 
   const clearPromptCopying = () => {
     dispatch(PromptsActions.setIsPromptContentCopying(false));
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
   };
 
   useEffect(() => {
