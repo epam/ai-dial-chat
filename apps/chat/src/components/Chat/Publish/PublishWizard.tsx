@@ -235,7 +235,7 @@ export default function PublishWizard({
   //   setSubmitted(true);
   // }, []);
 
-  const inputClassName = classNames('input-form mx-0 py-2', 'peer', {
+  const inputClassName = classNames('input-form peer mx-0 py-2', {
     'input-invalid submitted': submitted,
   });
 
@@ -278,7 +278,10 @@ export default function PublishWizard({
                 <input
                   ref={nameInputRef}
                   name="requestName"
-                  className={inputClassName}
+                  className={classNames(
+                    inputClassName,
+                    !name.trim() && submitted && '!border-error',
+                  )}
                   placeholder={t('A name for your request.') || ''}
                   value={name}
                   required
@@ -287,7 +290,9 @@ export default function PublishWizard({
                   onChange={nameOnChangeHandler}
                   data-qa="request-name"
                 />
-                <EmptyRequiredInputMessage useDisplay className="!mb-0" />
+                {!name.trim() && submitted && (
+                  <EmptyRequiredInputMessage isShown className="!mb-0" />
+                )}
               </div>
 
               <div>
@@ -344,13 +349,13 @@ export default function PublishWizard({
             </section>
 
             <section className="flex flex-col px-5 py-4">
-              <h2 className="flex flex-row gap-2">
+              <h2 className="flex gap-2">
                 {t('Target Audience Filters')}
 
                 <Tooltip
                   placement="top"
                   tooltip={
-                    <div className="max-w-[230px] break-words text-xs">
+                    <div className="flex max-w-[230px] break-words text-xs">
                       {t(
                         'The collection will be published for all users who meet AT LEAST ONE option from every',
                       )}

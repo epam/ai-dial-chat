@@ -1,4 +1,4 @@
-import { IconHelp } from '@tabler/icons-react';
+import { IconHelpCircle } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -11,6 +11,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
 import CollapsibleSection from '../../Common/CollapsibleSection';
+import Tooltip from '../../Common/Tooltip';
 import {
   ConversationPublicationResources,
   FilePublicationResources,
@@ -83,7 +84,9 @@ export function ApprovePublication({ publication }: Props) {
                   className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
                   disabled
                 >
-                  <span className="truncate">{publication.targetUrl}</span>
+                  <span className="truncate">
+                    {publication.targetUrl.replace(/^[^/]+/, 'Organization')}
+                  </span>
                 </button>
                 <div className="my-4">
                   <p className="text-xs text-secondary">
@@ -94,33 +97,58 @@ export function ApprovePublication({ publication }: Props) {
                   </p>
                 </div>
               </div>
-              <div className="px-5">
-                <p className="my-4 flex items-center text-sm">
+              <section className="px-5">
+                <h2 className="my-4 flex items-center gap-2 text-sm">
                   {t('Target Audience Filters')}
-                  <IconHelp size={18} className="ml-2 text-secondary" />
-                </p>
-                {filters.map((v) => (
-                  <CollapsibleSection
-                    name={v.name}
-                    dataQa={`filter-${v.id}`}
-                    key={`filter-${v.id}-${v.function}-${v.targets.join(',')}`}
-                    openByDefault={false}
-                    className="!pl-0"
-                  >
-                    <TargetAudienceFilterComponent
-                      readonly
-                      initialSelectedFilter={{
-                        filterFunction: v.function,
-                        filterParams: v.targets,
-                        id: v.id,
-                        name: v.name,
-                      }}
+
+                  {!!filters.length && (
+                    <Tooltip
+                      placement="top"
+                      tooltip={
+                        <div className="flex max-w-[230px] break-words text-xs">
+                          {t(
+                            'The collection will be published for all users who meet AT LEAST ONE option from every',
+                          )}
+                        </div>
+                      }
+                    >
+                      <IconHelpCircle
+                        size={18}
+                        className="text-secondary hover:text-accent-primary"
+                      />
+                    </Tooltip>
+                  )}
+                </h2>
+                {filters.length ? (
+                  filters.map((v) => (
+                    <CollapsibleSection
                       name={v.name}
-                      id={v.id}
-                    />
-                  </CollapsibleSection>
-                ))}
-              </div>
+                      dataQa={`filter-${v.id}`}
+                      key={`filter-${v.id}-${v.function}-${v.targets.join(',')}`}
+                      openByDefault={false}
+                      className="!pl-0"
+                    >
+                      <TargetAudienceFilterComponent
+                        readonly
+                        initialSelectedFilter={{
+                          filterFunction: v.function,
+                          filterParams: v.targets,
+                          id: v.id,
+                          name: v.name,
+                        }}
+                        name={v.name}
+                        id={v.id}
+                      />
+                    </CollapsibleSection>
+                  ))
+                ) : (
+                  <h2 className="mt-4 flex items-center gap-4 text-sm">
+                    {t(
+                      'This publication will be available to all users in the organization',
+                    )}
+                  </h2>
+                )}
+              </section>
             </div>
             <div className="bg-layer-2 px-5 py-4">
               {sections.map(
