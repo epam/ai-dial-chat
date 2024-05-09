@@ -1,14 +1,20 @@
 import { IconHelpCircle } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { isFileId } from '@/src/utils/app/id';
 
 import { BackendResourceType } from '@/src/types/common';
 import { Publication } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import Tooltip from '../../Common/Tooltip';
@@ -30,6 +36,13 @@ export function ApprovePublication({ publication }: Props) {
 
   const { t } = useTranslation(Translation.Chat);
 
+  const resourcesToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourcesToReviewByPublicationUrl(
+      state,
+      publication.url,
+    ),
+  );
+
   const filters = useMemo(
     () =>
       publication.rules?.map((rule) => ({
@@ -40,6 +53,42 @@ export function ApprovePublication({ publication }: Props) {
       })) || [],
     [publication.rules],
   );
+
+  useEffect(() => {
+    // we do not need to review files
+    const resourcesToReview = publication.resources.filter(
+      (r) => !isFileId(r.reviewUrl),
+    );
+
+    dispatch(
+      PublicationActions.setPublicationsToReview({
+        items: resourcesToReview.map((r) => ({
+          reviewed: false,
+          reviewUrl: r.reviewUrl,
+          publicationUrl: publication.url,
+        })),
+      }),
+    );
+  }, [dispatch, publication.resources, publication.url]);
+
+  const handlePublicationReview = () => {
+    const resourcesToReviewIds = resourcesToReview.filter(
+      (r) =>
+        !r.reviewed &&
+        r.publicationUrl === publication.url &&
+        !isFileId(r.reviewUrl),
+    );
+
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [
+          resourcesToReviewIds.length
+            ? resourcesToReviewIds[0].reviewUrl
+            : resourcesToReview[0].reviewUrl,
+        ],
+      }),
+    );
+  };
 
   const sections = [
     {
@@ -171,7 +220,10 @@ export function ApprovePublication({ publication }: Props) {
           </div>
         </div>
         <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 p-4">
-          <button className="text-accent-primary">
+          <button
+            className="text-accent-primary"
+            onClick={handlePublicationReview}
+          >
             {t('Go to a publication review...')}
           </button>
           <div>
@@ -188,7 +240,8 @@ export function ApprovePublication({ publication }: Props) {
               {t('Reject')}
             </button>
             <button
-              className="button button-primary"
+              className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              disabled={!resourcesToReview.every((r) => r.reviewed)}
               onClick={() =>
                 dispatch(
                   PublicationActions.approvePublication({

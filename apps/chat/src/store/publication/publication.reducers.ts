@@ -16,12 +16,18 @@ export interface PublicationState {
   publications: (PublicationInfo & Partial<Publication>)[];
   selectedPublication: Publication | null;
   publishedItems: PublishedItem[];
+  resourcesToReview: {
+    publicationUrl: string;
+    reviewed: boolean;
+    reviewUrl: string;
+  }[];
 }
 
 const initialState: PublicationState = {
   publications: [],
   publishedItems: [],
   selectedPublication: null,
+  resourcesToReview: [],
 };
 
 export const publicationSlice = createSlice({
@@ -106,6 +112,37 @@ export const publicationSlice = createSlice({
       { payload }: PayloadAction<{ publication: Publication }>,
     ) => {
       state.selectedPublication = payload.publication;
+    },
+    setPublicationsToReview: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        items: {
+          publicationUrl: string;
+          reviewed: boolean;
+          reviewUrl: string;
+        }[];
+      }>,
+    ) => {
+      const reviewUrls = state.resourcesToReview.map((r) => r.reviewUrl);
+      const itemsToReview = payload.items.filter(
+        (item) => !reviewUrls.includes(item.reviewUrl),
+      );
+
+      state.resourcesToReview = state.resourcesToReview.concat(itemsToReview);
+    },
+    markResourceAsReviewed: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        id: string;
+      }>,
+    ) => {
+      state.resourcesToReview = state.resourcesToReview.map((r) =>
+        r.reviewUrl === payload.id ? { ...r, reviewed: true } : r,
+      );
     },
   },
 });

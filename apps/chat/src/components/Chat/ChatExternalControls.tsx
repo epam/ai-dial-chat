@@ -7,7 +7,10 @@ import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+
+import PublicationChatControls from './Publish/PublicationChatControls';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -15,13 +18,30 @@ interface Props {
 
 export default function ChatExternalControls({ conversations }: Props) {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(
+      state,
+      conversations[0].id,
+    ),
+  );
 
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
       dispatch(ConversationsActions.duplicateConversation(conv));
     });
   }, [conversations, dispatch]);
+
+  if (conversations.length === 1 && resourceToReview) {
+    return (
+      <PublicationChatControls
+        resourceToReview={resourceToReview}
+        conversation={conversations[0]}
+      />
+    );
+  }
 
   return (
     <button
