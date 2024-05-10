@@ -8,9 +8,11 @@ DIAL Chat Visualizer Connector is a library for connecting custom visualizers - 
 
 ## Prerequisites
 
-Your Dial Chat application should configure hosts where your custom visualizers hosted. You could do this with `ALLOWED_IFRAME_SOURCES` env variable
+For security reason your Dial Chat application should configure sources where your custom visualizers hosted:
 
-\_Note: For development purposes you can set `*`\_
+- `ALLOWED_IFRAME_SOURCES` - list of allowed iframe sources in `<source> <source>` format.
+
+_Note: For development purposes you can set `*`_
 
 ```
 ALLOWED_IFRAME_SOURCES=http://localhost:8000
@@ -20,8 +22,30 @@ Moreover, it needs to be configured some **Visualizer** properties:
 
 - `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties. This properties are : `{ Title, Description, Icon, ContentType, Url }`.
 
+```typescript
+interface CustomVisualizer {
+  Title: string;
+  Description: string;
+  Icon: string;
+  ContentType: string;
+  Url: string;
+}
 ```
-CUSTOM_VISUALIZERS=[{"Title":"CUSTOM_VISUALIZER","Description": "CUSTOM VISUALIZER to render images","Icon":"https://some-path.svg","ContentType":"image/png","Url":"http://localhost:8000"}]
+
+```json
+CUSTOM_VISUALIZERS=[
+                    {
+                      "Title":"CUSTOM_VISUALIZER", // Visualizer title
+                      "Description": "CUSTOM VISUALIZER to render images", // Short description for the Visualizer
+                      "Icon":"data:image/svg+xml;base64,some-base64-image", // Icon for the Visualizer
+                      "ContentType":"image/png,image/jpg", // List of MIME types that Visualizer could render separated by ","
+                      "Url":"http://localhost:8000" // Visualizer host
+                    },
+                    {
+                      //Other Visualizer
+                    }
+
+                  ]
 
 ```
 
@@ -30,13 +54,13 @@ CUSTOM_VISUALIZERS=[{"Title":"CUSTOM_VISUALIZER","Description": "CUSTOM VISUALIZ
 1. Install library
 
 ```bash
-npm i @epam/ai-dial-chat-visualizer
+npm i @epam/ai-dial-chat-visualizer-connector
 ```
 
 2. Add file to serving folder in your application or just import it in code
 
 ```typescript
-import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visualizer';
+import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visualizer-connector';
 ```
 
 3. Set `dialHost` to the _DIAL CHAT_ host you want to connect:
@@ -102,7 +126,7 @@ data.visualizerData as { dataToRender: string };
 
 ```typescript
 
-import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visualizer';
+import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visualizer-connector';
 
 export const Module: FC = () => {
   const [data, setData] = useState<AttachmentData>();
