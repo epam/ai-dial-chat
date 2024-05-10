@@ -51,7 +51,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(500).send(errorsMessages.generalServer);
   }
 
-  return res.status(200).end();
+  return res.status(200).send(JSON.stringify({}));
 };
 
 export default handler;

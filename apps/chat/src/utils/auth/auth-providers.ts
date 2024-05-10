@@ -4,6 +4,7 @@ import AzureProvider from 'next-auth/providers/azure-ad';
 import CognitoProvider from 'next-auth/providers/cognito';
 import GoogleProvider from 'next-auth/providers/google';
 import KeycloakProvider from 'next-auth/providers/keycloak';
+import OktaProvider from 'next-auth/providers/okta';
 
 import { tokenConfig } from './auth-callbacks';
 import { GitLab } from './custom-gitlab';
@@ -132,6 +133,21 @@ const allProviders: (Provider | boolean)[] = [
       authorization: {
         params: {
           scope: process.env.AUTH_COGNITO_SCOPE || 'openid email profile',
+        },
+      },
+      token: tokenConfig,
+    }),
+
+  !!process.env.AUTH_OKTA_CLIENT_SECRET &&
+    !!process.env.AUTH_OKTA_CLIENT_ID &&
+    !!process.env.AUTH_OKTA_ISSUER &&
+    OktaProvider({
+      clientId: process.env.AUTH_OKTA_CLIENT_ID,
+      clientSecret: process.env.AUTH_OKTA_CLIENT_SECRET,
+      issuer: process.env.AUTH_OKTA_ISSUER,
+      authorization: {
+        params: {
+          scope: process.env.AUTH_OKTA_SCOPE || 'openid email profile',
         },
       },
       token: tokenConfig,
