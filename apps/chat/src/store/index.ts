@@ -25,7 +25,7 @@ import { OverlayEpics } from './overlay/overlay.epics';
 import { overlaySlice } from './overlay/overlay.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
-import { ServiceEpics } from './service/service.epic';
+import { ServiceEpics } from './service/service.epics';
 import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
 import { SettingsState, settingsSlice } from './settings/settings.reducers';
