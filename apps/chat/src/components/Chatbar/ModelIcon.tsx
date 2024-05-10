@@ -36,11 +36,17 @@ const ModelIconTemplate = memo(
     isInvalid,
     boxSize = MODEL_ICON_SIZE_DEFAULT.small,
   }: Omit<Props, 'isCustomTooltip'>) => {
+    const timeStamp = Date.now();
+
     const fallbackUrl =
       entity?.type === EntityType.Addon
-        ? 'api/themes/image?name=default-addon'
-        : 'api/themes/image?name=default-model';
+        ? `api/themes/image?name=default-addon&ts=${timeStamp}`
+        : `api/themes/image?name=default-model&ts=${timeStamp}`;
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
+
+    const iconUrlWithCacheBuster = entity?.iconUrl
+      ? `${entity.iconUrl}?ts=${timeStamp}`
+      : '';
 
     return (
       <span
@@ -53,7 +59,7 @@ const ModelIconTemplate = memo(
       >
         <SVG
           key={entityId}
-          src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
+          src={iconUrlWithCacheBuster}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height="auto"
