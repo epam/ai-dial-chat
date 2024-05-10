@@ -23,11 +23,6 @@ const defaultLoaderSVG = `<svg width="48" height="48" viewBox="0 0 48 48" fill="
 </svg>
 `;
 
-export interface VisualizerOptions {
-  //TODO define exact list of the options (theme, etc.)
-  options: unknown;
-}
-
 interface Subscription {
   eventType: string;
   callback: (payload: unknown) => void;
@@ -308,14 +303,6 @@ export class VisualizerConnector {
    */
   public setVisualizerConnectorOptions(options: VisualizerConnectorOptions) {
     this.options = options;
-  }
-
-  /**
-   * Send to Visualizer options (theme, etc.)
-   * @param options {VisualizerOptions} Options that should be set into the Visualizer
-   */
-  public async setVisualizerOptions(options: VisualizerOptions) {
-    await this.send(VisualizerConnectorRequests.setVisualizerOptions, options);
   }
 
   /**
