@@ -8,6 +8,6 @@ DIAL Visualizer Connector is a library for connecting DIAL CHAT with custom visu
 
 ## Prerequisites
 
-How to configure your DIAL CHAT to use **Custom Visualizers** you could find [here](./libs/chat-visualizer-connector/README.md).
+How to configure your DIAL CHAT to use **Custom Visualizers** you could find [here](../chat-visualizer-connector/README.md).
 
-At **Visualizer** side should be used [DIAL Chat VIsualizer Connector](./libs/chat-visualizer-connector/README.md)
+At **Visualizer** side should be used [DIAL Chat VIsualizer Connector](../chat-visualizer-connector/README.md)
