@@ -184,7 +184,7 @@ export const ChatView = memo(() => {
               },
             }),
           );
-        }, 200);
+        }, 500);
       }
     }
   }, [router.asPath]);
