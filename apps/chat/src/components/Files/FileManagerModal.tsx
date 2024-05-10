@@ -465,7 +465,7 @@ export const FileManagerModal = ({
       </div>
       <div className="flex items-center justify-between border-t border-primary px-6 py-4">
         <div className="flex items-center justify-center gap-2">
-          {(selectedFilesIds.length > 0 || selectedFolderIds.length > 0) && (
+          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
               onClick={handleStartDeleteMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
@@ -475,7 +475,7 @@ export const FileManagerModal = ({
               </Tooltip>
             </button>
           )}
-          {selectedFilesIds.length > 0 && (
+          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
               onClick={handleDownloadMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
