@@ -59,6 +59,7 @@ const ModelIconTemplate = memo(
           height="auto"
           description={description}
           cacheRequests={false}
+          uniquifyIDs
         >
           <SVG
             src={fallbackUrl}
@@ -66,6 +67,7 @@ const ModelIconTemplate = memo(
             height="auto"
             description={description}
             cacheRequests={false}
+            uniquifyIDs
           />
         </SVG>
       </span>
