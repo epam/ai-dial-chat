@@ -46,7 +46,7 @@
         "production": {
           "commands": [
             "nx run chat-e2e:e2e:chat --configuration=production",
-            "nx run chat-e2e:e2e:overlay --configuration=production --output-style=static"
+            "nx run chat-e2e:e2e:overlay --configuration=production"
           ],
           "parallel": true
         }
