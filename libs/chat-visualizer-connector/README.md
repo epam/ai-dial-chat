@@ -97,24 +97,27 @@ useEffect(() => {
 }, [appName, dialHost]);
 ```
 
-6. Send 'READY' message via `sendReady()` to the _DIAL CHAT_ to inform that your **Visualizer** is ready (this actinon will hide loader). Then you could do some preparation (login, etc.) and, after that, send 'READY TO INTERACT' message via `sendReadyToInteract()` to inform _DIAL CHAT_ that **Visualizer** is ready to receive data.
+6. Send 'READY' event via `sendReady()` to the _DIAL CHAT_ to inform that your **Visualizer** is ready (this action will hide loader). Then you could do some preparation (login, etc.) and, after that, send 'READY TO INTERACT' event via `sendReadyToInteract()` to inform _DIAL CHAT_ that **Visualizer** is ready to receive data.
 
 ```typescript
 useEffect(() => {
   if (appName && dialHost) {
     chatVisualizerConnector.current?.sendReady();
+    //Make some actions if needed
     chatVisualizerConnector.current?.sendReadyToInteract();
   }
 }, [dialHost, appName]);
 ```
 
-7. Do needed type assertion for the data from the _DIAL CHAT_
+7. Make needed type assertion for the data from the _DIAL CHAT_
+
+_Note: Data send by model/application from DIAL CHAT should be the same type as you expect._
 
 ```typescript
-data.visualizerData as { dataToRender: string };
+data.visualizerData as { dataToRender: string; layout: Layout };
 ```
 
-8. Render data in your **Visualizer**
+8. Render data in your **Visualizer**;
 
 ```tsx
 <div>{typedVisualizerData.dataToRender}</div>
