@@ -8,12 +8,13 @@ import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
 
-import Tooltip from '@/src/components/Common/Tooltip';
 import {
   MODEL_ICON_SIZE,
   MODEL_ICON_SIZE_DEFAULT,
-  ModelId
-} from "@/src/constants/chat";
+  ModelId,
+} from '@/src/constants/chat';
+
+import Tooltip from '@/src/components/Common/Tooltip';
 
 interface Props {
   entityId: string;
@@ -48,21 +49,23 @@ const ModelIconTemplate = memo(
           isInvalid ? 'text-secondary' : 'text-primary',
           animate && 'animate-bounce',
         )}
-        style={{  width: `${boxSize}px` }}
+        style={{ width: `${boxSize}px` }}
       >
         <SVG
           key={entityId}
           src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
-          height='auto'
+          height="auto"
           description={description}
+          cacheRequests={false}
         >
           <SVG
             src={fallbackUrl}
             width={size}
-            height='auto'
+            height="auto"
             description={description}
+            cacheRequests={false}
           />
         </SVG>
       </span>
@@ -77,14 +80,17 @@ export const ModelIcon = ({
   animate,
   isCustomTooltip,
   isInvalid,
-  isSmallIconSize = true
+  isSmallIconSize = true,
 }: Props) => {
-  const modelIconWidth = isSmallIconSize ? MODEL_ICON_SIZE.small : MODEL_ICON_SIZE.large;
-  const modelIconWidthDefault = isSmallIconSize ? MODEL_ICON_SIZE_DEFAULT.small : MODEL_ICON_SIZE_DEFAULT.large
+  const modelIconWidth = isSmallIconSize
+    ? MODEL_ICON_SIZE.small
+    : MODEL_ICON_SIZE.large;
+  const modelIconWidthDefault = isSmallIconSize
+    ? MODEL_ICON_SIZE_DEFAULT.small
+    : MODEL_ICON_SIZE_DEFAULT.large;
 
   const iconSize = useMemo(
-    () =>
-      modelIconWidth?.[entityId as ModelId] || modelIconWidthDefault,
+    () => modelIconWidth?.[entityId as ModelId] || modelIconWidthDefault,
     [entityId, isSmallIconSize],
   );
 
