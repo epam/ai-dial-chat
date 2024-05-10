@@ -175,14 +175,16 @@ export const ChatView = memo(() => {
         (currentConversation as any)?.id !== modelId &&
         modelIds?.includes(talkto as string)
       ) {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: selectedConversationsIds[0],
-            values: {
-              model: { id: modelId as string },
-            },
-          }),
-        );
+        setTimeout(() => {
+          dispatch(
+            ConversationsActions.updateConversation({
+              id: selectedConversationsIds[0],
+              values: {
+                model: { id: modelId as string },
+              },
+            }),
+          );
+        }, 200);
       }
     }
   }, [router.asPath]);
