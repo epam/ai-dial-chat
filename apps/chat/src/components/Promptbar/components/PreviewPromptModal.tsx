@@ -47,6 +47,23 @@ export const PreviewPromptModal = ({
 
   const dispatch = useAppDispatch();
 
+  const exportButton = (
+    <Tooltip placement="top" isTriggerClickable tooltip={t('Export prompt')}>
+      <button
+        onClick={() => {
+          dispatch(
+            ImportExportActions.exportPrompt({
+              id: prompt?.id,
+            }),
+          );
+        }}
+        className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+      >
+        <IconFileArrowRight size={24} strokeWidth="1.5" />
+      </button>
+    </Tooltip>
+  );
+
   return (
     <Modal
       portalId="theme-main"
@@ -91,24 +108,7 @@ export const PreviewPromptModal = ({
             {!isPublicationPreview || !resourceToReview ? (
               <>
                 <div className="flex h-[34px] gap-2">
-                  <Tooltip
-                    placement="top"
-                    isTriggerClickable
-                    tooltip={t('Export prompt')}
-                  >
-                    <button
-                      onClick={() => {
-                        dispatch(
-                          ImportExportActions.exportPrompt({
-                            id: prompt?.id,
-                          }),
-                        );
-                      }}
-                      className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
-                    >
-                      <IconFileArrowRight size={24} strokeWidth="1.5" />
-                    </button>
-                  </Tooltip>
+                  {exportButton}
                   {(!selectedPublication ||
                     (selectedPublication &&
                       selectedPublication.resources.some((r) =>
@@ -137,10 +137,13 @@ export const PreviewPromptModal = ({
                 </button>
               </>
             ) : (
-              <PublicationControls
-                entity={prompt}
-                resourceToReview={resourceToReview}
-              />
+              <div className="flex w-full items-center justify-between">
+                {exportButton}
+                <PublicationControls
+                  entity={prompt}
+                  resourceToReview={resourceToReview}
+                />
+              </div>
             )}
           </div>
         </>

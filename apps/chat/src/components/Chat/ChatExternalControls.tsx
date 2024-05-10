@@ -39,6 +39,7 @@ export default function ChatExternalControls({ conversations }: Props) {
       <PublicationControls
         resourceToReview={resourceToReview}
         entity={conversations[0]}
+        wrapperClassName="justify-center w-full"
       />
     );
   }

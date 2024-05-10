@@ -26,11 +26,13 @@ interface Props<T extends ConversationInfo | PromptInfo> {
     reviewed: boolean;
     reviewUrl: string;
   };
+  wrapperClassName?: string;
 }
 
 export function PublicationControls<T extends PromptInfo | ConversationInfo>({
   entity,
   resourceToReview,
+  wrapperClassName,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -83,7 +85,7 @@ export function PublicationControls<T extends PromptInfo | ConversationInfo>({
   }, [entity, resourceToReview, dispatch]);
 
   return (
-    <div className="!-top-10 flex h-[38px] w-full justify-center">
+    <div className={classNames('!-top-10 flex h-[38px]', wrapperClassName)}>
       <div className="flex justify-center gap-3">
         <button
           className={classNames(
