@@ -159,6 +159,7 @@ export const ChatView = memo(() => {
     'gpt-4-vision',
     'dall-e-3',
     'rag',
+    'hr-buddy',
   ];
 
   useEffect(() => {
