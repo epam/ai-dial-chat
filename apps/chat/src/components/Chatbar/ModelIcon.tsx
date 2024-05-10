@@ -36,6 +36,7 @@ const ModelIconTemplate = memo(
     isInvalid,
     boxSize = MODEL_ICON_SIZE_DEFAULT.small,
   }: Omit<Props, 'isCustomTooltip'>) => {
+    // PGPT-113: Using a timestamp as unique query param in Icon URL to bypass caching
     const timeStamp = Date.now();
 
     const fallbackUrl =
