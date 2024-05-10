@@ -22,6 +22,7 @@ export interface ConversationsState {
   newAddedFolderId?: string;
   conversationsLoaded: boolean;
   areSelectedConversationsLoaded: boolean;
+  isConversationUpdatedFromQueryParams: boolean;
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
@@ -30,4 +31,5 @@ export interface ConversationsState {
   loadedCharts: { url: string; data: PlotParams }[];
   chartLoading: boolean;
   compareLoading?: boolean;
+  initFoldersAndConversations: boolean;
 }

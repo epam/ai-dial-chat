@@ -67,6 +67,7 @@ enum DocumentId {
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -104,6 +105,18 @@ export const ChatView = memo(() => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const currentChatId = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded
+  );
+  const isConversationUpdatedFromQueryParams = useAppSelector(
+    ConversationsSelectors.selectIsConversationUpdatedFromQueryParams
+  );
+  const isInitFoldersAndConversations = useAppSelector(
+    ConversationsSelectors.selectIsInitFoldersAndConversations
+  );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
@@ -134,15 +147,7 @@ export const ChatView = memo(() => {
     (conv) => conv.messages.length > 0,
   );
 
-  const router = useRouter();
-
-  const allConversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
-  const currentChatId = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-  const currentConversation = allConversations.find(
+  const currentConversation = conversations.find(
     (chat) => chat?.id === currentChatId?.[0],
   );
 
@@ -173,21 +178,23 @@ export const ChatView = memo(() => {
 
       if (
         (currentConversation as any)?.id !== modelId &&
+        areSelectedConversationsLoaded &&
+        isInitFoldersAndConversations &&
+        !isConversationUpdatedFromQueryParams &&
         modelIds?.includes(talkto as string)
       ) {
-        setTimeout(() => {
-          dispatch(
-            ConversationsActions.updateConversation({
-              id: selectedConversationsIds[0],
-              values: {
-                model: { id: modelId as string },
-              },
-            }),
-          );
-        }, 500);
+        dispatch(ConversationsActions.updateConversationFromQueryParams());
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: selectedConversationsIds[0],
+            values: {
+              model: { id: modelId as string },
+            },
+          }),
+        );
       }
     }
-  }, [router.asPath]);
+  }, [areSelectedConversationsLoaded, isInitFoldersAndConversations]);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);

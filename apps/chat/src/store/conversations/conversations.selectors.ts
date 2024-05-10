@@ -695,3 +695,13 @@ export const selectDuplicatedConversation = createSelector(
     });
   },
 );
+
+export const selectIsConversationUpdatedFromQueryParams = createSelector(
+  [rootSelector],
+  (state) => state.isConversationUpdatedFromQueryParams,
+);
+
+export const selectIsInitFoldersAndConversations = createSelector(
+  [rootSelector],
+  (state) => state.initFoldersAndConversations,
+);

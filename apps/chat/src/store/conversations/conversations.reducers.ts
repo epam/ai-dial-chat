@@ -49,6 +49,7 @@ const initialState: ConversationsState = {
   newAddedFolderId: undefined,
   conversationsLoaded: false,
   areSelectedConversationsLoaded: false,
+  isConversationUpdatedFromQueryParams: false,
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
@@ -56,6 +57,7 @@ const initialState: ConversationsState = {
   chartLoading: false,
   isActiveNewConversationRequest: false,
   isMessageSending: false,
+  initFoldersAndConversations: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -111,7 +113,9 @@ export const conversationsSlice = createSlice({
     initSelectedConversations: (state) => state,
     getSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
-    initFoldersAndConversationsSuccess: (state) => state,
+    initFoldersAndConversationsSuccess: (state) => {
+      state.initFoldersAndConversations = true
+    },
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (
       state,
@@ -849,6 +853,9 @@ export const conversationsSlice = createSlice({
             },
           ];
       state.chartLoading = false;
+    },
+    updateConversationFromQueryParams: (state) => {
+      state.isConversationUpdatedFromQueryParams = true;
     },
     cleanupIsolatedConversation: (state) => state,
   },
