@@ -40,6 +40,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -89,6 +90,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
   );
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
@@ -375,8 +380,9 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             />
           )}
         </div>
-        {showModal && isSelected && isModalPreviewMode && (
+        {showModal && isSelected && isModalPreviewMode && !resourceToReview && (
           <PreviewPromptModal
+            prompt={prompt}
             isOpen
             onDuplicate={(e) => {
               handleDuplicate(e);
@@ -384,6 +390,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             }}
             onClose={handleClose}
             onDelete={() => setIsDeleting(true)}
+          />
+        )}
+        {showModal && isSelected && isModalPreviewMode && resourceToReview && (
+          <PreviewPromptModal
+            prompt={prompt}
+            isPublicationPreview
+            isOpen
+            onClose={handleClose}
           />
         )}
       </div>

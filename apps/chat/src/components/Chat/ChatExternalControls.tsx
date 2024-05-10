@@ -10,7 +10,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
-import PublicationChatControls from './Publish/PublicationChatControls';
+import { PublicationControls } from './Publish/PublicationChatControls';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -36,9 +36,9 @@ export default function ChatExternalControls({ conversations }: Props) {
 
   if (conversations.length === 1 && resourceToReview) {
     return (
-      <PublicationChatControls
+      <PublicationControls
         resourceToReview={resourceToReview}
-        conversation={conversations[0]}
+        entity={conversations[0]}
       />
     );
   }

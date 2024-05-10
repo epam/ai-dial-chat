@@ -1,22 +1,26 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isConversationId } from '@/src/utils/app/id';
+
 import { ConversationInfo } from '@/src/types/chat';
+import { PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
-interface Props {
-  conversation: ConversationInfo;
+interface Props<T extends ConversationInfo | PromptInfo> {
+  entity: T;
   resourceToReview: {
     publicationUrl: string;
     reviewed: boolean;
@@ -24,10 +28,10 @@ interface Props {
   };
 }
 
-export default function PublicationChatControls({
-  conversation,
+export function PublicationControls<T extends PromptInfo | ConversationInfo>({
+  entity,
   resourceToReview,
-}: Props) {
+}: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -42,15 +46,41 @@ export default function PublicationChatControls({
     (r) => r.reviewUrl === resourceToReview.reviewUrl,
   );
 
+  const toggleResource = useCallback(
+    (offset: number) => {
+      if (isConversationId(resourceToReview.reviewUrl)) {
+        dispatch(
+          ConversationsActions.selectConversations({
+            conversationIds: [
+              resourcesToReview[publicationIdx + offset].reviewUrl,
+            ],
+          }),
+        );
+      } else {
+        dispatch(
+          PromptsActions.uploadPrompt({
+            promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
+          }),
+        );
+        dispatch(
+          PromptsActions.setSelectedPrompt({
+            promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
+          }),
+        );
+      }
+    },
+    [dispatch, publicationIdx, resourceToReview.reviewUrl, resourcesToReview],
+  );
+
   useEffect(() => {
     if (!resourceToReview.reviewed) {
       dispatch(
         PublicationActions.markResourceAsReviewed({
-          id: conversation.id,
+          id: entity.id,
         }),
       );
     }
-  }, [conversation, resourceToReview, dispatch]);
+  }, [entity, resourceToReview, dispatch]);
 
   return (
     <div className="!-top-10 flex h-[38px] w-full justify-center">
@@ -62,15 +92,7 @@ export default function PublicationChatControls({
           )}
           data-qa="prev-chat-review-button"
           disabled={publicationIdx === 0}
-          onClick={() =>
-            dispatch(
-              ConversationsActions.selectConversations({
-                conversationIds: [
-                  resourcesToReview[publicationIdx - 1].reviewUrl,
-                ],
-              }),
-            )
-          }
+          onClick={() => toggleResource(-1)}
         >
           <span>
             <IconPlayerPlay className="rotate-180" height={18} width={18} />
@@ -83,15 +105,7 @@ export default function PublicationChatControls({
           )}
           data-qa="next-chat-review-button"
           disabled={publicationIdx === resourcesToReview.length - 1}
-          onClick={() =>
-            dispatch(
-              ConversationsActions.selectConversations({
-                conversationIds: [
-                  resourcesToReview[publicationIdx + 1].reviewUrl,
-                ],
-              }),
-            )
-          }
+          onClick={() => toggleResource(1)}
         >
           <span>
             <IconPlayerPlay height={18} width={18} />
@@ -99,16 +113,30 @@ export default function PublicationChatControls({
         </button>
         <button
           onClick={() => {
-            dispatch(
-              ConversationsActions.selectConversations({
-                conversationIds: [],
-              }),
-            );
-            dispatch(
-              PublicationActions.uploadPublication({
-                url: resourceToReview.publicationUrl,
-              }),
-            );
+            if (isConversationId(resourceToReview.reviewUrl)) {
+              dispatch(
+                ConversationsActions.selectConversations({
+                  conversationIds: [],
+                }),
+              );
+              dispatch(
+                PublicationActions.uploadPublication({
+                  url: resourceToReview.publicationUrl,
+                }),
+              );
+            } else {
+              dispatch(
+                PromptsActions.setSelectedPrompt({
+                  promptId: undefined,
+                }),
+              );
+              dispatch(
+                PromptsActions.setIsEditModalOpen({
+                  isOpen: false,
+                  isPreview: false,
+                }),
+              );
+            }
           }}
           className="button button-primary flex items-center"
         >

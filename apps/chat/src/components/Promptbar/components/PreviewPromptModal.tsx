@@ -4,6 +4,7 @@ import { MouseEventHandler } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { ModalState } from '@/src/types/modal';
+import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -14,13 +15,16 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
 import Modal from '../../Common/Modal';
 
 interface Props {
   isOpen: boolean;
-  onDuplicate: MouseEventHandler<HTMLButtonElement>;
+  onDuplicate?: MouseEventHandler<HTMLButtonElement>;
   onClose: () => void;
-  onDelete: MouseEventHandler<HTMLButtonElement>;
+  onDelete?: MouseEventHandler<HTMLButtonElement>;
+  isPublicationPreview?: boolean;
+  prompt: Prompt;
 }
 
 export const PreviewPromptModal = ({
@@ -28,13 +32,17 @@ export const PreviewPromptModal = ({
   onDuplicate,
   onDelete,
   onClose,
+  isPublicationPreview,
+  prompt,
 }: Props) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
-  const selectedPrompt = useAppSelector(PromptsSelectors.selectSelectedPrompt);
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
+  );
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
   );
 
   const dispatch = useAppDispatch();
@@ -52,79 +60,88 @@ export const PreviewPromptModal = ({
             : ModalState.OPENED
           : ModalState.CLOSED
       }
-      heading={selectedPrompt?.name}
+      heading={prompt?.name}
       onClose={onClose}
     >
-      {selectedPrompt ? (
+      {prompt ? (
         <>
           <ul className="mb-4 flex max-h-[435px] flex-col gap-4 overflow-auto px-3 md:p-6">
             <li className="flex gap-2.5">
               <p className="mb-1 flex min-w-28 text-secondary">{t('Name: ')}</p>
-              <p>{selectedPrompt.name}</p>
+              <p>{prompt.name}</p>
             </li>
-            {!!selectedPrompt.description && (
+            {!!prompt.description && (
               <li className="flex gap-2.5">
                 <p className="mb-1 flex min-w-28 text-secondary">
                   {t('Description: ')}
                 </p>
-                <p>{selectedPrompt.description}</p>
+                <p>{prompt.description}</p>
               </li>
             )}
-            {!!selectedPrompt.content && (
+            {!!prompt.content && (
               <li className="flex gap-2.5">
                 <p className="mb-1 flex min-w-28 text-secondary">
                   {t('Prompt: ')}
                 </p>
-                <p>{selectedPrompt.content}</p>
+                <p>{prompt.content}</p>
               </li>
             )}
           </ul>
           <div className="flex items-center justify-between px-3 md:p-6">
-            <div className="flex h-[34px] gap-2">
-              <Tooltip
-                placement="top"
-                isTriggerClickable
-                tooltip={t('Export prompt')}
-              >
-                <button
-                  onClick={() => {
-                    dispatch(
-                      ImportExportActions.exportPrompt({
-                        id: selectedPrompt?.id,
-                      }),
-                    );
-                  }}
-                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
-                >
-                  <IconFileArrowRight size={24} strokeWidth="1.5" />
-                </button>
-              </Tooltip>
-              {(!selectedPublication ||
-                (selectedPublication &&
-                  selectedPublication.resources.some((r) =>
-                    selectedPrompt.id.startsWith(r.sourceUrl),
-                  ))) && (
-                <Tooltip
-                  placement="top"
-                  isTriggerClickable
-                  tooltip={t('Delete prompt')}
-                >
-                  <button
-                    onClick={onDelete}
-                    className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+            {!isPublicationPreview || !resourceToReview ? (
+              <>
+                <div className="flex h-[34px] gap-2">
+                  <Tooltip
+                    placement="top"
+                    isTriggerClickable
+                    tooltip={t('Export prompt')}
                   >
-                    <IconTrashX size={24} strokeWidth="1.5" />
-                  </button>
-                </Tooltip>
-              )}
-            </div>
-            <button
-              className="button button-primary"
-              data-qa="save-prompt"
-              onClick={onDuplicate}
-            >
-              {t('Duplicate prompt')}
-            </button>
+                    <button
+                      onClick={() => {
+                        dispatch(
+                          ImportExportActions.exportPrompt({
+                            id: prompt?.id,
+                          }),
+                        );
+                      }}
+                      className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                    >
+                      <IconFileArrowRight size={24} strokeWidth="1.5" />
+                    </button>
+                  </Tooltip>
+                  {(!selectedPublication ||
+                    (selectedPublication &&
+                      selectedPublication.resources.some((r) =>
+                        prompt.id.startsWith(r.sourceUrl),
+                      ))) && (
+                    <Tooltip
+                      placement="top"
+                      isTriggerClickable
+                      tooltip={t('Delete prompt')}
+                    >
+                      <button
+                        onClick={onDelete}
+                        className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                      >
+                        <IconTrashX size={24} strokeWidth="1.5" />
+                      </button>
+                    </Tooltip>
+                  )}
+                </div>
+                <button
+                  className="button button-primary"
+                  data-qa="save-prompt"
+                  onClick={onDuplicate}
+                >
+                  {t('Duplicate prompt')}
+                </button>
+              </>
+            ) : (
+              <PublicationControls
+                entity={prompt}
+                resourceToReview={resourceToReview}
+              />
+            )}
           </div>
         </>
       ) : (

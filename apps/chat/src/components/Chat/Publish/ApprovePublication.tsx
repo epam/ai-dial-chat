@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isFileId } from '@/src/utils/app/id';
+import { isConversationId, isFileId, isPromptId } from '@/src/utils/app/id';
 
 import { BackendResourceType } from '@/src/types/common';
 import { Publication } from '@/src/types/publication';
@@ -11,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import {
   PublicationActions,
   PublicationSelectors,
@@ -72,22 +73,61 @@ export function ApprovePublication({ publication }: Props) {
   }, [dispatch, publication.resources, publication.url]);
 
   const handlePublicationReview = () => {
-    const resourcesToReviewIds = resourcesToReview.filter(
+    const conversationsToReviewIds = resourcesToReview.filter(
       (r) =>
         !r.reviewed &&
         r.publicationUrl === publication.url &&
-        !isFileId(r.reviewUrl),
+        isConversationId(r.reviewUrl),
+    );
+    const reviewedConversationsIds = resourcesToReview.filter(
+      (r) =>
+        r.publicationUrl === publication.url && isConversationId(r.reviewUrl),
     );
 
-    dispatch(
-      ConversationsActions.selectConversations({
-        conversationIds: [
-          resourcesToReviewIds.length
-            ? resourcesToReviewIds[0].reviewUrl
-            : resourcesToReview[0].reviewUrl,
-        ],
-      }),
+    if (conversationsToReviewIds.length || reviewedConversationsIds.length) {
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: [
+            conversationsToReviewIds.length
+              ? conversationsToReviewIds[0].reviewUrl
+              : reviewedConversationsIds[0].reviewUrl,
+          ],
+        }),
+      );
+    }
+
+    const promptsToReviewIds = resourcesToReview.filter(
+      (r) =>
+        !r.reviewed &&
+        r.publicationUrl === publication.url &&
+        isPromptId(r.reviewUrl),
     );
+    const reviewedPromptsIds = resourcesToReview.filter(
+      (r) => r.publicationUrl === publication.url && isPromptId(r.reviewUrl),
+    );
+
+    if (promptsToReviewIds.length || reviewedPromptsIds.length) {
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: promptsToReviewIds.length
+            ? promptsToReviewIds[0].reviewUrl
+            : reviewedPromptsIds[0].reviewUrl,
+        }),
+      );
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: promptsToReviewIds.length
+            ? promptsToReviewIds[0].reviewUrl
+            : reviewedPromptsIds[0].reviewUrl,
+        }),
+      );
+      dispatch(
+        PromptsActions.setIsEditModalOpen({
+          isOpen: true,
+          isPreview: true,
+        }),
+      );
+    }
   };
 
   const sections = [
