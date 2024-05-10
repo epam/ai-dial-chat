@@ -528,9 +528,15 @@ export const ChatMessageContent = ({
                   codeDetection(message.content) && (
                     <div className="text-xxs text-error">{t(codeWarning)}</div>
                   )}
-                <MessageAttachments
-                  attachments={message.custom_content?.attachments}
-                />
+                {!(
+                  conversation.isMessageStreaming &&
+                  conversation.playback?.isPlayback &&
+                  isLastMessage
+                ) && (
+                  <MessageAttachments
+                    attachments={message.custom_content?.attachments}
+                  />
+                )}
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
               {withButtons &&
