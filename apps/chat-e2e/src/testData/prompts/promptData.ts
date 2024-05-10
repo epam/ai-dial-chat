@@ -61,8 +61,8 @@ export class PromptData extends FolderData {
     const prompts: Prompt[] = [];
     for (let i = 1; i <= promptsCount; i++) {
       const prompt = this.prepareDefaultPrompt();
-      prompt.folderId = folder.folderId;
-      prompt.id = `${folder.folderId}/${prompt.id}`;
+      prompt.folderId = folder.id;
+      prompt.id = `${folder.id}/${prompt.id}`;
       prompts.push(prompt);
       this.resetData();
     }
@@ -84,7 +84,7 @@ export class PromptData extends FolderData {
     for (const item of nestedFolders) {
       const nestedPrompt = this.prepareDefaultPrompt();
       nestedPrompts.push(nestedPrompt);
-      nestedPrompt.folderId = item.folderId;
+      nestedPrompt.folderId = item.id;
       nestedPrompt.id = `${nestedPrompt.folderId}/${nestedPrompt.name}`;
       this.resetData();
     }

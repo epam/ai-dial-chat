@@ -1586,8 +1586,8 @@ dialSharedWithMeTest(
         nestedFolders = conversationData.prepareNestedFolder(1);
         conversationData.resetData();
         nestedConversation = conversationData.prepareDefaultConversation();
-        nestedConversation.folderId = nestedFolders[1].folderId;
-        nestedConversation.id = `${nestedFolders[1].folderId}/${nestedConversation.id}`;
+        nestedConversation.folderId = nestedFolders[1].id;
+        nestedConversation.id = `${nestedFolders[1].id}/${nestedConversation.id}`;
 
         await dataInjector.createConversations(
           [nestedConversation],
