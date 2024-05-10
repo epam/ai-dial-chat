@@ -17,6 +17,7 @@ This repository is managed as monorepo by [NX](https://nx.dev/) tools.
 `DIAL Chat Theming` documentation is placed [here](./docs/THEME-CUSTOMIZATION.md).
 
 `DIAL Overlay` documentation is placed [here](./libs/overlay/README.md).
+`DIAL Chat Visualizer Connector` documentation is placed [here](./libs/chat-visualizer-connector/README.md).
 
 ## Development
 

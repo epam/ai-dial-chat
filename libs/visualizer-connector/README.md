@@ -31,4 +31,4 @@ CUSTOM_VISUALIZERS=[{"Title":"CUSTOM_VISUALIZER","Description": "CUSTOM VISUALIZ
 
 ```
 
-At **Visualizer** side should be used [DIAL Chat VIsualizer Connector](https://github.com/epam/ai-dial-chat/blob/development/libs/chat-visualizer-connector/README.md)
+At **Visualizer** side should be used [DIAL Chat VIsualizer Connector](./libs/chat-visualizer-connector/README.md)
