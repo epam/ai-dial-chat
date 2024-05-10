@@ -28,6 +28,7 @@ config.webServer = {
   reuseExistingServer: true,
   stdout: 'pipe',
   stderr: 'pipe',
+  ignoreHTTPSErrors: true,
 };
 
 config.projects = [
