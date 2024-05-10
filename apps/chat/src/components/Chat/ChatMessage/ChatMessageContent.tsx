@@ -21,6 +21,7 @@ import {
   getUserCustomContent,
 } from '@/src/utils/app/file';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
@@ -466,7 +467,10 @@ export const ChatMessageContent = ({
                       }
                       selectedFilesIds={newEditableAttachments.map((f) =>
                         f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
-                          ? `${f.id}/`
+                          ? ApiUtils.decodeApiUrl(`${f.id}/`).replace(
+                              new RegExp('^files/metadata/'),
+                              '',
+                            )
                           : f.id,
                       )}
                       onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
