@@ -219,13 +219,13 @@ const selectMappedVisualizers = createSelector(
   (customVisualizers) => {
     return customVisualizers?.reduce(
       (visualizers: MappedVisualizers, currentVisualizerConfig) => {
-        const contentTypes = currentVisualizerConfig.ContentType.split(',');
+        const contentTypes = currentVisualizerConfig.contentType.split(',');
 
         visualizers = contentTypes.reduce(
           (visualizers: MappedVisualizers, contentType) => {
             visualizers[contentType] = !visualizers[contentType]
               ? [currentVisualizerConfig]
-              : visualizers[currentVisualizerConfig.ContentType].concat(
+              : visualizers[currentVisualizerConfig.contentType].concat(
                   currentVisualizerConfig,
                 );
 

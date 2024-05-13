@@ -1,9 +1,9 @@
 export interface CustomVisualizer {
-  Title: string;
-  Description: string;
-  Icon: string;
-  ContentType: string;
-  Url: string;
+  title: string;
+  description: string;
+  icon: string;
+  contentType: string;
+  url: string;
 }
 
 export type MappedVisualizers = Record<string, CustomVisualizer[]>;

@@ -20,26 +20,26 @@ ALLOWED_IFRAME_SOURCES=http://localhost:8000
 
 Moreover, it needs to be configured some **Visualizer** properties:
 
-- `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties. This properties are : `{ Title, Description, Icon, ContentType, Url }`.
+- `CUSTOM_VISUALIZERS` - list of the objects with custom visualizers properties. This properties are : `{ title, description, icon, contentType, url }`.
 
 ```typescript
 interface CustomVisualizer {
-  Title: string;
-  Description: string;
-  Icon: string;
-  ContentType: string;
-  Url: string;
+  title: string;
+  description: string;
+  icon: string;
+  contentType: string;
+  url: string;
 }
 ```
 
 ```json
 CUSTOM_VISUALIZERS=[
                     {
-                      "Title":"CUSTOM_VISUALIZER", // Visualizer title
-                      "Description": "CUSTOM VISUALIZER to render images", // Short description for the Visualizer
-                      "Icon":"data:image/svg+xml;base64,some-base64-image", // Icon for the Visualizer
-                      "ContentType":"image/png,image/jpg", // List of MIME types that Visualizer could render separated by ","
-                      "Url":"http://localhost:8000" // Visualizer host
+                      "title":"CUSTOM_VISUALIZER", // Visualizer title
+                      "description": "CUSTOM VISUALIZER to render images", // Short description for the Visualizer
+                      "icon":"data:image/svg+xml;base64,some-base64-image", // Icon for the Visualizer
+                      "contentType":"image/png,image/jpg", // List of MIME types that Visualizer could render separated by ","
+                      "url":"http://localhost:8000" // Visualizer host
                     },
                     {
                       //Other Visualizer
@@ -69,7 +69,7 @@ import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visu
 const dialHost = 'https://hosted-dial-chat-domain.com';
 ```
 
-4. Set `appName` same as `Title` in the _DIAL CHAT_ configuration in the `CUSTOM_VISUALIZERS`:
+4. Set `appName` same as `title` in the _DIAL CHAT_ configuration in the `CUSTOM_VISUALIZERS`:
 
 ```typescript
 const appName = 'CUSTOM_VISUALIZER';

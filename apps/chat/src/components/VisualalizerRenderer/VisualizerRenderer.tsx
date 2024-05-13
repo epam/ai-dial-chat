@@ -25,7 +25,7 @@ export const VisualizerRenderer = ({
   const visualizer = useRef<VisualizerConnector | null>(null);
 
   const [ready, setReady] = useState<boolean>();
-  const { Url: rendererUrl, Title } = renderer;
+  const { url: rendererUrl, title: visualizerTitle } = renderer;
   //This is for the MVP only.
   //TODO should be changed to get visualizer data like for the Plotly (TBD);
   const visualizerData: Record<string, unknown> = useMemo(
@@ -52,7 +52,7 @@ export const VisualizerRenderer = ({
       visualizer.current = new VisualizerConnector(iframeContainerRef.current, {
         domain: rendererUrl,
         hostDomain: window.location.origin,
-        visualizerName: Title,
+        visualizerName: visualizerTitle,
       });
 
       return () => {
@@ -60,7 +60,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-  }, [rendererUrl, Title]);
+  }, [rendererUrl, visualizerTitle]);
 
   useEffect(() => {
     if (ready && !!visualizer.current) {
@@ -76,7 +76,7 @@ export const VisualizerRenderer = ({
 
       if (
         event.data.type ===
-        `${Title}/${VisualizerConnectorEvents.readyToInteract}`
+        `${visualizerTitle}/${VisualizerConnectorEvents.readyToInteract}`
       ) {
         setReady(true);
       }
@@ -85,12 +85,12 @@ export const VisualizerRenderer = ({
     window.addEventListener('message', postMessageListener, false);
 
     return () => window.removeEventListener('message', postMessageListener);
-  }, [Title, rendererUrl]);
+  }, [visualizerTitle, rendererUrl]);
 
   return (
     <div ref={iframeContainerRef} className="h-[400px]">
       <div className="flex flex-row justify-between pr-10">
-        <h2>{Title}</h2>
+        <h2>{visualizerTitle}</h2>
         <button
           className="button button-secondary"
           onClick={() => visualizer.current && sendMessage(visualizer.current)}
