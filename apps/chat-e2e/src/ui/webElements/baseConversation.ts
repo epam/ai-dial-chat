@@ -66,14 +66,11 @@ export class BaseConversation extends SideBarEntities {
     return this.openEditEntityNameMode(this.entitySelector, newName);
   }
 
-  public async selectMenuOption(option: MenuOptions) {
-    const menu = this.getDropdownMenu();
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
-      await menu.selectMenuOption(option);
-      const response = await respPromise;
+  public async shareConversation() {
+    const response = await this.selectEntityMenuOption(MenuOptions.share, {
+      triggeredHttpMethod: 'POST',
+    });
+    if (response !== undefined) {
       const responseText = await response.text();
       const request = await response.request().postDataJSON();
       return {
@@ -81,7 +78,6 @@ export class BaseConversation extends SideBarEntities {
         response: JSON.parse(responseText) as ShareByLinkResponseModel,
       };
     }
-    await menu.selectMenuOption(option);
   }
 
   public async getConversationIcon(name: string, index?: number) {
