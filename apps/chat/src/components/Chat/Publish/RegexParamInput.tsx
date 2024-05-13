@@ -19,7 +19,7 @@ export function RegexParamInput({
   return (
     <div className="flex w-full flex-wrap rounded border border-primary p-1 focus-within:border-accent-primary">
       <input
-        className="w-full bg-transparent py-1 pl-2 outline-none placeholder:text-secondary"
+        className="w-full bg-transparent py-1 pl-2 outline-none placeholder:text-secondary-bg-dark"
         type="text"
         placeholder={'Enter regular expression...'}
         value={regEx}

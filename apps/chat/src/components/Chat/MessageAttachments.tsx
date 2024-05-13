@@ -41,7 +41,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
           height={18}
           width={18}
           className={classNames(
-            'shrink-0 text-secondary transition',
+            'shrink-0 text-secondary-bg-dark transition',
             isSectionOpened && 'rotate-180',
           )}
         />

@@ -49,7 +49,7 @@
 }
 
 html {
-  @apply bg-layer-1 text-primary;
+  @apply bg-layer-1 text-primary-bg-dark;
 }
 
 pre:has(div.codeblock) {
@@ -71,7 +71,7 @@ pre:has(div.codeblock) {
   }
 
   .input-form {
-    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
+    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary-bg-dark hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
 
   .submitted {
@@ -83,7 +83,7 @@ pre:has(div.codeblock) {
 }
 @layer components {
   .input {
-    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
+    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary-bg-dark hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
   .input.touched.invalid,
   .input.dirty.invalid {
@@ -114,7 +114,7 @@ pre:has(div.codeblock) {
   }
 
   .button.button-secondary {
-    @apply border-primary text-primary;
+    @apply border-primary text-primary-bg-dark;
   }
 
   .button.button-secondary:not(:disabled) {

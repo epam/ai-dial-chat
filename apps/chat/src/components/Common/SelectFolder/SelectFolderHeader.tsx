@@ -38,7 +38,7 @@ export const SelectFolderHeader = ({
             placeholder={t('Search folders') || ''}
             type="text"
             onChange={handleSearch}
-            className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+            className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary-bg-dark focus-visible:border-accent-primary"
             value={searchQuery}
           />
           {children}

@@ -115,7 +115,7 @@ function ModalView({
                 <button
                   type="button"
                   role="button"
-                  className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+                  className="absolute right-2 top-2 rounded text-secondary-bg-dark hover:text-accent-primary"
                   onClick={handleClose}
                 >
                   <IconX height={24} width={24} />

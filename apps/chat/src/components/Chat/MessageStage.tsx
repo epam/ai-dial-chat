@@ -42,13 +42,13 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
         <CircleCheck
           height={20}
           width={20}
-          className="shrink-0 grow-0 basis-auto text-secondary"
+          className="shrink-0 grow-0 basis-auto text-secondary-bg-dark"
           data-qa="stage-completed"
         />
       ) : (
         <IconExclamationCircle
           size={20}
-          className="shrink-0 grow-0 basis-auto text-secondary"
+          className="shrink-0 grow-0 basis-auto text-secondary-bg-dark"
         />
       )}
       {!!addon && <ModelIcon entity={addon} entityId={addon.id} size={18} />}
@@ -93,7 +93,7 @@ export const MessageStage = ({ stage }: Props) => {
             height={20}
             width={20}
             className={classNames(
-              'shrink-0 text-secondary transition',
+              'shrink-0 text-secondary-bg-dark transition',
               isOpened && 'rotate-180',
             )}
           />

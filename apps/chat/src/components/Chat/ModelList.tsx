@@ -119,7 +119,7 @@ const ModelGroup = ({
           </div>
           {description && (
             <span
-              className="text-secondary"
+              className="text-secondary-bg-dark"
               onClick={(e) => {
                 if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                   e.stopPropagation();
@@ -195,7 +195,7 @@ export const ModelList = ({
   }, [allEntities, displayCountLimit, entities]);
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
-      {heading && <span className="text-secondary">{heading}</span>}
+      {heading && <span className="text-secondary-bg-dark">{heading}</span>}
       <div
         className={classNames(
           'grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto',

@@ -336,11 +336,11 @@ export const PreUploadDialog = ({
 
         <div className="flex flex-col gap-1">
           <div>
-            <span className="text-xs text-secondary">{t('Upload to')}</span>
+            <span className="text-xs text-secondary-bg-dark">{t('Upload to')}</span>
             <span className="text-xs text-accent-primary">&nbsp;*</span>
           </div>
           <button
-            className="flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+            className="flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary-bg-dark hover:border-accent-primary focus:border-accent-primary focus:outline-none"
             onClick={handleFolderChange}
           >
             <span className="truncate">
@@ -353,7 +353,7 @@ export const PreUploadDialog = ({
         {selectedFiles.length !== 0 && (
           <div className="flex flex-col gap-1 overflow-auto">
             <div>
-              <span className="text-xs text-secondary">{t('Files')}</span>
+              <span className="text-xs text-secondary-bg-dark">{t('Files')}</span>
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
             <div className="flex flex-col gap-3 overflow-auto text-sm">
@@ -361,13 +361,13 @@ export const PreUploadDialog = ({
                 <div key={index} className="flex items-center gap-3">
                   <div className="relative flex grow items-center">
                     <IconFile
-                      className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"
+                      className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary-bg-dark"
                       size={18}
                     />
                     <input
                       type="text"
                       value={getFileNameWithoutExtension(file.name)}
-                      className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                      className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary-bg-dark hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                       onChange={handleRenameFile(index)}
                     />
                     <span className="absolute right-2">
@@ -378,7 +378,7 @@ export const PreUploadDialog = ({
                   <button onClick={handleUnselectFile(index)}>
                     <IconTrashX
                       size={24}
-                      className="shrink-0 text-secondary hover:text-accent-primary"
+                      className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
                     />
                   </button>
                 </div>

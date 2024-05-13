@@ -76,7 +76,7 @@ const PromptActionsBlock = () => {
         disabled={isNewPromptCreating}
         data-qa="new-entity"
       >
-        <PlusIcon className="text-secondary" width={18} height={18} />
+        <PlusIcon className="text-secondary-bg-dark" width={18} height={18} />
         {t('New prompt')}
       </button>
       {showModal && !isModalPreviewMode && (

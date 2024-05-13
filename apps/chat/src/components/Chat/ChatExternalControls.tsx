@@ -29,7 +29,7 @@ export default function ChatExternalControls({ conversations }: Props) {
       onClick={handleDuplicate}
       data-qa="duplicate"
     >
-      <span className="text-secondary">
+      <span className="text-secondary-bg-dark">
         <IconCopy width={18} height={18} />
       </span>
       {t('Duplicate the conversation to be able to edit it')}

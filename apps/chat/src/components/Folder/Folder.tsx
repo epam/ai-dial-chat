@@ -626,7 +626,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       className={classNames(
         'transition-colors duration-200',
         isDraggingOver && 'bg-accent-primary-alpha',
-        currentFolder.temporary && 'text-primary',
+        currentFolder.temporary && 'text-primary-bg-dark',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -666,7 +666,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isHighlighted
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-secondary" />
+                <IconFolder size={18} className="mr-1 text-secondary-bg-dark" />
               </ShareIcon>
             )}
 
@@ -714,7 +714,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isHighlighted={isContextMenu}
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-secondary" />
+                <IconFolder size={18} className="mr-1 text-secondary-bg-dark" />
               </ShareIcon>
             )}
             <div
@@ -733,14 +733,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   'max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
-                      ? 'text-primary'
-                      : 'text-secondary'),
+                      ? 'text-primary-bg-dark'
+                      : 'text-secondary-bg-dark'),
                   isNameOrPathInvalid
-                    ? 'text-secondary'
+                    ? 'text-secondary-bg-dark'
                     : highlightedFolders?.includes(currentFolder.id) &&
                         featureType
                       ? 'text-accent-primary'
-                      : 'text-primary',
+                      : 'text-primary-bg-dark',
                 )}
               >
                 {currentFolder.name}

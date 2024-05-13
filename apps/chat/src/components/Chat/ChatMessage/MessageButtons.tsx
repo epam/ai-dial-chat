@@ -73,7 +73,7 @@ export const MessageUserButtons = ({
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+                className="text-secondary-bg-dark hover:text-accent-primary disabled:cursor-not-allowed"
                 onClick={toggleEditing}
                 disabled={editDisabled}
               >
@@ -83,7 +83,7 @@ export const MessageUserButtons = ({
           )}
           <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
             <button
-              className="text-secondary hover:text-accent-primary"
+              className="text-secondary-bg-dark hover:text-accent-primary"
               onClick={onDelete}
             >
               <IconTrash size={18} />
@@ -128,7 +128,7 @@ export const MessageAssistantButtons = ({
           <Button
             onClick={onRegenerate}
             data-qa="regenerate"
-            className="text-secondary"
+            className="text-secondary-bg-dark"
           >
             <IconRefresh size={18} />
           </Button>
@@ -136,7 +136,7 @@ export const MessageAssistantButtons = ({
       )}
       {messageCopied ? (
         <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
-          <IconCheck size={18} className="text-secondary" />
+          <IconCheck size={18} className="text-secondary-bg-dark" />
         </Tooltip>
       ) : (
         <Tooltip
@@ -145,7 +145,7 @@ export const MessageAssistantButtons = ({
           isTriggerClickable
           tooltip={t('Copy text')}
         >
-          <Button className="text-secondary" onClick={copyOnClick}>
+          <Button className="text-secondary-bg-dark" onClick={copyOnClick}>
             <IconCopy size={18} />
           </Button>
         </Tooltip>
@@ -256,7 +256,7 @@ export const MessageMobileButtons = ({
             <MenuItem
               item={
                 <div className="flex items-center gap-3">
-                  <IconCheck size={20} className="text-secondary" />
+                  <IconCheck size={20} className="text-secondary-bg-dark" />
                   <p>{t('Copied')}</p>
                 </div>
               }
@@ -266,7 +266,7 @@ export const MessageMobileButtons = ({
               className="hover:bg-accent-primary-alpha"
               item={
                 <div className="flex items-center gap-3">
-                  <IconCopy className="text-secondary" size={18} />
+                  <IconCopy className="text-secondary-bg-dark" size={18} />
                   {t('Copy')}
                 </div>
               }
@@ -277,7 +277,7 @@ export const MessageMobileButtons = ({
             <MenuItem
               item={
                 <div className="flex items-center gap-3">
-                  <IconRefresh className="text-secondary" size={18} />
+                  <IconRefresh className="text-secondary-bg-dark" size={18} />
                   {t('Regenerate')}
                 </div>
               }
@@ -293,7 +293,7 @@ export const MessageMobileButtons = ({
               )}
               item={
                 <div className="flex items-center gap-3">
-                  <IconThumbUp className="text-secondary" size={18} />
+                  <IconThumbUp className="text-secondary-bg-dark" size={18} />
                   <p
                     className={classNames(
                       message.like === LikeState.Liked && 'text-secondary',
@@ -322,7 +322,7 @@ export const MessageMobileButtons = ({
               data-qa="dislike"
               item={
                 <div className="flex items-center gap-3">
-                  <IconThumbDown className="text-secondary" size={18} />
+                  <IconThumbDown className="text-secondary-bg-dark" size={18} />
                   <p
                     className={classNames(
                       message.like === LikeState.Disliked && 'text-secondary',
@@ -356,7 +356,7 @@ export const MessageMobileButtons = ({
           disabled={editDisabled}
           item={
             <div className="flex items-center gap-3">
-              <IconEdit className="text-secondary" size={18} />
+              <IconEdit className="text-secondary-bg-dark" size={18} />
               <p>{t('Edit')}</p>
             </div>
           }
@@ -366,7 +366,7 @@ export const MessageMobileButtons = ({
           onClick={onDelete}
           item={
             <div className="flex items-center gap-3">
-              <IconTrash className="text-secondary" size={18} />
+              <IconTrash className="text-secondary-bg-dark" size={18} />
               <p>{t('Delete')}</p>
             </div>
           }

@@ -62,7 +62,7 @@ const Addon = ({
         </span>
       </div>
       {addon.description && (
-        <span className="text-secondary">
+        <span className="text-secondary-bg-dark">
           <EntityMarkdownDescription>
             {addon.description}
           </EntityMarkdownDescription>
@@ -98,7 +98,7 @@ const SelectedAddon = ({
       <ModelIcon entity={addon} entityId={addon.id} size={15} />
       <span>{addon.name}</span>
       {!isPreselected && (
-        <IconX size={14} className="text-secondary hover:text-accent-primary" />
+        <IconX size={14} className="text-secondary-bg-dark hover:text-accent-primary" />
       )}
     </button>
   );
@@ -185,7 +185,7 @@ export const AddonsDialog: FC<Props> = ({
           {t('Addons (max 10)')}
           <button
             onClick={onClose}
-            className="text-secondary hover:text-accent-primary"
+            className="text-secondary-bg-dark hover:text-accent-primary"
             data-qa="close-addons-dialog"
           >
             <IconX height={24} width={24} />
@@ -200,7 +200,7 @@ export const AddonsDialog: FC<Props> = ({
             onChange={(e) => {
               handleSearch(e.target.value);
             }}
-            className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+            className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary-bg-dark focus-visible:border-accent-primary"
           ></input>
         </div>
         <div
@@ -210,7 +210,7 @@ export const AddonsDialog: FC<Props> = ({
           {(selectedAddons?.filter((addon) => addonsMap[addon.id]).length > 0 ||
             preselectedAddonsIds?.length > 0) && (
             <div className="flex flex-col gap-3">
-              <span className="text-secondary">{t('Selected')}</span>
+              <span className="text-secondary-bg-dark">{t('Selected')}</span>
 
               <div className="flex flex-wrap gap-1">
                 {preselectedAddonsIds.map((addonID) => {
@@ -246,7 +246,7 @@ export const AddonsDialog: FC<Props> = ({
           )}
           {displayedAddons?.length > 0 ? (
             <div className="flex shrink grow flex-col gap-3 overflow-auto">
-              <span className="text-secondary">{t('Search results')}</span>
+              <span className="text-secondary-bg-dark">{t('Search results')}</span>
 
               <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
                 {displayedAddons.map((addon) => (

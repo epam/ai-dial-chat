@@ -134,7 +134,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div className="mb-4">
         <label
-          className="mb-1 flex text-xs text-secondary"
+          className="mb-1 flex text-xs text-secondary-bg-dark"
           htmlFor="projectNameInput"
         >
           {t('Title')}
@@ -156,7 +156,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div className="mb-5">
         <label
-          className="mb-1 flex text-xs text-secondary"
+          className="mb-1 flex text-xs text-secondary-bg-dark"
           htmlFor="businessJustificationInput"
         >
           {t('Description')}

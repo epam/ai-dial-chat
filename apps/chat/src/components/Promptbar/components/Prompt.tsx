@@ -323,7 +323,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
           >
-            <IconBulb size={18} className="text-secondary" />
+            <IconBulb size={18} className="text-secondary-bg-dark" />
           </ShareIcon>
 
           <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">

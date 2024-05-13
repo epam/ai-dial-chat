@@ -247,7 +247,7 @@ export function MultipleComboBox<T>({
                         removeSelectedItem(selectedItemForRender);
                       }}
                     >
-                      <IconX size={14} className="text-secondary" />
+                      <IconX size={14} className="text-secondary-bg-dark" />
                     </span>
                   </span>
                 );

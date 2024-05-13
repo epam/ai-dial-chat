@@ -11,7 +11,7 @@ interface TooltipContainerProps {
 const TooltipContainer: FC<TooltipContainerProps> = ({ description }) => (
   <Tooltip
     contentClassName="max-w-[220px]"
-    triggerClassName="text-secondary cursor-pointer"
+    triggerClassName="text-secondary-bg-dark cursor-pointer"
     tooltip={
       <EntityMarkdownDescription>{description}</EntityMarkdownDescription>
     }

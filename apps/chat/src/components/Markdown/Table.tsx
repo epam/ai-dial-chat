@@ -25,7 +25,7 @@ const CopyIcon = ({ Icon, onClick, copied }: CopyIconProps) => {
 
   return (
     <IconComponent
-      className="cursor-pointer text-secondary hover:text-accent-primary"
+      className="cursor-pointer text-secondary-bg-dark hover:text-accent-primary"
       size={24}
       onClick={() => {
         if (!copied) {

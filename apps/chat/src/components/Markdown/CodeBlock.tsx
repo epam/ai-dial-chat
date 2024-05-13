@@ -78,7 +78,7 @@ export const CodeBlock: FC<Props> = memo(
 
     return (
       <div
-        className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text-primary`}
+        className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text--bg-dark`}
       >
         <div
           className={`flex items-center justify-between border-b border-secondary p-3 ${
@@ -90,7 +90,7 @@ export const CodeBlock: FC<Props> = memo(
           {!isLastMessageStreaming && (
             <div
               data-no-context-menu
-              className="flex items-center gap-3 text-secondary"
+              className="flex items-center gap-3 text-secondary-bg-dark"
             >
               <button
                 className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"

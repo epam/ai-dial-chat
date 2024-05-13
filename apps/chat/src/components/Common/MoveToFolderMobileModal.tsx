@@ -39,7 +39,7 @@ export const MoveToFolderMobileModal = ({
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
           <span className="h-min">{t('Move to')}</span>
           <span onClick={onClose}>
-            <IconX width={24} height={24} className="text-secondary" />
+            <IconX width={24} height={24} className="text-secondary-bg-dark" />
           </span>
         </div>
         <div
@@ -48,7 +48,7 @@ export const MoveToFolderMobileModal = ({
             handleMoveToFolder({ isNewFolder: true });
           }}
         >
-          <IconFolderPlus className="text-secondary" size={18} />
+          <IconFolderPlus className="text-secondary-bg-dark" size={18} />
           <span>{t('New folder')}</span>
         </div>
         <div className="overflow-auto py-2">

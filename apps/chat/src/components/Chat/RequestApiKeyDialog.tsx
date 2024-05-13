@@ -249,7 +249,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div>
         <label
-          className="mb-3 flex text-xs text-secondary"
+          className="mb-3 flex text-xs text-secondary-bg-dark"
           htmlFor="formDescription"
         >
           <span className="ml-1">
@@ -270,7 +270,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div>
         <label
-          className="mb-1 flex text-xs text-secondary"
+          className="mb-1 flex text-xs text-secondary-bg-dark"
           htmlFor="projectNameInput"
         >
           <span>1.</span>
@@ -295,7 +295,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div>
         <label
-          className="flex text-xs text-secondary"
+          className="flex text-xs text-secondary-bg-dark"
           htmlFor="streamNameInput"
         >
           <span>2.</span>
@@ -322,7 +322,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div>
         <label
-          className="mb-1 flex flex-col text-xs text-secondary md:flex-row"
+          className="mb-1 flex flex-col text-xs text-secondary-bg-dark md:flex-row"
           htmlFor="techLeadEmailInput"
         >
           <span>
@@ -352,7 +352,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div>
         <label
-          className="mb-1 flex text-xs text-secondary"
+          className="mb-1 flex text-xs text-secondary-bg-dark"
           htmlFor="businessJustificationInput"
         >
           <span>4.</span>
@@ -374,7 +374,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div>
         <label
-          className="mb-1 flex text-xs text-secondary"
+          className="mb-1 flex text-xs text-secondary-bg-dark"
           htmlFor="projectEndDateInput"
         >
           <span>5.</span>
@@ -399,7 +399,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       </div>
 
       <div>
-        <label className="mb-1 text-xs text-secondary" htmlFor="scenarioInput">
+        <label className="mb-1 text-xs text-secondary-bg-dark" htmlFor="scenarioInput">
           <span>6.</span>
           <span className="ml-1">
             {t(
@@ -423,7 +423,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       <div>
         <label
-          className="mb-1 flex flex-wrap text-xs text-secondary xl:inline-block"
+          className="mb-1 flex flex-wrap text-xs text-secondary-bg-dark xl:inline-block"
           htmlFor="costInput"
         >
           <span>

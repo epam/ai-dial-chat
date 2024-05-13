@@ -28,7 +28,7 @@ export const ChatInputFileAttachment = ({
       className="flex items-center gap-3 rounded border border-primary bg-layer-1 px-3 py-2"
     >
       {file.status !== UploadStatus.FAILED ? (
-        <IconFile className="shrink-0 text-secondary" size={18} />
+        <IconFile className="shrink-0 text-secondary-bg-dark" size={18} />
       ) : (
         <IconExclamationCircle className="shrink-0 text-error" size={18} />
       )}
@@ -56,7 +56,7 @@ export const ChatInputFileAttachment = ({
           {onRetryFile && file.status === UploadStatus.FAILED && (
             <button onClick={() => onRetryFile(file.id)}>
               <IconReload
-                className="shrink-0 text-secondary hover:text-accent-primary"
+                className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
                 size={18}
               />
             </button>
@@ -64,7 +64,7 @@ export const ChatInputFileAttachment = ({
           {onUnselectFile && (
             <button onClick={() => onUnselectFile(file.id)}>
               <IconX
-                className="shrink-0 text-secondary hover:text-accent-primary"
+                className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
                 size={18}
               />
             </button>

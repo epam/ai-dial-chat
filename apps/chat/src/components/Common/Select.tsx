@@ -53,7 +53,7 @@ export const Select = ({
             {selectedOptionName}
             <IconChevronDown
               className={classNames(
-                'shrink-0 text-primary transition-all',
+                'shrink-0 text-primary-bg-dark transition-all',
                 isOpen && 'rotate-180',
               )}
               width={18}

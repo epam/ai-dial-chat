@@ -93,7 +93,7 @@ const Sidebar = <T,>({
   );
 
   const resizeTriggerClassName = classNames(
-    'invisible h-full w-0.5 bg-layer-3 text-secondary group-hover:visible md:visible',
+    'invisible h-full w-0.5 bg-layer-3 text-secondary-bg-dark group-hover:visible md:visible',
     resizeTriggerColor,
     isResizing ? 'xl:visible' : 'xl:invisible',
   );
@@ -198,7 +198,7 @@ const Sidebar = <T,>({
   ]);
 
   const resizableWrapperClassName = classNames(
-    '!fixed z-40 flex min-w-[260px] max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
+    '!fixed z-40 flex min-w-[260px] max-w-[95%] bordertextColor-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
     isLeftSidebar
       ? 'sidebar-left left-0 border-r'
       : 'sidebar-right right-0 border-l',
@@ -212,7 +212,7 @@ const Sidebar = <T,>({
       className={resizableWrapperClassName}
       data-qa={dataQa}
     >
-      <div className="group/sidebar flex size-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 transition-all">
+      <div className="group/sidebar flex size-full flex-none shrink-0 flex-col divide-y divide-tertiary bg-layer-3 text-secondary-bg-dark transition-all">
         {areEntitiesUploaded ? (
           <>
             <Search
