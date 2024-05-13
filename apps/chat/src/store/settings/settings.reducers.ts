@@ -2,7 +2,10 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
-import { CustomVisualizer } from '@/src/types/custom-visualizers';
+import {
+  CustomVisualizer,
+  MappedVisualizers,
+} from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
 import { RootState } from '..';
@@ -215,14 +218,11 @@ const selectMappedVisualizers = createSelector(
   [selectCustomVisualizers],
   (customVisualizers) => {
     return customVisualizers?.reduce(
-      (
-        visualizers: Record<string, CustomVisualizer[]>,
-        currentVisualizerConfig,
-      ) => {
+      (visualizers: MappedVisualizers, currentVisualizerConfig) => {
         const contentTypes = currentVisualizerConfig.ContentType.split(',');
 
         visualizers = contentTypes.reduce(
-          (visualizers: Record<string, CustomVisualizer[]>, contentType) => {
+          (visualizers: MappedVisualizers, contentType) => {
             visualizers[contentType] = !visualizers[contentType]
               ? [currentVisualizerConfig]
               : visualizers[currentVisualizerConfig.ContentType].concat(
@@ -231,12 +231,12 @@ const selectMappedVisualizers = createSelector(
 
             return visualizers;
           },
-          {} as Record<string, CustomVisualizer[]>,
+          {} as MappedVisualizers,
         );
 
         return visualizers;
       },
-      {} as Record<string, CustomVisualizer[]>,
+      {} as MappedVisualizers,
     );
   },
 );

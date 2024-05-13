@@ -5,3 +5,5 @@ export interface CustomVisualizer {
   ContentType: string;
   Url: string;
 }
+
+export type MappedVisualizers = Record<string, CustomVisualizer[]>;
