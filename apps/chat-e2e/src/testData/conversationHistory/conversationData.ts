@@ -297,8 +297,8 @@ export class ConversationData extends FolderData {
         name,
       );
       nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = item.folderId;
-      nestedConversation.id = `${item.folderId}/${nestedConversation.id}`;
+      nestedConversation.folderId = item.id;
+      nestedConversation.id = `${item.id}/${nestedConversation.id}`;
       this.resetData();
     }
     return nestedConversations;
@@ -311,8 +311,8 @@ export class ConversationData extends FolderData {
     const conversations: Conversation[] = [];
     for (let i = 1; i <= conversationsCount; i++) {
       const conversation = this.prepareDefaultConversation();
-      conversation.folderId = folder.folderId;
-      conversation.id = `${folder.folderId}/${conversation.id}`;
+      conversation.folderId = folder.id;
+      conversation.id = `${folder.id}/${conversation.id}`;
       conversations.push(conversation);
       this.resetData();
     }
@@ -324,8 +324,8 @@ export class ConversationData extends FolderData {
   ): FolderConversation {
     const folder = this.prepareFolder();
     for (const conversation of conversations) {
-      conversation.folderId = folder.folderId;
-      conversation.id = `${folder.folderId}/${conversation.id}`;
+      conversation.folderId = folder.id;
+      conversation.id = `${folder.id}/${conversation.id}`;
     }
     return { conversations: conversations, folders: folder };
   }
@@ -340,8 +340,8 @@ export class ConversationData extends FolderData {
       conversationName,
     );
     const folder = this.prepareFolder(folderName);
-    conversation.folderId = folder.folderId;
-    conversation.id = `${folder.folderId}/${conversation.id}`;
+    conversation.folderId = folder.id;
+    conversation.id = `${folder.id}/${conversation.id}`;
     return { conversations: [conversation], folders: folder };
   }
 

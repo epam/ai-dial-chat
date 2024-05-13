@@ -10,7 +10,7 @@ export class FolderBuilder {
       id: GeneratorUtil.randomString(10),
       name: ExpectedConstants.newFolderTitle,
       type: FolderType.Chat,
-      folderId: ExpectedConstants.newFolderTitle,
+      folderId: '',
     };
   }
 

@@ -430,8 +430,8 @@ dialTest(
         for (let i = 0; i <= levelsCount; i++) {
           const nestedPrompt = promptData.prepareDefaultPrompt();
           nestedPrompts.push(nestedPrompt);
-          nestedPrompt.folderId = nestedFolders[i].folderId;
-          nestedPrompt.id = `${nestedFolders[i].folderId}/${nestedPrompt.id}`;
+          nestedPrompt.folderId = nestedFolders[i].id;
+          nestedPrompt.id = `${nestedFolders[i].id}/${nestedPrompt.id}`;
           promptData.resetData();
         }
         await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
