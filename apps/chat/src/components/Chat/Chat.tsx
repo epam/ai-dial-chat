@@ -109,13 +109,13 @@ export const ChatView = memo(() => {
     ConversationsSelectors.selectSelectedConversationsIds,
   );
   const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
   const isConversationUpdatedFromQueryParams = useAppSelector(
-    ConversationsSelectors.selectIsConversationUpdatedFromQueryParams
+    ConversationsSelectors.selectIsConversationUpdatedFromQueryParams,
   );
   const isInitFoldersAndConversations = useAppSelector(
-    ConversationsSelectors.selectIsInitFoldersAndConversations
+    ConversationsSelectors.selectIsInitFoldersAndConversations,
   );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
@@ -151,28 +151,15 @@ export const ChatView = memo(() => {
     (chat) => chat?.id === currentChatId?.[0],
   );
 
-  // TODO PGPT-137 Temporary solution.  ModelsIds are hardcoded for now.
-  // const modelIds = useMemo(
-  //   () => [...models.map((model) => model.id)],
-  //   [models],
-  // );
-
-  const modelIds = [
-    'gpt-35-turbo',
-    'gpt-4',
-    'gpt-4-32k',
-    'gpt-4-vision',
-    'dall-e-3',
-    'rag',
-    'hr-buddy',
-  ];
+  const modelIds = useMemo(
+    () => [...models.map((model) => model.id)],
+    [models],
+  );
 
   useEffect(() => {
     const { talkto } = router?.query || {};
 
     if (modelIds?.length > 0 && talkto) {
-      modelIds.push(DocumentId.queryParam);
-
       const modelId =
         talkto === DocumentId.queryParam ? DocumentId.modelId : talkto;
 
@@ -181,7 +168,7 @@ export const ChatView = memo(() => {
         areSelectedConversationsLoaded &&
         isInitFoldersAndConversations &&
         !isConversationUpdatedFromQueryParams &&
-        modelIds?.includes(talkto as string)
+        modelIds?.includes(modelId as string)
       ) {
         dispatch(ConversationsActions.updateConversationFromQueryParams());
         dispatch(

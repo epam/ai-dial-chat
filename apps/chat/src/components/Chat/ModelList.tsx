@@ -70,14 +70,16 @@ const ModelGroup = ({
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
   const description = currentEntity.description;
+  const isActive =
+    !disabled && !isReplayAsIs && selectedModelId === currentEntity.id;
 
   return (
     <div
       className={classNames(
-        'relative rounded border hover:border-hover',
-        !disabled && !isReplayAsIs && selectedModelId === currentEntity.id
+        'relative rounded border',
+        isActive
           ? 'border-accent-primary'
-          : 'border-primary',
+          : 'border-primary hover:border-hover',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
