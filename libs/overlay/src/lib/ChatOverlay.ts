@@ -360,5 +360,7 @@ export class ChatOverlay {
     window.removeEventListener('message', this.process);
     this.iframeInteraction.fail('Chat Overlay destroyed');
     this.root.removeChild(this.iframe);
+
+    this.root.removeChild(this.loader);
   }
 }

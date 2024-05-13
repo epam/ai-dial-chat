@@ -202,13 +202,21 @@ const AttachmentUrlRendererComponent = ({
     SettingsSelectors.selectIsCustomAttachmentType(state, attachmentType),
   );
 
-  return mappedVisualizers && isCustomAttachmentType ? (
-    <VisualizerRenderer
-      attachmentUrl={mappedAttachmentUrl}
-      renderer={mappedVisualizers[attachmentType][0]}
-      mimeType={attachmentType}
-    />
-  ) : (
+  if (mappedVisualizers && isCustomAttachmentType) {
+    return (
+      <VisualizerRenderer
+        attachmentUrl={mappedAttachmentUrl}
+        renderer={mappedVisualizers[attachmentType][0]}
+        mimeType={attachmentType}
+      />
+    );
+  }
+
+  if (attachmentType === chartType) {
+    return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+  }
+
+  return (
     <AttachmentUrlRenderer
       attachmentUrl={mappedAttachmentUrl}
       attachmentType={attachmentType}
@@ -360,15 +368,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           {attachment.data && (
             <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}
-          {mappedAttachmentUrl &&
-            (attachment.type === chartType ? (
-              <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />
-            ) : (
-              <AttachmentUrlRendererComponent
-                attachmentType={attachment.type}
-                mappedAttachmentUrl={mappedAttachmentUrl}
-              />
-            ))}
+          {mappedAttachmentUrl && (
+            <AttachmentUrlRendererComponent
+              attachmentType={attachment.type}
+              mappedAttachmentUrl={mappedAttachmentUrl}
+            />
+          )}
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}
