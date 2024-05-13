@@ -305,14 +305,15 @@ dialTest(
 );
 
 dialTest(
-  'Menu for New conversation',
+  'Menu for New conversation.\n' +
+    'Duplicate item is not available for chat without history',
   async ({
     dialHomePage,
     conversations,
     conversationDropdownMenu,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-594');
+    setTestIds('EPMRTC-594', 'EPMRTC-3054');
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await conversations.openConversationDropdownMenu(
@@ -1139,7 +1140,7 @@ dialTest(
           conversationData.prepareModelConversationBasedOnRequests(gpt35Model, [
             request,
           ]);
-        firstConversation.folderId = firstFolder.folderId;
+        firstConversation.folderId = firstFolder.id;
         firstConversation.id = `${firstConversation.folderId}/${firstConversation.id}`;
         conversationData.resetData();
 
@@ -1147,7 +1148,7 @@ dialTest(
           gpt4Model,
           matchingConversationName,
         );
-        secondConversation.folderId = firstFolder.folderId;
+        secondConversation.folderId = firstFolder.id;
         secondConversation.id = `${secondConversation.folderId}/${secondConversation.id}`;
         conversationData.resetData();
 
@@ -1160,13 +1161,13 @@ dialTest(
             [request],
             specialSymbolsName,
           );
-        thirdConversation.folderId = secondFolder.folderId;
+        thirdConversation.folderId = secondFolder.id;
         thirdConversation.id = `${thirdConversation.folderId}/${thirdConversation.id}`;
         conversationData.resetData();
 
         const fourthConversation =
           conversationData.prepareDefaultConversation(gpt35Model);
-        fourthConversation.folderId = secondFolder.folderId;
+        fourthConversation.folderId = secondFolder.id;
         fourthConversation.id = `${fourthConversation.folderId}/${fourthConversation.id}`;
         conversationData.resetData();
 
