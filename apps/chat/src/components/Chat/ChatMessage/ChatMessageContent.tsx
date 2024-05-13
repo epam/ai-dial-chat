@@ -447,7 +447,7 @@ export const ChatMessageContent = ({
                 <div
                   className={classNames(
                     'flex items-center',
-                    !canAttachFiles && !canAttachLinks
+                    !canAttachFiles && !canAttachFolders && !canAttachLinks
                       ? 'justify-end'
                       : 'justify-between',
                   )}
@@ -467,9 +467,10 @@ export const ChatMessageContent = ({
                       }
                       selectedFilesIds={newEditableAttachments.map((f) =>
                         f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
-                          ? ApiUtils.decodeApiUrl(f.id)
-                              .replace(new RegExp('^files/metadata/'), '')
-                              .replace(new RegExp('^metadata/'), '') + '/'
+                          ? ApiUtils.decodeApiUrl(f.id).replace(
+                              new RegExp('^metadata/'),
+                              '',
+                            ) + '/'
                           : f.id,
                       )}
                       onSelectAlreadyUploaded={handleSelectAlreadyUploaded}

@@ -84,7 +84,15 @@ export const ChatInputMessage = ({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttachFile);
+  const canAttachFiles = useAppSelector(
+    ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
+  );
+  const canAttachLinks = useAppSelector(
+    ConversationsSelectors.selectCanAttachLink,
+  );
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const selectedFolders = useAppSelector(FilesSelectors.selectSelectedFolders);
   const isUploadingFilePresent = useAppSelector(
@@ -358,13 +366,14 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
-  const paddingLeftClass = canAttach
-    ? isOverlay
-      ? 'pl-11'
-      : 'pl-12'
-    : isOverlay
-      ? 'pl-3'
-      : 'pl-4';
+  const paddingLeftClass =
+    canAttachFiles || canAttachFolders || canAttachLinks
+      ? isOverlay
+        ? 'pl-11'
+        : 'pl-12'
+      : isOverlay
+        ? 'pl-3'
+        : 'pl-4';
 
   return (
     <div
@@ -406,7 +415,7 @@ export const ChatInputMessage = ({
           isLoading={isLoading}
           isSendDisabled={isSendDisabled}
         />
-        {canAttach && (
+        {(canAttachFiles || canAttachFolders || canAttachLinks) && (
           <>
             <div className="absolute left-4 top-[calc(50%_-_12px)] cursor-pointer rounded disabled:cursor-not-allowed">
               <AttachButton

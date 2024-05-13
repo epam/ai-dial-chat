@@ -57,6 +57,9 @@ export const AttachButton = ({
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
   );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
+  );
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
   );
@@ -82,7 +85,7 @@ export const AttachButton = ({
         {
           name: t('Attach uploaded files'),
           dataQa: 'attach_uploaded',
-          display: canAttachFiles,
+          display: canAttachFiles || canAttachFolders,
           Icon: IconFileDescription,
           onClick: handleOpenAttachmentsModal,
         },
@@ -111,7 +114,7 @@ export const AttachButton = ({
     ],
   );
 
-  if (!canAttachFiles && !canAttachLinks) return null;
+  if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
 
   return (
     <>
