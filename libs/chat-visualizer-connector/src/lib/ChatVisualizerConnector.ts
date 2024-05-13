@@ -18,7 +18,7 @@ export interface AttachmentData {
 }
 
 /**
- * Class which creates connector with DIAL CHAT, allows to interact with it (send/receive messages)
+ * Class which creates connector with DIAL CHAT, allows to interact with it (send/receive data via post messages)
  */
 export class ChatVisualizerConnector {
   protected dialHost: string;

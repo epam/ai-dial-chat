@@ -4,7 +4,7 @@ DIAL Visualizer Connector is a library for connecting DIAL CHAT with custom visu
 
 ## Public classes to use
 
-`VisualizerConnector` - class which creates iframe with provided **VisualizerConnector**, allows to interact with **ChatVisualizerConnector** rendered in the iframe (send/receive messages). Types for configuration options is `VisualizerConnectorOptions`.
+`VisualizerConnector` - class which creates iframe with provided **VisualizerConnector**, allows to interact with **Visualizer** rendered in the iframe (send data). Types for configuration options is `VisualizerConnectorOptions`.
 
 ## Prerequisites
 
