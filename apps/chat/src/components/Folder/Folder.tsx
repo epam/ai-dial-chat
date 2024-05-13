@@ -32,6 +32,7 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
+  getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
 import {
@@ -185,11 +186,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
 
   useEffect(() => {
-    setIsSelected(
-      ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
-        `${currentFolder.id}/`,
-      ),
-    );
+    setIsSelected(() => {
+      const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
+      return parentFolderIds.some((id) =>
+        ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+          `${id}/`,
+        ),
+      );
+    });
   }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
 
   useEffect(() => {
@@ -648,6 +652,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isHighlighted =
     isRenaming ||
     isContextMenu ||
+    ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+      `${currentFolder.id}/`,
+    ) ||
     (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
 
   return (
