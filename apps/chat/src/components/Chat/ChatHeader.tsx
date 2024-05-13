@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
+  getOpenAIEntityFullName,
   getSelectedAddons,
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
@@ -135,7 +136,9 @@ export const ChatHeader = ({
         <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
           {isShowChatInfo && (
             <>
-              <div className="flex items-center">{model?.name}</div>
+              <div className="flex items-center">
+                {getOpenAIEntityFullName(model as DialAIEntityModel)}
+              </div>
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
                   tooltip={
