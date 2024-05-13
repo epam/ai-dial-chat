@@ -14,6 +14,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/epam/ai-dial-chat.git",
-    "directory": "libs/chat-chat-visualizer-connector"
+    "directory": "libs/chat-visualizer-connector"
   }
 }
