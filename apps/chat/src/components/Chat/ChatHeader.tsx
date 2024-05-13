@@ -137,7 +137,7 @@ export const ChatHeader = ({
           {isShowChatInfo && (
             <>
               <div className="flex items-center">
-                {getOpenAIEntityFullName(model as DialAIEntityModel)}
+                {model && getOpenAIEntityFullName(model as DialAIEntityModel)}
               </div>
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
