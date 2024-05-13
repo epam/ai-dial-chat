@@ -48,7 +48,7 @@ function ContextMenuItemRenderer({
         featureType={featureType}
         triggerIconClassName={classNames(
           className,
-          'text-secondary',
+          'text-secondary-bg-dark',
           'hover:bg-accent-primary-alpha',
         )}
         TriggerCustomRenderer={item}
@@ -59,7 +59,7 @@ function ContextMenuItemRenderer({
   return (
     <MenuItem
       className={classNames(
-        disabled ? 'text-secondary' : 'hover:bg-accent-primary-alpha',
+        disabled ? 'text-secondary-bg-dark' : 'hover:bg-accent-primary-alpha',
         className,
       )}
       item={item}
@@ -121,7 +121,7 @@ export default function ContextMenu({
         <div
           data-qa="menu-trigger"
           className={classNames(
-            'flex w-full items-center justify-center rounded text-secondary',
+            'flex w-full items-center justify-center rounded text-secondary-bg-dark',
             triggerIconHighlight && 'hover:text-accent-primary',
             className,
           )}

@@ -238,7 +238,7 @@ export const PlaybackControls = ({
                   <span
                     className={classNames(
                       'break-words',
-                      phase === 'EMPTY' && 'text-secondary',
+                      phase === 'EMPTY' && 'text-secondary-bg-dark',
                     )}
                     data-qa="playback-message-content"
                   >

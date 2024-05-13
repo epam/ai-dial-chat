@@ -64,7 +64,7 @@ const ChatActionsBlock = () => {
         data-qa="new-entity"
       >
         {isActiveNewConversationRequest ? (
-          <Spinner size={18}/>
+          <Spinner size={18} />
         ) : (
           <PlusIcon width={18} height={18} />
         )}

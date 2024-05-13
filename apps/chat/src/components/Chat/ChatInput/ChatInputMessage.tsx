@@ -414,13 +414,13 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
+        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-1 focus-within:border-accent-primary"
         data-qa="message"
       >
         <AdjustedTextarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
+            'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary-bg-dark',
             isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-3',
             paddingLeftClass,
           )}

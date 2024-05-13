@@ -169,7 +169,7 @@ export const MessageAssistantButtons = ({
                   }}
                   className={
                     message.like !== LikeState.Liked
-                      ? 'text-secondary'
+                      ? 'text-secondary-bg-dark'
                       : 'text-accent-primary'
                   }
                   disabled={message.like === LikeState.Liked}
@@ -197,7 +197,7 @@ export const MessageAssistantButtons = ({
                   }}
                   className={
                     message.like !== LikeState.Disliked
-                      ? 'text-secondary'
+                      ? 'text-secondary-bg-dark'
                       : 'text-accent-primary'
                   }
                   disabled={message.like === LikeState.Disliked}
@@ -296,7 +296,7 @@ export const MessageMobileButtons = ({
                   <IconThumbUp className="text-secondary-bg-dark" size={18} />
                   <p
                     className={classNames(
-                      message.like === LikeState.Liked && 'text-secondary',
+                      message.like === LikeState.Liked && 'text-secondary-bg-dark',
                     )}
                   >
                     {message.like === LikeState.Liked ? t('Liked') : t('Like')}
@@ -325,7 +325,7 @@ export const MessageMobileButtons = ({
                   <IconThumbDown className="text-secondary-bg-dark" size={18} />
                   <p
                     className={classNames(
-                      message.like === LikeState.Disliked && 'text-secondary',
+                      message.like === LikeState.Disliked && 'text-secondary-bg-dark',
                     )}
                   >
                     {message.like === LikeState.Disliked

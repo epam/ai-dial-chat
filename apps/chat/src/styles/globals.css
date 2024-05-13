@@ -137,8 +137,7 @@ pre:has(div.codeblock) {
 }
 
 @layer components{
-
-  #chat {
+  #chat .model-icon-template {
     --text-primary-bg-dark: var(--text-primary-bg-light);
   }
 

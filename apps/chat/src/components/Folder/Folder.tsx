@@ -720,7 +720,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             <div
               className={classNames(
                 'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
-                isNameOrPathInvalid && 'text-secondary',
+                isNameOrPathInvalid && 'text-secondary-bg-dark',
               )}
               data-qa="folder-name"
             >

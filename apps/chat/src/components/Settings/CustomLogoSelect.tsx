@@ -36,7 +36,7 @@ export const CustomLogoSelect = ({
         <div
           className={classNames(
             'block w-full max-w-full truncate',
-            localLogo ? 'text-primary-bg-dark' : 'text-secondary',
+            localLogo ? 'text-primary-bg-dark' : 'text-secondary-bg-dark',
           )}
         >
           {localLogo ? localLogo : t('No custom logo')}

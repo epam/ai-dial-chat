@@ -37,7 +37,7 @@ const TemperatureIndicator = ({
 }: TemperatureIndicatorProps) => {
   return (
     <div
-      className="absolute top-[calc(50%-20px)] flex size-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 shadow"
+      className="absolute top-[calc(50%-20px)] flex size-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 shadow text-primary-bg-dark"
       style={style}
       onKeyDown={onKeyDown}
       onMouseDown={onMouseDown}
