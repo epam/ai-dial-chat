@@ -12,7 +12,7 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtentionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getParentAndCurrentFolderIdsById } from '@/src/utils/app/folders';
+import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
@@ -36,7 +36,6 @@ import Tooltip from '../Common/Tooltip';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
-import { trimEnd } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -102,18 +101,12 @@ export const FileManagerModal = ({
   const hightlightFolderIds = useMemo(() => {
     return uniq(
       selectedFolderIds
-        .flatMap((folderId) =>
-          getParentAndCurrentFolderIdsById(folders, trimEnd(folderId, '/')),
-        )
+        .flatMap((folderId) => getParentFolderIdsFromFolderId(folderId))
         .concat(
-          files
-            .filter((f) => selectedFilesIds.includes(f.id))
-            .flatMap((f) =>
-              getParentAndCurrentFolderIdsById(folders, f.folderId),
-            ),
+          selectedFilesIds.flatMap((f) => getParentFolderIdsFromFolderId(f)),
         ),
     );
-  }, [files, folders, selectedFilesIds, selectedFolderIds]);
+  }, [selectedFilesIds, selectedFolderIds]);
 
   const {
     handleRenameFolder,
@@ -448,6 +441,7 @@ export const FileManagerModal = ({
                               item={file}
                               level={0}
                               additionalItemData={{
+                                selectedFolderIds,
                                 selectedFilesIds,
                               }}
                               onEvent={handleItemCallback}

@@ -467,10 +467,9 @@ export const ChatMessageContent = ({
                       }
                       selectedFilesIds={newEditableAttachments.map((f) =>
                         f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
-                          ? ApiUtils.decodeApiUrl(`${f.id}/`).replace(
-                              new RegExp('^files/metadata/'),
-                              '',
-                            )
+                          ? ApiUtils.decodeApiUrl(f.id)
+                              .replace(new RegExp('^files/metadata/'), '')
+                              .replace(new RegExp('^metadata/'), '') + '/'
                           : f.id,
                       )}
                       onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
