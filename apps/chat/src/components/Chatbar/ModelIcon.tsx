@@ -45,7 +45,7 @@ const ModelIconTemplate = memo(
       <span
         className={classNames(
           'relative inline-block shrink-0 leading-none',
-          isInvalid ? 'text-secondary' : 'text-primary',
+          isInvalid ? 'text-secondary-bg-dark' : 'text-primary-bg-dark',
           animate && 'animate-bounce',
         )}
         style={{  width: `${boxSize}px` }}

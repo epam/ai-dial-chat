@@ -714,7 +714,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isHighlighted={isContextMenu}
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-secondary-bg-dark" />
+                <IconFolder size={18} className="mr-1" />
               </ShareIcon>
             )}
             <div

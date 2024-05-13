@@ -32,7 +32,7 @@ function ContextMenuItemRenderer({
     >
       {Icon && (
         <Icon
-          className="shrink-0 text-secondary-bg-dark"
+          className="shrink-0"
           size={18}
           height={18}
           width={18}

@@ -136,12 +136,17 @@ pre:has(div.codeblock) {
   }
 }
 
-@layer components {
+@layer components{
+
+  #chat {
+    --text-primary-bg-dark: var(--text-primary-bg-light);
+  }
+
   .sidebar-left,
   .context-menu-chat {
     --text-accent-primary: var(--text-accent-secondary, #37babc);
     --stroke-accent-primary: var(--stroke-accent-secondary, #37babc);
-    --bg-accent-primary-alpha: var(--bg-accent-secondary-alpha, #37babc26);
+    --bg-accent-primary-alpha: var(--bg-accent-primary-alpha, #37babc26);
     --bg-accent-primary: var(--bg-accent-secondary, #37babc);
   }
 
@@ -149,7 +154,7 @@ pre:has(div.codeblock) {
   .context-menu-prompt {
     --text-accent-primary: var(--text-accent-tertiary, #a972ff);
     --stroke-accent-primary: var(--stroke-accent-tertiary, #a972ff);
-    --bg-accent-primary-alpha: var(--bg-accent-tertiary-alpha, #a972ff26);
+    --bg-accent-primary-alpha: var(--bg-accent-primary-alpha, #a972ff26);
     --bg-accent-primary: var(--bg-accent-tertiary, #a972ff);
   }
 }

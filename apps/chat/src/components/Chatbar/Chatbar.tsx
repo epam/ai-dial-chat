@@ -64,9 +64,9 @@ const ChatActionsBlock = () => {
         data-qa="new-entity"
       >
         {isActiveNewConversationRequest ? (
-          <Spinner size={18} className="text-secondary-bg-dark" />
+          <Spinner size={18}/>
         ) : (
-          <PlusIcon className="text-secondary-bg-dark" width={18} height={18} />
+          <PlusIcon width={18} height={18} />
         )}
         {t('New conversation')}
       </button>

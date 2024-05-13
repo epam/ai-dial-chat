@@ -92,20 +92,20 @@ const Header = () => {
             {showChatbar ? (
               <>
                 <IconX
-                  className="text-secondary-bg-dark md:hidden"
+                  className="md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
 
                 <MoveLeftIcon
-                  className="text-secondary-bg-dark hover:text-accent-secondary max-md:hidden"
+                  className="hover:text-accent-secondary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
               <MoveRightIcon
-                className="text-secondary-bg-dark hover:text-accent-secondary"
+                className="hover:text-accent-secondary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
@@ -143,20 +143,20 @@ const Header = () => {
             {showPromptbar ? (
               <>
                 <IconX
-                  className="text-secondary-bg-dark md:hidden"
+                  className="md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
 
                 <MoveRightIcon
-                  className="text-secondary-bg-dark hover:text-accent-tertiary max-md:hidden"
+                  className="hover:text-accent-secondary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
               <MoveLeftIcon
-                className="text-secondary-bg-dark hover:text-accent-tertiary"
+                className="hover:text-accent-secondary"
                 width={headerIconSize}
                 height={headerIconSize}
               />

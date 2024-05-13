@@ -69,7 +69,7 @@ export const UserDesktop = () => {
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
-              <IconSettings size={18} className="text-secondary-bg-dark" />
+              <IconSettings size={18} />
               <span className="ml-3">{t('Settings')}</span>
             </div>
           }
@@ -81,7 +81,7 @@ export const UserDesktop = () => {
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
-              <LogOutIcon width={18} height={18} className="text-secondary-bg-dark" />
+              <LogOutIcon width={18} height={18} />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>
           }
