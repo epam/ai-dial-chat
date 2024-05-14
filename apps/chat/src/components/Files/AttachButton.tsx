@@ -119,9 +119,6 @@ export const AttachButton = ({
 
   if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
 
-  // eslint-disable-next-line no-console
-  console.log('AttachButton - selectedFilesIds:', selectedFilesIds);
-
   const label = canAttachFiles
     ? 'Attach files'
     : canAttachFolders
