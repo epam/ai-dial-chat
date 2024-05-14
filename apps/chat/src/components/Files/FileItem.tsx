@@ -29,6 +29,7 @@ export enum FileItemEventIds {
   Cancel = 'cancel',
   Retry = 'retry',
   Toggle = 'toggle',
+  ToggleFolder = 'toggleFolder',
   Delete = 'delete',
 }
 
@@ -58,8 +59,10 @@ export const FileItem = ({
   const [isContextMenu, setIsContextMenu] = useState(false);
 
   const [isSelected, setIsSelected] = useState(false);
+  const [isHighligted, setIsHighlighted] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const canAttachFiles = !!additionalItemData?.canAttachFiles;
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -99,15 +102,28 @@ export const FileItem = ({
     setIsSelected(
       ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
         item.id,
+      ) ||
+        (!!additionalItemData?.selectedFolderIds &&
+          (additionalItemData.selectedFolderIds as string[]).some((folderId) =>
+            item.id.startsWith(folderId),
+          )),
+    );
+    setIsHighlighted(
+      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
+        item.id,
       ),
     );
-  }, [additionalItemData?.selectedFilesIds, item.id]);
+  }, [
+    additionalItemData?.selectedFilesIds,
+    additionalItemData?.selectedFolderIds,
+    item.id,
+  ]);
 
   return (
     <div
       className={classNames(
         'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
-        isContextMenu && 'bg-accent-primary-alpha',
+        (isHighligted || isContextMenu) && 'bg-accent-primary-alpha',
       )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
@@ -120,6 +136,7 @@ export const FileItem = ({
               {...item}
               containerClassName={classNames(
                 item.status !== UploadStatus.LOADING &&
+                  canAttachFiles &&
                   'group-hover/file-item:hidden',
               )}
               featureType={FeatureType.Chat}
@@ -128,6 +145,7 @@ export const FileItem = ({
               <IconFile
                 className={classNames(
                   item.status !== UploadStatus.LOADING &&
+                    canAttachFiles &&
                     'group-hover/file-item:hidden',
                 )}
                 size={18}
@@ -147,7 +165,8 @@ export const FileItem = ({
             )
           )}
           {item.status !== UploadStatus.LOADING &&
-            item.status !== UploadStatus.FAILED && (
+            item.status !== UploadStatus.FAILED &&
+            canAttachFiles && (
               <div
                 className={classNames(
                   'relative size-[18px] group-hover/file-item:flex',

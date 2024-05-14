@@ -5,6 +5,8 @@ import { UploadStatus } from '@/src/types/common';
 import { DialFile, DialLink } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
@@ -42,9 +44,10 @@ export const getFileName = (path: string | undefined): string | undefined => {
 
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
+  folders?: FolderInterface[],
   links?: DialLink[],
 ): { attachments: Attachment[] } | undefined => {
-  if (!files?.length && !links?.length) {
+  if (!files?.length && !links?.length && !folders?.length) {
     return undefined;
   }
 
@@ -62,6 +65,14 @@ export const getUserCustomContent = (
       }),
     );
 
+  const folderAttachments: Attachment[] | undefined = folders?.map(
+    (folder: FolderInterface) => ({
+      type: FOLDER_ATTACHMENT_CONTENT_TYPE,
+      title: folder.name ?? folder.id,
+      url: `metadata/${ApiUtils.encodeApiUrl(`${folder.id}`)}/`,
+    }),
+  );
+
   const linksAttachments: Attachment[] | undefined = links?.map(
     (link): Attachment => ({
       title: link.title ?? link.href,
@@ -73,7 +84,9 @@ export const getUserCustomContent = (
 
   return {
     attachments: (
-      [filesAttachments, linksAttachments].filter(Boolean) as Attachment[][]
+      [folderAttachments, filesAttachments, linksAttachments].filter(
+        Boolean,
+      ) as Attachment[][]
     ).flat(),
   };
 };
