@@ -5,6 +5,8 @@ import { UploadStatus } from '@/src/types/common';
 import { DialFile, DialLink } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
