@@ -158,22 +158,37 @@ try {
 execSync(`npm publish --access public --tag ${tag} --dry-run ${dry}`);
 
 function getDevVersion(potentialVersion) {
-  const result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());
-  const lastVersionToIncrement = result
-    .filter(ver => ver.startsWith(mainPackageJson.version))
-    .map(ver => ver.match(/\d+$/)?.[0])
-    .filter(Boolean)
-    .map(ver => parseInt(ver, 10))
-    .sort((a, b) => a - b)
-    .reverse()[0];
+  try{
+    const result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());
+    const lastVersionToIncrement = result
+      .filter(ver => ver.startsWith(mainPackageJson.version))
+      .map(ver => ver.match(/\d+$/)?.[0])
+      .filter(Boolean)
+      .map(ver => parseInt(ver, 10))
+      .sort((a, b) => a - b)
+      .reverse()[0];
 
-  if (typeof lastVersionToIncrement !== 'undefined') {
-    const incrementedNum = lastVersionToIncrement + 1;
-    potentialVersion = `${mainPackageJson.version}.${incrementedNum}`;
-  } else {
-    potentialVersion = `${mainPackageJson.version}.0`;
+    if (typeof lastVersionToIncrement !== 'undefined') {
+      const incrementedNum = lastVersionToIncrement + 1;
+      potentialVersion = `${mainPackageJson.version}.${incrementedNum}`;
+    } else {
+      potentialVersion = `${mainPackageJson.version}.0`;
+    }
+    console.log(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
+    return potentialVersion;
+    
+  }catch(e){
+    if(JSON.parse(e.stdout).error.code === 'E404'){
+      console.error(`Could not get versions from registry. Version from package.json will be used.\n `);
+      
+      potentialVersion = `${mainPackageJson.version}.0`;
+      
+      console.log(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
+      return potentialVersion;
+    }
+
+    console.error(`Could not get versions from registry.`);
+    
   }
-  console.log(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
-  return potentialVersion;
+  
 }
-
