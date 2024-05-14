@@ -14,20 +14,13 @@ import Modal from '../Common/Modal';
 
 interface Props {
   entity: Entity;
-  type: SharingType;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function UnpublishModal({
-  entity,
-  isOpen,
-  onClose,
-  // type,
-}: Props) {
+export default function UnpublishModal({ entity, isOpen, onClose }: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
-  // const unpublishAction = getUnpublishActionByType(type);
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();

@@ -13,7 +13,6 @@ import classNames from 'classnames';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
@@ -216,7 +215,6 @@ export const FileItem = ({
       {isUnpublishing && (
         <UnpublishModal
           entity={item}
-          type={SharingType.File}
           isOpen
           onClose={handleCloseUnpublishModal}
         />

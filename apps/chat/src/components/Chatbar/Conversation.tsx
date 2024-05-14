@@ -688,7 +688,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnpublishing && (
         <UnpublishModal
           entity={conversation}
-          type={SharingType.Conversation}
           isOpen
           onClose={handleCloseUnpublishModal}
         />

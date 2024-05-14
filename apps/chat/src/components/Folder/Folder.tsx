@@ -941,11 +941,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isUnpublishing && isPublishingEnabled && (
         <UnpublishModal
           entity={currentFolder}
-          type={
-            featureType === FeatureType.Prompt
-              ? SharingType.PromptFolder
-              : SharingType.ConversationFolder
-          }
           isOpen
           onClose={handleCloseUnpublishModal}
         />
