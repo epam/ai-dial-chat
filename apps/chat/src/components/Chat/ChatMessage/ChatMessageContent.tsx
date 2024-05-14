@@ -211,6 +211,24 @@ export const ChatMessageContent = ({
     [newEditableAttachments],
   );
 
+  const fileAttachments = useMemo(
+    () =>
+      newEditableAttachments.filter(
+        (f) => f.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
+      ),
+    [newEditableAttachments],
+  );
+
+  const folderAttachments = useMemo(
+    () =>
+      canAttachFolders
+        ? (newEditableAttachments.filter(
+            (f) => f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
+          ) as unknown as FileFolderInterface[])
+        : undefined,
+    [canAttachFolders, newEditableAttachments],
+  );
+
   const isSubmitAllowed = useMemo(() => {
     const isContentEmptyAndNoAttachments =
       messageContent.trim().length <= 0 && newEditableAttachments.length <= 0;
@@ -442,19 +460,8 @@ export const ChatMessageContent = ({
                     selectedDialLinks.length > 0) && (
                     <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
                       <ChatInputAttachments
-                        files={newEditableAttachments.filter(
-                          (f) =>
-                            f.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
-                        )}
-                        folders={
-                          canAttachFolders
-                            ? (newEditableAttachments.filter(
-                                (f) =>
-                                  f.contentType ===
-                                  FOLDER_ATTACHMENT_CONTENT_TYPE,
-                              ) as unknown as FileFolderInterface[])
-                            : undefined
-                        }
+                        files={fileAttachments}
+                        folders={folderAttachments}
                         links={selectedDialLinks}
                         onUnselectFile={handleUnselectFile}
                         onRetryFile={handleRetry}
