@@ -36,7 +36,7 @@ import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 
-import { uniq } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 
 const getMappedActions = (
   items: Conversation[] | Prompt[] | DialFile[],
