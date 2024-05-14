@@ -84,7 +84,7 @@ export const AttachButton = ({
       [
         {
           name: t(
-            `Attach uploaded ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? 'files' : ''}`,
+            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
           ),
           dataQa: 'attach_uploaded',
           display: canAttachFiles || canAttachFolders,
@@ -144,7 +144,7 @@ export const AttachButton = ({
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
-          customButtonLabel={t(label) as string}
+          customButtonLabel={t('Attach') as string}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
