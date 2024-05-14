@@ -134,17 +134,21 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
           if (promptResources.length) {
             const promptPaths = uniq(
-              promptResources.flatMap((resource) =>
-                getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(resource.targetUrl),
-                ).filter((p) => p !== resource.targetUrl),
-              ),
+              promptResources.flatMap((resource) => {
+                const url = resource.reviewUrl
+                  ? resource.reviewUrl
+                  : resource.targetUrl;
+
+                return getParentFolderIdsFromEntityId(
+                  getFolderIdFromEntityId(url),
+                ).filter((id) => id !== url);
+              }),
             );
 
             actions.push(
               concat(
                 of(
-                  ConversationsActions.addFolders({
+                  PromptsActions.addFolders({
                     folders: promptPaths.map((path) => ({
                       ...getFolderFromId(path, FolderType.Prompt),
                       status: UploadStatus.LOADED,
@@ -185,7 +189,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
                 return getParentFolderIdsFromEntityId(
                   getFolderIdFromEntityId(url),
-                ).filter((p) => p !== url);
+                ).filter((id) => id !== url);
               }),
             );
 
@@ -234,7 +238,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
                 return getParentFolderIdsFromEntityId(
                   getFolderIdFromEntityId(url),
-                ).filter((p) => p !== url);
+                ).filter((id) => id !== url);
               }),
             );
 

@@ -3,9 +3,13 @@ import { useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import {
+  getFolderIdFromEntityId,
+  getParentFolderIdsFromEntityId,
+} from '@/src/utils/app/folders';
 import { isConversationId, isFileId, isPromptId } from '@/src/utils/app/id';
 
-import { BackendResourceType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { Publication, PublicationStatus } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -16,6 +20,7 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import Tooltip from '../../Common/Tooltip';
@@ -27,6 +32,7 @@ import {
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
 import capitalize from 'lodash-es/capitalize';
+import uniq from 'lodash-es/uniq';
 
 interface Props {
   publication: Publication;
@@ -85,6 +91,24 @@ export function HandlePublication({ publication }: Props) {
     );
 
     if (conversationsToReviewIds.length || reviewedConversationsIds.length) {
+      const conversationPaths = uniq(
+        [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
+          (p) => {
+            const url = p.reviewUrl;
+
+            return getParentFolderIdsFromEntityId(
+              getFolderIdFromEntityId(url),
+            ).filter((id) => id !== url);
+          },
+        ),
+      );
+
+      dispatch(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: conversationPaths,
+          featureType: FeatureType.Chat,
+        }),
+      );
       dispatch(
         ConversationsActions.selectConversations({
           conversationIds: [
@@ -107,6 +131,22 @@ export function HandlePublication({ publication }: Props) {
     );
 
     if (promptsToReviewIds.length || reviewedPromptsIds.length) {
+      const promptPaths = uniq(
+        [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) => {
+          const url = p.reviewUrl;
+
+          return getParentFolderIdsFromEntityId(
+            getFolderIdFromEntityId(url),
+          ).filter((id) => id !== url);
+        }),
+      );
+
+      dispatch(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: promptPaths,
+          featureType: FeatureType.Prompt,
+        }),
+      );
       dispatch(
         PromptsActions.uploadPrompt({
           promptId: promptsToReviewIds.length

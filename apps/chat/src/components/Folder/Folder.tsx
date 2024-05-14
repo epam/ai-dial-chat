@@ -51,6 +51,7 @@ import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
@@ -60,7 +61,7 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import PublishModal from '../Chat/Publish/PublishWizard';
+import { PublishModal } from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
@@ -206,10 +207,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     setIsUnshareConfirmOpened(true);
   }, []);
 
-  const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsPublishing(true);
-  }, []);
+  const allChildItems = useMemo(() => {
+    return sortByName(
+      allItems?.filter((item) => item.id.startsWith(currentFolder.id)) || [],
+    );
+  }, [allItems, currentFolder.id]);
+
+  const handleOpenPublishing: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (featureType === FeatureType.Chat) {
+        dispatch(
+          ConversationsActions.uploadConversationsByIds({
+            conversationIds: allChildItems.map((e) => e.id),
+          }),
+        );
+      }
+
+      setIsPublishing(true);
+    },
+    [allChildItems, dispatch, featureType],
+  );
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
@@ -908,6 +927,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isPublishing && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
+          entities={allChildItems}
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder

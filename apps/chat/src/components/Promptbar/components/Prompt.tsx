@@ -50,7 +50,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import PublishModal from '../../Chat/Publish/PublishWizard';
+import { PublishModal } from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
@@ -405,6 +405,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isPublishing && (
         <PublishModal
           entity={prompt}
+          entities={[prompt]}
           type={SharingType.Prompt}
           isOpen
           onClose={handleClosePublishModal}

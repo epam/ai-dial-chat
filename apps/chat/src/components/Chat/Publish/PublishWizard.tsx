@@ -1,6 +1,5 @@
 import { IconHelpCircle } from '@tabler/icons-react';
 import {
-  ChangeEvent,
   ClipboardEvent,
   MouseEvent,
   useCallback,
@@ -12,18 +11,13 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { prepareEntityName } from '@/src/utils/app/common';
-import {
-  constructPath,
-  validatePublishingFileRenaming,
-} from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
+import { createTargetUrl } from '@/src/utils/app/publications';
 import { getAttachments } from '@/src/utils/app/share';
-import { onBlur } from '@/src/utils/app/style-helpers';
-import { parseConversationApiKey } from '@/src/utils/server/api';
 
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ApiKeys, ShareEntity } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
@@ -35,110 +29,56 @@ import { PublicationActions } from '@/src/store/publication/publication.reducers
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import Modal from '@/src/components/Common/Modal';
+import Tooltip from '@/src/components/Common/Tooltip';
 
-import CollapsibleSection from '../../Common/CollapsibleSection';
-import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
-import { ErrorMessage } from '../../Common/ErrorMessage';
-import Modal from '../../Common/Modal';
-import Tooltip from '../../Common/Tooltip';
-import { PublishAttachment } from './PublishAttachment';
+import {
+  ConversationRow,
+  PromptsRow,
+} from '../../Common/ReplaceConfirmationModal/Components';
+import {
+  ConversationPublicationResources,
+  FilePublicationResources,
+  PromptPublicationResources,
+} from './PublicationResources';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
+
+import compact from 'lodash-es/compact';
+import flatMapDeep from 'lodash-es/flatMapDeep';
 
 interface Props {
   entity: ShareEntity;
+  entities: ShareEntity[];
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
   depth?: number;
 }
 
-const getPrefix = (item: ShareEntity): string => {
-  if ('messages' in item) {
-    return 'Conversation';
-  } else if ('description' in item) {
-    return 'Prompt';
-  } else {
-    return 'Collection';
-  }
-};
-
-export default function PublishWizard({
+export function PublishModal({
   entity,
   isOpen,
   onClose,
   type,
   depth,
+  entities,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
-  const dispatch = useAppDispatch();
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [name, setName] = useState<string>(entity.name);
-  const [path, setPath] = useState<string>('');
-  const [renamingFile, setRenamingFile] = useState<DialFile>();
-  const newFileNames = useRef(new Map());
-  const [errorMessage, setErrorMessage] = useState('');
 
+  const dispatch = useAppDispatch();
+
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const [path, setPath] = useState<string>('');
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
-  // const [version, setVersion] = useState<string>('');
-  // const isVersionUnique = useAppSelector((state) =>
-  // isPublishVersionUnique(type)(state, entity.id, version.trim()),
-  // );
-
-  const files = useAppSelector((state) =>
-    getAttachments(type)(state, entity.id),
-  );
-  // const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
 
-  const nameOnChangeHandler = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setName(e.target.value);
-    },
-    [],
-  );
-
-  // const versionOnChangeHandler = useCallback(
-  //   (e: ChangeEvent<HTMLInputElement>) => {
-  //     setVersion(e.target.value);
-  //   },
-  //   [],
-  // );
-
-  const handleStartFileRename = useCallback((file: DialFile) => {
-    setRenamingFile(file);
-  }, []);
-
-  const handleFileRename = useCallback(
-    (name: string, cancel?: boolean) => {
-      if (cancel || !renamingFile) {
-        setErrorMessage('');
-        setRenamingFile(undefined);
-        return;
-      }
-
-      const error = validatePublishingFileRenaming(files, name, renamingFile);
-      if (error) {
-        setErrorMessage(t(error) as string);
-        return;
-      } else setErrorMessage('');
-
-      const nameMap = newFileNames.current;
-      let oldPath = constructPath(renamingFile.relativePath, renamingFile.name);
-      const newPath = constructPath(renamingFile.relativePath, name);
-      if (nameMap.has(oldPath)) {
-        const originalPath = nameMap.get(oldPath);
-        nameMap.delete(oldPath);
-        oldPath = originalPath;
-      }
-      newFileNames.current.set(newPath, oldPath);
-      renamingFile.name = name;
-      setRenamingFile(undefined);
-    },
-    [files, renamingFile, t],
+  const files = useAppSelector((state) =>
+    getAttachments(type)(state, entity.id),
   );
 
   const handleFolderChange = useCallback(() => {
@@ -159,37 +99,55 @@ export default function PublishWizard({
       e.preventDefault();
       e.stopPropagation();
 
-      setSubmitted(true);
+      const trimmedPath = path.trim();
 
-      const preparedName = prepareEntityName(name);
-      // const trimmedVersion = version?.trim();
-      const trimmedPath = path?.trim();
+      if (
+        type === SharingType.Conversation ||
+        type === SharingType.ConversationFolder
+      ) {
+        const mappedFiles = (entities as Conversation[])
+          .filter((c) => c.messages.some((m) => m.custom_content?.attachments))
+          .flatMap((c) => {
+            const urls = compact(
+              flatMapDeep(c.messages, (m) =>
+                m.custom_content?.attachments?.map((a) => a.url),
+              ),
+            );
 
-      if (!preparedName) {
-        return;
-      }
+            return urls.map((oldUrl) => ({
+              oldUrl,
+              newUrl: createTargetUrl(ApiKeys.Files, trimmedPath, entity, type),
+            }));
+          });
 
-      // if (!isVersionUnique) return;
-      if (type === SharingType.Conversation) {
         dispatch(
           PublicationActions.publish({
             targetFolder: trimmedPath,
             resources: [
-              {
+              ...entities.map((entity) => ({
                 sourceUrl: entity.id,
-                targetUrl: `${ApiKeys.Conversations}/public/${trimmedPath ? `${trimmedPath}/` : ''}${
-                  parseConversationApiKey(splitEntityId(entity.id).name).model
-                    .id +
-                  '__' +
-                  preparedName
-                }`,
-              },
-              ...files.map((file) => ({
-                sourceUrl: file.id,
-                targetUrl: `${ApiKeys.Files}/public/${trimmedPath ? `${trimmedPath}/` : ''}${
-                  file.name
-                }`,
+                targetUrl: createTargetUrl(
+                  ApiKeys.Conversations,
+                  trimmedPath,
+                  entity,
+                  type,
+                ),
               })),
+              ...files.reduce<{ sourceUrl: string; targetUrl: string }[]>(
+                (acc, file) => {
+                  const item = mappedFiles.find((f) => f.oldUrl === file.id);
+
+                  if (item) {
+                    acc.push({
+                      sourceUrl: file.id,
+                      targetUrl: item.newUrl,
+                    });
+                  }
+
+                  return acc;
+                },
+                [],
+              ),
             ],
             rules: otherTargetAudienceFilters.map((filter) => ({
               function: filter.filterFunction,
@@ -202,12 +160,17 @@ export default function PublishWizard({
         dispatch(
           PublicationActions.publish({
             resources: [
-              {
+              ...entities.map((entity) => ({
                 sourceUrl: entity.id,
-                targetUrl: `${ApiKeys.Prompts}/public/${trimmedPath ? `${trimmedPath}/` : ''}${preparedName}`,
-              },
+                targetUrl: createTargetUrl(
+                  ApiKeys.Prompts,
+                  trimmedPath,
+                  entity,
+                  type,
+                ),
+              })),
             ],
-            targetFolder: trimmedPath + '/',
+            targetFolder: trimmedPath,
             rules: otherTargetAudienceFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
@@ -221,23 +184,15 @@ export default function PublishWizard({
     },
     [
       dispatch,
-      entity.id,
+      entities,
+      entity,
       files,
-      name,
       onClose,
       otherTargetAudienceFilters,
       path,
       type,
     ],
   );
-
-  // const handleBlur = useCallback(() => {
-  //   setSubmitted(true);
-  // }, []);
-
-  const inputClassName = classNames('input-form peer mx-0 py-2', {
-    'input-invalid submitted': submitted,
-  });
 
   return (
     <Modal
@@ -253,55 +208,16 @@ export default function PublishWizard({
     >
       <div className="flex h-full flex-col divide-y divide-tertiary">
         <h4 className="p-4 pr-10 text-base font-semibold">
-          <span className="line-clamp-2 whitespace-pre break-words">
+          <span className="line-clamp-2 whitespace-pre break-words text-center">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink grow flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 px-5 py-4">
-              <h2>{t('General Info')}</h2>
-              <p className="text-secondary">
-                {t(
-                  'Your conversation will be visible to organization only after verification by the administrator',
-                )}
-              </p>
-
               <div>
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="requestName"
-                >
-                  {t(`${getPrefix(entity)} name`)}
-                  <span className="ml-1 inline text-accent-primary">*</span>
-                </label>
-                <input
-                  ref={nameInputRef}
-                  name="requestName"
-                  className={classNames(
-                    inputClassName,
-                    !name.trim() && submitted && '!border-error',
-                  )}
-                  placeholder={t('A name for your request.') || ''}
-                  value={name}
-                  required
-                  type="text"
-                  onBlur={onBlur}
-                  onChange={nameOnChangeHandler}
-                  data-qa="request-name"
-                />
-                {!name.trim() && submitted && (
-                  <EmptyRequiredInputMessage isShown className="!mb-0" />
-                )}
-              </div>
-
-              <div>
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="requestPath"
-                >
-                  {t('Path')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
+                <label className="mb-4 flex text-sm" htmlFor="requestPath">
+                  {t('Publish to')}
                 </label>
                 <button
                   className="input-form mx-0 flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
@@ -313,43 +229,10 @@ export default function PublishWizard({
                   <span className="text-accent-primary">{t('Change')}</span>
                 </button>
               </div>
-
-              {/* <div>
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="requestVersion"
-                >
-                  {t('Version')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
-                </label>
-                <input
-                  ref={nameInputRef}
-                  name="requestVersion"
-                  className={classNames(inputClassName, {
-                    '!border-error': !isVersionUnique && submitted,
-                  })}
-                  placeholder={t('A version for your request.') || ''}
-                  value={version}
-                  required
-                  type="text"
-                  data-qa="request-version"
-                  onBlur={handleBlur}
-                  onChange={versionOnChangeHandler}
-                />
-                {submitted && (!isVersionUnique || !version.trim()) && (
-                  <div className="text-xxs text-error">
-                    {t(
-                      !isVersionUnique
-                        ? 'Please provide unique version'
-                        : 'Please fill in all required fields',
-                    )}
-                  </div>
-                )}
-              </div> */}
             </section>
 
             <section className="flex flex-col px-5 py-4">
-              <h2 className="flex gap-2">
+              <h2 className="mb-4 flex gap-2">
                 {t('Target Audience Filters')}
 
                 <Tooltip
@@ -368,18 +251,6 @@ export default function PublishWizard({
                   />
                 </Tooltip>
               </h2>
-
-              {/* <CollapsableSection
-                name={t('User Group')}
-                dataQa="filter-user-group"
-                openByDefault={false}
-                className="!pl-0"
-              >
-                <UserGroupFilter
-                  onChangeUserGroups={setUserGroups}
-                  initialSelectedUserGroups={userGroups}
-                />
-              </CollapsableSection> */}
 
               {[
                 { id: 'title', name: 'Title' },
@@ -407,27 +278,93 @@ export default function PublishWizard({
               })}
             </section>
           </div>
-          {(type === SharingType.Conversation ||
-            type === SharingType.ConversationFolder) && (
-            <div className="flex w-full flex-col gap-[2px] px-5 py-4 md:max-w-[550px]">
-              <h2 className="mb-2">
-                {t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}
-              </h2>
-              <ErrorMessage error={errorMessage} />
-              {!files.length && (
-                <p className="text-secondary">{t('No files')}</p>
-              )}
-              {files.map((file) => (
-                <PublishAttachment
-                  key={constructPath(file?.relativePath, file?.name)}
-                  isRenaming={file === renamingFile}
-                  file={file}
-                  onRename={handleFileRename}
-                  onStartRename={handleStartFileRename}
+          <div className="flex w-full flex-col gap-[2px] px-5 py-4 md:max-w-[550px]">
+            {(type === SharingType.Conversation ||
+              type === SharingType.ConversationFolder) && (
+              <CollapsibleSection
+                name={t('Conversations')}
+                openByDefault
+                dataQa="conversations-to-send-request"
+              >
+                {type === SharingType.Conversation ? (
+                  <ConversationRow
+                    itemComponentClassNames="cursor-pointer"
+                    item={entity as ConversationInfo}
+                    level={0}
+                  />
+                ) : (
+                  <ConversationPublicationResources
+                    rootFolder={entity}
+                    resources={entities.map((entity) => ({
+                      sourceUrl: entity.id,
+                      targetUrl: constructPath(
+                        ApiKeys.Conversations,
+                        'public',
+                        path,
+                        splitEntityId(entity.id).name,
+                      ),
+                      reviewUrl: entity.id,
+                    }))}
+                    forViewOnly
+                  />
+                )}
+              </CollapsibleSection>
+            )}
+            {!!files.length && (
+              <CollapsibleSection
+                name={t('Files')}
+                openByDefault
+                dataQa="files-to-send-request"
+              >
+                <FilePublicationResources
+                  uploadedFiles={files}
+                  resources={files.map((f) => ({
+                    sourceUrl: f.id,
+                    targetUrl: constructPath(
+                      ApiKeys.Files,
+                      'public',
+                      path,
+                      f.name,
+                    ),
+                    reviewUrl: f.id,
+                  }))}
+                  forViewOnly
                 />
-              ))}
-            </div>
-          )}
+              </CollapsibleSection>
+            )}
+            {(type === SharingType.Prompt ||
+              type === SharingType.PromptFolder) && (
+              <CollapsibleSection
+                name={t('Prompts')}
+                openByDefault
+                dataQa="prompts-to-send-request"
+              >
+                {type === SharingType.Prompt ? (
+                  <PromptsRow
+                    itemComponentClassNames="cursor-pointer"
+                    item={entity}
+                    level={0}
+                  />
+                ) : (
+                  <PromptPublicationResources
+                    resources={[
+                      {
+                        sourceUrl: entity.id,
+                        targetUrl: constructPath(
+                          ApiKeys.Prompts,
+                          'public',
+                          path,
+                          entity.name,
+                        ),
+                        reviewUrl: entity.id,
+                      },
+                    ]}
+                    forViewOnly
+                  />
+                )}
+              </CollapsibleSection>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 p-4">
@@ -448,6 +385,7 @@ export default function PublishWizard({
           if (typeof folderId === 'string') {
             setPath(folderId);
           }
+
           setIsChangeFolderModalOpened(false);
         }}
         type={type}

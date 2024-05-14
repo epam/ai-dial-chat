@@ -67,12 +67,8 @@ export const publicationSlice = createSlice({
     uploadPublicationFail: (state) => state,
     deletePublication: (
       state,
-      { payload }: PayloadAction<{ resources: { targetUrl: string }[] }>,
-    ) => {
-      // state.publications = state.publications.filter(
-      //   (p) => p.url !== payload.url,
-      // );
-    },
+      _action: PayloadAction<{ resources: { targetUrl: string }[] }>,
+    ) => state,
     deletePublicationFail: (state) => state,
     uploadPublishedWithMeItems: (
       state,

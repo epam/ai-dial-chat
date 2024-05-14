@@ -4,7 +4,8 @@ import classNames from 'classnames';
 
 import { isRootId } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublicationResource } from '@/src/types/publication';
 
@@ -36,11 +37,13 @@ import uniqBy from 'lodash-es/uniqBy';
 interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
+  rootFolder?: ShareEntity;
 }
 
 export const PromptPublicationResources = ({
   resources,
   forViewOnly,
+  rootFolder,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -49,27 +52,25 @@ export const PromptPublicationResources = ({
   );
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const publicationFolders = useAppSelector(
-    PromptsSelectors.selectPublicationFolders,
-  );
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
+  const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
 
   const resourceUrls = useMemo(
     () => resources.map((r) => r.reviewUrl),
     [resources],
   );
-
   const promptsToDisplay = useMemo(() => {
     return prompts.filter(
       (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
     );
   }, [prompts, resourceUrls]);
-
   const rootFolders = useMemo(() => {
     const folders = resources.map((resource) => {
-      const relevantFolders = publicationFolders.filter((folder) =>
+      if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
+
+      const relevantFolders = allFolders.filter((folder) =>
         resource.reviewUrl
           ? resource.reviewUrl.startsWith(folder.id)
           : resource.targetUrl.startsWith(folder.id),
@@ -81,7 +82,7 @@ export const PromptPublicationResources = ({
     const existingFolders = folders.filter(Boolean) as FolderInterface[];
 
     return uniqBy(existingFolders, 'id');
-  }, [publicationFolders, resources]);
+  }, [allFolders, resources, rootFolder]);
 
   return (
     <>
@@ -93,12 +94,10 @@ export const PromptPublicationResources = ({
             level={forViewOnly ? 0 : 1}
             key={f.id}
             currentFolder={f}
-            allFolders={publicationFolders}
+            allFolders={allFolders}
             searchTerm={forViewOnly ? '' : searchTerm}
             openedFoldersIds={
-              forViewOnly
-                ? publicationFolders.map((f) => f.id)
-                : openedFoldersIds
+              forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={prompts}
             itemComponent={forViewOnly ? PromptsRow : PromptComponent}
@@ -108,6 +107,10 @@ export const PromptPublicationResources = ({
             }}
             featureType={FeatureType.Prompt}
             highlightedFolders={forViewOnly ? undefined : highlightedFolders}
+            folderClassName={classNames(forViewOnly && 'h-[38px]')}
+            itemComponentClassNames={classNames(
+              forViewOnly && 'cursor-pointer',
+            )}
           />
         );
       })}
@@ -130,6 +133,7 @@ export const PromptPublicationResources = ({
 export const ConversationPublicationResources = ({
   resources,
   forViewOnly,
+  rootFolder,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -140,27 +144,25 @@ export const ConversationPublicationResources = ({
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-  const publicationFolders = useAppSelector(
-    ConversationsSelectors.selectPublicationFolders,
-  );
+  const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
 
   const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
+    () => resources.map((r) => (r.reviewUrl ? r.reviewUrl : r.targetUrl)),
     [resources],
   );
-
   const conversationsToDisplay = useMemo(() => {
     return conversations.filter(
       (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
     );
   }, [conversations, resourceUrls]);
-
   const rootFolders = useMemo(() => {
+    if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
+
     const folders = resources.map((resource) => {
-      const relevantFolders = publicationFolders.filter((folder) =>
+      const relevantFolders = allFolders.filter((folder) =>
         resource.reviewUrl
           ? resource.reviewUrl.startsWith(folder.id)
           : resource.targetUrl.startsWith(folder.id),
@@ -172,7 +174,8 @@ export const ConversationPublicationResources = ({
     const existingFolders = folders.filter(Boolean) as FolderInterface[];
 
     return uniqBy(existingFolders, 'id');
-  }, [publicationFolders, resources]);
+  }, [allFolders, resources, rootFolder]);
+
   return (
     <>
       {rootFolders.filter(Boolean).map((f) => {
@@ -183,12 +186,10 @@ export const ConversationPublicationResources = ({
             level={forViewOnly ? 0 : 1}
             key={f.id}
             currentFolder={f}
-            allFolders={publicationFolders}
+            allFolders={allFolders}
             searchTerm={forViewOnly ? '' : searchTerm}
             openedFoldersIds={
-              forViewOnly
-                ? publicationFolders.map((f) => f.id)
-                : openedFoldersIds
+              forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={conversations}
             itemComponent={
@@ -226,31 +227,31 @@ export const ConversationPublicationResources = ({
 export const FilePublicationResources = ({
   resources,
   forViewOnly,
-}: PublicationResources) => {
+  uploadedFiles,
+}: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
   const openedFoldersIds = useAppSelector((state) =>
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
-  const publicationFolders = useAppSelector(
-    FilesSelectors.selectPublicationFolders,
-  );
+  const allFolders = useAppSelector(FilesSelectors.selectFolders);
 
   const resourceUrls = useMemo(
     () => resources.map((r) => r.reviewUrl),
     [resources],
   );
-
   const filesToDisplay = useMemo(() => {
-    return files.filter(
-      (f) => f.folderId.split('/').length === 2 && resourceUrls.includes(f.id),
-    );
-  }, [files, resourceUrls]);
-
+    return uploadedFiles
+      ? uploadedFiles
+      : files.filter(
+          (f) =>
+            f.folderId.split('/').length === 2 && resourceUrls.includes(f.id),
+        );
+  }, [files, uploadedFiles, resourceUrls]);
   const rootFolders = useMemo(() => {
     const folders = resources.map((resource) => {
-      const relevantFolders = publicationFolders.filter((folder) =>
+      const relevantFolders = allFolders.filter((folder) =>
         resource.reviewUrl
           ? resource.reviewUrl.startsWith(folder.id)
           : resource.targetUrl.startsWith(folder.id),
@@ -262,7 +263,7 @@ export const FilePublicationResources = ({
     const existingFolders = folders.filter(Boolean) as FolderInterface[];
 
     return uniqBy(existingFolders, 'id');
-  }, [publicationFolders, resources]);
+  }, [allFolders, resources]);
 
   return (
     <>
@@ -274,12 +275,10 @@ export const FilePublicationResources = ({
             level={forViewOnly ? 0 : 1}
             key={f.id}
             currentFolder={f}
-            allFolders={publicationFolders}
+            allFolders={allFolders}
             searchTerm={''}
             openedFoldersIds={
-              forViewOnly
-                ? publicationFolders.map((f) => f.id)
-                : openedFoldersIds
+              forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={files}
             itemComponent={forViewOnly ? FilesRow : FileItem}

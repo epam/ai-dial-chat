@@ -129,7 +129,10 @@ export const uiSlice = createSlice({
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.featureType]: uniq(payload.openedFolderIds),
+        [payload.featureType]: uniq([
+          ...payload.openedFolderIds,
+          ...state.openedFoldersIds[payload.featureType],
+        ]),
       };
     },
     toggleFolder: (

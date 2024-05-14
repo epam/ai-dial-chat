@@ -38,7 +38,7 @@ export const Prompts: FC<Props> = ({ prompts }) => {
         className="flex size-full flex-col gap-1 py-1 pr-0.5"
         data-qa="prompts"
       >
-        {promptsToDisplay.map((prompt) => (
+        {prompts.map((prompt) => (
           <PromptComponent key={prompt.id} item={prompt} />
         ))}
       </div>

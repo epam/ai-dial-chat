@@ -301,7 +301,7 @@ export const PromptSection = ({
       </div>
       {displayRootFiles && (
         <div className="flex flex-col gap-1">
-          {rootPrompts.map((item) => (
+          {prompts.map((item) => (
             <PromptComponent key={item.id} item={item} />
           ))}
         </div>
