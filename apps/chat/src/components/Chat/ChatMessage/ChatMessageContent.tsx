@@ -200,6 +200,17 @@ export const ChatMessageContent = ({
     newEditableAttachmentsIds,
   ]);
 
+  const selectedFileIds = useMemo(
+    () =>
+      newEditableAttachments.map((f) =>
+        f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
+          ? ApiUtils.decodeApiUrl(f.id).replace(new RegExp('^metadata/'), '') +
+            '/'
+          : f.id,
+      ),
+    [newEditableAttachments],
+  );
+
   const isSubmitAllowed = useMemo(() => {
     const isContentEmptyAndNoAttachments =
       messageContent.trim().length <= 0 && newEditableAttachments.length <= 0;
@@ -474,14 +485,7 @@ export const ChatMessageContent = ({
                           />
                         </div>
                       }
-                      selectedFilesIds={newEditableAttachments.map((f) =>
-                        f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
-                          ? ApiUtils.decodeApiUrl(f.id).replace(
-                              new RegExp('^metadata/'),
-                              '',
-                            ) + '/'
-                          : f.id,
-                      )}
+                      selectedFilesIds={selectedFileIds}
                       onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                       onUploadFromDevice={handleUploadFromDevice}
                       onAddLinkToMessage={handleAddLinkToMessage}
