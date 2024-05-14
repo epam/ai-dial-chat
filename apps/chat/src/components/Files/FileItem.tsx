@@ -62,6 +62,7 @@ export const FileItem = ({
   const [isHighligted, setIsHighlighted] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const canAttachFiles = !!additionalItemData?.canAttachFiles;
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -135,6 +136,7 @@ export const FileItem = ({
               {...item}
               containerClassName={classNames(
                 item.status !== UploadStatus.LOADING &&
+                  canAttachFiles &&
                   'group-hover/file-item:hidden',
               )}
               featureType={FeatureType.Chat}
@@ -143,6 +145,7 @@ export const FileItem = ({
               <IconFile
                 className={classNames(
                   item.status !== UploadStatus.LOADING &&
+                    canAttachFiles &&
                     'group-hover/file-item:hidden',
                 )}
                 size={18}
@@ -162,7 +165,8 @@ export const FileItem = ({
             )
           )}
           {item.status !== UploadStatus.LOADING &&
-            item.status !== UploadStatus.FAILED && (
+            item.status !== UploadStatus.FAILED &&
+            canAttachFiles && (
               <div
                 className={classNames(
                   'relative size-[18px] group-hover/file-item:flex',

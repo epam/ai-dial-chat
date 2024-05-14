@@ -77,6 +77,9 @@ export const FileManagerModal = ({
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
   );
+  const canAttachFiles = useAppSelector(
+    ConversationsSelectors.selectCanAttachFile,
+  );
   const canAttachFolders = useAppSelector(
     ConversationsSelectors.selectCanAttachFolders,
   );
@@ -254,15 +257,17 @@ export const FileManagerModal = ({
               selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
             ) {
               setSelectedFilesIds((oldFileIds) =>
-                oldFileIds.concat(
-                  files
-                    .filter((file) =>
-                      parentFolderIds.some((parentId) =>
-                        file.id.startsWith(parentId),
-                      ),
-                    )
-                    .map((f) => f.id),
-                ),
+                !canAttachFiles
+                  ? []
+                  : oldFileIds.concat(
+                      files
+                        .filter((file) =>
+                          parentFolderIds.some((parentId) =>
+                            file.id.startsWith(parentId),
+                          ),
+                        )
+                        .map((f) => f.id),
+                    ),
               );
               setSelectedFolderIds((oldFolderIds) => {
                 return oldFolderIds
@@ -287,7 +292,11 @@ export const FileManagerModal = ({
                   return oldValues.filter((oldValue) => oldValue !== data);
                 }
                 setSelectedFilesIds((oldFileIds) =>
-                  oldFileIds.filter((oldFileId) => !oldFileId.startsWith(data)),
+                  !canAttachFiles
+                    ? []
+                    : oldFileIds.filter(
+                        (oldFileId) => !oldFileId.startsWith(data),
+                      ),
                 );
                 return oldValues
                   .filter((oldFolderId) => oldFolderId.startsWith(data))
@@ -306,7 +315,7 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [dispatch, files, folders, selectedFolderIds],
+    [canAttachFiles, dispatch, files, folders, selectedFolderIds],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -492,6 +501,7 @@ export const FileManagerModal = ({
                               additionalItemData={{
                                 selectedFilesIds,
                                 selectedFolderIds,
+                                canAttachFiles,
                               }}
                               itemComponent={FileItem}
                               onClickFolder={handleFolderSelect}
@@ -520,6 +530,7 @@ export const FileManagerModal = ({
                               additionalItemData={{
                                 selectedFolderIds,
                                 selectedFilesIds,
+                                canAttachFiles,
                               }}
                               onEvent={handleItemCallback}
                             />
