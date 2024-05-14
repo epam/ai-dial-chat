@@ -108,6 +108,7 @@ export const AttachButton = ({
       ] as DisplayMenuItemProps[],
     [
       canAttachFiles,
+      canAttachFolders,
       canAttachLinks,
       handleAttachFromComputer,
       handleAttachLink,
@@ -118,6 +119,15 @@ export const AttachButton = ({
 
   if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
 
+  // eslint-disable-next-line no-console
+  console.log('AttachButton - selectedFilesIds:', selectedFilesIds);
+
+  const label = canAttachFiles
+    ? 'Attach files'
+    : canAttachFolders
+      ? 'Attach folders'
+      : '';
+
   return (
     <>
       <ContextMenu
@@ -126,7 +136,7 @@ export const AttachButton = ({
         TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
-        triggerTooltip={t('Attach files') || ''}
+        triggerTooltip={t(label) || ''}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
         featureType={FeatureType.File}
@@ -136,8 +146,8 @@ export const AttachButton = ({
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          headerLabel={t('Attach files')}
-          customButtonLabel={t('Attach files') as string}
+          headerLabel={t(label)}
+          customButtonLabel={t(label) as string}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
