@@ -18,6 +18,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { chartType, stopBubbling } from '@/src/constants/chat';
 
@@ -27,6 +28,7 @@ import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
+import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -183,12 +185,55 @@ interface Props {
   isInner?: boolean;
 }
 
+interface AttachmentUrlRendererComponentProps {
+  mappedAttachmentUrl: string;
+  attachmentType: string;
+}
+
+const AttachmentUrlRendererComponent = ({
+  mappedAttachmentUrl,
+  attachmentType,
+}: AttachmentUrlRendererComponentProps) => {
+  const mappedVisualizers = useAppSelector(
+    SettingsSelectors.selectMappedVisualizers,
+  );
+
+  const isCustomAttachmentType = useAppSelector((state) =>
+    SettingsSelectors.selectIsCustomAttachmentType(state, attachmentType),
+  );
+
+  if (mappedVisualizers && isCustomAttachmentType) {
+    return (
+      <VisualizerRenderer
+        attachmentUrl={mappedAttachmentUrl}
+        renderer={mappedVisualizers[attachmentType][0]}
+        mimeType={attachmentType}
+      />
+    );
+  }
+
+  if (attachmentType === chartType) {
+    return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+  }
+
+  return (
+    <AttachmentUrlRenderer
+      attachmentUrl={mappedAttachmentUrl}
+      attachmentType={attachmentType}
+    />
+  );
+};
+
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
   const [wasOpened, setWasOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
+
+  const isCustomAttachmentType = useAppSelector((state) =>
+    SettingsSelectors.selectIsCustomAttachmentType(state, attachment.type),
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -218,7 +263,8 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const isOpenable =
     attachment.data ||
     (attachment.url && imageTypes.has(attachment.type)) ||
-    attachment.type === chartType;
+    attachment.type === chartType ||
+    isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
     [attachment.url],
@@ -322,15 +368,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           {attachment.data && (
             <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}
-          {mappedAttachmentUrl &&
-            (attachment.type === chartType ? (
-              <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />
-            ) : (
-              <AttachmentUrlRenderer
-                attachmentUrl={mappedAttachmentUrl}
-                attachmentType={attachment.type}
-              />
-            ))}
+          {mappedAttachmentUrl && (
+            <AttachmentUrlRendererComponent
+              attachmentType={attachment.type}
+              mappedAttachmentUrl={mappedAttachmentUrl}
+            />
+          )}
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}

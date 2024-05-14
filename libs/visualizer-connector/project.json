@@ -1,0 +1,58 @@
+{
+  "name": "visualizer-connector",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/visualizer-connector/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "options": {
+        "outputPath": "dist/libs/visualizer-connector",
+        "main": "libs/visualizer-connector/src/index.ts",
+        "tsConfig": "libs/visualizer-connector/tsconfig.lib.json",
+        "project": "libs/visualizer-connector/package.json",
+        "compiler": "tsc",
+        "format": ["esm"],
+        "assets": [
+          {
+            "glob": "libs/visualizer-connector/README.md",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": ".gitignore",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": "LICENSE",
+            "input": ".",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "publish": {
+      "command": "node tools/publish-lib.mjs visualizer-connector --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+    },
+    "lint": {
+      "options": {
+        "lintFilePatterns": [
+          "libs/visualizer-connector/**/*.{ts,tsx,js,jsx}",
+          "libs/visualizer-connector/package.json"
+        ]
+      }
+    },
+    "lint:fix": {
+      "options": {
+        "lintFilePatterns": [
+          "libs/visualizer-connector/**/*.{ts,tsx,js,jsx}",
+          "libs/visualizer-connector/package.json"
+        ]
+      }
+    },
+    "format": {},
+    "format:fix": {}
+  },
+  "tags": []
+}
