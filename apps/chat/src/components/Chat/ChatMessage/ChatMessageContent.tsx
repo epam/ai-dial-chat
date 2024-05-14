@@ -20,12 +20,14 @@ import {
   getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
+import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -241,8 +243,12 @@ export const ChatMessageContent = ({
     }
 
     const attachments = getUserCustomContent(
-      newEditableAttachments,
-      [], // TODO
+      newEditableAttachments.filter(
+        (a) => !(a as unknown as FolderInterface).type,
+      ),
+      newEditableAttachments.filter(
+        (a) => !!(a as unknown as FolderInterface).type,
+      ) as unknown as FolderInterface[],
       selectedDialLinks,
     );
     const isAttachmentsSame = isEqual(
@@ -308,7 +314,9 @@ export const ChatMessageContent = ({
     if (typeof result === 'object') {
       const selectedFilesIds = result as string[];
       const uniqueFilesIds = uniq(selectedFilesIds);
-      setNewEditableAttachmentsIds(uniqueFilesIds);
+      setNewEditableAttachmentsIds(
+        uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
+      );
     }
   }, []);
 
