@@ -112,7 +112,9 @@ export const PreviewPromptModal = ({
                   {(!selectedPublication ||
                     (selectedPublication &&
                       selectedPublication.resources.some((r) =>
-                        prompt.id.startsWith(r.sourceUrl),
+                        prompt.id.startsWith(
+                          r.sourceUrl ? r.sourceUrl : r.targetUrl,
+                        ),
                       ))) && (
                     <Tooltip
                       placement="top"

@@ -1,5 +1,4 @@
 import {
-  IconClockShare,
   IconCopy,
   IconDots,
   IconEye,
@@ -26,6 +25,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
+import { isItemPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -87,7 +87,7 @@ export default function ItemContextMenu({
   onUnshare,
   onPublish,
   onUnpublish,
-  onPublishUpdate,
+  // onPublishUpdate,
   onOpenChange,
   onDuplicate,
   onView,
@@ -268,26 +268,23 @@ export default function ItemContextMenu({
         onClick: onPublish,
         disabled: disableAll,
       },
-      {
-        name: t('Update'),
-        dataQa: 'update-publishing',
-        display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onPublishUpdate,
-        Icon: IconClockShare,
-        onClick: onPublishUpdate,
-        disabled: disableAll,
-      },
+      // {
+      //   name: t('Update'),
+      //   dataQa: 'update-publishing',
+      //   display:
+      //     !isEmptyConversation &&
+      //     isPublishingEnabled &&
+      //     !!entity.isPublished &&
+      //     !!onPublishUpdate,
+      //   Icon: IconClockShare,
+      //   onClick: onPublishUpdate,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onUnpublish,
+          isPublishingEnabled && !!onUnpublish && isItemPublic(entity.id),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -327,7 +324,6 @@ export default function ItemContextMenu({
       onOpenMoveToModal,
       onPlayback,
       onPublish,
-      onPublishUpdate,
       onRename,
       onReplay,
       onShare,

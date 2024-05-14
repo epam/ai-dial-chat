@@ -6,7 +6,7 @@ import { useTranslation } from 'next-i18next';
 import { isConversationId, isFileId, isPromptId } from '@/src/utils/app/id';
 
 import { BackendResourceType } from '@/src/types/common';
-import { Publication } from '@/src/types/publication';
+import { Publication, PublicationStatus } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -32,7 +32,7 @@ interface Props {
   publication: Publication;
 }
 
-export function ApprovePublication({ publication }: Props) {
+export function HandlePublication({ publication }: Props) {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -58,14 +58,14 @@ export function ApprovePublication({ publication }: Props) {
   useEffect(() => {
     // we do not need to review files
     const resourcesToReview = publication.resources.filter(
-      (r) => !isFileId(r.reviewUrl),
+      (r) => !isFileId(r.targetUrl),
     );
 
     dispatch(
       PublicationActions.setPublicationsToReview({
         items: resourcesToReview.map((r) => ({
           reviewed: false,
-          reviewUrl: r.reviewUrl,
+          reviewUrl: r.reviewUrl ? r.reviewUrl : r.targetUrl,
           publicationUrl: publication.url,
         })),
       }),
@@ -157,8 +157,11 @@ export function ApprovePublication({ publication }: Props) {
         <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
           <h4
             data-qa="app-name"
-            className="w-full whitespace-pre text-center text-xl font-semibold"
+            className="w-full whitespace-pre text-center text-base font-semibold"
           >
+            {!(publication.status === PublicationStatus.REQUESTED_FOR_DELETION)
+              ? t('Publication request for: ')
+              : t('Unpublish: ')}
             {publication.url.split('/').slice(-1).shift()}
           </h4>
         </div>
@@ -166,25 +169,59 @@ export function ApprovePublication({ publication }: Props) {
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 py-4">
               <div className="px-5">
-                <label className="flex text-sm" htmlFor="approvePath">
-                  {t('Publish to')}
-                </label>
-                <button
-                  className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
-                  disabled
-                >
-                  <span className="truncate">
-                    {publication.targetUrl.replace(/^[^/]+/, 'Organization')}
-                  </span>
-                </button>
-                <div className="my-4">
-                  <p className="text-xs text-secondary">
-                    {t('Request creation date: ')}
-                  </p>
-                  <p className="mt-1 text-sm">
-                    {new Date(publication.createdAt).toLocaleString()}
-                  </p>
-                </div>
+                {!(
+                  publication.status ===
+                  PublicationStatus.REQUESTED_FOR_DELETION
+                ) ? (
+                  <>
+                    <label className="flex text-sm" htmlFor="approvePath">
+                      {t('Publish to')}
+                    </label>
+                    <button
+                      className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
+                      disabled
+                    >
+                      <span className="truncate">
+                        {publication.targetUrl
+                          ? publication.targetUrl.replace(
+                              /^[^/]+/,
+                              'Organization',
+                            )
+                          : ''}
+                      </span>
+                    </button>
+                    <div className="my-4">
+                      <p className="text-xs text-secondary">
+                        {t('Request creation date: ')}
+                      </p>
+                      <p className="mt-1 text-sm">
+                        {new Date(publication.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <label className="flex text-sm" htmlFor="approvePath">
+                      {t('General info')}
+                    </label>
+                    <div className="my-4 grid w-full grid-cols-3 gap-3 text-xs">
+                      <p className="text-secondary">
+                        <span>{t('Publication id: ')}</span>
+                      </p>
+                      <span className="col-span-2 truncate">
+                        {publication.url.split('/').slice(-1).shift()}
+                      </span>
+                      <p className="text-secondary">{t('Path: ')}</p>
+                      <span className="col-span-2">{t('Organization')}</span>
+                      <p className="text-secondary">
+                        {t('Publication date: ')}
+                      </p>
+                      <span className="col-span-2">
+                        {new Date(publication.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
               <section className="px-5">
                 <h2 className="my-4 flex items-center gap-2 text-sm">

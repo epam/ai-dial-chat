@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import { ApiKeys, BackendResourceType } from '@/src/types/common';
 import {
   Publication,
+  PublicationInfo,
   PublicationRequest,
   PublicationsListModel,
   PublishedByMeItem,
@@ -11,28 +12,40 @@ import {
 import { UIStorageKeys } from '@/src/types/storage';
 
 import { ApiUtils } from '../../server/api';
-import { isFolderId } from '../id';
+import { BucketService } from './bucket-service';
 import { BrowserStorage } from './storages/browser-storage';
 
 export class PublicationService {
   public static publish(
-    publicationData: PublicationRequest,
+    publicationData: Omit<PublicationRequest, 'url'>,
   ): Observable<Publication> {
     return ApiUtils.request('api/publication/create', {
       method: 'POST',
-      body: JSON.stringify(publicationData),
+      body: JSON.stringify({
+        url: `publications/${BucketService.getBucket()}/`,
+        ...publicationData,
+      }),
     });
   }
 
-  public static publicationList(
-    url: string,
-  ): Observable<PublicationsListModel> {
+  public static publicationList(): Observable<PublicationInfo[]> {
     return ApiUtils.request('api/publication/listing', {
       method: 'POST',
       body: JSON.stringify({
-        url: `${ApiUtils.encodeApiUrl(url)}${isFolderId(url) ? '/' : ''}`,
+        url: 'publications/public/',
       }),
-    });
+    }).pipe(
+      map(({ publications }: PublicationsListModel) => {
+        return publications.map((p) => {
+          if (!p.targetUrl) return p;
+
+          return {
+            ...p,
+            targetUrl: ApiUtils.decodeApiUrl(p.targetUrl),
+          };
+        });
+      }),
+    );
   }
 
   public static getPublication(url: string): Observable<Publication> {
@@ -44,22 +57,37 @@ export class PublicationService {
         const decodedResources = publication.resources.map((r) => ({
           ...r,
           targetUrl: ApiUtils.decodeApiUrl(r.targetUrl),
-          reviewUrl: ApiUtils.decodeApiUrl(r.reviewUrl),
-          sourceUrl: ApiUtils.decodeApiUrl(r.sourceUrl),
+          reviewUrl: r.reviewUrl ? ApiUtils.decodeApiUrl(r.reviewUrl) : null,
+          sourceUrl: r.sourceUrl ? ApiUtils.decodeApiUrl(r.sourceUrl) : null,
         }));
+
+        if (!publication.targetUrl) {
+          return {
+            ...publication,
+            resources: decodedResources,
+          };
+        }
 
         return {
           ...publication,
+          targetUrl: ApiUtils.decodeApiUrl(publication.targetUrl),
           resources: decodedResources,
         };
       }),
     );
   }
 
-  public static deletePublication(url: string): Observable<void> {
+  public static deletePublication(
+    resources: { targetUrl: string }[],
+  ): Observable<void> {
     return ApiUtils.request('api/publication/delete', {
       method: 'POST',
-      body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
+      body: JSON.stringify({
+        url: `publications/${BucketService.getBucket()}/`,
+        resources: resources.map((r) => ({
+          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+        })),
+      }),
     });
   }
 

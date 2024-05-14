@@ -29,14 +29,14 @@ export enum PublicationStatus {
 }
 
 export interface PublicationResource {
-  sourceUrl: string;
+  sourceUrl: string | null;
   targetUrl: string;
-  reviewUrl: string;
+  reviewUrl: string | null;
 }
 
 export interface Publication {
   url: string;
-  targetUrl: string;
+  targetUrl?: string;
   status: PublicationStatus;
   createdAt: number;
   resources: PublicationResource[];
@@ -46,7 +46,7 @@ export interface Publication {
 
 export interface PublicationInfo {
   url: string;
-  targetUrl: string;
+  targetUrl?: string;
   status: PublicationStatus;
   createdAt: number;
   resourceTypes: BackendResourceType[];

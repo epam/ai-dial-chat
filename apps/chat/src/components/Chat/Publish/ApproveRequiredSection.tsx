@@ -33,15 +33,12 @@ import {
 
 import { some } from 'lodash-es';
 
-const PublicationItem = ({
-  publication,
-  status,
-  resourceType,
-}: {
+interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
-  status: PublicationStatus;
   resourceType: BackendResourceType;
-}) => {
+}
+
+const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
   const dispatch = useAppDispatch();
 
   const selectedPublication = useAppSelector(
@@ -54,7 +51,9 @@ const PublicationItem = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const PublicationIcon =
-    status === PublicationStatus.PENDING ? IconClipboard : IconClipboardX;
+    publication.status !== PublicationStatus.REQUESTED_FOR_DELETION
+      ? IconClipboard
+      : IconClipboardX;
   const ResourcesComponent =
     resourceType === BackendResourceType.CONVERSATION
       ? ConversationPublicationResources
@@ -99,7 +98,7 @@ const PublicationItem = ({
               'relative max-h-5 flex-1 truncate break-all text-left',
               some(publication.resources, (r) =>
                 some(selectedConversationIds, (id) =>
-                  id.startsWith(r.reviewUrl),
+                  id.startsWith(r.reviewUrl ? r.reviewUrl : r.targetUrl),
                 ),
               ) && 'text-accent-primary',
             )}
@@ -176,7 +175,6 @@ export const ApproveRequiredSection = ({
       {publicationItems.map((p) => (
         <PublicationItem
           resourceType={resourceType}
-          status={PublicationStatus.PENDING}
           key={p.url}
           publication={p}
         />

@@ -70,7 +70,9 @@ export const PromptPublicationResources = ({
   const rootFolders = useMemo(() => {
     const folders = resources.map((resource) => {
       const relevantFolders = publicationFolders.filter((folder) =>
-        resource.reviewUrl.startsWith(folder.id),
+        resource.reviewUrl
+          ? resource.reviewUrl.startsWith(folder.id)
+          : resource.targetUrl.startsWith(folder.id),
       );
 
       return relevantFolders.find((folder) => isRootId(folder.folderId));
@@ -159,7 +161,9 @@ export const ConversationPublicationResources = ({
   const rootFolders = useMemo(() => {
     const folders = resources.map((resource) => {
       const relevantFolders = publicationFolders.filter((folder) =>
-        resource.reviewUrl.startsWith(folder.id),
+        resource.reviewUrl
+          ? resource.reviewUrl.startsWith(folder.id)
+          : resource.targetUrl.startsWith(folder.id),
       );
 
       return relevantFolders.find((folder) => isRootId(folder.folderId));
@@ -247,7 +251,9 @@ export const FilePublicationResources = ({
   const rootFolders = useMemo(() => {
     const folders = resources.map((resource) => {
       const relevantFolders = publicationFolders.filter((folder) =>
-        resource.reviewUrl.startsWith(folder.id),
+        resource.reviewUrl
+          ? resource.reviewUrl.startsWith(folder.id)
+          : resource.targetUrl.startsWith(folder.id),
       );
 
       return relevantFolders.find((folder) => isRootId(folder.folderId));

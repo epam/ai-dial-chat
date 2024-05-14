@@ -21,7 +21,7 @@ export default function CaretIconComponent({
         className={classNames(
           'text-secondary transition-all',
           isOpen && 'rotate-90',
-          showOnHoverOnly || hidden
+          showOnHoverOnly
             ? 'invisible group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]'
             : 'visible',
         )}

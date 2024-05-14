@@ -7,7 +7,9 @@ import { ModalState } from '@/src/types/modal';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-// import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch } from '@/src/store/hooks';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
+
 import Modal from '../Common/Modal';
 
 interface Props {
@@ -24,7 +26,7 @@ export default function UnpublishModal({
   // type,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
-  // const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
   // const unpublishAction = getUnpublishActionByType(type);
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
@@ -41,10 +43,14 @@ export default function UnpublishModal({
       e.preventDefault();
       e.stopPropagation();
 
-      // dispatch(unpublishAction({ id: entity.id }));
+      dispatch(
+        PublicationActions.deletePublication({
+          resources: [{ targetUrl: entity.id }],
+        }),
+      );
       onClose();
     },
-    [onClose],
+    [dispatch, entity.id, onClose],
   );
 
   return (

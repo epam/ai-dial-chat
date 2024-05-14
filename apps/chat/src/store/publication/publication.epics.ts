@@ -16,7 +16,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import {
   getFolderFromId,
@@ -39,7 +38,6 @@ import {
 
 import { ApiKeys, BackendDataNodeType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { PublicationRequest } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -62,9 +60,7 @@ import { uniq } from 'lodash-es';
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.init.match),
-    switchMap(() =>
-      of(PublicationActions.uploadPublications({ asAdmin: true })),
-    ),
+    switchMap(() => of(PublicationActions.uploadPublications())),
   );
 
 const publishEpic: AppEpic = (action$) =>
@@ -74,17 +70,14 @@ const publishEpic: AppEpic = (action$) =>
       const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
       const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
-      const publicationRequestInfo: PublicationRequest = {
-        url: `publications/${BucketService.getBucket()}/`,
+      return PublicationService.publish({
         targetUrl: `public/${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
         })),
         rules: payload.rules,
-      };
-
-      return PublicationService.publish(publicationRequestInfo).pipe(
+      }).pipe(
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.publishFail());
@@ -105,13 +98,9 @@ const publishFailEpic: AppEpic = (action$) =>
 const uploadPublicationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublications.match),
-    switchMap(({ payload }) =>
-      PublicationService.publicationList(
-        payload.asAdmin
-          ? `publications/public/`
-          : `publications/${BucketService.getBucket()}/${payload?.url ?? ''}`,
-      ).pipe(
-        switchMap(({ publications }) =>
+    switchMap(() =>
+      PublicationService.publicationList().pipe(
+        switchMap((publications) =>
           of(PublicationActions.uploadPublicationsSuccess({ publications })),
         ),
         catchError((err) => {
@@ -140,7 +129,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
         switchMap((publication) => {
           const actions: Observable<AnyAction>[] = [];
           const promptResources = publication.resources.filter((r) =>
-            isPromptId(r.reviewUrl),
+            isPromptId(r.targetUrl),
           );
 
           if (promptResources.length) {
@@ -169,10 +158,11 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(r.targetUrl).name,
                       );
+                      const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
 
                       return {
-                        id: r.reviewUrl,
-                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        id,
+                        folderId: getFolderIdFromEntityId(id),
                         name: parsedApiKey.name,
                       };
                     }),
@@ -183,16 +173,20 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           }
 
           const conversationResources = publication.resources.filter((r) =>
-            isConversationId(r.reviewUrl),
+            isConversationId(r.targetUrl),
           );
 
           if (conversationResources.length) {
             const conversationPaths = uniq(
-              conversationResources.flatMap((resource) =>
-                getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(resource.reviewUrl),
-                ).filter((p) => p !== resource.reviewUrl),
-              ),
+              conversationResources.flatMap((resource) => {
+                const url = resource.reviewUrl
+                  ? resource.reviewUrl
+                  : resource.targetUrl;
+
+                return getParentFolderIdsFromEntityId(
+                  getFolderIdFromEntityId(url),
+                ).filter((p) => p !== url);
+              }),
             );
 
             actions.push(
@@ -212,10 +206,11 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       const parsedApiKey = parseConversationApiKey(
                         splitEntityId(r.targetUrl).name,
                       );
+                      const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
 
                       return {
-                        id: r.reviewUrl,
-                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        id: id,
+                        folderId: getFolderIdFromEntityId(id),
                         model: parsedApiKey.model,
                         name: parsedApiKey.name,
                       };
@@ -227,16 +222,20 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           }
 
           const fileResources = publication.resources.filter((r) =>
-            isFileId(r.reviewUrl),
+            isFileId(r.targetUrl),
           );
 
           if (fileResources.length) {
             const filePaths = uniq(
-              conversationResources.flatMap((resource) =>
-                getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(resource.reviewUrl),
-                ).filter((p) => p !== resource.reviewUrl),
-              ),
+              fileResources.flatMap((resource) => {
+                const url = resource.reviewUrl
+                  ? resource.reviewUrl
+                  : resource.targetUrl;
+
+                return getParentFolderIdsFromEntityId(
+                  getFolderIdFromEntityId(url),
+                ).filter((p) => p !== url);
+              }),
             );
 
             actions.push(
@@ -252,14 +251,18 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                 ),
                 of(
                   FilesActions.getFilesSuccess({
-                    files: fileResources.map((file) => ({
-                      id: file.reviewUrl,
-                      folderId: getFolderIdFromEntityId(file.reviewUrl),
-                      name: splitEntityId(file.targetUrl).name,
-                      contentLength: 0,
-                      contentType: '',
-                      isPublicationFile: true,
-                    })),
+                    files: fileResources.map((r) => {
+                      const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
+
+                      return {
+                        id: id,
+                        folderId: getFolderIdFromEntityId(id),
+                        name: splitEntityId(r.targetUrl).name,
+                        contentLength: 0,
+                        contentType: '',
+                        isPublicationFile: true,
+                      };
+                    }),
                   }),
                 ),
               ),
@@ -294,7 +297,7 @@ const deletePublicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.deletePublication.match),
     switchMap(({ payload }) =>
-      PublicationService.deletePublication(payload.url).pipe(
+      PublicationService.deletePublication(payload.resources).pipe(
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.deletePublicationFail());
@@ -476,7 +479,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
           }
 
           const conversationResources = publication.resources.filter((r) =>
-            isConversationId(r.reviewUrl),
+            isConversationId(r.targetUrl),
           );
 
           if (conversationResources.length) {
@@ -522,7 +525,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
           }
 
           const promptResources = publication.resources.filter((r) =>
-            isPromptId(r.reviewUrl),
+            isPromptId(r.targetUrl),
           );
 
           if (promptResources.length) {

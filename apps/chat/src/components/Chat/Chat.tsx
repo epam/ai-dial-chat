@@ -53,7 +53,7 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { ApprovePublication } from './Publish/ApprovePublication';
+import { HandlePublication } from './Publish/HandlePublication';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -940,7 +940,7 @@ export function Chat() {
   );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
-    return <ApprovePublication publication={selectedPublication} />;
+    return <HandlePublication publication={selectedPublication} />;
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
