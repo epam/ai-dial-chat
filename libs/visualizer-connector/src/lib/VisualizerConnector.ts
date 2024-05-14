@@ -1,14 +1,13 @@
 import {
-  ChatOverlayOptions,
   DeferredRequest,
-  OverlayEvents,
-  OverlayRequest,
-  OverlayRequests,
   Styles,
   Task,
-  overlayAppName,
-  overlayLibName,
+  VisualizerConnectorEvents,
+  VisualizerConnectorOptions,
+  VisualizerConnectorRequest,
+  VisualizerConnectorRequests,
   setStyles,
+  visualizerConnectorLibName,
 } from '@epam/ai-dial-shared';
 
 const defaultLoaderSVG = `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -28,11 +27,11 @@ interface Subscription {
   eventType: string;
   callback: (payload: unknown) => void;
 }
-/**
- * Class which creates iframe with DIAL, allows to interact with it (send/receive messages)
- */
-export class ChatOverlay {
+
+export class VisualizerConnector {
   protected root: HTMLElement;
+  protected subscriptions: Subscription[];
+
   protected iframe: HTMLIFrameElement;
   protected loader: HTMLElement;
   protected loaderDisplayCss = 'flex';
@@ -40,16 +39,15 @@ export class ChatOverlay {
   protected iframeInteraction: Task;
 
   protected requests: DeferredRequest[];
-  protected subscriptions: Subscription[];
 
-  protected options: ChatOverlayOptions;
+  protected options: VisualizerConnectorOptions;
 
   /**
-   * Creates a ChatOverlay
+   * Creates a VisualizerConnector
    * @param root {HTMLElement | string} reference or selector to parent container where the iframe should be placed
-   * @param options {ChatOverlayOptions} overlay options (incl. domain, hostDomain, theme, modelId, etc.)
+   * @param options {VisualizerConnectorOptions} visualizer connector options ( hostDomain, domain etc.) which will be used to create iframe
    */
-  constructor(root: HTMLElement | string, options: ChatOverlayOptions) {
+  constructor(root: HTMLElement | string, options: VisualizerConnectorOptions) {
     this.options = options;
 
     this.root = this.getRoot(root);
@@ -60,6 +58,7 @@ export class ChatOverlay {
     this.iframeInteraction = new Task();
 
     this.iframe = this.initIframe();
+
     this.loader = this.initLoader(
       options?.loaderStyles || {},
       options?.loaderClass,
@@ -72,7 +71,6 @@ export class ChatOverlay {
     setStyles(this.root, { position: 'relative' });
 
     this.showLoader();
-
     window.addEventListener('message', this.process);
   }
 
@@ -84,20 +82,18 @@ export class ChatOverlay {
     const iframe = document.createElement('iframe');
 
     iframe.src = this.options.domain;
-    iframe.allow = 'clipboard-write';
-    iframe.name = 'overlay';
 
     iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-scripts');
     iframe.sandbox.add('allow-modals');
     iframe.sandbox.add('allow-forms');
-    iframe.sandbox.add('allow-popups');
     iframe.sandbox.add('allow-downloads');
-    iframe.sandbox.add('allow-popups-to-escape-sandbox');
 
     iframe.style.height = '100%';
     iframe.style.width = '100%';
     iframe.style.border = 'none';
+
+    iframe.loading = 'lazy';
 
     return iframe;
   }
@@ -175,7 +171,7 @@ export class ChatOverlay {
 
       if (!element) {
         throw new Error(
-          `[${overlayLibName}] There is no element with selector ${root} to append iframe`,
+          `[${visualizerConnectorLibName}] There is no element with selector ${root} to append iframe`,
         );
       }
 
@@ -186,49 +182,30 @@ export class ChatOverlay {
   }
 
   /**
-   * Allows iframe to be in fullscreen mode
-   */
-  public allowFullscreen(): void {
-    this.iframe.allowFullscreen = true;
-  }
-
-  /**
-   * Opens iframe in fullscreen mode
-   */
-  public openFullscreen(): void {
-    if (!this.iframe.requestFullscreen) {
-      throw new Error(
-        `[${overlayLibName}] Fullscreen is not allowed. Allow it first`,
-      );
-    }
-
-    this.iframe.requestFullscreen();
-  }
-
-  /**
    * Callback to post message event, contains mapping event to this.requests, mapping event to this.subscriptions
-   * If event.data.type === '@DIAL_OVERLAY/READY' means that DIAL ready to receive message -> this.iframeInteraction.complete()
+   * If event.data.type === '{visualizerName}/READY' means that Visualizer ready to receive message -> this.iframeInteraction.complete()
    * @param event {MessageEvent} post message event
    */
-  protected process = (event: MessageEvent<OverlayRequest>): void => {
-    if (event.data.type === `${overlayAppName}/${OverlayEvents.initReady}`) {
-      this.showLoader();
-      return;
-    }
-    if (event.data.type === `${overlayAppName}/${OverlayEvents.ready}`) {
-      this.setOverlayOptions(this.options);
+  protected process = (
+    event: MessageEvent<VisualizerConnectorRequest>,
+  ): void => {
+    if (
+      event.data.type ===
+      `${this.options.visualizerName}/${VisualizerConnectorEvents.ready}`
+    ) {
       this.hideLoader();
       return;
     }
     if (
-      event.data.type === `${overlayAppName}/${OverlayEvents.readyToInteract}`
+      event.data.type ===
+      `${this.options.visualizerName}/${VisualizerConnectorEvents.readyToInteract}`
     ) {
+      this.hideLoader();
       this.iframeInteraction.complete();
       return;
     }
 
     if (!event.data?.type) return;
-
     // Try to map event, because type doesn't have requestId
     if (!event.data?.requestId) {
       this.processEvent(event.data.type, event.data?.payload);
@@ -265,11 +242,11 @@ export class ChatOverlay {
    * We don't put something into the this.requests until `this.ready()`
    * @param type Request name
    * @param payload Request payload
-   * @param waitForReady Is this request should wait for overlay ready (default: true)
+   * @param waitForReady Is this request should wait for Visualizer ready (default: true)
    * @returns {Promise<unknown>} Return promise with response payload when resolved
    */
   public async send(
-    type: OverlayRequests,
+    type: VisualizerConnectorRequests,
     payload?: unknown,
     waitForReady = true,
   ): Promise<unknown> {
@@ -279,21 +256,24 @@ export class ChatOverlay {
 
     if (!this.iframe.contentWindow) {
       throw new Error(
-        `[${overlayLibName}] There is no content window to send requests`,
+        `[${visualizerConnectorLibName}] There is no content window to send requests`,
       );
     }
 
     const request = new DeferredRequest(
-      `${overlayAppName}/${type}`,
+      `${this.options.visualizerName}/${type}`,
       {
         payload,
         timeout: this.options?.requestTimeout,
       },
-      overlayLibName,
+      visualizerConnectorLibName,
     );
     this.requests.push(request);
 
-    this.iframe.contentWindow.postMessage(request.toPostMessage(), '*');
+    this.iframe.contentWindow.postMessage(
+      request.toPostMessage(),
+      this.options.domain,
+    );
 
     return request.promise;
   }
@@ -318,48 +298,19 @@ export class ChatOverlay {
   }
 
   /**
-   * Get messages from first selected conversation
+   * Sets Visualizer options (hostDomain,loaderStyles, etc.)
+   * @param options {VisualizerConnectorOptions} Options that should be set into the Visualizer
    */
-  public async getMessages() {
-    const messages = await this.send(OverlayRequests.getMessages);
-
-    return messages;
+  public setVisualizerConnectorOptions(options: VisualizerConnectorOptions) {
+    this.options = options;
   }
 
   /**
-   * Send message into the first selected conversation
-   * @param content {string} text of message that should be sent to the chat
-   */
-  public async sendMessage(content: string) {
-    await this.send(OverlayRequests.sendMessage, {
-      content,
-    });
-  }
-
-  /**
-   * Set systemPrompt into the first selected conversation
-   * @param systemPrompt {string} text content of system prompt
-   */
-  public async setSystemPrompt(systemPrompt: string) {
-    await this.send(OverlayRequests.setSystemPrompt, {
-      systemPrompt,
-    });
-  }
-
-  /**
-   * Send to DIAL overlay options (modelId, hostDomain, etc.)
-   * @param options {ChatOverlayOptions} Options that should be set into the DIAL
-   */
-  public async setOverlayOptions(options: ChatOverlayOptions) {
-    await this.send(OverlayRequests.setOverlayOptions, options, false);
-  }
-
-  /**
-   * Destroys ChatOverlay
+   * Destroys Visualizer
    */
   destroy() {
     window.removeEventListener('message', this.process);
-    this.iframeInteraction.fail('Chat Overlay destroyed');
+    this.iframeInteraction.fail('Chat Visualizer destroyed');
     this.root.removeChild(this.iframe);
 
     this.root.removeChild(this.loader);

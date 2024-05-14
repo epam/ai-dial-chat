@@ -1,4 +1,4 @@
-import { Styles } from '@epam/ai-dial-shared';
+import { Styles } from '../types';
 
 /**
  * Add styles to the html element
