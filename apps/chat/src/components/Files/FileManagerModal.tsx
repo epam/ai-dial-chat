@@ -83,6 +83,10 @@ export const FileManagerModal = ({
   const canAttachFolders = useAppSelector(
     ConversationsSelectors.selectCanAttachFolders,
   );
+  const allowedTypesArray = useMemo(
+    () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
+    [allowedTypes, canAttachFiles, canAttachFolders],
+  );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
@@ -132,25 +136,25 @@ export const FileManagerModal = ({
   }, [files, searchQuery]);
 
   const allowedExtensions = useMemo(() => {
-    if (allowedTypes.includes('*/*')) {
+    if (allowedTypesArray.includes('*/*')) {
       return [t('all')];
     }
 
-    return getShortExtentionsListFromMimeType(allowedTypes, t);
-  }, [allowedTypes, t]);
+    return getShortExtentionsListFromMimeType(allowedTypesArray, t);
+  }, [allowedTypesArray, t]);
 
   const typesLabel = useMemo(() => {
     if (allowedTypesLabel) {
       return allowedTypesLabel;
     }
     if (
-      allowedTypes.length === 1 &&
-      allowedTypes[0].endsWith('/*') &&
-      !allowedTypes[0].startsWith('*/')
+      allowedTypesArray.length === 1 &&
+      allowedTypesArray[0].endsWith('/*') &&
+      !allowedTypesArray[0].startsWith('*/')
     ) {
-      return t(allowedTypes[0].replace('/*', 's'));
+      return t(allowedTypesArray[0].replace('/*', 's'));
     }
-  }, [allowedTypes, allowedTypesLabel, t]);
+  }, [allowedTypesArray, allowedTypesLabel, t]);
 
   const showSpinner = folders.length === 0 && areFoldersLoading;
 
@@ -337,7 +341,7 @@ export const FileManagerModal = ({
     );
     const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
       selectedFiles,
-      allowedTypes,
+      allowedTypesArray,
     ).map((file) => file.name);
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
@@ -353,7 +357,7 @@ export const FileManagerModal = ({
 
     onClose([...selectedFolderIds, ...selectedFilesIds]);
   }, [
-    allowedTypes,
+    allowedTypesArray,
     files,
     maximumAttachmentsAmount,
     onClose,
@@ -435,23 +439,25 @@ export const FileManagerModal = ({
             {headerLabel}
           </h2>
         </div>
-        <p id={descriptionId}>
-          {t(
-            'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
-            {
-              allowedExtensions:
-                typesLabel ||
-                allowedExtensions.join(', ') ||
-                'no available extensions',
-            },
-          )}
-          &nbsp;
-          {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
-            !!maximumAttachmentsAmount &&
-            t('Max selected files is {{maxAttachmentsAmount}}.', {
-              maxAttachmentsAmount: maximumAttachmentsAmount,
-            })}
-        </p>
+        {canAttachFiles && (
+          <p id={descriptionId}>
+            {t(
+              'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+              {
+                allowedExtensions:
+                  typesLabel ||
+                  allowedExtensions.join(', ') ||
+                  'no available extensions',
+              },
+            )}
+            &nbsp;
+            {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
+              !!maximumAttachmentsAmount &&
+              t('Max selected files is {{maxAttachmentsAmount}}.', {
+                maxAttachmentsAmount: maximumAttachmentsAmount,
+              })}
+          </p>
+        )}
 
         <ErrorMessage error={errorMessage} />
 
@@ -604,7 +610,7 @@ export const FileManagerModal = ({
         <PreUploadDialog
           uploadFolderId={uploadFolderId}
           isOpen
-          allowedTypes={allowedTypes}
+          allowedTypes={allowedTypesArray}
           allowedTypesLabel={typesLabel}
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
