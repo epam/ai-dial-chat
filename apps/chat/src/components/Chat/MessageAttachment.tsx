@@ -8,7 +8,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
-import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/utils/app/file';
 
 import { Attachment } from '@/src/types/chat';
 import { ImageMIMEType, MIMEType } from '@/src/types/files';
@@ -22,6 +21,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { chartType, stopBubbling } from '@/src/constants/chat';
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';

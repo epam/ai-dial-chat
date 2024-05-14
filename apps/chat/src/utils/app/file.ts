@@ -381,6 +381,3 @@ export const getNextFileName = (
 
 export const prepareFileName = (filename: string) =>
   `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
-
-export const FOLDER_ATTACHMENT_CONTENT_TYPE =
-  'application/vnd.dial.metadata+json';

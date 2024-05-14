@@ -15,7 +15,6 @@ import classNames from 'classnames';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
-  FOLDER_ATTACHMENT_CONTENT_TYPE,
   getDialFilesFromAttachments,
   getDialLinksFromAttachments,
   getUserCustomContent,
@@ -36,6 +35,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 import {
