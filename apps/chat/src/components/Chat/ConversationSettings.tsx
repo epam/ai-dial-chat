@@ -66,7 +66,7 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
     <div
       className={classNames(
         'flex items-center gap-2',
-        isNotAllowed && 'text-secondary-bg-dark',
+        isNotAllowed && 'text-secondary-bg-light',
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />

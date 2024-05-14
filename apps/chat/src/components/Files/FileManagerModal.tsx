@@ -397,7 +397,7 @@ export const FileManagerModal = ({
             <>
               <button
                 onClick={handleStartDeleteMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary-bg-dark hover:bg-accent-primary-alpha  hover:text-accent-primary"
+                className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
                 <Tooltip tooltip="Delete files" isTriggerClickable>
                   <IconTrash size={24} />
@@ -405,7 +405,7 @@ export const FileManagerModal = ({
               </button>
               <button
                 onClick={handleDownloadMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary-bg-dark hover:bg-accent-primary-alpha  hover:text-accent-primary"
+                className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
                 <Tooltip tooltip="Download files" isTriggerClickable>
                   <IconDownload size={24} />
@@ -415,7 +415,7 @@ export const FileManagerModal = ({
           ) : (
             <button
               onClick={handleNewFolder}
-              className="flex size-[34px] items-center justify-center rounded text-secondary-bg-dark hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha  hover:text-accent-primary"
             >
               <FolderPlus height={24} width={24} />
             </button>

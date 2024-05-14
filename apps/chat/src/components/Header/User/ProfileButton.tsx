@@ -36,11 +36,11 @@ export const ProfileButton = () => {
 
   return (
     <button
-      className="flex size-full items-center justify-center text-secondary-bg-dark md:text-primary-bg-dark"
+      className="flex size-full items-center justify-center text-primary-bg-dark md:text-primary-bg-dark"
       onClick={onClick}
     >
       {isProfileOpen ? (
-        <IconX className="text-secondary-bg-dark" width={iconSize} height={iconSize} />
+        <IconX className="text-primary-bg-dark" width={iconSize} height={iconSize} />
       ) : session?.user?.image ? (
         <img
           className="rounded"

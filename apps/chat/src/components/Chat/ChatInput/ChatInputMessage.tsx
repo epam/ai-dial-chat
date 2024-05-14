@@ -414,7 +414,7 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-1 focus-within:border-accent-primary"
+        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-2 focus-within:border-accent-primary"
         data-qa="message"
       >
         <AdjustedTextarea

@@ -119,7 +119,7 @@ const ModelGroup = ({
           </div>
           {description && (
             <span
-              className="text-secondary-bg-dark"
+              className="text-secondary-bg-light"
               onClick={(e) => {
                 if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                   e.stopPropagation();

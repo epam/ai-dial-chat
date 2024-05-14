@@ -64,8 +64,8 @@ export const MessageUserButtons = ({
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full items-center justify-end gap-2',
-        isOverlay ? 'mt-3' : 'mt-4',
+        'flex h-[18px] w-full items-center justify-start gap-2',
+        isOverlay ? 'mt-3' : 'mt-2',
       )}
     >
       {!isMessageStreaming && (
@@ -73,7 +73,7 @@ export const MessageUserButtons = ({
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
-                className="text-secondary-bg-dark hover:text-accent-primary disabled:cursor-not-allowed"
+                className="text-tertiary-bg-light hover:text-accent-primary disabled:cursor-not-allowed"
                 onClick={toggleEditing}
                 disabled={editDisabled}
               >
@@ -83,7 +83,7 @@ export const MessageUserButtons = ({
           )}
           <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
             <button
-              className="text-secondary-bg-dark hover:text-accent-primary"
+              className="text-tertiary-bg-light hover:text-accent-primary"
               onClick={onDelete}
             >
               <IconTrash size={18} />
@@ -119,8 +119,8 @@ export const MessageAssistantButtons = ({
   return (
     <div
       className={classNames(
-        'flex w-full justify-end gap-2',
-        isOverlay ? 'mt-3' : 'mt-4',
+        'flex w-full justify-start gap-2',
+        isOverlay ? 'mt-3' : 'mt-2',
       )}
     >
       {onRegenerate && (
@@ -128,7 +128,7 @@ export const MessageAssistantButtons = ({
           <Button
             onClick={onRegenerate}
             data-qa="regenerate"
-            className="text-secondary-bg-dark"
+            className="text-tertiary-bg-light"
           >
             <IconRefresh size={18} />
           </Button>
@@ -145,7 +145,7 @@ export const MessageAssistantButtons = ({
           isTriggerClickable
           tooltip={t('Copy text')}
         >
-          <Button className="text-secondary-bg-dark" onClick={copyOnClick}>
+          <Button className="text-tertiary-bg-light" onClick={copyOnClick}>
             <IconCopy size={18} />
           </Button>
         </Tooltip>
@@ -169,7 +169,7 @@ export const MessageAssistantButtons = ({
                   }}
                   className={
                     message.like !== LikeState.Liked
-                      ? 'text-secondary-bg-dark'
+                      ? 'text-tertiary-bg-light'
                       : 'text-accent-primary'
                   }
                   disabled={message.like === LikeState.Liked}
@@ -197,7 +197,7 @@ export const MessageAssistantButtons = ({
                   }}
                   className={
                     message.like !== LikeState.Disliked
-                      ? 'text-secondary-bg-dark'
+                      ? 'text-tertiary-bg-light'
                       : 'text-accent-primary'
                   }
                   disabled={message.like === LikeState.Disliked}

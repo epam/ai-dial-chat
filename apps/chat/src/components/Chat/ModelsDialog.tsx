@@ -169,7 +169,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       overlayClassName="fixed inset-0 top-[48px]"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose
-      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px] bg-layer-2"
     >
       <div className="flex justify-between px-3 md:px-5">
         {t('Talk to')}
