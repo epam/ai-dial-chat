@@ -299,7 +299,7 @@ export const FileManagerModal = ({
                       ),
                 );
                 return oldValues
-                  .filter((oldFolderId) => oldFolderId.startsWith(data))
+                  .filter((oldFolderId) => !oldFolderId.startsWith(data))
                   .concat(data);
               });
             }
