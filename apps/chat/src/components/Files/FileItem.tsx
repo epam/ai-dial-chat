@@ -131,7 +131,8 @@ export const FileItem = ({
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <div className="text-secondary">
-          {!isSelected && item.status !== UploadStatus.FAILED ? (
+          {(!canAttachFiles || !isSelected) &&
+          item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
               containerClassName={classNames(
