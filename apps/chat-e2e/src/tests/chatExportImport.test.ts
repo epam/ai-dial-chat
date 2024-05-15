@@ -906,8 +906,7 @@ dialTest(
         nestedFolders = conversationData.prepareNestedFolder(levelsCount);
         thirdLevelFolderConversation =
           conversationData.prepareDefaultConversation();
-        thirdLevelFolderConversation.folderId =
-          nestedFolders[levelsCount].folderId;
+        thirdLevelFolderConversation.folderId = nestedFolders[levelsCount].id;
         thirdLevelFolderConversation.id = `${thirdLevelFolderConversation.folderId}/${thirdLevelFolderConversation.id}`;
 
         await dataInjector.createConversations(

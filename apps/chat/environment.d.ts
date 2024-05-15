@@ -11,6 +11,8 @@ declare global {
       APP_BASE_ORIGIN?: string;
       ALLOWED_IFRAME_ORIGINS?: string;
       IS_IFRAME?: string;
+      ALLOWED_IFRAME_SOURCES?: string;
+      CUSTOM_VISUALIZERS?: string;
       ENABLED_FEATURES?: string;
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
@@ -76,6 +78,10 @@ declare global {
       AUTH_COGNITO_HOST?: string;
       AUTH_COGNITO_NAME?: string;
       AUTH_COGNITO_SCOPE?: string;
+      AUTH_OKTA_CLIENT_ID?: string;
+      AUTH_OKTA_CLIENT_SECRET?: string;
+      AUTH_OKTA_ISSUER?: string;
+      AUTH_OKTA_SCOPE?: string;
     }
   }
 }

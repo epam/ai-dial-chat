@@ -55,6 +55,7 @@ export enum ExpectedMessages {
   promptNotUpdated = 'Prompt is not updated',
   promptNameValid = 'Prompt name is valid',
   promptDescriptionValid = 'Prompt description is valid',
+  promptContentValid = 'Prompt content is valid',
   promptVariablePlaceholderValid = 'Prompt variable placeholder is valid',
   promptNameUpdated = 'Prompt name is updated',
   promptDescriptionUpdated = 'Prompt description is updated',

@@ -57,6 +57,9 @@ export const AttachButton = ({
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
   );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
+  );
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
   );
@@ -80,9 +83,11 @@ export const AttachButton = ({
     () =>
       [
         {
-          name: t('Attach uploaded files'),
+          name: t(
+            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
+          ),
           dataQa: 'attach_uploaded',
-          display: canAttachFiles,
+          display: canAttachFiles || canAttachFolders,
           Icon: IconFileDescription,
           onClick: handleOpenAttachmentsModal,
         },
@@ -103,6 +108,7 @@ export const AttachButton = ({
       ] as DisplayMenuItemProps[],
     [
       canAttachFiles,
+      canAttachFolders,
       canAttachLinks,
       handleAttachFromComputer,
       handleAttachLink,
@@ -111,7 +117,13 @@ export const AttachButton = ({
     ],
   );
 
-  if (!canAttachFiles && !canAttachLinks) return null;
+  if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
+
+  const label = canAttachFiles
+    ? 'Attach files'
+    : canAttachFolders
+      ? 'Attach folders'
+      : '';
 
   return (
     <>
@@ -121,7 +133,7 @@ export const AttachButton = ({
         TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
-        triggerTooltip={t('Attach files') || ''}
+        triggerTooltip={t(label) || ''}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
         featureType={FeatureType.File}
@@ -131,8 +143,8 @@ export const AttachButton = ({
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          headerLabel={t('Attach files')}
-          customButtonLabel={t('Attach files') as string}
+          headerLabel={t(label)}
+          customButtonLabel={t('Attach') as string}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);

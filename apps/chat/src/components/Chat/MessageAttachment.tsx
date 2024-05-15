@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { IconDownload, IconPaperclip } from '@tabler/icons-react';
+import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
@@ -18,15 +18,19 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { chartType, stopBubbling } from '@/src/constants/chat';
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
+import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
+import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -183,12 +187,55 @@ interface Props {
   isInner?: boolean;
 }
 
+interface AttachmentUrlRendererComponentProps {
+  mappedAttachmentUrl: string;
+  attachmentType: string;
+}
+
+const AttachmentUrlRendererComponent = ({
+  mappedAttachmentUrl,
+  attachmentType,
+}: AttachmentUrlRendererComponentProps) => {
+  const mappedVisualizers = useAppSelector(
+    SettingsSelectors.selectMappedVisualizers,
+  );
+
+  const isCustomAttachmentType = useAppSelector((state) =>
+    SettingsSelectors.selectIsCustomAttachmentType(state, attachmentType),
+  );
+
+  if (mappedVisualizers && isCustomAttachmentType) {
+    return (
+      <VisualizerRenderer
+        attachmentUrl={mappedAttachmentUrl}
+        renderer={mappedVisualizers[attachmentType][0]}
+        mimeType={attachmentType}
+      />
+    );
+  }
+
+  if (attachmentType === chartType) {
+    return <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />;
+  }
+
+  return (
+    <AttachmentUrlRenderer
+      attachmentUrl={mappedAttachmentUrl}
+      attachmentType={attachmentType}
+    />
+  );
+};
+
 export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
   const [wasOpened, setWasOpened] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
+
+  const isCustomAttachmentType = useAppSelector((state) =>
+    SettingsSelectors.selectIsCustomAttachmentType(state, attachment.type),
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -215,10 +262,14 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     };
   }, [wasOpened]);
 
+  const isFolder = attachment.type === FOLDER_ATTACHMENT_CONTENT_TYPE;
+  const Icon = isFolder ? IconFolder : IconFile;
+
   const isOpenable =
     attachment.data ||
     (attachment.url && imageTypes.has(attachment.type)) ||
-    attachment.type === chartType;
+    attachment.type === chartType ||
+    isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
     [attachment.url],
@@ -240,20 +291,22 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
       <div className="flex items-center gap-3 px-2">
         <div className="flex items-center">
           {mappedAttachmentReferenceUrl ? (
-            <a
-              href={mappedAttachmentReferenceUrl}
-              target="_blank"
-              className="shrink-0"
-              rel="noopener noreferrer"
-            >
-              <Link
-                height={18}
-                width={18}
-                className="text-secondary hover:text-accent-primary"
-              />
-            </a>
+            <Tooltip tooltip="Open link">
+              <a
+                href={mappedAttachmentReferenceUrl}
+                target="_blank"
+                className="shrink-0"
+                rel="noopener noreferrer"
+              >
+                <Link
+                  height={18}
+                  width={18}
+                  className="text-secondary hover:text-accent-primary"
+                />
+              </a>
+            </Tooltip>
           ) : (
-            <IconPaperclip size={18} className="shrink-0 text-secondary" />
+            <Icon size={18} className="shrink-0 text-secondary" />
           )}
         </div>
         <button
@@ -273,14 +326,16 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         >
           <span
             className={classNames(
-              'shrink whitespace-pre text-left text-sm',
-              isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate',
+              'shrink truncate whitespace-pre text-left text-sm',
+              isExpanded || isFolder || mappedAttachmentReferenceUrl
+                ? 'max-w-full'
+                : 'max-w-[calc(100%-30px)]',
             )}
             title={attachment.title || attachment.url || t('Attachment') || ''}
           >
             {attachment.title || attachment.url || t('Attachment')}
           </span>
-          {isOpenable ? (
+          {isOpenable && !isFolder ? (
             <div className="flex gap-2">
               {imageTypes.has(attachment.type) && (
                 <a
@@ -302,15 +357,18 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               />
             </div>
           ) : (
-            <a
-              download={attachment.title}
-              href={mappedAttachmentUrl}
-              onClick={stopBubbling}
-              target="_blank"
-              className="text-secondary hover:text-accent-primary"
-            >
-              <IconDownload size={18} />
-            </a>
+            !isFolder &&
+            !mappedAttachmentReferenceUrl && (
+              <a
+                download={attachment.title}
+                href={mappedAttachmentUrl}
+                onClick={stopBubbling}
+                target="_blank"
+                className="text-secondary hover:text-accent-primary"
+              >
+                <IconDownload size={18} />
+              </a>
+            )
           )}
         </button>
       </div>
@@ -322,15 +380,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           {attachment.data && (
             <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}
-          {mappedAttachmentUrl &&
-            (attachment.type === chartType ? (
-              <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />
-            ) : (
-              <AttachmentUrlRenderer
-                attachmentUrl={mappedAttachmentUrl}
-                attachmentType={attachment.type}
-              />
-            ))}
+          {mappedAttachmentUrl && (
+            <AttachmentUrlRendererComponent
+              attachmentType={attachment.type}
+              mappedAttachmentUrl={mappedAttachmentUrl}
+            />
+          )}
           {mappedAttachmentReferenceUrl && (
             <a
               href={mappedAttachmentReferenceUrl}

@@ -89,7 +89,9 @@ dialTest(
         await conversations.openConversationDropdownMenu(
           replayConversation!.name,
         );
-        await conversations.selectMenuOption(MenuOptions.replay);
+        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+          triggeredHttpMethod: 'POST',
+        });
       },
     );
 
