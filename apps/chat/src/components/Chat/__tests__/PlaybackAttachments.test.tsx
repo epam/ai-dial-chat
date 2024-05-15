@@ -21,6 +21,7 @@ vi.mock('@/src/utils/app/file', () => {
         });
         return files;
       }),
+    getDialFoldersFromAttachments: vi.fn().mockReturnValue([]),
     getDialLinksFromAttachments: vi.fn().mockReturnValue([]),
   };
 });
