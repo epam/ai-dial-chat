@@ -117,7 +117,9 @@ const shareConversationEpic: AppEpic = (action$) =>
               {
                 url: ApiUtils.encodeApiUrl(payload.resourceId),
               },
-              ...internalResources.map((res) => ({ url: res })),
+              ...internalResources.map((res) => ({
+                url: ApiUtils.encodeApiUrl(res),
+              })),
             ],
           }).pipe(
             map((response: ShareByLinkResponseModel) => {
