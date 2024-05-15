@@ -1,12 +1,12 @@
 import config from '../../../config/playwright.config';
 
-import { API, Import } from '@/src/testData';
+import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
 import path from 'path';
 
 export interface UploadDownloadData {
   path: string;
-  isDownloadedData?: boolean;
+  dataType?: 'download' | 'upload';
 }
 
 const apiTimeout = 35000;
@@ -147,14 +147,25 @@ export class BasePage {
       filename ?? download.suggestedFilename(),
     );
     await download.saveAs(filePath);
-    return { path: filePath, isDownloadedData: true };
+    return { path: filePath, dataType: 'download' };
   }
 
   public async uploadData<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
   ) {
-    const directory = uploadData.isDownloadedData ? '' : Import.importPath;
+    let directory;
+    const dataType = uploadData.dataType;
+    switch (dataType) {
+      case 'download':
+        directory = '';
+        break;
+      case 'upload':
+        directory = Attachment.attachmentPath;
+        break;
+      default:
+        directory = Import.importPath;
+    }
     const fileChooserPromise = this.page.waitForEvent('filechooser');
     await method();
     const fileChooser = await fileChooserPromise;

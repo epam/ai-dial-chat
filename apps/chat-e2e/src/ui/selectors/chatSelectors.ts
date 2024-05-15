@@ -98,4 +98,9 @@ export const ChatSelectors = {
   chatScrollableArea: '[data-qa="scrollable-area"]',
   attachmentExpanded: '[data-qa="attachment-expanded"]',
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
+  menuTrigger: '[data-qa="menu-trigger"]',
+  dropdownMenu: '[data-qa="dropdown-menu"]',
+  inputAttachmentsContainer: '[data-qa="attachment-container"]',
+  inputAttachment: '[data-qa="chat-attachment"]',
+  inputAttachmentLoadingIndicator: '[data-qa="attachment-loading"]',
 };
