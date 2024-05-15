@@ -163,7 +163,7 @@ function getDevVersion(potentialVersion) {
     result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());    
   }catch(e){
 
-    if(JSON.parse(e.stdout).error.code === 'E40'){
+    if(JSON.parse(e.stdout).error.code === 'E404'){
       console.warn(`Could not get versions from registry. Version from package.json will be used.\n `);
 
       result =[];
