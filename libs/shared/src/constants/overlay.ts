@@ -14,5 +14,3 @@ export enum OverlayEvents {
   gptStartGenerating = 'GPT_START_GENERATING',
   gptEndGenerating = 'GPT_END_GENERATING',
 }
-
-export const overlayLibName = 'ChatOverlay';

@@ -1,14 +1,14 @@
+import { DeferredRequest } from './utils/DeferredRequest';
+import { Task } from './utils/Task';
+import { setStyles } from './utils/styleUtils';
+
 import {
   ChatOverlayOptions,
-  DeferredRequest,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
   Styles,
-  Task,
   overlayAppName,
-  overlayLibName,
-  setStyles,
 } from '@epam/ai-dial-shared';
 
 const defaultLoaderSVG = `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -174,7 +174,7 @@ export class ChatOverlay {
 
       if (!element) {
         throw new Error(
-          `[${overlayLibName}] There is no element with selector ${root} to append iframe`,
+          `[ChatOverlay] There is no element with selector ${root} to append iframe`,
         );
       }
 
@@ -197,7 +197,7 @@ export class ChatOverlay {
   public openFullscreen(): void {
     if (!this.iframe.requestFullscreen) {
       throw new Error(
-        `[${overlayLibName}] Fullscreen is not allowed. Allow it first`,
+        '[ChatOverlay] Fullscreen is not allowed. Allow it first',
       );
     }
 
@@ -278,18 +278,14 @@ export class ChatOverlay {
 
     if (!this.iframe.contentWindow) {
       throw new Error(
-        `[${overlayLibName}] There is no content window to send requests`,
+        '[ChatOverlay] There is no content window to send requests',
       );
     }
 
-    const request = new DeferredRequest(
-      `${overlayAppName}/${type}`,
-      {
-        payload,
-        timeout: this.options?.requestTimeout,
-      },
-      overlayLibName,
-    );
+    const request = new DeferredRequest(`${overlayAppName}/${type}`, {
+      payload,
+      timeout: this.options?.requestTimeout,
+    });
     this.requests.push(request);
 
     this.iframe.contentWindow.postMessage(request.toPostMessage(), '*');
@@ -360,7 +356,5 @@ export class ChatOverlay {
     window.removeEventListener('message', this.process);
     this.iframeInteraction.fail('Chat Overlay destroyed');
     this.root.removeChild(this.iframe);
-
-    this.root.removeChild(this.loader);
   }
 }

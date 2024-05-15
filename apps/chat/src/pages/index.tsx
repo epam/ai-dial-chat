@@ -270,17 +270,11 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
-  const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
-    ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-    : 'frame-ancestors none';
-
-  const frameSrcDirective = process.env.ALLOWED_IFRAME_SOURCES
-    ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
-    : 'frame-src none';
-
   res.setHeader(
     'Content-Security-Policy',
-    ancestorsDirective + '; ' + frameSrcDirective,
+    process.env.ALLOWED_IFRAME_ORIGINS
+      ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+      : 'frame-ancestors none',
   );
 
   const session = await getServerSession(req, res, authOptions);
@@ -296,10 +290,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       },
     };
   }
-
-  const customRenderers =
-    process.env.CUSTOM_VISUALIZERS &&
-    JSON.parse(process.env.CUSTOM_VISUALIZERS);
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
@@ -339,7 +329,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
-    customRenderers: customRenderers || [],
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

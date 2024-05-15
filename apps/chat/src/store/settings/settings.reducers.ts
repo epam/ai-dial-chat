@@ -2,10 +2,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
-import {
-  CustomVisualizer,
-  MappedVisualizers,
-} from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
 import { RootState } from '..';
@@ -26,7 +22,6 @@ export interface SettingsState {
   storageType: StorageType;
   themesHostDefined: boolean;
   isolatedModelId?: string;
-  customRenderers?: CustomVisualizer[];
 }
 
 const initialState: SettingsState = {
@@ -42,7 +37,6 @@ const initialState: SettingsState = {
   defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
-  customRenderers: [],
 };
 
 export const settingsSlice = createSlice({
@@ -210,47 +204,6 @@ const selectThemeHostDefined = createSelector([rootSelector], (state) => {
   return state.themesHostDefined;
 });
 
-const selectCustomVisualizers = createSelector([rootSelector], (state) => {
-  return state.customRenderers;
-});
-
-const selectMappedVisualizers = createSelector(
-  [selectCustomVisualizers],
-  (customVisualizers) => {
-    return customVisualizers?.reduce(
-      (visualizers: MappedVisualizers, currentVisualizerConfig) => {
-        const contentTypes = currentVisualizerConfig.contentType.split(',');
-
-        visualizers = contentTypes.reduce(
-          (visualizers: MappedVisualizers, contentType) => {
-            visualizers[contentType] = !visualizers[contentType]
-              ? [currentVisualizerConfig]
-              : visualizers[currentVisualizerConfig.contentType].concat(
-                  currentVisualizerConfig,
-                );
-
-            return visualizers;
-          },
-          {} as MappedVisualizers,
-        );
-
-        return visualizers;
-      },
-      {} as MappedVisualizers,
-    );
-  },
-);
-
-const selectIsCustomAttachmentType = createSelector(
-  [selectMappedVisualizers, (_state, attachmentType: string) => attachmentType],
-  (mappedVisualizers, attachmentType) => {
-    return (
-      mappedVisualizers &&
-      Object.prototype.hasOwnProperty.call(mappedVisualizers, attachmentType)
-    );
-  },
-);
-
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -270,7 +223,4 @@ export const SettingsSelectors = {
   selectThemeHostDefined,
   selectIsIsolatedView,
   selectIsolatedModelId,
-  selectCustomVisualizers,
-  selectMappedVisualizers,
-  selectIsCustomAttachmentType,
 };

@@ -1,4 +1,4 @@
-import { DialLibRequest } from '../types';
+import { OverlayRequest } from '@epam/ai-dial-shared';
 
 const defaultRequestTimeout = 10000;
 
@@ -9,7 +9,6 @@ interface RequestParams {
 
 export class DeferredRequest {
   public promise: Promise<unknown>;
-  public libName: string;
 
   private type: string;
   private requestId: string;
@@ -19,10 +18,9 @@ export class DeferredRequest {
 
   private params: RequestParams;
 
-  constructor(type: string, params: RequestParams, libName: string) {
+  constructor(type: string, params: RequestParams) {
     this.type = type;
     this.params = params;
-    this.libName = libName;
 
     this.requestId = DeferredRequest.generateRequestId();
 
@@ -35,7 +33,7 @@ export class DeferredRequest {
       new Promise((_, reject) => {
         setTimeout(() => {
           reject(
-            `[${libName}] Request ${type} failed. Timeout ${
+            `[ChatOverlay] Request ${type} failed. Timeout ${
               this.params?.timeout || defaultRequestTimeout
             }`,
           );
@@ -53,7 +51,8 @@ export class DeferredRequest {
     this._isReplied = true;
     this.resolve(payload);
   }
-  toPostMessage(): DialLibRequest {
+
+  toPostMessage(): OverlayRequest {
     return {
       type: this.type,
       payload: this.params?.payload,

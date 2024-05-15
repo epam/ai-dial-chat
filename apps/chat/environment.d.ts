@@ -11,8 +11,6 @@ declare global {
       APP_BASE_ORIGIN?: string;
       ALLOWED_IFRAME_ORIGINS?: string;
       IS_IFRAME?: string;
-      ALLOWED_IFRAME_SOURCES?: string;
-      CUSTOM_VISUALIZERS?: string;
       ENABLED_FEATURES?: string;
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
