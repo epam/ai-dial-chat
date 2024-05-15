@@ -12,7 +12,7 @@ export const createTargetUrl = (
   type: SharingType,
 ) => {
   const baseElements =
-    type === SharingType.Prompt || type === SharingType.Conversation
+    type === SharingType.PromptFolder || type === SharingType.ConversationFolder
       ? entity.id.split('/').slice(2, -1)
       : '';
 
