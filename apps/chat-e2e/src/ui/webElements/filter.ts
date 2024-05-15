@@ -1,4 +1,4 @@
-import { SideBarSelectors } from '@/src/ui/selectors';
+import { ChatSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
@@ -27,7 +27,7 @@ export class Filter extends BaseElement {
   }
 
   private filterMenuTrigger = this.getChildElementBySelector(
-    SideBarSelectors.filterMenuTrigger,
+    ChatSelectors.menuTrigger,
   );
 
   public async openFilterDropdownMenu() {

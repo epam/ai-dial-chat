@@ -463,7 +463,10 @@ export const ChatMessageContent = ({
 
                   {(newEditableAttachments.length > 0 ||
                     selectedDialLinks.length > 0) && (
-                    <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
+                    <div
+                      className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+                      data-qa="attachment-container"
+                    >
                       <ChatInputAttachments
                         files={fileAttachments}
                         folders={folderAttachments}

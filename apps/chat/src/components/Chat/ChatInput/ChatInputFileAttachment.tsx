@@ -26,6 +26,7 @@ export const ChatInputFileAttachment = ({
     <div
       key={file.id}
       className="flex items-center gap-3 rounded border border-primary bg-layer-1 px-3 py-2"
+      data-qa="chat-attachment"
     >
       {file.status !== UploadStatus.FAILED ? (
         <IconFile className="shrink-0 text-secondary" size={18} />
@@ -48,6 +49,7 @@ export const ChatInputFileAttachment = ({
               <div
                 className="h-full bg-controls-accent"
                 style={{ width: `${file.percent}%` }}
+                data-qa="attachment-loading"
               ></div>
             </div>
           )}

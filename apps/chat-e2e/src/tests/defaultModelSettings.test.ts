@@ -27,6 +27,7 @@ dialTest(
   'Create new conversation.\n' +
     'Default settings in new chat with cleared site data.\n' +
     '"Talk to" icon is set in recent list on default screen for new chat.\n' +
+    'Addon icon is set in recent and selected list on default screen for new chat.\n' +
     'Addon icon is set in recent and selected list on default screen for new chat',
   async ({
     dialHomePage,
@@ -38,12 +39,19 @@ dialTest(
     addons,
     iconApiHelper,
     talkToRecentGroupEntities,
+    sendMessage,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-933', 'EPMRTC-398', 'EPMRTC-376', 'EPMRTC-1030');
+    setTestIds(
+      'EPMRTC-933',
+      'EPMRTC-398',
+      'EPMRTC-376',
+      'EPMRTC-1030',
+      'EPMRTC-1890',
+    );
     const expectedAddons = ModelsUtil.getAddons();
     await dialTest.step(
-      'Create new conversation and verify it is moved under Today section in chat bar',
+      'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea ',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
@@ -65,6 +73,12 @@ dialTest(
               expect.stringContaining(ExpectedConstants.newConversationTitle),
             );
         }
+        await expect
+          .soft(
+            await sendMessage.attachmentMenuTrigger.getElementLocator(),
+            ExpectedMessages.clipIconNotAvailable,
+          )
+          .toBeHidden();
       },
     );
 
