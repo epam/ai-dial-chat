@@ -429,7 +429,7 @@ export const FileManagerModal = ({
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="flex flex-col gap-2 overflow-auto p-6">
+      <div className="flex flex-col gap-2 overflow-auto px-3 py-4 md:p-6">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
             {headerLabel}

@@ -299,11 +299,10 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         'flex size-full flex-col sm:w-[525px]',
         featuresToReplace.length < 3 && 'sm:h-fit',
       )}
-      overlayClassName="px-0 py-0"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex h-full flex-col justify-between gap-2 sm:gap-4">
-        <div className="flex h-[90%] flex-col gap-4 p-6 pb-0">
+        <div className="flex h-[90%] flex-col gap-4 px-3 py-4 md:p-6 pb-0">
           <div className="flex h-fit flex-col gap-2">
             <h2 className="text-base font-semibold">
               {t('Some items failed to import due to duplicate names')}
