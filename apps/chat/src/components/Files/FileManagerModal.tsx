@@ -476,7 +476,12 @@ export const FileManagerModal = ({
             ></input>
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
-                className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
+                className={classNames(
+                  'flex items-center gap-1 rounded py-1 text-xs ',
+                  selectedFilesIds.length > 0 || selectedFolderIds.length > 0
+                    ? 'text-accent-primary'
+                    : 'text-secondary',
+                )}
                 onClick={() => handleToggleFolder(getFileRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
