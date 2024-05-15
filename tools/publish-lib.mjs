@@ -14,6 +14,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import minimist from 'minimist';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
 const PREFIX = '@epam/ai-dial';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,11 +48,14 @@ const getVersion = (version) => {
 
   if (isDevelopment && !version) {
     potentialVersion = getDevVersion(potentialVersion);
-    invariant(potentialVersion !== 'dev', `Version calculated incorrectly - still equal 'dev'.`)
+    invariant(
+      potentialVersion !== 'dev',
+      `Version calculated incorrectly - still equal 'dev'.`,
+    );
   }
 
   return potentialVersion || mainPackageJson.version;
-}
+};
 version = getVersion(version);
 
 // A simple SemVer validation to validate the version
@@ -89,7 +93,6 @@ const isFromCurrentProj = (dep) => {
   }
   return false;
 };
-
 
 const getDependencyVersion = (dep) => {
   let localVersion =
@@ -159,38 +162,43 @@ execSync(`npm publish --access public --tag ${tag} --dry-run ${dry}`);
 
 function getDevVersion(potentialVersion) {
   let result;
-  try{
-    result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());    
-  }catch(e){
+  try {
+    result = JSON.parse(
+      execSync(`npm view ${PREFIX}-${name} versions --json`).toString(),
+    );
+  } catch (e) {
+    if (JSON.parse(e.stdout).error.code === 'E404') {
+      console.warn(
+        `Could not get versions from registry. Version from package.json will be used.\n `,
+      );
 
-    if(JSON.parse(e.stdout).error.code === 'E404'){
-      console.warn(`Could not get versions from registry. Version from package.json will be used.\n `);
+      result = [];
 
-      result =[];
-            
-      console.warn(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
+      console.warn(
+        `Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`,
+      );
       return potentialVersion;
     }
 
     throw new Error(`Could not get versions from registry.`);
-    
   }
 
   const lastVersionToIncrement = result
-      .filter(ver => ver.startsWith(mainPackageJson.version))
-      .map(ver => ver.match(/\d+$/)?.[0])
-      .filter(Boolean)
-      .map(ver => parseInt(ver, 10))
-      .sort((a, b) => a - b)
-      .reverse()[0];
+    .filter((ver) => ver.startsWith(mainPackageJson.version))
+    .map((ver) => ver.match(/\d+$/)?.[0])
+    .filter(Boolean)
+    .map((ver) => parseInt(ver, 10))
+    .sort((a, b) => a - b)
+    .reverse()[0];
 
-    if (typeof lastVersionToIncrement !== 'undefined') {
-      const incrementedNum = lastVersionToIncrement + 1;
-      potentialVersion = `${mainPackageJson.version}.${incrementedNum}`;
-    } else {
-      potentialVersion = `${mainPackageJson.version}.0`;
-    }
-    console.warn(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
-    return potentialVersion;
-  
+  if (typeof lastVersionToIncrement !== 'undefined') {
+    const incrementedNum = lastVersionToIncrement + 1;
+    potentialVersion = `${mainPackageJson.version}.${incrementedNum}`;
+  } else {
+    potentialVersion = `${mainPackageJson.version}.0`;
+  }
+  console.warn(
+    `Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`,
+  );
+  return potentialVersion;
 }
