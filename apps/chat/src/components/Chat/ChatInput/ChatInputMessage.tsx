@@ -430,7 +430,10 @@ export const ChatInputMessage = ({
             {(selectedFiles.length > 0 ||
               selectedDialLinks.length > 0 ||
               selectedFolders.length > 0) && (
-              <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
+              <div
+                className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3"
+                data-qa="attachment-container"
+              >
                 <ChatInputAttachments
                   files={selectedFiles}
                   folders={selectedFolders}

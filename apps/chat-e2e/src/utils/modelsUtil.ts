@@ -91,6 +91,18 @@ export class ModelsUtil {
       .map((m) => m.id);
   }
 
+  public static getModelsWithAttachment() {
+    return ModelsUtil.getModels().filter(
+      (m) => m.inputAttachmentTypes !== undefined,
+    );
+  }
+
+  public static getLatestModelsWithAttachment() {
+    return ModelsUtil.getLatestModels().filter(
+      (m) => m.inputAttachmentTypes !== undefined,
+    );
+  }
+
   public static getApplication(appId: string) {
     return ModelsUtil.getApplications().find((a) => a.id === appId);
   }

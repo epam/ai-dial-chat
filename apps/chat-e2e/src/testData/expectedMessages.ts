@@ -229,4 +229,7 @@ export enum ExpectedMessages {
   scrollDownButtonIsVisible = 'Scroll down button is visible',
   scrollPositionIsCorrect = 'Scroll position is correct',
   elementPositionIsCorrect = 'Element position is correct',
+  clipIconNotAvailable = 'Clip icon is not available for the model',
+  clipIconIsAvailable = 'Clip icon is available for the model',
+  attachmentLoadingIndicatorNotVisible = 'Attachment loading indicator is not visible',
 }

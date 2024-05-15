@@ -1,10 +1,10 @@
-import { SideBarSelectors } from '@/src/ui/selectors';
+import { ChatSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export abstract class Menu extends BaseElement {
   constructor(page: Page) {
-    super(page, SideBarSelectors.dropdownMenu);
+    super(page, ChatSelectors.dropdownMenu);
   }
 
   abstract menuOptions(): BaseElement;
