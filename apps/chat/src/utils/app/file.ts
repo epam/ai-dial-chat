@@ -69,7 +69,9 @@ export const getUserCustomContent = (
     (folder: FolderInterface) => ({
       type: FOLDER_ATTACHMENT_CONTENT_TYPE,
       title: folder.name ?? folder.id,
-      url: `metadata/${ApiUtils.encodeApiUrl(`${folder.id}`)}/`,
+      url: !folder.id.startsWith('metadata/')
+        ? `metadata/${ApiUtils.encodeApiUrl(`${folder.id}`)}/`
+        : folder.id,
     }),
   );
 

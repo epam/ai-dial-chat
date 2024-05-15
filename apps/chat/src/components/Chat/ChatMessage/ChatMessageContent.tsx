@@ -274,10 +274,14 @@ export const ChatMessageContent = ({
 
     const attachments = getUserCustomContent(
       newEditableAttachments.filter(
-        (a) => !(a as unknown as FolderInterface).type,
+        (a) =>
+          !(a as unknown as FolderInterface).type &&
+          a.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
       ),
       newEditableAttachments.filter(
-        (a) => !!(a as unknown as FolderInterface).type,
+        (a) =>
+          !!(a as unknown as FolderInterface).type ||
+          a.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
       ) as unknown as FolderInterface[],
       selectedDialLinks,
     );
@@ -329,7 +333,8 @@ export const ChatMessageContent = ({
   const handleUnselectFile = useCallback(
     (fileId: string) => {
       dispatch(FilesActions.uploadFileCancel({ id: fileId }));
-      setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fileId));
+      const fid = isFolderId(fileId) ? fileId.slice(0, -1) : fileId;
+      setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fid));
     },
     [dispatch],
   );
@@ -458,7 +463,10 @@ export const ChatMessageContent = ({
 
                   {(newEditableAttachments.length > 0 ||
                     selectedDialLinks.length > 0) && (
-                    <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
+                    <div
+                      className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+                      data-qa="attachment-container"
+                    >
                       <ChatInputAttachments
                         files={fileAttachments}
                         folders={folderAttachments}

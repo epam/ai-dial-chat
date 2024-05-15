@@ -128,10 +128,12 @@ export const FileItem = ({
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
+      data-qa="attached-file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary">
-          {!isSelected && item.status !== UploadStatus.FAILED ? (
+        <div className="text-secondary" data-qa="attached-file-icon">
+          {(!canAttachFiles || !isSelected) &&
+          item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
               containerClassName={classNames(
