@@ -274,10 +274,14 @@ export const ChatMessageContent = ({
 
     const attachments = getUserCustomContent(
       newEditableAttachments.filter(
-        (a) => !(a as unknown as FolderInterface).type,
+        (a) =>
+          !(a as unknown as FolderInterface).type &&
+          a.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
       ),
       newEditableAttachments.filter(
-        (a) => !!(a as unknown as FolderInterface).type,
+        (a) =>
+          !!(a as unknown as FolderInterface).type ||
+          a.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
       ) as unknown as FolderInterface[],
       selectedDialLinks,
     );
