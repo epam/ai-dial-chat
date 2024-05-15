@@ -46,8 +46,11 @@ module.exports = {
     divideColor: commonBorderColors,
     textColor: {
       transparent: 'transparent',
-      primary: 'var(--text-primary, #F3F4F6)',
-      secondary: 'var(--text-secondary, #7F8792)',
+      'primary-bg-dark': 'var(--text-primary-bg-dark, #F3F4F6)',
+      'secondary-bg-dark': 'var(--text-secondary-bg-dark, #7F8792)',
+      'primary-bg-light': 'var(--text-primary-bg-light, #023465)',
+      'secondary-bg-light': 'var(--text-secondary-bg-light, #7F8792)',
+      'tertiary-bg-light': 'var(--text-tertiary-bg-light, #7F8792)',
       error: 'var(--text-error, #F76464)',
       'accent-primary': 'var(--text-accent-primary, #5C8DEA)',
       'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
@@ -85,7 +88,7 @@ module.exports = {
       typography: {
         DEFAULT: {
           css: {
-            color: 'var(--text-primary, #F3F4F6)',
+            color: 'var(--text-primary-bg-light, #F3F4F6)',
             a: {
               color: 'var(--text-accent-primary, #5C8DEA)',
             },

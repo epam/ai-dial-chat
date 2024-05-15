@@ -89,7 +89,7 @@ export const ChatControls: FC<Props> = ({
           width={24}
           className={classNames(
             'shrink-0 hover:text-accent-primary',
-            isError ? 'text-error' : 'text-secondary',
+            isError ? 'text-error' : 'text-secondary-bg-dark',
           )}
         />
       </Tooltip>

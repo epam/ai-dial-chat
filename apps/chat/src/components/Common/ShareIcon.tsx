@@ -44,7 +44,7 @@ export default function ShareIcon({
   );
   const containerClass = classNames(
     'relative',
-    isInvalid && 'text-secondary',
+    isInvalid && 'text-secondary-bg-dark',
     containerClassName,
   );
 

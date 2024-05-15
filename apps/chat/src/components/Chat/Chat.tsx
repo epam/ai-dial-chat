@@ -632,7 +632,7 @@ export const ChatView = memo(() => {
 
   return (
     <div
-      className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
+      className="relative min-w-0 shrink grow basis-0 overflow-y-auto text-primary-bg-light"
       data-qa="chat"
       id="chat"
     >

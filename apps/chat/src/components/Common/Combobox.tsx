@@ -140,7 +140,7 @@ export const Combobox = <T,>({
             <input
               disabled={disabled}
               placeholder={!selectedItem ? placeholder || '' : ''}
-              className="w-full bg-transparent px-3 outline-none placeholder:text-secondary"
+              className="w-full bg-transparent px-3 outline-none placeholder:text-secondary-bg-dark"
               style={{
                 ...(selectedItemRef.current && {
                   height: `${selectedItemRef.current.clientHeight}px`,

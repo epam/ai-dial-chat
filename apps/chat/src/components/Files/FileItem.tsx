@@ -114,7 +114,7 @@ export const FileItem = ({
       }}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary">
+        <div className="text-secondary-bg-dark">
           {!isSelected && item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
@@ -190,7 +190,7 @@ export const FileItem = ({
         {item.status === UploadStatus.FAILED && (
           <button onClick={handleRetry}>
             <IconReload
-              className="shrink-0 text-secondary hover:text-accent-primary"
+              className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
               size={18}
             />
           </button>
@@ -198,7 +198,7 @@ export const FileItem = ({
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
             <IconX
-              className="shrink-0 text-secondary hover:text-accent-primary"
+              className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
               size={18}
             />
           </button>

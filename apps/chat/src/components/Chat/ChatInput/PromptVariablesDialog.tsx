@@ -142,7 +142,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         )}
 
         <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+          className="absolute right-2 top-2 rounded text-secondary-bg-dark hover:text-accent-primary"
           onClick={onClose}
         >
           <IconX size={24} />
@@ -150,7 +150,7 @@ export const PromptVariablesDialog: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
-            <div className="mb-1 flex text-xs text-secondary">
+            <div className="mb-1 flex text-xs text-secondary-bg-dark">
               {variable.key}
               <span className="ml-1 inline text-accent-primary">*</span>
             </div>

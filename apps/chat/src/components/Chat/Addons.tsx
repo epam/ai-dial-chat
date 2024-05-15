@@ -55,7 +55,7 @@ const Addon = ({
       <ModelIcon entity={addonsMap[addonId]} entityId={addonId} size={15} />
       <span>{addonsMap[addonId]?.name || addonId}</span>
       {isSelected && !preselectedAddonsIds.includes(addonId) && (
-        <IconX size={14} className="text-secondary" />
+        <IconX size={14} className="text-secondary-bg-dark" />
       )}
     </button>
   );
@@ -145,7 +145,7 @@ export const Addons = ({
       {(selectedAddonsIds?.filter((id) => addonsMap[id]).length > 0 ||
         preselectedAddonsIds?.length > 0) && (
         <>
-          <span className="text-secondary">{t('Selected')}</span>
+          <span className="text-secondary-bg-dark">{t('Selected')}</span>
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => (
               <Addon
@@ -179,7 +179,7 @@ export const Addons = ({
         <>
           {filteredRecentAddons?.length > 0 && (
             <>
-              <span className="text-secondary">{t('Recent')}</span>
+              <span className="text-secondary-bg-dark">{t('Recent')}</span>
               <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
                   .map((addon) => (
@@ -200,7 +200,7 @@ export const Addons = ({
             <button
               disabled={disabled}
               className={classNames(
-                'mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed',
+                'mt-3 inline text-left text-secondary-bg-light hover:text-accent-primary disabled:cursor-not-allowed',
               )}
               onClick={() => {
                 setIsAddonsDialogOpen(true);

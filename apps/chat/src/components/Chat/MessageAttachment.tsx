@@ -221,11 +221,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               <Link
                 height={18}
                 width={18}
-                className="text-secondary hover:text-accent-primary"
+                className="text-secondary-bg-dark hover:text-accent-primary"
               />
             </a>
           ) : (
-            <IconPaperclip size={18} className="shrink-0 text-secondary" />
+            <IconPaperclip size={18} className="shrink-0 text-secondary-bg-dark" />
           )}
         </div>
         <button
@@ -253,7 +253,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                   download={attachment.title}
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
-                  className="text-secondary hover:text-accent-primary"
+                  className="text-secondary-bg-dark hover:text-accent-primary"
                 >
                   <IconDownload size={18} />
                 </a>
@@ -262,7 +262,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 height={18}
                 width={18}
                 className={classNames(
-                  'shrink-0 text-secondary transition',
+                  'shrink-0 text-secondary-bg-dark transition',
                   isOpened && 'rotate-180',
                 )}
               />
@@ -273,7 +273,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               href={mappedAttachmentUrl}
               onClick={stopBubbling}
               target="_blank"
-              className="text-secondary hover:text-accent-primary"
+              className="text-secondary-bg-dark hover:text-accent-primary"
             >
               <IconDownload size={18} />
             </a>

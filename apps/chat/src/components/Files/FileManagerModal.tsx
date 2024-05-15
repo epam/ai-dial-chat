@@ -318,11 +318,11 @@ export const FileManagerModal = ({
               placeholder={t('Search files') || ''}
               type="text"
               onChange={handleSearch}
-              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary-bg-dark focus-visible:border-accent-primary"
             ></input>
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
-                className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
+                className="flex items-center gap-1 rounded py-1 text-xs text-secondary-bg-dark"
                 onClick={() => handleToggleFolder(getRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
@@ -397,7 +397,7 @@ export const FileManagerModal = ({
             <>
               <button
                 onClick={handleStartDeleteMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+                className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
                 <Tooltip tooltip="Delete files" isTriggerClickable>
                   <IconTrash size={24} />
@@ -405,7 +405,7 @@ export const FileManagerModal = ({
               </button>
               <button
                 onClick={handleDownloadMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+                className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha  hover:text-accent-primary"
               >
                 <Tooltip tooltip="Download files" isTriggerClickable>
                   <IconDownload size={24} />
@@ -415,7 +415,7 @@ export const FileManagerModal = ({
           ) : (
             <button
               onClick={handleNewFolder}
-              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha  hover:text-accent-primary"
             >
               <FolderPlus height={24} width={24} />
             </button>

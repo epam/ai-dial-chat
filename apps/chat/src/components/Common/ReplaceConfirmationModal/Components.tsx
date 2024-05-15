@@ -177,7 +177,7 @@ interface PromptViewProps {
 const PromptView = ({ item: prompt }: PromptViewProps) => {
   return (
     <FeatureContainer>
-      <IconBulb size={18} className="text-secondary" />
+      <IconBulb size={18} className="text-secondary-bg-dark" />
       <Tooltip
         tooltip={prompt.name}
         triggerClassName="truncate text-center w-full"
@@ -221,7 +221,7 @@ interface FileViewProps {
 const FileView = ({ item: file }: FileViewProps) => {
   return (
     <FeatureContainer>
-      <IconFile size={18} className="text-secondary" />
+      <IconFile size={18} className="text-secondary-bg-dark" />
       <Tooltip
         tooltip={file.name}
         triggerClassName="truncate text-center w-full"

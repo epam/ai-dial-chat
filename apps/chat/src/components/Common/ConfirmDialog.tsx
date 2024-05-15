@@ -46,7 +46,7 @@ export const ConfirmDialog = ({
               <p
                 id={descriptionId}
                 data-qa="confirm-message"
-                className="whitespace-pre-wrap text-secondary"
+                className="whitespace-pre-wrap text-secondary-bg-dark"
               >
                 {description}
               </p>

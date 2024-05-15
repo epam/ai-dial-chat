@@ -38,13 +38,13 @@ export default function Search({
   return (
     <div className="relative flex items-center py-1 pl-5 pr-2" data-qa="search">
       <IconSearch
-        className="absolute left-5 text-secondary"
+        className="absolute left-5"
         size={18}
         width={18}
         height={18}
       />
       <input
-        className="w-full bg-transparent px-8 py-2 text-[14px] leading-3 outline-none placeholder:text-secondary"
+        className="w-full bg-transparent px-8 py-2 text-[14px] leading-3 outline-none placeholder:text-primary-bg-dark"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}

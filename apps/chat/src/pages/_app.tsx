@@ -78,7 +78,7 @@ function App({
                     <div
                       className={classNames(
                         'mx-0.5 whitespace-pre-wrap text-sm leading-[21px] *:!whitespace-pre-wrap',
-                        t.type === 'error' ? 'text-error' : 'text-primary',
+                        t.type === 'error' ? 'text-error' : 'text-primary-bg-dark',
                       )}
                     >
                       {message}
@@ -88,7 +88,7 @@ function App({
                         <IconX
                           stroke={1}
                           size={24}
-                          className="text-secondary"
+                          className="text-secondary-bg-dark"
                         />
                       </button>
                     )}

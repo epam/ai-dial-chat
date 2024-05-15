@@ -66,7 +66,7 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
     <div
       className={classNames(
         'flex items-center gap-2',
-        isNotAllowed && 'text-secondary',
+        isNotAllowed && 'text-secondary-bg-light',
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
@@ -221,7 +221,7 @@ export const ConversationSettings = ({
         </div>
         {isCloseEnabled && (
           <button
-            className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
+            className="absolute right-3 top-3 text-secondary-bg-dark hover:text-accent-primary"
             onClick={onClose}
           >
             <IconX height={24} width={24} />

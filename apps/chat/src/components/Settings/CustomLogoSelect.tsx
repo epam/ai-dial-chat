@@ -36,7 +36,7 @@ export const CustomLogoSelect = ({
         <div
           className={classNames(
             'block w-full max-w-full truncate',
-            localLogo ? 'text-primary' : 'text-secondary',
+            localLogo ? 'text-primary-bg-dark' : 'text-secondary-bg-dark',
           )}
         >
           {localLogo ? localLogo : t('No custom logo')}
@@ -50,7 +50,7 @@ export const CustomLogoSelect = ({
               onClick={onDeleteLocalLogoHandler}
               className="text-accent-primary"
             >
-              <IconTrash className="text-secondary" size={18} />
+              <IconTrash className="text-secondary-bg-dark" size={18} />
             </button>
           )}
         </div>

@@ -323,7 +323,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
           >
-            <IconBulb size={18} className="text-secondary" />
+            <IconBulb size={18} />
           </ShareIcon>
 
           <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
@@ -334,7 +334,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               hideTooltip={!isNameOrPathInvalid}
               triggerClassName={classNames(
                 'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-                isNameOrPathInvalid && 'text-secondary',
+                isNameOrPathInvalid && 'text-secondary-bg-dark',
               )}
             >
               <span

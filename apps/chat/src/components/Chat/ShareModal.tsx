@@ -86,10 +86,10 @@ export default function ShareModal() {
       heading={`${t('Share')}: ${shareResourceName?.trim()}`}
     >
       <div className="flex flex-col justify-between gap-2">
-        <p className="text-sm text-secondary">
+        <p className="text-sm text-secondary-bg-dark">
           {t('share.modal.link.description')}
         </p>
-        <p className="text-sm text-secondary">
+        <p className="text-sm text-secondary-bg-dark">
           {t('share.modal.link', { context: sharingType })}
         </p>
         <div className="relative mt-2">
@@ -106,7 +106,7 @@ export default function ShareModal() {
           <div className="absolute right-3 top-3">
             {urlCopied ? (
               <Tooltip tooltip={t('Copied!')}>
-                <IconCheck size={20} className="text-secondary" />
+                <IconCheck size={20} className="text-secondary-bg-dark" />
               </Tooltip>
             ) : (
               <Tooltip tooltip={t('Copy URL')}>
@@ -119,7 +119,7 @@ export default function ShareModal() {
                   <IconCopy
                     height={20}
                     width={20}
-                    className="text-secondary hover:text-accent-primary"
+                    className="text-secondary-bg-dark hover:text-accent-primary"
                   />
                 </button>
               </Tooltip>

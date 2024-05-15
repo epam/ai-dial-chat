@@ -93,7 +93,7 @@ export const ConversationSettingsModel = ({
             <button className="flex items-center gap-3 rounded border border-accent-primary p-3 text-left text-xs">
               <ModelIcon entityId="" entity={undefined} size={24} isSmallIconSize={false} />
               <div className="flex flex-col gap-1">
-                <span className="text-secondary" data-qa="group-entity-name">
+                <span className="text-secondary-bg-light" data-qa="group-entity-name">
                   {unavailableModelId}
                 </span>
                 <span className="text-error" data-qa="group-entity-descr">
@@ -125,7 +125,7 @@ export const ConversationSettingsModel = ({
       </div>
       <button
         disabled={isPlayback}
-        className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
+        className="mt-3 inline text-left text-secondary-bg-light hover:text-accent-primary disabled:cursor-not-allowed"
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >

@@ -172,7 +172,7 @@ export const SystemPrompt: FC<Props> = ({
         {disabled && <DisableOverlay />}
         <AdjustedTextarea
           ref={textareaRef}
-          className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
+          className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary-bg-dark focus-within:border-accent-primary"
           placeholder={t('Type a text or «/» to use a prompt...') || ''}
           maxHeight={MAX_HEIGHT}
           value={content}

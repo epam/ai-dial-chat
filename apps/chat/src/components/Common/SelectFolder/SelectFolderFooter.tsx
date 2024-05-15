@@ -20,12 +20,12 @@ export const SelectFolderFooter = ({
       <div className="flex items-center justify-center">
         <button
           onClick={handleNewFolder}
-          className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+          className="flex size-[34px] items-center justify-center rounded text-secondary-bg-dark hover:bg-accent-primary-alpha hover:text-accent-primary"
         >
           <FolderPlus
             height={24}
             width={24}
-            className="text-secondary hover:text-accent-primary"
+            className="text-secondary-bg-dark hover:text-accent-primary"
           />
         </button>
       </div>

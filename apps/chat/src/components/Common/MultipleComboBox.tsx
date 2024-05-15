@@ -247,7 +247,7 @@ export function MultipleComboBox<T>({
                         removeSelectedItem(selectedItemForRender);
                       }}
                     >
-                      <IconX size={14} className="text-secondary" />
+                      <IconX size={14} className="text-secondary-bg-dark" />
                     </span>
                   </span>
                 );
@@ -258,7 +258,7 @@ export function MultipleComboBox<T>({
               disabled={disabled}
               placeholder={selectedItems.length ? '' : placeholder || ''}
               className={classNames(
-                'w-max min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
+                'w-max min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary-bg-dark',
                 selectedItems.length ? 'pl-1' : 'pl-2',
               )}
               {...getInputProps({

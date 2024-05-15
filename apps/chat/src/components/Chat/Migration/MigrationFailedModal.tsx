@@ -283,7 +283,7 @@ export const MigrationFailedWindow = ({
                 ? t('Now your data will be available on all your devices')
                 : t('Some items failed to migrate, retry migration?')}
             </h1>
-            <p className="mt-2 text-secondary">
+            <p className="mt-2 text-secondary-bg-dark">
               {showSelectToMigrateWindow ? (
                 <>
                   {t('All current conversations')}
@@ -362,7 +362,7 @@ export const MigrationFailedWindow = ({
               failedMigratedEntities={failedMigratedPrompts}
               getModelIcon={() => (
                 <div className="flex items-center">
-                  <IconBulb size={18} className="text-secondary" />
+                  <IconBulb size={18} className="text-secondary-bg-dark" />
                 </div>
               )}
               withPt={!!failedMigratedConversations.length}
@@ -389,7 +389,7 @@ export const MigrationFailedWindow = ({
                     />
                   )}
                 </div>
-                <p className="text-secondary">
+                <p className="text-secondary-bg-dark">
                   {t(
                     "I don't want to backup conversations/prompts and I’m ready ",
                   )}
@@ -410,7 +410,7 @@ export const MigrationFailedWindow = ({
                       className="mr-3 text-accent-secondary"
                     />
                   ) : (
-                    <IconDownload size={18} className="mr-3 text-secondary" />
+                    <IconDownload size={18} className="mr-3 text-secondary-bg-dark" />
                   )}
                   {!isScreenSmall && t('Backup')} {t('prompts')}
                 </button>
@@ -427,7 +427,7 @@ export const MigrationFailedWindow = ({
                       className="mr-3 text-accent-secondary"
                     />
                   ) : (
-                    <IconDownload size={18} className="mr-3 text-secondary" />
+                    <IconDownload size={18} className="mr-3 text-secondary-bg-dark" />
                   )}
                   {!isScreenSmall && t('Backup')} {t('chats')}
                 </button>
@@ -444,7 +444,7 @@ export const MigrationFailedWindow = ({
           </footer>
         </div>
       </div>
-      <p className="mt-6 text-secondary">
+      <p className="mt-6 text-secondary-bg-dark">
         {t('If you have a problem please ')}
         <button
           onClick={() => setIsReportIssueDialogOpen(true)}

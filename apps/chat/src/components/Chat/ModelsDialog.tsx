@@ -169,13 +169,13 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       overlayClassName="fixed inset-0 top-[48px]"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose
-      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px] bg-layer-2"
     >
       <div className="flex justify-between px-3 md:px-5">
         {t('Talk to')}
         <button
           onClick={onClose}
-          className="text-secondary hover:text-accent-primary"
+          className="text-secondary-bg-dark hover:text-accent-primary"
           data-qa="close-models-dialog"
         >
           <IconX height={24} width={24} />
@@ -190,7 +190,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           onChange={(e) => {
             handleSearch(e.target.value);
           }}
-          className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary-bg-dark focus-visible:border-accent-primary"
         ></input>
       </div>
 
