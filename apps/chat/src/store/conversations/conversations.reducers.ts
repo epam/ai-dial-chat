@@ -114,7 +114,7 @@ export const conversationsSlice = createSlice({
     getSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
     initFoldersAndConversationsSuccess: (state) => {
-      state.initFoldersAndConversations = true
+      state.initFoldersAndConversations = true;
     },
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (

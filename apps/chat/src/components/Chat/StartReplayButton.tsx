@@ -35,7 +35,11 @@ export const StartReplayButton = () => {
       onClick={handleReplayStart}
       data-qa="start-replay"
     >
-      <Play height={18} width={18} className="shrink-0 text-secondary-bg-dark" />
+      <Play
+        height={18}
+        width={18}
+        className="shrink-0 text-secondary-bg-dark"
+      />
       <span>{t('Start replay')}</span>
     </button>
   );

@@ -11,15 +11,16 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
+import { TEMPERATURE_TOOLTIP } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+
+import { TooltipContainer } from '@/src/components/Common/TooltipContainer';
 
 import { DisableOverlay } from '../Common/DisableOverlay';
 
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { HandleProps } from 'rc-slider/lib/Handles/Handle';
-import { TEMPERATURE_TOOLTIP } from "@/src/constants/chat";
-import { TooltipContainer } from "@/src/components/Common/TooltipContainer";
 
 interface TemperatureIndicatorProps extends HandleProps {
   onKeyDown: KeyboardEventHandler<HTMLDivElement>;
@@ -37,7 +38,7 @@ const TemperatureIndicator = ({
 }: TemperatureIndicatorProps) => {
   return (
     <div
-      className="absolute top-[calc(50%-20px)] flex size-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 shadow text-primary-bg-dark"
+      className="absolute top-[calc(50%-20px)] flex size-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 text-primary-bg-dark shadow"
       style={style}
       onKeyDown={onKeyDown}
       onMouseDown={onMouseDown}

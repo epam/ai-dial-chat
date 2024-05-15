@@ -410,7 +410,10 @@ export const MigrationFailedWindow = ({
                       className="mr-3 text-accent-secondary"
                     />
                   ) : (
-                    <IconDownload size={18} className="mr-3 text-secondary-bg-dark" />
+                    <IconDownload
+                      size={18}
+                      className="mr-3 text-secondary-bg-dark"
+                    />
                   )}
                   {!isScreenSmall && t('Backup')} {t('prompts')}
                 </button>
@@ -427,7 +430,10 @@ export const MigrationFailedWindow = ({
                       className="mr-3 text-accent-secondary"
                     />
                   ) : (
-                    <IconDownload size={18} className="mr-3 text-secondary-bg-dark" />
+                    <IconDownload
+                      size={18}
+                      className="mr-3 text-secondary-bg-dark"
+                    />
                   )}
                   {!isScreenSmall && t('Backup')} {t('chats')}
                 </button>

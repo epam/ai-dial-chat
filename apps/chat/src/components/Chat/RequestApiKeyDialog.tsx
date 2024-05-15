@@ -399,7 +399,10 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       </div>
 
       <div>
-        <label className="mb-1 text-xs text-secondary-bg-dark" htmlFor="scenarioInput">
+        <label
+          className="mb-1 text-xs text-secondary-bg-dark"
+          htmlFor="scenarioInput"
+        >
           <span>6.</span>
           <span className="ml-1">
             {t(

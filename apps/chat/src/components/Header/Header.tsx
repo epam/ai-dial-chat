@@ -16,15 +16,14 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
+import PrimaryLogo from '../../../public/images/icons/primary-logo.svg';
+import SecondaryLogo from '../../../public/images/icons/secondary-logo.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
-import PrimaryLogo from '../../../public/images/icons/primary-logo.svg';
-import SecondaryLogo from '../../../public/images/icons/secondary-logo.svg';
 
 import { Feature } from '@epam/ai-dial-shared';
-// import cssEscape from 'css.escape';
 
 const DEFAULT_HEADER_ICON_SIZE = 24;
 const OVERLAY_HEADER_ICON_SIZE = 18;
@@ -120,7 +119,6 @@ const Header = () => {
       )}
       <div className="flex grow justify-between">
         <div className="flex grow justify-center md:justify-start">
-
           {/* Comment this previous solution to revert changes
               in case we need to apply logo icon for more than one theme
           <span>
@@ -135,17 +133,23 @@ const Header = () => {
             }}
           ></span> */}
 
-          <PrimaryLogo className='md:ml-5 mr-3 self-center' width={31} height={30}/>
-          <div className='border-r my-3 border-primary'/>
-          <SecondaryLogo className='ml-3 self-center' width={25} height={30}/>
-          <span className='ml-2 md:mr-3 flex flex-wrap content-center text-xl'>prGPT</span>
-          <span className='border-r my-3 border-primary hidden md:inline-block'/>
-          <span className='ml-2 flex-wrap content-center text-s hidden md:flex'>
+          <PrimaryLogo
+            className="mr-3 self-center md:ml-5"
+            width={31}
+            height={30}
+          />
+          <div className="my-3 border-r border-primary" />
+          <SecondaryLogo className="ml-3 self-center" width={25} height={30} />
+          <span className="ml-2 flex flex-wrap content-center text-xl md:mr-3">
+            prGPT
+          </span>
+          <span className="my-3 hidden border-r border-primary md:inline-block" />
+          <span className="ml-2 hidden flex-wrap content-center text-s md:flex">
             {t('Your secured IA assistant within Pernod Ricard environment')}
           </span>
         </div>
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User/>
+          <User />
         </div>
       </div>
 

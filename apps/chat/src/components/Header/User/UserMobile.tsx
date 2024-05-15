@@ -36,7 +36,11 @@ const UserInfo = () => {
             alt={t('User avatar') || ''}
           />
         ) : (
-          <UserIcon className="mx-2 text-primary-bg-dark" width={18} height={18} />
+          <UserIcon
+            className="mx-2 text-primary-bg-dark"
+            width={18}
+            height={18}
+          />
         )}
 
         <span className="grow">{session?.user?.name ?? ''}</span>

@@ -30,14 +30,7 @@ function ContextMenuItemRenderer({
         !!childMenuItems && className,
       )}
     >
-      {Icon && (
-        <Icon
-          className="shrink-0"
-          size={18}
-          height={18}
-          width={18}
-        />
-      )}
+      {Icon && <Icon className="shrink-0" size={18} height={18} width={18} />}
       <span className="truncate break-words">{name}</span>
     </div>
   );

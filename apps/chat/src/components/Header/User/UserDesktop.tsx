@@ -40,7 +40,7 @@ export const UserDesktop = () => {
             className="flex min-w-[120px] items-center justify-end gap-2 pr-3 hover:text-accent-primary"
             data-qa="account-settings"
           >
-            <span >{session?.user?.name || t('User')}</span>
+            <span>{session?.user?.name || t('User')}</span>
 
             <div className="flex items-center gap-3">
               {session?.user?.image ? (
