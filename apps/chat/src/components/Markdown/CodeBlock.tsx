@@ -78,7 +78,7 @@ export const CodeBlock: FC<Props> = memo(
 
     return (
       <div
-        className={`codeblock text-primary-bg-dark relative overflow-hidden rounded border border-secondary font text-sm`}
+        className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text-primary-bg-dark`}
       >
         <div
           className={`flex items-center justify-between border-b border-secondary p-3 ${

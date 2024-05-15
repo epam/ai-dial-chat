@@ -217,7 +217,7 @@ const Sidebar = <T,>({
           <>
             <Search
               placeholder={t('Search {{name}}', {
-                name: featureType
+                name: featureType,
               })}
               searchTerm={searchTerm}
               searchFilters={searchFilters}
