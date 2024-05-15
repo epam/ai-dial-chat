@@ -1,6 +1,7 @@
 import config from '../../config/chat.playwright.config';
 import { DialHomePage } from '../ui/pages';
 import {
+  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -49,6 +50,7 @@ import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
 import { GroupEntity } from '@/src/ui/webElements/groupEntity';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
+import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { Playback } from '@/src/ui/webElements/playback';
@@ -61,6 +63,7 @@ import { Search } from '@/src/ui/webElements/search';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
+import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { allure } from 'allure-playwright';
 import path from 'path';
@@ -91,6 +94,8 @@ const dialTest = test.extend<
     chat: Chat;
     chatMessages: ChatMessages;
     sendMessage: SendMessage;
+    sendMessageAttachmentDropdownMenu: DropdownMenu;
+    sendMessageInputAttachments: InputAttachments;
     conversations: Conversations;
     prompts: Prompts;
     folderConversations: FolderConversations;
@@ -155,6 +160,8 @@ const dialTest = test.extend<
     additionalSecondUserShareApiHelper: ShareApiHelper;
     additionalSecondUserItemApiHelper: ItemApiHelper;
     chatNotFound: ChatNotFound;
+    attachFilesModal: AttachFilesModal;
+    uploadFromDeviceModal: UploadFromDeviceModal;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -243,6 +250,14 @@ const dialTest = test.extend<
   sendMessage: async ({ chat }, use) => {
     const sendMessage = chat.getSendMessage();
     await use(sendMessage);
+  },
+  sendMessageAttachmentDropdownMenu: async ({ sendMessage }, use) => {
+    const sendMessageAttachmentDropdownMenu = sendMessage.getDropdownMenu();
+    await use(sendMessageAttachmentDropdownMenu);
+  },
+  sendMessageInputAttachments: async ({ sendMessage }, use) => {
+    const sendMessageInputAttachments = sendMessage.getInputAttachments();
+    await use(sendMessageInputAttachments);
   },
   conversations: async ({ chatBar }, use) => {
     const conversations = chatBar.getConversations();
@@ -536,6 +551,14 @@ const dialTest = test.extend<
       additionalSecondShareUserRequestContext,
     );
     await use(additionalSecondUserItemApiHelper);
+  },
+  attachFilesModal: async ({ page }, use) => {
+    const attachFilesModal = new AttachFilesModal(page);
+    await use(attachFilesModal);
+  },
+  uploadFromDeviceModal: async ({ page }, use) => {
+    const uploadFromDeviceModal = new UploadFromDeviceModal(page);
+    await use(uploadFromDeviceModal);
   },
 });
 

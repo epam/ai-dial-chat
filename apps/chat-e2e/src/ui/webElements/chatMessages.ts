@@ -369,6 +369,10 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.textarea);
   }
 
+  public getChatMessageClipIcon(message: string) {
+    return this.getChatMessage(message).locator(ChatSelectors.menuTrigger);
+  }
+
   public async isChatMessageCodeVisible(message: number | string) {
     return this.getChatMessage(message)
       .locator(ChatSelectors.codeblock)

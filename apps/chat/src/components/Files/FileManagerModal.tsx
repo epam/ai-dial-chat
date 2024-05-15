@@ -604,6 +604,7 @@ export const FileManagerModal = ({
               disabled={
                 selectedFilesIds.length === 0 && selectedFolderIds.length === 0
               }
+              data-qa="attach-files"
             >
               {customButtonLabel}
             </button>
