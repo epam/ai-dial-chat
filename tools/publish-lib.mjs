@@ -158,9 +158,25 @@ try {
 execSync(`npm publish --access public --tag ${tag} --dry-run ${dry}`);
 
 function getDevVersion(potentialVersion) {
+  let result;
   try{
-    const result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());
-    const lastVersionToIncrement = result
+    result = JSON.parse(execSync(`npm view ${PREFIX}-${name} versions --json`).toString());    
+  }catch(e){
+
+    if(JSON.parse(e.stdout).error.code === 'E40'){
+      console.warn(`Could not get versions from registry. Version from package.json will be used.\n `);
+
+      result =[];
+            
+      console.warn(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
+      return potentialVersion;
+    }
+
+    throw new Error(`Could not get versions from registry.`);
+    
+  }
+
+  const lastVersionToIncrement = result
       .filter(ver => ver.startsWith(mainPackageJson.version))
       .map(ver => ver.match(/\d+$/)?.[0])
       .filter(Boolean)
@@ -174,21 +190,7 @@ function getDevVersion(potentialVersion) {
     } else {
       potentialVersion = `${mainPackageJson.version}.0`;
     }
-    console.log(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
+    console.warn(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
     return potentialVersion;
-    
-  }catch(e){
-    if(JSON.parse(e.stdout).error.code === 'E404'){
-      console.error(`Could not get versions from registry. Version from package.json will be used.\n `);
-      
-      potentialVersion = `${mainPackageJson.version}.0`;
-      
-      console.log(`Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`);
-      return potentialVersion;
-    }
-
-    console.error(`Could not get versions from registry.`);
-    
-  }
   
 }
