@@ -173,14 +173,10 @@ function getDevVersion(potentialVersion) {
       );
 
       result = [];
-
-      console.warn(
-        `Version of development package for ${PREFIX + '-' + name} will be: ${potentialVersion}`,
-      );
-      return potentialVersion;
+    } else {
+      console.log('CODE', JSON.parse(e.stdout).error.code);
+      throw new Error(`Could not get versions from registry.`);
     }
-
-    throw new Error(`Could not get versions from registry.`);
   }
 
   const lastVersionToIncrement = result
