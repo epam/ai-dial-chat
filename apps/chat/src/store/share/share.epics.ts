@@ -36,6 +36,7 @@ import {
 } from '@/src/types/share';
 import { AppEpic } from '@/src/types/store';
 
+import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -55,7 +56,11 @@ const getInternalResourcesUrls = (
   return (messages
     ?.map((message) =>
       message.custom_content?.attachments
-        ?.map((attachment) => attachment.url)
+        ?.map((attachment) =>
+          attachment.url && attachment.type === PLOTLY_CONTENT_TYPE
+            ? ApiUtils.encodeApiUrl(attachment.url)
+            : attachment.url,
+        )
         .filter(Boolean)
         .filter((url) => url && !isAttachmentLink(url)),
     )
@@ -118,7 +123,7 @@ const shareConversationEpic: AppEpic = (action$) =>
                 url: ApiUtils.encodeApiUrl(payload.resourceId),
               },
               ...internalResources.map((res) => ({
-                url: ApiUtils.encodeApiUrl(res),
+                url: res,
               })),
             ],
           }).pipe(
