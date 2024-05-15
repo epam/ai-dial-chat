@@ -13,7 +13,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-// import ChevronDownIcon from '../../../../public/images/icons/chevron-down.svg';
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user-new.svg';
 
@@ -55,6 +54,7 @@ export const UserDesktop = () => {
                 <UserIcon width={30} height={30} />
               )}
             </div>
+            {/* PGPT-87 According to the design we temporarily do not need this icon*/}
             {/*<ChevronDownIcon*/}
             {/*  className={`shrink-0 text-primary-bg-dark transition-all ${*/}
             {/*    isOpen ? 'rotate-180' : ''*/}

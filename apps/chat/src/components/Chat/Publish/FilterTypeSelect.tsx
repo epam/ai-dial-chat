@@ -46,7 +46,7 @@ export function FilterTypeSelect({
             <IconChevronDown
               data-qa={`open-filter-dropdown-${id}`}
               className={classNames(
-                'text-primary-bg-dark shrink-0 transition-all',
+                'shrink-0 text-primary-bg-dark transition-all',
                 isOpen && 'rotate-180',
               )}
               width={18}
