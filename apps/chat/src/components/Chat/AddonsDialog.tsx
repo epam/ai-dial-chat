@@ -56,7 +56,12 @@ const Addon = ({
       }}
     >
       <div className="flex items-center gap-2">
-        <ModelIcon entity={addon} entityId={addon.id} size={24} isSmallIconSize={false} />
+        <ModelIcon
+          entity={addon}
+          entityId={addon.id}
+          size={24}
+          isSmallIconSize={false}
+        />
         <span className="whitespace-pre text-left" data-qa="addon-name">
           {addon.name}
         </span>
@@ -98,7 +103,10 @@ const SelectedAddon = ({
       <ModelIcon entity={addon} entityId={addon.id} size={15} />
       <span>{addon.name}</span>
       {!isPreselected && (
-        <IconX size={14} className="text-secondary-bg-dark hover:text-accent-primary" />
+        <IconX
+          size={14}
+          className="text-secondary-bg-dark hover:text-accent-primary"
+        />
       )}
     </button>
   );
@@ -246,7 +254,9 @@ export const AddonsDialog: FC<Props> = ({
           )}
           {displayedAddons?.length > 0 ? (
             <div className="flex shrink grow flex-col gap-3 overflow-auto">
-              <span className="text-secondary-bg-dark">{t('Search results')}</span>
+              <span className="text-secondary-bg-dark">
+                {t('Search results')}
+              </span>
 
               <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
                 {displayedAddons.map((addon) => (

@@ -336,7 +336,9 @@ export const PreUploadDialog = ({
 
         <div className="flex flex-col gap-1">
           <div>
-            <span className="text-xs text-secondary-bg-dark">{t('Upload to')}</span>
+            <span className="text-xs text-secondary-bg-dark">
+              {t('Upload to')}
+            </span>
             <span className="text-xs text-accent-primary">&nbsp;*</span>
           </div>
           <button
@@ -353,7 +355,9 @@ export const PreUploadDialog = ({
         {selectedFiles.length !== 0 && (
           <div className="flex flex-col gap-1 overflow-auto">
             <div>
-              <span className="text-xs text-secondary-bg-dark">{t('Files')}</span>
+              <span className="text-xs text-secondary-bg-dark">
+                {t('Files')}
+              </span>
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
             <div className="flex flex-col gap-3 overflow-auto text-sm">

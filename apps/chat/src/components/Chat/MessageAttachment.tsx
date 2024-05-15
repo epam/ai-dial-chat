@@ -225,7 +225,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               />
             </a>
           ) : (
-            <IconPaperclip size={18} className="shrink-0 text-secondary-bg-dark" />
+            <IconPaperclip
+              size={18}
+              className="shrink-0 text-secondary-bg-dark"
+            />
           )}
         </div>
         <button

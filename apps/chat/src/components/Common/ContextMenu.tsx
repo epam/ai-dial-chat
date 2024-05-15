@@ -30,14 +30,7 @@ function ContextMenuItemRenderer({
         !!childMenuItems && className,
       )}
     >
-      {Icon && (
-        <Icon
-          className="shrink-0"
-          size={18}
-          height={18}
-          width={18}
-        />
-      )}
+      {Icon && <Icon className="shrink-0" size={18} height={18} width={18} />}
       <span className="truncate break-words">{name}</span>
     </div>
   );
@@ -121,7 +114,7 @@ export default function ContextMenu({
         <div
           data-qa="menu-trigger"
           className={classNames(
-            'flex w-full items-center justify-center rounded text-secondary-bg-dark',
+            'flex w-full items-center justify-center rounded text-primary-bg-dark',
             triggerIconHighlight && 'hover:text-accent-primary',
             className,
           )}

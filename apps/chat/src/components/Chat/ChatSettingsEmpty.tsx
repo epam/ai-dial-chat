@@ -8,10 +8,14 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import {
+  CONVERSATION_SETTINGS_SUB_TITLE,
+  CONVERSATION_SETTINGS_TITLE,
+} from '@/src/constants/chat';
+
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 import { ModelDescription } from './ModelDescription';
-import { CONVERSATION_SETTINGS_SUB_TITLE, CONVERSATION_SETTINGS_TITLE } from "@/src/constants/chat";
 
 interface Props {
   isModels: boolean;
@@ -80,14 +84,16 @@ export const ChatSettingsEmpty = ({
               {/*    </h4>*/}
               {/*  </div>*/}
               {/*)}*/}
-              <div className="pt-4" style={{ paddingBottom: '20px'}}>
+              <div className="pt-4" style={{ paddingBottom: '20px' }}>
                 <h4
                   data-qa="conversation-settings-title"
-                  className="w-full whitespace-pre text-center text-xl font-semibold mb-4"
+                  className="mb-4 w-full whitespace-pre text-center text-xl font-semibold"
                 >
                   {CONVERSATION_SETTINGS_TITLE}
                 </h4>
-                <div className="text-center">{CONVERSATION_SETTINGS_SUB_TITLE}</div>
+                <div className="text-center">
+                  {CONVERSATION_SETTINGS_SUB_TITLE}
+                </div>
               </div>
             </>
           )}

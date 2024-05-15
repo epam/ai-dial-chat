@@ -44,7 +44,10 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
         }}
       >
         {!isConversationsLoaded || isActiveNewConversationRequest ? (
-          <Spinner size={iconSize} className="cursor-pointer text-primary-bg-dark" />
+          <Spinner
+            size={iconSize}
+            className="cursor-pointer text-primary-bg-dark"
+          />
         ) : (
           <CirclePlusIcon
             className="cursor-pointer text-primary-bg-dark"

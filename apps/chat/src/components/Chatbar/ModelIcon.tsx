@@ -56,13 +56,13 @@ const ModelIconTemplate = memo(
           src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
-          height='100%'
+          height="100%"
           description={description}
         >
           <SVG
             src={fallbackUrl}
             width={size}
-            height='100%'
+            height="100%"
             description={description}
           />
         </SVG>

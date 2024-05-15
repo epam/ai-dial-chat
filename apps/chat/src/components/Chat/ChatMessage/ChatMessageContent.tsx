@@ -320,9 +320,7 @@ export const ChatMessageContent = ({
   return (
     <div
       ref={messageRef}
-      className={classNames(
-        'group h-full md:px-4 xl:px-8',
-      )}
+      className={classNames('group h-full md:px-4 xl:px-8')}
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
@@ -353,7 +351,8 @@ export const ChatMessageContent = ({
                   undefined
                 }
                 animate={isShowResponseLoader}
-                size={chatIconSize} isSmallIconSize={false}
+                size={chatIconSize}
+                isSmallIconSize={false}
               />
             ) : (
               <IconUser size={chatIconSize} />

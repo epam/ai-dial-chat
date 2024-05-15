@@ -13,9 +13,8 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import ChevronDownIcon from '../../../../public/images/icons/chevron-down.svg';
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
-import UserIcon from '../../../../public/images/icons/user.svg';
+import UserIcon from '../../../../public/images/icons/user-new.svg';
 
 export const UserDesktop = () => {
   const { t } = useTranslation(Translation.Header);
@@ -37,9 +36,11 @@ export const UserDesktop = () => {
         onOpenChange={setIsOpen}
         trigger={
           <div
-            className="flex min-w-[120px] items-center justify-between gap-2 pr-3"
+            className="flex min-w-[120px] items-center justify-end gap-2 pr-3 hover:text-accent-primary"
             data-qa="account-settings"
           >
+            <span>{session?.user?.name || t('User')}</span>
+
             <div className="flex items-center gap-3">
               {session?.user?.image ? (
                 <img
@@ -50,18 +51,17 @@ export const UserDesktop = () => {
                   alt={t(`User avatar`) || ''}
                 />
               ) : (
-                <UserIcon width={18} height={18} />
+                <UserIcon width={30} height={30} />
               )}
-
-              <span className="grow">{session?.user?.name || t('User')}</span>
             </div>
-            <ChevronDownIcon
-              className={`shrink-0 text-primary-bg-dark transition-all ${
-                isOpen ? 'rotate-180' : ''
-              }`}
-              width={18}
-              height={18}
-            />
+            {/* PGPT-87 According to the design we temporarily do not need this icon*/}
+            {/*<ChevronDownIcon*/}
+            {/*  className={`shrink-0 text-primary-bg-dark transition-all ${*/}
+            {/*    isOpen ? 'rotate-180' : ''*/}
+            {/*  }`}*/}
+            {/*  width={18}*/}
+            {/*  height={18}*/}
+            {/*/>*/}
           </div>
         }
       >
