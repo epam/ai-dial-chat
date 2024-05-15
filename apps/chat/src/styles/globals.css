@@ -154,7 +154,7 @@ pre:has(div.codeblock) {
     --text-accent-primary: var(--text-accent-tertiary, #a972ff);
     --stroke-accent-primary: var(--stroke-accent-tertiary, #a972ff);
     --bg-accent-primary-alpha: var(--bg-accent-primary-alpha, #a972ff26);
-    --bg-accent-primary: var(--bg-accent-tertiary, #a972ff);
+    --bg-accent-primary: var(--bg-accent-secondary, #a972ff);
   }
 }
 

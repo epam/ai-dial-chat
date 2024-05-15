@@ -216,11 +216,8 @@ const Sidebar = <T,>({
         {areEntitiesUploaded ? (
           <>
             <Search
-              placeholder={t('Search {{name}}...', {
-                name: trimEnd(
-                  EnumMapper.getApiKeyByFeatureType(featureType),
-                  's',
-                ),
+              placeholder={t('Search {{name}}', {
+                name: featureType,
               })}
               searchTerm={searchTerm}
               searchFilters={searchFilters}
