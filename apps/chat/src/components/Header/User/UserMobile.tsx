@@ -36,7 +36,7 @@ const UserInfo = () => {
             alt={t('User avatar') || ''}
           />
         ) : (
-          <UserIcon className="mx-2 text-secondary-bg-dark" width={18} height={18} />
+          <UserIcon className="mx-2 text-primary-bg-dark" width={18} height={18} />
         )}
 
         <span className="grow">{session?.user?.name ?? ''}</span>
@@ -58,7 +58,7 @@ const UserSettings = () => {
       className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
       onClick={onClick}
     >
-      <IconSettings className="text-secondary-bg-dark" size={18} />
+      <IconSettings className="text-primary-bg-dark" size={18} />
       <span>{t('Settings')}</span>
     </div>
   );
@@ -87,7 +87,7 @@ const Logout = () => {
           setIsLogoutConfirmationOpened(true);
         }}
       >
-        <LogOutIcon className="text-secondary-bg-dark" width={18} height={18} />
+        <LogOutIcon className="text-primary-bg-dark" width={18} height={18} />
         <span>{session ? t('Log out') : t('Login')}</span>
       </div>
       <ConfirmDialog

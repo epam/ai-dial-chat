@@ -121,7 +121,7 @@ export default function ContextMenu({
         <div
           data-qa="menu-trigger"
           className={classNames(
-            'flex w-full items-center justify-center rounded text-secondary-bg-dark',
+            'flex w-full items-center justify-center rounded text-primary-bg-dark',
             triggerIconHighlight && 'hover:text-accent-primary',
             className,
           )}

@@ -20,9 +20,11 @@ import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
+import PrimaryLogo from '../../../public/images/icons/primary-logo.svg';
+import SecondaryLogo from '../../../public/images/icons/secondary-logo.svg';
 
 import { Feature } from '@epam/ai-dial-shared';
-import cssEscape from 'css.escape';
+// import cssEscape from 'css.escape';
 
 const DEFAULT_HEADER_ICON_SIZE = 24;
 const OVERLAY_HEADER_ICON_SIZE = 18;
@@ -117,19 +119,33 @@ const Header = () => {
         <CreateNewChatMobile iconSize={headerIconSize} />
       )}
       <div className="flex grow justify-between">
-        <span
-          className={classNames(
-            'min-w-[165px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
-            { 'bg-contain': customLogoUrl },
-          )}
-          style={{
-            backgroundImage: customLogoUrl
-              ? `url(${cssEscape(customLogoUrl)})`
-              : `var(--app-logo)`,
-          }}
-        ></span>
+        <div className="flex grow justify-center md:justify-start">
+
+          {/* Comment this previous solution to revert changes
+              in case we need to apply logo icon for more than one theme
+          <span>
+            className={classNames(
+              'min-w-[165px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
+              { 'bg-contain': customLogoUrl },
+            )}
+            style={{
+              backgroundImage: customLogoUrl
+                ? `url(${cssEscape(customLogoUrl)})`
+                : `var(--app-logo)`,
+            }}
+          ></span> */}
+
+          <PrimaryLogo className='md:ml-5 mr-3 self-center' width={31} height={30}/>
+          <div className='border-r my-3 border-primary'/>
+          <SecondaryLogo className='ml-3 self-center' width={25} height={30}/>
+          <span className='ml-2 md:mr-3 flex flex-wrap content-center text-xl'>prGPT</span>
+          <span className='border-r my-3 border-primary hidden md:inline-block'/>
+          <span className='ml-2 flex-wrap content-center text-s hidden md:flex'>
+            {t('Your secured IA assistant within Pernod Ricard environment')}
+          </span>
+        </div>
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User />
+          <User/>
         </div>
       </div>
 

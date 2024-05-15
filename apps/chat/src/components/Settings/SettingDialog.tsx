@@ -132,7 +132,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <button
-        className="absolute right-2 top-2 rounded text-secondary-bg-dark hover:text-accent-primary"
+        className="absolute right-2 top-2 rounded text-primary-bg-dark hover:text-accent-primary"
         onClick={handleClose}
       >
         <IconX height={24} width={24} />

@@ -84,6 +84,9 @@ module.exports = {
       },
       fontSize: {
         xxs: '10px',
+        xs: '12px',
+        s: '14px',
+        xl: '22px',
       },
       typography: {
         DEFAULT: {
