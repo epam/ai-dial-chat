@@ -376,6 +376,9 @@ export const FileManagerModal = ({
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
       folderPath: string | undefined,
     ) => {
+      setSelectedFilesIds((oldValues) => 
+        oldValues.concat(selectedFiles.map(f => f.id)));
+
       selectedFiles.forEach((file) => {
         dispatch(
           FilesActions.uploadFile({
