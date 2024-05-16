@@ -17,6 +17,8 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GPT_4, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_1106_PREVIEW, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_0125_PREVIEW, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_TURBO_2024_04_29, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_TURBO, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0314, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0613, isSysPromptAllowed: true },
   { modelId: ModelIds.BISON_001, isSysPromptAllowed: true },
@@ -30,6 +32,7 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V21, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_SONNET, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_HAIKU, isSysPromptAllowed: true },
+  { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_OPUS, isSysPromptAllowed: true },
   {
     modelId: ModelIds.ANTHROPIC_CLAUDE_INSTANT_V1,
     isSysPromptAllowed: true,
