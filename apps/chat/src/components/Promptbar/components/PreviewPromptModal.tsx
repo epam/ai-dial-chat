@@ -90,7 +90,7 @@ export const PreviewPromptModal = ({
                       }),
                     );
                   }}
-                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-primary-alpha hover:text-accent-primary"
                 >
                   <IconFileArrowRight size={24} strokeWidth="1.5" />
                 </button>
@@ -102,7 +102,7 @@ export const PreviewPromptModal = ({
               >
                 <button
                   onClick={onDelete}
-                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                  className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-primary-alpha hover:text-accent-primary"
                 >
                   <IconTrashX size={24} strokeWidth="1.5" />
                 </button>
