@@ -1,7 +1,13 @@
 import { IconRefresh } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
+
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import {
   VisualizerConnectorEvents,
@@ -26,14 +32,34 @@ export const VisualizerRenderer = ({
 
   const [ready, setReady] = useState<boolean>();
   const { url: rendererUrl, title: visualizerTitle } = renderer;
-  //This is for the MVP only.
-  //TODO should be changed to get visualizer data like for the Plotly (TBD);
-  const visualizerData: Record<string, unknown> = useMemo(
-    () => ({
-      dataToRender: attachmentUrl,
-    }),
-    [attachmentUrl],
+
+  const dispatch = useAppDispatch();
+
+  const loadedCustomAttachmentData = useAppSelector(
+    ConversationsSelectors.selectLoadedCustomAttachments,
   );
+
+  //TODO implement attachmentDataLoading
+
+  // const attachmentDataLoading = useAppSelector(
+  //   ConversationsSelectors.selectCustomAttachmentLoading,
+  // );
+
+  const customAttachmentData = attachmentUrl
+    ? loadedCustomAttachmentData.find((loadedData) =>
+        loadedData.url.endsWith(attachmentUrl),
+      )?.data
+    : undefined;
+
+  useEffect(() => {
+    if (attachmentUrl && !customAttachmentData) {
+      dispatch(
+        ConversationsActions.getCustomAttachmentData({
+          pathToAttachment: attachmentUrl,
+        }),
+      );
+    }
+  }, [attachmentUrl, customAttachmentData, dispatch]);
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {
@@ -41,10 +67,10 @@ export const VisualizerRenderer = ({
 
       visualizer.send(VisualizerConnectorRequests.sendVisualizeData, {
         mimeType,
-        visualizerData,
+        visualizerData: customAttachmentData,
       });
     },
-    [mimeType, visualizerData],
+    [mimeType, customAttachmentData],
   );
 
   useEffect(() => {
@@ -86,6 +112,10 @@ export const VisualizerRenderer = ({
 
     return () => window.removeEventListener('message', postMessageListener);
   }, [visualizerTitle, rendererUrl]);
+
+  if (!attachmentUrl) {
+    return null;
+  }
 
   return (
     <div ref={iframeContainerRef} className="h-[400px]">

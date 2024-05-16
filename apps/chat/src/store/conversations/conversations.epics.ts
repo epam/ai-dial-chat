@@ -83,6 +83,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
+import { CustomVisualizerData } from '@/src/types/custom-visualizers';
 import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 
@@ -2455,6 +2456,32 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
     ),
   );
 
+const getCustomAttachmentDataEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.getCustomAttachmentData.match),
+    switchMap(({ payload }) =>
+      FileService.getFileContent<CustomVisualizerData>(
+        payload.pathToAttachment,
+      ).pipe(
+        switchMap((params) => {
+          return of(
+            ConversationsActions.getCustomAttachmentDataSuccess({
+              params,
+              url: payload.pathToAttachment,
+            }),
+          );
+        }),
+        catchError(() =>
+          of(
+            UIActions.showErrorToast(
+              translate('Error while uploading chart data'),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
 const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter((action) =>
@@ -2543,4 +2570,6 @@ export const ConversationsEpics = combineEpics(
   getChartAttachmentEpic,
 
   cleanupIsolatedConversationEpic,
+
+  getCustomAttachmentDataEpic,
 );

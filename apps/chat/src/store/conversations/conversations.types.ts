@@ -2,6 +2,7 @@ import { PlotParams } from 'react-plotly.js';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
+import { CustomVisualizerData } from '@/src/types/custom-visualizers';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
@@ -26,4 +27,6 @@ export interface ConversationsState {
   loadedCharts: { url: string; data: PlotParams }[];
   chartLoading: boolean;
   compareLoading?: boolean;
+  loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[];
+  customAttachmentDataLoading: boolean;
 }

@@ -19,6 +19,7 @@ import {
   Message,
 } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
+import { CustomVisualizerData } from '@/src/types/custom-visualizers';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -52,6 +53,8 @@ const initialState: ConversationsState = {
   chartLoading: false,
   isActiveNewConversationRequest: false,
   isMessageSending: false,
+  loadedCustomAttachmentsData: [],
+  customAttachmentDataLoading: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -734,6 +737,37 @@ export const conversationsSlice = createSlice({
             },
           ];
       state.chartLoading = false;
+    },
+    getCustomAttachmentData: (
+      state,
+      _action: PayloadAction<{
+        pathToAttachment: string;
+      }>,
+    ) => {
+      state.customAttachmentDataLoading = true;
+    },
+    getCustomAttachmentDataSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        params: CustomVisualizerData;
+        url: string;
+      }>,
+    ) => {
+      state.loadedCustomAttachmentsData =
+        state.loadedCustomAttachmentsData.find(
+          (attachmentData) => attachmentData.url === payload.url,
+        )
+          ? state.loadedCustomAttachmentsData
+          : [
+              ...state.loadedCustomAttachmentsData,
+              {
+                url: payload.url,
+                data: payload.params,
+              },
+            ];
+      state.customAttachmentDataLoading = false;
     },
     cleanupIsolatedConversation: (state) => state,
     uploadChildConversationsWithFoldersSuccess: (

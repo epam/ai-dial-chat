@@ -7,3 +7,5 @@ export interface CustomVisualizer {
 }
 
 export type MappedVisualizers = Record<string, CustomVisualizer[]>;
+
+export type CustomVisualizerData = Record<string, string>;
