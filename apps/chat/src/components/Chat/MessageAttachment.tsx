@@ -19,7 +19,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import { chartType, stopBubbling } from '@/src/constants/chat';
+import { PLOTLY_CONTENT_TYPE, stopBubbling } from '@/src/constants/chat';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
@@ -96,7 +96,7 @@ const AttachmentDataRenderer = ({
       />
     );
   }
-  if (attachment.type === chartType) {
+  if (attachment.type === PLOTLY_CONTENT_TYPE) {
     return (
       <PlotlyComponent plotlyData={attachment.data as unknown as PlotParams} />
     );
@@ -218,7 +218,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const isOpenable =
     attachment.data ||
     (attachment.url && imageTypes.has(attachment.type)) ||
-    attachment.type === chartType;
+    attachment.type === PLOTLY_CONTENT_TYPE;
   const mappedAttachmentUrl = useMemo(
     () => getMappedAttachmentUrl(attachment.url),
     [attachment.url],
@@ -322,7 +322,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
             <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
           )}
           {mappedAttachmentUrl &&
-            (attachment.type === chartType ? (
+            (attachment.type === PLOTLY_CONTENT_TYPE ? (
               <ChartAttachmentUrlRenderer attachmentUrl={mappedAttachmentUrl} />
             ) : (
               <AttachmentUrlRenderer
