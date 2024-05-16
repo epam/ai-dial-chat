@@ -2,14 +2,15 @@ import { TFunction } from 'next-i18next';
 
 import { Attachment, Conversation } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
-import { DialFile, DialLink } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
+import { isFolderId } from './id';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import { extensions } from 'mime-types';
@@ -171,6 +172,9 @@ const parseAttachmentUrl = (url: string) => {
   };
 };
 
+export const isAttachmentLink = (url: string): boolean =>
+  url.startsWith('http') || url.startsWith('//');
+
 export const getDialFilesFromAttachments = (
   attachments: Attachment[] | undefined,
 ): Omit<DialFile, 'contentLength'>[] => {
@@ -182,8 +186,8 @@ export const getDialFilesFromAttachments = (
     .map((attachment): Omit<DialFile, 'contentLength'> | null => {
       if (
         !attachment.url ||
-        attachment.url.startsWith('http') ||
-        attachment.url.startsWith('//')
+        isAttachmentLink(attachment.url) ||
+        isFolderId(attachment.url)
       ) {
         return null;
       }
@@ -201,6 +205,36 @@ export const getDialFilesFromAttachments = (
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
 };
 
+export const getDialFoldersFromAttachments = (
+  attachments: Attachment[] | undefined,
+): FileFolderInterface[] => {
+  if (!attachments) {
+    return [];
+  }
+
+  return attachments
+    .map((attachment): FileFolderInterface | null => {
+      if (
+        !attachment.url ||
+        isAttachmentLink(attachment.url) ||
+        !isFolderId(attachment.url)
+      ) {
+        return null;
+      }
+
+      const { absolutePath, name } = parseAttachmentUrl(attachment.url);
+
+      return {
+        id: attachment.url,
+        type: FolderType.File,
+        name,
+        folderId: absolutePath,
+        absolutePath,
+      };
+    })
+    .filter(Boolean) as FileFolderInterface[];
+};
+
 export const getDialLinksFromAttachments = (
   attachments: Attachment[] | undefined,
 ): DialLink[] => {
@@ -210,10 +244,7 @@ export const getDialLinksFromAttachments = (
 
   return attachments
     .map((attachment): DialLink | null => {
-      if (
-        !attachment.url ||
-        (!attachment.url.startsWith('http') && !attachment.url.startsWith('//'))
-      ) {
+      if (!attachment.url || !isAttachmentLink(attachment.url)) {
         return null;
       }
 
