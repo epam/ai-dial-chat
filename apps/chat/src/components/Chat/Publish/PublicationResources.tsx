@@ -66,6 +66,11 @@ export const PromptPublicationResources = ({
       (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
     );
   }, [prompts, resourceUrls]);
+  const folderPromptsToDisplay = useMemo(() => {
+    return prompts.filter(
+      (c) => c.folderId.split('/').length !== 2 && resourceUrls.includes(c.id),
+    );
+  }, [prompts, resourceUrls]);
   const rootFolders = useMemo(() => {
     if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
 
@@ -99,7 +104,7 @@ export const PromptPublicationResources = ({
             openedFoldersIds={
               forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
-            allItems={prompts}
+            allItems={folderPromptsToDisplay}
             itemComponent={forViewOnly ? PromptsRow : PromptComponent}
             onClickFolder={(folderId: string) => {
               if (forViewOnly) return;
@@ -158,6 +163,11 @@ export const ConversationPublicationResources = ({
       (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
     );
   }, [conversations, resourceUrls]);
+  const folderConversationsToDisplay = useMemo(() => {
+    return conversations.filter(
+      (c) => c.folderId.split('/').length !== 2 && resourceUrls.includes(c.id),
+    );
+  }, [conversations, resourceUrls]);
   const rootFolders = useMemo(() => {
     if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
 
@@ -191,7 +201,7 @@ export const ConversationPublicationResources = ({
             openedFoldersIds={
               forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
-            allItems={conversations}
+            allItems={folderConversationsToDisplay}
             itemComponent={
               forViewOnly ? ConversationRow : ConversationComponent
             }
@@ -249,6 +259,11 @@ export const FilePublicationResources = ({
             f.folderId.split('/').length === 2 && resourceUrls.includes(f.id),
         );
   }, [files, uploadedFiles, resourceUrls]);
+  const folderFilesToDisplay = useMemo(() => {
+    return files.filter(
+      (c) => c.folderId.split('/').length !== 2 && resourceUrls.includes(c.id),
+    );
+  }, [files, resourceUrls]);
   const rootFolders = useMemo(() => {
     const folders = resources.map((resource) => {
       const relevantFolders = allFolders.filter((folder) =>
@@ -280,7 +295,7 @@ export const FilePublicationResources = ({
             openedFoldersIds={
               forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
-            allItems={files}
+            allItems={folderFilesToDisplay}
             itemComponent={forViewOnly ? FilesRow : FileItem}
             onClickFolder={(folderId: string) => {
               if (forViewOnly) return;

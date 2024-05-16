@@ -199,7 +199,11 @@ export const ChangePathDialog = ({
             onDeleteFolder: handleDeleteFolder,
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
-            featureType: FeatureType.File,
+            featureType:
+              type === SharingType.Conversation ||
+              type === SharingType.ConversationFolder
+                ? FeatureType.Chat
+                : FeatureType.Prompt,
           }}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}

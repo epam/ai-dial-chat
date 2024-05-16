@@ -195,6 +195,9 @@ export function PublishModal({
       e.stopPropagation();
 
       const trimmedPath = path.trim();
+      const notEmptyFilters = otherTargetAudienceFilters.filter(
+        (filter) => filter.filterParams.filter(Boolean).length,
+      );
 
       if (
         type === SharingType.Conversation ||
@@ -244,7 +247,7 @@ export function PublishModal({
                 [],
               ),
             ],
-            rules: otherTargetAudienceFilters.map((filter) => ({
+            rules: notEmptyFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
               targets: filter.filterParams,
@@ -266,7 +269,7 @@ export function PublishModal({
               })),
             ],
             targetFolder: trimmedPath,
-            rules: otherTargetAudienceFilters.map((filter) => ({
+            rules: notEmptyFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
               targets: filter.filterParams,
@@ -469,7 +472,8 @@ export function PublishModal({
         type={type}
         depth={depth}
         rootFolderId={
-          type === SharingType.Conversation
+          type === SharingType.Conversation ||
+          type === SharingType.ConversationFolder
             ? `${ApiKeys.Conversations}/public`
             : `${ApiKeys.Prompts}/public`
         }
