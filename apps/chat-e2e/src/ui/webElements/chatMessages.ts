@@ -393,12 +393,8 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(MessageInputSelectors.textarea);
   }
 
-  public getChatMessageClipIcon(message: string) {
+  public getChatMessageClipIcon(message: string | number) {
     return this.getChatMessage(message).locator(MenuSelectors.menuTrigger);
-  }
-
-  public getChatMessageClipIcon(message: string) {
-    return this.getChatMessage(message).locator(ChatSelectors.menuTrigger);
   }
 
   public async isChatMessageCodeVisible(message: number | string) {
@@ -409,8 +405,7 @@ export class ChatMessages extends BaseElement {
 
   public messageEditIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.editIcon);
-  public saveAndSubmit = new BaseElement(
-    this.page,
+  public saveAndSubmit = this.getChildElementBySelector(
     MessageInputSelectors.saveAndSubmit,
   );
   public cancel = new BaseElement(this.page, MessageInputSelectors.cancelEdit);
@@ -439,11 +434,11 @@ export class ChatMessages extends BaseElement {
   }
 
   public async fillEditData(oldMessage: string, newMessage: string) {
-    const textArea = await this.clearEditTextarea(oldMessage);
+    const textArea = await this.selectEditTextareaContent(oldMessage);
     await textArea.fill(newMessage);
   }
 
-  public async clearEditTextarea(oldMessage: string) {
+  public async selectEditTextareaContent(oldMessage: string) {
     const textArea = this.getChatMessageTextarea(oldMessage);
     await textArea.waitFor();
     await textArea.click();

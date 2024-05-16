@@ -1497,7 +1497,9 @@ dialTest(
           (firstConversationRequests.length - 1) * 2,
         );
         await chatMessages.openEditCompareRowMessageMode(Side.left, 1);
-        await chatMessages.clearEditTextarea(firstConversationRequests[1]);
+        await chatMessages.selectEditTextareaContent(
+          firstConversationRequests[1],
+        );
         await page.keyboard.press(keys.ctrlPlusV);
         await chatMessages.saveAndSubmit.click();
         await chatMessages.waitForResponseReceived();
