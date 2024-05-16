@@ -214,7 +214,15 @@ export function PublishModal({
 
             return urls.map((oldUrl) => ({
               oldUrl,
-              newUrl: createTargetUrl(ApiKeys.Files, trimmedPath, oldUrl, type),
+              newUrl: createTargetUrl(
+                ApiKeys.Files,
+                trimmedPath,
+                constructPath(
+                  ...c.id.split('/').slice(0, -1),
+                  ...oldUrl.split('/').slice(-1),
+                ),
+                type,
+              ),
             }));
           });
 

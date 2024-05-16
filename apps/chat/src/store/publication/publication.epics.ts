@@ -505,7 +505,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                     folders: conversationPaths.map((path) => ({
                       ...getFolderFromId(path, FolderType.Chat),
                       status: UploadStatus.LOADED,
-                      publishedWithMe: true,
+                      publishedWithMe: path.split('/').length === 3,
                     })),
                   }),
                 ),
@@ -551,7 +551,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                     folders: promptPaths.map((path) => ({
                       ...getFolderFromId(path, FolderType.Prompt),
                       status: UploadStatus.LOADED,
-                      publishedWithMe: true,
+                      publishedWithMe: path.split('/').length === 3,
                     })),
                   }),
                 ),
