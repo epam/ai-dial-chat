@@ -111,7 +111,7 @@ const ModelGroup = ({
                 : currentEntity.name}
             </span>
             <ModelVersionSelect
-              className="absolute right-3 !h-auto"
+              className="absolute right-3 h-max"
               entities={entities}
               onSelect={onSelect}
               currentEntity={currentEntity}
