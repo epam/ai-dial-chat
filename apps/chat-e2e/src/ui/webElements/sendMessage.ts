@@ -1,4 +1,8 @@
-import { MessageInputSelectors, SendMessageSelectors } from '../selectors';
+import {
+  ChatSelectors,
+  MessageInputSelectors,
+  SendMessageSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { keys } from '@/src/ui/keyboard';
@@ -45,7 +49,7 @@ export class SendMessage extends BaseElement {
     SendMessageSelectors.sendMessage,
   );
   public messageInputSpinner = this.messageInput.getChildElementBySelector(
-    SendMessageSelectors.messageSpinner,
+    ChatSelectors.messageSpinner,
   );
   public attachmentMenuTrigger = this.getChildElementBySelector(
     MenuSelectors.menuTrigger,

@@ -399,7 +399,7 @@ export class ChatMessages extends BaseElement {
 
   public async isChatMessageCodeVisible(message: number | string) {
     return this.getChatMessage(message)
-      .locator(ChatSelectors.codeblock)
+      .locator(ChatSelectors.codeBlock)
       .isVisible();
   }
 

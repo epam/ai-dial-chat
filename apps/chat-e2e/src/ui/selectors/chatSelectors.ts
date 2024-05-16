@@ -5,7 +5,6 @@ export const appContainer = '#theme-main';
 
 export const SendMessageSelectors = {
   message: '[data-qa="message"]',
-  messageSpinner: '[data-qa="message-input-spinner"]',
   stopGenerating: '[data-qa="stop-generating"]',
   sendMessage: '[data-qa="send"]',
   scrollDownButton: '[data-qa="scroll-down-button"]',
@@ -136,7 +135,7 @@ export const ChatSelectors = {
   iconAnimation: '.animate-bounce',
   footer: '[data-qa="footer-message"]',
   rate: (rate: Rate) => `[data-qa="${rate}"]`,
-  codeblock: '.codeblock',
+  codeBlock: '.codeblock',
   duplicate: '[data-qa="duplicate"]',
   chatScrollableArea: '[data-qa="scrollable-area"]',
   attachmentExpanded: '[data-qa="attachment-expanded"]',
@@ -146,4 +145,5 @@ export const ChatSelectors = {
   inputAttachmentsContainer: '[data-qa="attachment-container"]',
   inputAttachment: '[data-qa="chat-attachment"]',
   inputAttachmentLoadingIndicator: '[data-qa="attachment-loading"]',
+  messageSpinner: '[data-qa="message-input-spinner"]',
 };
