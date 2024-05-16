@@ -1,6 +1,7 @@
 import { Placement } from '@floating-ui/react';
 import {
   IconFileDescription,
+  IconFolder,
   IconLink,
   IconPaperclip,
   IconUpload,
@@ -88,7 +89,7 @@ export const AttachButton = ({
           ),
           dataQa: 'attach_uploaded',
           display: canAttachFiles || canAttachFolders,
-          Icon: IconFileDescription,
+          Icon: !canAttachFiles ? IconFolder : IconFileDescription,
           onClick: handleOpenAttachmentsModal,
         },
         {
