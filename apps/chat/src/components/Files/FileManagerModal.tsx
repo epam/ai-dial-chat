@@ -425,7 +425,6 @@ export const FileManagerModal = ({
     }
 
     dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
-    setSelectedFilesIds([]);
   }, [dispatch, selectedFilesIds]);
 
   return (
