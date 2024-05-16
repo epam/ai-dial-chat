@@ -17,6 +17,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { PublicationService } from '@/src/utils/app/data/publication-service';
+import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
@@ -55,7 +56,9 @@ import {
   PublicationSelectors,
 } from './publication.reducers';
 
-import { uniq } from 'lodash-es';
+import entries from 'lodash-es/entries';
+import maxBy from 'lodash-es/maxBy';
+import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -664,6 +667,45 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const uploadRulesEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadRules.match),
+    switchMap(({ payload }) =>
+      PublicationService.getRules(payload.path).pipe(
+        switchMap(({ rules }) => {
+          const currentRulePath = `${constructPath('public', payload.path)}/`;
+
+          if (!rules[currentRulePath] && payload.path) {
+            const longestEntry = maxBy(entries(rules), ([key]) => key.length);
+
+            if (longestEntry) {
+              // value [1] is the rule
+              rules[currentRulePath] = longestEntry[1];
+            }
+          }
+
+          return of(
+            PublicationActions.uploadRulesSuccess({
+              ruleRecords: rules,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.uploadRulesFail());
+        }),
+      ),
+    ),
+  );
+
+const uploadRulesFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadRulesFail.match),
+    map(() =>
+      UIActions.showErrorToast(translate(errorsMessages.rulesUploadingFailed)),
+    ),
+  );
+
 export const PublicationEpics = combineEpics(
   initEpic,
   publishEpic,
@@ -681,4 +723,6 @@ export const PublicationEpics = combineEpics(
   rejectPublicationEpic,
   rejectPublicationFailEpic,
   resolvePublicationSuccessEpic,
+  uploadRulesEpic,
+  uploadRulesFailEpic,
 );

@@ -55,4 +55,5 @@ export const errorsMessages = {
   publicationApproveFailed: 'Publication approving failed.',
   publicationRejectFailed: 'Publication rejecting failed.',
   publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
+  rulesUploadingFailed: 'Rules uploading failed.',
 };

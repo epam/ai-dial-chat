@@ -21,6 +21,8 @@ export interface PublicationState {
     reviewed: boolean;
     reviewUrl: string;
   }[];
+  rules: Record<string, PublicationRule[]>;
+  isRulesLoading: boolean;
 }
 
 const initialState: PublicationState = {
@@ -28,6 +30,8 @@ const initialState: PublicationState = {
   publishedItems: [],
   selectedPublication: null,
   resourcesToReview: [],
+  rules: {},
+  isRulesLoading: false,
 };
 
 export const publicationSlice = createSlice({
@@ -139,6 +143,24 @@ export const publicationSlice = createSlice({
       state.resourcesToReview = state.resourcesToReview.map((r) =>
         r.reviewUrl === payload.id ? { ...r, reviewed: true } : r,
       );
+    },
+    uploadRules: (state, _action: PayloadAction<{ path: string }>) => {
+      state.isRulesLoading = true;
+    },
+    uploadRulesSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ ruleRecords: Record<string, PublicationRule[]> }>,
+    ) => {
+      for (const key of Object.keys(payload.ruleRecords)) {
+        state.rules[key] = payload.ruleRecords[key];
+      }
+
+      state.isRulesLoading = false;
+    },
+    uploadRulesFail: (state) => {
+      state.isRulesLoading = false;
     },
   },
 });

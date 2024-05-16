@@ -3,6 +3,7 @@ import {
   ClipboardEvent,
   MouseEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -24,7 +25,10 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
@@ -44,8 +48,95 @@ import {
 } from './PublicationResources';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
+import capitalize from 'lodash-es/capitalize';
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
+
+interface PublishModalFiltersProps {
+  path: string;
+  otherTargetAudienceFilters: TargetAudienceFilter[];
+  onChangeFilters: (targetFilter: TargetAudienceFilter) => void;
+}
+
+function PublishModalFilters({
+  path,
+  otherTargetAudienceFilters,
+  onChangeFilters,
+}: PublishModalFiltersProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const rules = useAppSelector((state) =>
+    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
+  );
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
+  );
+
+  if (!path) {
+    return (
+      <p>
+        {t(
+          'This publication will be available to all users in the organization',
+        )}
+      </p>
+    );
+  }
+
+  if (isRulesLoading) {
+    return null; // loader for rules
+  }
+
+  if (rules) {
+    return rules.map((rule, idx) => (
+      <CollapsibleSection
+        name={capitalize(rule.source)}
+        dataQa={`filter-${rule.source}`}
+        key={`filter-${idx}`}
+        openByDefault
+        className="!pl-0"
+      >
+        <TargetAudienceFilterComponent
+          readonly
+          name={rule.source}
+          initialSelectedFilter={{
+            filterFunction: rule.function,
+            filterParams: rule.targets,
+            id: rule.source,
+            name: rule.source,
+          }}
+          id={rule.source}
+          onChangeFilter={onChangeFilters}
+        />
+      </CollapsibleSection>
+    ));
+  }
+
+  // define filters in config
+  return [
+    { id: 'title', name: 'Title' },
+    { id: 'roles', name: 'Roles' },
+  ].map((v, idx) => {
+    const initialSelectedFilter = otherTargetAudienceFilters.find(
+      ({ id }) => id === v.id,
+    );
+    return (
+      <CollapsibleSection
+        name={v.name}
+        dataQa={`filter-${v.id}`}
+        key={`filter-${idx}`}
+        openByDefault={false}
+        className="!pl-0"
+      >
+        <TargetAudienceFilterComponent
+          name={v.name}
+          id={v.id}
+          initialSelectedFilter={initialSelectedFilter}
+          onChangeFilter={onChangeFilters}
+        />
+      </CollapsibleSection>
+    );
+  });
+}
 
 interface Props {
   entity: ShareEntity;
@@ -80,6 +171,10 @@ export function PublishModal({
   const files = useAppSelector((state) =>
     getAttachments(type)(state, entity.id),
   );
+
+  useEffect(() => {
+    dispatch(PublicationActions.uploadRules({ path }));
+  }, [dispatch, path]);
 
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
@@ -116,7 +211,7 @@ export function PublishModal({
 
             return urls.map((oldUrl) => ({
               oldUrl,
-              newUrl: createTargetUrl(ApiKeys.Files, trimmedPath, entity, type),
+              newUrl: createTargetUrl(ApiKeys.Files, trimmedPath, oldUrl, type),
             }));
           });
 
@@ -129,7 +224,7 @@ export function PublishModal({
                 targetUrl: createTargetUrl(
                   ApiKeys.Conversations,
                   trimmedPath,
-                  entity,
+                  entity.id,
                   type,
                 ),
               })),
@@ -165,7 +260,7 @@ export function PublishModal({
                 targetUrl: createTargetUrl(
                   ApiKeys.Prompts,
                   trimmedPath,
-                  entity,
+                  entity.id,
                   type,
                 ),
               })),
@@ -185,7 +280,6 @@ export function PublishModal({
     [
       dispatch,
       entities,
-      entity,
       files,
       onClose,
       otherTargetAudienceFilters,
@@ -235,47 +329,30 @@ export function PublishModal({
               <h2 className="mb-4 flex gap-2">
                 {t('Target Audience Filters')}
 
-                <Tooltip
-                  placement="top"
-                  tooltip={
-                    <div className="flex max-w-[230px] break-words text-xs">
-                      {t(
-                        'The collection will be published for all users who meet AT LEAST ONE option from every',
-                      )}
-                    </div>
-                  }
-                >
-                  <IconHelpCircle
-                    size={18}
-                    className="text-secondary  hover:text-accent-primary"
-                  />
-                </Tooltip>
+                {path && (
+                  <Tooltip
+                    placement="top"
+                    tooltip={
+                      <div className="flex max-w-[230px] break-words text-xs">
+                        {t(
+                          'The collection will be published for all users who meet AT LEAST ONE option from every',
+                        )}
+                      </div>
+                    }
+                  >
+                    <IconHelpCircle
+                      size={18}
+                      className="text-secondary  hover:text-accent-primary"
+                    />
+                  </Tooltip>
+                )}
               </h2>
 
-              {[
-                { id: 'title', name: 'Title' },
-                { id: 'roles', name: 'Roles' },
-              ].map((v, idx) => {
-                const initialSelectedFilter = otherTargetAudienceFilters.find(
-                  ({ id }) => id === v.id,
-                );
-                return (
-                  <CollapsibleSection
-                    name={v.name}
-                    dataQa={`filter-${v.id}`}
-                    key={`filter-${v.id}-${idx}`}
-                    openByDefault={false}
-                    className="!pl-0"
-                  >
-                    <TargetAudienceFilterComponent
-                      name={v.name}
-                      id={v.id}
-                      initialSelectedFilter={initialSelectedFilter}
-                      onChangeFilter={handleOnChangeFilters}
-                    />
-                  </CollapsibleSection>
-                );
-              })}
+              <PublishModalFilters
+                path={path}
+                otherTargetAudienceFilters={otherTargetAudienceFilters}
+                onChangeFilters={handleOnChangeFilters}
+              />
             </section>
           </div>
           <div className="flex w-full flex-col gap-[2px] px-5 py-4 md:max-w-[550px]">
@@ -347,6 +424,7 @@ export function PublishModal({
                   />
                 ) : (
                   <PromptPublicationResources
+                    rootFolder={entity}
                     resources={[
                       {
                         sourceUrl: entity.id,

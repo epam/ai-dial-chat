@@ -51,3 +51,13 @@ export const selectResourcesToReviewByPublicationUrl = createSelector(
   [rootSelector, (_state, id: string) => id],
   (state, id) => state.resourcesToReview.filter((r) => r.publicationUrl === id),
 );
+
+export const selectRulesByPath = createSelector(
+  [rootSelector, (_state, path: string) => path],
+  (state, path) => state.rules[path],
+);
+
+export const selectIsRulesLoading = createSelector(
+  [rootSelector],
+  (state) => state.isRulesLoading,
+);

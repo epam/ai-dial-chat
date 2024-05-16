@@ -5,6 +5,7 @@ import {
   Publication,
   PublicationInfo,
   PublicationRequest,
+  PublicationRule,
   PublicationsListModel,
   PublishedByMeItem,
   PublishedItem,
@@ -125,6 +126,15 @@ export class PublicationService {
     return ApiUtils.request('api/publication/reject', {
       method: 'POST',
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
+    });
+  }
+
+  public static getRules(
+    path: string,
+  ): Observable<{ rules: Record<string, PublicationRule[]> }> {
+    return ApiUtils.request('api/publication/rulesList', {
+      method: 'POST',
+      body: JSON.stringify({ url: path ? `public/${path}/` : `public/` }),
     });
   }
 

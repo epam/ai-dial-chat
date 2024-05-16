@@ -55,10 +55,10 @@ export const PromptPublicationResources = ({
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-  const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
+  const allFolders = useAppSelector(PromptsSelectors.selectFolders);
 
   const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
+    () => resources.map((r) => (r.reviewUrl ? r.reviewUrl : r.targetUrl)),
     [resources],
   );
   const promptsToDisplay = useMemo(() => {
@@ -67,9 +67,9 @@ export const PromptPublicationResources = ({
     );
   }, [prompts, resourceUrls]);
   const rootFolders = useMemo(() => {
-    const folders = resources.map((resource) => {
-      if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
+    if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
 
+    const folders = resources.map((resource) => {
       const relevantFolders = allFolders.filter((folder) =>
         resource.reviewUrl
           ? resource.reviewUrl.startsWith(folder.id)

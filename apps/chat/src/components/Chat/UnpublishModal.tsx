@@ -4,7 +4,6 @@ import { useTranslation } from 'next-i18next';
 
 import { Entity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
