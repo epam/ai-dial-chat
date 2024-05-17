@@ -336,7 +336,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
           </button>
           <button
             onClick={handleContinueImport}
-            className="button button-primary h-[38px] bg-controls-accent hover:bg-controls-accent-hover"
+            className="button button-primary h-[38px]"
           >
             {t('Continue')}
           </button>
