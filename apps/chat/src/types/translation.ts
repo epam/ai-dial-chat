@@ -7,4 +7,5 @@ export enum Translation {
   SideBar = 'sidebar',
   Files = 'files',
   Header = 'header',
+  TourGuide = 'tourguide',
 }

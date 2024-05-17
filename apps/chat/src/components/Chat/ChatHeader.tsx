@@ -27,6 +27,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { TourGuideId } from '@/src/constants/share';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
@@ -252,6 +254,7 @@ export const ChatHeader = ({
                   className="cursor-pointer text-secondary hover:text-accent-primary"
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
+                  id={TourGuideId.settings}
                 >
                   <IconSettings size={iconSize} />
                 </button>

@@ -1,9 +1,11 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { useIsSmallScreenOrMobile } from '@/src/utils/app/mobile';
 
 import { Translation } from '@/src/types/translation';
 
@@ -12,16 +14,20 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import ChevronDownIcon from '../../../../public/images/icons/chevron-down.svg';
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
+
+import { TourGuideIcon } from '@/src/icons';
 
 export const UserDesktop = () => {
   const { t } = useTranslation(Translation.Header);
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
+  const isSmallScreenOrMobile = useIsSmallScreenOrMobile();
   const { data: session } = useSession();
   const dispatch = useAppDispatch();
   const handleLogout = useCallback(() => {
@@ -30,8 +36,27 @@ export const UserDesktop = () => {
       : signIn('azure-ad', { redirect: true });
   }, [session]);
 
+  const startTour = () => {
+    dispatch(UIActions.setTourRun(true));
+    dispatch(UIActions.setTourStepIndex(0));
+  };
+
+  //hide TourGuide for smaller screens and mobile
+  useEffect(() => {
+    dispatch(UIActions.setTourRun(false));
+    dispatch(UIActions.setTourStepIndex(0));
+  }, [isSmallScreenOrMobile]);
+
   return (
-    <>
+    <div className="mt-[15px] flex items-center justify-center">
+      {!isSmallScreenOrMobile && (
+        <Tooltip isTriggerClickable tooltip={t('Tour Guide')}>
+          <button onClick={startTour} className="ml-[25px] mr-[25px]">
+            <TourGuideIcon />
+          </button>
+        </Tooltip>
+      )}
+
       <Menu
         className="w-full"
         onOpenChange={setIsOpen}
@@ -107,6 +132,6 @@ export const UserDesktop = () => {
           }
         }}
       />
-    </>
+    </div>
   );
 };

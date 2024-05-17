@@ -71,6 +71,7 @@
     "react-hot-toast": "^2.4.1",
     "react-i18next": "^12.2.0",
     "react-inlinesvg": "^4.1.1",
+    "react-joyride": "^2.8.1",
     "react-markdown": "^8.0.5",
     "react-plotly.js": "^2.6.0",
     "react-redux": "^8.1.2",
@@ -151,9 +152,9 @@
   "optionalDependencies": {
     "@nx/playwright": "^18.2.2",
     "@playwright/test": "^1.43.0",
-    "playwright-chromium": "^1.43.0",
     "allure-playwright": "^2.15.0",
-    "eslint-plugin-playwright": "^1.5.4"
+    "eslint-plugin-playwright": "^1.5.4",
+    "playwright-chromium": "^1.43.0"
   },
   "engines": {
     "node": ">=18.18.2",

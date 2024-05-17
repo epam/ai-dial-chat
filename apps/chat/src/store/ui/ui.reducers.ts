@@ -26,6 +26,8 @@ export interface UIState {
   chatbarWidth?: number;
   promptbarWidth?: number;
   customLogo?: string;
+  tourStepIndex?: number;
+  isTourRun?: boolean;
 }
 
 export const openFoldersInitialState = {
@@ -48,6 +50,8 @@ const initialState: UIState = {
   promptbarWidth: SIDEBAR_MIN_WIDTH,
   isChatFullWidth: false,
   showSelectToMigrateWindow: false,
+  tourStepIndex: 0,
+  isTourRun: false,
 };
 
 export const uiSlice = createSlice({
@@ -63,6 +67,12 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<UIState['availableThemes']>,
     ) => {
       state.availableThemes = payload;
+    },
+    setTourStepIndex: (state, action: PayloadAction<number>) => {
+      state.tourStepIndex = action.payload;
+    },
+    setTourRun: (state, action: PayloadAction<boolean>) => {
+      state.isTourRun = action.payload;
     },
     setChatbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.chatbarWidth = payload;
@@ -195,6 +205,14 @@ const selectAvailableThemes = createSelector([rootSelector], (state) => {
   return state.availableThemes;
 });
 
+const selectTourStepIndex = createSelector([rootSelector], (state) => {
+  return state.tourStepIndex;
+});
+
+const selectIsTourRun = createSelector([rootSelector], (state) => {
+  return state.isTourRun;
+});
+
 const selectShowChatbar = createSelector([rootSelector], (state) => {
   return state.showChatbar;
 });
@@ -294,4 +312,6 @@ export const UISelectors = {
   selectCustomLogo,
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,
+  selectTourStepIndex,
+  selectIsTourRun,
 };
