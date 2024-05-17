@@ -1,3 +1,5 @@
+import { Step } from 'react-joyride';
+
 import { TourGuideId } from '@/src/constants/share';
 
 export enum TourStepAction {
@@ -60,6 +62,7 @@ export const DEFAULT_STEPS = [
     target: `body`,
     title:
       'Ready to harness the full power of artificial intelligence within Pernod Ricard?',
+    content: '',
     placement: 'center',
     disableBeacon: true,
   },
@@ -87,3 +90,10 @@ export const handleBodyScroll = (status: string, lifecycle: string) => {
 export const isTargetInDocument = (selector: string): boolean => {
   return document.querySelector(selector) !== null;
 };
+
+export const translateSteps = (steps: Step[], t: any) =>
+  steps.map((step) => ({
+    ...step,
+    title: t(step.title),
+    content: t(step.content),
+  }));

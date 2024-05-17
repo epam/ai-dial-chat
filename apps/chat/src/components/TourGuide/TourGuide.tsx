@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Joyride, { CallBackProps, Step } from 'react-joyride';
 
+import { useTranslation } from 'next-i18next';
+
 import { Conversation } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -22,6 +25,7 @@ import {
   TourStepType,
   handleBodyScroll,
   isTargetInDocument,
+  translateSteps,
 } from './TourGuide.props';
 
 const TourGuide = () => {
@@ -36,6 +40,8 @@ const TourGuide = () => {
   const currentChatId = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+
+  const { t } = useTranslation(Translation.TourGuide);
 
   const [isClient, setIsClient] = useState(false);
   const [steps, setSteps] = useState(DEFAULT_STEPS);
@@ -111,7 +117,7 @@ const TourGuide = () => {
     isClient && (
       <Joyride
         tooltipComponent={tooltipComponent}
-        steps={steps as Step[]}
+        steps={translateSteps(steps as Step[], t)}
         stepIndex={tourStepIndex}
         run={isTourRun}
         continuous
