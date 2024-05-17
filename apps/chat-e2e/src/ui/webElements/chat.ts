@@ -210,7 +210,7 @@ export class Chat extends BaseElement {
   }
 
   private async sendRequest(
-    message: string,
+    message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
@@ -225,6 +225,14 @@ export class Chat extends BaseElement {
     return this.sendRequest(
       message,
       () => this.getSendMessage().send(message),
+      waitForAnswer,
+    );
+  }
+
+  public async saveAndSubmitRequest(waitForAnswer = false) {
+    return this.sendRequest(
+      undefined,
+      () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
   }

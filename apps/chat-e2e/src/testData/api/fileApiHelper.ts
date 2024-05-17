@@ -9,12 +9,13 @@ import path from 'path';
 
 export class FileApiHelper extends BaseApiHelper {
   public async putFile(filename: string, parentPath?: string) {
+    const encodedFilename = encodeURIComponent(filename);
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
     const baseUrl = `${API.fileHost}/${BucketUtil.getBucket()}`;
     const url = parentPath
-      ? `${baseUrl}/${parentPath}/${filename}`
-      : `${baseUrl}/${filename}`;
+      ? `${baseUrl}/${parentPath}/${encodedFilename}`
+      : `${baseUrl}/${encodedFilename}`;
     const response = await this.request.put(url, {
       headers: {
         Accept: '*/*',
@@ -34,7 +35,7 @@ export class FileApiHelper extends BaseApiHelper {
     ).toBe(200);
     const responseText = await response.text();
     const body = JSON.parse(responseText) as BackendFile & { url: string };
-    return body.url;
+    return decodeURIComponent(body.url);
   }
 
   public async deleteFile(path: string) {
@@ -72,7 +73,7 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public static getContentTypeForFile(filename: string) {
-    const extension = filename.match(/(?<=\.).+$/g);
+    const extension = filename.match(/(?<=\.)[^.]+$/g);
     switch (extension![0]) {
       case 'png':
         return 'image/png';
