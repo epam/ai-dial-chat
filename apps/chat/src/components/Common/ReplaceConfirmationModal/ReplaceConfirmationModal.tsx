@@ -330,13 +330,13 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-6 py-2 sm:py-4">
           <button
             onClick={handleCancel}
-            className="button button-secondary h-[38px] rounded px-3"
+            className="button button-secondary h-[38px]"
           >
             {t('Cancel')}
           </button>
           <button
             onClick={handleContinueImport}
-            className="button button-primary h-[38px] rounded bg-controls-accent px-3 hover:bg-controls-accent-hover"
+            className="button button-primary h-[38px] bg-controls-accent hover:bg-controls-accent-hover"
           >
             {t('Continue')}
           </button>
