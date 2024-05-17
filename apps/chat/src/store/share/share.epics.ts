@@ -17,7 +17,7 @@ import { combineEpics } from 'redux-observable';
 
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, isAttachmentLink } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -56,7 +56,8 @@ const getInternalResourcesUrls = (
     ?.map((message) =>
       message.custom_content?.attachments
         ?.map((attachment) => attachment.url)
-        .filter(Boolean),
+        .filter(Boolean)
+        .filter((url) => url && !isAttachmentLink(url)),
     )
     .filter(Boolean)
     .flat() || []) as string[];
@@ -116,7 +117,9 @@ const shareConversationEpic: AppEpic = (action$) =>
               {
                 url: ApiUtils.encodeApiUrl(payload.resourceId),
               },
-              ...internalResources.map((res) => ({ url: res })),
+              ...internalResources.map((res) => ({
+                url: res,
+              })),
             ],
           }).pipe(
             map((response: ShareByLinkResponseModel) => {
