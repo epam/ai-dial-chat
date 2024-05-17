@@ -19,6 +19,8 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { TourGuideId } from '@/src/constants/share';
+
 import { PromptFolders } from './components/PromptFolders';
 import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
@@ -65,7 +67,7 @@ const PromptActionsBlock = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex px-2 py-1">
+    <div className="flex px-2 py-1" id={TourGuideId.newPrompt}>
       <button
         className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
         onClick={() => {
