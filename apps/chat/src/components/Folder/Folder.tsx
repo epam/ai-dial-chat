@@ -56,6 +56,7 @@ import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
@@ -288,6 +289,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
+  const handleNewFolderRename = useCallback(() => {
+    if (newAddedFolderId === currentFolder.id) {
+      dispatch(FilesActions.resetNewFolderId());
+    }
+  }, [newAddedFolderId, dispatch, currentFolder]);
+
   const handleRename = useCallback(() => {
     if (!onRenameFolder) {
       return;
@@ -338,6 +345,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     if (newName && newName !== currentFolder.name) {
       onRenameFolder(newName, currentFolder.id);
     }
+
+    handleNewFolderRename();
+
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
@@ -347,6 +357,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     skipFolderRenameValidation,
     currentFolder,
     allFoldersWithoutFilters,
+    handleNewFolderRename,
     dispatch,
     t,
   ]);
@@ -917,6 +928,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               handleClick={(e) => {
                 e.stopPropagation();
                 setIsRenaming(false);
+                handleNewFolderRename();
               }}
             >
               <IconX
