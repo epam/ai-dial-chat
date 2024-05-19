@@ -19,7 +19,6 @@ import {
   Message,
 } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { CustomVisualizerData } from '@/src/types/custom-visualizers';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { PublishRequest } from '@/src/types/share';
@@ -29,6 +28,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
+import { CustomVisualizerData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export { ConversationsSelectors };

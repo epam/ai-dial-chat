@@ -83,7 +83,6 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
-import { CustomVisualizerData } from '@/src/types/custom-visualizers';
 import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 
@@ -108,6 +107,7 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import { CustomVisualizerData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>

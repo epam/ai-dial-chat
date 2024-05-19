@@ -12,3 +12,15 @@ export interface VisualizerConnectorOptions {
 }
 
 export type VisualizerConnectorRequest = DialLibRequest;
+
+export interface CustomVisualizerDataLayout extends Record<string, unknown> {
+  width: number;
+  height: number;
+}
+export interface CustomVisualizerData extends Record<string, unknown> {
+  layout: CustomVisualizerDataLayout;
+}
+export interface AttachmentData {
+  mimeType: string;
+  visualizerData: CustomVisualizerData;
+}

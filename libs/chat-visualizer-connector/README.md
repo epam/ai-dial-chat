@@ -4,7 +4,7 @@ DIAL Chat Visualizer Connector is a library for connecting custom visualizers - 
 
 ## Public classes to use
 
-`ChatVisualizerConnector` - class which provides needed methods for the **Visualizer**(rendered in the iframe) to interact with **DIAL Chat** (receive data to visualize). Types for configuration options are `ChatVisualizerConnector` and `AttachmentData`.
+`ChatVisualizerConnector` - class which provides needed methods for the **Visualizer**(rendered in the iframe) to interact with **DIAL Chat** (receive data to visualize).
 
 ## Prerequisites
 
@@ -49,6 +49,19 @@ CUSTOM_VISUALIZERS=[
 
 ```
 
+Futhermore, model or application should send data in _json_ like format which should include layout property. This layout object should have **width** and **height** properties. All other properties could be set to anything you need for your **Visualizer**.
+
+```typescript
+export interface CustomVisualizerDataLayout extends Record<string, unknown> {
+  width: number;
+  height: number;
+}
+
+export interface CustomVisualizerData extends Record<string, unknown> {
+  layout: CustomVisualizerDataLayout;
+}
+```
+
 ## To integrate **Visualizer** with _DIAL CHAT_.
 
 1. Install library
@@ -60,7 +73,40 @@ npm i @epam/ai-dial-chat-visualizer-connector
 2. Add file to serving folder in your application or just import it in code
 
 ```typescript
-import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visualizer-connector';
+import { AttachmentData, ChatVisualizerConnector, CustomVisualizerDataLayout } from '@epam/ai-dial-chat-visualizer-connector';
+```
+
+`ChatVisualizerConnector` - class which provides needed methods for the **Visualizer**(rendered in the iframe) to interact with **DIAL Chat** (receive data to visualize).
+Expects following required arguments:
+
+```typescript
+/**
+ * Creates a ChatVisualizerConnector
+ * @param dialHost {string} DIAL CHAT host
+ * @param appName {string} name of the Visualizer same as in config
+ * @param dataCallback {(visualizerData: AttachmentData) => void} callback to get data that will be used in the Visualizer
+ */
+
+new ChatVisualizerConnector(dialHost, appName, setData);
+```
+
+`AttachmentData` - interface for the payload you will get from the _DIAL CHAT_
+
+```typescript
+export interface AttachmentData {
+  mimeType: string;
+  visualizerData: CustomVisualizerData;
+}
+```
+
+`CustomVisualizerDataLayout` - interface for the layout you will get from the _DIAL CHAT_.
+Properties **width** and **height** is needed for proper rendering in the _DIAL CHAT_.
+
+```typescript
+export interface CustomVisualizerDataLayout extends Record<string, unknown> {
+  width: number;
+  height: number;
+}
 ```
 
 3. Set `dialHost` to the _DIAL CHAT_ host you want to connect:
@@ -69,7 +115,7 @@ import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visu
 const dialHost = 'https://hosted-dial-chat-domain.com';
 ```
 
-4. Set `appName` same as `title` in the _DIAL CHAT_ configuration in the `CUSTOM_VISUALIZERS`:
+4. Set `appName` same as `title` in the _DIAL CHAT_ configuration in the `CUSTOM_VISUALIZERS` environmental variable:
 
 ```typescript
 const appName = 'CUSTOM_VISUALIZER';
@@ -114,7 +160,11 @@ useEffect(() => {
 _Note: Data send by model/application from DIAL CHAT should be the same type as you expect._
 
 ```typescript
-data.visualizerData as { dataToRender: string; layout: Layout };
+//layout should include width and height properties
+interface YourVisualizerLayout extends CustomVisualizerDataLayout {
+  //any other layout properties expected from the model/application output
+}
+data.visualizerData as { dataToRender: string; layout: YourVisualizerLayout };
 ```
 
 8. Render data in your **Visualizer**;
@@ -129,7 +179,8 @@ data.visualizerData as { dataToRender: string; layout: Layout };
 
 ```typescript
 
-import { AttachmentData, ChatVisualizerConnector } from '@epam/ai-dial-chat-visualizer-connector';
+import { AttachmentData, ChatVisualizerConnector, CustomVisualizerDataLayout } from '@epam/ai-dial-chat-visualizer-connector';
+
 
 export const Module: FC = () => {
   const [data, setData] = useState<AttachmentData>();
@@ -168,7 +219,7 @@ export const Module: FC = () => {
 
   const typedVisualizerData = React.useMemo(() => {
     return (
-      data?.visualizerData && (data.visualizerData as { dataToRender: string })
+      data?.visualizerData && (data.visualizerData as unknown as { dataToRender: string; layout: YourVisualizerLayout })
     );
   }, [data?.visualizerData]);
 
