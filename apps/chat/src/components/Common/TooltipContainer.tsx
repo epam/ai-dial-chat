@@ -1,8 +1,9 @@
-import { IconHelp } from '@tabler/icons-react';
 import React, { FC } from 'react';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import Tooltip from '@/src/components/Common/Tooltip';
+
+import HelpIcon from '../../../public/images/icons/help.svg';
 
 interface TooltipContainerProps {
   description: string;
@@ -16,7 +17,7 @@ const TooltipContainer: FC<TooltipContainerProps> = ({ description }) => (
       <EntityMarkdownDescription>{description}</EntityMarkdownDescription>
     }
   >
-    <IconHelp size={18} />
+    <HelpIcon width={18} height={18} />
   </Tooltip>
 );
 

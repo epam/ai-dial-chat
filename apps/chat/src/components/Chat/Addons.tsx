@@ -139,13 +139,13 @@ export const Addons = ({
   }
 
   return (
-    <div className="flex flex-col gap-3" data-qa="addons">
+    <div className="flex flex-col gap-3 font-medium" data-qa="addons">
       <span>{t('Addons (max 10)')}</span>
 
       {(selectedAddonsIds?.filter((id) => addonsMap[id]).length > 0 ||
         preselectedAddonsIds?.length > 0) && (
         <>
-          <span className="text-secondary-bg-dark">{t('Selected')}</span>
+          <span className="text-quaternary-bg-light">{t('Selected')}</span>
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => (
               <Addon
@@ -179,7 +179,7 @@ export const Addons = ({
         <>
           {filteredRecentAddons?.length > 0 && (
             <>
-              <span className="text-secondary-bg-dark">{t('Recent')}</span>
+              <span className="text-quaternary-bg-light">{t('Recent')}</span>
               <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
                   .map((addon) => (

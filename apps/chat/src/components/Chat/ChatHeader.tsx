@@ -101,7 +101,7 @@ export const ChatHeader = ({
     <>
       <div
         className={classNames(
-          'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
+          'chat-header sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-7 px-3 py-3 text-sm text-quinary-bg-light md:flex-wrap md:px-0 lg:flex-row',
           {
             'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth,
           },
@@ -125,7 +125,7 @@ export const ChatHeader = ({
                   'block max-w-full md:max-w-[330px] lg:max-w-[425px]':
                     !isChatFullWidth,
                 },
-                isConversationInvalid && 'text-secondary-bg-dark',
+                isConversationInvalid && 'text-quaternary-bg-light',
               )}
               data-qa="chat-title"
             >
@@ -249,7 +249,7 @@ export const ChatHeader = ({
             {isShowModelSelect && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
-                  className="cursor-pointer text-secondary-bg-dark hover:text-accent-primary"
+                  className="cursor-pointer text-quinary-bg-light hover:text-accent-primary"
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
                 >
@@ -265,7 +265,7 @@ export const ChatHeader = ({
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
-                    className="cursor-pointer text-secondary-bg-dark hover:text-accent-primary"
+                    className="cursor-pointer text-quinary-bg-light hover:text-accent-primary"
                     onClick={() => setIsClearConversationModalOpen(true)}
                     data-qa="clear-conversation"
                   >
@@ -279,7 +279,7 @@ export const ChatHeader = ({
                 tooltip={t('Delete conversation from compare mode')}
               >
                 <button
-                  className="cursor-pointer text-secondary-bg-dark hover:text-accent-primary disabled:cursor-not-allowed"
+                  className="cursor-pointer text-quinary-bg-light hover:text-accent-primary disabled:cursor-not-allowed"
                   onClick={() => onUnselectConversation(conversation.id)}
                   disabled={conversation.isMessageStreaming}
                   data-qa="delete-from-compare"

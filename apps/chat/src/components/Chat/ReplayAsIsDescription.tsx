@@ -24,7 +24,7 @@ export const ReplayAsIsDescription = ({ isModelInMessages }: Props) => {
 
           <div className="flex flex-col justify-center">
             <span
-              className="text-xs text-secondary-bg-dark"
+              className="text-xs text-quaternary-bg-light"
               data-qa="app-descr"
             >
               {t(

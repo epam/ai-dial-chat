@@ -223,7 +223,7 @@ export const PlaybackControls = ({
         </button>
         <div
           ref={nextMessageBoxRef}
-          className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
+          className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded-full border border-secondary bg-layer-2 px-12 py-3 text-left shadow-primary outline-none placeholder:text-xs placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (
@@ -238,7 +238,7 @@ export const PlaybackControls = ({
                   <span
                     className={classNames(
                       'break-words',
-                      phase === 'EMPTY' && 'text-secondary-bg-dark',
+                      phase === 'EMPTY' && 'text-quaternary-bg-light',
                     )}
                     data-qa="playback-message-content"
                   >

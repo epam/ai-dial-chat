@@ -90,7 +90,7 @@ function App({
                         <IconX
                           stroke={1}
                           size={24}
-                          className="text-secondary-bg-dark"
+                          className="text-primary-bg-dark"
                         />
                       </button>
                     )}

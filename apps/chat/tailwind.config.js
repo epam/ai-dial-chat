@@ -6,8 +6,11 @@ const commonBgColors = {
   'layer-2': 'var(--bg-layer-2, #141A23)',
   'layer-3': 'var(--bg-layer-3, #222932)',
   'layer-4': 'var(--bg-layer-4, #333942)',
-  'layer-5': 'var(--bg-layer-4, #333942)',
+  'layer-5': 'var(--bg-layer-5, #333942)',
+  'layer-6': 'var(--bg-layer-6, #184487)',
+  'layer-7': 'var(--bg-layer-7, #ECEEF4)',
   blackout: 'var(--bg-blackout, #090D13B3)',
+  'blackout-2': 'var(--bg-blackout-2, #023465CC)',
   error: 'var(--bg-error, #402027)',
   'accent-primary': 'var(--bg-accent-primary, #5C8DEA)',
   'accent-secondary': 'var(--bg-accent-secondary, #37BABC)',
@@ -29,6 +32,7 @@ const commonBorderColors = {
   'accent-primary': 'var(--stroke-accent-primary, #5C8DEA)',
   'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
   'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
+  'accent-quaternary': 'var(--stroke-accent-quaternary, #7FA5D0)',
 };
 
 // Do not use palette directly, only through semantic colors
@@ -54,12 +58,18 @@ module.exports = {
       'primary-bg-light': 'var(--text-primary-bg-light, #023465)',
       'secondary-bg-light': 'var(--text-secondary-bg-light, #7F8792)',
       'tertiary-bg-light': 'var(--text-tertiary-bg-light, #7F8792)',
+      'quaternary-bg-light': 'var(--text-quaternary-bg-light, #6A7585)',
+      'quinary-bg-light': 'var(--text-quinary-bg-light, #082A5E)',
       error: 'var(--text-error, #F76464)',
       'accent-primary': 'var(--text-accent-primary, #5C8DEA)',
       'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
       'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-disable': 'var(--controls-text-disable, #333942)',
+      'temperature-primary': 'var(--text-temperature-primary, #80A6D1)',
+      'temperature-secondary': 'var(--text-temperature-secondary, #426E9C)',
+      'temperature-tertiary': 'var(--text-temperature-tertiary, #043667)',
+      'pr-primary-700': 'var(--text-pr-primary-700, #023465)',
     },
     gradientColorStops: commonBgColors,
     /////////
@@ -75,12 +85,14 @@ module.exports = {
       },
       borderRadius: {
         DEFAULT: '3px',
+        primary: '6px',
       },
       opacity: {
         15: '15%',
       },
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--bg-blackout, #090D13B3)',
+        primary: '0 5px 10px 0 var(--bg-blackout-2, #1844870D)',
       },
       fontFamily: {
         DEFAULT: ['var(--font-inter)'],

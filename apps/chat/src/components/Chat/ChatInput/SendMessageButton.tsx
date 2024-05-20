@@ -1,8 +1,4 @@
-import {
-  IconPlaystationSquare,
-  IconRefresh,
-  IconSend,
-} from '@tabler/icons-react';
+import { IconPlaystationSquare, IconRefresh } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
@@ -13,6 +9,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import SendMessageIcon from '../../../../public/images/icons/send-message.svg';
 import { Spinner } from '../../Common/Spinner';
 
 interface Props {
@@ -57,12 +54,12 @@ export const SendMessageButton = ({
   const isSpinner = isLoading || isModelsLoading;
   const [Icon, dataQa, disabled] = messageIsStreaming
     ? [IconPlaystationSquare, 'stop-generating', false]
-    : [IconSend, 'send', isDisabled];
+    : [SendMessageIcon, 'send', isDisabled];
 
   return (
     <button
       className={classNames(
-        'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary disabled:cursor-not-allowed disabled:text-secondary-bg-dark',
+        'absolute top-[calc(50%_-_12px)] rounded-full text-pr-primary-700 hover:text-secondary-bg-light disabled:cursor-not-allowed disabled:text-pr-primary-700',
         isOverlay ? 'right-3' : 'right-4',
       )}
       onClick={onSend}
@@ -74,7 +71,11 @@ export const SendMessageButton = ({
         tooltip={tooltip}
         isTriggerClickable
       >
-        {isSpinner ? <Spinner size={20} /> : <Icon size={24} stroke="1.5" />}
+        {isSpinner ? (
+          <Spinner size={20} />
+        ) : (
+          <Icon width={24} height={24} stroke="1.5" />
+        )}
       </Tooltip>
     </button>
   );
