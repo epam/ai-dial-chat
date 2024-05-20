@@ -179,7 +179,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setContent(selectedPrompt?.content || '');
   }, [selectedPrompt]);
 
-  const inputClassName = classNames('input-form', 'peer', {
+  const inputClassName = classNames('input-form', 'mx-0', 'peer', {
     'input-invalid': submitted,
     submitted: submitted,
   });
@@ -194,7 +194,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="flex flex-col gap-4 inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
       state={
         isOpen
@@ -203,7 +203,6 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             : ModalState.OPENED
           : ModalState.CLOSED
       }
-      heading={t('Edit prompt')}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt && !saveDisabled) handleEnter(e, selectedPrompt);
@@ -212,85 +211,90 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     >
       {selectedPrompt ? (
         <>
-          <div className="mb-4">
-            <label
-              className="mb-1 flex text-xs text-secondary"
-              htmlFor="promptName"
-            >
-              {t('Name')}
-              <span className="ml-1 inline text-accent-primary">*</span>
-            </label>
-            <input
-              ref={nameInputRef}
-              name="promptName"
-              className={classNames(
-                isDotError &&
-                  'border-error hover:border-error focus:border-error',
-                inputClassName,
-              )}
-              placeholder={t('A name for your prompt.') || ''}
-              value={name}
-              required
-              type="text"
-              onBlur={nameOnBlurHandler}
-              onChange={nameOnChangeHandler}
-              data-qa="prompt-name"
-            />
-            <EmptyRequiredInputMessage
-              isShown={isDotError}
-              text={
-                (isDotError
-                  ? t('Using a dot at the end of a name is not permitted.')
-                  : t('Please fill in all required fields')) || ''
-              }
-            />
+          <div className="flex justify-between">
+            <h2 className="text-base font-semibold">{t('Edit prompt')}</h2>
           </div>
+          <div className="flex flex-col gap-2 overflow-y-auto">
+            <div className="mb-4">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="promptName"
+              >
+                {t('Name')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              <input
+                ref={nameInputRef}
+                name="promptName"
+                className={classNames(
+                  isDotError &&
+                    'border-error hover:border-error focus:border-error',
+                  inputClassName,
+                )}
+                placeholder={t('A name for your prompt.') || ''}
+                value={name}
+                required
+                type="text"
+                onBlur={nameOnBlurHandler}
+                onChange={nameOnChangeHandler}
+                data-qa="prompt-name"
+              />
+              <EmptyRequiredInputMessage
+                isShown={isDotError}
+                text={
+                  (isDotError
+                    ? t('Using a dot at the end of a name is not permitted.')
+                    : t('Please fill in all required fields')) || ''
+                }
+              />
+            </div>
 
-          <div className="mb-4">
-            <label
-              className="mb-1 flex text-xs text-secondary"
-              htmlFor="description"
-            >
-              {t('Description')}
-            </label>
-            <textarea
-              ref={descriptionInputRef}
-              name="description"
-              className={inputClassName}
-              style={{ resize: 'none' }}
-              placeholder={t('A description for your prompt.') || ''}
-              value={description}
-              onChange={descriptionOnChangeHandler}
-              rows={3}
-              data-qa="prompt-descr"
-            />
-          </div>
-          <div className="mb-5">
-            <label
-              className="mb-1 flex text-xs text-secondary"
-              htmlFor="content"
-            >
-              {t('Prompt')}
-              <span className="ml-1 inline text-accent-primary">*</span>
-            </label>
-            <textarea
-              ref={contentInputRef}
-              name="content"
-              className={inputClassName}
-              style={{ resize: 'none' }}
-              placeholder={
-                t(
-                  'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
-                ) || ''
-              }
-              value={content}
-              onChange={contentOnChangeHandler}
-              onBlur={contentOnBlurHandler}
-              rows={10}
-              data-qa="prompt-value"
-              required
-            />
-            <EmptyRequiredInputMessage />
+            <div className="mb-4">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="description"
+              >
+                {t('Description')}
+              </label>
+              <textarea
+                ref={descriptionInputRef}
+                name="description"
+                className={inputClassName}
+                style={{ resize: 'none' }}
+                placeholder={t('A description for your prompt.') || ''}
+                value={description}
+                onChange={descriptionOnChangeHandler}
+                rows={3}
+                data-qa="prompt-descr"
+              />
+            </div>
+            <div className="mb-5">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="content"
+              >
+                {t('Prompt')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              <textarea
+                ref={contentInputRef}
+                name="content"
+                className={inputClassName}
+                style={{ resize: 'none' }}
+                placeholder={
+                  t(
+                    'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
+                  ) || ''
+                }
+                value={content}
+                onChange={contentOnChangeHandler}
+                onBlur={contentOnBlurHandler}
+                rows={10}
+                data-qa="prompt-value"
+                required
+              />
+              <EmptyRequiredInputMessage />
+            </div>
           </div>
           <div className="flex justify-end">
             <Tooltip

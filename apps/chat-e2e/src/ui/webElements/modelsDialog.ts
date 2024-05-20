@@ -1,4 +1,4 @@
-import { ChatSelectors, ModelDialog } from '../selectors';
+import { ChatSelectors, ErrorLabelSelectors, ModelDialog } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Groups } from '@/src/testData';
@@ -51,7 +51,7 @@ export class ModelsDialog extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(ModelDialog.closeDialog);
   public noResultFoundIcon = this.getChildElementBySelector(
-    ChatSelectors.noResultFound,
+    ErrorLabelSelectors.noResultFound,
   );
   public modelsTab = this.getChildElementBySelector(ModelDialog.modelsTab);
   public assistantsTab = this.getChildElementBySelector(

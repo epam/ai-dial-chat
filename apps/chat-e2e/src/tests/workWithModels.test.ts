@@ -443,7 +443,7 @@ dialTest(
         });
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -525,7 +525,7 @@ dialTest(
       async () => {
         await chatMessages.regenerateResponse(false);
         await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -601,8 +601,8 @@ dialTest(
           .toBeFalsy();
 
         await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
-        await chat.stopGenerating.waitForState({ state: 'hidden' });
+        await sendMessage.stopGenerating.click();
+        await sendMessage.stopGenerating.waitForState({ state: 'hidden' });
       },
     );
 
