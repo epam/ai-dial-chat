@@ -174,11 +174,17 @@ function getDevVersion(potentialVersion) {
 
       result = [];
     } else {
-      console.log('CODE', JSON.parse(e.stdout).error.code);
       throw new Error(`Could not get versions from registry.`);
     }
   }
 
+  if(!result){
+    throw new Error(`Could not get version.`);
+  }
+
+  if( !Array.isArray(result) && typeof result === 'string'){
+    result = [result];
+  }
   const lastVersionToIncrement = result
     .filter((ver) => ver.startsWith(mainPackageJson.version))
     .map((ver) => ver.match(/\d+$/)?.[0])

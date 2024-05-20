@@ -425,11 +425,9 @@ export const updateAttachment = ({
   // TODO: remove ApiUtils.encodeApiUrl from updateAttachment()
   const newAttachmentUrl =
     oldAttachment.url &&
-    (oldAttachment.type === PLOTLY_CONTENT_TYPE
-      ? constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name)
-      : ApiUtils.encodeApiUrl(
-          constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
-        ));
+    ApiUtils.encodeApiUrl(
+      constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
+    );
 
   const newType =
     oldAttachment.type === PLOTLY_CONTENT_TYPE
