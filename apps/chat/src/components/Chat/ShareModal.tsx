@@ -79,7 +79,7 @@ export default function ShareModal() {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-full max-w-[424px] p-6"
+      containerClassName="inline-block w-full max-w-[424px] md:p-6"
       dataQa="share-modal"
       state={modalState}
       onClose={handleClose}
