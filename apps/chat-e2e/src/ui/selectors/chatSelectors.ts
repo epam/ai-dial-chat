@@ -140,6 +140,7 @@ export const ChatSelectors = {
   chatScrollableArea: '[data-qa="scrollable-area"]',
   attachmentExpanded: '[data-qa="attachment-expanded"]',
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
+  attachmentsGroup: '[data-qa="grouped-attachments"]',
   menuTrigger: '[data-qa="menu-trigger"]',
   dropdownMenu: '[data-qa="dropdown-menu"]',
   inputAttachmentsContainer: '[data-qa="attachment-container"]',
