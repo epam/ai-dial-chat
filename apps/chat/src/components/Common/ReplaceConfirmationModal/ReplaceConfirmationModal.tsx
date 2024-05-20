@@ -293,7 +293,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       }}
       hideClose
       dataQa="replace-confirmation-modal"
-      containerClassName="flex w-full flex-col pr-0 pl-0 gap-4 pt-4 sm:w-[525px] md:pt-6"
+      containerClassName="flex w-full min-h-[595px] flex-col pr-0 pl-0 gap-4 pt-4 sm:w-[525px] md:pt-6"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex h-fit flex-col gap-2 px-3 md:px-6">
@@ -317,7 +317,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         {featuresToReplace && featureList}
       </div>
 
-      <div className="flex h-fit flex-row justify-end gap-3 border-t-[1px] border-tertiary px-3 pt-4 md:px-6 md:pb-4">
+      <div className="mt-auto flex h-fit flex-row justify-end gap-3 border-t-[1px] border-tertiary px-3 pt-4 md:px-6 md:pb-4">
         <button
           onClick={handleCancel}
           className="button button-secondary h-[38px] rounded px-3 py-0"
