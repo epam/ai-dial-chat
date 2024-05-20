@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
@@ -6,12 +6,14 @@ import { Locator, Page } from '@playwright/test';
 
 export class MoreInfo extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.moreInfo, parentLocator);
+    super(page, ChatSettingsSelectors.moreInfo, parentLocator);
   }
-  public entityInfo = this.getChildElementBySelector(ChatSelectors.entityInfo);
+  public entityInfo = this.getChildElementBySelector(
+    ChatSettingsSelectors.entityInfo,
+  );
 
   public entityDescription = this.getChildElementBySelector(
-    ChatSelectors.entityDescription,
+    ChatSettingsSelectors.entityDescription,
   );
   public entityIcon = this.getChildElementBySelector(Tags.svg);
 

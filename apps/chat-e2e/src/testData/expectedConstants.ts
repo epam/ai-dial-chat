@@ -200,6 +200,8 @@ export const Attachment = {
   sunImageName: 'sun.jpg',
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
+  flowerImageName: 'flower.jpg',
+  longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
 };
 
 export enum Side {
