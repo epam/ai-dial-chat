@@ -76,7 +76,7 @@ export const VisualizerRenderer = ({
         ? scrollWidth
         : customAttachmentData?.layout.width ?? DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
       height:
-        customAttachmentData?.layout.width ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+        customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
     };
   }, [customAttachmentData?.layout, scrollWidth]);
 
