@@ -191,6 +191,10 @@ export function HandlePublication({ publication }: Props) {
     },
   ];
 
+  const publishToUrl = publication.targetFolder
+    ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
+    : '';
+
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
@@ -221,14 +225,17 @@ export function HandlePublication({ publication }: Props) {
                       className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
                       disabled
                     >
-                      <span className="truncate">
-                        {publication.targetUrl
-                          ? publication.targetUrl.replace(
-                              /^[^/]+/,
-                              'Organization',
-                            )
-                          : ''}
-                      </span>
+                      <Tooltip
+                        placement="top"
+                        triggerClassName="w-full text-start"
+                        tooltip={
+                          <div className="flex break-words text-xs">
+                            {publishToUrl}
+                          </div>
+                        }
+                      >
+                        <span className="w-full truncate">{publishToUrl}</span>
+                      </Tooltip>
                     </button>
                     <div className="my-4">
                       <p className="text-xs text-secondary">

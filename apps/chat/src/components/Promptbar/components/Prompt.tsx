@@ -413,6 +413,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       )}
       {isUnpublishing && (
         <UnpublishModal
+          type={SharingType.Prompt}
           entity={prompt}
           isOpen
           onClose={handleCloseUnpublishModal}

@@ -18,7 +18,6 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
-import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
@@ -58,7 +57,6 @@ export const FileItem = ({
 
   const [isSelected, setIsSelected] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -86,13 +84,8 @@ export const FileItem = ({
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsUnpublishing(true);
       setIsContextMenu(false);
     }, []);
-
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
 
   useEffect(() => {
     setIsSelected(
@@ -212,13 +205,6 @@ export const FileItem = ({
           />
         )}
       </div>
-      {isUnpublishing && (
-        <UnpublishModal
-          entity={item}
-          isOpen
-          onClose={handleCloseUnpublishModal}
-        />
-      )}
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}

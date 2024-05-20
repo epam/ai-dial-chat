@@ -4,6 +4,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Entity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
@@ -14,12 +15,24 @@ import Modal from '../Common/Modal';
 interface Props {
   entity: Entity;
   isOpen: boolean;
+  type: SharingType;
   onClose: () => void;
 }
 
-export default function UnpublishModal({ entity, isOpen, onClose }: Props) {
+export default function UnpublishModal({
+  entity,
+  isOpen,
+  onClose,
+  // type,
+}: Props) {
   const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
+
+  // const files = useAppSelector((state) =>
+  //   getAttachments(type)(state, entity.id),
+  // );
+
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -37,7 +50,12 @@ export default function UnpublishModal({ entity, isOpen, onClose }: Props) {
 
       dispatch(
         PublicationActions.deletePublication({
-          resources: [{ targetUrl: entity.id }],
+          resources: [
+            { targetUrl: entity.id },
+            // ...files.map((f) => ({
+            //   targetUrl: f.id,
+            // })),
+          ],
         }),
       );
       onClose();

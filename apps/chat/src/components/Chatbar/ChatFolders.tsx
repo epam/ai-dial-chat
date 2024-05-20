@@ -236,8 +236,10 @@ export const ChatSection = ({
   dataQa,
 }: FolderSectionProps) => {
   const { t } = useTranslation(Translation.SideBar);
-  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+
+  const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const rootFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -253,17 +255,16 @@ export const ChatSection = ({
       searchTerm,
     ),
   );
+  const selectedFoldersIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsFoldersIds,
+  );
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
 
   const sortedRootConversations = useMemo(
     () => sortByName(rootConversations),
     [rootConversations],
-  );
-  const selectedFoldersIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsFoldersIds,
-  );
-
-  const selectedConversationsIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
   );
 
   useEffect(() => {

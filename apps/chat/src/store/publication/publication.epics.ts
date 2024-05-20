@@ -39,6 +39,7 @@ import {
 
 import { ApiKeys, BackendDataNodeType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
+import { PublishActions } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -74,8 +75,9 @@ const publishEpic: AppEpic = (action$) =>
       const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
       return PublicationService.publish({
-        targetUrl: `public/${encodedTargetFolder}${targetFolderSuffix}`,
+        targetFolder: `public/${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
+          action: PublishActions.ADD,
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
         })),
@@ -182,7 +184,6 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           const conversationResources = publication.resources.filter((r) =>
             isConversationId(r.targetUrl),
           );
-
           if (conversationResources.length) {
             const conversationPaths = uniq(
               conversationResources.flatMap((resource) => {

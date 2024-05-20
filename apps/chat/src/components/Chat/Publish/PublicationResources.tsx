@@ -287,6 +287,7 @@ export const FilePublicationResources = ({
           <Folder
             readonly
             noCaretIcon={!!forViewOnly}
+            displayCaretAlways
             level={forViewOnly ? 0 : 1}
             key={f.id}
             currentFolder={f}

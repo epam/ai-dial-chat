@@ -115,8 +115,14 @@ export const ChangePathDialog = ({
     (folderId?: string | undefined) => {
       setSelectedFolderId(folderId);
       handleToggleFolder(folderId);
+      dispatch(
+        ConversationsActions.uploadConversationsWithFoldersRecursive({
+          path: folderId,
+          noLoader: true,
+        }),
+      );
     },
-    [handleToggleFolder],
+    [dispatch, handleToggleFolder],
   );
 
   const handleRenameFolder = useCallback(

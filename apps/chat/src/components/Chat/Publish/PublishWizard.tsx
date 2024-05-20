@@ -20,7 +20,7 @@ import { getAttachments } from '@/src/utils/app/share';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ApiKeys, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { TargetAudienceFilter } from '@/src/types/publication';
+import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -384,6 +384,7 @@ export function PublishModal({
                   <ConversationPublicationResources
                     rootFolder={entity}
                     resources={entities.map((entity) => ({
+                      action: PublishActions.ADD,
                       sourceUrl: entity.id,
                       targetUrl: constructPath(
                         ApiKeys.Conversations,
@@ -407,6 +408,7 @@ export function PublishModal({
                 <FilePublicationResources
                   uploadedFiles={files}
                   resources={files.map((f) => ({
+                    action: PublishActions.ADD,
                     sourceUrl: f.id,
                     targetUrl: constructPath(
                       ApiKeys.Files,
@@ -438,6 +440,7 @@ export function PublishModal({
                     rootFolder={entity}
                     resources={[
                       {
+                        action: PublishActions.ADD,
                         sourceUrl: entity.id,
                         targetUrl: constructPath(
                           ApiKeys.Prompts,

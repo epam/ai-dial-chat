@@ -8,6 +8,11 @@ export enum PublicationFunctions {
   TRUE = 'TRUE',
 }
 
+export enum PublishActions {
+  ADD = 'ADD',
+  DELETE = 'DELETE',
+}
+
 export interface PublicationRule {
   source: string;
   function: PublicationFunctions;
@@ -15,9 +20,12 @@ export interface PublicationRule {
 }
 
 export interface PublicationRequest {
-  url: string;
-  targetUrl: string;
-  resources: { sourceUrl: string; targetUrl: string }[];
+  targetFolder: string;
+  resources: {
+    action: PublishActions;
+    sourceUrl: string;
+    targetUrl: string;
+  }[];
   rules?: PublicationRule[];
 }
 
@@ -29,6 +37,7 @@ export enum PublicationStatus {
 }
 
 export interface PublicationResource {
+  action: PublishActions;
   sourceUrl: string | null;
   targetUrl: string;
   reviewUrl: string | null;
@@ -36,7 +45,7 @@ export interface PublicationResource {
 
 export interface Publication {
   url: string;
-  targetUrl?: string;
+  targetFolder?: string;
   status: PublicationStatus;
   createdAt: number;
   resources: PublicationResource[];

@@ -44,7 +44,7 @@ import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
@@ -733,7 +733,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
-              hidden={(!hasChildElements && !displayCaretAlways) || noCaretIcon}
+              hidden={
+                (!hasChildElements &&
+                  currentFolder.status === UploadStatus.LOADED &&
+                  !displayCaretAlways) ||
+                noCaretIcon
+              }
             />
 
             {loadingFolderIds.includes(currentFolder.id) &&
@@ -940,6 +945,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       )}
       {isUnpublishing && isPublishingEnabled && (
         <UnpublishModal
+          type={
+            featureType === FeatureType.Chat
+              ? SharingType.ConversationFolder
+              : SharingType.PromptFolder
+          }
           entity={currentFolder}
           isOpen
           onClose={handleCloseUnpublishModal}

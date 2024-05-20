@@ -18,12 +18,11 @@ import { BrowserStorage } from './storages/browser-storage';
 
 export class PublicationService {
   public static publish(
-    publicationData: Omit<PublicationRequest, 'url'>,
+    publicationData: PublicationRequest,
   ): Observable<Publication> {
     return ApiUtils.request('api/publication/create', {
       method: 'POST',
       body: JSON.stringify({
-        url: `publications/${BucketService.getBucket()}/`,
         ...publicationData,
       }),
     });
@@ -62,7 +61,7 @@ export class PublicationService {
           sourceUrl: r.sourceUrl ? ApiUtils.decodeApiUrl(r.sourceUrl) : null,
         }));
 
-        if (!publication.targetUrl) {
+        if (!publication.targetFolder) {
           return {
             ...publication,
             resources: decodedResources,
@@ -71,7 +70,7 @@ export class PublicationService {
 
         return {
           ...publication,
-          targetUrl: ApiUtils.decodeApiUrl(publication.targetUrl),
+          targetUrl: ApiUtils.decodeApiUrl(publication.targetFolder),
           resources: decodedResources,
         };
       }),

@@ -1,7 +1,13 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useMemo } from 'react';
 
+import classNames from 'classnames';
+
+import { BackendResourceType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 interface Props {
   prompts: Prompt[];
@@ -26,6 +32,12 @@ export const PromptList: FC<Props> = ({
       onClose();
     },
   });
+  const promptResources = useAppSelector((state) =>
+    PublicationSelectors.selectFilteredPublicationResources(
+      state,
+      BackendResourceType.PROMPT,
+    ),
+  );
 
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
@@ -36,6 +48,11 @@ export const PromptList: FC<Props> = ({
     }
   }, [activePromptIndex, refs.floating]);
 
+  const filteredPrompts = useMemo(() => {
+    const publicationPromptUrls = promptResources.map((r) => r.reviewUrl);
+    return prompts.filter((p) => !publicationPromptUrls.includes(p.id));
+  }, [promptResources, prompts]);
+
   return (
     <ul
       ref={refs.setFloating}
@@ -43,12 +60,13 @@ export const PromptList: FC<Props> = ({
       className="z-10 max-h-52 w-full overflow-auto rounded bg-layer-3"
       data-qa="prompt-list"
     >
-      {prompts.map((prompt, index) => (
+      {filteredPrompts.map((prompt, index) => (
         <li
           key={prompt.id}
-          className={`${
-            index === activePromptIndex ? 'bg-accent-primary-alpha' : ''
-          } cursor-pointer px-3 py-2`}
+          className={classNames(
+            'cursor-pointer px-3 py-2',
+            index === activePromptIndex && 'bg-accent-primary-alpha',
+          )}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
