@@ -105,6 +105,7 @@ export const ExpectedConstants = {
   duplicatedConversationRootNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists at the root.`,
   prohibitedNameSymbols: `=,:;{}/%&`,
+  // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
 };
 

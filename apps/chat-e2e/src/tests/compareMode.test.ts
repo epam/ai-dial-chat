@@ -268,10 +268,12 @@ dialTest(
       'Open another conversation and verify compare mode is closed',
       async () => {
         await conversations.selectConversation(replayConversation.name);
-        const isCompareModeOn = await compare.isVisible();
-        expect
-          .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await compare.getElementLocator(),
+            ExpectedMessages.compareModeClosed,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -651,21 +653,18 @@ dialTest(
         await chatMessages.waitForCompareMessageJumpingIconDisappears(
           Side.left,
         );
-        const isRegenerateButtonVisible = await chatMessages.regenerate
-          .getNthElement(1)
-          .isVisible();
-        expect
+        await expect
           .soft(
-            isRegenerateButtonVisible,
+            await chatMessages.regenerate.getNthElement(1),
             ExpectedMessages.regenerateNotAvailable,
           )
-          .toBeFalsy();
-
-        const isStopButtonVisible =
-          await sendMessage.stopGenerating.isVisible();
-        expect
-          .soft(isStopButtonVisible, ExpectedMessages.stopGeneratingAvailable)
-          .toBeTruthy();
+          .toBeHidden();
+        await expect
+          .soft(
+            await sendMessage.stopGenerating.getElementLocator(),
+            ExpectedMessages.stopGeneratingAvailable,
+          )
+          .toBeVisible();
       },
     );
 
@@ -693,12 +692,12 @@ dialTest(
           .toBe(secondConversation.model.id);
 
         for (const conversation of [firstConversation, secondConversation]) {
-          const isConversationVisible = await conversations
-            .getConversationByName(conversation.name)
-            .isVisible();
-          expect
-            .soft(isConversationVisible, ExpectedMessages.conversationIsVisible)
-            .toBeTruthy();
+          await expect
+            .soft(
+              await conversations.getConversationByName(conversation.name),
+              ExpectedMessages.conversationIsVisible,
+            )
+            .toBeVisible();
         }
       },
     );
@@ -1268,10 +1267,12 @@ dialTest(
         await dialHomePage.reloadPage();
         await compare.waitForState();
         await conversations.selectConversation(firstConversation.name);
-        const isCompareModeOn = await compare.isVisible();
-        expect
-          .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await compare.getElementLocator(),
+            ExpectedMessages.compareModeClosed,
+          )
+          .toBeHidden();
       },
     );
 
@@ -1283,14 +1284,12 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
-        const isDeleteConversationIconVisible =
-          await leftChatHeader.deleteConversationFromComparison.isVisible();
-        expect
+        await expect
           .soft(
-            isDeleteConversationIconVisible,
+            await leftChatHeader.deleteConversationFromComparison.getElementLocator(),
             ExpectedMessages.closeChatIconIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         await compareConversationSelector.click();
         const overflowProp =
@@ -1557,10 +1556,12 @@ dialTest(
         await conversations
           .getConversationByName(updatedRequestContent)
           .waitFor({ state: 'hidden' });
-        const isCompareModeOpened = await compare.isVisible();
-        expect
-          .soft(isCompareModeOpened, ExpectedMessages.compareModeClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await compare.getElementLocator(),
+            ExpectedMessages.compareModeClosed,
+          )
+          .toBeHidden();
       },
     );
   },

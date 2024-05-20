@@ -210,12 +210,17 @@ dialTest(
       'Verify new Replay conversations are created inside 1st and 3rd level folders',
       async () => {
         for (let i = 0; i < nestedLevels; i = i + 2) {
-          await folderConversations.getFolderEntity(
-            nestedFolders[i + 1].name,
-            `${ExpectedConstants.replayConversation}${
-              nestedConversations[i + 1].name
-            }`,
-          ).waitFor;
+          await expect
+            .soft(
+              await folderConversations.getFolderEntity(
+                nestedFolders[i + 1].name,
+                `${ExpectedConstants.replayConversation}${
+                  nestedConversations[i + 1].name
+                }`,
+              ),
+              ExpectedMessages.replayConversationCreated,
+            )
+            .toBeVisible();
         }
       },
     );
@@ -939,11 +944,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
 
         await talkToSelector.waitForState({ state: 'attached' });
-
-        const isStartReplayVisible = await chat.replay.isVisible();
-        expect
-          .soft(isStartReplayVisible, ExpectedMessages.startReplayNotVisible)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chat.replay.getElementLocator(),
+            ExpectedMessages.startReplayNotVisible,
+          )
+          .toBeHidden();
 
         const notAllowedModelError =
           await chat.notAllowedModelLabel.getElementContent();

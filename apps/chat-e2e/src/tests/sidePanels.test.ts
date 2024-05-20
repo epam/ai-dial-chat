@@ -106,10 +106,12 @@ dialTest(
       'Verify Attachment icon is visible at the panel bottom menu',
       async () => {
         await chatBar.attachments.waitForState();
-        const isDotsMenuVisible = await chatBar.bottomDotsMenuIcon.isVisible();
-        expect
-          .soft(isDotsMenuVisible, ExpectedMessages.dotsMenuIsHidden)
-          .toBeFalsy();
+        await expect
+          .soft(
+            chatBar.bottomDotsMenuIcon.getElementLocator(),
+            ExpectedMessages.dotsMenuIsHidden,
+          )
+          .toBeHidden();
 
         await chatBar.attachments.hoverOver();
         const iconTooltip = await tooltip.getContent();
@@ -223,10 +225,12 @@ dialTest(
       'Verify dots menu is visible at the panel bottom menu',
       async () => {
         await chatBar.bottomDotsMenuIcon.waitForState();
-        const isAttachmentsIconVisible = await chatBar.attachments.isVisible();
-        expect
-          .soft(isAttachmentsIconVisible, ExpectedMessages.iconIsHidden)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatBar.attachments.getElementLocator(),
+            ExpectedMessages.iconIsHidden,
+          )
+          .toBeHidden();
 
         await chatBar.bottomDotsMenuIcon.hoverOver();
         const dotsMenuIconColor =

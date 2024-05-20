@@ -336,6 +336,7 @@ dialTest(
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
+    // eslint-disable-next-line playwright/no-force-option
     await promptBar.click({ force: true });
 
     const isPromptModalVisible = await promptModalDialog.isVisible();
@@ -491,12 +492,12 @@ dialTest(
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    expect
+    await expect
       .soft(
-        await prompts.getPromptByName(prompt.name).isVisible(),
+        await prompts.getPromptByName(prompt.name),
         ExpectedMessages.promptDeleted,
       )
-      .toBeFalsy();
+      .toBeHidden();
   },
 );
 
@@ -520,12 +521,12 @@ dialTest(
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.cancelDialog();
-    expect
+    await expect
       .soft(
-        await prompts.getPromptByName(prompt.name).isVisible(),
+        await prompts.getPromptByName(prompt.name),
         ExpectedMessages.promptNotDeleted,
       )
-      .toBeTruthy();
+      .toBeVisible();
   },
 );
 
@@ -719,35 +720,41 @@ dialTest(
         .getConversationByName(singleConversation.name)
         .waitFor();
 
-      const isPromptFolderVisible = await folderPrompts
-        .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(4))
-        .isVisible();
-      expect
-        .soft(isPromptFolderVisible, ExpectedMessages.folderDeleted)
-        .toBeFalsy();
+      await expect
+        .soft(
+          await folderPrompts.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(4),
+          ),
+          ExpectedMessages.folderDeleted,
+        )
+        .toBeHidden();
 
-      const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(
-        promptInFolder.folders.name,
-        promptInFolder.prompts[0].name,
-      );
-      expect
-        .soft(isFolderPromptVisible, ExpectedMessages.promptDeleted)
-        .toBeFalsy();
+      await expect
+        .soft(
+          await folderPrompts.getFolderEntity(
+            promptInFolder.folders.name,
+            promptInFolder.prompts[0].name,
+          ),
+          ExpectedMessages.promptDeleted,
+        )
+        .toBeHidden();
 
-      const isSinglePromptVisible = await prompts
-        .getPromptByName(singlePrompt.name)
-        .isVisible();
-      expect
-        .soft(isSinglePromptVisible, ExpectedMessages.promptDeleted)
-        .toBeFalsy();
+      await expect
+        .soft(
+          await prompts.getPromptByName(singlePrompt.name),
+          ExpectedMessages.promptDeleted,
+        )
+        .toBeHidden();
 
       for (let i = 1; i <= 3; i++) {
-        const isNestedPromptFolderVisible = await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
-          .isVisible();
-        expect
-          .soft(isNestedPromptFolderVisible, ExpectedMessages.folderDeleted)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await folderPrompts.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i),
+            ),
+            ExpectedMessages.folderDeleted,
+          )
+          .toBeHidden();
       }
 
       if (i > 1) {
@@ -766,14 +773,12 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
-    const isDeleteAllPromptVisible =
-      await promptBar.deleteEntitiesButton.isVisible();
-    expect
+    await expect
       .soft(
-        isDeleteAllPromptVisible,
+        await promptBar.deleteEntitiesButton.getElementLocator(),
         ExpectedMessages.deleteAllPromptsButtonNotVisible,
       )
-      .toBeFalsy();
+      .toBeHidden();
   },
 );
 

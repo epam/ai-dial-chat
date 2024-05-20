@@ -65,12 +65,12 @@ dialTest(
     await dialTest.step(
       'Verify request is fully displayed in chat history',
       async () => {
-        expect
+        await expect
           .soft(
-            await chatMessages.getChatMessage(1).textContent(),
+            await chatMessages.getChatMessage(1),
             ExpectedMessages.messageContentIsValid,
           )
-          .toBe(messageToSend);
+          .toHaveText(messageToSend);
       },
     );
 
@@ -163,12 +163,12 @@ dialTest(
         const nameInput =
           await conversations.openEditConversationNameMode(newName);
         await nameInput.clickCancelButton();
-        expect
+        await expect
           .soft(
-            await conversations.getConversationByName(newName).isVisible(),
+            await conversations.getConversationByName(newName),
             ExpectedMessages.conversationNameNotUpdated,
           )
-          .toBeFalsy();
+          .toBeHidden();
       },
     );
 
@@ -207,12 +207,12 @@ dialTest(
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
     await conversations.editConversationNameWithTick(newName);
-    expect
+    await expect
       .soft(
-        await conversations.getConversationByName(newName).isVisible(),
+        await conversations.getConversationByName(newName),
         ExpectedMessages.conversationNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     const chatNameOverflow = await conversations
       .getConversationName(newName)
@@ -222,12 +222,12 @@ dialTest(
       .toBe(Overflow.ellipsis);
 
     await chat.sendRequestWithButton('one more test message');
-    expect
+    await expect
       .soft(
-        await conversations.getConversationByName(newName).isVisible(),
+        await conversations.getConversationByName(newName),
         ExpectedMessages.conversationNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
   },
 );
 
@@ -479,12 +479,15 @@ dialTest(
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    await folderConversations
-      .getFolderEntity(
-        conversationInFolder.folders.name,
-        conversationInFolder.conversations[0].name,
+    await expect
+      .soft(
+        await folderConversations.getFolderEntity(
+          conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name,
+        ),
+        ExpectedMessages.conversationIsNotVisible,
       )
-      .waitFor({ state: 'hidden' });
+      .toBeHidden();
   },
 );
 
@@ -510,9 +513,12 @@ dialTest(
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    await conversations
-      .getConversationByName(conversation.name)
-      .waitFor({ state: 'hidden' });
+    await expect
+      .soft(
+        await conversations.getConversationByName(conversation.name),
+        ExpectedMessages.conversationIsNotVisible,
+      )
+      .toBeHidden();
   },
 );
 
@@ -893,12 +899,14 @@ dialTest(
       expect.soft(isFolderVisible, ExpectedMessages.folderDeleted).toBeFalsy();
 
       for (let i = 1; i <= 3; i++) {
-        const isNestedFolderVisible = await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
-          .isVisible();
-        expect
-          .soft(isNestedFolderVisible, ExpectedMessages.folderDeleted)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i),
+            ),
+            ExpectedMessages.folderDeleted,
+          )
+          .toBeHidden();
       }
 
       const isSingleConversationVisible = await conversations
@@ -1332,12 +1340,12 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
               ExpectedMessages.conversationNameUpdated,
             )
             .toBeVisible();
-          expect
+          await expect
             .soft(
-              await chatMessages.getChatMessage(1).textContent(),
+              await chatMessages.getChatMessage(1),
               ExpectedMessages.messageContentIsValid,
             )
-            .toBe(request);
+            .toHaveText(request);
         },
       );
     },
@@ -1377,12 +1385,12 @@ dialTest(
           conversation.messages[0].content,
           updatedRequest,
         );
-        expect
+        await expect
           .soft(
-            await chatMessages.getChatMessage(1).textContent(),
+            await chatMessages.getChatMessage(1),
             ExpectedMessages.messageContentIsValid,
           )
-          .toBe(updatedRequest);
+          .toHaveText(updatedRequest);
       },
     );
 

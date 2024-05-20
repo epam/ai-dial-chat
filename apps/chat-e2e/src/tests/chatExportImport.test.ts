@@ -108,13 +108,15 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations
-          .getFolderEntity(
-            conversationInFolder.folders.name,
-            conversationInFolder.conversations[0].name,
+        await expect
+          .soft(
+            await folderConversations.getFolderEntity(
+              conversationInFolder.folders.name,
+              conversationInFolder.conversations[0].name,
+            ),
+            ExpectedMessages.conversationIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
 
@@ -130,13 +132,15 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations
-          .getFolderEntity(
-            conversationInFolder.folders.name,
-            conversationInFolder.conversations[0].name,
+        await expect
+          .soft(
+            await folderConversations.getFolderEntity(
+              conversationInFolder.folders.name,
+              conversationInFolder.conversations[0].name,
+            ),
+            ExpectedMessages.conversationIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
   },
@@ -202,18 +206,33 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .waitFor();
-        await conversations
-          .getConversationByName(conversationOutsideFolder.name)
-          .waitFor();
+        await expect
+          .soft(
+            await folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderExpanded,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            await conversations.getConversationByName(
+              conversationOutsideFolder.name,
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
 
         for (let i = 0; i <= levelsCount; i++) {
-          await folderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor();
+          await expect
+            .soft(
+              await folderConversations.getFolderEntity(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
+              ExpectedMessages.conversationIsVisible,
+            )
+            .toBeVisible();
         }
       },
     );
@@ -334,14 +353,14 @@ dialTest(
         await conversations
           .getConversationByName(importedRootConversation.name)
           .waitFor();
-        expect
+        await expect
           .soft(
-            await conversations
-              .getConversationByName(conversationOutsideFolder.name)
-              .isVisible(),
+            await conversations.getConversationByName(
+              conversationOutsideFolder.name,
+            ),
             ExpectedMessages.conversationIsVisible,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 

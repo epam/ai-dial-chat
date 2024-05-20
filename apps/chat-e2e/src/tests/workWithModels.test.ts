@@ -256,12 +256,12 @@ dialTest(
         await chatMessages.fillEditData(userRequests[1], editData);
         await chatMessages.cancel.click();
 
-        const isEditTextareaVisible = await chatMessages
-          .getChatMessageTextarea(userRequests[1])
-          .isVisible();
-        expect
-          .soft(isEditTextareaVisible, ExpectedMessages.editModeIsClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatMessages.getChatMessageTextarea(userRequests[1]),
+            ExpectedMessages.editModeIsClosed,
+          )
+          .toBeVisible();
 
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect

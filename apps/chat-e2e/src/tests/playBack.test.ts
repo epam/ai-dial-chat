@@ -816,7 +816,7 @@ dialTest(
         const playedBackResponse = await chatMessages.getChatMessage(
           conversation.messages[1].content,
         );
-        expect(
+        await expect(
           playedBackResponse,
           ExpectedMessages.playbackMessageIsInViewport,
         ).toBeInViewport();

@@ -285,6 +285,7 @@ export class Chat extends BaseElement {
   public async waitForScrollPosition(state: ScrollState) {
     let counter = 5;
     while (counter > 0) {
+      // eslint-disable-next-line playwright/no-wait-for-timeout
       await this.page.waitForTimeout(SCROLL_MOVING_DELAY);
       counter--;
       const scrollPosition =

@@ -54,12 +54,12 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        expect
+        await expect
           .soft(
-            await sendMessage.scrollDownButton.isVisible(),
+            await sendMessage.scrollDownButton.getElementLocator(),
             ExpectedMessages.scrollDownButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
       },
     );
 
@@ -78,12 +78,12 @@ dialTest(
         expect
           .soft(scrollPosition, ExpectedMessages.scrollPositionIsCorrect)
           .toBe(ScrollState.bottom);
-        expect
+        await expect
           .soft(
-            await sendMessage.scrollDownButton.isVisible(),
+            await sendMessage.scrollDownButton.getElementLocator(),
             ExpectedMessages.scrollDownButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
       },
     );
 
@@ -272,12 +272,12 @@ dialTest(
         expect
           .soft(scrollPosition, ExpectedMessages.scrollPositionIsCorrect)
           .toBe(ScrollState.bottom);
-        expect
+        await expect
           .soft(
-            await sendMessage.scrollDownButton.isVisible(),
+            await sendMessage.scrollDownButton.getElementLocator(),
             ExpectedMessages.scrollDownButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
       },
     );
   },
@@ -481,7 +481,6 @@ dialTest(
     localStorageManager,
     dataInjector,
     setTestIds,
-    sendMessage,
     chatMessages,
   }) => {
     setTestIds('EPMRTC-3076');

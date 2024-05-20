@@ -62,6 +62,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
+        // eslint-disable-next-line playwright/no-force-option
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
@@ -102,6 +103,7 @@ dialTest(
           { path: Import.importedAttachmentsFilename },
           () => chatBar.importButton.click(),
         );
+        // eslint-disable-next-line playwright/no-force-option
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
