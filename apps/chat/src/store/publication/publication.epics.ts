@@ -4,7 +4,6 @@ import {
   catchError,
   concat,
   filter,
-  ignoreElements,
   iif,
   map,
   mergeMap,
@@ -75,7 +74,10 @@ const publishEpic: AppEpic = (action$) =>
       const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
       return PublicationService.publish({
-        targetFolder: `public/${encodedTargetFolder}${targetFolderSuffix}`,
+        targetFolder: constructPath(
+          'public',
+          `${encodedTargetFolder}${targetFolderSuffix}`,
+        ),
         resources: payload.resources.map((r) => ({
           action: PublishActions.ADD,
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
@@ -83,11 +85,11 @@ const publishEpic: AppEpic = (action$) =>
         })),
         rules: payload.rules,
       }).pipe(
+        switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.publishFail());
         }),
-        ignoreElements(),
       );
     }),
   );
@@ -312,13 +314,13 @@ const deletePublicationEpic: AppEpic = (action$) =>
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
         })),
       }).pipe(
+        switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.deletePublicationFail());
         }),
       ),
     ),
-    ignoreElements(),
   );
 
 const deletePublicationFailEpic: AppEpic = (action$) =>
