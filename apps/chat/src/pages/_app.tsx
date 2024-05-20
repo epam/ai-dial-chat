@@ -32,7 +32,7 @@ const gilroy = localFont({
     },
     {
       path: '../../public/fonts/gilroy/gilroy-extrabold-webfont.woff2',
-      weight: '800'
+      weight: '800',
     },
   ],
   variable: '--font-gilroy',
