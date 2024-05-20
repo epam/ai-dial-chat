@@ -49,7 +49,7 @@ export function TargetAudienceFilterComponent({
       '',
   );
 
-  const onChangeFilterFunction = useCallback(
+  const handleChangeFilterFunction = useCallback(
     (filterFunction: PublicationFunctions) => {
       if (!onChangeFilter) return;
 
@@ -67,7 +67,7 @@ export function TargetAudienceFilterComponent({
     },
     [filterParams, id, name, onChangeFilter, filterRegexParam],
   );
-  const onChangeFilterParams = useCallback(
+  const handleChangeFilterParams = useCallback(
     (filterParams: string[]) => {
       if (!onChangeFilter) return;
 
@@ -77,7 +77,7 @@ export function TargetAudienceFilterComponent({
     [filterFunction, id, name, onChangeFilter],
   );
 
-  const onChangeFilterRegexParam = useCallback(
+  const handleChangeFilterRegexParam = useCallback(
     (filterRegexParam: string) => {
       if (!onChangeFilter) return;
 
@@ -101,14 +101,14 @@ export function TargetAudienceFilterComponent({
         readonly={readonly}
         filterFunctions={filterFunctionValues}
         selectedFilterFunction={filterFunction}
-        onChangeFilterFunction={onChangeFilterFunction}
+        onChangeFilterFunction={handleChangeFilterFunction}
         id={id}
       />
       {filterFunction === PublicationFunctions.REGEX ? (
         <RegexParamInput
           readonly={readonly}
           regEx={filterRegexParam}
-          onRegExChange={onChangeFilterRegexParam}
+          onRegExChange={handleChangeFilterRegexParam}
         />
       ) : (
         <MultipleComboBox
@@ -116,7 +116,7 @@ export function TargetAudienceFilterComponent({
           initialSelectedItems={initialSelectedFilter?.filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
-          onChangeSelectedItems={onChangeFilterParams}
+          onChangeSelectedItems={handleChangeFilterParams}
           placeholder={t('Enter one or more options...') as string}
         />
       )}

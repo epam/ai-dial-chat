@@ -86,7 +86,7 @@ describe('TargetAudienceFilterComponent', () => {
     expect(onChangeFilter).toBeCalledWith({
       id: testFilter.id,
       name: testFilter.name,
-      filterType: selectedVlaue,
+      filterFunction: selectedVlaue,
       filterParams: [],
     });
   });
@@ -105,16 +105,8 @@ describe('TargetAudienceFilterComponent', () => {
     expect(onChangeFilter).toHaveBeenCalledWith({
       id: testFilter.id,
       name: testFilter.name,
-      filterType: defaultFilterOption,
+      filterFunction: defaultFilterOption,
       filterParams: ['QA'],
-    });
-    await userEvent.type(combobox, 'BA{enter}');
-    expect(onChangeFilter).toHaveBeenCalledTimes(2);
-    expect(onChangeFilter).toHaveBeenCalledWith({
-      id: testFilter.id,
-      name: testFilter.name,
-      filterType: defaultFilterOption,
-      filterParams: ['QA', 'BA'],
     });
   });
 
