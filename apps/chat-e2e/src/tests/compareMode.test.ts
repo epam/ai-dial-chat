@@ -640,9 +640,10 @@ dialTest(
             await route.continue();
           }
         });
+        await dialHomePage.throttleAPIResponse('**/*');
 
         await chat.sendRequestInCompareMode(
-          'write down 20 adjectives about person',
+          'write down 10 adjectives about person',
           {
             rightEntity: firstConversation.model.id,
             leftEntity: secondConversation.model.id,
@@ -672,6 +673,7 @@ dialTest(
     await dialTest.step(
       'Click "Regenerate" button and verify last response is regenerated for both chats',
       async () => {
+        await dialHomePage.unRouteAllResponses();
         await chatMessages.regenerate.getNthElement(1).waitFor();
 
         const requestsData = await chat.regenerateResponseInCompareMode({
