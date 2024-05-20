@@ -27,10 +27,10 @@ for (const modelToUse of modelsForRequestWithAttachment) {
     async ({ conversationData, chatApiHelper }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation =
-        conversationData.prepareConversationWithAttachmentInRequest(
-          imageUrl,
+        conversationData.prepareConversationWithAttachmentsInRequest(
           modelToUse.modelId,
           modelToUse.isTextRequestRequired,
+          imageUrl,
         );
       const modelResponse = await chatApiHelper.postRequest(conversation);
       const status = modelResponse.status();

@@ -44,9 +44,10 @@ dialTest(
       'Create conversation with attachment in the request',
       async () => {
         conversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            imageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             randomModelWithAttachment,
+            false,
+            imageUrl,
           );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
@@ -91,7 +92,7 @@ dialTest(
     attachFilesModal,
     sendMessage,
     fileApiHelper,
-    sendMessageAttachmentDropdownMenu,
+    attachmentDropdownMenu,
     sendMessageInputAttachments,
   }) => {
     setTestIds('EPMRTC-1763', 'EPMRTC-1901');
@@ -112,7 +113,7 @@ dialTest(
       Attachment.flowerImageName,
     ];
 
-    await dialTest.step('Upload 2 files to app', async () => {
+    await dialTest.step('Upload 3 files to app', async () => {
       for (const file of allAttachedFiles) {
         await fileApiHelper.putFile(file);
       }
@@ -127,7 +128,7 @@ dialTest(
         });
         await talkToSelector.selectModel(randomModelWithAttachment);
         await sendMessage.attachmentMenuTrigger.click();
-        await sendMessageAttachmentDropdownMenu.selectMenuOption(
+        await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {
@@ -141,7 +142,7 @@ dialTest(
       'Open "Attach files" modal again and verify files are checked and marked with blue',
       async () => {
         await sendMessage.attachmentMenuTrigger.click();
-        await sendMessageAttachmentDropdownMenu.selectMenuOption(
+        await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {

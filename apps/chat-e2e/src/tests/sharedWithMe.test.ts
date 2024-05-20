@@ -824,10 +824,10 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         gptVisionConversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            gptProVisionImageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             ModelIds.GPT_4_VISION_PREVIEW,
             true,
+            gptProVisionImageUrl,
           );
         conversationData.resetData();
 
@@ -1048,10 +1048,10 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         gptVisionConversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            gptProVisionImageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             ModelIds.GPT_4_VISION_PREVIEW,
             true,
+            gptProVisionImageUrl,
           );
         conversationData.resetData();
 
