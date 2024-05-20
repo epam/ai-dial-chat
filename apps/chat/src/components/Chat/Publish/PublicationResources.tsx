@@ -248,7 +248,7 @@ export const FilePublicationResources = ({
   const allFolders = useAppSelector(FilesSelectors.selectFolders);
 
   const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
+    () => resources.map((r) => (r.reviewUrl ? r.reviewUrl : r.targetUrl)),
     [resources],
   );
   const filesToDisplay = useMemo(() => {

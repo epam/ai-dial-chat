@@ -7,13 +7,13 @@ import {
   PublicationRequest,
   PublicationRule,
   PublicationsListModel,
+  PublishActions,
   PublishedByMeItem,
   PublishedItem,
 } from '@/src/types/publication';
 import { UIStorageKeys } from '@/src/types/storage';
 
 import { ApiUtils } from '../../server/api';
-import { BucketService } from './bucket-service';
 import { BrowserStorage } from './storages/browser-storage';
 
 export class PublicationService {
@@ -80,11 +80,12 @@ export class PublicationService {
   public static deletePublication(
     resources: { targetUrl: string }[],
   ): Observable<void> {
-    return ApiUtils.request('api/publication/delete', {
+    return ApiUtils.request('api/publication/create', {
       method: 'POST',
       body: JSON.stringify({
-        url: `publications/${BucketService.getBucket()}/`,
+        targetFolder: 'public/',
         resources: resources.map((r) => ({
+          action: PublishActions.DELETE,
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
         })),
       }),

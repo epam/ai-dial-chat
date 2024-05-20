@@ -2,12 +2,14 @@ import { ClipboardEvent, MouseEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getAttachments } from '@/src/utils/app/share';
+
 import { Entity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
 import Modal from '../Common/Modal';
@@ -23,15 +25,15 @@ export default function UnpublishModal({
   entity,
   isOpen,
   onClose,
-  // type,
+  type,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
 
-  // const files = useAppSelector((state) =>
-  //   getAttachments(type)(state, entity.id),
-  // );
+  const files = useAppSelector((state) =>
+    getAttachments(type)(state, entity.id),
+  );
 
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
@@ -52,15 +54,16 @@ export default function UnpublishModal({
         PublicationActions.deletePublication({
           resources: [
             { targetUrl: entity.id },
-            // ...files.map((f) => ({
-            //   targetUrl: f.id,
-            // })),
+            ...files.map((f) => ({
+              targetUrl: f.id,
+            })),
           ],
         }),
       );
+
       onClose();
     },
-    [dispatch, entity.id, onClose],
+    [dispatch, entity.id, files, onClose],
   );
 
   return (
