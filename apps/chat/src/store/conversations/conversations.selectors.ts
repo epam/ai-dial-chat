@@ -715,3 +715,17 @@ export const selectLoadedCustomAttachments = createSelector(
     return state.loadedCustomAttachmentsData;
   },
 );
+
+export const selectCustomAttachmentData = createSelector(
+  [
+    selectLoadedCustomAttachments,
+    (_state: RootState, attachmentUrl: string) => attachmentUrl,
+  ],
+  (loadedCustomAttachment, attachmentUrl) => {
+    return attachmentUrl
+      ? loadedCustomAttachment.find((loadedData) =>
+          loadedData.url.endsWith(attachmentUrl),
+        )?.data
+      : undefined;
+  },
+);

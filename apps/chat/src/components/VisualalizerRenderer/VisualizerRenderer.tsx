@@ -48,19 +48,13 @@ export const VisualizerRenderer = ({
 
   const dispatch = useAppDispatch();
 
-  const loadedCustomAttachmentData = useAppSelector(
-    ConversationsSelectors.selectLoadedCustomAttachments,
-  );
-
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
   );
 
-  const customAttachmentData = attachmentUrl
-    ? loadedCustomAttachmentData.find((loadedData) =>
-        loadedData.url.endsWith(attachmentUrl),
-      )?.data
-    : undefined;
+  const customAttachmentData = useAppSelector((state) =>
+    ConversationsSelectors.selectCustomAttachmentData(state, attachmentUrl),
+  );
 
   const scrollWidth =
     iframeContainerRef?.current && iframeContainerRef.current.scrollWidth;
