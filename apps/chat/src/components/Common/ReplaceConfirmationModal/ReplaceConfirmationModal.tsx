@@ -296,7 +296,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       hideClose
       dataQa="replace-confirmation-modal"
       containerClassName={classNames(
-        'flex max-h-full flex-col gap-4 px-0 pt-4 sm:w-[525px] md:pt-6',
+        'flex flex-col gap-4 px-0 pt-4 sm:w-[525px] md:pt-6',
       )}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
