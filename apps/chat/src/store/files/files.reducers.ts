@@ -259,21 +259,30 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.newAddedFolderId = undefined;
-      state.folders = state.folders.map((folder) => {
-        if (folder.id !== payload.folderId) {
-          return folder;
-        }
 
-        const slashIndex = folder.id.lastIndexOf('/');
-        const oldFolderIdPath = folder.id.slice(
-          0,
-          slashIndex === -1 ? 0 : slashIndex,
-        );
-        return {
-          ...folder,
-          name: payload.newName.trim(),
-          id: constructPath(oldFolderIdPath, payload.newName),
-        };
+      const targetFolder = state.folders.find(f => f.id === payload.folderId);
+
+      if (!targetFolder) return;
+
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            name: payload.newName.trim(),
+            id: constructPath(targetFolder.folderId, payload.newName),
+          };
+        } else if (folder.id.startsWith(payload.folderId)) {
+          const updatedFolderId = folder.folderId.replace(
+            targetFolder.id,
+            constructPath(targetFolder.folderId, payload.newName));
+
+          return {
+            ...folder,
+            folderId: updatedFolderId,
+            id: constructPath(updatedFolderId, folder.name),
+          }
+        }
+        return folder;
       });
     },
     resetNewFolderId: (state) => {
