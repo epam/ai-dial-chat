@@ -277,7 +277,7 @@ dialTest(
         await chatMessages.fillEditData(userRequests[1], '');
         await expect
           .soft(
-            await chatMessages.getElementLocator(),
+            await chatMessages.saveAndSubmit.getElementLocator(),
             ExpectedMessages.saveIsDisabled,
           )
           .toBeDisabled();
