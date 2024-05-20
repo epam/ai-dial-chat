@@ -45,6 +45,7 @@ export const ExpectedConstants = {
     'Renaming will stop sharing and other users will no longer see this conversation.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
+  sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
   stopGeneratingTooltip: 'Stop generating',
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
@@ -143,6 +144,11 @@ export enum AccountMenuOptions {
   logout = 'Log out',
 }
 
+export enum UploadMenuOptions {
+  attachUploadedFiles = 'Attach uploaded files',
+  uploadFromDevice = 'Upload from device',
+}
+
 export const Chronology = {
   today: 'Today',
   yesterday: 'Yesterday',
@@ -194,6 +200,8 @@ export const Attachment = {
   sunImageName: 'sun.jpg',
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
+  flowerImageName: 'flower.jpg',
+  longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
 };
 
 export enum Side {
@@ -213,6 +221,8 @@ export enum ModelIds {
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
   GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',
+  GPT_4_TURBO_2024_04_29 = 'gpt-4-turbo-2024-04-09',
+  GPT_4_TURBO = 'gpt-4-turbo',
   GPT_4_32K = 'gpt-4-32k',
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
@@ -233,6 +243,7 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
   ANTHROPIC_CLAUDE_V3_SONNET = 'anthropic.claude-v3-sonnet',
   ANTHROPIC_CLAUDE_V3_HAIKU = 'anthropic.claude-v3-haiku',
+  ANTHROPIC_CLAUDE_V3_OPUS = 'anthropic.claude-v3-opus',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_1_5 = 'gemini-1.5-pro-preview-0409',

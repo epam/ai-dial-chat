@@ -22,6 +22,7 @@ import { getConversationRootId } from './id';
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
     url &&
+    !url.startsWith('metadata') &&
     !url.startsWith('files') &&
     !url.startsWith('http') &&
     !url.startsWith('//')

@@ -12,13 +12,15 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtentionsListFromMimeType,
 } from '@/src/utils/app/file';
-import { getFileRootId, isRootId } from '@/src/utils/app/id';
+import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
+import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
@@ -33,6 +35,8 @@ import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
+
+import uniq from 'lodash-es/uniq';
 
 interface Props {
   isOpen: boolean;
@@ -73,6 +77,16 @@ export const FileManagerModal = ({
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
   );
+  const canAttachFiles = useAppSelector(
+    ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
+  );
+  const allowedTypesArray = useMemo(
+    () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
+    [allowedTypes, canAttachFiles, canAttachFolders],
+  );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
@@ -83,9 +97,23 @@ export const FileManagerModal = ({
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilesIds, setSelectedFilesIds] = useState(
-    initialSelectedFilesIds,
+    initialSelectedFilesIds.filter((id) => !isFolderId(id)),
+  );
+  const [selectedFolderIds, setSelectedFolderIds] = useState(
+    initialSelectedFilesIds.filter((id) => isFolderId(id)),
   );
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
+  const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
+
+  const hightlightFolderIds = useMemo(() => {
+    return uniq(
+      selectedFolderIds
+        .flatMap((folderId) => getParentFolderIdsFromFolderId(folderId))
+        .concat(
+          selectedFilesIds.flatMap((f) => getParentFolderIdsFromFolderId(f)),
+        ),
+    );
+  }, [selectedFilesIds, selectedFolderIds]);
 
   const {
     handleRenameFolder,
@@ -110,25 +138,25 @@ export const FileManagerModal = ({
   }, [files, searchQuery]);
 
   const allowedExtensions = useMemo(() => {
-    if (allowedTypes.includes('*/*')) {
+    if (allowedTypesArray.includes('*/*')) {
       return [t('all')];
     }
 
-    return getShortExtentionsListFromMimeType(allowedTypes, t);
-  }, [allowedTypes, t]);
+    return getShortExtentionsListFromMimeType(allowedTypesArray, t);
+  }, [allowedTypesArray, t]);
 
   const typesLabel = useMemo(() => {
     if (allowedTypesLabel) {
       return allowedTypesLabel;
     }
     if (
-      allowedTypes.length === 1 &&
-      allowedTypes[0].endsWith('/*') &&
-      !allowedTypes[0].startsWith('*/')
+      allowedTypesArray.length === 1 &&
+      allowedTypesArray[0].endsWith('/*') &&
+      !allowedTypesArray[0].startsWith('*/')
     ) {
-      return t(allowedTypes[0].replace('/*', 's'));
+      return t(allowedTypesArray[0].replace('/*', 's'));
     }
-  }, [allowedTypes, allowedTypesLabel, t]);
+  }, [allowedTypesArray, allowedTypesLabel, t]);
 
   const showSpinner = folders.length === 0 && areFoldersLoading;
 
@@ -164,12 +192,13 @@ export const FileManagerModal = ({
   );
 
   const handleStartDeleteMultipleFiles = useCallback(() => {
-    if (!selectedFilesIds.length) {
+    if (!selectedFilesIds.length && !selectedFolderIds.length) {
       return;
     }
 
     setDeletingFileIds(selectedFilesIds);
-  }, [selectedFilesIds]);
+    setDeletingFolderIds(selectedFolderIds);
+  }, [selectedFilesIds, selectedFolderIds]);
 
   const handleItemCallback = useCallback(
     (eventId: string, data: unknown) => {
@@ -182,13 +211,105 @@ export const FileManagerModal = ({
           dispatch(FilesActions.reuploadFile({ fileId: data }));
           break;
         case FileItemEventIds.Toggle:
-          setSelectedFilesIds((oldValues) => {
-            if (oldValues.includes(data)) {
-              return oldValues.filter((oldValue) => oldValue !== data);
+          {
+            const parentFolderIds = getParentFolderIdsFromFolderId(data)
+              .slice(0, -1)
+              .map((fid) => `${fid}/`);
+            if (
+              selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
+            ) {
+              setSelectedFilesIds((oldFileIds) =>
+                oldFileIds.concat(
+                  files
+                    .filter((file) =>
+                      selectedFolderIds.some((parentId) =>
+                        file.id.startsWith(parentId),
+                      ),
+                    )
+                    .map((f) => f.id),
+                ),
+              );
+              setSelectedFolderIds((oldFolderIds) => {
+                return oldFolderIds
+                  .concat(
+                    folders
+                      .filter((folder) =>
+                        parentFolderIds.some((parentId) =>
+                          folder.id.startsWith(parentId),
+                        ),
+                      )
+                      .map((f) => `${f.id}/`),
+                  )
+                  .filter(
+                    (oldFolderId) => !parentFolderIds.includes(oldFolderId),
+                  );
+              });
             }
+            setSelectedFilesIds((oldValues) => {
+              if (oldValues.includes(data)) {
+                return oldValues.filter((oldValue) => oldValue !== data);
+              }
 
-            return oldValues.concat(data);
-          });
+              return oldValues.concat(data);
+            });
+          }
+          break;
+        case FileItemEventIds.ToggleFolder:
+          {
+            const parentFolderIds = getParentFolderIdsFromFolderId(data)
+              .slice(0, -2)
+              .map((fid) => `${fid}/`);
+            if (
+              selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
+            ) {
+              setSelectedFilesIds((oldFileIds) =>
+                !canAttachFiles
+                  ? []
+                  : oldFileIds.concat(
+                      files
+                        .filter((file) =>
+                          parentFolderIds.some((parentId) =>
+                            file.id.startsWith(parentId),
+                          ),
+                        )
+                        .map((f) => f.id),
+                    ),
+              );
+              setSelectedFolderIds((oldFolderIds) => {
+                return oldFolderIds
+                  .concat(
+                    folders
+                      .filter((folder) =>
+                        parentFolderIds.some((parentId) =>
+                          folder.id.startsWith(parentId),
+                        ),
+                      )
+                      .map((f) => `${f.id}/`),
+                  )
+                  .filter(
+                    (oldFolderId) =>
+                      oldFolderId !== data &&
+                      !parentFolderIds.includes(oldFolderId),
+                  );
+              });
+            } else {
+              setSelectedFolderIds((oldValues) => {
+                if (oldValues.includes(data)) {
+                  return oldValues.filter((oldValue) => oldValue !== data);
+                }
+                setSelectedFilesIds((oldFileIds) =>
+                  !canAttachFiles
+                    ? []
+                    : oldFileIds.filter(
+                        (oldFileId) => !oldFileId.startsWith(data),
+                      ),
+                );
+                return oldValues
+                  .filter((oldFolderId) => !oldFolderId.startsWith(data))
+                  .concat(data);
+              });
+            }
+          }
           break;
         case FileItemEventIds.Cancel:
           dispatch(FilesActions.deleteFile({ fileId: data }));
@@ -200,7 +321,7 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [dispatch],
+    [canAttachFiles, dispatch, files, folders, selectedFolderIds],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -222,7 +343,7 @@ export const FileManagerModal = ({
     );
     const filesWithIncorrectTypes = getDialFilesWithInvalidFileType(
       selectedFiles,
-      allowedTypes,
+      allowedTypesArray,
     ).map((file) => file.name);
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
@@ -236,13 +357,14 @@ export const FileManagerModal = ({
       return;
     }
 
-    onClose(selectedFilesIds);
+    onClose([...selectedFolderIds, ...selectedFilesIds]);
   }, [
-    allowedTypes,
+    allowedTypesArray,
     files,
     maximumAttachmentsAmount,
     onClose,
     selectedFilesIds,
+    selectedFolderIds,
     t,
   ]);
 
@@ -256,6 +378,10 @@ export const FileManagerModal = ({
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
       folderPath: string | undefined,
     ) => {
+      setSelectedFilesIds((oldValues) =>
+        oldValues.concat(selectedFiles.map((f) => f.id)),
+      );
+
       selectedFiles.forEach((file) => {
         dispatch(
           FilesActions.uploadFile({
@@ -271,15 +397,29 @@ export const FileManagerModal = ({
   );
 
   const handleDeleteMultipleFiles = useCallback(() => {
-    if (!deletingFileIds.length) {
+    if (!deletingFileIds.length && !deletingFolderIds.length) {
       return;
     }
-
-    dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
-    if (selectedFilesIds === deletingFileIds) {
-      setSelectedFilesIds([]);
+    if (deletingFileIds.length) {
+      dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
+      if (selectedFilesIds === deletingFileIds) {
+        setSelectedFilesIds([]);
+      }
     }
-  }, [deletingFileIds, dispatch, selectedFilesIds]);
+    if (deletingFolderIds.length) {
+      // TODO: implement
+      // dispatch(FilesActions.deleteFolderList({ folderIds: deletingFolderIds }));
+      if (selectedFolderIds === deletingFolderIds) {
+        setSelectedFolderIds([]);
+      }
+    }
+  }, [
+    deletingFileIds,
+    deletingFolderIds,
+    dispatch,
+    selectedFilesIds,
+    selectedFolderIds,
+  ]);
 
   const handleDownloadMultipleFiles = useCallback(() => {
     if (!selectedFilesIds.length) {
@@ -287,7 +427,6 @@ export const FileManagerModal = ({
     }
 
     dispatch(FilesActions.downloadFilesList({ fileIds: selectedFilesIds }));
-    setSelectedFilesIds([]);
   }, [dispatch, selectedFilesIds]);
 
   return (
@@ -299,29 +438,31 @@ export const FileManagerModal = ({
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="flex flex-col gap-2 overflow-auto p-6">
+      <div className="flex flex-col gap-2 overflow-auto md:p-6">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
             {headerLabel}
           </h2>
         </div>
-        <p id={descriptionId}>
-          {t(
-            'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
-            {
-              allowedExtensions:
-                typesLabel ||
-                allowedExtensions.join(', ') ||
-                'no available extensions',
-            },
-          )}
-          &nbsp;
-          {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
-            !!maximumAttachmentsAmount &&
-            t('Max selected files is {{maxAttachmentsAmount}}.', {
-              maxAttachmentsAmount: maximumAttachmentsAmount,
-            })}
-        </p>
+        {canAttachFiles && (
+          <p id={descriptionId}>
+            {t(
+              'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
+              {
+                allowedExtensions:
+                  typesLabel ||
+                  allowedExtensions.join(', ') ||
+                  'no available extensions',
+              },
+            )}
+            &nbsp;
+            {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
+              !!maximumAttachmentsAmount &&
+              t('Max selected files is {{maxAttachmentsAmount}}.', {
+                maxAttachmentsAmount: maximumAttachmentsAmount,
+              })}
+          </p>
+        )}
 
         <ErrorMessage error={errorMessage} />
 
@@ -340,7 +481,12 @@ export const FileManagerModal = ({
             ></input>
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
-                className="flex items-center gap-1 rounded py-1 text-xs text-secondary"
+                className={classNames(
+                  'flex items-center gap-1 rounded py-1 text-xs ',
+                  selectedFilesIds.length > 0 || selectedFolderIds.length > 0
+                    ? 'text-accent-primary'
+                    : 'text-secondary',
+                )}
                 onClick={() => handleToggleFolder(getFileRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
@@ -361,7 +507,7 @@ export const FileManagerModal = ({
                               searchTerm={searchQuery}
                               currentFolder={folder}
                               allFolders={folders}
-                              highlightedFolders={[]}
+                              highlightedFolders={hightlightFolderIds}
                               isInitialRenameEnabled
                               newAddedFolderId={newFolderId}
                               displayCaretAlways
@@ -370,6 +516,8 @@ export const FileManagerModal = ({
                               allItems={filteredFiles}
                               additionalItemData={{
                                 selectedFilesIds,
+                                selectedFolderIds,
+                                canAttachFiles,
                               }}
                               itemComponent={FileItem}
                               onClickFolder={handleFolderSelect}
@@ -380,6 +528,7 @@ export const FileManagerModal = ({
                               onItemEvent={handleItemCallback}
                               withBorderHighlight={false}
                               featureType={FeatureType.File}
+                              canAttachFolders={canAttachFolders}
                             />
                           </div>
                         );
@@ -395,7 +544,9 @@ export const FileManagerModal = ({
                               item={file}
                               level={0}
                               additionalItemData={{
+                                selectedFolderIds,
                                 selectedFilesIds,
+                                canAttachFiles,
                               }}
                               onEvent={handleItemCallback}
                             />
@@ -412,26 +563,27 @@ export const FileManagerModal = ({
       </div>
       <div className="flex items-center justify-between border-t border-primary px-6 py-4">
         <div className="flex items-center justify-center gap-2">
-          {selectedFilesIds.length > 0 ? (
-            <>
-              <button
-                onClick={handleStartDeleteMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-              >
-                <Tooltip tooltip="Delete files" isTriggerClickable>
-                  <IconTrash size={24} />
-                </Tooltip>
-              </button>
-              <button
-                onClick={handleDownloadMultipleFiles}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
-              >
-                <Tooltip tooltip="Download files" isTriggerClickable>
-                  <IconDownload size={24} />
-                </Tooltip>
-              </button>
-            </>
-          ) : (
+          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
+            <button
+              onClick={handleStartDeleteMultipleFiles}
+              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+            >
+              <Tooltip tooltip="Delete files" isTriggerClickable>
+                <IconTrash size={24} />
+              </Tooltip>
+            </button>
+          )}
+          {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
+            <button
+              onClick={handleDownloadMultipleFiles}
+              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+            >
+              <Tooltip tooltip="Download files" isTriggerClickable>
+                <IconDownload size={24} />
+              </Tooltip>
+            </button>
+          )}
+          {selectedFilesIds.length === 0 && selectedFolderIds.length === 0 && (
             <button
               onClick={handleNewFolder}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
@@ -454,7 +606,10 @@ export const FileManagerModal = ({
             <button
               onClick={handleAttachFiles}
               className="button button-primary"
-              disabled={selectedFilesIds.length === 0}
+              disabled={
+                selectedFilesIds.length === 0 && selectedFolderIds.length === 0
+              }
+              data-qa="attach-files"
             >
               {customButtonLabel}
             </button>
@@ -466,7 +621,7 @@ export const FileManagerModal = ({
         <PreUploadDialog
           uploadFolderId={uploadFolderId}
           isOpen
-          allowedTypes={allowedTypes}
+          allowedTypes={allowedTypesArray}
           allowedTypesLabel={typesLabel}
           initialFilesSelect
           onUploadFiles={handleUploadFiles}
@@ -477,13 +632,38 @@ export const FileManagerModal = ({
       )}
 
       <ConfirmDialog
-        isOpen={!!deletingFileIds.length}
+        isOpen={!!deletingFileIds.length || !!deletingFolderIds.length}
         heading={t(
-          `Confirm deleting file${deletingFileIds.length > 1 ? 's' : ''}`,
+          [
+            'Confirm deleting ',
+            deletingFolderIds.length > 0
+              ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+              : '',
+            deletingFileIds.length > 0 && deletingFolderIds.length > 0
+              ? ' and '
+              : '',
+            deletingFileIds.length > 0
+              ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+              : '',
+          ].join(''),
         )}
         description={
           t(
-            `Are you sure that you want to delete ${deletingFileIds.length > 1 ? 'these files' : 'this file'}?`,
+            [
+              'Are you sure that you want to delete ',
+              deletingFileIds.length + deletingFolderIds.length > 1
+                ? 'these '
+                : 'this ',
+              deletingFolderIds.length > 0
+                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
+                : '',
+              deletingFileIds.length > 0 && deletingFolderIds.length > 0
+                ? ' and '
+                : '',
+              deletingFileIds.length > 0
+                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
+                : '',
+            ].join(''),
           ) || ''
         }
         confirmLabel={t('Delete')}
@@ -493,6 +673,7 @@ export const FileManagerModal = ({
             handleDeleteMultipleFiles();
           }
           setDeletingFileIds([]);
+          setDeletingFolderIds([]);
         }}
       />
     </Modal>

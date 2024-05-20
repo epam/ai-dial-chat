@@ -178,6 +178,6 @@ export class FileService {
   }
 
   public static getFileContent<T>(path: string): Observable<T> {
-    return ApiUtils.request(ApiUtils.encodeApiUrl(path));
+    return ApiUtils.request(path);
   }
 }

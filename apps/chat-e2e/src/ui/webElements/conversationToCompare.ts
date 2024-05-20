@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { CompareSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
@@ -6,12 +6,12 @@ import { Page } from '@playwright/test';
 
 export class ConversationToCompare extends BaseElement {
   constructor(page: Page) {
-    super(page, ChatSelectors.conversationToCompare);
+    super(page, CompareSelectors.conversationToCompare);
   }
 
   private conversationSelector!: ModelSelector;
   public showAllConversationsCheckbox = this.getChildElementBySelector(
-    ChatSelectors.showAllCheckbox,
+    CompareSelectors.showAllCheckbox,
   );
 
   getConversationSelector(): ModelSelector {

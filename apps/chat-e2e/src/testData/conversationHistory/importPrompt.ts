@@ -32,7 +32,6 @@ export class ImportPrompt {
     };
     return {
       path: FileUtil.writeDataToFile(folderPromptToImport),
-      isDownloadedData: false,
     };
   }
 }
