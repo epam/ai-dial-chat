@@ -83,7 +83,7 @@ export const ChatSettingsEmpty = ({
             <div className="flex w-full items-center justify-start rounded-t bg-layer-2 px-3 py-2 md:px-5 md:py-4">
               <div className="flex items-center">
                 <SecondaryLogo className="" width={27} height={30} />
-                <span className="ml-3 text-[22px] font-semibold">prGPT</span>
+                <span className="ml-3 text-[22px] font-bold">prGPT</span>
               </div>
             </div>
           )}

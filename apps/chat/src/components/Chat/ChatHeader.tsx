@@ -101,7 +101,7 @@ export const ChatHeader = ({
     <>
       <div
         className={classNames(
-          'chat-header sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-7 px-3 py-3 text-sm text-quinary-bg-light md:flex-wrap md:px-0 lg:flex-row',
+          'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-7 px-3 py-3 text-sm text-quinary-bg-light md:flex-wrap md:px-0 lg:flex-row',
           {
             'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth,
           },
