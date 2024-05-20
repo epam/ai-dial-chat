@@ -2,7 +2,6 @@ import { SessionContextValue, signIn, useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 
 import { GetServerSideProps } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -297,10 +296,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       },
     };
   }
-
-
-  const token = await getToken({ req });
-  console.log(token);
 
   const customRenderers =
     process.env.CUSTOM_VISUALIZERS &&
