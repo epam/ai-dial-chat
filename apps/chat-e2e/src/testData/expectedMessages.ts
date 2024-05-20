@@ -119,6 +119,7 @@ export enum ExpectedMessages {
   requestTempIsValid = 'Request temperature is valid in API request',
   requestSelectedAddonsAreValid = 'Request addons are valid in API request',
   requestAssistantModelIdIsValid = 'Request assistant modelId is valid in API request',
+  requestCustomContentIsValid = 'Request custom content is valid in API request',
   regenerateNotAvailable = 'Regenerate button is not available',
   regenerateIsAvailable = 'Regenerate button is available',
   stopGeneratingAvailable = 'Stop generating button is available',
@@ -243,4 +244,7 @@ export enum ExpectedMessages {
   fileIsNotAttached = 'File is removed from message box',
   attachedFilesCountIsValid = 'Attached files count is valid',
   removeAttachmentIconIsHighlighted = 'Remove attachment icon is highlighted',
+  attachmentsAreGrouped = 'Attachments are grouped',
+  attachmentIsVisible = 'Attachment is visible',
+  attachmentIsHidden = 'Attachment is hidden',
 }
