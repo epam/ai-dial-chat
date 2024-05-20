@@ -55,10 +55,11 @@ export const FileItem = ({
   const dispatch = useAppDispatch();
 
   const [isContextMenu, setIsContextMenu] = useState(false);
-
   const [isSelected, setIsSelected] = useState(false);
   const [isHighligted, setIsHighlighted] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+
+  const canAttachFiles = !!additionalItemData?.canAttachFiles;
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -99,6 +100,7 @@ export const FileItem = ({
             item.id.startsWith(folderId),
           )),
     );
+
     setIsHighlighted(
       ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
         item.id,
