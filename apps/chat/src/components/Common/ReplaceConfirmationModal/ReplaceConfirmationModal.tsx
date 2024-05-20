@@ -299,11 +299,10 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         'flex size-full flex-col sm:w-[525px]',
         featuresToReplace.length < 3 && 'sm:h-fit',
       )}
-      overlayClassName="px-0 py-0"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex h-full flex-col justify-between gap-2 sm:gap-4">
-        <div className="flex h-[90%] flex-col gap-4 p-6 pb-0">
+        <div className="flex h-[90%] flex-col gap-4 md:p-6">
           <div className="flex h-fit flex-col gap-2">
             <h2 className="text-base font-semibold">
               {t('Some items failed to import due to duplicate names')}
@@ -331,13 +330,13 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-6 py-2 sm:py-4">
           <button
             onClick={handleCancel}
-            className="button button-secondary h-[38px] rounded px-3"
+            className="button button-secondary h-[38px]"
           >
             {t('Cancel')}
           </button>
           <button
             onClick={handleContinueImport}
-            className="h-[38px] rounded bg-controls-accent px-3 hover:bg-controls-accent-hover"
+            className="button button-primary h-[38px]"
           >
             {t('Continue')}
           </button>
