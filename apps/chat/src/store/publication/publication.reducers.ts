@@ -71,7 +71,10 @@ export const publicationSlice = createSlice({
     uploadPublicationFail: (state) => state,
     deletePublication: (
       state,
-      _action: PayloadAction<{ resources: { targetUrl: string }[] }>,
+      _action: PayloadAction<{
+        targetFolder: string;
+        resources: { targetUrl: string }[];
+      }>,
     ) => state,
     deletePublicationFail: (state) => state,
     uploadPublishedWithMeItems: (

@@ -305,7 +305,13 @@ const deletePublicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.deletePublication.match),
     switchMap(({ payload }) =>
-      PublicationService.deletePublication(payload.resources).pipe(
+      PublicationService.deletePublication({
+        targetFolder: payload.targetFolder,
+        resources: payload.resources.map((r) => ({
+          action: PublishActions.DELETE,
+          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+        })),
+      }).pipe(
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.deletePublicationFail());

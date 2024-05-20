@@ -2,6 +2,7 @@ import { ClipboardEvent, MouseEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getAttachments } from '@/src/utils/app/share';
 
 import { Entity } from '@/src/types/common';
@@ -52,6 +53,7 @@ export default function UnpublishModal({
 
       dispatch(
         PublicationActions.deletePublication({
+          targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
             { targetUrl: entity.id },
             ...files.map((f) => ({

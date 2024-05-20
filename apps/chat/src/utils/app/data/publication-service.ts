@@ -7,7 +7,6 @@ import {
   PublicationRequest,
   PublicationRule,
   PublicationsListModel,
-  PublishActions,
   PublishedByMeItem,
   PublishedItem,
 } from '@/src/types/publication';
@@ -77,18 +76,13 @@ export class PublicationService {
     );
   }
 
-  public static deletePublication(
-    resources: { targetUrl: string }[],
-  ): Observable<void> {
+  public static deletePublication(data: {
+    targetFolder: string;
+    resources: { targetUrl: string }[];
+  }): Observable<void> {
     return ApiUtils.request('api/publication/create', {
       method: 'POST',
-      body: JSON.stringify({
-        targetFolder: 'public/',
-        resources: resources.map((r) => ({
-          action: PublishActions.DELETE,
-          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
-        })),
-      }),
+      body: JSON.stringify(data),
     });
   }
 
