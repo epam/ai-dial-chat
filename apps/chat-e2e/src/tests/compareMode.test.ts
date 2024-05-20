@@ -591,6 +591,7 @@ dialTest(
     localStorageManager,
     dataInjector,
     conversations,
+    sendMessage,
     page,
   }) => {
     setTestIds('EPMRTC-553', 'EPMRTC-555');
@@ -660,7 +661,8 @@ dialTest(
           )
           .toBeFalsy();
 
-        const isStopButtonVisible = await chat.stopGenerating.isVisible();
+        const isStopButtonVisible =
+          await sendMessage.stopGenerating.isVisible();
         expect
           .soft(isStopButtonVisible, ExpectedMessages.stopGeneratingAvailable)
           .toBeTruthy();
@@ -902,6 +904,7 @@ dialTest(
     dataInjector,
     compare,
     iconApiHelper,
+    sendMessage,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
@@ -944,7 +947,7 @@ dialTest(
           await jumpingIcon.waitFor();
         }
 
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -955,7 +958,8 @@ dialTest(
         expect
           .soft(isResponseLoading, ExpectedMessages.responseLoadingStopped)
           .toBeFalsy();
-        const isStopButtonVisible = await chat.stopGenerating.isVisible();
+        const isStopButtonVisible =
+          await sendMessage.stopGenerating.isVisible();
         expect
           .soft(isStopButtonVisible, ExpectedMessages.responseLoadingStopped)
           .toBeFalsy();
@@ -1493,7 +1497,9 @@ dialTest(
           (firstConversationRequests.length - 1) * 2,
         );
         await chatMessages.openEditCompareRowMessageMode(Side.left, 1);
-        await chatMessages.clearEditTextarea(firstConversationRequests[1]);
+        await chatMessages.selectEditTextareaContent(
+          firstConversationRequests[1],
+        );
         await page.keyboard.press(keys.ctrlPlusV);
         await chatMessages.saveAndSubmit.click();
         await chatMessages.waitForResponseReceived();

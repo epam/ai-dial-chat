@@ -1,4 +1,9 @@
-import { ChatSelectors } from '../selectors';
+import {
+  ChatSelectors,
+  ChatSettingsSelectors,
+  ErrorLabelSelectors,
+  ReplaySelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
@@ -29,15 +34,12 @@ export class Chat extends BaseElement {
   private playBack!: Playback;
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
-  public replay = new BaseElement(this.page, ChatSelectors.startReplay);
+  public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
-    new BaseElement(this.page, ChatSelectors.applyChanges).getNthElement(
-      index ?? 1,
-    );
-  public stopGenerating = new BaseElement(
-    this.page,
-    ChatSelectors.stopGenerating,
-  );
+    new BaseElement(
+      this.page,
+      ChatSettingsSelectors.applyChanges,
+    ).getNthElement(index ?? 1);
   public proceedGenerating = new BaseElement(
     this.page,
     ChatSelectors.proceedGenerating,
@@ -45,7 +47,7 @@ export class Chat extends BaseElement {
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
   public footer = this.getChildElementBySelector(ChatSelectors.footer);
   public notAllowedModelLabel = this.getChildElementBySelector(
-    ChatSelectors.notAllowedModel,
+    ErrorLabelSelectors.notAllowedModel,
   );
   public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
   public scrollableArea = this.getChildElementBySelector(
