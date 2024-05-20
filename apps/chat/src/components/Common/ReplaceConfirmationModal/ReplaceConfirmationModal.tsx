@@ -302,7 +302,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex h-full flex-col justify-between gap-2 sm:gap-4">
-        <div className="flex h-[90%] flex-col gap-4 md:p-6">
+        <div className="flex min-h-[80%] flex-col gap-4 md:p-6">
           <div className="flex h-fit flex-col gap-2">
             <h2 className="text-base font-semibold">
               {t('Some items failed to import due to duplicate names')}
@@ -314,7 +314,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
             </p>
           </div>
 
-          <div className="flex h-[90%] min-h-[150px] flex-col sm:h-[92%]">
+          <div className="flex h-[90%] min-h-[100px] flex-col sm:h-[92%]">
             <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pb-1 pl-3 sm:pb-3">
               <span>{t('All items')}</span>
               <ReplaceSelector
@@ -330,13 +330,13 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-6 py-2 sm:py-4">
           <button
             onClick={handleCancel}
-            className="button button-secondary h-[38px] rounded px-3"
+            className="button button-secondary h-[38px]"
           >
             {t('Cancel')}
           </button>
           <button
             onClick={handleContinueImport}
-            className="h-[38px] rounded bg-controls-accent px-3 hover:bg-controls-accent-hover"
+            className="button button-primary h-[38px]"
           >
             {t('Continue')}
           </button>
