@@ -309,7 +309,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
             'Add a postfix, ignore or replace existing items with importing ones.',
           )}
         </p>
-        <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary px-3">
+        <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pl-3">
           <span>{t('All items')}</span>
           <ReplaceSelector
             selectedOption={actionForAllItems}
@@ -317,7 +317,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
           />
         </div>
       </div>
-      <div className="flex shrink flex-col overflow-y-scroll px-3 pr-6 md:px-6 md:pr-9">
+      <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
         {featuresToReplace && featureList}
       </div>
 
