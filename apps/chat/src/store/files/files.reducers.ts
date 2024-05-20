@@ -260,7 +260,7 @@ export const filesSlice = createSlice({
     ) => {
       state.newAddedFolderId = undefined;
 
-      const targetFolder = state.folders.find(f => f.id === payload.folderId);
+      const targetFolder = state.folders.find((f) => f.id === payload.folderId);
 
       if (!targetFolder) return;
 
@@ -274,13 +274,14 @@ export const filesSlice = createSlice({
         } else if (folder.id.startsWith(payload.folderId)) {
           const updatedFolderId = folder.folderId.replace(
             targetFolder.id,
-            constructPath(targetFolder.folderId, payload.newName));
+            constructPath(targetFolder.folderId, payload.newName),
+          );
 
           return {
             ...folder,
             folderId: updatedFolderId,
             id: constructPath(updatedFolderId, folder.name),
-          }
+          };
         }
         return folder;
       });
