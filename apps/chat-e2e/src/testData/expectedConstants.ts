@@ -200,6 +200,9 @@ export const Attachment = {
   sunImageName: 'sun.jpg',
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
+  flowerImageName: 'flower.jpg',
+  longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
+  specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
 };
 
 export enum Side {

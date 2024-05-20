@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { TalkToGroup } from '@/src/ui/webElements/talkToGroup';
@@ -6,7 +6,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class RecentEntities extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.recentEntities, parentLocator);
+    super(page, ChatSettingsSelectors.recentEntities, parentLocator);
   }
 
   public talkToGroup!: TalkToGroup;
@@ -19,10 +19,10 @@ export class RecentEntities extends BaseElement {
   }
 
   public replayAsIsButton = this.getChildElementBySelector(
-    ChatSelectors.replayAsIsButton,
+    ChatSettingsSelectors.replayAsIsButton,
   );
 
   public playbackButton = this.getChildElementBySelector(
-    ChatSelectors.playbackButton,
+    ChatSettingsSelectors.playbackButton,
   );
 }
