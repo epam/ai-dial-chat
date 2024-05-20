@@ -1012,9 +1012,12 @@ dialTest(
             filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
           )
           .waitFor();
-        await folderConversations.expandFolder(Import.oldVersionAppFolderName, {
-          isHttpMethodTriggered: true,
-        });
+        await folderConversations
+          .getFolderEntity(
+            Import.oldVersionAppFolderName,
+            Import.oldVersionAppFolderChatName,
+          )
+          .waitFor();
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,
