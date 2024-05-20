@@ -81,12 +81,13 @@ Expects following required arguments:
 
 ```typescript
 /**
- * Creates a ChatVisualizerConnector
+ * Params for a ChatVisualizerConnector
  * @param dialHost {string} DIAL CHAT host
  * @param appName {string} name of the Visualizer same as in config
  * @param dataCallback {(visualizerData: AttachmentData) => void} callback to get data that will be used in the Visualizer
  */
 
+//instance example
 new ChatVisualizerConnector(dialHost, appName, setData);
 ```
 
