@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 import { EntitySelector } from './entitySelector';
 
@@ -9,7 +9,7 @@ export class ConversationSettings extends BaseElement {
   constructor(page: Page, index?: number) {
     const elementLocator = new BaseElement(
       page,
-      ChatSelectors.conversationSettingsSelector,
+      ChatSettingsSelectors.conversationSettingsSelector,
     ).getNthElement(index ?? 1);
     super(page, '', elementLocator);
   }
