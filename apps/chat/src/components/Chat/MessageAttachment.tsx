@@ -46,11 +46,13 @@ const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
 interface AttachmentDataRendererProps {
   attachment: Attachment;
   isInner?: boolean;
+  isOpened?: boolean;
 }
 
 const AttachmentDataRenderer = ({
   attachment,
   isInner,
+  isOpened = false,
 }: AttachmentDataRendererProps) => {
   if (!attachment.data) {
     return null;
@@ -93,6 +95,7 @@ const AttachmentDataRenderer = ({
         isShowResponseLoader={false}
         content={attachment.data}
         isInner={isInner}
+        isOpened={isOpened}
       />
     );
   }
@@ -288,7 +291,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
       {isOpenable && isOpened && (
         <div className="relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200">
           {attachment.data && (
-            <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
+            <AttachmentDataRenderer
+              attachment={attachment}
+              isInner={isInner}
+              isOpened={isOpened}
+            />
           )}
           {mappedAttachmentUrl &&
             (attachment.type === chartType ? (

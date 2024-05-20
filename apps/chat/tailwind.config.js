@@ -104,9 +104,14 @@ module.exports = {
         s: '14px',
       },
       typography: {
+        invert: {
+          css: {
+            color: 'var(--text-primary-bg-dark, #FFFFFF)',
+          },
+        },
         DEFAULT: {
           css: {
-            color: 'var(--text-primary-bg-light, #F3F4F6)',
+            color: 'var(--text-primary-bg-light, #212429)',
             a: {
               color: 'var(--text-accent-primary, #5C8DEA)',
             },
