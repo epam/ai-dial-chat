@@ -403,23 +403,24 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareConversationWithAttachmentInRequest(
-    attachmentUrl: string,
+  public prepareConversationWithAttachmentsInRequest(
     model: DialAIEntityModel | string,
     hasRequest?: boolean,
+    ...attachmentUrl: string[]
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const attachments = attachmentUrl.map((url) => this.getAttachmentData(url));
     const userMessage: Message = {
       role: Role.User,
       content: hasRequest ? 'what is on picture?' : '',
       custom_content: {
-        attachments: [this.getAttachmentData(attachmentUrl)],
+        attachments: attachments,
       },
       model: modelToUse,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
-      content: 'Heart',
+      content: 'Images',
       model: modelToUse,
     };
     const name = GeneratorUtil.randomString(10);

@@ -1,6 +1,7 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { ErrorLabelSelectors } from '@/src/ui/selectors';
 import { PromptModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
@@ -19,7 +20,7 @@ export class PromptModalDialog extends BaseElement {
   public fieldLabel = (label: string) =>
     this.getChildElementBySelector(PromptModal.fieldLabel(label));
   public getFieldBottomMessage = (field: BaseElement) =>
-    field.getElementLocator().locator(`~${PromptModal.fieldError}`);
+    field.getElementLocator().locator(`~${ErrorLabelSelectors.fieldError}`);
 
   public async fillPromptDetails(
     name: string,
