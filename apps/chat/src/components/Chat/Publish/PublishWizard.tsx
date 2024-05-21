@@ -29,6 +29,7 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
@@ -48,9 +49,10 @@ import {
 } from './PublicationResources';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
-import capitalize from 'lodash-es/capitalize';
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
+import startCase from 'lodash-es/startCase';
+import toLower from 'lodash-es/toLower';
 
 interface PublishModalFiltersProps {
   path: string;
@@ -71,6 +73,9 @@ function PublishModalFilters({
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
   );
+  const publicationFilters = useAppSelector(
+    SettingsSelectors.selectPublicationFilters,
+  );
 
   if (!path || (rules && !rules.length)) {
     return (
@@ -89,7 +94,7 @@ function PublishModalFilters({
   if (rules) {
     return rules.map((rule, idx) => (
       <CollapsibleSection
-        name={capitalize(rule.source)}
+        name={startCase(toLower(rule.source))}
         dataQa={`filter-${rule.source}`}
         key={`filter-${idx}`}
         openByDefault
@@ -112,24 +117,21 @@ function PublishModalFilters({
   }
 
   // define filters in config
-  return [
-    { id: 'title', name: 'Title' },
-    { id: 'roles', name: 'Roles' },
-  ].map((v, idx) => {
+  return publicationFilters.map((filter, idx) => {
     const initialSelectedFilter = otherTargetAudienceFilters.find(
-      ({ id }) => id === v.id,
+      ({ id }) => id === filter,
     );
     return (
       <CollapsibleSection
-        name={v.name}
-        dataQa={`filter-${v.id}`}
+        name={startCase(toLower(filter))}
+        dataQa={`filter-${filter}`}
         key={`filter-${idx}`}
         openByDefault={false}
         className="!pl-0"
       >
         <TargetAudienceFilterComponent
-          name={v.name}
-          id={v.id}
+          name={startCase(toLower(filter))}
+          id={filter}
           initialSelectedFilter={initialSelectedFilter}
           onChangeFilter={onChangeFilters}
         />

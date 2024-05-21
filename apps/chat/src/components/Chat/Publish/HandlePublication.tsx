@@ -31,7 +31,8 @@ import {
 } from './PublicationResources';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
-import capitalize from 'lodash-es/capitalize';
+import startCase from 'lodash-es/startCase';
+import toLower from 'lodash-es/toLower';
 import uniq from 'lodash-es/uniq';
 
 interface Props {
@@ -54,7 +55,7 @@ export function HandlePublication({ publication }: Props) {
     () =>
       publication.rules?.map((rule) => ({
         id: rule.source,
-        name: capitalize(rule.source),
+        name: startCase(toLower(rule.source)),
         function: rule.function,
         targets: rule.targets,
       })) || [],

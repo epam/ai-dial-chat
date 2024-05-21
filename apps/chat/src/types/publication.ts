@@ -4,8 +4,6 @@ export enum PublicationFunctions {
   EQUAL = 'EQUAL',
   CONTAIN = 'CONTAIN',
   REGEX = 'REGEX',
-  FALSE = 'FALSE',
-  TRUE = 'TRUE',
 }
 
 export enum PublishActions {

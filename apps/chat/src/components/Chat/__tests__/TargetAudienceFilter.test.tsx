@@ -15,8 +15,6 @@ describe('TargetAudienceFilterComponent', () => {
     PublicationFunctions.CONTAIN,
     PublicationFunctions.EQUAL,
     PublicationFunctions.REGEX,
-    PublicationFunctions.FALSE,
-    PublicationFunctions.TRUE,
   ];
 
   const defaultFilterOption = PublicationFunctions.CONTAIN;

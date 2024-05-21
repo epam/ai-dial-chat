@@ -26,8 +26,6 @@ const filterFunctionValues = [
   PublicationFunctions.CONTAIN,
   PublicationFunctions.EQUAL,
   PublicationFunctions.REGEX,
-  PublicationFunctions.TRUE,
-  PublicationFunctions.FALSE,
 ];
 
 export function TargetAudienceFilterComponent({

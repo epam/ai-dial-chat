@@ -22,6 +22,8 @@ import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
+import Tooltip from './Tooltip';
+
 import { useCombobox, useMultipleSelection } from 'downshift';
 
 interface getFilteredItemsArgs<T> {
@@ -222,40 +224,45 @@ export function MultipleComboBox<T>({
           {selectedItems &&
             selectedItems.map((selectedItemForRender, index) => {
               return (
-                <span
-                  className="flex items-center gap-2 rounded bg-accent-primary-alpha px-3 py-1.5"
+                <Tooltip
                   key={`selected-item-${getItemLabel(
                     selectedItemForRender,
                   )}-${index}`}
-                  {...getSelectedItemProps({
-                    selectedItem: selectedItemForRender,
-                    index,
-                  })}
+                  tooltip={getItemLabel(selectedItemForRender)}
+                  triggerClassName="truncate text-center"
                 >
-                  {selectedItemRow ? (
-                    createElement(selectedItemRow, {
-                      item: selectedItemForRender,
-                    })
-                  ) : (
-                    <span className="max-w-[150px] truncate break-all text-xs">
-                      {getItemLabel(selectedItemForRender)}
-                    </span>
-                  )}
                   <span
-                    data-qa={`unselect-item-${getItemValue(
-                      selectedItemForRender,
-                    )}`}
-                    className="cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeSelectedItem(selectedItemForRender);
-                    }}
+                    className="flex items-center gap-2 rounded bg-accent-primary-alpha px-3 py-1.5"
+                    {...getSelectedItemProps({
+                      selectedItem: selectedItemForRender,
+                      index,
+                    })}
                   >
-                    {!readonly && (
-                      <IconX size={14} className="text-secondary" />
+                    {selectedItemRow ? (
+                      createElement(selectedItemRow, {
+                        item: selectedItemForRender,
+                      })
+                    ) : (
+                      <span className="max-w-[150px] truncate break-all text-xs">
+                        {getItemLabel(selectedItemForRender)}
+                      </span>
                     )}
+                    <span
+                      data-qa={`unselect-item-${getItemValue(
+                        selectedItemForRender,
+                      )}`}
+                      className="cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSelectedItem(selectedItemForRender);
+                      }}
+                    >
+                      {!readonly && (
+                        <IconX size={14} className="text-secondary" />
+                      )}
+                    </span>
                   </span>
-                </span>
+                </Tooltip>
               );
             })}
           <input

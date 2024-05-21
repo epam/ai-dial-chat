@@ -75,7 +75,7 @@ const publishEpic: AppEpic = (action$) =>
 
       return PublicationService.publish({
         targetFolder: constructPath(
-          'public',
+          `public${payload.targetFolder ? '' : '/'}`,
           `${encodedTargetFolder}${targetFolderSuffix}`,
         ),
         resources: payload.resources.map((r) => ({
