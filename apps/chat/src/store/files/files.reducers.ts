@@ -271,7 +271,7 @@ export const filesSlice = createSlice({
             name: payload.newName.trim(),
             id: constructPath(targetFolder.folderId, payload.newName),
           };
-        } else if (folder.id.startsWith(payload.folderId)) {
+        } else if (folder.id.startsWith(`${payload.folderId}/`)) {
           const updatedFolderId = folder.folderId.replace(
             targetFolder.id,
             constructPath(targetFolder.folderId, payload.newName),
