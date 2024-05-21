@@ -483,14 +483,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             }
           }
 
-          return concat(
-            of(
-              PublicationActions.uploadPublishedWithMeItemsSuccess({
-                publishedItems: publications,
-              }),
-            ),
-            ...actions,
-          );
+          return concat(...actions);
         }),
         catchError((err) => {
           console.error(err);

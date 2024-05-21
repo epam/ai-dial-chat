@@ -5,7 +5,6 @@ import {
   Publication,
   PublicationInfo,
   PublicationRule,
-  PublishedItem,
 } from '@/src/types/publication';
 
 import * as PublicationSelectors from './publication.selectors';
@@ -15,7 +14,6 @@ export { PublicationSelectors };
 export interface PublicationState {
   publications: (PublicationInfo & Partial<Publication>)[];
   selectedPublication: Publication | null;
-  publishedItems: PublishedItem[];
   resourcesToReview: {
     publicationUrl: string;
     reviewed: boolean;
@@ -27,7 +25,6 @@ export interface PublicationState {
 
 const initialState: PublicationState = {
   publications: [],
-  publishedItems: [],
   selectedPublication: null,
   resourcesToReview: [],
   rules: {},
@@ -81,12 +78,6 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{ featureType: ApiKeys }>,
     ) => state,
-    uploadPublishedWithMeItemsSuccess: (
-      state,
-      { payload }: PayloadAction<{ publishedItems: PublishedItem }>,
-    ) => {
-      state.publishedItems = payload.publishedItems.items || [];
-    },
     uploadPublishedWithMeItemsFail: (state) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,
