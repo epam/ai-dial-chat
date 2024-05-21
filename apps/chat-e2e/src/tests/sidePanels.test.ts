@@ -16,18 +16,22 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await header.chatPanelToggle.click();
-      isChatPanelVisible = await chatBar.isVisible();
-      expect
-        .soft(isChatPanelVisible, ExpectedMessages.sideBarPanelIsHidden)
-        .toBeFalsy();
+      await expect
+        .soft(
+          await chatBar.getElementLocator(),
+          ExpectedMessages.sideBarPanelIsHidden,
+        )
+        .toBeHidden();
     });
 
     await dialTest.step('Hide prompts panel', async () => {
       await header.promptsPanelToggle.click();
-      isPromptsPanelVisible = await promptBar.isVisible();
-      expect
-        .soft(isPromptsPanelVisible, ExpectedMessages.sideBarPanelIsHidden)
-        .toBeFalsy();
+      await expect
+        .soft(
+          await promptBar.getElementLocator(),
+          ExpectedMessages.sideBarPanelIsHidden,
+        )
+        .toBeHidden();
     });
 
     await dialTest.step(

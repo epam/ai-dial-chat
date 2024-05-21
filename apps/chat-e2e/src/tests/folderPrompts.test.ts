@@ -290,10 +290,12 @@ dialTest(
       )
       .toBeHidden();
 
-    const isPromptVisible = await prompts
-      .getPromptByName(promptInFolder.prompts[0].name)
-      .isVisible();
-    expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeFalsy();
+    await expect
+      .soft(
+        await prompts.getPromptByName(promptInFolder.prompts[0].name),
+        ExpectedMessages.promptIsVisible,
+      )
+      .toBeHidden();
   },
 );
 

@@ -119,14 +119,12 @@ dialTest(
           .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
           .toBe(ExpectedConstants.answerError);
 
-        const isGenerateResponseVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
+        await expect
           .soft(
-            isGenerateResponseVisible,
+            await chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -297,12 +295,12 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe((userRequests.length - 1) * 2);
 
-        const isMessageEdited = await chatMessages
-          .getChatMessage(editData)
-          .isVisible();
-        expect
-          .soft(isMessageEdited, ExpectedMessages.requestMessageIsEdited)
-          .toBeTruthy();
+        await expect
+          .soft(
+            await chatMessages.getChatMessage(editData),
+            ExpectedMessages.requestMessageIsEdited,
+          )
+          .toBeVisible();
 
         const lastMessage = await chatMessages.getLastMessageContent();
         expect
@@ -363,12 +361,12 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe((userRequests.length - 1) * 2);
 
-        const isMessageVisible = await chatMessages
-          .getChatMessage(userRequests[1])
-          .isVisible();
-        expect
-          .soft(isMessageVisible, ExpectedMessages.messageIsDeleted)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatMessages.getChatMessage(userRequests[1]),
+            ExpectedMessages.messageIsDeleted,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -463,14 +461,12 @@ dialTest(
           .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedModelIcon);
 
-        const isRegenerateButtonVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
+        await expect
           .soft(
-            isRegenerateButtonVisible,
+            await chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -543,14 +539,12 @@ dialTest(
           .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedModelIcon);
 
-        const isRegenerateButtonVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
+        await expect
           .soft(
-            isRegenerateButtonVisible,
+            await chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 

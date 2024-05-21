@@ -790,22 +790,21 @@ dialTest(
       )
       .toBeTruthy();
 
-    const isFolderVisible = await folderConversations
-      .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-      .isVisible();
-    expect
-      .soft(isFolderVisible, ExpectedMessages.folderNotDeleted)
-      .toBeTruthy();
-
-    const isSingleConversationVisible = await conversations
-      .getConversationByName(singleConversation.name)
-      .isVisible();
-    expect
+    await expect
       .soft(
-        isSingleConversationVisible,
+        await folderConversations.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        ),
+        ExpectedMessages.folderNotDeleted,
+      )
+      .toBeVisible();
+
+    await expect
+      .soft(
+        await conversations.getConversationByName(singleConversation.name),
         ExpectedMessages.conversationNotDeleted,
       )
-      .toBeTruthy();
+      .toBeVisible();
   },
 );
 
@@ -893,10 +892,14 @@ dialTest(
         .soft(isFolderConversationVisible, ExpectedMessages.conversationDeleted)
         .toBeFalsy();
 
-      const isFolderVisible = await folderConversations
-        .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(4))
-        .isVisible();
-      expect.soft(isFolderVisible, ExpectedMessages.folderDeleted).toBeFalsy();
+      await expect
+        .soft(
+          await folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(4),
+          ),
+          ExpectedMessages.folderDeleted,
+        )
+        .toBeHidden();
 
       for (let i = 1; i <= 3; i++) {
         await expect
@@ -909,12 +912,12 @@ dialTest(
           .toBeHidden();
       }
 
-      const isSingleConversationVisible = await conversations
-        .getConversationByName(singleConversation.name)
-        .isVisible();
-      expect
-        .soft(isSingleConversationVisible, ExpectedMessages.conversationDeleted)
-        .toBeFalsy();
+      await expect
+        .soft(
+          await conversations.getConversationByName(singleConversation.name),
+          ExpectedMessages.conversationDeleted,
+        )
+        .toBeHidden();
 
       await conversations
         .getConversationByName(ExpectedConstants.newConversationTitle)
@@ -931,23 +934,23 @@ dialTest(
         .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)
         .toBeTruthy();
 
-      const isPromptFolderVisible = await folderPrompts
-        .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-        .isVisible();
+      const promptFolder = await folderPrompts.getFolderByName(
+        ExpectedConstants.newFolderWithIndexTitle(1),
+      );
       i === 1
-        ? expect
-            .soft(isPromptFolderVisible, ExpectedMessages.folderNotDeleted)
-            .toBeFalsy()
-        : expect
-            .soft(isPromptFolderVisible, ExpectedMessages.folderNotDeleted)
-            .toBeTruthy();
+        ? await expect
+            .soft(promptFolder, ExpectedMessages.folderNotDeleted)
+            .toBeHidden()
+        : await expect
+            .soft(promptFolder, ExpectedMessages.folderNotDeleted)
+            .toBeVisible();
 
-      const isSinglePromptVisible = await prompts
-        .getPromptByName(singlePrompt.name)
-        .isVisible();
-      expect
-        .soft(isSinglePromptVisible, ExpectedMessages.promptNotDeleted)
-        .toBeTruthy();
+      await expect
+        .soft(
+          await prompts.getPromptByName(singlePrompt.name),
+          ExpectedMessages.promptNotDeleted,
+        )
+        .toBeVisible();
 
       if (i > 1) {
         await dialHomePage.reloadPage();
@@ -1232,12 +1235,14 @@ dialTest(
           .soft(results, ExpectedMessages.searchResultCountIsValid)
           .toBe(isApiStorageType ? 2 : 3);
 
-        const isEmptyFolderVisible = await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .isVisible();
-        expect
-          .soft(isEmptyFolderVisible, ExpectedMessages.folderIsNotVisible)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
   },

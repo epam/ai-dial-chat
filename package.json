@@ -151,7 +151,7 @@
     "@playwright/test": "^1.44.0",
     "playwright-chromium": "^1.44.0",
     "allure-playwright": "^2.15.0",
-    "eslint-plugin-playwright": "^1.5.4"
+    "eslint-plugin-playwright": "^1.6.1"
   },
   "engines": {
     "node": ">=18.18.2",

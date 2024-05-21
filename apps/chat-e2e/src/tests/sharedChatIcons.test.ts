@@ -214,15 +214,14 @@ dialTest(
           )
           .toBeDefined();
 
-        const isArrowIconVisible = await conversations
-          .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
-          .isVisible();
-        expect
+        await expect
           .soft(
-            isArrowIconVisible,
+            await conversations.getConversationArrowIcon(
+              ExpectedConstants.newConversationTitle,
+            ),
             ExpectedMessages.sharedConversationIconIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
       },
     );
 

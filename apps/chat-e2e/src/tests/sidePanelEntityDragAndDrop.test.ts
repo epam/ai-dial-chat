@@ -278,10 +278,12 @@ dialTest(
       )
       .toBeFalsy();
 
-    const isPromptVisible = await prompts
-      .getPromptByName(promptInFolder.prompts[0].name)
-      .isVisible();
-    expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeTruthy();
+    await expect
+      .soft(
+        await prompts.getPromptByName(promptInFolder.prompts[0].name),
+        ExpectedMessages.promptIsVisible,
+      )
+      .toBeVisible();
   },
 );
 

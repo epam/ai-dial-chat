@@ -330,10 +330,12 @@ dialTest(
           activeChat = secondConversation.name;
         }
 
-        const isCompareModeOn = await compare.isVisible();
-        expect
-          .soft(isCompareModeOn, ExpectedMessages.compareModeClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await compare.getElementLocator(),
+            ExpectedMessages.compareModeClosed,
+          )
+          .toBeHidden();
 
         const activeChatHeader =
           await leftChatHeader.chatTitle.getElementContent();
@@ -959,11 +961,12 @@ dialTest(
         expect
           .soft(isResponseLoading, ExpectedMessages.responseLoadingStopped)
           .toBeFalsy();
-        const isStopButtonVisible =
-          await sendMessage.stopGenerating.isVisible();
-        expect
-          .soft(isStopButtonVisible, ExpectedMessages.responseLoadingStopped)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await sendMessage.stopGenerating.getElementLocator(),
+            ExpectedMessages.responseLoadingStopped,
+          )
+          .toBeHidden();
 
         const expectedModelIcon =
           await iconApiHelper.getEntityIcon(defaultModel);

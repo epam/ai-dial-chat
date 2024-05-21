@@ -707,11 +707,12 @@ dialTest(
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
           .toBe(ExpectedConstants.stopGeneratingTooltip);
 
-        const isSendButtonVisible =
-          await sendMessage.sendMessageButton.isVisible();
-        expect
-          .soft(isSendButtonVisible, ExpectedMessages.sendMessageButtonDisabled)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await sendMessage.sendMessageButton.getElementLocator(),
+            ExpectedMessages.sendMessageButtonDisabled,
+          )
+          .toBeHidden();
       },
     );
 
@@ -724,15 +725,12 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        const isSendButtonVisible =
-          await sendMessage.sendMessageButton.isVisible();
-
-        expect
+        await expect
           .soft(
-            isSendButtonVisible,
+            await sendMessage.sendMessageButton.getElementLocator(),
             ExpectedMessages.sendMessageButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         await chat.footer.waitForState({ state: 'attached' });
       },
@@ -754,14 +752,12 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        const isSendButtonVisible =
-          await sendMessage.sendMessageButton.isVisible();
-        expect
+        await expect
           .soft(
-            isSendButtonVisible,
+            await sendMessage.sendMessageButton.getElementLocator(),
             ExpectedMessages.sendMessageButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         await chat.footer.waitForState({ state: 'attached' });
       },
