@@ -29,7 +29,7 @@ dialTest(
     conversations,
     chatHeader,
     fileApiHelper,
-    sendMessageAttachmentDropdownMenu,
+    attachmentDropdownMenu,
   }) => {
     setTestIds('EPMRTC-1891', 'EPMRTC-1639', 'EPMRTC-1536');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -67,7 +67,7 @@ dialTest(
       'Upload 2 files and verify Send button is enabled',
       async () => {
         await sendMessage.attachmentMenuTrigger.click();
-        await sendMessageAttachmentDropdownMenu.selectMenuOption(
+        await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of attachedFiles) {
@@ -117,7 +117,7 @@ dialTest(
     conversations,
     chatHeader,
     fileApiHelper,
-    sendMessageAttachmentDropdownMenu,
+    attachmentDropdownMenu,
     chat,
   }) => {
     setTestIds('EPMRTC-1640');
@@ -139,7 +139,7 @@ dialTest(
         });
         await talkToSelector.selectModel(randomModelWithAttachment);
         await sendMessage.attachmentMenuTrigger.click();
-        await sendMessageAttachmentDropdownMenu.selectMenuOption(
+        await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         await attachFilesModal.checkAttachedFile(Attachment.sunImageName);
@@ -178,7 +178,7 @@ dialTest(
     sendMessage,
     tooltip,
     uploadFromDeviceModal,
-    sendMessageAttachmentDropdownMenu,
+    attachmentDropdownMenu,
     sendMessageInputAttachments,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
@@ -198,7 +198,7 @@ dialTest(
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () =>
-            sendMessageAttachmentDropdownMenu.selectMenuOption(
+            attachmentDropdownMenu.selectMenuOption(
               UploadMenuOptions.uploadFromDevice,
             ),
         );
@@ -250,7 +250,7 @@ dialTest(
     attachFilesModal,
     sendMessage,
     fileApiHelper,
-    sendMessageAttachmentDropdownMenu,
+    attachmentDropdownMenu,
     chat,
     chatMessages,
     page,
@@ -275,7 +275,7 @@ dialTest(
         });
         await talkToSelector.selectModel(randomModelWithAttachment);
         await sendMessage.attachmentMenuTrigger.click();
-        await sendMessageAttachmentDropdownMenu.selectMenuOption(
+        await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         await attachFilesModal.checkAttachedFile(Attachment.longImageName);
@@ -396,7 +396,7 @@ dialTest(
     setTestIds,
     sendMessage,
     uploadFromDeviceModal,
-    sendMessageAttachmentDropdownMenu,
+    attachmentDropdownMenu,
     sendMessageInputAttachments,
     context,
   }) => {
@@ -417,7 +417,7 @@ dialTest(
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
           () =>
-            sendMessageAttachmentDropdownMenu.selectMenuOption(
+            attachmentDropdownMenu.selectMenuOption(
               UploadMenuOptions.uploadFromDevice,
             ),
         );

@@ -12,6 +12,7 @@ import { Attributes, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
+import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Locator, Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
@@ -38,6 +39,14 @@ export class ChatMessages extends BaseElement {
     );
 
   public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
+  private inputAttachments!: InputAttachments;
+
+  getInputAttachments(): InputAttachments {
+    if (!this.inputAttachments) {
+      this.inputAttachments = new InputAttachments(this.page, this.rootLocator);
+    }
+    return this.inputAttachments;
+  }
 
   public messageStage = (messagesIndex: number, stageIndex: number) =>
     this.chatMessages
@@ -140,6 +149,10 @@ export class ChatMessages extends BaseElement {
   public async getChatMessageDownloadUrl(message: string | number) {
     const openedMessageAttachment = this.getDownloadAttachmentIcon(message);
     return openedMessageAttachment.getAttribute(Attributes.href);
+  }
+
+  public getChatMessageAttachmentsGroup(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.attachmentsGroup);
   }
 
   public async getGeneratedChatContent(messagesCount: number) {
@@ -389,7 +402,7 @@ export class ChatMessages extends BaseElement {
     }
   }
 
-  public getChatMessageTextarea(message: string) {
+  public getChatMessageTextarea(message: string | number) {
     return this.getChatMessage(message).locator(MessageInputSelectors.textarea);
   }
 
@@ -408,7 +421,9 @@ export class ChatMessages extends BaseElement {
   public saveAndSubmit = this.getChildElementBySelector(
     MessageInputSelectors.saveAndSubmit,
   );
-  public cancel = new BaseElement(this.page, MessageInputSelectors.cancelEdit);
+  public cancel = this.getChildElementBySelector(
+    MessageInputSelectors.cancelEdit,
+  );
 
   public messageDeleteIcon = (message: string) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
@@ -433,24 +448,17 @@ export class ChatMessages extends BaseElement {
     await this.waitForResponseReceived();
   }
 
-  public async fillEditData(oldMessage: string, newMessage: string) {
+  public async fillEditData(oldMessage: string | number, newMessage: string) {
     const textArea = await this.selectEditTextareaContent(oldMessage);
     await textArea.fill(newMessage);
   }
 
-  public async selectEditTextareaContent(oldMessage: string) {
+  public async selectEditTextareaContent(oldMessage: string | number) {
     const textArea = this.getChatMessageTextarea(oldMessage);
     await textArea.waitFor();
     await textArea.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     return textArea;
-  }
-
-  public async isSaveButtonEnabled() {
-    const disabledAttributeValue = await this.saveAndSubmit.getAttribute(
-      Attributes.disabled,
-    );
-    return disabledAttributeValue === undefined;
   }
 
   public async openDeleteMessageDialog(message: string) {

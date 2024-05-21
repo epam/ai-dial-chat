@@ -35,6 +35,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
       <button
         className="flex w-full items-center gap-2 p-2 text-sm"
         onClick={() => setIsSectionOpened((val) => !val)}
+        data-qa="grouped-attachments"
       >
         {t('Attachments')}
         <ChevronDown
