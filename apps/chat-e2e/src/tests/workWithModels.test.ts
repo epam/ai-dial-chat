@@ -259,7 +259,7 @@ dialTest(
             await chatMessages.getChatMessageTextarea(userRequests[1]),
             ExpectedMessages.editModeIsClosed,
           )
-          .toBeVisible();
+          .toBeHidden();
 
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect
