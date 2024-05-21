@@ -36,11 +36,11 @@ export class PublicationService {
     }).pipe(
       map(({ publications }: PublicationsListModel) => {
         return publications.map((p) => {
-          if (!p.targetUrl) return p;
+          if (!p.targetFolder) return p;
 
           return {
             ...p,
-            targetUrl: ApiUtils.decodeApiUrl(p.targetUrl),
+            targetFolder: ApiUtils.decodeApiUrl(p.targetFolder),
           };
         });
       }),
@@ -69,6 +69,7 @@ export class PublicationService {
 
         return {
           ...publication,
+          targetFolder: ApiUtils.decodeApiUrl(publication.targetFolder),
           targetUrl: ApiUtils.decodeApiUrl(publication.targetFolder),
           resources: decodedResources,
         };

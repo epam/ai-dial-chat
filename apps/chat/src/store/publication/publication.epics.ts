@@ -219,7 +219,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
 
                       return {
-                        id: id,
+                        id,
                         folderId: getFolderIdFromEntityId(id),
                         model: parsedApiKey.model,
                         name: parsedApiKey.name,
@@ -265,7 +265,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
 
                       return {
-                        id: id,
+                        id,
                         folderId: getFolderIdFromEntityId(id),
                         name: splitEntityId(r.targetUrl).name,
                         contentLength: 0,
@@ -306,9 +306,12 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
 const deletePublicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.deletePublication.match),
-    switchMap(({ payload }) =>
-      PublicationService.deletePublication({
-        targetFolder: payload.targetFolder,
+    switchMap(({ payload }) => {
+      const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
+      const targetFolderSuffix = payload.targetFolder ? '/' : '';
+
+      return PublicationService.deletePublication({
+        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
           action: PublishActions.DELETE,
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
@@ -319,8 +322,8 @@ const deletePublicationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(PublicationActions.deletePublicationFail());
         }),
-      ),
-    ),
+      );
+    }),
   );
 
 const deletePublicationFailEpic: AppEpic = (action$) =>
@@ -333,13 +336,41 @@ const deletePublicationFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const uploadPublishedWithMeItemsEpic: AppEpic = (action$) =>
+const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublishedWithMeItems.match),
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap((publications) => {
           const actions: Observable<AnyAction>[] = [];
+          const selectedIds =
+            ConversationsSelectors.selectSelectedConversationsIds(state$.value);
+
+          if (
+            selectedIds.some((id) =>
+              id.startsWith(constructPath(ApiKeys.Conversations, 'public/')),
+            )
+          ) {
+            const pathsToUpload = selectedIds.filter((id) =>
+              id.startsWith(constructPath(ApiKeys.Conversations, 'public/')),
+            );
+            const rootFolderIds = uniq(
+              pathsToUpload.map((path) =>
+                path.split('/').slice(0, 3).join('/'),
+              ),
+            );
+
+            rootFolderIds.forEach((path) =>
+              actions.push(
+                of(
+                  ConversationsActions.uploadConversationsWithFoldersRecursive({
+                    path,
+                    noLoader: true,
+                  }),
+                ),
+              ),
+            );
+          }
 
           if (!publications.items) {
             return EMPTY;
@@ -680,7 +711,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.uploadRules.match),
     switchMap(({ payload }) =>
-      PublicationService.getRules(payload.path).pipe(
+      PublicationService.getRules(ApiUtils.encodeApiUrl(payload.path)).pipe(
         switchMap(({ rules }) => {
           const currentRulePath = `${constructPath('public', payload.path)}/`;
 

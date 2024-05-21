@@ -10,7 +10,7 @@ import {
 import { isConversationId, isFileId, isPromptId } from '@/src/utils/app/id';
 
 import { BackendResourceType, FeatureType } from '@/src/types/common';
-import { Publication, PublicationStatus } from '@/src/types/publication';
+import { Publication, PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -203,7 +203,7 @@ export function HandlePublication({ publication }: Props) {
             data-qa="app-name"
             className="w-full whitespace-pre text-center text-base font-semibold"
           >
-            {!(publication.status === PublicationStatus.REQUESTED_FOR_DELETION)
+            {publication.resources[0].action !== PublishActions.DELETE
               ? t('Publication request for: ')
               : t('Unpublish: ')}
             {publication.url.split('/').slice(-1).shift()}
@@ -213,10 +213,7 @@ export function HandlePublication({ publication }: Props) {
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 py-4">
               <div className="px-5">
-                {!(
-                  publication.status ===
-                  PublicationStatus.REQUESTED_FOR_DELETION
-                ) ? (
+                {publication.resources[0].action !== PublishActions.DELETE ? (
                   <>
                     <label className="flex text-sm" htmlFor="approvePath">
                       {t('Publish to')}
@@ -227,14 +224,14 @@ export function HandlePublication({ publication }: Props) {
                     >
                       <Tooltip
                         placement="top"
-                        triggerClassName="w-full text-start"
+                        triggerClassName="w-full truncate text-start"
                         tooltip={
                           <div className="flex break-words text-xs">
                             {publishToUrl}
                           </div>
                         }
                       >
-                        <span className="w-full truncate">{publishToUrl}</span>
+                        <span className="w-full">{publishToUrl}</span>
                       </Tooltip>
                     </button>
                     <div className="my-4">
@@ -259,7 +256,12 @@ export function HandlePublication({ publication }: Props) {
                         {publication.url.split('/').slice(-1).shift()}
                       </span>
                       <p className="text-secondary">{t('Path: ')}</p>
-                      <span className="col-span-2">{t('Organization')}</span>
+                      <span className="col-span-2">
+                        {publication.targetFolder?.replace(
+                          /^[^/]+/,
+                          'Organization',
+                        )}
+                      </span>
                       <p className="text-secondary">
                         {t('Publication date: ')}
                       </p>

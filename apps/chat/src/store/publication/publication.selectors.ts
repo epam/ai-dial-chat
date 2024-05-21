@@ -1,10 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { BackendResourceType } from '@/src/types/common';
-import {
-  PublicationResource,
-  PublicationStatus,
-} from '@/src/types/publication';
+import { PublicationResource } from '@/src/types/publication';
 
 import { RootState } from '../index';
 import { PublicationState } from './publication.reducers';
@@ -30,21 +27,6 @@ export const selectFilteredPublicationResources = createSelector(
     return filteredPublications
       .filter((p) => p.resources)
       .flatMap((p) => p.resources) as PublicationResource[];
-  },
-);
-export const selectPendingPublications = createSelector(
-  [selectPublications],
-  (publications) => {
-    return publications.filter((p) => p.status === PublicationStatus.PENDING);
-  },
-);
-
-export const selectRequestedForDeletionPublications = createSelector(
-  [selectPublications],
-  (publications) => {
-    return publications.filter(
-      (p) => p.status === PublicationStatus.REQUESTED_FOR_DELETION,
-    );
   },
 );
 

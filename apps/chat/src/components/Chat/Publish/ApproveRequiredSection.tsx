@@ -1,4 +1,4 @@
-import { IconClipboard, IconClipboardX } from '@tabler/icons-react';
+import { IconClipboard } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -7,11 +7,7 @@ import classNames from 'classnames';
 
 import { BackendResourceType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
-import {
-  Publication,
-  PublicationInfo,
-  PublicationStatus,
-} from '@/src/types/publication';
+import { Publication, PublicationInfo } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -50,10 +46,6 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const PublicationIcon =
-    publication.status !== PublicationStatus.REQUESTED_FOR_DELETION
-      ? IconClipboard
-      : IconClipboardX;
   const ResourcesComponent =
     resourceType === BackendResourceType.CONVERSATION
       ? ConversationPublicationResources
@@ -92,7 +84,7 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
       >
         <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
           <CaretIconComponent isOpen={isOpen} />
-          <PublicationIcon className="text-secondary" width={18} height={18} />
+          <IconClipboard className="text-secondary" width={18} height={18} />
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',

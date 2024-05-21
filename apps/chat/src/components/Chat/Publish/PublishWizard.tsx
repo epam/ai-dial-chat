@@ -72,7 +72,7 @@ function PublishModalFilters({
     PublicationSelectors.selectIsRulesLoading,
   );
 
-  if (!path) {
+  if (!path || (rules && !rules.length)) {
     return (
       <p>
         {t(
@@ -168,6 +168,9 @@ export function PublishModal({
     TargetAudienceFilter[]
   >([]);
 
+  const rules = useAppSelector((state) =>
+    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
+  );
   const files = useAppSelector((state) =>
     getAttachments(type)(state, entity.id),
   );
@@ -340,7 +343,7 @@ export function PublishModal({
               <h2 className="mb-4 flex gap-2">
                 {t('Target Audience Filters')}
 
-                {path && (
+                {!!(path && rules && rules.length) && (
                   <Tooltip
                     placement="top"
                     tooltip={

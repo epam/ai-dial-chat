@@ -33,7 +33,6 @@ export enum PublicationStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
-  REQUESTED_FOR_DELETION = 'REQUESTED_FOR_DELETION',
 }
 
 export interface PublicationResource {
@@ -55,7 +54,7 @@ export interface Publication {
 
 export interface PublicationInfo {
   url: string;
-  targetUrl?: string;
+  targetFolder?: string;
   status: PublicationStatus;
   createdAt: number;
   resourceTypes: BackendResourceType[];
