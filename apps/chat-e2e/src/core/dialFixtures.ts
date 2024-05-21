@@ -93,8 +93,9 @@ const dialTest = test.extend<
     promptBar: PromptBar;
     chat: Chat;
     chatMessages: ChatMessages;
+    editMessageInputAttachments: InputAttachments;
     sendMessage: SendMessage;
-    sendMessageAttachmentDropdownMenu: DropdownMenu;
+    attachmentDropdownMenu: DropdownMenu;
     sendMessageInputAttachments: InputAttachments;
     conversations: Conversations;
     prompts: Prompts;
@@ -247,13 +248,17 @@ const dialTest = test.extend<
     const chatMessages = chat.getChatMessages();
     await use(chatMessages);
   },
+  editMessageInputAttachments: async ({ chatMessages }, use) => {
+    const editMessageInputAttachments = chatMessages.getInputAttachments();
+    await use(editMessageInputAttachments);
+  },
   sendMessage: async ({ chat }, use) => {
     const sendMessage = chat.getSendMessage();
     await use(sendMessage);
   },
-  sendMessageAttachmentDropdownMenu: async ({ sendMessage }, use) => {
-    const sendMessageAttachmentDropdownMenu = sendMessage.getDropdownMenu();
-    await use(sendMessageAttachmentDropdownMenu);
+  attachmentDropdownMenu: async ({ sendMessage }, use) => {
+    const attachmentDropdownMenu = sendMessage.getDropdownMenu();
+    await use(attachmentDropdownMenu);
   },
   sendMessageInputAttachments: async ({ sendMessage }, use) => {
     const sendMessageInputAttachments = sendMessage.getInputAttachments();

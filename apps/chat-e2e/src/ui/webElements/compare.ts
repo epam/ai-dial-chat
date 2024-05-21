@@ -1,7 +1,7 @@
 import { BaseElement } from './baseElement';
 import { ConversationSettings } from './conversationSettings';
 
-import { ChatSelectors } from '@/src/ui/selectors';
+import { CompareSelectors } from '@/src/ui/selectors';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { ChatMessages } from '@/src/ui/webElements/chatMessages';
 import { ConversationToCompare } from '@/src/ui/webElements/conversationToCompare';
@@ -9,7 +9,7 @@ import { Page } from '@playwright/test';
 
 export class Compare extends BaseElement {
   constructor(page: Page) {
-    super(page, ChatSelectors.compareMode);
+    super(page, CompareSelectors.compareMode);
   }
   private leftConversationSettings!: ConversationSettings;
   private rightConversationSettings!: ConversationSettings;

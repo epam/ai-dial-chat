@@ -1,4 +1,4 @@
-import { ChatSelectors, SideBarSelectors } from '../selectors';
+import { ErrorLabelSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -46,7 +46,7 @@ export class SideBar extends BaseElement {
     SideBarSelectors.draggableArea,
   );
   public noResultFoundIcon = this.getChildElementBySelector(
-    ChatSelectors.noResultFound,
+    ErrorLabelSelectors.noResultFound,
   );
   public resizeIcon = this.getChildElementBySelector(
     SideBarSelectors.resizeIcon,
