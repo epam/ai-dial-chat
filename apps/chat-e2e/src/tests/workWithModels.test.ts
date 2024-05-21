@@ -275,11 +275,12 @@ dialTest(
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], '');
-
-        const isSaveButtonDisabled = await chatMessages.isSaveButtonEnabled();
-        expect
-          .soft(isSaveButtonDisabled, ExpectedMessages.saveIsDisabled)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatMessages.saveAndSubmit.getElementLocator(),
+            ExpectedMessages.saveIsDisabled,
+          )
+          .toBeDisabled();
         await chatMessages.cancel.click();
       },
     );
