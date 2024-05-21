@@ -203,6 +203,15 @@ export function PublishModal({
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) => filter.filterParams.filter(Boolean).length,
       );
+      const preparedFilters =
+        rules && !notEmptyFilters.length
+          ? rules.map((rule) => ({
+              filterFunction: rule.function,
+              filterParams: rule.targets,
+              id: rule.source,
+              name: rule.source,
+            }))
+          : otherTargetAudienceFilters;
 
       if (
         type === SharingType.Conversation ||
@@ -260,7 +269,7 @@ export function PublishModal({
                 [],
               ),
             ],
-            rules: notEmptyFilters.map((filter) => ({
+            rules: preparedFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
               targets: filter.filterParams,
@@ -282,7 +291,7 @@ export function PublishModal({
               })),
             ],
             targetFolder: trimmedPath,
-            rules: notEmptyFilters.map((filter) => ({
+            rules: preparedFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
               targets: filter.filterParams,
@@ -300,6 +309,7 @@ export function PublishModal({
       onClose,
       otherTargetAudienceFilters,
       path,
+      rules,
       type,
     ],
   );

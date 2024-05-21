@@ -151,7 +151,7 @@ export function MultipleComboBox<T>({
     defaultHighlightedIndex: 0, // after selection, highlight the first item.
     selectedItem: null,
     inputValue,
-    stateReducer(state, actionAndChanges) {
+    stateReducer(_, actionAndChanges) {
       const { changes, type } = actionAndChanges;
 
       switch (type) {

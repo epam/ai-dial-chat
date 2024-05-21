@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import { BackendResourceType } from '@/src/types/common';
-import { PublicationResource } from '@/src/types/publication';
+import { PublicationResource, PublicationRule } from '@/src/types/publication';
 
 import { RootState } from '../index';
 import { PublicationState } from './publication.reducers';
@@ -47,7 +47,7 @@ export const selectResourcesToReviewByPublicationUrl = createSelector(
 
 export const selectRulesByPath = createSelector(
   [rootSelector, (_state, path: string) => path],
-  (state, path) => state.rules[path],
+  (state, path) => state.rules[path] as PublicationRule[] | undefined,
 );
 
 export const selectIsRulesLoading = createSelector(
