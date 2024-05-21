@@ -172,10 +172,10 @@ dialTest(
           );
         conversationData.resetData();
         gptProVisionConversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            gptProVisionImageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             ModelIds.GPT_4_VISION_PREVIEW,
             true,
+            gptProVisionImageUrl,
           );
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
