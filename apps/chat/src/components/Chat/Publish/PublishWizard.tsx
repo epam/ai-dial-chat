@@ -116,7 +116,6 @@ function PublishModalFilters({
     ));
   }
 
-  // define filters in config
   return publicationFilters.map((filter, idx) => {
     const initialSelectedFilter = otherTargetAudienceFilters.find(
       ({ id }) => id === filter,
@@ -201,7 +200,8 @@ export function PublishModal({
 
       const trimmedPath = path.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
-        (filter) => filter.filterParams.filter(Boolean).length,
+        (filter) =>
+          filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
       const preparedFilters =
         rules && !notEmptyFilters.length
