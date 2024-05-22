@@ -14,6 +14,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { HEADER_TITLE_TEXT } from '@/src/constants/chat';
+
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import PrimaryLogo from '../../../public/images/icons/primary-logo.svg';
@@ -127,7 +129,7 @@ const Header = () => {
           <div className="my-3 border-r border-primary" />
           <SecondaryLogo className="ml-3 self-center" width={25} height={30} />
           <span className="ml-2 flex flex-wrap content-center font-weave text-[22px] font-bold md:mr-3">
-            PR GPT
+            {HEADER_TITLE_TEXT}
           </span>
           <span className="my-3 hidden border-r border-primary md:inline-block" />
           <span className="ml-2 hidden flex-wrap content-center text-s md:flex">

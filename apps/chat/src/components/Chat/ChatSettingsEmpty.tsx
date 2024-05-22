@@ -3,6 +3,8 @@ import { useCallback } from 'react';
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
+import { HEADER_TITLE_TEXT } from '@/src/constants/chat';
+
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 
@@ -53,7 +55,7 @@ export const ChatSettingsEmpty = ({
               <div className="flex items-center">
                 <SecondaryLogo className="" width={27} height={30} />
                 <span className="ml-3 font-weave text-[22px] font-bold">
-                  PR GPT
+                  {HEADER_TITLE_TEXT}
                 </span>
               </div>
             </div>

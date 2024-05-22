@@ -133,7 +133,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const menuItems: DisplayMenuItemProps[] = [
     {
       display: true,
-      name: 'Models',
+      name: t('Models'),
       dataQa: 'models',
       customTriggerData: {
         type: EntityType.Model,
@@ -142,7 +142,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     },
     {
       display: false,
-      name: 'Assistants',
+      name: t('Assistants'),
       dataQa: 'assistants',
       customTriggerData: {
         type: EntityType.Assistant,
@@ -151,7 +151,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     },
     {
       display: true,
-      name: 'Applications',
+      name: t('Applications'),
       dataQa: 'applications',
       customTriggerData: {
         type: EntityType.Application,
@@ -207,7 +207,9 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
             <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
               <div className="flex items-end text-quaternary-bg-light hover:text-primary-bg-light">
                 <FilterIcon width={20} height={20} className="inline-block" />
-                <span className="hidden pl-2 md:inline-block">Filters</span>
+                <span className="hidden pl-2 md:inline-block">
+                  {t('Filters')}
+                </span>
               </div>
             </Tooltip>
           }

@@ -57,3 +57,5 @@ export const MODEL_ICON_SIZE_DEFAULT = {
   large: 30,
   small: 22.5,
 };
+
+export const HEADER_TITLE_TEXT = 'PR GPT';

@@ -256,7 +256,7 @@ export const MessageMobileButtons = ({
             <MenuItem
               item={
                 <div className="flex items-center gap-3">
-                  <IconCheck size={20} className="text-secondary-bg-dark" />
+                  <IconCheck size={20} className="text-primary-bg-dark" />
                   <p>{t('Copied')}</p>
                 </div>
               }
@@ -266,7 +266,7 @@ export const MessageMobileButtons = ({
               className="hover:bg-accent-primary-alpha"
               item={
                 <div className="flex items-center gap-3">
-                  <IconCopy className="text-secondary-bg-dark" size={18} />
+                  <IconCopy className="text-primary-bg-dark" size={18} />
                   {t('Copy')}
                 </div>
               }
@@ -277,7 +277,7 @@ export const MessageMobileButtons = ({
             <MenuItem
               item={
                 <div className="flex items-center gap-3">
-                  <IconRefresh className="text-secondary-bg-dark" size={18} />
+                  <IconRefresh className="text-primary-bg-dark" size={18} />
                   {t('Regenerate')}
                 </div>
               }
@@ -292,14 +292,16 @@ export const MessageMobileButtons = ({
                   'hover:bg-accent-primary-alpha',
               )}
               item={
-                <div className="flex items-center gap-3">
-                  <IconThumbUp className="text-secondary-bg-dark" size={18} />
-                  <p
-                    className={classNames(
-                      message.like === LikeState.Liked &&
-                        'text-secondary-bg-dark',
-                    )}
-                  >
+                <div
+                  className={classNames(
+                    'flex items-center gap-3',
+                    message.like === LikeState.Liked
+                      ? 'text-accent-primary'
+                      : 'text-primary-bg-dark',
+                  )}
+                >
+                  <IconThumbUp size={18} />
+                  <p>
                     {message.like === LikeState.Liked ? t('Liked') : t('Like')}
                   </p>
                 </div>
@@ -322,14 +324,16 @@ export const MessageMobileButtons = ({
               )}
               data-qa="dislike"
               item={
-                <div className="flex items-center gap-3">
-                  <IconThumbDown className="text-secondary-bg-dark" size={18} />
-                  <p
-                    className={classNames(
-                      message.like === LikeState.Disliked &&
-                        'text-secondary-bg-dark',
-                    )}
-                  >
+                <div
+                  className={classNames(
+                    'flex items-center gap-3',
+                    message.like === LikeState.Disliked
+                      ? 'text-accent-primary'
+                      : 'text-primary-bg-dark',
+                  )}
+                >
+                  <IconThumbDown className="" size={18} />
+                  <p>
                     {message.like === LikeState.Disliked
                       ? t('Disliked')
                       : t('Dislike')}
@@ -358,7 +362,7 @@ export const MessageMobileButtons = ({
           disabled={editDisabled}
           item={
             <div className="flex items-center gap-3">
-              <IconEdit className="text-secondary-bg-dark" size={18} />
+              <IconEdit className="text-primary-bg-dark" size={18} />
               <p>{t('Edit')}</p>
             </div>
           }
@@ -368,7 +372,7 @@ export const MessageMobileButtons = ({
           onClick={onDelete}
           item={
             <div className="flex items-center gap-3">
-              <IconTrash className="text-secondary-bg-dark" size={18} />
+              <IconTrash className="text-primary-bg-dark" size={18} />
               <p>{t('Delete')}</p>
             </div>
           }
