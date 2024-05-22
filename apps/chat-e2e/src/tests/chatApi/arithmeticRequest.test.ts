@@ -21,6 +21,7 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GPT_4_TURBO, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0314, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0613, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_O_2024_05_13, isSysPromptAllowed: true },
   { modelId: ModelIds.BISON_001, isSysPromptAllowed: true },
   { modelId: ModelIds.BISON_32k_002, isSysPromptAllowed: true },
   { modelId: ModelIds.CODE_BISON_001, isSysPromptAllowed: false },
