@@ -32,7 +32,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        '[&:not(:disabled)]:hover:text-accent-primary',
+        '[&:not(:disabled)]:hover:text-primary-bg-light',
         className,
       )}
       {...props}
@@ -73,7 +73,7 @@ export const MessageUserButtons = ({
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
-                className="text-tertiary-bg-light hover:text-accent-primary disabled:cursor-not-allowed"
+                className="text-tertiary-bg-light hover:text-primary-bg-light disabled:cursor-not-allowed"
                 onClick={toggleEditing}
                 disabled={editDisabled}
               >
@@ -83,7 +83,7 @@ export const MessageUserButtons = ({
           )}
           <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
             <button
-              className="text-tertiary-bg-light hover:text-accent-primary"
+              className="text-tertiary-bg-light hover:text-primary-bg-light"
               onClick={onDelete}
             >
               <IconTrash size={18} />
@@ -170,7 +170,7 @@ export const MessageAssistantButtons = ({
                   className={
                     message.like !== LikeState.Liked
                       ? 'text-tertiary-bg-light'
-                      : 'text-accent-primary'
+                      : 'text-primary-bg-light'
                   }
                   disabled={message.like === LikeState.Liked}
                   data-qa="like"
@@ -198,7 +198,7 @@ export const MessageAssistantButtons = ({
                   className={
                     message.like !== LikeState.Disliked
                       ? 'text-tertiary-bg-light'
-                      : 'text-accent-primary'
+                      : 'text-primary-bg-light'
                   }
                   disabled={message.like === LikeState.Disliked}
                   data-qa="dislike"

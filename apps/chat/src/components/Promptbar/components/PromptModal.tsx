@@ -37,6 +37,7 @@ import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Modal from '../../Common/Modal';
 import Tooltip from '../../Common/Tooltip';
+import {IconX} from "@tabler/icons-react";
 
 interface Props {
   isOpen: boolean;
@@ -194,8 +195,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="inline-block w-full overflow-y-auto bg-layer-1 px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
+      hideClose
       state={
         isOpen
           ? isLoading
@@ -203,7 +205,18 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             : ModalState.OPENED
           : ModalState.CLOSED
       }
-      heading={t('Edit prompt')}
+      heading={(
+        <div className="font-medium flex justify-between pb-4 text-xl text-primary-bg-light ">
+          {t('Edit prompt')}
+          <button
+            onClick={onClose}
+            className="text-quaternary-bg-light hover:text-primary-bg-light"
+            data-qa="close-edit-prompt"
+          >
+            <IconX height={24} width={24}/>
+          </button>
+        </div>
+      )}
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt && !saveDisabled) handleEnter(e, selectedPrompt);
@@ -214,19 +227,19 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
         <>
           <div className="mb-4">
             <label
-              className="mb-1 flex text-xs text-secondary-bg-dark"
+              className="mb-1 flex text-xs text-primary-bg-light"
               htmlFor="promptName"
             >
               {t('Name')}
-              <span className="ml-1 inline text-accent-primary">*</span>
+              <span className="inline text-quinary-bg-light">*</span>
             </label>
             <input
               ref={nameInputRef}
               name="promptName"
               className={classNames(
-                isDotError &&
-                  'border-error hover:border-error focus:border-error',
                 inputClassName,
+                'placeholder:text-tertiary-bg-light bg-layer-2 m-0 rounded-primary shadow-primary border-secondary hover:border-accent-quaternary focus-within:border-accent-quaternary',
+                isDotError && 'border-error hover:border-error focus:border-error',
               )}
               placeholder={t('A name for your prompt.') || ''}
               value={name}
@@ -248,7 +261,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
           <div className="mb-4">
             <label
-              className="mb-1 flex text-xs text-secondary-bg-dark"
+              className="mb-1 flex text-xs text-primary-bg-light"
               htmlFor="description"
             >
               {t('Description')}
@@ -256,7 +269,10 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             <textarea
               ref={descriptionInputRef}
               name="description"
-              className={inputClassName}
+              className={classNames(
+                inputClassName,
+                'placeholder:text-tertiary-bg-light bg-layer-2 m-0 rounded-primary shadow-primary border-secondary hover:border-accent-quaternary focus-within:border-accent-quaternary'
+              )}
               style={{ resize: 'none' }}
               placeholder={t('A description for your prompt.') || ''}
               value={description}
@@ -267,16 +283,19 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
           </div>
           <div className="mb-5">
             <label
-              className="mb-1 flex text-xs text-secondary-bg-dark"
+              className="mb-1 flex text-xs text-primary-bg-light"
               htmlFor="content"
             >
               {t('Prompt')}
-              <span className="ml-1 inline text-accent-primary">*</span>
+              <span className="inline text-quinary-bg-light">*</span>
             </label>
             <textarea
               ref={contentInputRef}
               name="content"
-              className={inputClassName}
+              className={classNames(
+                inputClassName,
+                'placeholder:text-tertiary-bg-light bg-layer-2 m-0 rounded-primary shadow-primary border-secondary hover:border-accent-quaternary focus-within:border-accent-quaternary'
+              )}
               style={{ resize: 'none' }}
               placeholder={
                 t(

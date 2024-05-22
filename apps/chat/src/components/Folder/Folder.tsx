@@ -640,7 +640,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           !withBorderHighlight && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
-          isHighlighted && withBorderHighlight && 'border-accent-primary',
+          isHighlighted && withBorderHighlight && 'border-tertiary',
           folderClassName,
         )}
         data-qa="folder"

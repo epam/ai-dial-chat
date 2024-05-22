@@ -133,7 +133,7 @@ export const ConversationSettingsModel = ({
       </div>
       <button
         disabled={isPlayback}
-        className="mt-3 inline text-left text-secondary-bg-light hover:text-accent-primary disabled:cursor-not-allowed"
+        className="mt-3 inline text-left text-quaternary-bg-light hover:text-primary-bg-light disabled:cursor-not-allowed"
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >

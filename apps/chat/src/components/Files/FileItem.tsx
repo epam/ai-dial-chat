@@ -162,7 +162,7 @@ export const FileItem = ({
                 />
                 <IconCheck
                   size={18}
-                  className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                  className="pointer-events-none invisible absolute text-quaternary-bg-light peer-checked:visible"
                 />
               </div>
             )}
@@ -171,7 +171,7 @@ export const FileItem = ({
           className={classNames(
             'block max-w-full truncate whitespace-pre',
             item.status === UploadStatus.FAILED && 'text-error',
-            isSelected && 'text-accent-primary',
+            isSelected && 'text-pr-primary-700',
           )}
         >
           {item.name}

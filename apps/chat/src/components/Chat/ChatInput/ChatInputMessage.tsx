@@ -41,7 +41,6 @@ import { errorsMessages } from '@/src/constants/errors';
 import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
 import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
@@ -63,8 +62,6 @@ const MAX_HEIGHT = 320;
 
 export const ChatInputMessage = ({
   textareaRef,
-  showScrollDownButton,
-  onScrollDownClick,
   onSend,
   onStopConversation,
   onRegenerate,
@@ -467,13 +464,6 @@ export const ChatInputMessage = ({
               </div>
             )}
           </>
-        )}
-
-        {showScrollDownButton && (
-          <ScrollDownButton
-            className="-top-16 right-0 md:-top-20"
-            onScrollDownClick={onScrollDownClick}
-          />
         )}
 
         {showPromptList && filteredPrompts.length > 0 && (

@@ -62,7 +62,7 @@ module.exports = {
       'quaternary-bg-light': 'var(--text-quaternary-bg-light, #6A7585)',
       'quinary-bg-light': 'var(--text-quinary-bg-light, #082A5E)',
       error: 'var(--text-error, #F76464)',
-      'accent-primary': 'var(--text-accent-primary, #FF9266)',
+      'accent-primary': 'var(--text-accent-primary, #FFD440)',
       'accent-secondary': 'var(--text-accent-secondary, #FF9166)',
       'accent-tertiary': 'var(--text-accent-tertiary, #000000)',
       'controls-permanent': 'var(--controls-text-permanent, #FFFFFF)',
@@ -97,6 +97,7 @@ module.exports = {
       },
       fontFamily: {
         DEFAULT: ['var(--font-gilroy)'],
+        weave: ['var(--font-weave)'],
       },
       fontSize: {
         xxs: '10px',

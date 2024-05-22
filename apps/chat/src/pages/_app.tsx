@@ -16,6 +16,20 @@ import { HomeProps } from '.';
 import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
 
+const weave = localFont({
+  src: [
+    {
+      path: '../../public/fonts/weave/weave-bold.ttf',
+      weight: '700',
+    },
+    {
+      path: '../../public/fonts/weave/weave-extrabold.ttf',
+      weight: '800',
+    },
+  ],
+  variable: '--font-weave',
+});
+
 const gilroy = localFont({
   src: [
     {
@@ -63,7 +77,7 @@ function App({
   return (
     <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
       <Provider store={store}>
-        <div className={`${gilroy.variable} font`}>
+        <div className={`${gilroy.variable} ${weave.variable} font`}>
           <Toaster toastOptions={{ duration: 9000 }}>
             {(t) => (
               <ToastBar

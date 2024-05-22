@@ -249,7 +249,7 @@ export const ChatHeader = ({
             {isShowModelSelect && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
-                  className="cursor-pointer text-quinary-bg-light hover:text-accent-primary"
+                  className="cursor-pointer text-quinary-bg-light hover:text-primary-bg-light"
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
                 >
@@ -265,7 +265,7 @@ export const ChatHeader = ({
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
-                    className="cursor-pointer text-quinary-bg-light hover:text-accent-primary"
+                    className="cursor-pointer text-quinary-bg-light hover:text-primary-bg-light"
                     onClick={() => setIsClearConversationModalOpen(true)}
                     data-qa="clear-conversation"
                   >
@@ -279,7 +279,7 @@ export const ChatHeader = ({
                 tooltip={t('Delete conversation from compare mode')}
               >
                 <button
-                  className="cursor-pointer text-quinary-bg-light hover:text-accent-primary disabled:cursor-not-allowed"
+                  className="cursor-pointer text-quinary-bg-light hover:text-primary-bg-light disabled:cursor-not-allowed"
                   onClick={() => onUnselectConversation(conversation.id)}
                   disabled={conversation.isMessageStreaming}
                   data-qa="delete-from-compare"
@@ -290,7 +290,7 @@ export const ChatHeader = ({
             )}
             {isPlayback && (
               <button
-                className="cursor-pointer text-accent-primary"
+                className="cursor-pointer text-tertiary-bg-light hover:text-primary-bg-light"
                 onClick={onCancelPlaybackMode}
                 data-qa="cancel-playback-mode"
               >
