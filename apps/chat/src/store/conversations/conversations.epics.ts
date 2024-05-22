@@ -2323,6 +2323,10 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
               FeatureType.Chat,
             );
 
+            const rootConversationId = conversations.toSorted(
+              (a, b) => a.folderId.length - b.folderId.length,
+            )[0].id;
+
             actions.push(
               concat(
                 of(
@@ -2340,7 +2344,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                 ),
                 of(
                   ConversationsActions.selectConversations({
-                    conversationIds: [conversations[0]?.id],
+                    conversationIds: [rootConversationId],
                   }),
                 ),
                 of(
