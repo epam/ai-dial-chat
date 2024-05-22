@@ -436,7 +436,7 @@ export const FileManagerModal = ({
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="flex flex-col gap-2 overflow-auto md:p-6">
+      <div className="flex flex-col gap-2 overflow-auto px-3 py-4 md:p-6">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
             {headerLabel}
@@ -559,7 +559,7 @@ export const FileManagerModal = ({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between border-t border-primary px-6 py-4">
+      <div className="flex items-center justify-between border-t border-primary px-3 py-4 md:px-6 md:py-4">
         <div className="flex items-center justify-center gap-2">
           {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
