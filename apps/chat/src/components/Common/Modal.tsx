@@ -102,7 +102,7 @@ function ModalView({
           >
             <Tag
               className={classNames(
-                'relative max-h-full rounded bg-layer-3 px-3 py-4 text-left md:p-0',
+                'relative max-h-full rounded bg-layer-3 text-left',
                 containerClassName,
               )}
               role="dialog"
