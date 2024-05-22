@@ -158,8 +158,8 @@ pre:has(div.codeblock) {
     --bg-accent-primary: var(--bg-accent-secondary, #a972ff);
   }
 
-  .context-menu-chat .menu-trigger,
-  .context-menu-prompt .menu-trigger {
+  .sidebar-right .menu-trigger,
+  .sidebar-left .menu-trigger {
     --text-quaternary-bg-light: var(--text-primary-bg-dark);
   }
 
