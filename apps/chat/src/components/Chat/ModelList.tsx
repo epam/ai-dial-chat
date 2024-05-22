@@ -15,6 +15,8 @@ import { DialAIEntity } from '@/src/types/models';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { TourGuideId } from '@/src/constants/share';
+
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
@@ -203,6 +205,7 @@ export const ModelList = ({
           'grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto',
           !showInOneColumn && 'md:grid-cols-2',
         )}
+        id={TourGuideId.modelSelection}
       >
         {groupedModels.map((modelGroup) => (
           <ModelGroup

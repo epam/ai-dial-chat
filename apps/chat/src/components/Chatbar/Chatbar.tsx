@@ -20,6 +20,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { TourGuideId } from '@/src/constants/share';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -51,6 +52,7 @@ const ChatActionsBlock = () => {
   return (
     <div className="flex">
       <button
+        id={TourGuideId.newConversation}
         className="mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 hover:bg-accent-quaternary disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(

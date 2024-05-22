@@ -328,7 +328,7 @@ export class BrowserStorage implements DialStorage {
     value: K,
   ): Observable<void> {
     try {
-      this.storage!.setItem(key, JSON.stringify(value));
+      this.storage?.setItem(key, JSON.stringify(value));
       return of(undefined);
     } catch (e: unknown) {
       console.error(e);

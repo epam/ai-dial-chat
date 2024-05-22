@@ -11,6 +11,8 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { TourGuide } from '@/src/components/TourGuide';
+
 import { HomeProps } from '.';
 
 import { createStore } from '@/src/store';
@@ -78,6 +80,7 @@ function App({
     <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
       <Provider store={store}>
         <div className={`${gilroy.variable} ${weave.variable} font`}>
+          <TourGuide />
           <Toaster toastOptions={{ duration: 9000 }}>
             {(t) => (
               <ToastBar
