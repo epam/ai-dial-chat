@@ -234,6 +234,8 @@ const selectAcceptedEntityInfo = createSelector([rootSelector], (state) => {
   return {
     acceptedId: state.acceptedId,
     isFolderAccepted: state.isFolderAccepted,
+    isConversation: state.isConversation,
+    isPrompt: state.isPrompt,
   };
 });
 

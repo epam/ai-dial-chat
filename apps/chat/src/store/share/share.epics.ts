@@ -460,7 +460,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.getSharedListingSuccess.match),
     switchMap(({ payload }) => {
       const actions = [];
-      const { acceptedId, isFolderAccepted } =
+      const { acceptedId, isFolderAccepted, isConversation, isPrompt } =
         ShareSelectors.selectAcceptedEntityInfo(state$.value);
       const [selectedConv] = ConversationsSelectors.selectSelectedConversations(
         state$.value,
@@ -659,7 +659,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (acceptedId) {
-        if (isConversationId(acceptedId)) {
+        if (isConversation) {
           if (isFolderAccepted) {
             actions.push(
               ConversationsActions.uploadConversationsWithFoldersRecursive({
@@ -675,7 +675,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
           }
-        } else if (isPromptId(acceptedId)) {
+        } else if (isPrompt) {
           if (isFolderAccepted) {
             actions.push(
               PromptsActions.uploadPromptsWithFoldersRecursive({
