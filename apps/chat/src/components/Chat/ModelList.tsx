@@ -101,7 +101,10 @@ const ModelGroup = ({
       data-qa="group-entity"
     >
       {disabled && <DisableOverlay />}
-      <div className="flex min-h-[48px] items-center gap-3 border-secondary px-5 py-2">
+      <div
+        className="flex min-h-[48px] items-center gap-3 border-secondary px-5 py-2"
+        id={TourGuideId.modelSelection}
+      >
         <ModelIcon
           entityId={currentEntity.id}
           entity={currentEntity}
@@ -205,7 +208,6 @@ export const ModelList = ({
           'grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto',
           !showInOneColumn && 'md:grid-cols-2',
         )}
-        id={TourGuideId.modelSelection}
       >
         {groupedModels.map((modelGroup) => (
           <ModelGroup

@@ -97,3 +97,9 @@ export const translateSteps = (steps: Step[], t: any) =>
     title: t(step.title),
     content: t(step.content),
   }));
+
+export const styles = {
+  spotlight: {
+    borderRadius: '0px',
+  },
+};

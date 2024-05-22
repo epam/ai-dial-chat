@@ -7,6 +7,9 @@ import { DialAIEntityAddon } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
+
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -39,6 +42,7 @@ export const ChatSettings = ({
   onApplySettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const isTourRun = useAppSelector(UISelectors.selectIsTourRun);
 
   const [currentModelId, setCurrentModelId] = useState<string>(modelId);
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
@@ -117,6 +121,10 @@ export const ChatSettings = ({
   useEffect(() => {
     handleChangeSettings();
   }, [handleChangeSettings]);
+
+  useEffect(() => {
+    if (isTourRun) onClose();
+  }, [isTourRun]);
 
   return (
     <div className="absolute z-30 flex size-full grow items-start justify-center bg-blackout md:top-0 md:p-5">

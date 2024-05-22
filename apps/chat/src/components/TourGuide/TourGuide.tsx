@@ -25,6 +25,7 @@ import {
   TourStepType,
   handleBodyScroll,
   isTargetInDocument,
+  styles,
   translateSteps,
 } from './TourGuide.props';
 
@@ -123,7 +124,10 @@ const TourGuide = () => {
         continuous
         showSkipButton
         disableScrollParentFix
+        spotlightPadding={0}
         callback={handleJoyrideCallback}
+        disableOverlayClose
+        styles={styles}
       />
     )
   );
