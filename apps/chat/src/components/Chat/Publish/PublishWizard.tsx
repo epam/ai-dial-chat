@@ -212,6 +212,10 @@ export function PublishModal({
               name: rule.source,
             }))
           : otherTargetAudienceFilters;
+      const folderRegExp = new RegExp(
+        entity.folderId.split('/').slice(2).join('/'),
+        'g',
+      );
 
       if (
         type === SharingType.Conversation ||
@@ -234,7 +238,7 @@ export function PublishModal({
                 constructPath(
                   ...c.id.split('/').slice(0, -1),
                   ...oldUrl.split('/').slice(-1),
-                ),
+                ).replace(folderRegExp, ''),
                 type,
               ),
             }));
@@ -244,12 +248,14 @@ export function PublishModal({
           PublicationActions.publish({
             targetFolder: trimmedPath,
             resources: [
-              ...entities.map((entity) => ({
-                sourceUrl: entity.id,
+              ...entities.map((item) => ({
+                sourceUrl: item.id,
                 targetUrl: createTargetUrl(
                   ApiKeys.Conversations,
                   trimmedPath,
-                  entity.id,
+                  type === SharingType.ConversationFolder
+                    ? item.id.replace(folderRegExp, '')
+                    : item.id,
                   type,
                 ),
               })),
@@ -280,12 +286,14 @@ export function PublishModal({
         dispatch(
           PublicationActions.publish({
             resources: [
-              ...entities.map((entity) => ({
-                sourceUrl: entity.id,
+              ...entities.map((item) => ({
+                sourceUrl: item.id,
                 targetUrl: createTargetUrl(
                   ApiKeys.Prompts,
                   trimmedPath,
-                  entity.id,
+                  type === SharingType.PromptFolder
+                    ? item.id.replace(folderRegExp, '')
+                    : item.id,
                   type,
                 ),
               })),
@@ -305,6 +313,7 @@ export function PublishModal({
     [
       dispatch,
       entities,
+      entity.folderId,
       files,
       onClose,
       otherTargetAudienceFilters,
