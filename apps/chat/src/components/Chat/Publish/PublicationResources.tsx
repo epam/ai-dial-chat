@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import { isRootId } from '@/src/utils/app/id';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublicationResource } from '@/src/types/publication';
@@ -109,6 +109,15 @@ export const PromptPublicationResources = ({
             onClickFolder={(folderId: string) => {
               if (forViewOnly) return;
               dispatch(PromptsActions.toggleFolder({ id: folderId }));
+
+              if (f.status !== UploadStatus.LOADED) {
+                dispatch(
+                  PromptsActions.uploadPromptsWithFoldersRecursive({
+                    path: folderId,
+                    noLoader: true,
+                  }),
+                );
+              }
             }}
             featureType={FeatureType.Prompt}
             highlightedFolders={forViewOnly ? undefined : highlightedFolders}
@@ -208,6 +217,15 @@ export const ConversationPublicationResources = ({
             onClickFolder={(folderId: string) => {
               if (forViewOnly) return;
               dispatch(ConversationsActions.toggleFolder({ id: folderId }));
+
+              if (f.status !== UploadStatus.LOADED) {
+                dispatch(
+                  ConversationsActions.uploadConversationsWithFoldersRecursive({
+                    path: folderId,
+                    noLoader: true,
+                  }),
+                );
+              }
             }}
             featureType={FeatureType.Chat}
             highlightedFolders={forViewOnly ? undefined : highlightedFolders}
