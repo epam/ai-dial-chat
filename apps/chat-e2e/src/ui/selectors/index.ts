@@ -5,3 +5,4 @@ export * from './dialogSelectors';
 export * from './headerSelectors';
 export * from './iconSelectors';
 export * from './shareModalSelectors';
+export * from './menuSelectors';

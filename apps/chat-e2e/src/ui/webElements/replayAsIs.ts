@@ -1,22 +1,22 @@
-import { ChatSelectors } from '@/src/ui/selectors';
+import { ReplaySelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class ReplayAsIs extends BaseElement {
   constructor(page: Page) {
-    super(page, ChatSelectors.replayAsIs);
+    super(page, ReplaySelectors.replayAsIs);
   }
 
   public replayAsIsLabel = this.getChildElementBySelector(
-    ChatSelectors.replayAsIsLabel,
+    ReplaySelectors.replayAsIsLabel,
   );
 
   public replayAsIsDescr = this.getChildElementBySelector(
-    ChatSelectors.replayDescription,
+    ReplaySelectors.replayDescription,
   );
 
   public replayOldVersionWarning = this.getChildElementBySelector(
-    ChatSelectors.replayOldVersion,
+    ReplaySelectors.replayOldVersion,
   );
 
   public async getReplayAsIsLabelText() {

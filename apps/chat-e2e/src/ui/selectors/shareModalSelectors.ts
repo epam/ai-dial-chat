@@ -9,6 +9,7 @@ export const ShareModalSelectors = {
 export const AttachFilesModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
   attachedFile: '[data-qa="attached-file"]',
+  attachedFileName: '[data-qa="attached-file-name"]',
   attachedFileIcon: '[data-qa="attached-file-icon"]',
   attachFilesButton: '[data-qa="attach-files"]',
 };

@@ -41,6 +41,7 @@ export const ChatInputFileAttachment = ({
               'block max-w-full truncate whitespace-pre text-start text-sm',
               file.status === UploadStatus.FAILED && 'text-error',
             )}
+            data-qa="attachment-name"
           >
             {file.name}
           </span>
@@ -56,7 +57,7 @@ export const ChatInputFileAttachment = ({
         </div>
         <div className="flex gap-3">
           {onRetryFile && file.status === UploadStatus.FAILED && (
-            <button onClick={() => onRetryFile(file.id)}>
+            <button data-qa="retry-upload" onClick={() => onRetryFile(file.id)}>
               <IconReload
                 className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}
@@ -64,7 +65,10 @@ export const ChatInputFileAttachment = ({
             </button>
           )}
           {onUnselectFile && (
-            <button onClick={() => onUnselectFile(file.id)}>
+            <button
+              onClick={() => onUnselectFile(file.id)}
+              data-qa="remove-file"
+            >
               <IconX
                 className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}

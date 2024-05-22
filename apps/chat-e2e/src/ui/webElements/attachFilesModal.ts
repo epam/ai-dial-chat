@@ -18,6 +18,16 @@ export class AttachFilesModal extends BaseElement {
       AttachFilesModalSelectors.attachedFileIcon,
     );
 
+  public attachedFileName = (filename: string) =>
+    this.createElementFromLocator(
+      this.attachedFile(filename).locator(
+        AttachFilesModalSelectors.attachedFileName,
+      ),
+    );
+
+  public attachedFileCheckBox = (filename: string) =>
+    this.attachedFileIcon(filename).getByRole('checkbox');
+
   public attachFilesButton = this.getChildElementBySelector(
     AttachFilesModalSelectors.attachFilesButton,
   );
