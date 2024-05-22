@@ -60,7 +60,6 @@ interface ItemContextMenuProps {
   onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
-  onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
@@ -87,7 +86,6 @@ export default function ItemContextMenu({
   onUnshare,
   onPublish,
   onUnpublish,
-  // onPublishUpdate,
   onOpenChange,
   onDuplicate,
   onView,
@@ -268,18 +266,6 @@ export default function ItemContextMenu({
         onClick: onPublish,
         disabled: disableAll,
       },
-      // {
-      //   name: t('Update'),
-      //   dataQa: 'update-publishing',
-      //   display:
-      //     !isEmptyConversation &&
-      //     isPublishingEnabled &&
-      //     !!entity.isPublished &&
-      //     !!onPublishUpdate,
-      //   Icon: IconClockShare,
-      //   onClick: onPublishUpdate,
-      //   disabled: disableAll,
-      // },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',

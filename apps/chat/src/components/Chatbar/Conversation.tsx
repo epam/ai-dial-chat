@@ -633,7 +633,6 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onShare={handleOpenSharing}
             onUnshare={handleUnshare}
             onPublish={handleOpenPublishing}
-            onPublishUpdate={handleOpenPublishing}
             onUnpublish={handleOpenUnpublishing}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}

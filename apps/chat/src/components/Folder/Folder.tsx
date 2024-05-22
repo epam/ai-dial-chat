@@ -265,11 +265,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     setIsPublishing(false);
   }, []);
 
-  const handleOpenUnpublishing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsUnpublishing(true);
-  }, []);
-
   const handleCloseUnpublishModal = useCallback(() => {
     setIsUnpublishing(false);
   }, []);
@@ -927,7 +922,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onUnshare={handleUnshare}
                     onPublish={handleOpenPublishing}
                     onPublishUpdate={handleOpenPublishing}
-                    onUnpublish={handleOpenUnpublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}

@@ -42,7 +42,6 @@ interface FolderContextMenuProps {
   onShare?: MouseEventHandler<unknown>;
   onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
-  onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
 }
@@ -57,7 +56,6 @@ export const FolderContextMenu = ({
   onShare,
   onUnshare,
   onPublish,
-  // onUnpublish,
   onPublishUpdate,
   onUpload,
   isOpen,
@@ -138,18 +136,6 @@ export const FolderContextMenu = ({
         onClick: onPublishUpdate,
         disabled: disableAll,
       },
-      // {
-      //   name: t('Unpublish'),
-      //   dataQa: 'unpublish',
-      //   display:
-      //     !isEmpty &&
-      //     isPublishingEnabled &&
-      //     !!folder.isPublished &&
-      //     !!onUnpublish,
-      //   Icon: UnpublishIcon,
-      //   onClick: onUnpublish,
-      //   disabled: disableAll,
-      // },
       {
         name: t('Delete'),
         display:

@@ -360,7 +360,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onShare={handleOpenSharing}
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
-              onPublishUpdate={handleOpenPublishing}
               onUnpublish={handleOpenUnpublishing}
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
