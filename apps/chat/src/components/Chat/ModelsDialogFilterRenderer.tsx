@@ -16,7 +16,7 @@ export default function ModelsDialogFilterRenderer({
   dataQa,
   ...props
 }: CustomTriggerMenuRendererProps) {
-  const {isSelected, type} = customTriggerData as ModelsDialogFilterData;
+  const { isSelected, type } = customTriggerData as ModelsDialogFilterData;
   const [checked, setChecked] = useState<boolean>(isSelected);
   const handleCheck = useCallback(() => {
     setChecked((check: boolean) => !check);
@@ -26,7 +26,7 @@ export default function ModelsDialogFilterRenderer({
 
   return (
     <div
-      className="relative flex h-[34px] w-full px-3 py-2 group-hover/file-item:flex bg-layer-2 text-primary-bg-light"
+      className="relative flex h-[34px] w-full bg-layer-2 px-3 py-2 text-primary-bg-light group-hover/file-item:flex"
       data-qa={dataQa}
     >
       <input

@@ -1,3 +1,4 @@
+import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
@@ -37,7 +38,6 @@ import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Modal from '../../Common/Modal';
 import Tooltip from '../../Common/Tooltip';
-import {IconX} from "@tabler/icons-react";
 
 interface Props {
   isOpen: boolean;
@@ -205,18 +205,18 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             : ModalState.OPENED
           : ModalState.CLOSED
       }
-      heading={(
-        <div className="font-medium flex justify-between pb-4 text-xl text-primary-bg-light ">
+      heading={
+        <div className="flex justify-between pb-4 text-xl font-medium text-primary-bg-light ">
           {t('Edit prompt')}
           <button
             onClick={onClose}
             className="text-quaternary-bg-light hover:text-primary-bg-light"
             data-qa="close-edit-prompt"
           >
-            <IconX height={24} width={24}/>
+            <IconX height={24} width={24} />
           </button>
         </div>
-      )}
+      }
       onClose={handleClose}
       onKeyDownOverlay={(e) => {
         if (selectedPrompt && !saveDisabled) handleEnter(e, selectedPrompt);
@@ -238,8 +238,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               name="promptName"
               className={classNames(
                 inputClassName,
-                'placeholder:text-tertiary-bg-light bg-layer-2 m-0 rounded-primary shadow-primary border-secondary hover:border-accent-quaternary focus-within:border-accent-quaternary',
-                isDotError && 'border-error hover:border-error focus:border-error',
+                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                isDotError &&
+                  'border-error hover:border-error focus:border-error',
               )}
               placeholder={t('A name for your prompt.') || ''}
               value={name}
@@ -271,7 +272,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               name="description"
               className={classNames(
                 inputClassName,
-                'placeholder:text-tertiary-bg-light bg-layer-2 m-0 rounded-primary shadow-primary border-secondary hover:border-accent-quaternary focus-within:border-accent-quaternary'
+                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
               )}
               style={{ resize: 'none' }}
               placeholder={t('A description for your prompt.') || ''}
@@ -294,7 +295,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               name="content"
               className={classNames(
                 inputClassName,
-                'placeholder:text-tertiary-bg-light bg-layer-2 m-0 rounded-primary shadow-primary border-secondary hover:border-accent-quaternary focus-within:border-accent-quaternary'
+                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
               )}
               style={{ resize: 'none' }}
               placeholder={
