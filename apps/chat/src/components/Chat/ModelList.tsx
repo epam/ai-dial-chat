@@ -76,10 +76,10 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'relative rounded border',
+        'relative flex rounded-primary border font-medium hover:border-tertiary',
         isActive
-          ? 'border-accent-primary'
-          : 'border-primary hover:border-hover',
+          ? 'border-accent-quaternary bg-accent-secondary-alpha shadow-primary'
+          : 'border-secondary bg-layer-2 hover:bg-accent-secondary-alpha hover:shadow-primary',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
@@ -99,14 +99,14 @@ const ModelGroup = ({
       data-qa="group-entity"
     >
       {disabled && <DisableOverlay />}
-      <div className="flex h-full items-center gap-3 px-3 py-2">
+      <div className="flex min-h-[48px] items-center gap-3 border-secondary px-5 py-2">
         <ModelIcon
           entityId={currentEntity.id}
           entity={currentEntity}
           size={24}
           isSmallIconSize={false}
         />
-        <div className="flex w-full flex-col gap-1 text-left">
+        <div className="flex w-full flex-col gap-0.5 text-left">
           <div className="flex items-center justify-between">
             <span data-qa="group-entity-name" className="whitespace-pre">
               {entities.length === 1
@@ -121,7 +121,7 @@ const ModelGroup = ({
           </div>
           {description && (
             <span
-              className="text-secondary-bg-light"
+              className="text-[11px] text-quaternary-bg-light"
               onClick={(e) => {
                 if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                   e.stopPropagation();

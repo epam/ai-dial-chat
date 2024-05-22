@@ -86,10 +86,10 @@ export default function ShareModal() {
       heading={`${t('Share')}: ${shareResourceName?.trim()}`}
     >
       <div className="flex flex-col justify-between gap-2">
-        <p className="text-sm text-secondary-bg-dark">
+        <p className="text-sm text-quaternary-bg-light">
           {t('share.modal.link.description')}
         </p>
-        <p className="text-sm text-secondary-bg-dark">
+        <p className="text-sm text-quaternary-bg-light">
           {t('share.modal.link', { context: sharingType })}
         </p>
         <div className="relative mt-2">
@@ -97,7 +97,7 @@ export default function ShareModal() {
             <input
               type="text"
               readOnly
-              className="w-full gap-2 truncate rounded border border-primary bg-layer-3 p-3 pr-10 outline-none"
+              className="w-full gap-2 truncate rounded rounded-primary border border-primary bg-layer-3 p-3 pr-10 text-primary-bg-dark outline-none"
               onCopyCapture={handleCopy}
               value={url}
               data-qa="share-link"
@@ -106,7 +106,7 @@ export default function ShareModal() {
           <div className="absolute right-3 top-3">
             {urlCopied ? (
               <Tooltip tooltip={t('Copied!')}>
-                <IconCheck size={20} className="text-secondary-bg-dark" />
+                <IconCheck size={20} className="text-primary-bg-dark" />
               </Tooltip>
             ) : (
               <Tooltip tooltip={t('Copy URL')}>
@@ -119,7 +119,7 @@ export default function ShareModal() {
                   <IconCopy
                     height={20}
                     width={20}
-                    className="text-secondary-bg-dark hover:text-accent-primary"
+                    className="text-primary-bg-dark hover:text-accent-primary"
                   />
                 </button>
               </Tooltip>

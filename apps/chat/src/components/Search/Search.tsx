@@ -16,6 +16,7 @@ interface Props {
   onSearchFiltersChanged: (searchFilters: SearchFilters) => void;
   searchFilters: SearchFilters;
   featureType: FeatureType;
+  isShowSearchFilter?: boolean;
 }
 
 export default function Search({
@@ -25,6 +26,7 @@ export default function Search({
   searchFilters,
   onSearchFiltersChanged,
   featureType,
+  isShowSearchFilter = false,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -53,12 +55,13 @@ export default function Search({
         value={searchTerm}
         onChange={handleSearchChange}
       />
-      {/* PGPT-87 Temporary remove Search Filter component according to the design*/}
-      {/*<SearchFiltersView*/}
-      {/*  featureType={featureType}*/}
-      {/*  onSearchFiltersChanged={onSearchFiltersChanged}*/}
-      {/*  searchFilters={searchFilters}*/}
-      {/*/>*/}
+      {isShowSearchFilter && (
+        <SearchFiltersView
+          featureType={featureType}
+          onSearchFiltersChanged={onSearchFiltersChanged}
+          searchFilters={searchFilters}
+        />
+      )}
     </div>
   );
 }

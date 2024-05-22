@@ -403,7 +403,7 @@ export const ChatInputMessage = ({
       : 'pl-12'
     : isOverlay
       ? 'pl-3'
-      : 'pl-4';
+      : 'pl-6';
 
   return (
     <div
@@ -413,21 +413,21 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-2 focus-within:border-accent-primary"
+        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded-full border border-secondary bg-layer-2 shadow-primary"
         data-qa="message"
       >
         <AdjustedTextarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary-bg-dark',
-            isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-3',
+            'm-0 min-h-[38px] w-full grow resize-none rounded-full bg-transparent leading-[150%] outline-none placeholder:text-xs placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary',
+            isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-2',
             paddingLeftClass,
           )}
           maxHeight={MAX_HEIGHT}
           placeholder={
             isOverlay || isIsolatedView
               ? t('Type a message') || ''
-              : t('Type a text or «/» to use a prompt...') || ''
+              : t('Ask me a question...') || ''
           }
           disabled={isLoading}
           value={content}

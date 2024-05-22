@@ -28,6 +28,7 @@ interface ChatMDComponentProps {
   isShowResponseLoader: boolean;
   content: string;
   isInner?: boolean;
+  isOpened?: boolean;
 }
 
 export const getMDComponents = (
@@ -105,16 +106,18 @@ const ChatMDComponent = ({
   isShowResponseLoader,
   content,
   isInner = false,
+  isOpened = false,
 }: ChatMDComponentProps) => {
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
-    'prose min-w-full dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
+    'prose min-w-full prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
     {
       'max-w-none': isChatFullWidth,
       'text-sm': isOverlay,
       'leading-[150%]': isSmallScreen() || isOverlay,
+      'prose-invert': isOpened,
     },
   );
 

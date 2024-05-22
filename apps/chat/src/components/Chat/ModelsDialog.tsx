@@ -83,6 +83,9 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
     useState<DialAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filteredAllEntities, setFilteredAllEntities] = useState<
+    DialAIEntity[]
+  >([]);
 
   const countEntityTypes = (models: Model[]): Record<EntityType, number> => {
     const counts: Record<EntityType, number> = {
@@ -126,6 +129,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         (entity) => entity.type === EntityType.Application,
       ),
     );
+    setFilteredAllEntities(newFilteredEntities);
   }, [models, entityTypes, searchTerm]);
 
   const handleSearch = useCallback((searchValue: string) => {
@@ -169,13 +173,13 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       overlayClassName="fixed inset-0 top-[48px]"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose
-      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px] bg-layer-2"
+      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto pb-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
     >
-      <div className="flex justify-between px-3 md:px-5">
+      <div className="front-medium flex justify-between bg-layer-3 px-3 py-6 text-xl text-primary-bg-dark md:px-5">
         {t('Talk to')}
         <button
           onClick={onClose}
-          className="text-secondary-bg-dark hover:text-accent-primary"
+          className="text-primary-bg-dark hover:text-secondary-bg-dark"
           data-qa="close-models-dialog"
         >
           <IconX height={24} width={24} />
@@ -244,30 +248,9 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         filteredAssistantsEntities?.length > 0 ||
         filteredApplicationsEntities?.length > 0 ? (
           <>
-            {filteredModelsEntities.length > 0 && (
+            {filteredAllEntities.length > 0 && (
               <ModelList
-                entities={filteredModelsEntities}
-                heading={t('Models') || ''}
-                onSelect={handleSelectModel}
-                selectedModelId={selectedModelId}
-                allEntities={models}
-                searchTerm={searchTerm}
-              />
-            )}
-            {filteredAssistantsEntities.length > 0 && (
-              <ModelList
-                entities={filteredAssistantsEntities}
-                heading={t('Assistants') || ''}
-                onSelect={handleSelectModel}
-                selectedModelId={selectedModelId}
-                allEntities={models}
-                searchTerm={searchTerm}
-              />
-            )}
-            {filteredApplicationsEntities.length > 0 && (
-              <ModelList
-                entities={filteredApplicationsEntities}
-                heading={t('Applications') || ''}
+                entities={filteredAllEntities}
                 onSelect={handleSelectModel}
                 selectedModelId={selectedModelId}
                 allEntities={models}

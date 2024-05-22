@@ -1,21 +1,16 @@
 import { useCallback } from 'react';
 
 import { Conversation } from '@/src/types/chat';
-import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import {
-  CONVERSATION_SETTINGS_SUB_TITLE,
-  CONVERSATION_SETTINGS_TITLE,
-} from '@/src/constants/chat';
-
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
-import { ModelDescription } from './ModelDescription';
+
+import SecondaryLogo from '@/public/images/icons/secondary-logo.svg';
 
 interface Props {
   isModels: boolean;
@@ -60,42 +55,37 @@ export const ChatSettingsEmpty = ({
       <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
         <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
           {!isModels ? (
-            <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+            <div className="flex w-full items-center justify-center rounded-t-primary bg-layer-2 p-4">
               <Spinner size={16} className="mx-auto" />
             </div>
           ) : (
-            <>
-              {/*{appName && (*/}
-              {/*  <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">*/}
-              {/*    <h4*/}
-              {/*      data-qa="app-name"*/}
-              {/*      className="w-full whitespace-pre text-center text-xl font-semibold"*/}
-              {/*    >*/}
-              {/*      {isolatedModelId && modelsMap[isolatedModelId] ? (*/}
-              {/*        <ModelDescription*/}
-              {/*          model={modelsMap[isolatedModelId] as DialAIEntityModel}*/}
-              {/*          className="justify-center"*/}
-              {/*          hideMoreInfo*/}
-              {/*          isShortDescription*/}
-              {/*        />*/}
-              {/*      ) : (*/}
-              {/*        appName*/}
-              {/*      )}*/}
-              {/*    </h4>*/}
-              {/*  </div>*/}
-              {/*)}*/}
-              <div className="pt-4" style={{ paddingBottom: '20px' }}>
-                <h4
-                  data-qa="conversation-settings-title"
-                  className="mb-4 w-full whitespace-pre text-center text-xl font-semibold"
-                >
-                  {CONVERSATION_SETTINGS_TITLE}
-                </h4>
-                <div className="text-center">
-                  {CONVERSATION_SETTINGS_SUB_TITLE}
-                </div>
+            // <>
+            //   {appName && (
+            //     <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+            //       <h4
+            //         data-qa="app-name"
+            //         className="w-full whitespace-pre text-center text-xl font-semibold"
+            //       >
+            //         {isolatedModelId && modelsMap[isolatedModelId] ? (
+            //           <ModelDescription
+            //             model={modelsMap[isolatedModelId] as DialAIEntityModel}
+            //             className="justify-center"
+            //             hideMoreInfo
+            //             isShortDescription
+            //           />
+            //         ) : (
+            //           appName
+            //         )}
+            //       </h4>
+            //     </div>
+            //   )}
+            // </>
+            <div className="flex w-full items-center justify-start rounded-t bg-layer-2 px-3 py-2 md:px-5 md:py-4">
+              <div className="flex items-center">
+                <SecondaryLogo className="" width={27} height={30} />
+                <span className="ml-3 text-[22px] font-bold">prGPT</span>
               </div>
-            </>
+            </div>
           )}
 
           {isShowSettings && isModels && (

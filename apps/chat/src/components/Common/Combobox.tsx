@@ -135,12 +135,12 @@ export const Combobox = <T,>({
             {label}
           </label>
         )}
-        <div className="flex rounded border border-primary py-2.5 focus-within:border-accent-primary">
+        <div className="flex rounded-primary border border-secondary py-2.5 focus-within:border-accent-secondary">
           <div className="relative w-full">
             <input
               disabled={disabled}
               placeholder={!selectedItem ? placeholder || '' : ''}
-              className="w-full bg-transparent px-3 outline-none placeholder:text-secondary-bg-dark"
+              className="w-full bg-transparent px-3 outline-none placeholder:text-tertiary-bg-light"
               style={{
                 ...(selectedItemRef.current && {
                   height: `${selectedItemRef.current.clientHeight}px`,
@@ -174,7 +174,7 @@ export const Combobox = <T,>({
       </div>
       <ul
         className={classNames(
-          'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+          'z-10 max-h-80 overflow-auto rounded-primary border border-secondary bg-layer-2',
           !isOpen && 'hidden',
         )}
         {...getMenuProps(

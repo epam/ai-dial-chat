@@ -14,11 +14,10 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
-import UserIcon from '../../../../public/images/icons/user-new.svg';
+import UserDesktopIcon from '../../../../public/images/icons/user-desktop.svg';
 
 export const UserDesktop = () => {
   const { t } = useTranslation(Translation.Header);
-  const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
   const { data: session } = useSession();
@@ -33,7 +32,6 @@ export const UserDesktop = () => {
     <>
       <Menu
         className="w-full"
-        onOpenChange={setIsOpen}
         trigger={
           <div
             className="flex min-w-[120px] items-center justify-end gap-2 pr-3 hover:text-accent-primary"
@@ -51,7 +49,7 @@ export const UserDesktop = () => {
                   alt={t(`User avatar`) || ''}
                 />
               ) : (
-                <UserIcon width={30} height={30} />
+                <UserDesktopIcon width={30} height={30} />
               )}
             </div>
             {/* PGPT-87 According to the design we temporarily do not need this icon*/}

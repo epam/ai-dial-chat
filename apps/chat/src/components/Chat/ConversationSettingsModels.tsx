@@ -75,8 +75,8 @@ export const ConversationSettingsModel = ({
 
   return (
     <div className="w-full" data-qa="entity-selector">
-      <div className="mb-4 flex items-center gap-2">
-        <div>{t('Talk to')}</div>
+      <div className="mb-4 flex items-center gap-2 font-medium">
+        <div>{t('Start a discussion with')}</div>
         <TooltipContainer description={t(TALK_TO_TOOLTIP)} />
       </div>
 

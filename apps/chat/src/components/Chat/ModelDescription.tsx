@@ -42,7 +42,7 @@ export const ModelDescription = ({
       </div>
       {model.description && (
         <span
-          className="whitespace-pre-wrap text-xs text-secondary-bg-dark"
+          className="whitespace-pre-wrap text-xs text-quaternary-bg-light"
           data-qa="app-descr"
         >
           <EntityMarkdownDescription isShortDescription={isShortDescription}>

@@ -15,7 +15,7 @@ interface SwitchStateTextProps {
 const SwitchStateText = ({ switchText, isOn }: SwitchStateTextProps) => (
   <span
     className={classNames(
-      'h-[15px] w-6 text-xs',
+      'w-6 text-xs text-primary-bg-dark',
       isOn && 'text-controls-permanent',
     )}
   >
@@ -31,8 +31,8 @@ export function ToggleSwitch({
 }: ToggleSwitchProps) {
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
-    'flex min-w-[50px] shrink-0 cursor-pointer items-center gap-1 rounded-full p-1.5 transition-all duration-200',
-    isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-4',
+    'flex min-w-[50px] shrink-0 cursor-pointer items-center gap-1 rounded-full px-1 py-0.5 transition-all duration-200',
+    isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-3',
   );
 
   return (

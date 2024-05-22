@@ -12,7 +12,7 @@ export const NoData = () => {
         height={60}
         width={60}
         stroke={0.5}
-        className="text-secondary-bg-dark"
+        className="text-primary-bg-dark"
       />
       <span>{t('No data')}</span>
     </div>

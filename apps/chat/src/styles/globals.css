@@ -63,11 +63,11 @@ pre:has(div.codeblock) {
   }
 
   .temperature-slider .rc-slider-rail {
-    @apply rounded-full bg-layer-1;
+    @apply rounded-full bg-gradient-to-r from-layer-5 to-layer-3;
   }
 
   .temperature-slider .rc-slider-track {
-    @apply rounded-full bg-controls-accent;
+    @apply rounded-full bg-transparent;
   }
 
   .input-form {
@@ -93,7 +93,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .button {
-    @apply rounded border border-transparent px-3 py-2.5 outline-none;
+    @apply rounded-primary border border-transparent px-3 py-2.5 outline-none;
   }
 
   .button:disabled {
@@ -110,7 +110,7 @@ pre:has(div.codeblock) {
   }
 
   .button.button-primary:not(:disabled) {
-    @apply bg-controls-accent hover:bg-controls-accent-hover;
+    @apply bg-layer-4 hover:bg-layer-3;
   }
 
   .button.button-secondary {
@@ -118,7 +118,7 @@ pre:has(div.codeblock) {
   }
 
   .button.button-secondary:not(:disabled) {
-    @apply bg-transparent hover:bg-layer-4;
+    @apply bg-controls-accent hover:bg-layer-3;
   }
 
   .button.button-secondary:disabled {
@@ -126,19 +126,26 @@ pre:has(div.codeblock) {
   }
 
   .button.button-chat {
-    @apply absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 border-primary bg-layer-2 p-3 hover:bg-layer-4;
+    @apply absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 border-primary bg-layer-2 p-3;
   }
 }
 
 @layer components {
   .checkbox {
-    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
+    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border text-tertiary-bg-light checked:text-pr-primary-700 hover:text-pr-primary-700 focus-visible:outline-none;
   }
 }
 
 @layer components {
   #chat .model-icon-template {
+    --text-primary-bg-dark: var(--text-quinary-bg-light);
+  }
+
+  .file-manager-modal,
+  .select-folder-header,
+  .select-folder-footer {
     --text-primary-bg-dark: var(--text-primary-bg-light);
+    --text-secondary-bg-dark: var(--text-secondary-bg-light);
   }
 
   .sidebar-left,

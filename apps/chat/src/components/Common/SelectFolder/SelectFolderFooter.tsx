@@ -16,7 +16,7 @@ export const SelectFolderFooter = ({
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex items-center justify-between border-t border-primary px-6 py-4">
+    <div className="select-folder-footer flex items-center justify-between border-t border-primary px-6 py-4">
       <div className="flex items-center justify-center">
         <button
           onClick={handleNewFolder}
@@ -25,7 +25,7 @@ export const SelectFolderFooter = ({
           <FolderPlus
             height={24}
             width={24}
-            className="text-secondary-bg-dark hover:text-accent-primary"
+            className="text-primary-bg-dark hover:text-accent-primary"
           />
         </button>
       </div>

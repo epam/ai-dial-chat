@@ -17,7 +17,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
-import UserIcon from '../../../../public/images/icons/user.svg';
+import UserMobileIcon from '../../../../public/images/icons/user-mobile.svg';
 
 const UserInfo = () => {
   const { t } = useTranslation(Translation.SideBar);
@@ -36,11 +36,7 @@ const UserInfo = () => {
             alt={t('User avatar') || ''}
           />
         ) : (
-          <UserIcon
-            className="mx-2 text-primary-bg-dark"
-            width={18}
-            height={18}
-          />
+          <UserMobileIcon className="mx-2" width={18} height={18} />
         )}
 
         <span className="grow">{session?.user?.name ?? ''}</span>

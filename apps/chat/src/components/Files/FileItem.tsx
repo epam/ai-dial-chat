@@ -155,7 +155,7 @@ export const FileItem = ({
                 )}
               >
                 <input
-                  className="checkbox peer size-[18px] bg-layer-3"
+                  className="checkbox peer size-[18px]"
                   type="checkbox"
                   checked={isSelected}
                   onChange={handleToggleFile}

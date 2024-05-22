@@ -278,7 +278,7 @@ export const FileManagerModal = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="file-manager-modal"
-      containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
+      containerClassName="file-manager-modal flex flex-col gap-4 sm:w-[525px] w-full"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto p-6">
@@ -318,11 +318,11 @@ export const FileManagerModal = ({
               placeholder={t('Search files') || ''}
               type="text"
               onChange={handleSearch}
-              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary-bg-dark focus-visible:border-accent-primary"
+              className="m-0 w-full rounded-primary border border-accent-quaternary bg-transparent px-3 py-2 outline-none placeholder:text-tertiary-bg-light focus-within:border-tertiary"
             ></input>
             <div className="flex min-h-[350px] flex-col overflow-auto">
               <button
-                className="flex items-center gap-1 rounded py-1 text-xs text-secondary-bg-dark"
+                className="flex items-center gap-1 rounded py-1 text-xs text-primary-bg-light"
                 onClick={() => handleToggleFolder(getRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />

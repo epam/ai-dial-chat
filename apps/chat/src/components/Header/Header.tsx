@@ -140,7 +140,7 @@ const Header = () => {
           />
           <div className="my-3 border-r border-primary" />
           <SecondaryLogo className="ml-3 self-center" width={25} height={30} />
-          <span className="ml-2 flex flex-wrap content-center text-xl md:mr-3">
+          <span className="ml-2 flex flex-wrap content-center text-[22px] font-extrabold md:mr-3">
             prGPT
           </span>
           <span className="my-3 hidden border-r border-primary md:inline-block" />

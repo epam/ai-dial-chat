@@ -46,11 +46,13 @@ const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
 interface AttachmentDataRendererProps {
   attachment: Attachment;
   isInner?: boolean;
+  isOpened?: boolean;
 }
 
 const AttachmentDataRenderer = ({
   attachment,
   isInner,
+  isOpened = false,
 }: AttachmentDataRendererProps) => {
   if (!attachment.data) {
     return null;
@@ -93,6 +95,7 @@ const AttachmentDataRenderer = ({
         isShowResponseLoader={false}
         content={attachment.data}
         isInner={isInner}
+        isOpened={isOpened}
       />
     );
   }
@@ -204,8 +207,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       data-no-context-menu
       className={classNames(
-        'rounded bg-layer-3 px-1 py-2',
-        isExpanded && 'col-span-1 col-start-1 sm:col-span-2 md:col-span-3',
+        'bg-layer-3 px-1 py-2',
+        isExpanded
+          ? 'col-span-1 col-start-1 rounded-primary sm:col-span-2 md:col-span-3'
+          : 'rounded-full hover:bg-layer-0',
         !isInner && 'border border-secondary',
       )}
     >
@@ -221,13 +226,13 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               <Link
                 height={18}
                 width={18}
-                className="text-secondary-bg-dark hover:text-accent-primary"
+                className="text-primary-bg-dark hover:text-accent-primary"
               />
             </a>
           ) : (
             <IconPaperclip
               size={18}
-              className="shrink-0 text-secondary-bg-dark"
+              className="shrink-0 text-primary-bg-dark"
             />
           )}
         </div>
@@ -242,7 +247,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         >
           <span
             className={classNames(
-              'shrink whitespace-pre text-left text-sm',
+              'shrink whitespace-pre text-left text-sm text-primary-bg-dark',
               isExpanded ? 'max-w-full' : 'max-w-[calc(100%-30px)] truncate',
             )}
             title={attachment.title || attachment.url || t('Attachment') || ''}
@@ -256,7 +261,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                   download={attachment.title}
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
-                  className="text-secondary-bg-dark hover:text-accent-primary"
+                  className="text-primary-bg-dark hover:text-accent-primary"
                 >
                   <IconDownload size={18} />
                 </a>
@@ -265,7 +270,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 height={18}
                 width={18}
                 className={classNames(
-                  'shrink-0 text-secondary-bg-dark transition',
+                  'shrink-0 text-primary-bg-dark transition',
                   isOpened && 'rotate-180',
                 )}
               />
@@ -276,7 +281,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               href={mappedAttachmentUrl}
               onClick={stopBubbling}
               target="_blank"
-              className="text-secondary-bg-dark hover:text-accent-primary"
+              className="text-primary-bg-dark hover:text-accent-primary"
             >
               <IconDownload size={18} />
             </a>
@@ -286,7 +291,11 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
       {isOpenable && isOpened && (
         <div className="relative mt-2 h-auto w-full overflow-hidden p-3 pt-4 text-sm duration-200">
           {attachment.data && (
-            <AttachmentDataRenderer attachment={attachment} isInner={isInner} />
+            <AttachmentDataRenderer
+              attachment={attachment}
+              isInner={isInner}
+              isOpened={isOpened}
+            />
           )}
           {mappedAttachmentUrl &&
             (attachment.type === chartType ? (
