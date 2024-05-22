@@ -9,7 +9,7 @@ import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API, ScrollState } from '@/src/testData';
+import { API, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
@@ -163,22 +163,25 @@ export class Chat extends BaseElement {
 
   public async regenerateResponseInCompareMode(
     comparedEntities: { rightEntity: string; leftEntity: string },
-    waitForAnswer = false,
+    compareSide: Side,
   ) {
-    const rightRequestPromise = this.waitForRequestSent(
-      comparedEntities.rightEntity,
+    const rightRespPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().postData() !== null &&
+        resp.request().postData()!.includes(comparedEntities.rightEntity),
     );
-    const leftRequestPromise = this.waitForRequestSent(
-      comparedEntities.leftEntity,
+    const leftRespPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().postData() !== null &&
+        resp.request().postData()!.includes(comparedEntities.leftEntity),
     );
-    await this.getChatMessages().regenerate.getNthElement(1).click();
-    const rightRequest = await rightRequestPromise;
-    const leftRequest = await leftRequestPromise;
-    await this.waitForResponse(waitForAnswer);
-    return {
-      rightRequest: rightRequest.postDataJSON(),
-      leftRequest: leftRequest.postDataJSON(),
-    };
+    const regenerateButtonIndex = compareSide === Side.left ? 1 : 2;
+    await this.getChatMessages()
+      .regenerate.getNthElement(regenerateButtonIndex)
+      .click();
+    await rightRespPromise;
+    await leftRespPromise;
+    await this.waitForResponse(true);
   }
 
   public waitForRequestSent(userRequest: string | undefined) {
