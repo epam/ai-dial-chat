@@ -8,8 +8,10 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 
 import keyBy from 'lodash-es/keyBy';
+import merge from 'lodash-es/merge';
 import trimEnd from 'lodash-es/trimEnd';
 import uniq from 'lodash-es/uniq';
+import values from 'lodash-es/values';
 import { substring } from 'stringz';
 
 /**
@@ -22,17 +24,9 @@ export const combineEntities = <T extends Entity>(
   entities1: T[],
   entities2: T[],
 ): T[] => {
-  const entities2Map = keyBy(entities2, 'id');
-  const updatedEntities1 = entities1.map((entity) =>
-    entities2Map[entity.id]
-      ? { ...entity, ...entities2Map[entity.id] }
-      : entity,
-  );
-  const newEntities = entities2.filter(
-    (e2) => !entities1.some((e1) => e1.id === e2.id),
-  );
+  const mergedEntities = merge(keyBy(entities2, 'id'), keyBy(entities1, 'id'));
 
-  return [...updatedEntities1, ...newEntities];
+  return values(mergedEntities);
 };
 
 export const isEntityNameOnSameLevelUnique = (
