@@ -125,7 +125,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[500px] overflow-y-auto p-4 align-bottom transition-all md:max-h-[400px]"
+      containerClassName="inline-block w-[500px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[400px] md:p-6"
       dataQa="settings-modal"
       state={open ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}

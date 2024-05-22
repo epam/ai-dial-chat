@@ -33,7 +33,7 @@ export const ConfirmDialog = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="confirmation-dialog"
-      containerClassName="inline-block w-full min-w-[90%] md:p-6 text-center md:min-w-[300px] md:max-w-[500px]"
+      containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 text-center md:min-w-[300px] md:max-w-[500px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
       heading={heading}

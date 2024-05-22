@@ -327,7 +327,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
             </div>
           </div>
         </div>
-        <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-6 py-2 sm:py-4">
+        <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-3 py-4 md:px-6">
           <button
             onClick={handleCancel}
             className="button button-secondary h-[38px]"
