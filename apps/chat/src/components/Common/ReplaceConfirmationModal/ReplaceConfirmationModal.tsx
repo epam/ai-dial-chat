@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersFromIds,
@@ -295,52 +293,43 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       }}
       hideClose
       dataQa="replace-confirmation-modal"
-      containerClassName={classNames(
-        'flex size-full flex-col sm:w-[525px]',
-        featuresToReplace.length < 3 && 'sm:h-fit',
-      )}
+      containerClassName="flex w-full min-h-[595px] flex-col gap-4 pt-4 sm:w-[525px] md:pt-6"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="flex h-full flex-col justify-between gap-2 sm:gap-4">
-        <div className="flex min-h-[80%] flex-col gap-4 md:p-6">
-          <div className="flex h-fit flex-col gap-2">
-            <h2 className="text-base font-semibold">
-              {t('Some items failed to import due to duplicate names')}
-            </h2>
-            <p className="text-secondary">
-              {t(
-                'Add a postfix, ignore or replace existing items with importing ones.',
-              )}
-            </p>
-          </div>
+      <div className="flex h-fit flex-col gap-2 px-3 md:px-6">
+        <h2 className="text-base font-semibold">
+          {t('Some items failed to import due to duplicate names')}
+        </h2>
+        <p className="text-secondary">
+          {t(
+            'Add a postfix, ignore or replace existing items with importing ones.',
+          )}
+        </p>
+        <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pl-3">
+          <span>{t('All items')}</span>
+          <ReplaceSelector
+            selectedOption={actionForAllItems}
+            onOptionChangeHandler={handleOnChangeAllAction}
+          />
+        </div>
+      </div>
+      <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
+        {featuresToReplace && featureList}
+      </div>
 
-          <div className="flex h-[90%] min-h-[100px] flex-col sm:h-[92%]">
-            <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pb-1 pl-3 sm:pb-3">
-              <span>{t('All items')}</span>
-              <ReplaceSelector
-                selectedOption={actionForAllItems}
-                onOptionChangeHandler={handleOnChangeAllAction}
-              />
-            </div>
-            <div className="flex max-h-[80%] flex-col gap-1 overflow-y-scroll pt-1 sm:max-h-full">
-              {featuresToReplace && featureList}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-3 py-4 md:px-6">
-          <button
-            onClick={handleCancel}
-            className="button button-secondary h-[38px]"
-          >
-            {t('Cancel')}
-          </button>
-          <button
-            onClick={handleContinueImport}
-            className="button button-primary h-[38px]"
-          >
-            {t('Continue')}
-          </button>
-        </div>
+      <div className="mt-auto flex h-fit flex-row justify-end gap-3 border-t-[1px] border-tertiary px-3 py-4 md:px-6 md:pb-4">
+        <button
+          onClick={handleCancel}
+          className="button button-secondary h-[38px] rounded px-3 py-0"
+        >
+          {t('Cancel')}
+        </button>
+        <button
+          onClick={handleContinueImport}
+          className="button button-primary h-[38px] rounded px-3 py-0"
+        >
+          {t('Continue')}
+        </button>
       </div>
     </Modal>
   );
