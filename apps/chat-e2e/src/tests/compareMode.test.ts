@@ -580,22 +580,21 @@ dialTest(
 );
 
 dialTest(
-  'Generate new response for two chats in compare mode. Bison and GPT-4-32 which have different response time.\n' +
-    'Regenerate response in compare mode',
+  'Regenerate response in compare mode',
   async ({
     dialHomePage,
     chat,
-    chatMessages,
     setTestIds,
     conversationData,
     localStorageManager,
     dataInjector,
-    conversations,
-    sendMessage,
+    leftChatHeader,
+    rightChatHeader,
     page,
   }) => {
-    setTestIds('EPMRTC-553', 'EPMRTC-555');
+    setTestIds('EPMRTC-555');
     const request = ['beautiful'];
+    const conversationName = request[0];
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -604,12 +603,14 @@ dialTest(
         conversationData.prepareModelConversationBasedOnRequests(
           bisonModel,
           request,
+          conversationName,
         );
       conversationData.resetData();
       secondConversation =
         conversationData.prepareModelConversationBasedOnRequests(
           ModelsUtil.getModel(ModelIds.GPT_4_32K)!,
           request,
+          conversationName,
         );
       await dataInjector.createConversations([
         firstConversation,
@@ -622,85 +623,37 @@ dialTest(
     });
 
     await dialTest.step(
-      'Send new message in compare chat and verify regenerate is not available until both responses received',
+      'Click "Regenerate" button for both sides and verify conversation names are not changed',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
         await page.route(API.chatHost, async (route) => {
-          const request = route.request();
-          const postData = await request.postDataJSON();
-
-          if (postData.modelId === bisonModel.id) {
-            await route.fulfill({
-              status: 200,
-              body: '{}',
-            });
-          } else {
-            await route.continue();
-          }
-        });
-        await dialHomePage.throttleAPIResponse('**/*');
-
-        await chat.sendRequestInCompareMode(
-          'write down 10 adjectives about person',
-          {
-            rightEntity: firstConversation.model.id,
-            leftEntity: secondConversation.model.id,
-          },
-        );
-        await chatMessages.waitForCompareMessageJumpingIconDisappears(
-          Side.left,
-        );
-        const isRegenerateButtonVisible = await chatMessages.regenerate
-          .getNthElement(1)
-          .isVisible();
-        expect
-          .soft(
-            isRegenerateButtonVisible,
-            ExpectedMessages.regenerateNotAvailable,
-          )
-          .toBeFalsy();
-
-        const isStopButtonVisible =
-          await sendMessage.stopGenerating.isVisible();
-        expect
-          .soft(isStopButtonVisible, ExpectedMessages.stopGeneratingAvailable)
-          .toBeTruthy();
-      },
-    );
-
-    await dialTest.step(
-      'Click "Regenerate" button and verify last response is regenerated for both chats',
-      async () => {
-        await dialHomePage.unRouteAllResponses();
-        await chatMessages.regenerate.getNthElement(1).waitFor();
-
-        const requestsData = await chat.regenerateResponseInCompareMode({
-          rightEntity: firstConversation.model.id,
-          leftEntity: secondConversation.model.id,
+          await route.fulfill({
+            status: 200,
+            body: '{"content":"Response"}\u0000{}\u0000',
+          });
         });
 
-        expect
-          .soft(
-            requestsData.rightRequest.modelId,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(firstConversation.model.id);
-        expect
-          .soft(
-            requestsData.leftRequest.modelId,
-            ExpectedMessages.requestModeIdIsValid,
-          )
-          .toBe(secondConversation.model.id);
-
-        for (const conversation of [firstConversation, secondConversation]) {
-          const isConversationVisible = await conversations
-            .getConversationByName(conversation.name)
-            .isVisible();
+        for (const side of Object.values(Side)) {
+          await chat.regenerateResponseInCompareMode(
+            {
+              rightEntity: firstConversation.model.id,
+              leftEntity: secondConversation.model.id,
+            },
+            side,
+          );
           expect
-            .soft(isConversationVisible, ExpectedMessages.conversationIsVisible)
-            .toBeTruthy();
+            .soft(
+              await leftChatHeader.chatTitle.getElementInnerContent(),
+              ExpectedMessages.headerTitleIsValid,
+            )
+            .toBe(conversationName);
+          expect
+            .soft(
+              await rightChatHeader.chatTitle.getElementInnerContent(),
+              ExpectedMessages.headerTitleIsValid,
+            )
+            .toBe(conversationName);
         }
       },
     );
