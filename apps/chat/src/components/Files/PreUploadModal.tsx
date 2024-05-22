@@ -382,7 +382,7 @@ export const PreUploadDialog = ({
                   <button onClick={handleUnselectFile(index)}>
                     <IconTrashX
                       size={24}
-                      className="shrink-0 text-tertiary-bg-light hover:text-secondary-bg-light"
+                      className="shrink-0 text-quaternary-bg-light hover:text-primary-bg-light"
                     />
                   </button>
                 </div>
@@ -392,7 +392,7 @@ export const PreUploadDialog = ({
         )}
       </div>
       <div className="flex w-full justify-between gap-3">
-        <label className="cursor-pointer rounded py-2.5 text-secondary-bg-light">
+        <label className="cursor-pointer rounded py-2.5 text-quaternary-bg-light hover:text-primary-bg-light">
           {t('Add more files...')}
           <input
             ref={uploadInputRef}

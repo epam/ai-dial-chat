@@ -3,9 +3,7 @@ import { useCallback } from 'react';
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { HEADER_TITLE_TEXT } from '@/src/constants/chat';
 
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
@@ -22,7 +20,6 @@ interface Props {
   onSelectModel: (modelId: string) => void;
   onSelectAssistantSubModel: (modelId: string) => void;
   onChangeAddon: (addonId: string) => void;
-  appName: string;
   onApplyAddons: (conversation: Conversation, addonIds: string[]) => void;
 }
 
@@ -31,7 +28,6 @@ export const ChatSettingsEmpty = ({
   conversation,
   prompts,
   isShowSettings,
-  appName,
   onChangePrompt,
   onChangeTemperature,
   onSelectModel,
@@ -45,10 +41,6 @@ export const ChatSettingsEmpty = ({
     },
     [conversation, onApplyAddons],
   );
-  const isolatedModelId = useAppSelector(
-    SettingsSelectors.selectIsolatedModelId,
-  );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <>
@@ -59,31 +51,12 @@ export const ChatSettingsEmpty = ({
               <Spinner size={16} className="mx-auto" />
             </div>
           ) : (
-            // <>
-            //   {appName && (
-            //     <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
-            //       <h4
-            //         data-qa="app-name"
-            //         className="w-full whitespace-pre text-center text-xl font-semibold"
-            //       >
-            //         {isolatedModelId && modelsMap[isolatedModelId] ? (
-            //           <ModelDescription
-            //             model={modelsMap[isolatedModelId] as DialAIEntityModel}
-            //             className="justify-center"
-            //             hideMoreInfo
-            //             isShortDescription
-            //           />
-            //         ) : (
-            //           appName
-            //         )}
-            //       </h4>
-            //     </div>
-            //   )}
-            // </>
             <div className="flex w-full items-center justify-start rounded-t bg-layer-2 px-3 py-2 md:px-5 md:py-4">
               <div className="flex items-center">
                 <SecondaryLogo className="" width={27} height={30} />
-                <span className="ml-3 text-[22px] font-bold">prGPT</span>
+                <span className="ml-3 font-weave text-[22px] font-bold">
+                  {HEADER_TITLE_TEXT}
+                </span>
               </div>
             </div>
           )}

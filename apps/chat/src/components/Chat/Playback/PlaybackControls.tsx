@@ -217,7 +217,7 @@ export const PlaybackControls = ({
           data-qa="playback-prev"
           onClick={handlePrevMessage}
           disabled={activeIndex === 0 && phase !== 'MESSAGE'}
-          className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+          className="absolute bottom-3 left-4 rounded text-quaternary-bg-light outline-none hover:text-primary-bg-light disabled:cursor-not-allowed disabled:text-controls-disable"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
         </button>
@@ -255,7 +255,7 @@ export const PlaybackControls = ({
                   <button
                     data-qa="playback-next"
                     onClick={handlePlayNextMessage}
-                    className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    className="absolute bottom-3 right-4 rounded text-quaternary-bg-light outline-none hover:text-primary-bg-light disabled:cursor-not-allowed disabled:text-controls-disable"
                     disabled={isMessageStreaming || !isNextMessageInStack}
                   >
                     <IconPlayerPlay size={20} className="shrink-0" />

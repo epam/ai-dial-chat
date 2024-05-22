@@ -150,18 +150,22 @@ pre:has(div.codeblock) {
 
   .sidebar-left,
   .context-menu-chat {
-    --text-accent-primary: var(--text-accent-secondary, #37babc);
-    --stroke-accent-primary: var(--stroke-accent-secondary, #37babc);
-    --bg-accent-primary-alpha: var(--bg-accent-primary-alpha, #37babc26);
     --bg-accent-primary: var(--bg-accent-secondary, #37babc);
   }
 
   .sidebar-right,
   .context-menu-prompt {
-    --text-accent-primary: var(--text-accent-tertiary, #a972ff);
-    --stroke-accent-primary: var(--stroke-accent-tertiary, #a972ff);
-    --bg-accent-primary-alpha: var(--bg-accent-primary-alpha, #a972ff26);
     --bg-accent-primary: var(--bg-accent-secondary, #a972ff);
+  }
+
+  .sidebar-right .menu-trigger,
+  .sidebar-left .menu-trigger {
+    --text-quaternary-bg-light: var(--text-primary-bg-dark);
+  }
+
+  .select-folder-header {
+    --text-accent-primary: var(--text-primary-bg-light);
+    --border-accent-primary: var(--border-tertiary);
   }
 }
 

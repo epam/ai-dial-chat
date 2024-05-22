@@ -42,7 +42,7 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
         <CircleCheck
           height={20}
           width={20}
-          className="shrink-0 grow-0 basis-auto text-secondary-bg-dark"
+          className="shrink-0 grow-0 basis-auto text-primary-bg-light"
           data-qa="stage-completed"
         />
       ) : (
@@ -79,7 +79,7 @@ export const MessageStage = ({ stage }: Props) => {
   }, [stage?.content, stage?.attachments?.length]);
 
   return (
-    <div className="block min-w-0 shrink rounded border border-secondary bg-layer-1">
+    <div className="block min-w-0 shrink rounded-primary border border-secondary bg-layer-1">
       {hasContent ? (
         <button
           className="flex w-full min-w-0 shrink items-center gap-2 p-2"

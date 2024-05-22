@@ -69,7 +69,6 @@ export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
@@ -785,7 +784,6 @@ export const ChatView = memo(() => {
                                   onChangeTemperature={(temperature) =>
                                     handleChangeTemperature(conv, temperature)
                                   }
-                                  appName={appName}
                                   onApplyAddons={handleOnApplyAddons}
                                 />
                               </div>

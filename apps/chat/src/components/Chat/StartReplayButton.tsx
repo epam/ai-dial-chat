@@ -31,15 +31,11 @@ export const StartReplayButton = () => {
 
   return (
     <button
-      className="button button-chat"
+      className="button button-chat hover:border-tertiary"
       onClick={handleReplayStart}
       data-qa="start-replay"
     >
-      <Play
-        height={18}
-        width={18}
-        className="shrink-0 text-secondary-bg-dark"
-      />
+      <Play height={18} width={18} className="shrink-0 text-pr-primary-700" />
       <span>{t('Start replay')}</span>
     </button>
   );

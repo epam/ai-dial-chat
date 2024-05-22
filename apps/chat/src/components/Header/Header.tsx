@@ -14,6 +14,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { HEADER_TITLE_TEXT } from '@/src/constants/chat';
+
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import PrimaryLogo from '../../../public/images/icons/primary-logo.svg';
@@ -99,14 +101,14 @@ const Header = () => {
                 />
 
                 <MoveLeftIcon
-                  className="hover:text-accent-secondary max-md:hidden"
+                  className="hover:text-accent-primary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
               <MoveRightIcon
-                className="hover:text-accent-secondary"
+                className="hover:text-accent-primary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
@@ -119,20 +121,6 @@ const Header = () => {
       )}
       <div className="flex grow justify-between">
         <div className="flex grow justify-center md:justify-start">
-          {/* Comment this previous solution to revert changes
-              in case we need to apply logo icon for more than one theme
-          <span>
-            className={classNames(
-              'min-w-[165px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
-              { 'bg-contain': customLogoUrl },
-            )}
-            style={{
-              backgroundImage: customLogoUrl
-                ? `url(${cssEscape(customLogoUrl)})`
-                : `var(--app-logo)`,
-            }}
-          ></span> */}
-
           <PrimaryLogo
             className="mr-3 self-center md:ml-5"
             width={31}
@@ -140,8 +128,8 @@ const Header = () => {
           />
           <div className="my-3 border-r border-primary" />
           <SecondaryLogo className="ml-3 self-center" width={25} height={30} />
-          <span className="ml-2 flex flex-wrap content-center text-[22px] font-extrabold md:mr-3">
-            prGPT
+          <span className="ml-2 flex flex-wrap content-center font-weave text-[22px] font-bold md:mr-3">
+            {HEADER_TITLE_TEXT}
           </span>
           <span className="my-3 hidden border-r border-primary md:inline-block" />
           <span className="ml-2 hidden flex-wrap content-center text-s md:flex">
@@ -169,14 +157,14 @@ const Header = () => {
                 />
 
                 <MoveRightIcon
-                  className="hover:text-accent-secondary max-md:hidden"
+                  className="hover:text-accent-primary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
               <MoveLeftIcon
-                className="hover:text-accent-secondary"
+                className="hover:text-accent-primary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
