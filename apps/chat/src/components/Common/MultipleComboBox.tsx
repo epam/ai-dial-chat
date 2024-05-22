@@ -179,15 +179,15 @@ export function MultipleComboBox<T>({
             return;
           }
 
-          if (!getItemLabel(newSelectedItem).trim()) {
+          if (
+            getItemLabel(newSelectedItem) &&
+            !getItemLabel(newSelectedItem).trim()
+          ) {
             return;
           }
 
-          addSelectedItem(getItemLabel(newSelectedItem).trim() as T);
-          onChangeSelectedItems([
-            ...(selectedItems ?? []),
-            getItemLabel(newSelectedItem).trim() as T,
-          ]);
+          addSelectedItem(newSelectedItem);
+          onChangeSelectedItems([...(selectedItems ?? []), newSelectedItem]);
           setInputValue('');
 
           break;
