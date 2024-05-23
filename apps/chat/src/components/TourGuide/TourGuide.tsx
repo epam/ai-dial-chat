@@ -124,7 +124,7 @@ const TourGuide = () => {
         continuous
         showSkipButton
         disableScrollParentFix
-        spotlightPadding={0}
+        spotlightPadding={7}
         callback={handleJoyrideCallback}
         disableOverlayClose
         styles={styles}

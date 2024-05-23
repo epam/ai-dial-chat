@@ -100,6 +100,6 @@ export const translateSteps = (steps: Step[], t: any) =>
 
 export const styles = {
   spotlight: {
-    borderRadius: '0px',
+    borderRadius: '5px',
   },
 };
