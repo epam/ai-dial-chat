@@ -78,10 +78,10 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'relative flex rounded-primary border font-medium hover:border-tertiary',
+        'rounded-primary relative flex border font-medium hover:border-tertiary',
         isActive
-          ? 'border-accent-quaternary bg-accent-secondary-alpha shadow-primary'
-          : 'border-secondary bg-layer-2 hover:bg-accent-secondary-alpha hover:shadow-primary',
+          ? 'border-accent-quaternary shadow-primary bg-accent-secondary-alpha'
+          : 'hover:shadow-primary border-secondary bg-layer-2 hover:bg-accent-secondary-alpha',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
@@ -99,12 +99,10 @@ const ModelGroup = ({
         }
       }}
       data-qa="group-entity"
+      id={TourGuideId.modelSelection}
     >
       {disabled && <DisableOverlay />}
-      <div
-        className="flex min-h-[48px] items-center gap-3 border-secondary px-5 py-2"
-        id={TourGuideId.modelSelection}
-      >
+      <div className="flex min-h-[48px] items-center gap-3 border-secondary px-5 py-2">
         <ModelIcon
           entityId={currentEntity.id}
           entity={currentEntity}
@@ -126,7 +124,7 @@ const ModelGroup = ({
           </div>
           {description && (
             <span
-              className="text-[11px] text-quaternary-bg-light"
+              className="text-quaternary-bg-light text-[11px]"
               onClick={(e) => {
                 if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                   e.stopPropagation();

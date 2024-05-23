@@ -49,10 +49,7 @@ export const UserDesktop = () => {
     <div className="flex items-center justify-center">
       {!isSmallScreenOrMobile && (
         <Tooltip isTriggerClickable tooltip={t('Tour Guide')}>
-          <button
-            onClick={startTour}
-            className="mx-[25px] hover:text-accent-primary"
-          >
+          <button onClick={startTour} className=" hover:text-accent-primary">
             <TourGuideIcon />
           </button>
         </Tooltip>
@@ -62,7 +59,7 @@ export const UserDesktop = () => {
         className="w-full"
         trigger={
           <div
-            className="flex min-w-[110px] items-center justify-end gap-2 pr-3 hover:text-accent-primary"
+            className="flex min-w-[120px] items-center justify-end gap-2 pr-3 hover:text-accent-primary"
             data-qa="account-settings"
           >
             <span>{session?.user?.name || t('User')}</span>

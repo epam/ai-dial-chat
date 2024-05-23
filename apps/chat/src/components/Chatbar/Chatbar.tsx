@@ -50,9 +50,9 @@ const ChatActionsBlock = () => {
   }
 
   return (
-    <div className="flex" id={TourGuideId.newConversation}>
+    <div className="flex">
       <button
-        className="mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 hover:bg-accent-quaternary disabled:cursor-not-allowed"
+        className="hover:bg-accent-quaternary mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(
             ConversationsActions.createNewConversations({
@@ -63,6 +63,7 @@ const ChatActionsBlock = () => {
         }}
         disabled={messageIsStreaming || isActiveNewConversationRequest}
         data-qa="new-entity"
+        id={TourGuideId.newConversation}
       >
         {isActiveNewConversationRequest ? (
           <Spinner size={18} className={'text-primary-bg-dark'} />
