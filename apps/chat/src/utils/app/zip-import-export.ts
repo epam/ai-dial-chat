@@ -214,7 +214,7 @@ export const updateAttachmentsNames = ({
       existingFiles.length &&
       existingFiles.some(({ name }) => name === attachment.name)
     ) {
-      const newName = getNextFileName(attachment.name, existingFiles);
+      const newName = getNextFileName(attachment.name, existingFiles, 0, true);
 
       const updatedAttachment = { ...attachment, name: newName };
 
