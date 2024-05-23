@@ -270,6 +270,8 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId: ApiUtils.decodeApiUrl(acceptedIds[0].url),
                   isFolder: isFolderId(data.resources[0].url),
+                  isConversation: isConversationId(data.resources[0].url),
+                  isPrompt: isPromptId(data.resources[0].url),
                 }),
               );
             }),
@@ -290,9 +292,14 @@ const acceptInvitationEpic: AppEpic = (action$) =>
 const acceptInvitationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationSuccess.match),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       history.replaceState({}, '', window.location.origin);
 
+      if (payload.isPrompt) {
+        return of(UIActions.setShowPromptbar(true));
+      } else if (payload.isConversation) {
+        return of(UIActions.setShowChatbar(true));
+      }
       return EMPTY;
     }),
   );
@@ -453,7 +460,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.getSharedListingSuccess.match),
     switchMap(({ payload }) => {
       const actions = [];
-      const { acceptedId, isFolderAccepted } =
+      const { acceptedId, isFolderAccepted, isConversation, isPrompt } =
         ShareSelectors.selectAcceptedEntityInfo(state$.value);
       const [selectedConv] = ConversationsSelectors.selectSelectedConversations(
         state$.value,
@@ -652,7 +659,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (acceptedId) {
-        if (isConversationId(acceptedId)) {
+        if (isConversation) {
           if (isFolderAccepted) {
             actions.push(
               ConversationsActions.uploadConversationsWithFoldersRecursive({
@@ -668,7 +675,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
           }
-        } else if (isPromptId(acceptedId)) {
+        } else if (isPrompt) {
           if (isFolderAccepted) {
             actions.push(
               PromptsActions.uploadPromptsWithFoldersRecursive({
