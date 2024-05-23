@@ -586,7 +586,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
               FeatureType.Prompt,
             );
 
-            const rootPromptId = prompts.toSorted(
+            const topLevelPromptId = prompts.toSorted(
               (a, b) => a.folderId.length - b.folderId.length,
             )[0].id;
 
@@ -603,10 +603,10 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
                     prompts,
                   }),
                 ),
-                of(PromptsActions.uploadPrompt({ promptId: rootPromptId })),
+                of(PromptsActions.uploadPrompt({ promptId: topLevelPromptId })),
                 of(
                   PromptsActions.setSelectedPrompt({
-                    promptId: rootPromptId,
+                    promptId: topLevelPromptId,
                   }),
                 ),
                 of(
