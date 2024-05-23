@@ -8,8 +8,8 @@ interface CollapsibleSectionProps {
   name: string;
   openByDefault?: boolean;
   isHighlighted?: boolean;
-  currentIconSize?: number;
-  currentIconHidden?: boolean;
+  caretIconSize?: number;
+  caretIconHidden?: boolean;
   children: ReactNode | ReactNode[];
   dataQa?: string;
   onToggle?: (isOpen: boolean) => void;
@@ -22,8 +22,8 @@ export default function CollapsibleSection({
   openByDefault = true,
   isHighlighted = false,
   children,
-  currentIconSize = 10,
-  currentIconHidden,
+  caretIconSize = 10,
+  caretIconHidden,
   dataQa,
   onToggle,
   className,
@@ -52,8 +52,8 @@ export default function CollapsibleSection({
       >
         <CaretIconComponent
           isOpen={isOpened}
-          size={currentIconSize}
-          hidden={currentIconHidden}
+          size={caretIconSize}
+          hidden={caretIconHidden}
           showOnHoverOnly={showOnHoverOnly}
         />
         {name}

@@ -8,6 +8,7 @@ import {
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
 import { isConversationId, isFileId, isPromptId } from '@/src/utils/app/id';
+import { getPublicationId } from '@/src/utils/app/publications';
 
 import { BackendResourceType, FeatureType } from '@/src/types/common';
 import { Publication, PublishActions } from '@/src/types/publication';
@@ -72,7 +73,7 @@ export function HandlePublication({ publication }: Props) {
       PublicationActions.setPublicationsToReview({
         items: resourcesToReview.map((r) => ({
           reviewed: false,
-          reviewUrl: r.reviewUrl ? r.reviewUrl : r.targetUrl,
+          reviewUrl: r.reviewUrl,
           publicationUrl: publication.url,
         })),
       }),
@@ -207,7 +208,7 @@ export function HandlePublication({ publication }: Props) {
             {publication.resources[0].action !== PublishActions.DELETE
               ? t('Publication request for: ')
               : t('Unpublish: ')}
-            {publication.url.split('/').slice(-1).shift()}
+            {getPublicationId(publication.url)}
           </h4>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
@@ -254,7 +255,7 @@ export function HandlePublication({ publication }: Props) {
                         <span>{t('Publication id: ')}</span>
                       </p>
                       <span className="col-span-2 truncate">
-                        {publication.url.split('/').slice(-1).shift()}
+                        {getPublicationId(publication.url)}
                       </span>
                       <p className="text-secondary">{t('Path: ')}</p>
                       <span className="col-span-2">

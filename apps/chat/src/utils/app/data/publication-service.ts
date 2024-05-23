@@ -56,7 +56,9 @@ export class PublicationService {
         const decodedResources = publication.resources.map((r) => ({
           ...r,
           targetUrl: ApiUtils.decodeApiUrl(r.targetUrl),
-          reviewUrl: r.reviewUrl ? ApiUtils.decodeApiUrl(r.reviewUrl) : null,
+          reviewUrl: r.reviewUrl
+            ? ApiUtils.decodeApiUrl(r.reviewUrl)
+            : ApiUtils.decodeApiUrl(r.targetUrl),
           sourceUrl: r.sourceUrl ? ApiUtils.decodeApiUrl(r.sourceUrl) : null,
         }));
 

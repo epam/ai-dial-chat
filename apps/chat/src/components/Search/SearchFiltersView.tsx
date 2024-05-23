@@ -59,16 +59,6 @@ export default function SearchFiltersView({
           dataQa: 'shared-by-me-filter',
           filterValue: SearchFilters.SharedByMe,
         },
-        // {
-        //   display: enabledFeatures.has(
-        //     featureType === FeatureType.Chat
-        //       ? Feature.ConversationsPublishing
-        //       : Feature.PromptsPublishing,
-        //   ),
-        //   name: t('Published by me'),
-        //   dataQa: 'published-by-me-filter',
-        //   filterValue: SearchFilters.PublishedByMe,
-        // },
       ]
         .filter(({ display }) => display)
         .map(({ filterValue, ...props }) => ({

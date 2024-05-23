@@ -37,7 +37,7 @@ export interface PublicationResource {
   action: PublishActions;
   sourceUrl: string | null;
   targetUrl: string;
-  reviewUrl: string | null;
+  reviewUrl: string;
 }
 
 export interface Publication {

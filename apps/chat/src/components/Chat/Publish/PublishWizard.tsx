@@ -88,7 +88,7 @@ function PublishModalFilters({
   }
 
   if (isRulesLoading) {
-    return null; // loader for rules
+    return null; // TODO: loader for rules
   }
 
   if (rules) {
@@ -509,8 +509,8 @@ export function PublishModal({
         rootFolderId={
           type === SharingType.Conversation ||
           type === SharingType.ConversationFolder
-            ? `${ApiKeys.Conversations}/public`
-            : `${ApiKeys.Prompts}/public`
+            ? constructPath(ApiKeys.Conversations, 'public')
+            : constructPath(ApiKeys.Prompts, 'public')
         }
       />
     </Modal>

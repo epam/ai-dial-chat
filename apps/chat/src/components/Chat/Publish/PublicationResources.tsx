@@ -58,7 +58,7 @@ export const PromptPublicationResources = ({
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
 
   const resourceUrls = useMemo(
-    () => resources.map((r) => (r.reviewUrl ? r.reviewUrl : r.targetUrl)),
+    () => resources.map((r) => r.reviewUrl),
     [resources],
   );
   const promptsToDisplay = useMemo(() => {
@@ -164,7 +164,7 @@ export const ConversationPublicationResources = ({
   );
 
   const resourceUrls = useMemo(
-    () => resources.map((r) => (r.reviewUrl ? r.reviewUrl : r.targetUrl)),
+    () => resources.map((r) => r.reviewUrl),
     [resources],
   );
   const conversationsToDisplay = useMemo(() => {
@@ -266,7 +266,7 @@ export const FilePublicationResources = ({
   const allFolders = useAppSelector(FilesSelectors.selectFolders);
 
   const resourceUrls = useMemo(
-    () => resources.map((r) => (r.reviewUrl ? r.reviewUrl : r.targetUrl)),
+    () => resources.map((r) => r.reviewUrl),
     [resources],
   );
   const filesToDisplay = useMemo(() => {

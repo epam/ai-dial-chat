@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getPublicationId } from '@/src/utils/app/publications';
+
 import { BackendResourceType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
@@ -90,13 +92,13 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
               'relative max-h-5 flex-1 truncate break-all text-left',
               some(publication.resources, (r) =>
                 some(selectedConversationIds, (id) =>
-                  id.startsWith(r.reviewUrl ? r.reviewUrl : r.targetUrl),
+                  id.startsWith(r.reviewUrl),
                 ),
               ) && 'text-accent-primary',
             )}
             data-qa="folder-name"
           >
-            {publication.url.split('/').slice(-1).shift()}
+            {getPublicationId(publication.url)}
           </div>
         </div>
       </div>

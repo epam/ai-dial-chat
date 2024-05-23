@@ -26,3 +26,6 @@ export const createTargetUrl = (
     ...lastElement,
   );
 };
+
+export const getPublicationId = (url: string) =>
+  url.split('/').slice(-1).shift();

@@ -169,11 +169,10 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(r.targetUrl).name,
                       );
-                      const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
 
                       return {
-                        id,
-                        folderId: getFolderIdFromEntityId(id),
+                        id: r.reviewUrl,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
                         name: parsedApiKey.name,
                       };
                     }),
@@ -216,11 +215,10 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       const parsedApiKey = parseConversationApiKey(
                         splitEntityId(r.targetUrl).name,
                       );
-                      const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
 
                       return {
-                        id,
-                        folderId: getFolderIdFromEntityId(id),
+                        id: r.reviewUrl,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
                         model: parsedApiKey.model,
                         name: parsedApiKey.name,
                       };
@@ -261,18 +259,14 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                 ),
                 of(
                   FilesActions.getFilesSuccess({
-                    files: fileResources.map((r) => {
-                      const id = r.reviewUrl ? r.reviewUrl : r.targetUrl;
-
-                      return {
-                        id,
-                        folderId: getFolderIdFromEntityId(id),
-                        name: splitEntityId(r.targetUrl).name,
-                        contentLength: 0,
-                        contentType: '',
-                        isPublicationFile: true,
-                      };
-                    }),
+                    files: fileResources.map((r) => ({
+                      id: r.reviewUrl,
+                      folderId: getFolderIdFromEntityId(r.reviewUrl),
+                      name: splitEntityId(r.targetUrl).name,
+                      contentLength: 0,
+                      contentType: '',
+                      isPublicationFile: true,
+                    })),
                   }),
                 ),
               ),
