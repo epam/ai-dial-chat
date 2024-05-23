@@ -62,7 +62,7 @@ export const UserDesktop = () => {
         className="w-full"
         trigger={
           <div
-            className="flex items-center justify-end gap-2 pr-3 hover:text-accent-primary"
+            className="flex min-w-[110px] items-center justify-end gap-2 pr-3 hover:text-accent-primary"
             data-qa="account-settings"
           >
             <span>{session?.user?.name || t('User')}</span>
