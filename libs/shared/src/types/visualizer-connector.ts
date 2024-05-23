@@ -13,11 +13,11 @@ export interface VisualizerConnectorOptions {
 
 export type VisualizerConnectorRequest = DialLibRequest;
 
-export interface CustomVisualizerDataLayout extends Record<string, unknown> {
+export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
 }
-export interface CustomVisualizerData extends Record<string, unknown> {
+export interface CustomVisualizerData {
   layout: CustomVisualizerDataLayout;
 }
 export interface AttachmentData {

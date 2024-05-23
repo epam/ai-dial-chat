@@ -49,15 +49,15 @@ CUSTOM_VISUALIZERS=[
 
 ```
 
-Futhermore, model or application should send data in _json_ like format which should include layout property. This layout object should have **width** and **height** properties. All other properties could be set to anything you need for your **Visualizer**.
+Futhermore, model or application should send data in **json**-like format which should include layout property. This layout object should have **width** and **height** properties. All other properties could be set to anything you need for your **Visualizer**.
 
 ```typescript
-export interface CustomVisualizerDataLayout extends Record<string, unknown> {
+export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
 }
 
-export interface CustomVisualizerData extends Record<string, unknown> {
+export interface CustomVisualizerData {
   layout: CustomVisualizerDataLayout;
 }
 ```
@@ -101,10 +101,10 @@ export interface AttachmentData {
 ```
 
 `CustomVisualizerDataLayout` - interface for the layout you will get from the _DIAL CHAT_.
-Properties **width** and **height** is needed for proper rendering in the _DIAL CHAT_.
+Properties **width** and **height** is needed for the proper rendering in the _DIAL CHAT_.
 
 ```typescript
-export interface CustomVisualizerDataLayout extends Record<string, unknown> {
+export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
 }
@@ -218,7 +218,7 @@ export const Module: FC = () => {
     }
   }, [dialHost, appName]);
 
-  const typedVisualizerData = React.useMemo(() => {
+  const typedVisualizerData = useMemo(() => {
     return (
       data?.visualizerData && (data.visualizerData as unknown as { dataToRender: string; layout: YourVisualizerLayout })
     );
