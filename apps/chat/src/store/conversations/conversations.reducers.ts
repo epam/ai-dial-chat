@@ -27,6 +27,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
+import { CustomVisualizerData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export { ConversationsSelectors };
@@ -51,6 +52,8 @@ const initialState: ConversationsState = {
   chartLoading: false,
   isActiveNewConversationRequest: false,
   isMessageSending: false,
+  loadedCustomAttachmentsData: [],
+  customAttachmentDataLoading: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -675,6 +678,37 @@ export const conversationsSlice = createSlice({
             },
           ];
       state.chartLoading = false;
+    },
+    getCustomAttachmentData: (
+      state,
+      _action: PayloadAction<{
+        pathToAttachment: string;
+      }>,
+    ) => {
+      state.customAttachmentDataLoading = true;
+    },
+    getCustomAttachmentDataSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        params: CustomVisualizerData;
+        url: string;
+      }>,
+    ) => {
+      state.loadedCustomAttachmentsData =
+        state.loadedCustomAttachmentsData.find(
+          (attachmentData) => attachmentData.url === payload.url,
+        )
+          ? state.loadedCustomAttachmentsData
+          : [
+              ...state.loadedCustomAttachmentsData,
+              {
+                url: payload.url,
+                data: payload.params,
+              },
+            ];
+      state.customAttachmentDataLoading = false;
     },
     cleanupIsolatedConversation: (state) => state,
     uploadChildConversationsWithFoldersSuccess: (

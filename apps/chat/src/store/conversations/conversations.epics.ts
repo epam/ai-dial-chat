@@ -113,6 +113,7 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
+import { CustomVisualizerData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -2469,6 +2470,32 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
     ),
   );
 
+const getCustomAttachmentDataEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.getCustomAttachmentData.match),
+    switchMap(({ payload }) =>
+      FileService.getFileContent<CustomVisualizerData>(
+        payload.pathToAttachment,
+      ).pipe(
+        switchMap((params) => {
+          return of(
+            ConversationsActions.getCustomAttachmentDataSuccess({
+              params,
+              url: payload.pathToAttachment,
+            }),
+          );
+        }),
+        catchError(() =>
+          of(
+            UIActions.showErrorToast(
+              translate('Error while uploading chart data'),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
 const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter((action) =>
@@ -2557,4 +2584,6 @@ export const ConversationsEpics = combineEpics(
   getChartAttachmentEpic,
 
   cleanupIsolatedConversationEpic,
+
+  getCustomAttachmentDataEpic,
 );
