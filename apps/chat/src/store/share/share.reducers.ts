@@ -23,6 +23,8 @@ export interface ShareState {
   isFolderAccepted: boolean | undefined;
   shareFeatureType?: FeatureType;
   shareIsFolder?: boolean;
+  isConversation?: boolean;
+  isPrompt?: boolean;
 }
 
 const initialState: ShareState = {
@@ -35,6 +37,8 @@ const initialState: ShareState = {
   isFolderAccepted: undefined,
   shareFeatureType: undefined,
   shareIsFolder: undefined,
+  isConversation: undefined,
+  isPrompt: undefined,
 };
 
 export const shareSlice = createSlice({
@@ -156,10 +160,19 @@ export const shareSlice = createSlice({
     ) => state,
     acceptShareInvitationSuccess: (
       state,
-      { payload }: PayloadAction<{ acceptedId: string; isFolder: boolean }>,
+      {
+        payload,
+      }: PayloadAction<{
+        acceptedId: string;
+        isFolder: boolean;
+        isConversation?: boolean;
+        isPrompt?: boolean;
+      }>,
     ) => {
       state.acceptedId = payload.acceptedId;
       state.isFolderAccepted = payload.isFolder;
+      state.isConversation = payload.isConversation;
+      state.isPrompt = payload.isPrompt;
     },
     triggerGettingSharedConversationListings: (state) => state,
     triggerGettingSharedPromptListings: (state) => state,
@@ -172,6 +185,8 @@ export const shareSlice = createSlice({
     resetAcceptedEntityInfo: (state) => {
       state.acceptedId = undefined;
       state.isFolderAccepted = undefined;
+      state.isConversation = undefined;
+      state.isPrompt = undefined;
     },
     getSharedListing: (
       state,
@@ -219,6 +234,8 @@ const selectAcceptedEntityInfo = createSelector([rootSelector], (state) => {
   return {
     acceptedId: state.acceptedId,
     isFolderAccepted: state.isFolderAccepted,
+    isConversation: state.isConversation,
+    isPrompt: state.isPrompt,
   };
 });
 
