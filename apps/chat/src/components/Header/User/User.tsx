@@ -8,7 +8,7 @@ export const User = () => {
         <ProfileButton />
       </div>
 
-      <div className="hidden size-full md:block">
+      <div className="hidden size-full md:flex">
         <UserDesktop />
       </div>
     </>

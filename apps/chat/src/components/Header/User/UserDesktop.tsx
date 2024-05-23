@@ -46,10 +46,13 @@ export const UserDesktop = () => {
   }, [isSmallScreenOrMobile]);
 
   return (
-    <div className="mt-[15px] flex items-center justify-center">
+    <div className="flex items-center justify-center">
       {!isSmallScreenOrMobile && (
         <Tooltip isTriggerClickable tooltip={t('Tour Guide')}>
-          <button onClick={startTour} className="ml-[25px] mr-[25px]">
+          <button
+            onClick={startTour}
+            className="mx-[25px] hover:text-accent-primary"
+          >
             <TourGuideIcon />
           </button>
         </Tooltip>
@@ -59,7 +62,7 @@ export const UserDesktop = () => {
         className="w-full"
         trigger={
           <div
-            className="flex min-w-[120px] items-center justify-end gap-2 pr-3 hover:text-accent-primary"
+            className="flex items-center justify-end gap-2 pr-3 hover:text-accent-primary"
             data-qa="account-settings"
           >
             <span>{session?.user?.name || t('User')}</span>
@@ -77,14 +80,6 @@ export const UserDesktop = () => {
                 <UserDesktopIcon width={30} height={30} />
               )}
             </div>
-            {/* PGPT-87 According to the design we temporarily do not need this icon*/}
-            {/*<ChevronDownIcon*/}
-            {/*  className={`shrink-0 text-primary-bg-dark transition-all ${*/}
-            {/*    isOpen ? 'rotate-180' : ''*/}
-            {/*  }`}*/}
-            {/*  width={18}*/}
-            {/*  height={18}*/}
-            {/*/>*/}
           </div>
         }
       >
