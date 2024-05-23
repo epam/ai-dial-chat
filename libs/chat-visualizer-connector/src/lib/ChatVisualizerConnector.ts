@@ -1,4 +1,5 @@
 import {
+  AttachmentData,
   VisualizerConnectorEvents,
   VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
@@ -10,11 +11,6 @@ interface RequestParams {
 }
 export interface PostMessageRequestParams extends RequestParams {
   dialHost: string;
-}
-
-export interface AttachmentData {
-  mimeType: string;
-  visualizerData: Record<string, unknown>;
 }
 
 /**
