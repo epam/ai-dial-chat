@@ -9,6 +9,7 @@ export interface ChatOverlayOptions {
 
   theme?: string;
   modelId?: string;
+  overlayConversationId?: string;
 
   enabledFeatures?: Feature[] | string;
 

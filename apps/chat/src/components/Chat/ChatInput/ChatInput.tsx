@@ -20,6 +20,7 @@ interface Props {
   onRegenerate: () => void;
   showReplayControls: boolean;
   children?: ReactNode;
+  hideFooter?: boolean;
 }
 
 export const ChatInput = ({
@@ -34,6 +35,7 @@ export const ChatInput = ({
   isShowInput,
   showReplayControls,
   children,
+  hideFooter,
 }: Props) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -71,7 +73,7 @@ export const ChatInput = ({
           showReplayControls={showReplayControls}
         />
       )}
-      <ChatInputFooter />
+      {!hideFooter && <ChatInputFooter />}
     </div>
   );
 };

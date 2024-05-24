@@ -33,6 +33,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -100,6 +101,10 @@ export default function ItemContextMenu({
   );
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, entity, featureType),
+  );
+
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
 
   const isNameInvalid = isEntityNameInvalid(entity.name);
@@ -257,7 +262,7 @@ export default function ItemContextMenu({
         name: t('Publish'),
         dataQa: 'publish',
         display:
-          !isEmptyConversation &&
+          (!isEmptyConversation || isPlayback) &&
           isPublishingEnabled &&
           !entity.isPublished &&
           !!onPublish &&
@@ -317,6 +322,7 @@ export default function ItemContextMenu({
       onUnshare,
       onView,
       t,
+      isPlayback,
     ],
   );
 

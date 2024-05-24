@@ -17,7 +17,11 @@ import {
   Replay,
   Role,
 } from '@/src/types/chat';
-import { EntityType, UploadStatus } from '@/src/types/common';
+import {
+  BackendResourceType,
+  EntityType,
+  UploadStatus,
+} from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -103,6 +107,13 @@ export const ChatView = memo(() => {
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
+  const publicationItems = useAppSelector((state) =>
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      BackendResourceType.CONVERSATION,
+    ),
+  );
+
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
@@ -130,6 +141,11 @@ export const ChatView = memo(() => {
   const isNotEmptyConversations = selectedConversations.some(
     (conv) => conv.messages.length > 0,
   );
+
+  const isPublishedPlayback =
+    isPlayback &&
+    isExternal &&
+    !selectedConversations.some((conv) => conv.publishedWithMe);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
@@ -823,7 +839,8 @@ export const ChatView = memo(() => {
                     <NotAllowedModel type={notAllowedType} />
                   ) : (
                     <>
-                      {!isPlayback && (
+                      {(!isPlayback ||
+                        (isPublishedPlayback && publicationItems.length)) && (
                         <ChatInput
                           showReplayControls={showReplayControls}
                           textareaRef={textareaRef}
@@ -840,6 +857,7 @@ export const ChatView = memo(() => {
                             (!isReplay || isNotEmptyConversations) &&
                             !isExternal
                           }
+                          hideFooter={isPublishedPlayback}
                         >
                           {showReplayControls && !isNotEmptyConversations && (
                             <StartReplayButton />

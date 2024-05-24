@@ -9,6 +9,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { PublicationControls } from './Publish/PublicationChatControls';
 
@@ -28,6 +29,10 @@ export default function ChatExternalControls({ conversations }: Props) {
     ),
   );
 
+  const isOverlayConversationId = useAppSelector(
+    SettingsSelectors.selectOverlayConversationId,
+  );
+
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
       dispatch(ConversationsActions.duplicateConversation(conv));
@@ -44,6 +49,9 @@ export default function ChatExternalControls({ conversations }: Props) {
     );
   }
 
+  if (isOverlayConversationId) {
+    return null;
+  }
   return (
     <button
       className="button button-chat !-top-10"
