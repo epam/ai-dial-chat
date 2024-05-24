@@ -302,7 +302,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         data-qa="prompt"
       >
         <div
-          className={classNames('flex size-full items-center gap-2', {
+          className={classNames('flex max-w-full items-center gap-2', {
             'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid}
@@ -325,11 +325,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               hideTooltip={isNameOrPathInvalid}
               contentClassName="sm:max-w-[400px] max-w-[250px]"
               triggerClassName={classNames(
-                'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                'max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                 isNameOrPathInvalid && 'text-secondary',
               )}
             >
-              {prompt.name}
+              <span
+                className="block max-w-full truncate whitespace-pre"
+                data-qa="attached-file-name"
+              >
+                {prompt.name}
+              </span>
             </Tooltip>
           </div>
         </div>

@@ -126,9 +126,14 @@ export function ConversationView({
           }
           hideTooltip={isNameOrPathInvalid}
           contentClassName="sm:max-w-[400px] max-w-[250px]"
-          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+          triggerClassName=" max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         >
-          {conversation.name}
+          <span
+            className="block max-w-full truncate whitespace-pre"
+            data-qa="attached-file-name"
+          >
+            {conversation.name}
+          </span>
         </Tooltip>
       </div>
     </>
@@ -581,7 +586,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
+            'group flex max-w-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
             isSelected && 'pr-0',
           )}
           onClick={() => {

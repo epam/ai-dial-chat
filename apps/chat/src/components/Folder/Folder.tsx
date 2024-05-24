@@ -685,7 +685,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     >
       <div
         className={classNames(
-          'group/folder-item group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group/button group/folder-item group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           !withBorderHighlight && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
           isHighlighted && withBorderHighlight && 'border-accent-primary',
@@ -768,7 +768,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           </div>
         ) : (
           <div
-            className="group/button group/folder-item flex size-full cursor-pointer items-center gap-1 py-2 pr-3"
+            className="group/folder-item flex max-w-full cursor-pointer items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 24}px`,
             }}
