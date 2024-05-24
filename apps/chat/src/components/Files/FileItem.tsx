@@ -206,11 +206,12 @@ export const FileItem = ({
             <div
               className="h-full bg-controls-accent"
               style={{ width: `${item.percent}%` }}
+              data-qa="attachment-loading"
             ></div>
           </div>
         )}
         {item.status === UploadStatus.FAILED && (
-          <button onClick={handleRetry}>
+          <button onClick={handleRetry} data-qa="retry-upload">
             <IconReload
               className="shrink-0 text-secondary hover:text-accent-primary"
               size={18}
@@ -218,7 +219,7 @@ export const FileItem = ({
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
-          <button onClick={handleCancelFile}>
+          <button onClick={handleCancelFile} data-qa="remove-file">
             <IconX
               className="shrink-0 text-secondary hover:text-accent-primary"
               size={18}

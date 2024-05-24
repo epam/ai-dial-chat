@@ -11,13 +11,4 @@ export class UploadFromDeviceModal extends BaseElement {
   public uploadButton = this.getChildElementBySelector(
     UploadFromDeviceModalSelectors.uploadButton,
   );
-
-  public async uploadFile() {
-    const respPromise = this.page.waitForResponse(
-      (resp) => resp.request().method() === 'POST',
-    );
-    await this.uploadButton.click();
-    await respPromise;
-    await this.waitForState({ state: 'hidden' });
-  }
 }

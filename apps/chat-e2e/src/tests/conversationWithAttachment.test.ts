@@ -230,7 +230,7 @@ dialTest(
             await sendMessageInputAttachments.inputAttachmentLoadingIndicator(
               Attachment.sunImageName,
             ),
-            ExpectedMessages.attachmentLoadingIndicatorNotVisible,
+            ExpectedMessages.attachmentLoadingIndicatorIsVisible,
           )
           .toBeVisible();
       },
@@ -241,6 +241,7 @@ dialTest(
 dialTest(
   'Long attachment name is cut with three dots at the end in message box.\n' +
     'Attachment name is shown fully if to click on it. Text attachment.\n' +
+    '[Manage attachments] Long file name is cut with three dots at the end.\n' +
     'Attached picture is shown if to click on the button.\n' +
     'Download attached file from user message',
   async ({
@@ -256,7 +257,13 @@ dialTest(
     page,
     sendMessageInputAttachments,
   }) => {
-    setTestIds('EPMRTC-1896', 'EPMRTC-1897', 'EPMRTC-1898', 'EPMRTC-1899');
+    setTestIds(
+      'EPMRTC-1896',
+      'EPMRTC-1897',
+      'EPMRTC-3297',
+      'EPMRTC-1898',
+      'EPMRTC-1899',
+    );
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );
@@ -267,7 +274,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Create new conversation based on model with long name input attachment',
+      'Create new conversation and upload attachment with long name',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
@@ -278,7 +285,22 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
+      },
+    );
+
+    await dialTest.step(
+      'Check uploaded file and verify its name is truncated in Attach file modal',
+      async () => {
         await attachFilesModal.checkAttachedFile(Attachment.longImageName);
+        const attachmentNameOverflow = await attachFilesModal
+          .attachedFileName(Attachment.longImageName)
+          .getComputedStyleProperty(Styles.text_overflow);
+        expect
+          .soft(
+            attachmentNameOverflow[0],
+            ExpectedMessages.attachmentNameIsTruncated,
+          )
+          .toBe(Overflow.ellipsis);
         await attachFilesModal.attachFiles();
       },
     );

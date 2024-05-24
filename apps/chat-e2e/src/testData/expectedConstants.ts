@@ -33,6 +33,8 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?',
+  deleteFileMessage: 'Are you sure that you want to delete this file',
+  deleteFilesMessage: 'Are you sure that you want to delete these files',
   deleteSharedFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?\n' +
     'Deleting will stop sharing and other users will no longer see this folder.',
@@ -133,6 +135,8 @@ export enum MenuOptions {
   unpublish = 'Unpublish',
   delete = 'Delete',
   newFolder = 'New folder',
+  attachments = 'Attachments',
+  download = 'Download',
 }
 
 export enum FilterMenuOptions {

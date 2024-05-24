@@ -565,6 +565,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleStartDeleteMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="delete-files"
             >
               <Tooltip tooltip="Delete files" isTriggerClickable>
                 <IconTrash size={24} />
@@ -575,6 +576,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleDownloadMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="download-files"
             >
               <Tooltip tooltip="Download files" isTriggerClickable>
                 <IconDownload size={24} />
@@ -597,6 +599,7 @@ export const FileManagerModal = ({
               'button',
               customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
+            data-qa="upload-from-device"
           >
             {t('Upload from device')}
           </button>

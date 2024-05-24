@@ -1,5 +1,5 @@
-export const Dialog = {
-  confirmationDialog: '[data-qa="confirmation-dialog"]',
+export const ConfirmationDialogSelectors = {
+  container: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
   confirm: '[data-qa="confirm"]',
   confirmationMessage: '[data-qa="confirm-message"]',
@@ -56,4 +56,28 @@ export const InfoTooltip = {
   tempInfo: '[data-qa="temp-info"]',
   addonsInfo: '[data-qa="addons-info"]',
   tooltip: '[data-qa="tooltip"]',
+};
+
+export const ShareModalSelectors = {
+  modalContainer: '[data-qa="share-modal"]',
+  shareLink: '[data-qa="share-link"]',
+  copyLink: '[data-qa="copy-link"]',
+  entityName: '[data-qa="modal-entity-name"]',
+  shareText: ' .text-sm',
+};
+
+export const UploadFromDeviceModalSelectors = {
+  modalContainer: '[data-qa="pre-upload-modal"]',
+  uploadButton: '[data-qa="upload"]',
+};
+
+export const AttachFilesModalSelectors = {
+  modalContainer: '[data-qa="file-manager-modal"]',
+  attachedFile: '[data-qa="attached-file"]',
+  attachedFileName: '[data-qa="attached-file-name"]',
+  attachedFileIcon: '[data-qa="attached-file-icon"]',
+  attachFilesButton: '[data-qa="attach-files"]',
+  uploadFromDeviceButton: '[data-qa="upload-from-device"]',
+  deleteFilesButton: '[data-qa="delete-files"]',
+  downloadFilesButton: '[data-qa="download-files"]',
 };
