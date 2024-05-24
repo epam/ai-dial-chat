@@ -730,7 +730,9 @@ dialTest(
       'Open chat settings and update them for both models',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [initRandomModel.iconUrl],
+          iconsToBeLoaded: initRandomModel?.iconUrl
+            ? [initRandomModel.iconUrl]
+            : undefined,
         });
         await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
