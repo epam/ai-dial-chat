@@ -1014,21 +1014,27 @@ const importZipEpic: AppEpic = (action$) =>
                     return of(ImportExportActions.importFail(FeatureType.Chat));
                   }
 
-                  const conversation =
-                    cleanHistory.history[firstConversationIndex];
-
-                  const importFileFolderPath = constructPath(
-                    getFileRootId(),
-                    ImportRoot.Imports,
-                    conversation.name,
+                  const importFileFolderPaths = uniq(
+                    attachmentsToUpload.map((a) =>
+                      constructPath(getFileRootId(), a.relativePath),
+                    ),
                   );
 
-                  return FileService.getFiles(importFileFolderPath).pipe(
-                    switchMap((existedFiles) => {
+                  const fileObservables = importFileFolderPaths.map(
+                    (folderPath) => FileService.getFiles(folderPath),
+                  );
+
+                  return forkJoin(fileObservables).pipe(
+                    switchMap((allExistedFiles) => {
+                      const existedFiles = allExistedFiles.flat();
+
                       const attachmentsToUploadWithFolder =
                         attachmentsToUpload.map((attachment) => ({
                           ...attachment,
-                          folderId: importFileFolderPath,
+                          folderId: constructPath(
+                            getFileRootId(),
+                            attachment.relativePath,
+                          ),
                         }));
 
                       const duplicatedFiles =
@@ -1078,29 +1084,30 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadConversationAttachments.match),
     switchMap(({ payload }) => {
-      const { attachmentsToPostfix, attachmentsToReplace, completeHistory } =
-        payload;
+      const { attachmentsToPostfix, attachmentsToReplace } = payload;
       const bucket = BucketService.getBucket();
 
       if (!bucket.length) {
         return of(ImportExportActions.importFail(FeatureType.Chat));
       }
 
-      const conversation = completeHistory.history[firstConversationIndex];
-
-      const importFileFolderPath = constructPath(
-        getFileRootId(),
-        ImportRoot.Imports,
-        conversation.name,
+      const importFileFolderPaths = uniq(
+        [...attachmentsToPostfix, ...(attachmentsToReplace ?? [])].map((a) =>
+          constructPath(getFileRootId(), a.relativePath),
+        ),
       );
 
-      return FileService.getFiles(importFileFolderPath).pipe(
-        switchMap((filesFromFolder) => {
+      const fileObservables = importFileFolderPaths.map((folderPath) =>
+        FileService.getFiles(folderPath),
+      );
+
+      return forkJoin(fileObservables).pipe(
+        switchMap((filesFromAllFolders) => {
           const nonDuplicatedFiles =
             ImportExportSelectors.selectNonDuplicatedFiles(state$.value);
 
           const alreadyExistedFiles = [
-            ...filesFromFolder,
+            ...filesFromAllFolders.flat(),
             ...nonDuplicatedFiles,
           ];
 
@@ -1132,14 +1139,9 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
               attachment.name,
             );
 
-            const relativePath = constructPath(
-              ImportRoot.Imports,
-              conversation.name,
-            );
-
             return FileService.sendFile(
               formData,
-              relativePath,
+              attachment.relativePath,
               attachment.name,
             ).pipe(
               filter(
