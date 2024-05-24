@@ -34,7 +34,6 @@ const initEpic: AppEpic = (action$, state$) =>
       );
 
       return forkJoin({
-        theme: DataService.getTheme(),
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()
           : of([]),
@@ -49,7 +48,6 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
     switchMap(
       ({
-        theme,
         availableThemes,
         showChatbar,
         showPromptbar,
@@ -60,28 +58,16 @@ const initEpic: AppEpic = (action$, state$) =>
         customLogo,
       }) => {
         const actions = [];
-        // PGPT-87: Temporary remove new theme from envs except for dev and show only new theme on dev env
-        const filteredAvailableThemes = availableThemes.filter((theme) =>
-          process.env.NODE_ENV === 'development'
-            ? theme.id === 'prNewDesign'
-            : theme.id !== 'prNewDesign',
-        );
 
-        if (
-          filteredAvailableThemes.some(
-            (availableTheme) => availableTheme.id === theme,
-          )
-        ) {
-          actions.push(UIActions.setTheme(theme));
-        } else if (typeof filteredAvailableThemes[0] !== 'undefined') {
-          actions.push(UIActions.setTheme(filteredAvailableThemes[0]?.id));
+        if (typeof availableThemes[0] !== 'undefined') {
+          actions.push(UIActions.setTheme(availableThemes[0]?.id));
         }
 
         if (customLogo) {
           actions.push(UIActions.setCustomLogo({ logo: customLogo }));
         }
 
-        actions.push(UIActions.setAvailableThemes(filteredAvailableThemes));
+        actions.push(UIActions.setAvailableThemes(availableThemes));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
         actions.push(
