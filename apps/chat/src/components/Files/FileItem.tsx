@@ -188,16 +188,22 @@ export const FileItem = ({
               </div>
             )}
         </div>
-        <span
-          className={classNames(
-            'block max-w-full truncate whitespace-pre',
-            item.status === UploadStatus.FAILED && 'text-error',
-            isSelected && 'text-accent-primary',
-          )}
-          data-qa="attached-file-name"
+        <Tooltip
+          contentClassName="sm:max-w-[400px] max-w-[250px]"
+          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+          tooltip={t(item.name)}
         >
-          {item.name}
-        </span>
+          <span
+            className={classNames(
+              'block max-w-full truncate whitespace-pre',
+              item.status === UploadStatus.FAILED && 'text-error',
+              isSelected && 'text-accent-primary',
+            )}
+            data-qa="attached-file-name"
+          >
+            {item.name}
+          </span>
+        </Tooltip>
       </div>
 
       <div className="flex items-center gap-2">

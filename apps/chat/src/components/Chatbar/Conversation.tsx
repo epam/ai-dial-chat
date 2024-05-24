@@ -120,10 +120,12 @@ export function ConversationView({
         data-qa="conversation-name"
       >
         <Tooltip
-          tooltip={t(
-            getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
-          )}
-          hideTooltip={!isNameOrPathInvalid}
+          tooltip={
+            conversation.name ||
+            t(getEntityNameError(isNameInvalid, isInvalidPath, isExternal))
+          }
+          hideTooltip={isNameOrPathInvalid}
+          contentClassName="sm:max-w-[400px] max-w-[250px]"
           triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         >
           {conversation.name}
