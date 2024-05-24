@@ -71,7 +71,7 @@ import {
 import { Conversation, Message, Stage } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { ImportRoot, LatestExportFormat } from '@/src/types/import-export';
+import { LatestExportFormat } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
 
