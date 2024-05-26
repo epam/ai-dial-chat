@@ -860,9 +860,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   )
                 }
                 hideTooltip={isNameOrPathInvalid}
-                contentClassName="sm:max-w-[400px] max-w-[250px]"
+                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  'block max-h-5 flex-1 truncate whitespace-pre text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
                       ? 'text-primary'

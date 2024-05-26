@@ -189,9 +189,9 @@ export const FileItem = ({
             )}
         </div>
         <Tooltip
-          contentClassName="sm:max-w-[400px] max-w-[250px]"
-          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-          tooltip={t(item.name)}
+          tooltip={item.name}
+          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
+          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         >
           <span
             className={classNames(
