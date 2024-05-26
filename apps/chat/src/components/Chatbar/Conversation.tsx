@@ -152,8 +152,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
   const isReplay = useMemo(
-    () =>
-      conversation.isReplay || (conversation as Conversation).replay?.isReplay,
+    () => (conversation as Conversation).replay?.isReplay,
     [conversation],
   );
   const folders = useAppSelector((state) =>
@@ -165,9 +164,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     ),
   );
   const isPlayback = useMemo(
-    () =>
-      conversation.isPlayback ||
-      (conversation as Conversation).playback?.isPlayback,
+    () => (conversation as Conversation).playback?.isPlayback,
     [conversation],
   );
   const isExternal = useAppSelector((state) =>
