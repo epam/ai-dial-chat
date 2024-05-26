@@ -849,7 +849,16 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               data-qa="folder-name"
             >
               <Tooltip
-                tooltip={currentFolder.name}
+                tooltip={
+                  currentFolder.name ||
+                  t(
+                    getEntityNameError(
+                      isNameInvalid,
+                      isInvalidPath,
+                      isExternal,
+                    ),
+                  )
+                }
                 hideTooltip={isNameOrPathInvalid}
                 contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                 triggerClassName={classNames(

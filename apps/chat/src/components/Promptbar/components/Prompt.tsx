@@ -318,7 +318,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
 
           <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
             <Tooltip
-              tooltip={prompt.name}
+              tooltip={
+                prompt.name ||
+                t(getEntityNameError(isNameInvalid, isInvalidPath, isExternal))
+              }
               triggerClassName={classNames(
                 'max-h-5 flex-1 truncate whitespace-pre text-left',
                 isNameOrPathInvalid && 'text-secondary',
