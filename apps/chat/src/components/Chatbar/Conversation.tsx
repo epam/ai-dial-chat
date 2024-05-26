@@ -7,7 +7,6 @@ import {
   MouseEventHandler,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -151,10 +150,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isReplay = useMemo(
-    () => (conversation as Conversation).replay?.isReplay,
-    [conversation],
-  );
+  const isReplay = (conversation as Conversation).replay?.isReplay;
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -163,10 +159,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       true,
     ),
   );
-  const isPlayback = useMemo(
-    () => (conversation as Conversation).playback?.isPlayback,
-    [conversation],
-  );
+  const isPlayback = (conversation as Conversation).playback?.isPlayback;
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
