@@ -36,7 +36,7 @@ import {
 } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
@@ -170,6 +170,8 @@ export const ChatView = memo(() => {
         !isConversationUpdatedFromQueryParams &&
         modelIds?.includes(modelId as string)
       ) {
+        dispatch(UIActions.setShowPromptbar(false));
+        dispatch(UIActions.setShowChatbar(false));
         dispatch(ConversationsActions.updateConversationFromQueryParams());
         dispatch(
           ConversationsActions.updateConversation({
