@@ -16,6 +16,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { getAttachments } from '@/src/utils/app/share';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ApiKeys, ShareEntity } from '@/src/types/common';
@@ -120,6 +121,7 @@ function PublishModalFilters({
     const initialSelectedFilter = otherTargetAudienceFilters.find(
       ({ id }) => id === filter,
     );
+
     return (
       <CollapsibleSection
         name={startCase(toLower(filter))}
@@ -230,18 +232,22 @@ export function PublishModal({
               ),
             );
 
-            return urls.map((oldUrl) => ({
-              oldUrl,
-              newUrl: createTargetUrl(
-                ApiKeys.Files,
-                trimmedPath,
-                constructPath(
-                  ...c.id.split('/').slice(0, -1),
-                  ...oldUrl.split('/').slice(-1),
-                ).replace(folderRegExp, ''),
-                type,
-              ),
-            }));
+            return urls.map((oldUrl) => {
+              const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+
+              return {
+                oldUrl: decodedOldUrl,
+                newUrl: createTargetUrl(
+                  ApiKeys.Files,
+                  trimmedPath,
+                  constructPath(
+                    ...c.id.split('/').slice(0, -1),
+                    ...decodedOldUrl.split('/').slice(-1),
+                  ).replace(folderRegExp, ''),
+                  type,
+                ),
+              };
+            });
           });
 
         dispatch(
@@ -261,11 +267,14 @@ export function PublishModal({
               })),
               ...files.reduce<{ sourceUrl: string; targetUrl: string }[]>(
                 (acc, file) => {
-                  const item = mappedFiles.find((f) => f.oldUrl === file.id);
+                  const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+                  const item = mappedFiles.find(
+                    (f) => f.oldUrl === decodedFileId,
+                  );
 
                   if (item) {
                     acc.push({
-                      sourceUrl: file.id,
+                      sourceUrl: decodedFileId,
                       targetUrl: item.newUrl,
                     });
                   }
@@ -431,17 +440,7 @@ export function PublishModal({
               >
                 <FilePublicationResources
                   uploadedFiles={files}
-                  resources={files.map((f) => ({
-                    action: PublishActions.ADD,
-                    sourceUrl: f.id,
-                    targetUrl: constructPath(
-                      ApiKeys.Files,
-                      'public',
-                      path,
-                      f.name,
-                    ),
-                    reviewUrl: f.id,
-                  }))}
+                  resources={[]}
                   forViewOnly
                 />
               </CollapsibleSection>

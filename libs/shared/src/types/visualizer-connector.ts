@@ -12,3 +12,15 @@ export interface VisualizerConnectorOptions {
 }
 
 export type VisualizerConnectorRequest = DialLibRequest;
+
+export interface CustomVisualizerDataLayout {
+  width: number;
+  height: number;
+}
+export interface CustomVisualizerData {
+  layout: CustomVisualizerDataLayout;
+}
+export interface AttachmentData {
+  mimeType: string;
+  visualizerData: CustomVisualizerData;
+}
