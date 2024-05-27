@@ -115,9 +115,7 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div
-        className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-      >
+      <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
         <Tooltip
           tooltip={
             !isNameOrPathInvalid
