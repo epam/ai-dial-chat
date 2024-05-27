@@ -10,7 +10,7 @@ import { Page } from '@playwright/test';
 
 export class FolderConversations extends Folders {
   constructor(page: Page) {
-    super(page, ChatBarSelectors.pinnedChats(), ChatBarSelectors.conversation);
+    super(page, ChatBarSelectors.pinnedChats(), ChatBarSelectors.conversationName);
   }
 
   public async selectShareMenuOption() {

@@ -337,7 +337,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             >
               <span
                 className="block max-w-full truncate whitespace-pre"
-                data-qa="attached-file-name"
+                data-qa="prompt-name"
               >
                 {prompt.name}
               </span>

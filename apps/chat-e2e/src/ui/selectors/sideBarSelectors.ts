@@ -46,6 +46,7 @@ export const PromptBarSelectors = {
   newPromptButton: '[data-qa="new-prompt"]',
   prompts: '[data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
+  promptName: '[data-qa="prompt-name"]',
   deletePrompts: '[data-qa="delete-prompts"]',
   leftResizeIcon: '[data-qa="left-resize-icon"]',
 };

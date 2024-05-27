@@ -117,7 +117,6 @@ export function ConversationView({
       </ShareIcon>
       <div
         className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-        data-qa="conversation-name"
       >
         <Tooltip
           tooltip={
@@ -130,7 +129,7 @@ export function ConversationView({
         >
           <span
             className="block max-w-full truncate whitespace-pre"
-            data-qa="attached-file-name"
+            data-qa="conversation-name"
           >
             {conversation.name}
           </span>

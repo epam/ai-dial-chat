@@ -5,6 +5,6 @@ import { Page } from '@playwright/test';
 
 export class FolderPrompts extends Folders {
   constructor(page: Page) {
-    super(page, PromptBarSelectors.promptFolders, PromptBarSelectors.prompt);
+    super(page, PromptBarSelectors.promptFolders, PromptBarSelectors.promptName);
   }
 }
