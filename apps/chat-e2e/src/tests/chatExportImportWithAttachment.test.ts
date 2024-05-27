@@ -96,8 +96,8 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        const beforeImportConversationsCount =
-          await conversations.getElementsCount();
+        const beforeImportConversations =
+          await conversations.getTodayConversations();
         await dialHomePage.throttleAPIResponse('**/*');
         await dialHomePage.uploadData(
           { path: Import.importedAttachmentsFilename },
@@ -107,14 +107,14 @@ dialTest(
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
-        const afterImportConversationsCount =
-          await conversations.getElementsCount();
+        const afterImportConversations =
+          await conversations.getTodayConversations();
         expect
           .soft(
-            beforeImportConversationsCount === afterImportConversationsCount,
+            afterImportConversations.length,
             ExpectedMessages.dataIsNotImported,
           )
-          .toBeTruthy();
+          .toBe(beforeImportConversations.length);
       },
     );
   },
