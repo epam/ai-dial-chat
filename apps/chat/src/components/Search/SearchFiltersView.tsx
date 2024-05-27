@@ -59,6 +59,7 @@ export default function SearchFiltersView({
           dataQa: 'shared-by-me-filter',
           filterValue: SearchFilters.SharedByMe,
         },
+        // TODO: Published by me filter
       ]
         .filter(({ display }) => display)
         .map(({ filterValue, ...props }) => ({

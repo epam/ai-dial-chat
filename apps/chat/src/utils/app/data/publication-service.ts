@@ -98,9 +98,14 @@ export class PublicationService {
       ...(options?.recursive && { recursive: String(options.recursive) }),
     });
     const resultQuery = query.toString();
-    return ApiUtils.request(
-      `api/publication/${EnumMapper.getApiKeyByFeatureType(featureType)}/public/${ApiUtils.encodeApiUrl(parentPath)}?${resultQuery}`,
-    );
+    return ApiUtils.request(`
+      ${constructPath(
+        'api',
+        'publication',
+        EnumMapper.getApiKeyByFeatureType(featureType),
+        'public',
+        ApiUtils.encodeApiUrl(parentPath),
+      )}${resultQuery ? `?${resultQuery}` : ''}`);
   }
 
   public static getPublishedByMeItems(

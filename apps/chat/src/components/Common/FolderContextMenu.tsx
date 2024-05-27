@@ -136,6 +136,7 @@ export const FolderContextMenu = ({
         onClick: onPublishUpdate,
         disabled: disableAll,
       },
+      // TODO: Unpublish
       {
         name: t('Delete'),
         display:
