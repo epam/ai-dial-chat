@@ -150,9 +150,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isReplay = useAppSelector(
-    ConversationsSelectors.selectIsReplaySelectedConversations,
-  );
+  const isReplay = (conversation as Conversation).replay?.isReplay;
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -161,9 +159,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       true,
     ),
   );
-  const isPlayback = useAppSelector(
-    ConversationsSelectors.selectIsPlaybackSelectedConversations,
-  );
+  const isPlayback = (conversation as Conversation).playback?.isPlayback;
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
@@ -617,7 +613,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         >
           <ItemContextMenu
             entity={conversation}
-            isEmptyConversation={isEmptyConversation}
+            isEmptyConversation={
+              !isReplay && !isPlayback && isEmptyConversation
+            }
             folders={folders}
             featureType={FeatureType.Chat}
             onOpenMoveToModal={() => setIsShowMoveToModal(true)}
@@ -628,13 +626,19 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onOpenExportModal={handleOpenExportModal}
             onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
             onDuplicate={handleDuplicate}
-            onReplay={!isPlayback ? handleStartReplay : undefined}
-            onPlayback={handleCreatePlayback}
-            onShare={handleOpenSharing}
-            onUnshare={handleUnshare}
-            onPublish={handleOpenPublishing}
-            onPublishUpdate={handleOpenPublishing}
-            onUnpublish={handleOpenUnpublishing}
+            onReplay={!isReplay && !isPlayback ? handleStartReplay : undefined}
+            onPlayback={
+              !isReplay && !isPlayback ? handleCreatePlayback : undefined
+            }
+            //TODO: remove `&& !isPlayback` for onShare, onUnshare, onPublish and onUnpublish in https://github.com/epam/ai-dial-chat/issues/1403
+            onShare={!isReplay && !isPlayback ? handleOpenSharing : undefined}
+            onUnshare={!isReplay && !isPlayback ? handleUnshare : undefined}
+            onPublish={
+              !isReplay && !isPlayback ? handleOpenPublishing : undefined
+            }
+            onUnpublish={
+              !isReplay && !isPlayback ? handleOpenUnpublishing : undefined
+            }
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}
