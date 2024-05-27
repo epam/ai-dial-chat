@@ -12,7 +12,7 @@ import {
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
@@ -326,10 +326,7 @@ export function PromptFolders() {
     SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      BackendResourceType.PROMPT,
-    ),
+    PublicationSelectors.selectFilteredPublications(state, FeatureType.Prompt),
   );
 
   const toApproveFolderItem = {
@@ -384,7 +381,7 @@ export function PromptFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          resourceType={BackendResourceType.PROMPT}
+          featureType={FeatureType.Prompt}
           {...toApproveFolderItem}
         />
       )}

@@ -158,7 +158,7 @@ export const selectConversation = createSelector(
   },
 );
 export const selectSelectedConversationsIds = createSelector(
-  [rootSelector],
+  [rootSelector, SettingsSelectors.selectIsOverlay],
   (state) => {
     return state.selectedConversationsIds;
   },

@@ -5,9 +5,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
-import { BackendResourceType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -33,10 +34,13 @@ import some from 'lodash-es/some';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
-  resourceType: BackendResourceType;
+  featureType: FeatureType;
 }
 
-const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
+const PublicationItem = ({
+  publication,
+  featureType: resourceType,
+}: PublicationProps) => {
   const dispatch = useAppDispatch();
 
   const selectedPublication = useAppSelector(
@@ -76,7 +80,7 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
   }, [dispatch, isOpen, publication]);
 
   const ResourcesComponent =
-    resourceType === BackendResourceType.CONVERSATION
+    resourceType === FeatureType.Chat
       ? ConversationPublicationResources
       : PromptPublicationResources;
 
@@ -115,12 +119,12 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
 
 export const ApproveRequiredSection = ({
   name,
-  resourceType,
+  featureType,
   displayRootFiles,
   openByDefault = false,
   dataQa,
 }: Omit<FolderSectionProps, 'filters'> & {
-  resourceType: BackendResourceType;
+  featureType: FeatureType;
 }) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -134,7 +138,7 @@ export const ApproveRequiredSection = ({
     ConversationsSelectors.selectSelectedConversations,
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, resourceType),
+    PublicationSelectors.selectFilteredPublications(state, featureType),
   );
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
@@ -146,7 +150,9 @@ export const ApproveRequiredSection = ({
     const shouldBeHighlighted = !!(
       (selectedPublication &&
         !selectedConversationsIds.length &&
-        selectedPublication.resourceTypes.includes(resourceType)) ||
+        selectedPublication.resourceTypes.includes(
+          EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+        )) ||
       selectedConversationsIds.some((id) => publicationReviewIds.includes(id))
     );
 
@@ -157,7 +163,7 @@ export const ApproveRequiredSection = ({
     displayRootFiles,
     isSectionHighlighted,
     publicationItems,
-    resourceType,
+    featureType,
     selectedConversations,
     selectedConversationsIds,
     selectedPublication,
@@ -172,7 +178,7 @@ export const ApproveRequiredSection = ({
     >
       {publicationItems.map((p) => (
         <PublicationItem
-          resourceType={resourceType}
+          featureType={featureType}
           key={p.url}
           publication={p}
         />

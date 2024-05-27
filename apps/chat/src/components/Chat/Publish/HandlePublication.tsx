@@ -8,9 +8,10 @@ import {
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
 import { isConversationId, isFileId, isPromptId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { Publication, PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -174,19 +175,19 @@ export function HandlePublication({ publication }: Props) {
 
   const sections = [
     {
-      resourceType: BackendResourceType.CONVERSATION,
+      featureType: FeatureType.Chat,
       sectionName: t('Conversations'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
     },
     {
-      resourceType: BackendResourceType.PROMPT,
+      featureType: FeatureType.Prompt,
       sectionName: t('Prompts'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
     },
     {
-      resourceType: BackendResourceType.FILE,
+      featureType: FeatureType.File,
       sectionName: t('Files'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
@@ -329,10 +330,12 @@ export function HandlePublication({ publication }: Props) {
             </div>
             <div className="bg-layer-2 px-5 py-4">
               {sections.map(
-                ({ dataQa, sectionName, Component, resourceType }) =>
-                  publication.resourceTypes.includes(resourceType) && (
+                ({ dataQa, sectionName, Component, featureType }) =>
+                  publication.resourceTypes.includes(
+                    EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+                  ) && (
                     <CollapsibleSection
-                      key={resourceType}
+                      key={featureType}
                       name={sectionName}
                       openByDefault
                       dataQa={dataQa}
