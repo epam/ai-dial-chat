@@ -24,7 +24,7 @@ export default function ChatExternalControls({ conversations }: Props) {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(
       state,
-      conversations[0].id,
+      conversations[0]?.id,
     ),
   );
 

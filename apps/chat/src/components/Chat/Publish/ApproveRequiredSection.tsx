@@ -1,5 +1,5 @@
 import { IconClipboard } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -29,7 +29,7 @@ import {
   PromptPublicationResources,
 } from './PublicationResources';
 
-import { some } from 'lodash-es';
+import some from 'lodash-es/some';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
@@ -48,6 +48,33 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
 
   const [isOpen, setIsOpen] = useState(false);
 
+  const selectedItemIsPublication = useMemo(
+    () =>
+      some(publication.resources, (r) =>
+        some(selectedConversationIds, (id) => id.startsWith(r.reviewUrl)),
+      ),
+    [publication.resources, selectedConversationIds],
+  );
+
+  const handlePublicationSelect = useCallback(() => {
+    setIsOpen(true);
+    if (!isOpen) {
+      dispatch(PublicationActions.uploadPublication({ url: publication.url }));
+    } else {
+      dispatch(
+        PublicationActions.selectPublication({
+          publication: publication as Publication,
+        }),
+      );
+    }
+
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [],
+      }),
+    );
+  }, [dispatch, isOpen, publication]);
+
   const ResourcesComponent =
     resourceType === BackendResourceType.CONVERSATION
       ? ConversationPublicationResources
@@ -56,26 +83,7 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
   return (
     <div className="flex flex-col gap-1">
       <div
-        onClick={() => {
-          setIsOpen(true);
-          if (!isOpen) {
-            dispatch(
-              PublicationActions.uploadPublication({ url: publication.url }),
-            );
-          } else {
-            dispatch(
-              PublicationActions.selectPublication({
-                publication: publication as Publication,
-              }),
-            );
-          }
-
-          dispatch(
-            ConversationsActions.selectConversations({
-              conversationIds: [],
-            }),
-          );
-        }}
+        onClick={() => handlePublicationSelect}
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           selectedPublication?.url === publication.url &&
@@ -90,11 +98,7 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              some(publication.resources, (r) =>
-                some(selectedConversationIds, (id) =>
-                  id.startsWith(r.reviewUrl),
-                ),
-              ) && 'text-accent-primary',
+              selectedItemIsPublication && 'text-accent-primary',
             )}
             data-qa="folder-name"
           >

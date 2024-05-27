@@ -10,10 +10,8 @@ import {
   PublishedByMeItem,
   PublishedItem,
 } from '@/src/types/publication';
-import { UIStorageKeys } from '@/src/types/storage';
 
 import { ApiUtils } from '../../server/api';
-import { BrowserStorage } from './storages/browser-storage';
 
 export class PublicationService {
   public static publish(
@@ -99,7 +97,7 @@ export class PublicationService {
     });
     const resultQuery = query.toString();
     return ApiUtils.request(
-      `api/publication/${entityType}/public/${parentPath}?${resultQuery}`,
+      `api/publication/${entityType}/public/${ApiUtils.encodeApiUrl(parentPath)}?${resultQuery}`,
     );
   }
 
@@ -131,20 +129,9 @@ export class PublicationService {
   ): Observable<{ rules: Record<string, PublicationRule[]> }> {
     return ApiUtils.request('api/publication/rulesList', {
       method: 'POST',
-      body: JSON.stringify({ url: path ? `public/${path}/` : `public/` }),
+      body: JSON.stringify({
+        url: ApiUtils.encodeApiUrl(path ? `public/${path}/` : `public/`),
+      }),
     });
-  }
-
-  public static getSelectedConversationsId(): Observable<string | null> {
-    return BrowserStorage.getData(UIStorageKeys.SelectedPublicationId, null);
-  }
-
-  public static setSelectedPublicationId(
-    selectedPublicationId: string,
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.SelectedPublicationId,
-      selectedPublicationId,
-    );
   }
 }

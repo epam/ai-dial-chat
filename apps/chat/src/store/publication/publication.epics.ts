@@ -698,7 +698,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.uploadRules.match),
     switchMap(({ payload }) =>
-      PublicationService.getRules(ApiUtils.encodeApiUrl(payload.path)).pipe(
+      PublicationService.getRules(payload.path).pipe(
         switchMap(({ rules }) => {
           const currentRulePath = `${constructPath('public', payload.path)}/`;
 
