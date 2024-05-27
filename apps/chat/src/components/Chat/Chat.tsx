@@ -17,11 +17,7 @@ import {
   Replay,
   Role,
 } from '@/src/types/chat';
-import {
-  BackendResourceType,
-  EntityType,
-  UploadStatus,
-} from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -107,13 +103,6 @@ export const ChatView = memo(() => {
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
-  const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      BackendResourceType.CONVERSATION,
-    ),
-  );
-
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
@@ -145,7 +134,7 @@ export const ChatView = memo(() => {
   const isPublishedPlayback =
     isPlayback &&
     isExternal &&
-    !selectedConversations.some((conv) => conv.publishedWithMe);
+    selectedConversations.some((conv) => conv.publishedWithMe);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
@@ -839,8 +828,7 @@ export const ChatView = memo(() => {
                     <NotAllowedModel type={notAllowedType} />
                   ) : (
                     <>
-                      {(!isPlayback ||
-                        (isPublishedPlayback && publicationItems.length)) && (
+                      {(!isPlayback || isPublishedPlayback) && (
                         <ChatInput
                           showReplayControls={showReplayControls}
                           textareaRef={textareaRef}

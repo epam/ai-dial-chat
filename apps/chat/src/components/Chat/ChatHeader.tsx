@@ -287,7 +287,7 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            {isPlayback && !isExternal && !conversation.publishedWithMe && (
+            {isPlayback && !isExternal && (
               <button
                 className="cursor-pointer text-accent-primary"
                 onClick={onCancelPlaybackMode}
