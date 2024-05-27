@@ -850,19 +850,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             >
               <Tooltip
                 tooltip={
-                  currentFolder.name ||
-                  t(
-                    getEntityNameError(
-                      isNameInvalid,
-                      isInvalidPath,
-                      isExternal,
-                    ),
-                  )
+                  !isNameOrPathInvalid
+                    ? currentFolder.name
+                    : t(
+                        getEntityNameError(
+                          isNameInvalid,
+                          isInvalidPath,
+                          isExternal,
+                        ),
+                      )
                 }
-                hideTooltip={isNameOrPathInvalid}
-                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                contentClassName="sm:max-w-[400px] max-w-[250px]"
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate whitespace-pre text-left',
+                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
                       ? 'text-primary'

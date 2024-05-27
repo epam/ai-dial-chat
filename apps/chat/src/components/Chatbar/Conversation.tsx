@@ -121,12 +121,12 @@ export function ConversationView({
       >
         <Tooltip
           tooltip={
-            conversation.name ||
-            t(getEntityNameError(isNameInvalid, isInvalidPath, isExternal))
+            !isNameOrPathInvalid
+              ? conversation.name
+              : t(getEntityNameError(isNameInvalid, isInvalidPath, isExternal))
           }
-          triggerClassName=" max-h-5 flex-1 truncate whitespace-pre text-left"
-          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-          hideTooltip={isNameOrPathInvalid}
+          triggerClassName="max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+          contentClassName="sm:max-w-[400px] max-w-[250px]"
         >
           <span
             className="block max-w-full truncate whitespace-pre"
