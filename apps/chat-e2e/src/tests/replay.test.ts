@@ -89,7 +89,9 @@ dialTest(
         await conversations.openConversationDropdownMenu(
           replayConversation!.name,
         );
-        await conversations.selectMenuOption(MenuOptions.replay);
+        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+          triggeredHttpMethod: 'POST',
+        });
       },
     );
 
@@ -694,7 +696,7 @@ dialTest(
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
-        await chat.stopGenerating.hoverOver();
+        await sendMessage.stopGenerating.hoverOver();
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
@@ -711,7 +713,7 @@ dialTest(
     await dialTest.step(
       'Stop generating and verify message is preserved, footer is visible and tooltip shown on hover',
       async () => {
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
         const inputMessage = await sendMessage.messageInput.getElementContent();
         expect
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)

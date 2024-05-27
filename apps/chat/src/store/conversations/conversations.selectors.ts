@@ -42,7 +42,7 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { cloneDeep } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState): ConversationsState =>
@@ -452,6 +452,17 @@ export const selectCanAttachLink = createSelector(
   },
 );
 
+export const selectCanAttachFolders = createSelector(
+  [selectSelectedConversationsModels],
+  (models) => {
+    if (models.length === 0) {
+      return false;
+    }
+
+    return models.every((model) => model?.features?.folderAttachments);
+  },
+);
+
 export const selectCanAttachFile = createSelector(
   [
     (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
@@ -688,5 +699,33 @@ export const selectDuplicatedConversation = createSelector(
         conversation.name === conversationName
       );
     });
+  },
+);
+
+export const selectCustomAttachmentLoading = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.customAttachmentDataLoading;
+  },
+);
+
+export const selectLoadedCustomAttachments = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.loadedCustomAttachmentsData;
+  },
+);
+
+export const selectCustomAttachmentData = createSelector(
+  [
+    selectLoadedCustomAttachments,
+    (_state: RootState, attachmentUrl: string) => attachmentUrl,
+  ],
+  (loadedCustomAttachment, attachmentUrl) => {
+    return attachmentUrl
+      ? loadedCustomAttachment.find((loadedData) =>
+          loadedData.url.endsWith(attachmentUrl),
+        )?.data
+      : undefined;
   },
 );

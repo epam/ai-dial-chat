@@ -1,10 +1,15 @@
-import { ChatSelectors } from '../selectors';
+import {
+  ChatSelectors,
+  ChatSettingsSelectors,
+  ErrorLabelSelectors,
+  ReplaySelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API, ScrollState } from '@/src/testData';
+import { API, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
@@ -29,15 +34,12 @@ export class Chat extends BaseElement {
   private playBack!: Playback;
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
-  public replay = new BaseElement(this.page, ChatSelectors.startReplay);
+  public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
-    new BaseElement(this.page, ChatSelectors.applyChanges).getNthElement(
-      index ?? 1,
-    );
-  public stopGenerating = new BaseElement(
-    this.page,
-    ChatSelectors.stopGenerating,
-  );
+    new BaseElement(
+      this.page,
+      ChatSettingsSelectors.applyChanges,
+    ).getNthElement(index ?? 1);
   public proceedGenerating = new BaseElement(
     this.page,
     ChatSelectors.proceedGenerating,
@@ -45,7 +47,7 @@ export class Chat extends BaseElement {
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
   public footer = this.getChildElementBySelector(ChatSelectors.footer);
   public notAllowedModelLabel = this.getChildElementBySelector(
-    ChatSelectors.notAllowedModel,
+    ErrorLabelSelectors.notAllowedModel,
   );
   public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
   public scrollableArea = this.getChildElementBySelector(
@@ -161,22 +163,25 @@ export class Chat extends BaseElement {
 
   public async regenerateResponseInCompareMode(
     comparedEntities: { rightEntity: string; leftEntity: string },
-    waitForAnswer = false,
+    compareSide: Side,
   ) {
-    const rightRequestPromise = this.waitForRequestSent(
-      comparedEntities.rightEntity,
+    const rightRespPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().postData() !== null &&
+        resp.request().postData()!.includes(comparedEntities.rightEntity),
     );
-    const leftRequestPromise = this.waitForRequestSent(
-      comparedEntities.leftEntity,
+    const leftRespPromise = this.page.waitForResponse(
+      (resp) =>
+        resp.request().postData() !== null &&
+        resp.request().postData()!.includes(comparedEntities.leftEntity),
     );
-    await this.getChatMessages().regenerate.getNthElement(1).click();
-    const rightRequest = await rightRequestPromise;
-    const leftRequest = await leftRequestPromise;
-    await this.waitForResponse(waitForAnswer);
-    return {
-      rightRequest: rightRequest.postDataJSON(),
-      leftRequest: leftRequest.postDataJSON(),
-    };
+    const regenerateButtonIndex = compareSide === Side.left ? 1 : 2;
+    await this.getChatMessages()
+      .regenerate.getNthElement(regenerateButtonIndex)
+      .click();
+    await rightRespPromise;
+    await leftRespPromise;
+    await this.waitForResponse(true);
   }
 
   public waitForRequestSent(userRequest: string | undefined) {
@@ -208,7 +213,7 @@ export class Chat extends BaseElement {
   }
 
   private async sendRequest(
-    message: string,
+    message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
@@ -223,6 +228,14 @@ export class Chat extends BaseElement {
     return this.sendRequest(
       message,
       () => this.getSendMessage().send(message),
+      waitForAnswer,
+    );
+  }
+
+  public async saveAndSubmitRequest(waitForAnswer = false) {
+    return this.sendRequest(
+      undefined,
+      () => this.getChatMessages().saveAndSubmit.click(),
       waitForAnswer,
     );
   }

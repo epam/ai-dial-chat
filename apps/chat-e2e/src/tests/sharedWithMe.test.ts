@@ -824,10 +824,10 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         gptVisionConversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            gptProVisionImageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             ModelIds.GPT_4_VISION_PREVIEW,
             true,
+            gptProVisionImageUrl,
           );
         conversationData.resetData();
 
@@ -1048,10 +1048,10 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         gptVisionConversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            gptProVisionImageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             ModelIds.GPT_4_VISION_PREVIEW,
             true,
+            gptProVisionImageUrl,
           );
         conversationData.resetData();
 
@@ -1485,8 +1485,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectMenuOption(
+        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
           MenuOptions.replay,
+          { triggeredHttpMethod: 'POST' },
         );
         await additionalShareUserConversations
           .getConversationByName(
@@ -1549,8 +1550,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectMenuOption(
+        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
           MenuOptions.playback,
+          { triggeredHttpMethod: 'POST' },
         );
         await additionalShareUserConversations
           .getConversationByName(
@@ -1584,8 +1586,8 @@ dialSharedWithMeTest(
         nestedFolders = conversationData.prepareNestedFolder(1);
         conversationData.resetData();
         nestedConversation = conversationData.prepareDefaultConversation();
-        nestedConversation.folderId = nestedFolders[1].folderId;
-        nestedConversation.id = `${nestedFolders[1].folderId}/${nestedConversation.id}`;
+        nestedConversation.folderId = nestedFolders[1].id;
+        nestedConversation.id = `${nestedFolders[1].id}/${nestedConversation.id}`;
 
         await dataInjector.createConversations(
           [nestedConversation],

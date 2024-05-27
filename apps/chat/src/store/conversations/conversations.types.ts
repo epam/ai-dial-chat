@@ -5,6 +5,8 @@ import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
+import { CustomVisualizerData } from '@epam/ai-dial-shared';
+
 export interface ConversationsState {
   conversations: ConversationInfo[];
   selectedConversationsIds: string[];
@@ -26,4 +28,6 @@ export interface ConversationsState {
   loadedCharts: { url: string; data: PlotParams }[];
   chartLoading: boolean;
   compareLoading?: boolean;
+  loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[];
+  customAttachmentDataLoading: boolean;
 }

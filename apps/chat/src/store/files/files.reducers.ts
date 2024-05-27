@@ -259,21 +259,31 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.newAddedFolderId = undefined;
-      state.folders = state.folders.map((folder) => {
-        if (folder.id !== payload.folderId) {
-          return folder;
-        }
 
-        const slashIndex = folder.id.lastIndexOf('/');
-        const oldFolderIdPath = folder.id.slice(
-          0,
-          slashIndex === -1 ? 0 : slashIndex,
-        );
-        return {
-          ...folder,
-          name: payload.newName.trim(),
-          id: constructPath(oldFolderIdPath, payload.newName),
-        };
+      const targetFolder = state.folders.find((f) => f.id === payload.folderId);
+
+      if (!targetFolder) return;
+
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            name: payload.newName.trim(),
+            id: constructPath(targetFolder.folderId, payload.newName),
+          };
+        } else if (folder.id.startsWith(`${payload.folderId}/`)) {
+          const updatedFolderId = folder.folderId.replace(
+            targetFolder.id,
+            constructPath(targetFolder.folderId, payload.newName),
+          );
+
+          return {
+            ...folder,
+            folderId: updatedFolderId,
+            id: constructPath(updatedFolderId, folder.name),
+          };
+        }
+        return folder;
       });
     },
     resetNewFolderId: (state) => {
@@ -360,6 +370,11 @@ const selectFilesByIds = createSelector(
 const selectSelectedFilesIds = createSelector([rootSelector], (state) => {
   return state.selectedFilesIds;
 });
+const selectFolders = createSelector([rootSelector], (state) => {
+  return [...state.folders].sort((a, b) =>
+    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
+  );
+});
 const selectSelectedFiles = createSelector(
   [selectSelectedFilesIds, selectFiles],
   (selectedFilesIds, files): FilesState['files'] => {
@@ -368,17 +383,21 @@ const selectSelectedFiles = createSelector(
       .filter(Boolean) as FilesState['files'];
   },
 );
+
+const selectSelectedFolders = createSelector(
+  [selectSelectedFilesIds, selectFolders],
+  (selectedFilesIds, folders): FilesState['folders'] => {
+    return selectedFilesIds
+      .map((fileId) => folders.find((folder) => `${folder.id}/` === fileId))
+      .filter(Boolean) as FilesState['folders'];
+  },
+);
 const selectIsUploadingFilePresent = createSelector(
   [selectSelectedFiles],
   (selectedFiles) =>
     selectedFiles.some((file) => file.status === UploadStatus.LOADING),
 );
 
-const selectFolders = createSelector([rootSelector], (state) => {
-  return [...state.folders].sort((a, b) =>
-    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
-  );
-});
 const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
   return state.foldersStatus === UploadStatus.LOADING;
 });
@@ -413,6 +432,7 @@ export const FilesSelectors = {
   selectFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
+  selectSelectedFolders,
   selectIsUploadingFilePresent,
   selectFolders,
   selectAreFoldersLoading,

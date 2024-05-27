@@ -4,4 +4,5 @@ export * from './sideBarSelectors';
 export * from './dialogSelectors';
 export * from './headerSelectors';
 export * from './iconSelectors';
-export * from './modalSelectors';
+export * from './shareModalSelectors';
+export * from './menuSelectors';

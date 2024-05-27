@@ -356,19 +356,19 @@ export const PreUploadDialog = ({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 py-6 md:w-[425px] w-full max-w-[425px]"
+      containerClassName="flex flex-col gap-4 md:w-[425px] w-full max-w-[425px] px-3 py-4 md:p-6"
       dataQa="pre-upload-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
-        <div className="flex justify-between px-6">
+        <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
             {t('Upload from device')}
           </h2>
         </div>
-        <p id={descriptionId} className="px-6">
+        <p id={descriptionId}>
           {t(
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
@@ -380,11 +380,11 @@ export const PreUploadDialog = ({
           )}
         </p>
 
-        <div className="px-6">
+        <div>
           <ErrorMessage error={errorMessage} />
         </div>
 
-        <div className="flex flex-col gap-2 overflow-auto px-6">
+        <div className="flex flex-col gap-2 overflow-auto">
           <div className="flex flex-col gap-1">
             <div>
               <span className="text-xs text-secondary">{t('Upload to')}</span>
@@ -439,7 +439,7 @@ export const PreUploadDialog = ({
           )}
         </div>
       </div>
-      <div className="flex w-full justify-between gap-3 px-6">
+      <div className="flex w-full justify-between gap-3">
         <label className="cursor-pointer rounded py-2.5 text-accent-primary">
           {t('Add more files...')}
           <input
@@ -457,6 +457,7 @@ export const PreUploadDialog = ({
           className="button button-primary"
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
+          data-qa="upload"
         >
           {customUploadButtonLabel ? customUploadButtonLabel : t('Upload')}
         </button>

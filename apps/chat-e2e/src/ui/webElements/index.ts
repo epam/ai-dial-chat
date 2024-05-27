@@ -47,3 +47,6 @@ export * from './baseConversation';
 export * from './chatNotFound';
 export * from './sharedFolderConversations';
 export * from './sharedWithMeConversations';
+export * from './attachFilesModal';
+export * from './inputAttachments';
+export * from './uploadFromDeviceModal';

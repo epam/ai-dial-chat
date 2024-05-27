@@ -123,14 +123,23 @@ export class SideBarEntities extends BaseElement {
   }
 
   public async selectMoveToMenuOption(name: string) {
-    const dropdownMenu = this.getDropdownMenu();
+    return this.selectEntityMenuOption(name, { triggeredHttpMethod: 'DELETE' });
+  }
+
+  public async selectEntityMenuOption(
+    option: string,
+    {
+      triggeredHttpMethod = undefined,
+    }: { triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' } = {},
+  ) {
+    const menu = this.getDropdownMenu();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
+        (resp) => resp.request().method() === triggeredHttpMethod,
       );
-      await dropdownMenu.selectMenuOption(name);
+      await menu.selectMenuOption(option);
       return respPromise;
     }
-    await dropdownMenu.selectMenuOption(name);
+    await menu.selectMenuOption(option);
   }
 }

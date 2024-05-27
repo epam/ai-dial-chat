@@ -18,6 +18,10 @@ This repository is managed as monorepo by [NX](https://nx.dev/) tools.
 
 `DIAL Overlay` documentation is placed [here](./libs/overlay/README.md).
 
+`DIAL Chat Visualizer Connector` documentation is placed [here](./libs/chat-visualizer-connector/README.md).
+
+`DIAL Visualizer Connector` documentation is placed [here](./libs/visualizer-connector/README.md).
+
 ## Development
 
 To work with this repo we are using NX.

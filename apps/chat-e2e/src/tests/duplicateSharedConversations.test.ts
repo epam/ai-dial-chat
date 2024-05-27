@@ -58,8 +58,11 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectMenuOption(
+        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
           MenuOptions.duplicate,
+          {
+            triggeredHttpMethod: 'POST',
+          },
         );
         await additionalShareUserConversations
           .getConversationByName(conversation.name)

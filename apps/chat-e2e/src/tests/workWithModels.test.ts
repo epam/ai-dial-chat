@@ -275,11 +275,12 @@ dialTest(
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], '');
-
-        const isSaveButtonDisabled = await chatMessages.isSaveButtonEnabled();
-        expect
-          .soft(isSaveButtonDisabled, ExpectedMessages.saveIsDisabled)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatMessages.saveAndSubmit.getElementLocator(),
+            ExpectedMessages.saveIsDisabled,
+          )
+          .toBeDisabled();
         await chatMessages.cancel.click();
       },
     );
@@ -443,7 +444,7 @@ dialTest(
         });
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -525,7 +526,7 @@ dialTest(
       async () => {
         await chatMessages.regenerateResponse(false);
         await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -601,8 +602,8 @@ dialTest(
           .toBeFalsy();
 
         await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
-        await chat.stopGenerating.waitForState({ state: 'hidden' });
+        await sendMessage.stopGenerating.click();
+        await sendMessage.stopGenerating.waitForState({ state: 'hidden' });
       },
     );
 

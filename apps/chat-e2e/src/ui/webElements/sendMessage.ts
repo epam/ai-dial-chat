@@ -1,16 +1,25 @@
-import { ChatSelectors } from '../selectors';
+import {
+  ChatSelectors,
+  MessageInputSelectors,
+  SendMessageSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { keys } from '@/src/ui/keyboard';
+import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
+import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
+import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { PromptList } from '@/src/ui/webElements/promptList';
 import { Locator, Page } from '@playwright/test';
 
 export class SendMessage extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.message, parentLocator);
+    super(page, SendMessageSelectors.message, parentLocator);
   }
 
   private promptList!: PromptList;
+  private dropdownMenu!: DropdownMenu;
+  private inputAttachments!: InputAttachments;
 
   getPromptList() {
     if (!this.promptList) {
@@ -19,24 +28,47 @@ export class SendMessage extends BaseElement {
     return this.promptList;
   }
 
-  public messageInput = this.getChildElementBySelector(ChatSelectors.textarea);
+  getDropdownMenu(): DropdownMenu {
+    if (!this.dropdownMenu) {
+      this.dropdownMenu = new DropdownMenu(this.page);
+    }
+    return this.dropdownMenu;
+  }
+
+  getInputAttachments(): InputAttachments {
+    if (!this.inputAttachments) {
+      this.inputAttachments = new InputAttachments(this.page, this.rootLocator);
+    }
+    return this.inputAttachments;
+  }
+
+  public messageInput = this.getChildElementBySelector(
+    MessageInputSelectors.textarea,
+  );
   public sendMessageButton = this.getChildElementBySelector(
-    ChatSelectors.sendMessage,
+    SendMessageSelectors.sendMessage,
   );
   public messageInputSpinner = this.messageInput.getChildElementBySelector(
     ChatSelectors.messageSpinner,
   );
-
-  public scrollDownButton = this.getChildElementBySelector(
-    ChatSelectors.scrollDownButton,
+  public attachmentMenuTrigger = this.getChildElementBySelector(
+    MenuSelectors.menuTrigger,
   );
 
-  public async send(message: string) {
+  public scrollDownButton = this.getChildElementBySelector(
+    SendMessageSelectors.scrollDownButton,
+  );
+
+  public stopGenerating = this.getChildElementBySelector(
+    SendMessageSelectors.stopGenerating,
+  );
+
+  public async send(message?: string) {
     await this.fillRequestData(message);
     await this.sendMessageButton.click();
   }
 
-  public async sendWithEnterKey(message: string) {
+  public async sendWithEnterKey(message?: string) {
     await this.fillRequestData(message);
     await this.page.keyboard.press(keys.enter);
   }
@@ -55,9 +87,11 @@ export class SendMessage extends BaseElement {
     await this.page.keyboard.press(keys.ctrlPlusV);
   }
 
-  public async fillRequestData(message: string) {
+  public async fillRequestData(message?: string) {
     await this.messageInput.waitForState();
     await this.sendMessageButton.waitForState();
-    await this.messageInput.fillInInput(message);
+    message
+      ? await this.messageInput.fillInInput(message)
+      : await this.messageInput.click();
   }
 }

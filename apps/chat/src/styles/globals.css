@@ -109,6 +109,10 @@ pre:has(div.codeblock) {
     @apply text-controls-permanent;
   }
 
+  .button.button-primary:disabled {
+    @apply text-controls-disable;
+  }
+
   .button.button-primary:not(:disabled) {
     @apply bg-controls-accent hover:bg-controls-accent-hover;
   }

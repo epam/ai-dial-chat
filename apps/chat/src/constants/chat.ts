@@ -17,6 +17,9 @@ export const resetShareEntity: ShareInterface = {
   sharedWithMe: false,
 };
 
-export const chartType = 'application/vnd.plotly.v1+json';
+export const PLOTLY_CONTENT_TYPE = 'application/vnd.plotly.v1+json';
 
 export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
+
+export const DEFAULT_CUSTOM_ATTACHMENT_WIDTH = 150;
+export const DEFAULT_CUSTOM_ATTACHMENT_HEIGHT = 150;

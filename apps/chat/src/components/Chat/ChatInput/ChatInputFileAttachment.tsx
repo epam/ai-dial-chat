@@ -26,6 +26,7 @@ export const ChatInputFileAttachment = ({
     <div
       key={file.id}
       className="flex items-center gap-3 rounded border border-primary bg-layer-1 px-3 py-2"
+      data-qa="chat-attachment"
     >
       {file.status !== UploadStatus.FAILED ? (
         <IconFile className="shrink-0 text-secondary" size={18} />
@@ -40,6 +41,7 @@ export const ChatInputFileAttachment = ({
               'block max-w-full truncate whitespace-pre text-start text-sm',
               file.status === UploadStatus.FAILED && 'text-error',
             )}
+            data-qa="attachment-name"
           >
             {file.name}
           </span>
@@ -48,13 +50,14 @@ export const ChatInputFileAttachment = ({
               <div
                 className="h-full bg-controls-accent"
                 style={{ width: `${file.percent}%` }}
+                data-qa="attachment-loading"
               ></div>
             </div>
           )}
         </div>
         <div className="flex gap-3">
           {onRetryFile && file.status === UploadStatus.FAILED && (
-            <button onClick={() => onRetryFile(file.id)}>
+            <button data-qa="retry-upload" onClick={() => onRetryFile(file.id)}>
               <IconReload
                 className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}
@@ -62,7 +65,10 @@ export const ChatInputFileAttachment = ({
             </button>
           )}
           {onUnselectFile && (
-            <button onClick={() => onUnselectFile(file.id)}>
+            <button
+              onClick={() => onUnselectFile(file.id)}
+              data-qa="remove-file"
+            >
               <IconX
                 className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}

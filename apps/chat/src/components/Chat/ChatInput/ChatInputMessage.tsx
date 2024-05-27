@@ -84,14 +84,19 @@ export const ChatInputMessage = ({
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
-  const canAttach = useAppSelector(ConversationsSelectors.selectCanAttachFile);
+  const canAttachFiles = useAppSelector(
+    ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
+  );
+  const canAttachLinks = useAppSelector(
+    ConversationsSelectors.selectCanAttachLink,
+  );
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const selectedFolders = useAppSelector(FilesSelectors.selectSelectedFolders);
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
-  );
-
-  const attachedFilesIds = useAppSelector(
-    FilesSelectors.selectSelectedFilesIds,
   );
 
   const isMessageError = useAppSelector(
@@ -138,11 +143,17 @@ export const ChatInputMessage = ({
 
   const isInputEmpty = useMemo(() => {
     return (
-      content.trim().length === 0 &&
-      selectedFiles.length === 0 &&
+      !content.trim().length &&
+      !selectedFiles.length &&
+      !selectedFolders.length &&
       !selectedDialLinks.length
     );
-  }, [content, selectedDialLinks.length, selectedFiles.length]);
+  }, [
+    content,
+    selectedDialLinks.length,
+    selectedFiles.length,
+    selectedFolders.length,
+  ]);
   const isSendDisabled =
     isReplay ||
     isError ||
@@ -189,7 +200,11 @@ export const ChatInputMessage = ({
     onSend({
       role: Role.User,
       content,
-      custom_content: getUserCustomContent(selectedFiles, selectedDialLinks),
+      custom_content: getUserCustomContent(
+        selectedFiles,
+        selectedFolders,
+        selectedDialLinks,
+      ),
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
@@ -205,6 +220,7 @@ export const ChatInputMessage = ({
     onSend,
     content,
     selectedFiles,
+    selectedFolders,
     selectedDialLinks,
     setContent,
     textareaRef,
@@ -350,13 +366,14 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
-  const paddingLeftClass = canAttach
-    ? isOverlay
-      ? 'pl-11'
-      : 'pl-12'
-    : isOverlay
-      ? 'pl-3'
-      : 'pl-4';
+  const paddingLeftClass =
+    canAttachFiles || canAttachFolders || canAttachLinks
+      ? isOverlay
+        ? 'pl-11'
+        : 'pl-12'
+      : isOverlay
+        ? 'pl-3'
+        : 'pl-4';
 
   return (
     <div
@@ -398,20 +415,28 @@ export const ChatInputMessage = ({
           isLoading={isLoading}
           isSendDisabled={isSendDisabled}
         />
-        {canAttach && (
+        {(canAttachFiles || canAttachFolders || canAttachLinks) && (
           <>
             <div className="absolute left-4 top-[calc(50%_-_12px)] cursor-pointer rounded disabled:cursor-not-allowed">
               <AttachButton
-                selectedFilesIds={attachedFilesIds}
+                selectedFilesIds={selectedFiles
+                  .map((f) => f.id)
+                  .concat(selectedFolders.map((f) => `${f.id}/`))}
                 onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                 onUploadFromDevice={handleUploadFromDevice}
                 onAddLinkToMessage={handleAddLinkToMessage}
               />
             </div>
-            {(selectedFiles.length > 0 || selectedDialLinks.length > 0) && (
-              <div className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3">
+            {(selectedFiles.length > 0 ||
+              selectedDialLinks.length > 0 ||
+              selectedFolders.length > 0) && (
+              <div
+                className="mb-2.5 flex max-h-[100px] flex-col gap-1 overflow-auto px-12 md:grid md:grid-cols-3"
+                data-qa="attachment-container"
+              >
                 <ChatInputAttachments
                   files={selectedFiles}
+                  folders={selectedFolders}
                   links={selectedDialLinks}
                   onUnselectFile={handleUnselectFile}
                   onRetryFile={handleRetry}
