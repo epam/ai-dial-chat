@@ -1,4 +1,4 @@
-import { ApiKeys, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import { constructPath } from './file';
