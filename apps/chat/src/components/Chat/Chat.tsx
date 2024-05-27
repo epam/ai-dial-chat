@@ -131,11 +131,6 @@ export const ChatView = memo(() => {
     (conv) => conv.messages.length > 0,
   );
 
-  const isPublishedPlayback =
-    isPlayback &&
-    isExternal &&
-    selectedConversations.some((conv) => conv.publishedWithMe);
-
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
     const isNotAllowedModel =
@@ -828,7 +823,7 @@ export const ChatView = memo(() => {
                     <NotAllowedModel type={notAllowedType} />
                   ) : (
                     <>
-                      {(!isPlayback || isPublishedPlayback) && (
+                      {!isPlayback && (
                         <ChatInput
                           showReplayControls={showReplayControls}
                           textareaRef={textareaRef}
@@ -845,7 +840,6 @@ export const ChatView = memo(() => {
                             (!isReplay || isNotEmptyConversations) &&
                             !isExternal
                           }
-                          hideFooter={isPublishedPlayback}
                         >
                           {showReplayControls && !isNotEmptyConversations && (
                             <StartReplayButton />
