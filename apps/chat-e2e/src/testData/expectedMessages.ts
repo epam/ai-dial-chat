@@ -158,6 +158,7 @@ export enum ExpectedMessages {
   buttonIsEnabled = 'Button is enabled',
   newPromptButtonIsHighlighted = 'New prompt button is highlighted',
   newPromptButtonCursorIsPointer = 'New prompt button cursor is a pointer',
+  playbackControlsHidden = 'PlayBack controls are hidden',
   playbackNextButtonEnabled = 'PlayBack next button is enabled',
   playbackNextButtonDisabled = 'PlayBack next button is disabled',
   playbackPreviousButtonDisabled = 'PlayBack previous button is disabled',
