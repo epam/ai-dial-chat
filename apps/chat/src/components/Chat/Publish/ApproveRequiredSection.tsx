@@ -37,10 +37,7 @@ interface PublicationProps {
   featureType: FeatureType;
 }
 
-const PublicationItem = ({
-  publication,
-  featureType: resourceType,
-}: PublicationProps) => {
+const PublicationItem = ({ publication, featureType }: PublicationProps) => {
   const dispatch = useAppDispatch();
 
   const selectedPublication = useAppSelector(
@@ -80,7 +77,7 @@ const PublicationItem = ({
   }, [dispatch, isOpen, publication]);
 
   const ResourcesComponent =
-    resourceType === FeatureType.Chat
+    featureType === FeatureType.Chat
       ? ConversationPublicationResources
       : PromptPublicationResources;
 
