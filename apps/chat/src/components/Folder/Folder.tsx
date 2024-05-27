@@ -843,7 +843,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
+                'relative max-h-5 flex-1 truncate text-left group-hover/button:pr-5',
                 isNameOrPathInvalid && 'text-secondary',
               )}
               data-qa="folder-name"
@@ -860,7 +860,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         ),
                       )
                 }
-                contentClassName="sm:max-w-[400px] max-w-[250px]"
+                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                 triggerClassName={classNames(
                   'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
