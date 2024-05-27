@@ -14,12 +14,14 @@ import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { getAttachments } from '@/src/utils/app/share';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ApiKeys, ShareEntity } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
@@ -238,7 +240,7 @@ export function PublishModal({
               return {
                 oldUrl: decodedOldUrl,
                 newUrl: createTargetUrl(
-                  ApiKeys.Files,
+                  FeatureType.File,
                   trimmedPath,
                   constructPath(
                     ...c.id.split('/').slice(0, -1),
@@ -257,7 +259,7 @@ export function PublishModal({
               ...entities.map((item) => ({
                 sourceUrl: item.id,
                 targetUrl: createTargetUrl(
-                  ApiKeys.Conversations,
+                  FeatureType.Chat,
                   trimmedPath,
                   type === SharingType.ConversationFolder
                     ? item.id.replace(folderRegExp, '')
@@ -298,7 +300,7 @@ export function PublishModal({
               ...entities.map((item) => ({
                 sourceUrl: item.id,
                 targetUrl: createTargetUrl(
-                  ApiKeys.Prompts,
+                  FeatureType.Prompt,
                   trimmedPath,
                   type === SharingType.PromptFolder
                     ? item.id.replace(folderRegExp, '')
@@ -420,7 +422,7 @@ export function PublishModal({
                       action: PublishActions.ADD,
                       sourceUrl: entity.id,
                       targetUrl: constructPath(
-                        ApiKeys.Conversations,
+                        EnumMapper.getApiKeyByFeatureType(FeatureType.Chat),
                         'public',
                         path,
                         splitEntityId(entity.id).name,
@@ -466,7 +468,7 @@ export function PublishModal({
                         action: PublishActions.ADD,
                         sourceUrl: entity.id,
                         targetUrl: constructPath(
-                          ApiKeys.Prompts,
+                          EnumMapper.getApiKeyByFeatureType(FeatureType.Prompt),
                           'public',
                           path,
                           entity.name,
@@ -508,8 +510,8 @@ export function PublishModal({
         rootFolderId={
           type === SharingType.Conversation ||
           type === SharingType.ConversationFolder
-            ? constructPath(ApiKeys.Conversations, 'public')
-            : constructPath(ApiKeys.Prompts, 'public')
+            ? getRootId({ featureType: FeatureType.Chat, bucket: 'public' })
+            : getRootId({ featureType: FeatureType.Prompt, bucket: 'public' })
         }
       />
     </Modal>

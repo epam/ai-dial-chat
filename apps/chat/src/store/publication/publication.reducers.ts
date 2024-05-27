@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { ApiKeys, UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -76,7 +76,7 @@ export const publicationSlice = createSlice({
     deletePublicationFail: (state) => state,
     uploadPublishedWithMeItems: (
       state,
-      _action: PayloadAction<{ featureType: ApiKeys }>,
+      _action: PayloadAction<{ featureType: FeatureType }>,
     ) => state,
     uploadPublishedWithMeItemsFail: (state) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>

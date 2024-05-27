@@ -1,6 +1,6 @@
 import { Observable, map } from 'rxjs';
 
-import { ApiKeys, BackendResourceType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -12,6 +12,8 @@ import {
 } from '@/src/types/publication';
 
 import { ApiUtils } from '../../server/api';
+import { constructPath } from '../file';
+import { EnumMapper } from '../mappers';
 
 export class PublicationService {
   public static publish(
@@ -89,7 +91,7 @@ export class PublicationService {
 
   public static getPublishedWithMeItems(
     parentPath: string,
-    entityType: ApiKeys,
+    featureType: FeatureType,
     options?: Partial<{ recursive: boolean }>,
   ): Observable<PublishedItem> {
     const query = new URLSearchParams({
@@ -97,7 +99,7 @@ export class PublicationService {
     });
     const resultQuery = query.toString();
     return ApiUtils.request(
-      `api/publication/${entityType}/public/${ApiUtils.encodeApiUrl(parentPath)}?${resultQuery}`,
+      `api/publication/${EnumMapper.getApiKeyByFeatureType(featureType)}/public/${ApiUtils.encodeApiUrl(parentPath)}?${resultQuery}`,
     );
   }
 
@@ -130,7 +132,9 @@ export class PublicationService {
     return ApiUtils.request('api/publication/rulesList', {
       method: 'POST',
       body: JSON.stringify({
-        url: ApiUtils.encodeApiUrl(path ? `public/${path}/` : `public/`),
+        url: `${ApiUtils.encodeApiUrl(
+          path ? constructPath('public', path) : 'public',
+        )}/`,
       }),
     });
   }
