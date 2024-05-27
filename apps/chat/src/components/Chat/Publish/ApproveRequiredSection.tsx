@@ -83,7 +83,7 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
   return (
     <div className="flex flex-col gap-1">
       <div
-        onClick={() => handlePublicationSelect}
+        onClick={handlePublicationSelect}
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           selectedPublication?.url === publication.url &&
