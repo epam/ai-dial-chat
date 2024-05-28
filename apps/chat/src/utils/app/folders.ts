@@ -384,7 +384,7 @@ export const getConversationAttachmentWithPath = <
   const { path } = getPathToFolderById(folders, conversation.folderId);
   const attachments =
     'messages' in conversation
-      ? conversation.messages.flatMap(
+      ? (conversation.playback?.messagesStack || conversation.messages).flatMap(
           (message) => message.custom_content?.attachments || [],
         )
       : [];

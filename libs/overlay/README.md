@@ -64,6 +64,8 @@ const run = async () => {
     },
     // optional, class for loader
     loaderClass: 'overlay__loader',
+    // optional, id of the conversation to be selected on start
+    overlayConversationId: 'some-conversation-id',
   });
 
   // overlay loaded application and ready to send and receive information from the application.
