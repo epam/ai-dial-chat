@@ -122,11 +122,16 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$) =>
+const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     takeUntil(action$.pipe(filter(ShareActions.acceptShareInvitation.match))),
-    // use getSelectedConversations to load selected conversations, we can unsubscribe from this action if we try to accept a share link
+    takeUntil(
+      action$.pipe(
+        filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+      ),
+    ),
+    // use getSelectedConversations to load selected conversations, we can unsubscribe from this action if we try to accept a share link or we in a overlay mode
     switchMap(() => of(ConversationsActions.getSelectedConversations())),
   );
 
@@ -135,7 +140,17 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.getSelectedConversations.match),
     switchMap(() =>
       ConversationService.getSelectedConversationsIds().pipe(
-        switchMap((selectedIds) => {
+        switchMap((selectedConversationsIds) => {
+          const overlayConversationId =
+            SettingsSelectors.selectOverlayConversationId(state$.value);
+
+          const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+
+          const selectedIds =
+            isOverlay && overlayConversationId
+              ? [overlayConversationId]
+              : selectedConversationsIds;
+
           if (!selectedIds.length) {
             return forkJoin({
               selectedConversations: of([]),
@@ -2247,7 +2262,11 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
               old: conversation,
             }),
           ),
-          of(ConversationsActions.saveConversation(newConversation)),
+          iif(
+            () => !newConversation.isPlayback,
+            of(ConversationsActions.saveConversation(newConversation)),
+            EMPTY,
+          ),
         ),
       );
     }),

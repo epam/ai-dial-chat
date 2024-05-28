@@ -15,6 +15,7 @@ import { Feature } from '@epam/ai-dial-shared';
 export interface SettingsState {
   appName: string;
   isOverlay: boolean;
+  overlayConversationId?: string;
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
@@ -126,6 +127,9 @@ export const settingsSlice = createSlice({
     },
     setIsolatedModelId: (state, { payload }: PayloadAction<string>) => {
       state.isolatedModelId = payload;
+    },
+    setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
+      state.overlayConversationId = payload;
     },
   },
 });
@@ -263,6 +267,10 @@ const selectPublicationFilters = createSelector([rootSelector], (state) => {
   return state.publicationFilters;
 });
 
+const selectOverlayConversationId = createSelector([rootSelector], (state) => {
+  return state.overlayConversationId;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -286,4 +294,5 @@ export const SettingsSelectors = {
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
   selectPublicationFilters,
+  selectOverlayConversationId,
 };
