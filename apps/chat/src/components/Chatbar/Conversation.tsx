@@ -60,7 +60,7 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
-import UnpublishModal from '../Chat/UnpublishModal';
+import { UnpublishModal } from '../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
@@ -691,7 +691,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       )}
       {isUnpublishing && (
         <UnpublishModal
+          subtitle={t(
+            'Conversation will no longer be visible to the organization',
+          )}
           entity={conversation}
+          entities={[conversation]}
           isOpen
           onClose={handleCloseUnpublishModal}
           type={SharingType.Conversation}

@@ -13,20 +13,25 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
-import Modal from '../Common/Modal';
+import Modal from '../../Common/Modal';
+import { PublicationItemsList } from './PublicationItemsList';
 
 interface Props {
+  subtitle: string;
   entity: Entity;
+  entities: Entity[];
   isOpen: boolean;
   type: SharingType;
   onClose: () => void;
 }
 
-export default function UnpublishModal({
+export function UnpublishModal({
   entity,
+  entities,
   isOpen,
   onClose,
   type,
+  subtitle,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -55,7 +60,7 @@ export default function UnpublishModal({
         PublicationActions.deletePublication({
           targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
-            { targetUrl: entity.id },
+            ...entities.map((entity) => ({ targetUrl: entity.id })),
             ...files.map((f) => ({
               targetUrl: f.id,
             })),
@@ -65,39 +70,53 @@ export default function UnpublishModal({
 
       onClose();
     },
-    [dispatch, entity.id, files, onClose],
+    [dispatch, entities, entity.id, files, onClose],
   );
 
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block h-[434px] sm:w-[424px] p-6 w-full"
+      containerClassName="h-full py-4 align-bottom transition-all !max-h-[434px] sm:w-[424px] w-full"
       dataQa="unpublish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
     >
-      <div className="flex h-full flex-col justify-between gap-2">
-        <h4 className=" max-h-[50px] text-base font-semibold">
+      <div className="flex h-full flex-col">
+        <h4 className="px-6 text-base font-semibold">
           <span className="line-clamp-2 break-words">
             {`${t('Unpublish')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <div className="flex justify-end gap-3">
-          <button
-            className="button button-secondary"
-            onClick={handleClose}
-            data-qa="cancel"
-          >
-            {t('Cancel')}
-          </button>
-          <button
-            className="button button-primary"
-            onClick={handleUnpublish}
-            data-qa="unpublish"
-            autoFocus
-          >
-            {t('Unpublish')}
-          </button>
+        <h5 className="mb-4 mt-2 px-6 text-secondary">{subtitle}</h5>
+        <div className="flex h-full flex-col justify-between gap-4 divide-y divide-tertiary">
+          <div className="max-h-[250px] overflow-scroll">
+            <PublicationItemsList
+              collapsibleSectionClassNames="!px-0"
+              containerClassNames="px-6"
+              type={type}
+              entity={entity}
+              entities={entities}
+              path={''}
+              files={files}
+            />
+          </div>
+          <div className="flex justify-end gap-3 px-6 pt-4">
+            <button
+              className="button button-secondary"
+              onClick={handleClose}
+              data-qa="cancel"
+            >
+              {t('Cancel')}
+            </button>
+            <button
+              className="button button-primary"
+              onClick={handleUnpublish}
+              data-qa="unpublish"
+              autoFocus
+            >
+              {t('Unpublish')}
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

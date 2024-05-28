@@ -68,7 +68,7 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
-import UnpublishModal from '../Chat/UnpublishModal';
+import { UnpublishModal } from '../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
@@ -248,7 +248,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (e) => {
       e.stopPropagation();
 
-      if (featureType === FeatureType.Chat) {
+      if (
+        featureType === FeatureType.Chat &&
+        (!allChildItems.length ||
+          !allChildItems.every((item) => 'messages' in item))
+      ) {
         dispatch(
           ConversationsActions.uploadConversationsByIds({
             conversationIds: allChildItems.map((e) => e.id),
@@ -264,6 +268,27 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
   }, []);
+
+  const handleOpenUnpublishing: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (
+        featureType === FeatureType.Chat &&
+        (!allChildItems.length ||
+          !allChildItems.every((item) => 'messages' in item))
+      ) {
+        dispatch(
+          ConversationsActions.uploadConversationsWithContentRecursive({
+            path: currentFolder.id,
+          }),
+        );
+      }
+
+      setIsUnpublishing(true);
+    },
+    [allChildItems, currentFolder.id, dispatch, featureType],
+  );
 
   const handleCloseUnpublishModal = useCallback(() => {
     setIsUnpublishing(false);
@@ -921,6 +946,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onShare={handleShare}
                     onUnshare={handleUnshare}
                     onPublish={handleOpenPublishing}
+                    onUnpublish={handleOpenUnpublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
@@ -1060,12 +1086,22 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       )}
       {isUnpublishing && isPublishingEnabled && (
         <UnpublishModal
+          subtitle={
+            featureType === FeatureType.Chat
+              ? t(
+                  'Folder/conversations will no longer be visible to the organization',
+                )
+              : t(
+                  'Folder/prompts will no longer be visible to the organization',
+                )
+          }
           type={
             featureType === FeatureType.Chat
               ? SharingType.ConversationFolder
               : SharingType.PromptFolder
           }
           entity={currentFolder}
+          entities={allChildItems}
           isOpen
           onClose={handleCloseUnpublishModal}
         />
