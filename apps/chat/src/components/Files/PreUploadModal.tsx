@@ -409,7 +409,11 @@ export const PreUploadDialog = ({
               </div>
               <div className="flex flex-col gap-3 overflow-auto text-sm">
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center gap-3">
+                  <div
+                    key={index}
+                    className="flex items-center gap-3"
+                    data-qa="uploaded-file"
+                  >
                     <div className="relative flex grow items-center">
                       <IconFile
                         className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"

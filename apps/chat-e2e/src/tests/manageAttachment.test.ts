@@ -428,20 +428,13 @@ dialTest(
     dialHomePage,
     setTestIds,
     attachFilesModal,
-    fileApiHelper,
+    uploadFromDeviceModal,
     chatBar,
   }) => {
     setTestIds('EPMRTC-2015');
 
     await dialTest.step(
-      'Upload file with special symbols in name to app',
-      async () => {
-        await fileApiHelper.putFile(Attachment.specialSymbolsName);
-      },
-    );
-
-    await dialTest.step(
-      'Open "Manage attachments" modal through chat side bar menu icon',
+      'Upload file and set his name to contain special symbols',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
@@ -451,6 +444,15 @@ dialTest(
         await chatBar
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          () => attachFilesModal.uploadFromDeviceButton.click(),
+        );
+        await uploadFromDeviceModal.setUploadedFilename(
+          Attachment.sunImageName,
+          ExpectedConstants.allowedSpecialSymbolsInName,
+        );
+        await uploadFromDeviceModal.uploadFile();
       },
     );
 
@@ -458,7 +460,7 @@ dialTest(
       'Select "Download" option from file dropdown menu and verify file is successfully downloaded, file is not highlighted in "Manage attachments" modal',
       async () => {
         await attachFilesModal.openFileDropdownMenu(
-          Attachment.specialSymbolsName,
+          ExpectedConstants.allowedSpecialSymbolsInName,
         );
         const downloadedData = await dialHomePage.downloadData(() =>
           attachFilesModal
@@ -470,10 +472,10 @@ dialTest(
             downloadedData.path,
             ExpectedMessages.attachmentIsSuccessfullyDownloaded,
           )
-          .toContain(Attachment.specialSymbolsName);
+          .toContain(ExpectedConstants.winAllowedSpecialSymbolsInName);
 
         const fileBackgroundColor = await attachFilesModal
-          .attachedFileName(Attachment.specialSymbolsName)
+          .attachedFileName(ExpectedConstants.allowedSpecialSymbolsInName)
           .getComputedStyleProperty(Styles.backgroundColor);
         expect
           .soft(fileBackgroundColor[0], ExpectedMessages.fileIsNotHighlighted)

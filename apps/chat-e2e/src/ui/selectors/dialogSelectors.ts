@@ -69,6 +69,7 @@ export const ShareModalSelectors = {
 export const UploadFromDeviceModalSelectors = {
   modalContainer: '[data-qa="pre-upload-modal"]',
   uploadButton: '[data-qa="upload"]',
+  uploadedFile: '[data-qa="uploaded-file"]',
 };
 
 export const AttachFilesModalSelectors = {

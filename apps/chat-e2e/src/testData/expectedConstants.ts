@@ -111,6 +111,8 @@ export const ExpectedConstants = {
   controlChars: `\b\t\f`,
   attachedFileError: (filename: string) =>
     `You've trying to upload files with incorrect type: ${filename}`,
+  allowedSpecialSymbolsInName: '(`~!@#$^*-_+[]\'|<>.?")',
+  winAllowedSpecialSymbolsInName: "(`~!@#$^_-_+[]'___.__)",
 };
 
 export enum Groups {
