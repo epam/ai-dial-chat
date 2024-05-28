@@ -2167,8 +2167,7 @@ const saveConversationEpic: AppEpic = (action$) =>
     filter(
       (action) =>
         ConversationsActions.saveConversation.match(action) &&
-        !action.payload.isMessageStreaming &&
-        !action.payload.isPlayback, // shouldn't save during streaming or if Playback
+        !action.payload.isMessageStreaming, // shouldn't save during streaming
     ),
     concatMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
