@@ -58,6 +58,7 @@ const initialState: ConversationsState = {
   isActiveNewConversationRequest: false,
   isMessageSending: false,
   initFoldersAndConversations: false,
+  talkTo: '',
 };
 
 export const conversationsSlice = createSlice({
@@ -114,7 +115,7 @@ export const conversationsSlice = createSlice({
     getSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
     initFoldersAndConversationsSuccess: (state) => {
-      state.initFoldersAndConversations = true
+      state.initFoldersAndConversations = true;
     },
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     recreateConversation: (
@@ -854,10 +855,16 @@ export const conversationsSlice = createSlice({
           ];
       state.chartLoading = false;
     },
-    updateConversationFromQueryParams: (state) => {
-      state.isConversationUpdatedFromQueryParams = true;
+    updateConversationFromQueryParams: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isConversationUpdatedFromQueryParams = payload;
     },
     cleanupIsolatedConversation: (state) => state,
+    setTalkTo: (state, { payload }: PayloadAction<string>) => {
+      state.talkTo = payload;
+    },
   },
 });
 

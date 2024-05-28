@@ -32,4 +32,5 @@ export interface ConversationsState {
   chartLoading: boolean;
   compareLoading?: boolean;
   initFoldersAndConversations: boolean;
+  talkTo?: string;
 }
