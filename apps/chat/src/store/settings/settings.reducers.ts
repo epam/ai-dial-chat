@@ -18,6 +18,7 @@ export interface SettingsState {
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
+  publicationFilters: string[];
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
@@ -35,6 +36,7 @@ const initialState: SettingsState = {
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
+  publicationFilters: [],
   codeWarning: '',
   announcement: '',
   defaultModelId: undefined,
@@ -79,6 +81,12 @@ export const settingsSlice = createSlice({
       { payload }: PayloadAction<SettingsState['enabledFeatures']>,
     ) => {
       state.enabledFeatures = payload;
+    },
+    setPublicationFilters: (
+      state,
+      { payload }: PayloadAction<SettingsState['publicationFilters']>,
+    ) => {
+      state.publicationFilters = payload;
     },
     setCodeWarning: (
       state,
@@ -251,6 +259,10 @@ const selectIsCustomAttachmentType = createSelector(
   },
 );
 
+const selectPublicationFilters = createSelector([rootSelector], (state) => {
+  return state.publicationFilters;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -273,4 +285,5 @@ export const SettingsSelectors = {
   selectCustomVisualizers,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
+  selectPublicationFilters,
 };

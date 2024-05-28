@@ -5,7 +5,7 @@ import { Conversation } from '@/src/types/chat';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import CollapsableSection from '../Common/CollapsableSection';
+import CollapsibleSection from '../Common/CollapsibleSection';
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {
@@ -31,7 +31,7 @@ export const ConversationsRenderer = ({
   return (
     <>
       {conversations.length > 0 && (
-        <CollapsableSection
+        <CollapsibleSection
           name={label}
           dataQa="chronology"
           isHighlighted={isSectionHighlighted}
@@ -45,7 +45,7 @@ export const ConversationsRenderer = ({
               />
             ))}
           </div>
-        </CollapsableSection>
+        </CollapsibleSection>
       )}
     </>
   );

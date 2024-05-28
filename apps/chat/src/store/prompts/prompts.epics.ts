@@ -52,6 +52,7 @@ import { AppEpic } from '@/src/types/store';
 import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 
+import { PublicationActions } from '../publication/publication.reducers';
 import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
@@ -83,6 +84,11 @@ const initEpic: AppEpic = (action$) =>
               }),
             ),
             of(PromptsActions.initFoldersAndPromptsSuccess()),
+            of(
+              PublicationActions.uploadPublishedWithMeItems({
+                featureType: FeatureType.Prompt,
+              }),
+            ),
           );
         }),
       ),
@@ -158,7 +164,6 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         PromptsActions.addFolders.match(action) ||
         PromptsActions.clearPrompts.match(action) ||
         PromptsActions.importPromptsSuccess.match(action) ||
-        PromptsActions.unpublishFolder.match(action) ||
         PromptsActions.setFolders.match(action),
     ),
     map(() => ({

@@ -27,6 +27,7 @@ import { ConversationsActions } from '../conversations/conversations.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
 import { ModelsActions } from '../models/models.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
+import { PublicationActions } from '../publication/publication.reducers';
 import { ShareActions } from '../share/share.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { SettingsActions, SettingsSelectors } from './settings.reducers';
@@ -62,6 +63,7 @@ const initEpic: AppEpic = (action$, state$) =>
                 of(ConversationsActions.init()),
                 of(PromptsActions.init()),
                 of(ShareActions.init()),
+                of(PublicationActions.init()),
               ];
 
               if (isIsolatedView) {
