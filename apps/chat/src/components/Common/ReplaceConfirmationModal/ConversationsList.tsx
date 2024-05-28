@@ -11,11 +11,12 @@ import { OnItemEvent } from './ReplaceConfirmationModal';
 
 interface Props {
   folders: FolderInterface[];
-  mappedActions: MappedReplaceActions;
+  mappedActions?: MappedReplaceActions;
   openedFoldersIds: string[];
   conversationsToReplace: Conversation[];
-  handleToggleFolder: (folderId: string) => void;
-  onItemEvent: OnItemEvent;
+  handleToggleFolder?: (folderId: string) => void;
+  onItemEvent?: OnItemEvent;
+  foldersOnly?: boolean;
 }
 export const ConversationsList = ({
   folders,
@@ -24,6 +25,7 @@ export const ConversationsList = ({
   conversationsToReplace,
   handleToggleFolder,
   onItemEvent,
+  foldersOnly = false,
 }: Props) => {
   return (
     <>
@@ -55,21 +57,22 @@ export const ConversationsList = ({
           </div>
         );
       })}
-      {conversationsToReplace.map((conversation) => {
-        if (!isRootId(conversation.folderId)) {
-          return null;
-        }
+      {!foldersOnly &&
+        conversationsToReplace.map((conversation) => {
+          if (!isRootId(conversation.folderId)) {
+            return null;
+          }
 
-        return (
-          <div key={conversation.id}>
-            <ConversationRow
-              item={conversation}
-              onEvent={onItemEvent}
-              additionalItemData={{ mappedActions }}
-            />
-          </div>
-        );
-      })}
+          return (
+            <div key={conversation.id}>
+              <ConversationRow
+                item={conversation}
+                onEvent={onItemEvent}
+                additionalItemData={{ mappedActions }}
+              />
+            </div>
+          );
+        })}
     </>
   );
 };

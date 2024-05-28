@@ -417,6 +417,12 @@ const selectFoldersWithSearchTerm = createSelector(
     return getParentAndChildFolders(folders, filtered);
   },
 );
+const selectPublicationFolders = createSelector(
+  [rootSelector],
+  (state: FilesState) => {
+    return state.folders.filter((f) => f.isPublicationFolder);
+  },
+);
 const hasExternalParent = createSelector(
   [selectFolders, (_state: RootState, folderId: string) => folderId],
   (folders, folderId) => {
@@ -440,6 +446,7 @@ export const FilesSelectors = {
   selectNewAddedFolderId,
   selectFilesByIds,
   selectFoldersWithSearchTerm,
+  selectPublicationFolders,
   hasExternalParent,
 };
 

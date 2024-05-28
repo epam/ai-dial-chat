@@ -130,8 +130,10 @@ export const FileManagerModal = ({
   );
 
   const filteredFiles = useMemo(() => {
-    return files.filter(({ name }) =>
-      name.toLowerCase().includes(searchQuery.toLowerCase()),
+    return files.filter(
+      ({ name, isPublicationFile }) =>
+        name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !isPublicationFile,
     );
   }, [files, searchQuery]);
 
