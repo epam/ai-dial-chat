@@ -22,6 +22,8 @@ import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
+import Tooltip from './Tooltip';
+
 import { useCombobox, useMultipleSelection } from 'downshift';
 
 interface getFilteredItemsArgs<T> {
@@ -67,6 +69,7 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
+  readonly?: boolean;
 }
 
 export function MultipleComboBox<T>({
@@ -81,6 +84,7 @@ export function MultipleComboBox<T>({
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
+  readonly,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -109,7 +113,7 @@ export function MultipleComboBox<T>({
     selectedItems,
     addSelectedItem,
   } = useMultipleSelection({
-    selectedItems: initialSelectedItems,
+    selectedItems: initialSelectedItems || [],
     onStateChange({ selectedItems: newSelectedItems, type }) {
       switch (type) {
         case useMultipleSelection.stateChangeTypes.SelectedItemKeyDownBackspace:
@@ -147,7 +151,7 @@ export function MultipleComboBox<T>({
     defaultHighlightedIndex: 0, // after selection, highlight the first item.
     selectedItem: null,
     inputValue,
-    stateReducer(state, actionAndChanges) {
+    stateReducer(_, actionAndChanges) {
       const { changes, type } = actionAndChanges;
 
       switch (type) {
@@ -174,6 +178,14 @@ export function MultipleComboBox<T>({
           if (!newSelectedItem) {
             return;
           }
+
+          if (
+            getItemLabel(newSelectedItem) &&
+            !getItemLabel(newSelectedItem).trim()
+          ) {
+            return;
+          }
+
           addSelectedItem(newSelectedItem);
           onChangeSelectedItems([...(selectedItems ?? []), newSelectedItem]);
           setInputValue('');
@@ -197,32 +209,38 @@ export function MultipleComboBox<T>({
   }, [isOpen, update, refs.floating, refs.reference]);
 
   return (
-    <>
-      <div className="relative w-full" data-qa="multiple-combobox">
-        <div className="flex w-full flex-col gap-1">
-          {label && (
-            <label htmlFor="option-input" {...getLabelProps()}>
-              {label}
-            </label>
+    <div className="relative w-full" data-qa="multiple-combobox">
+      <div className="flex w-full flex-col gap-1">
+        {label && (
+          <label htmlFor="option-input" {...getLabelProps()}>
+            {label}
+          </label>
+        )}
+        <div
+          ref={refs.reference as RefObject<HTMLDivElement>}
+          onClick={() => {
+            if (!inputRef.current) {
+              return;
+            }
+            inputRef.current.focus();
+          }}
+          className={classNames(
+            'relative flex w-full flex-wrap gap-1 rounded border border-primary p-1',
+            !readonly && 'focus-within:border-accent-primary',
           )}
-          <div
-            ref={refs.reference as RefObject<HTMLDivElement>}
-            onClick={() => {
-              if (!inputRef.current) {
-                return;
-              }
-              inputRef.current.focus();
-            }}
-            className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
-          >
-            {selectedItems &&
-              selectedItems.map((selectedItemForRender, index) => {
-                return (
+        >
+          {selectedItems &&
+            selectedItems.map((selectedItemForRender, index) => {
+              return (
+                <Tooltip
+                  key={`selected-item-${getItemLabel(
+                    selectedItemForRender,
+                  )}-${index}`}
+                  tooltip={getItemLabel(selectedItemForRender)}
+                  triggerClassName="truncate text-center"
+                >
                   <span
                     className="flex items-center gap-2 rounded bg-accent-primary-alpha px-3 py-1.5"
-                    key={`selected-item-${getItemLabel(
-                      selectedItemForRender,
-                    )}-${index}`}
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,
@@ -247,70 +265,71 @@ export function MultipleComboBox<T>({
                         removeSelectedItem(selectedItemForRender);
                       }}
                     >
-                      <IconX size={14} className="text-secondary" />
+                      {!readonly && (
+                        <IconX size={14} className="text-secondary" />
+                      )}
                     </span>
                   </span>
-                );
-              })}
-
-            <input
-              name="option-input"
-              disabled={disabled}
-              placeholder={selectedItems.length ? '' : placeholder || ''}
-              className={classNames(
-                'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
-                selectedItems.length ? 'pl-1' : 'pl-2',
-              )}
-              {...getInputProps({
-                ...getDropdownProps({
-                  preventKeyAction: isOpen,
-                }),
-                ref: inputRef,
-              })}
-            />
-          </div>
-
-          <ul
+                </Tooltip>
+              );
+            })}
+          <input
+            name="option-input"
+            disabled={disabled}
+            placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
-              'z-10 max-h-80 overflow-auto rounded bg-layer-3',
-              !isOpen && 'hidden',
+              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
+              selectedItems.length ? 'pl-1' : 'pl-2',
+              readonly && 'hidden',
             )}
-            {...getMenuProps(
-              { ref: refs.floating as RefObject<HTMLUListElement> },
-              { suppressRefError: true },
-            )}
-            style={{
-              position: strategy,
-              top: y ?? '',
-              left: x ?? '',
-              width: `${floatingWidth}px`,
-            }}
-          >
-            {true &&
-              (displayedItems?.length > 0
-                ? displayedItems.map((item, index) => (
-                    <li
-                      className={classNames(
-                        'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
-                        highlightedIndex === index && 'bg-accent-primary-alpha',
-                        selectedItem === item && 'bg-accent-primary-alpha',
-                      )}
-                      key={`${getItemValue(item)}${index}`}
-                      {...getItemProps({ item, index })}
-                    >
-                      {itemRow
-                        ? createElement(itemRow, { item })
-                        : getItemLabel(item)}
-                    </li>
-                  ))
-                : !!inputValue?.length && (
-                    <li className="px-3 py-2">
-                      {notFoundPlaceholder || t('No available items')}
-                    </li>
-                  ))}
-          </ul>
+            {...getInputProps({
+              ...getDropdownProps({
+                preventKeyAction: isOpen,
+                ref: inputRef,
+              }),
+            })}
+          />
         </div>
+
+        <ul
+          className={classNames(
+            'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+            !isOpen && 'hidden',
+          )}
+          {...getMenuProps(
+            { ref: refs.floating as RefObject<HTMLUListElement> },
+            { suppressRefError: true },
+          )}
+          style={{
+            position: strategy,
+            top: y ?? '',
+            left: x ?? '',
+            width: `${floatingWidth}px`,
+          }}
+        >
+          {displayedItems?.length > 0
+            ? displayedItems.map((item, index) => (
+                <li
+                  className={classNames(
+                    'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
+                    highlightedIndex === index && 'bg-accent-primary-alpha',
+                    selectedItem === item && 'bg-accent-primary-alpha',
+                  )}
+                  key={`${getItemValue(item)}${index}`}
+                  {...getItemProps({ item, index })}
+                >
+                  {itemRow
+                    ? createElement(itemRow, { item })
+                    : getItemLabel(item)}
+                </li>
+              ))
+            : !!inputValue?.length && (
+                <li className="px-3 py-2">
+                  {notFoundPlaceholder || t('No available items')}
+                </li>
+              )}
+        </ul>
       </div>
-    </>
+    </div>
   );
 }

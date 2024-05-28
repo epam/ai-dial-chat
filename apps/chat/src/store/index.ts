@@ -25,6 +25,8 @@ import { OverlayEpics } from './overlay/overlay.epics';
 import { overlaySlice } from './overlay/overlay.reducers';
 import { PromptsEpics } from './prompts/prompts.epics';
 import { promptsSlice } from './prompts/prompts.reducers';
+import { PublicationEpics } from './publication/publication.epics';
+import { publicationSlice } from './publication/publication.reducers';
 import { ServiceEpics } from './service/service.epics';
 import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
@@ -47,6 +49,7 @@ export const rootEpic = combineEpics(
   ShareEpics,
   ServiceEpics,
   MigrationEpics,
+  PublicationEpics,
 );
 
 const reducer = {
@@ -63,6 +66,7 @@ const reducer = {
   share: shareSlice.reducer,
   service: serviceSlice.reducer,
   migration: migrationSlice.reducer,
+  publication: publicationSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any

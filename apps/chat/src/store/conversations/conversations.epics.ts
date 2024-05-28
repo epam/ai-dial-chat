@@ -101,6 +101,7 @@ import { defaultReplay } from '@/src/constants/replay';
 import { AddonsActions } from '../addons/addons.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
+import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import {
   ConversationsActions,
@@ -270,6 +271,11 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
+            of(
+              PublicationActions.uploadPublishedWithMeItems({
+                featureType: FeatureType.Chat,
+              }),
+            ),
           );
         }),
         catchError((err) => {
@@ -1731,7 +1737,6 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
         ConversationsActions.clearConversations.match(action) ||
         ConversationsActions.importConversationsSuccess.match(action) ||
         ConversationsActions.addFolders.match(action) ||
-        ConversationsActions.unpublishFolder.match(action) ||
         ConversationsActions.setFolders.match(action),
     ),
     map(() => ({

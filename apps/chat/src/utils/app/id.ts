@@ -47,3 +47,5 @@ export const isConversationId = (id?: string) =>
 
 export const isPromptId = (id?: string) =>
   id?.startsWith(`${ApiKeys.Prompts}/`);
+
+export const isFileId = (id?: string) => id?.startsWith(`${ApiKeys.Files}/`);

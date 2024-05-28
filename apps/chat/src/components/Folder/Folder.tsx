@@ -49,13 +49,14 @@ import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -66,7 +67,7 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import PublishModal from '../Chat/Publish/PublishWizard';
+import { PublishModal } from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
@@ -83,6 +84,7 @@ export interface FolderProps<T, P = unknown> {
     readonly?: boolean;
     additionalItemData?: Record<string, unknown>;
     onEvent?: (eventId: string, data: P) => void;
+    itemComponentClassNames?: string;
   }>;
   allItems?: T[];
   allFolders: FolderInterface[];
@@ -99,7 +101,7 @@ export interface FolderProps<T, P = unknown> {
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
-  onClickFolder: (folderId: string) => void;
+  onClickFolder?: (folderId: string) => void;
   featureType: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
@@ -111,6 +113,8 @@ export interface FolderProps<T, P = unknown> {
   allItemsWithoutFilters?: T[];
   folderClassName?: string;
   skipFolderRenameValidation?: boolean;
+  noCaretIcon?: boolean;
+  itemComponentClassNames?: string;
   canAttachFolders?: boolean;
 }
 
@@ -144,6 +148,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   withBorderHighlight = true,
   folderClassName,
   skipFolderRenameValidation = false,
+  noCaretIcon = false,
+  itemComponentClassNames,
   canAttachFolders = false,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
@@ -232,18 +238,31 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     setIsUnshareConfirmOpened(true);
   }, []);
 
-  const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsPublishing(true);
-  }, []);
+  const allChildItems = useMemo(() => {
+    return sortByName(
+      allItems?.filter((item) => item.id.startsWith(currentFolder.id)) || [],
+    );
+  }, [allItems, currentFolder.id]);
+
+  const handleOpenPublishing: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (featureType === FeatureType.Chat) {
+        dispatch(
+          ConversationsActions.uploadConversationsByIds({
+            conversationIds: allChildItems.map((e) => e.id),
+          }),
+        );
+      }
+
+      setIsPublishing(true);
+    },
+    [allChildItems, dispatch, featureType],
+  );
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
-  }, []);
-
-  const handleOpenUnpublishing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsUnpublishing(true);
   }, []);
 
   const handleCloseUnpublishModal = useCallback(() => {
@@ -774,6 +793,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             }}
             onClick={(e) => {
               if (
+                onClickFolder &&
                 !hasParentWithAttribute(
                   e.target as HTMLDivElement,
                   'data-item-checkbox',
@@ -792,7 +812,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
-              hidden={!hasChildElements && !displayCaretAlways}
+              hidden={
+                (!hasChildElements &&
+                  currentFolder.status === UploadStatus.LOADED &&
+                  !displayCaretAlways) ||
+                noCaretIcon
+              }
             />
 
             {loadingFolderIds.includes(currentFolder.id) &&
@@ -897,7 +922,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onUnshare={handleUnshare}
                     onPublish={handleOpenPublishing}
                     onPublishUpdate={handleOpenPublishing}
-                    onUnpublish={handleOpenUnpublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
@@ -950,6 +974,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 <Fragment key={item.id}>
                   <div className="h-1"></div>
                   <Folder
+                    folderClassName={folderClassName}
+                    noCaretIcon={noCaretIcon}
                     readonly={readonly}
                     level={level + 1}
                     searchTerm={searchTerm}
@@ -977,6 +1003,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     maxDepth={maxDepth}
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
+                    itemComponentClassNames={itemComponentClassNames}
                     canAttachFolders={canAttachFolders}
                   />
                 </Fragment>
@@ -991,6 +1018,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   level: level + 1,
                   readonly,
                   additionalItemData,
+                  itemComponentClassNames,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>
@@ -1019,6 +1047,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isPublishing && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
+          entities={allChildItems}
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder
@@ -1031,12 +1060,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       )}
       {isUnpublishing && isPublishingEnabled && (
         <UnpublishModal
-          entity={currentFolder}
           type={
-            featureType === FeatureType.Prompt
-              ? SharingType.PromptFolder
-              : SharingType.ConversationFolder
+            featureType === FeatureType.Chat
+              ? SharingType.ConversationFolder
+              : SharingType.PromptFolder
           }
+          entity={currentFolder}
           isOpen
           onClose={handleCloseUnpublishModal}
         />

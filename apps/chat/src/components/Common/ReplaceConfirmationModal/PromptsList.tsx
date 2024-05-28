@@ -11,11 +11,11 @@ import { OnItemEvent } from './ReplaceConfirmationModal';
 
 interface Props {
   folders: FolderInterface[];
-  mappedActions: MappedReplaceActions;
+  mappedActions?: MappedReplaceActions;
   openedFoldersIds: string[];
   promptsToReplace: Prompt[];
-  handleToggleFolder: (folderId: string) => void;
-  onItemEvent: OnItemEvent;
+  handleToggleFolder?: (folderId: string) => void;
+  onItemEvent?: OnItemEvent;
 }
 export const PromptsList = ({
   folders,
