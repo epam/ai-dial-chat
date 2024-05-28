@@ -17,6 +17,7 @@ export enum UIStorageKeys {
   ConversationHistory = 'conversationHistory',
   Folders = 'folders',
   SelectedConversationIds = 'selectedConversationIds',
+  SelectedPublicationId = 'selectedPublicationId',
   RecentModelsIds = 'recentModelsIds',
   RecentAddonsIds = 'recentAddonsIds',
   Settings = 'settings',

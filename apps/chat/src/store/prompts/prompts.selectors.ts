@@ -295,7 +295,10 @@ export const selectTemporaryAndFilteredFolders = createSelector(
       (folder) => folder.name.includes(searchTerm.toLowerCase()),
     );
 
-    return getParentAndChildFolders(allFolders, filtered);
+    return getParentAndChildFolders(
+      [...allFolders, ...temporaryFolders],
+      filtered,
+    );
   },
 );
 
@@ -378,5 +381,12 @@ export const selectDuplicatedPrompt = createSelector(
         parentPath === importParentPath && conversation.name === promptName
       );
     });
+  },
+);
+
+export const selectPublicationFolders = createSelector(
+  [rootSelector],
+  (state: PromptsState) => {
+    return state.folders.filter((f) => f.isPublicationFolder);
   },
 );

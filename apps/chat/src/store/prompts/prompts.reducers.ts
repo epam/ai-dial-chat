@@ -14,7 +14,7 @@ import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
-import { PublishRequest } from '@/src/types/share';
+import '@/src/types/share';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -131,58 +131,6 @@ export const promptsSlice = createSlice({
         return prompt;
       });
     },
-    publishPrompt: (state, { payload }: PayloadAction<PublishRequest>) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.id) {
-          return {
-            ...prompt,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isPublished: true,
-          };
-        }
-
-        return prompt;
-      });
-    },
-    publishFolder: (state, { payload }: PayloadAction<PublishRequest>) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isPublished: true,
-          };
-        }
-
-        return folder;
-      });
-    },
-    unpublishPrompt: (state, { payload }: PayloadAction<{ id: string }>) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.id) {
-          return {
-            ...prompt,
-            //TODO: unpublish prompt by API
-            isPublished: false,
-          };
-        }
-
-        return prompt;
-      });
-    },
-    unpublishFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: unpublish folder by API
-            isPublished: false,
-          };
-        }
-
-        return folder;
-      });
-    },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setPrompts: (
       state,
@@ -271,7 +219,7 @@ export const promptsSlice = createSlice({
         id,
         name: folderName,
         type: FolderType.Prompt,
-        folderId: payload.relativePath,
+        folderId: payload.relativePath || getPromptRootId(),
         temporary: true,
       });
       state.newAddedFolderId = id;
