@@ -164,7 +164,11 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
         map((res) => res.filter(Boolean) as Conversation[]),
         switchMap((conversations: Conversation[]) => {
           const internalResourcesIds = conversations
-            .flatMap((res) => getInternalResourcesUrls(res.messages))
+            .flatMap((res) =>
+              getInternalResourcesUrls(
+                res.playback?.messagesStack || res.messages,
+              ),
+            )
             .map((url) => ({ url }));
 
           return ShareService.share({
