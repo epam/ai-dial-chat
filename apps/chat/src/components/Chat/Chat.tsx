@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { getTimeZoneOffset } from '@/src/utils/app/common';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
@@ -38,7 +39,10 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_ASSISTANT_SUBMODEL_ID,
+  DEFAULT_CONVERSATION_NAME,
+} from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -67,7 +71,6 @@ enum DocumentId {
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
-  const router = useRouter();
 
   const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -105,20 +108,9 @@ export const ChatView = memo(() => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
-  const currentChatId = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
-  );
-  const isConversationUpdatedFromQueryParams = useAppSelector(
-    ConversationsSelectors.selectIsConversationUpdatedFromQueryParams,
-  );
-  const isInitFoldersAndConversations = useAppSelector(
-    ConversationsSelectors.selectIsInitFoldersAndConversations,
-  );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -139,6 +131,12 @@ export const ChatView = memo(() => {
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
 
+  useEffect(() => {
+    const timeZoneOffset = getTimeZoneOffset();
+
+    dispatch(UIActions.setTmeZoneOffset(timeZoneOffset));
+  }, []);
+
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
   }, [isReplay, isReplayPaused, messageIsStreaming]);
@@ -146,44 +144,6 @@ export const ChatView = memo(() => {
   const isNotEmptyConversations = selectedConversations.some(
     (conv) => conv.messages.length > 0,
   );
-
-  const currentConversation = conversations.find(
-    (chat) => chat?.id === currentChatId?.[0],
-  );
-
-  const modelIds = useMemo(
-    () => [...models.map((model) => model.id)],
-    [models],
-  );
-
-  useEffect(() => {
-    const { talkto } = router?.query || {};
-
-    if (modelIds?.length > 0 && talkto) {
-      const modelId =
-        talkto === DocumentId.queryParam ? DocumentId.modelId : talkto;
-
-      if (
-        (currentConversation as any)?.id !== modelId &&
-        areSelectedConversationsLoaded &&
-        isInitFoldersAndConversations &&
-        !isConversationUpdatedFromQueryParams &&
-        modelIds?.includes(modelId as string)
-      ) {
-        dispatch(UIActions.setShowPromptbar(false));
-        dispatch(UIActions.setShowChatbar(false));
-        dispatch(ConversationsActions.updateConversationFromQueryParams());
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: selectedConversationsIds[0],
-            values: {
-              model: { id: modelId as string },
-            },
-          }),
-        );
-      }
-    }
-  }, [areSelectedConversationsLoaded, isInitFoldersAndConversations]);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
@@ -428,6 +388,7 @@ export const ChatView = memo(() => {
         return;
       }
 
+      talkTo && dispatch(ConversationsActions.setTalkTo(''));
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
@@ -437,7 +398,7 @@ export const ChatView = memo(() => {
         }),
       );
     },
-    [applySelectedModel, dispatch, modelsMap],
+    [applySelectedModel, dispatch, modelsMap, talkTo],
   );
 
   const handleSelectAssistantSubModel = useCallback(
@@ -957,6 +918,8 @@ export const ChatView = memo(() => {
 ChatView.displayName = 'ChatView';
 
 export function Chat() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
   const areSelectedConversationsLoaded = useAppSelector(
@@ -975,6 +938,74 @@ export function Chat() {
   const activeModel = useAppSelector((state) =>
     ModelsSelectors.selectModel(state, isolatedModelId || ''),
   );
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
+  const isConversationUpdatedFromQueryParams = useAppSelector(
+    ConversationsSelectors.selectIsConversationUpdatedFromQueryParams,
+  );
+  const currentChatId = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const isInitFoldersAndConversations = useAppSelector(
+    ConversationsSelectors.selectIsInitFoldersAndConversations,
+  );
+
+  const currentConversation = conversations.find(
+    (chat) => chat?.id === currentChatId?.[0],
+  );
+
+  const modelIds = useMemo(
+    () => [...models.map((model) => model.id)],
+    [models],
+  );
+
+  useEffect(() => {
+    const { talkto } = router?.query || {};
+
+    if (modelIds?.length > 0 && talkto) {
+      const modelId =
+        talkto === DocumentId.queryParam ? DocumentId.modelId : talkto;
+
+      if (
+        (currentConversation as any)?.id !== modelId &&
+        areSelectedConversationsLoaded &&
+        isInitFoldersAndConversations &&
+        !isConversationUpdatedFromQueryParams &&
+        modelIds?.includes(modelId as string)
+      ) {
+        dispatch(UIActions.setShowPromptbar(false));
+        dispatch(UIActions.setShowChatbar(false));
+        dispatch(ConversationsActions.updateConversationFromQueryParams(true));
+        dispatch(ConversationsActions.setTalkTo(talkto as string));
+        dispatch(
+          selectedConversations[0].messages.length ||
+            selectedConversations[0].isPlayback ||
+            selectedConversations[0].isReplay
+            ? ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+              })
+            : ConversationsActions.updateConversation({
+                id: selectedConversationsIds[0],
+                values: {
+                  model: { id: modelId as string },
+                },
+              }),
+        );
+      }
+    }
+  }, [areSelectedConversationsLoaded, isInitFoldersAndConversations]);
+
+  useEffect(() => {
+    if (isConversationUpdatedFromQueryParams && !talkTo) {
+      const { pathname } = router;
+
+      dispatch(ConversationsActions.updateConversationFromQueryParams(false));
+      router.push(pathname, undefined, { shallow: true });
+    }
+  }, [talkTo]);
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
     return (
