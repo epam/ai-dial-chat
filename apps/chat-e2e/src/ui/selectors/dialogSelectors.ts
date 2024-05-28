@@ -81,3 +81,7 @@ export const AttachFilesModalSelectors = {
   deleteFilesButton: '[data-qa="delete-files"]',
   downloadFilesButton: '[data-qa="download-files"]',
 };
+
+export const FilesModalSelectors = {
+  supportedAttributesLabel: '[data-qa="supported-attributes"]',
+};

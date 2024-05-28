@@ -109,6 +109,8 @@ export const ExpectedConstants = {
   prohibitedNameSymbols: `=,:;{}/%&`,
   // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
+  attachedFileError: (filename: string) =>
+    `You've trying to upload files with incorrect type: ${filename}`,
 };
 
 export enum Groups {
@@ -208,6 +210,11 @@ export const Attachment = {
   flowerImageName: 'flower.jpg',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
   specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
+  textName: 'text.txt',
+  allTypesExtension: '*/*',
+  allTypesLabel: 'all',
+  imageTypesExtension: 'image/*',
+  imagesTypesLabel: 'images',
 };
 
 export enum Side {

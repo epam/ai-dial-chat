@@ -368,7 +368,7 @@ export const PreUploadDialog = ({
             {t('Upload from device')}
           </h2>
         </div>
-        <p id={descriptionId}>
+        <p id={descriptionId} data-qa="supported-attributes">
           {t(
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {

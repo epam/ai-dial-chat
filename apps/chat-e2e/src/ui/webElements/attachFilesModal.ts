@@ -8,6 +8,7 @@ import {
 } from '@/src/ui/selectors';
 import { FileSelectors } from '@/src/ui/selectors/fileSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
+import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
 import { Page } from '@playwright/test';
 
 export class AttachFilesModal extends BaseElement {
@@ -16,12 +17,20 @@ export class AttachFilesModal extends BaseElement {
   }
 
   private fileDropdownMenu!: DropdownMenu;
+  private modalHeader!: FilesModalHeader;
 
   getFileDropdownMenu(): DropdownMenu {
     if (!this.fileDropdownMenu) {
       this.fileDropdownMenu = new DropdownMenu(this.page);
     }
     return this.fileDropdownMenu;
+  }
+
+  getModalHeader(): FilesModalHeader {
+    if (!this.modalHeader) {
+      this.modalHeader = new FilesModalHeader(this.page, this.rootLocator);
+    }
+    return this.modalHeader;
   }
 
   public attachedFile = (filename: string) =>
@@ -90,5 +99,11 @@ export class AttachFilesModal extends BaseElement {
     await file.hover();
     await file.locator(SideBarSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();
+  }
+
+  public async getAttachedFileErrorMessage() {
+    return this.getChildElementBySelector(
+      ErrorLabelSelectors.fieldError,
+    ).getElementContent();
   }
 }

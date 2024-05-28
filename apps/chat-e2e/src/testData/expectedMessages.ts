@@ -156,6 +156,7 @@ export enum ExpectedMessages {
   fieldIsHighlightedWithBlue = 'Field is highlighted with blue',
   buttonIsDisabled = 'Button is disabled',
   buttonIsEnabled = 'Button is enabled',
+  buttonBackgroundColorIsValid = 'Button background color is valid',
   newPromptButtonIsHighlighted = 'New prompt button is highlighted',
   newPromptButtonCursorIsPointer = 'New prompt button cursor is a pointer',
   playbackControlsHidden = 'PlayBack controls are hidden',
@@ -251,4 +252,6 @@ export enum ExpectedMessages {
   attachmentsAreGrouped = 'Attachments are grouped',
   attachmentIsVisible = 'Attachment is visible',
   attachmentIsHidden = 'Attachment is hidden',
+  attachFilesModalIsOpened = 'Attach files modal dialog is opened',
+  supportedTypesLabelIsCorrect = 'Supported types label is valid',
 }
