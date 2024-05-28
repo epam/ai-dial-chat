@@ -2425,9 +2425,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (action$) =>
             ),
             of(
               ConversationsActions.uploadConversationsByIds({
-                conversationIds: conversations
-                  .filter((c) => !('messages' in c))
-                  .map((c) => c.id),
+                conversationIds: conversations.map((c) => c.id),
               }),
             ),
           );
