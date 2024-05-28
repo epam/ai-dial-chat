@@ -170,6 +170,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -340,6 +341,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
+      talkTo && dispatch(ConversationsActions.setTalkTo(''));
       dispatch(ConversationsActions.createNewReplayConversation(conversation));
     },
     [conversation, dispatch],
@@ -347,6 +349,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
+      talkTo && dispatch(ConversationsActions.setTalkTo(''));
       dispatch(
         ConversationsActions.createNewPlaybackConversation(conversation),
       );
@@ -368,6 +371,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
+      talkTo && dispatch(ConversationsActions.setTalkTo(''));
       dispatch(ConversationsActions.duplicateConversation(conversation));
     },
     [conversation, dispatch],
@@ -584,6 +588,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           onClick={() => {
             setIsDeleting(false);
             setIsRenaming(false);
+            if (talkTo && selectedConversationIds[0] !== conversation.id) {
+              dispatch(ConversationsActions.setTalkTo(''));
+            }
             dispatch(
               ConversationsActions.selectConversations({
                 conversationIds: [conversation.id],

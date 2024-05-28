@@ -44,6 +44,7 @@ const ChatActionsBlock = () => {
   const isNewConversationDisabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
   );
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
 
   if (isNewConversationDisabled) {
     return null;
@@ -54,6 +55,7 @@ const ChatActionsBlock = () => {
       <button
         className="hover:bg-accent-quaternary mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 disabled:cursor-not-allowed"
         onClick={() => {
+          talkTo && dispatch(ConversationsActions.setTalkTo(''));
           dispatch(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],

@@ -705,3 +705,8 @@ export const selectIsInitFoldersAndConversations = createSelector(
   [rootSelector],
   (state) => state.initFoldersAndConversations,
 );
+
+export const selectTalkTo = createSelector(
+  [rootSelector],
+  (state) => state.talkTo,
+);

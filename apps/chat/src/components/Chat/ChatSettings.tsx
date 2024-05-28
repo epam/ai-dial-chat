@@ -7,7 +7,11 @@ import { DialAIEntityAddon } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
@@ -41,8 +45,10 @@ export const ChatSettings = ({
   onChangeSettings,
   onApplySettings,
 }: Props) => {
+  const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
   const isTourRun = useAppSelector(UISelectors.selectIsTourRun);
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
 
   const [currentModelId, setCurrentModelId] = useState<string>(modelId);
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
@@ -90,6 +96,10 @@ export const ChatSettings = ({
   };
 
   const handleOnApplySettings = () => {
+    if (talkTo && currentModelId !== conversation.model.id) {
+      dispatch(ConversationsActions.setTalkTo(''));
+    }
+
     if (conversation.isShared && currentModelId !== conversation.model.id) {
       setIsConfirmModelChanging(true);
       return;

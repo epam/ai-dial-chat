@@ -315,23 +315,14 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       return state$.pipe(
         startWith(state$.value),
         map((state) => {
-          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(state);
-          const isolatedModelId =
-            SettingsSelectors.selectIsolatedModelId(state);
-          if (isIsolatedView && isolatedModelId) {
-            const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.id === isolatedModelId);
-          }
-          return ModelsSelectors.selectRecentModels(state);
+          const talkToModelId = ConversationsSelectors.selectTalkTo(state);
+          return ModelsSelectors.selectModels(state).filter(
+            (model) => model.id === talkToModelId,
+          );
         }),
-        filter((models) => models && models.length > 0),
         take(1),
-        switchMap((recentModels) => {
-          const model = recentModels[0];
-
-          if (!model) {
-            return EMPTY;
-          }
+        switchMap((models) => {
+          const model = models[0];
           const conversationRootId = getConversationRootId();
           const newConversations: Conversation[] = names.map(
             (name: string, index): Conversation => {
@@ -350,7 +341,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 model: {
                   //PGPT-81: Set GPT3.5 turbo as the default selected model
                   //Changing recentModels and rearranging it impacts other parts of the code, which is why it is set directly
-                  id: process.env.DEFAULT_MODEL || ModelId.GPT_35,
+                  id: model?.id || process.env.DEFAULT_MODEL || ModelId.GPT_35,
                 },
                 prompt: DEFAULT_SYSTEM_PROMPT,
                 temperature:
