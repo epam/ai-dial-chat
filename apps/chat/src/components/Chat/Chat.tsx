@@ -824,14 +824,14 @@ export const ChatView = memo(() => {
                     <NotAllowedModel type={notAllowedType} />
                   ) : (
                     <>
-                      {isExternal && (
+                      {isExternal && selectedConversations.length === 1 && (
                         <div
                           className={classNames(
                             !isPlayback && 'relative top-[-46px]',
                           )}
                         >
                           <PublicationControls
-                            entities={selectedConversations}
+                            entity={selectedConversations[0]}
                             wrapperClassName="justify-center w-full"
                           />
                         </div>

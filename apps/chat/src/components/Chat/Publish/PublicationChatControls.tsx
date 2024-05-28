@@ -9,6 +9,7 @@ import { isConversationId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
+import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -19,16 +20,9 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
-interface PublicationControlsViewProps<
-  T extends ConversationInfo | PromptInfo,
-> {
+interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
   wrapperClassName?: string;
-  resourceToReview: {
-    publicationUrl: string;
-    reviewed: boolean;
-    reviewUrl: string;
-  };
 }
 
 export function PublicationControlsView<
@@ -37,7 +31,7 @@ export function PublicationControlsView<
   entity,
   wrapperClassName,
   resourceToReview,
-}: PublicationControlsViewProps<T>) {
+}: Props<T> & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -153,30 +147,22 @@ export function PublicationControlsView<
   );
 }
 
-interface PublicationControlsProps<T extends PromptInfo | ConversationInfo> {
-  entities: T[];
-  wrapperClassName: string;
-}
-
 export function PublicationControls<T extends PromptInfo | ConversationInfo>({
-  entities,
+  entity,
   wrapperClassName,
-}: PublicationControlsProps<T>) {
+}: Props<T>) {
   const resourceToReview = useAppSelector((state) =>
-    PublicationSelectors.selectResourceToReviewByReviewUrl(
-      state,
-      entities[0].id,
-    ),
+    PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );
 
-  if (entities.length !== 1 || !resourceToReview) {
+  if (!resourceToReview) {
     return null;
   }
 
   return (
     <PublicationControlsView
       resourceToReview={resourceToReview}
-      entity={entities[0]}
+      entity={entity}
       wrapperClassName={wrapperClassName}
     />
   );
