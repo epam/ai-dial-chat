@@ -82,12 +82,7 @@ import {
   RateBody,
   Role,
 } from '@/src/types/chat';
-import {
-  ApiKeys,
-  EntityType,
-  FeatureType,
-  UploadStatus,
-} from '@/src/types/common';
+import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 

@@ -13,7 +13,7 @@ import {
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';

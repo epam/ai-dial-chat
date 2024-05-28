@@ -12,7 +12,7 @@ import {
 } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
