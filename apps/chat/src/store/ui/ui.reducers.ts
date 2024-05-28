@@ -23,6 +23,7 @@ export interface UIState {
   textOfClosedAnnouncement?: string | undefined;
   isChatFullWidth: boolean;
   showSelectToMigrateWindow: boolean;
+  timeZoneOffset?: number | undefined;
   chatbarWidth?: number;
   promptbarWidth?: number;
   customLogo?: string;
@@ -44,6 +45,7 @@ const initialState: UIState = {
   isUserSettingsOpen: false,
   isProfileOpen: false,
   isCompareMode: false,
+  timeZoneOffset: undefined,
   openedFoldersIds: openFoldersInitialState,
   textOfClosedAnnouncement: undefined,
   chatbarWidth: SIDEBAR_MIN_WIDTH,
@@ -112,6 +114,9 @@ export const uiSlice = createSlice({
     },
     setIsChatFullWidth: (state, { payload }: PayloadAction<boolean>) => {
       state.isChatFullWidth = payload;
+    },
+    setTmeZoneOffset: (state, { payload }: PayloadAction<number>) => {
+      state.timeZoneOffset = payload;
     },
     setCustomLogo: (state, { payload }: PayloadAction<{ logo: string }>) => {
       state.customLogo = payload.logo;
@@ -207,6 +212,10 @@ const selectAvailableThemes = createSelector([rootSelector], (state) => {
 
 const selectTourStepIndex = createSelector([rootSelector], (state) => {
   return state.tourStepIndex;
+});
+
+const selectTimeZoneOffset = createSelector([rootSelector], (state) => {
+  return state.timeZoneOffset;
 });
 
 const selectIsTourRun = createSelector([rootSelector], (state) => {
@@ -309,6 +318,7 @@ export const UISelectors = {
   selectChatbarWidth,
   selectPromptbarWidth,
   selectIsChatFullWidth,
+  selectTimeZoneOffset,
   selectCustomLogo,
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,

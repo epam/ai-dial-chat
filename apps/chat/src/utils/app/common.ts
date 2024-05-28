@@ -144,3 +144,5 @@ export const prepareEntityName = (
     ? trimEndDots(result)
     : result.trim();
 };
+
+export const getTimeZoneOffset = () => new Date().getTimezoneOffset() / -60;
