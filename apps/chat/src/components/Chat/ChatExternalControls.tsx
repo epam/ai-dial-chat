@@ -8,10 +8,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { PublicationControls } from './Publish/PublicationChatControls';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -22,13 +19,6 @@ export default function ChatExternalControls({ conversations }: Props) {
 
   const dispatch = useAppDispatch();
 
-  const resourceToReview = useAppSelector((state) =>
-    PublicationSelectors.selectResourceToReviewByReviewUrl(
-      state,
-      conversations[0].id,
-    ),
-  );
-
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
   );
@@ -38,16 +28,6 @@ export default function ChatExternalControls({ conversations }: Props) {
       dispatch(ConversationsActions.duplicateConversation(conv));
     });
   }, [conversations, dispatch]);
-
-  if (conversations.length === 1 && resourceToReview) {
-    return (
-      <PublicationControls
-        resourceToReview={resourceToReview}
-        entity={conversations[0]}
-        wrapperClassName="justify-center w-full"
-      />
-    );
-  }
 
   if (isOverlayConversationId) {
     return null;

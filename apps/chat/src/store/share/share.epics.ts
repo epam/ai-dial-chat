@@ -110,7 +110,10 @@ const shareConversationEpic: AppEpic = (action$) =>
         folderId: constructPath(apiKey, bucket, parentPath),
       }).pipe(
         switchMap((res) => {
-          const internalResources = getInternalResourcesUrls(res?.messages);
+          const internalResources = getInternalResourcesUrls(
+            res?.playback?.messagesStack || res?.messages,
+          );
+
           return ShareService.share({
             invitationType: ShareRequestType.link,
             resources: [
