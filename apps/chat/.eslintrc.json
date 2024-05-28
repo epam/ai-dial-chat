@@ -14,7 +14,7 @@
   },
   "settings": {
     "tailwindcss": {
-      "config": "./apps/chat/tailwind.config.js",
+      "config": "./tailwind.config.js",
       "callees": ["classnames", "classNames"]
     }
   },
