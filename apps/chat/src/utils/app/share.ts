@@ -1,49 +1,11 @@
 import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { FilesSelectors } from '@/src/store/files/files.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { RootState } from '@/src/store';
-
-export const getPublishActionByType = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsActions.publishConversation;
-    case SharingType.ConversationFolder:
-      return ConversationsActions.publishFolder;
-    case SharingType.Prompt:
-      return PromptsActions.publishPrompt;
-    case SharingType.PromptFolder:
-      return PromptsActions.publishFolder;
-    default:
-      throw new Error('unknown type');
-  }
-};
-
-export const getUnpublishActionByType = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsActions.unpublishConversation;
-    case SharingType.ConversationFolder:
-      return ConversationsActions.unpublishFolder;
-    case SharingType.Prompt:
-      return PromptsActions.unpublishPrompt;
-    case SharingType.PromptFolder:
-      return PromptsActions.unpublishFolder;
-    case SharingType.File:
-      return FilesActions.unpublishFile;
-    default:
-      throw new Error('unknown type');
-  }
-};
 
 export const isEntityExternal = (entity: ShareEntity) =>
   !!(entity.sharedWithMe || entity.publishedWithMe);

@@ -59,7 +59,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
-import PublishModal from '../Chat/Publish/PublishWizard';
+import { PublishModal } from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
@@ -683,6 +683,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isPublishing && (
         <PublishModal
           entity={conversation}
+          entities={[conversation]}
           type={SharingType.Conversation}
           isOpen
           onClose={handleClosePublishModal}
@@ -691,9 +692,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnpublishing && (
         <UnpublishModal
           entity={conversation}
-          type={SharingType.Conversation}
           isOpen
           onClose={handleCloseUnpublishModal}
+          type={SharingType.Conversation}
         />
       )}
       {isUnshareConfirmOpened && (
