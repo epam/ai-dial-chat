@@ -5,6 +5,7 @@ export interface FolderInterface extends ShareEntity {
   type: FolderType;
   temporary?: boolean;
   serverSynced?: boolean;
+  isPublicationFolder?: boolean;
 }
 
 export interface FoldersAndEntities<T> {

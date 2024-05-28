@@ -30,8 +30,6 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from './ContextMenu';
 
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-
 interface FolderContextMenuProps {
   folder: FolderInterface;
   featureType: FeatureType;
@@ -44,7 +42,6 @@ interface FolderContextMenuProps {
   onShare?: MouseEventHandler<unknown>;
   onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
-  onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
 }
@@ -59,7 +56,6 @@ export const FolderContextMenu = ({
   onShare,
   onUnshare,
   onPublish,
-  onUnpublish,
   onPublishUpdate,
   onUpload,
   isOpen,
@@ -92,7 +88,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Rename'),
-        display: !!onRename && !isExternal,
+        display: (!!onRename && !isExternal) || !!folder.temporary,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -140,27 +136,29 @@ export const FolderContextMenu = ({
         onClick: onPublishUpdate,
         disabled: disableAll,
       },
-      {
-        name: t('Unpublish'),
-        dataQa: 'unpublish',
-        display:
-          !isEmpty &&
-          isPublishingEnabled &&
-          !!folder.isPublished &&
-          !!onUnpublish,
-        Icon: UnpublishIcon,
-        onClick: onUnpublish,
-        disabled: disableAll,
-      },
+      // TODO: implement Unpublish folder in https://github.com/epam/ai-dial-chat/issues/318
+      // {
+      //   name: t('Unpublish'),
+      //   dataQa: 'unpublish',
+      //   display:
+      //     !isEmpty &&
+      //     isPublishingEnabled &&
+      //     !!folder.isPublished &&
+      //     !!onUnpublish,
+      //   Icon: UnpublishIcon,
+      //   onClick: onUnpublish,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Delete'),
         display:
-          !!onDelete &&
-          folder.id.startsWith(
-            getRootId({
-              featureType,
-            }),
-          ),
+          (!!onDelete &&
+            folder.id.startsWith(
+              getRootId({
+                featureType,
+              }),
+            )) ||
+          !!folder.temporary,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -187,19 +185,19 @@ export const FolderContextMenu = ({
       isExternal,
       disableAll,
       onRename,
+      folder.temporary,
+      folder.isShared,
+      folder.isPublished,
+      folder.id,
+      folder.sharedWithMe,
       isNameInvalid,
       isEmpty,
       isSharingEnabled,
       onShare,
       onUnshare,
-      folder.isShared,
-      folder.isPublished,
-      folder.id,
-      folder.sharedWithMe,
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,
-      onUnpublish,
       onDelete,
       featureType,
       onAddFolder,

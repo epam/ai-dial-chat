@@ -2,78 +2,88 @@ import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { FiltersTypes, TargetAudienceFilter } from '@/src/types/share';
+import {
+  PublicationFunctions,
+  TargetAudienceFilter,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
-import { FilterTypeSelect } from './FilterTypeSelect';
+import { FilterFunctionSelect } from './FilterFunctionSelect';
 import { RegexParamInput } from './RegexParamInput';
 
 interface Props {
   id: string;
   name: string;
   initialSelectedFilter?: TargetAudienceFilter;
-  onChangeFilter: (filter: TargetAudienceFilter) => void;
+  onChangeFilter?: (filter: TargetAudienceFilter) => void;
+  readonly?: boolean;
 }
 
-const filterTypeValues = [
-  FiltersTypes.Contains,
-  FiltersTypes.NotContains,
-  FiltersTypes.Equals,
-  FiltersTypes.Regex,
-];
-
 const getItemLabel = (item: string) => item;
+
+const filterFunctionValues = [
+  PublicationFunctions.Contain,
+  PublicationFunctions.Equal,
+  PublicationFunctions.Regex,
+];
 
 export function TargetAudienceFilterComponent({
   id,
   name,
   initialSelectedFilter,
   onChangeFilter,
+  readonly = false,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
-  const [filterType, setFilterType] = useState<FiltersTypes>(
-    initialSelectedFilter?.filterType ?? filterTypeValues[0],
+  const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
+    initialSelectedFilter?.filterFunction ?? filterFunctionValues[0],
   );
-  const [filterParams, setFilteParams] = useState<string[]>([]);
-  const [filterRegexParam, setfilterRegexParam] = useState<string>(
-    (initialSelectedFilter?.filterType === FiltersTypes.Regex &&
+  const [filterParams, setFilterParams] = useState<string[]>([]);
+  const [filterRegexParam, setFilterRegexParam] = useState<string>(
+    (initialSelectedFilter?.filterFunction === PublicationFunctions.Regex &&
       initialSelectedFilter.filterParams[0]) ||
       '',
   );
 
-  const onChangeFilterType = useCallback(
-    (filterType: FiltersTypes) => {
-      setFilterType(filterType);
-      if (filterType === FiltersTypes.Regex) {
+  const handleChangeFilterFunction = useCallback(
+    (filterFunction: PublicationFunctions) => {
+      if (!onChangeFilter) return;
+
+      setFilterFunction(filterFunction);
+      if (filterFunction === PublicationFunctions.Regex) {
         onChangeFilter({
           id,
           name,
-          filterType,
+          filterFunction,
           filterParams: [filterRegexParam],
         });
         return;
       }
-      onChangeFilter({ id, name, filterType, filterParams });
+      onChangeFilter({ id, name, filterFunction, filterParams });
     },
     [filterParams, id, name, onChangeFilter, filterRegexParam],
   );
-  const onChangeFilterParams = useCallback(
+  const handleChangeFilterParams = useCallback(
     (filterParams: string[]) => {
-      setFilteParams(filterParams);
-      onChangeFilter({ id, name, filterType, filterParams });
+      if (!onChangeFilter) return;
+
+      setFilterParams(filterParams);
+      onChangeFilter({ id, name, filterFunction, filterParams });
     },
-    [filterType, id, name, onChangeFilter],
+    [filterFunction, id, name, onChangeFilter],
   );
 
-  const onChangefilterRegexParam = useCallback(
+  const handleChangeFilterRegexParam = useCallback(
     (filterRegexParam: string) => {
-      setfilterRegexParam(filterRegexParam);
+      if (!onChangeFilter) return;
+
+      setFilterRegexParam(filterRegexParam);
       onChangeFilter({
         id,
         name,
-        filterType: FiltersTypes.Regex,
+        filterFunction: PublicationFunctions.Regex,
         filterParams: [filterRegexParam],
       });
     },
@@ -85,23 +95,26 @@ export function TargetAudienceFilterComponent({
       className="flex flex-col gap-1 sm:flex-row"
       data-qa={`publish-audience-filter-${id}`}
     >
-      <FilterTypeSelect
-        filterTypes={filterTypeValues}
-        selectedType={filterType}
-        onChangeFilterType={onChangeFilterType}
+      <FilterFunctionSelect
+        readonly={readonly}
+        filterFunctions={filterFunctionValues}
+        selectedFilterFunction={filterFunction}
+        onChangeFilterFunction={handleChangeFilterFunction}
         id={id}
       />
-      {filterType === FiltersTypes.Regex ? (
+      {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
+          readonly={readonly}
           regEx={filterRegexParam}
-          onRegExChange={onChangefilterRegexParam}
+          onRegExChange={handleChangeFilterRegexParam}
         />
       ) : (
         <MultipleComboBox
+          readonly={readonly}
           initialSelectedItems={initialSelectedFilter?.filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
-          onChangeSelectedItems={onChangeFilterParams}
+          onChangeSelectedItems={handleChangeFilterParams}
           placeholder={t('Enter one or more options...') as string}
         />
       )}

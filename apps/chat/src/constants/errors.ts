@@ -46,4 +46,14 @@ export const errorsMessages = {
   entityPathInvalid: 'The parent folder name is invalid. Please, rename it',
   entityNameInvalidExternal: 'The name is invalid',
   entityPathInvalidExternal: 'The parent folder name is invalid',
+  publicationFailed: 'Publication failed. Please try again later.',
+  publicationsUploadFailed: 'Publications uploading failed.',
+  publicationUploadFailed: 'Publication uploading failed.',
+  publicationDeletionFailed: 'Publication deletion failed.',
+  publishedConversationsUploadFailed:
+    'Published conversations uploading failed.',
+  publicationApproveFailed: 'Publication approving failed.',
+  publicationRejectFailed: 'Publication rejecting failed.',
+  publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
+  rulesUploadingFailed: 'Rules uploading failed.',
 };
