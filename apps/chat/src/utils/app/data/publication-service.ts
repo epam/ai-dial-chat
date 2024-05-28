@@ -1,6 +1,6 @@
 import { Observable, map } from 'rxjs';
 
-import { ApiKeys, BackendResourceType } from '@/src/types/common';
+import { BackendResourceType, FeatureType } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -10,10 +10,10 @@ import {
   PublishedByMeItem,
   PublishedItem,
 } from '@/src/types/publication';
-import { UIStorageKeys } from '@/src/types/storage';
 
 import { ApiUtils } from '../../server/api';
-import { BrowserStorage } from './storages/browser-storage';
+import { constructPath } from '../file';
+import { EnumMapper } from '../mappers';
 
 export class PublicationService {
   public static publish(
@@ -91,16 +91,21 @@ export class PublicationService {
 
   public static getPublishedWithMeItems(
     parentPath: string,
-    entityType: ApiKeys,
+    featureType: FeatureType,
     options?: Partial<{ recursive: boolean }>,
   ): Observable<PublishedItem> {
     const query = new URLSearchParams({
       ...(options?.recursive && { recursive: String(options.recursive) }),
     });
     const resultQuery = query.toString();
-    return ApiUtils.request(
-      `api/publication/${entityType}/public/${parentPath}?${resultQuery}`,
-    );
+    return ApiUtils.request(`
+      ${constructPath(
+        'api',
+        'publication',
+        EnumMapper.getApiKeyByFeatureType(featureType),
+        'public',
+        ApiUtils.encodeApiUrl(parentPath),
+      )}${resultQuery ? `?${resultQuery}` : ''}`);
   }
 
   public static getPublishedByMeItems(
@@ -131,20 +136,11 @@ export class PublicationService {
   ): Observable<{ rules: Record<string, PublicationRule[]> }> {
     return ApiUtils.request('api/publication/rulesList', {
       method: 'POST',
-      body: JSON.stringify({ url: path ? `public/${path}/` : `public/` }),
+      body: JSON.stringify({
+        url: `${ApiUtils.encodeApiUrl(
+          path ? constructPath('public', path) : 'public',
+        )}/`,
+      }),
     });
-  }
-
-  public static getSelectedConversationsId(): Observable<string | null> {
-    return BrowserStorage.getData(UIStorageKeys.SelectedPublicationId, null);
-  }
-
-  public static setSelectedPublicationId(
-    selectedPublicationId: string,
-  ): Observable<void> {
-    return BrowserStorage.setData(
-      UIStorageKeys.SelectedPublicationId,
-      selectedPublicationId,
-    );
   }
 }

@@ -59,6 +59,17 @@ export default function SearchFiltersView({
           dataQa: 'shared-by-me-filter',
           filterValue: SearchFilters.SharedByMe,
         },
+        // TODO: implement Published by me filter in https://github.com/epam/ai-dial-chat/issues/1440
+        // {
+        //   display: enabledFeatures.has(
+        //     featureType === FeatureType.Chat
+        //       ? Feature.ConversationsPublishing
+        //       : Feature.PromptsPublishing,
+        //   ),
+        //   name: t('Published by me'),
+        //   dataQa: 'published-by-me-filter',
+        //   filterValue: SearchFilters.PublishedByMe,
+        // },
       ]
         .filter(({ display }) => display)
         .map(({ filterValue, ...props }) => ({

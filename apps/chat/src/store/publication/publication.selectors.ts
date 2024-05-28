@@ -1,6 +1,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { BackendResourceType } from '@/src/types/common';
+import { EnumMapper } from '@/src/utils/app/mappers';
+
+import { FeatureType } from '@/src/types/common';
 import { PublicationResource, PublicationRule } from '@/src/types/publication';
 
 import { RootState } from '../index';
@@ -13,10 +15,12 @@ export const selectPublications = createSelector([rootSelector], (state) => {
 });
 
 export const selectFilteredPublications = createSelector(
-  [rootSelector, (_state, resourceType: BackendResourceType) => resourceType],
-  (state, resourceType) => {
+  [rootSelector, (_state, featureType: FeatureType) => featureType],
+  (state, featureType) => {
     return state.publications.filter((p) =>
-      p.resourceTypes.includes(resourceType),
+      p.resourceTypes.includes(
+        EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+      ),
     );
   },
 );

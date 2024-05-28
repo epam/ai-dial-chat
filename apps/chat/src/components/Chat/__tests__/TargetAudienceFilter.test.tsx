@@ -12,12 +12,12 @@ describe('TargetAudienceFilterComponent', () => {
   };
 
   const filterValues = [
-    PublicationFunctions.CONTAIN,
-    PublicationFunctions.EQUAL,
-    PublicationFunctions.REGEX,
+    PublicationFunctions.Contain,
+    PublicationFunctions.Equal,
+    PublicationFunctions.Regex,
   ];
 
-  const defaultFilterOption = PublicationFunctions.CONTAIN;
+  const defaultFilterOption = PublicationFunctions.Contain;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let onChangeFilter: any;
@@ -109,7 +109,7 @@ describe('TargetAudienceFilterComponent', () => {
   });
 
   it.skip('fires onChangeFilter method on changing input when Regex selected', async () => {
-    const selectedVlaue = PublicationFunctions.REGEX;
+    const selectedVlaue = PublicationFunctions.Regex;
     const regEx = '/testd?/i';
     render(
       <TargetAudienceFilterComponent
@@ -131,7 +131,7 @@ describe('TargetAudienceFilterComponent', () => {
     expect(onChangeFilter).toHaveBeenCalledWith({
       id: testFilter.id,
       name: testFilter.name,
-      filterType: PublicationFunctions.REGEX,
+      filterType: PublicationFunctions.Regex,
       filterParams: [regEx],
     });
   });

@@ -44,7 +44,7 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
 
-import { ApiKeys, FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -86,7 +86,7 @@ const initEpic: AppEpic = (action$) =>
             of(PromptsActions.initFoldersAndPromptsSuccess()),
             of(
               PublicationActions.uploadPublishedWithMeItems({
-                featureType: ApiKeys.Prompts,
+                featureType: FeatureType.Prompt,
               }),
             ),
           );
