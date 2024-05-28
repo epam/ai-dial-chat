@@ -48,6 +48,7 @@ export const FooterMessage = () => {
         <span
           dangerouslySetInnerHTML={{
             //temporary solution, need to investigate issue with changing language
+            // @ts-expect-error-next-line
             __html: isChinaLocation ? t('footer_msg_zh') : t('footer_msg_en'),
           }}
         />
