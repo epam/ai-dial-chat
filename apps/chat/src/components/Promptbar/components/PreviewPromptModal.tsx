@@ -141,10 +141,7 @@ export const PreviewPromptModal = ({
             ) : (
               <div className="flex w-full items-center justify-between">
                 {exportButton}
-                <PublicationControls
-                  entity={prompt}
-                  resourceToReview={resourceToReview}
-                />
+                <PublicationControls entity={prompt} />
               </div>
             )}
           </div>
