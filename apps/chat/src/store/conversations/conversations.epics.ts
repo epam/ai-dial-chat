@@ -293,7 +293,7 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
             of(
               PublicationActions.uploadPublishedWithMeItems({
-                featureType: ApiKeys.Conversations,
+                featureType: FeatureType.Chat,
               }),
             ),
           );

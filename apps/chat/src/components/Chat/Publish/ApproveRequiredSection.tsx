@@ -1,13 +1,14 @@
 import { IconClipboard } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
-import { BackendResourceType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -29,14 +30,14 @@ import {
   PromptPublicationResources,
 } from './PublicationResources';
 
-import { some } from 'lodash-es';
+import some from 'lodash-es/some';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
-  resourceType: BackendResourceType;
+  featureType: FeatureType;
 }
 
-const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
+const PublicationItem = ({ publication, featureType }: PublicationProps) => {
   const dispatch = useAppDispatch();
 
   const selectedPublication = useAppSelector(
@@ -48,34 +49,42 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
 
   const [isOpen, setIsOpen] = useState(false);
 
+  const selectedItemIsPublication = useMemo(
+    () =>
+      some(publication.resources, (r) =>
+        some(selectedConversationIds, (id) => id.startsWith(r.reviewUrl)),
+      ),
+    [publication.resources, selectedConversationIds],
+  );
+
+  const handlePublicationSelect = useCallback(() => {
+    setIsOpen(true);
+    if (!isOpen) {
+      dispatch(PublicationActions.uploadPublication({ url: publication.url }));
+    } else {
+      dispatch(
+        PublicationActions.selectPublication({
+          publication: publication as Publication,
+        }),
+      );
+    }
+
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [],
+      }),
+    );
+  }, [dispatch, isOpen, publication]);
+
   const ResourcesComponent =
-    resourceType === BackendResourceType.CONVERSATION
+    featureType === FeatureType.Chat
       ? ConversationPublicationResources
       : PromptPublicationResources;
 
   return (
     <div className="flex flex-col gap-1">
       <div
-        onClick={() => {
-          setIsOpen(true);
-          if (!isOpen) {
-            dispatch(
-              PublicationActions.uploadPublication({ url: publication.url }),
-            );
-          } else {
-            dispatch(
-              PublicationActions.selectPublication({
-                publication: publication as Publication,
-              }),
-            );
-          }
-
-          dispatch(
-            ConversationsActions.selectConversations({
-              conversationIds: [],
-            }),
-          );
-        }}
+        onClick={handlePublicationSelect}
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           selectedPublication?.url === publication.url &&
@@ -90,11 +99,7 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              some(publication.resources, (r) =>
-                some(selectedConversationIds, (id) =>
-                  id.startsWith(r.reviewUrl),
-                ),
-              ) && 'text-accent-primary',
+              selectedItemIsPublication && 'text-accent-primary',
             )}
             data-qa="folder-name"
           >
@@ -111,12 +116,12 @@ const PublicationItem = ({ publication, resourceType }: PublicationProps) => {
 
 export const ApproveRequiredSection = ({
   name,
-  resourceType,
+  featureType,
   displayRootFiles,
   openByDefault = false,
   dataQa,
 }: Omit<FolderSectionProps, 'filters'> & {
-  resourceType: BackendResourceType;
+  featureType: FeatureType;
 }) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -130,7 +135,7 @@ export const ApproveRequiredSection = ({
     ConversationsSelectors.selectSelectedConversations,
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, resourceType),
+    PublicationSelectors.selectFilteredPublications(state, featureType),
   );
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
@@ -142,7 +147,9 @@ export const ApproveRequiredSection = ({
     const shouldBeHighlighted = !!(
       (selectedPublication &&
         !selectedConversationsIds.length &&
-        selectedPublication.resourceTypes.includes(resourceType)) ||
+        selectedPublication.resourceTypes.includes(
+          EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+        )) ||
       selectedConversationsIds.some((id) => publicationReviewIds.includes(id))
     );
 
@@ -153,7 +160,7 @@ export const ApproveRequiredSection = ({
     displayRootFiles,
     isSectionHighlighted,
     publicationItems,
-    resourceType,
+    featureType,
     selectedConversations,
     selectedConversationsIds,
     selectedPublication,
@@ -168,7 +175,7 @@ export const ApproveRequiredSection = ({
     >
       {publicationItems.map((p) => (
         <PublicationItem
-          resourceType={resourceType}
+          featureType={featureType}
           key={p.url}
           publication={p}
         />

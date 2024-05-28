@@ -1,12 +1,13 @@
-import { ApiKeys } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import { constructPath } from './file';
+import { EnumMapper } from './mappers';
 
 export const isItemPublic = (id: string) => id.split('/')[1] === 'public';
 
 export const createTargetUrl = (
-  apiKey: ApiKeys,
+  featureType: FeatureType,
   publicPath: string,
   id: string,
   type?: SharingType,
@@ -19,7 +20,7 @@ export const createTargetUrl = (
   const lastElement = id.split('/').slice(-1);
 
   return constructPath(
-    apiKey,
+    EnumMapper.getApiKeyByFeatureType(featureType),
     'public',
     publicPath,
     ...baseElements,

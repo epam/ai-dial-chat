@@ -342,10 +342,7 @@ export function ChatFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      BackendResourceType.CONVERSATION,
-    ),
+    PublicationSelectors.selectFilteredPublications(state, FeatureType.Chat),
   );
 
   const toApproveFolderItem = {
@@ -393,7 +390,7 @@ export function ChatFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          resourceType={BackendResourceType.CONVERSATION}
+          featureType={FeatureType.Chat}
           {...toApproveFolderItem}
         />
       )}

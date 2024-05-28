@@ -86,7 +86,7 @@ const initEpic: AppEpic = (action$) =>
             of(PromptsActions.initFoldersAndPromptsSuccess()),
             of(
               PublicationActions.uploadPublishedWithMeItems({
-                featureType: ApiKeys.Prompts,
+                featureType: FeatureType.Prompt,
               }),
             ),
           );

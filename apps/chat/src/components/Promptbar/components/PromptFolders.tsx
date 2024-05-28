@@ -326,10 +326,7 @@ export function PromptFolders() {
     SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      BackendResourceType.PROMPT,
-    ),
+    PublicationSelectors.selectFilteredPublications(state, FeatureType.Prompt),
   );
 
   const toApproveFolderItem = {
@@ -384,7 +381,7 @@ export function PromptFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          resourceType={BackendResourceType.PROMPT}
+          featureType={FeatureType.Prompt}
           {...toApproveFolderItem}
         />
       )}

@@ -3,7 +3,7 @@ import { FC, useEffect, useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { BackendResourceType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -35,7 +35,7 @@ export const PromptList: FC<Props> = ({
   const promptResources = useAppSelector((state) =>
     PublicationSelectors.selectFilteredPublicationResources(
       state,
-      BackendResourceType.PROMPT,
+      FeatureType.Prompt,
     ),
   );
 

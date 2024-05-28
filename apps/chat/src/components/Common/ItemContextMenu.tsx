@@ -266,6 +266,19 @@ export default function ItemContextMenu({
         onClick: onPublish,
         disabled: disableAll,
       },
+      // TODO: implement Unpublish folder in https://github.com/epam/ai-dial-chat/issues/318
+      // {
+      //   name: t('Update'),
+      //   dataQa: 'update-publishing',
+      //   display:
+      //     !isEmptyConversation &&
+      //     isPublishingEnabled &&
+      //     !!entity.isPublished &&
+      //     !!onPublishUpdate,
+      //   Icon: IconClockShare,
+      //   onClick: onPublishUpdate,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',

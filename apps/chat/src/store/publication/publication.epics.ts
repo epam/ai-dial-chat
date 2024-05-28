@@ -24,6 +24,7 @@ import {
   splitEntityId,
 } from '@/src/utils/app/folders';
 import {
+  getRootId,
   isConversationId,
   isFileId,
   isPromptId,
@@ -36,7 +37,11 @@ import {
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
-import { ApiKeys, BackendDataNodeType, UploadStatus } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  FeatureType,
+  UploadStatus,
+} from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
@@ -71,13 +76,9 @@ const publishEpic: AppEpic = (action$) =>
     filter(PublicationActions.publish.match),
     switchMap(({ payload }) => {
       const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
-      const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
       return PublicationService.publish({
-        targetFolder: constructPath(
-          `public${payload.targetFolder ? '' : '/'}`,
-          `${encodedTargetFolder}${targetFolderSuffix}`,
-        ),
+        targetFolder: `${constructPath('public', encodedTargetFolder)}/`,
         resources: payload.resources.map((r) => ({
           action: PublishActions.ADD,
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
@@ -342,11 +343,19 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
           if (
             selectedIds.some((id) =>
-              id.startsWith(constructPath(ApiKeys.Conversations, 'public/')),
+              id.startsWith(`
+                ${getRootId({
+                  featureType: FeatureType.Chat,
+                  bucket: 'public',
+                })}/`),
             )
           ) {
             const pathsToUpload = selectedIds.filter((id) =>
-              id.startsWith(constructPath(ApiKeys.Conversations, 'public/')),
+              id.startsWith(`
+                ${getRootId({
+                  featureType: FeatureType.Prompt,
+                  bucket: 'public',
+                })}/`),
             );
             const rootFolderIds = uniq(
               pathsToUpload.map((path) =>
@@ -370,7 +379,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             return EMPTY;
           }
 
-          if (payload.featureType === ApiKeys.Conversations) {
+          if (payload.featureType === FeatureType.Chat) {
             const folderTypeEntities = publications.items.filter(
               (item) => item.nodeType === BackendDataNodeType.FOLDER,
             );
@@ -423,7 +432,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                 ),
               );
             }
-          } else if (payload.featureType === ApiKeys.Prompts) {
+          } else if (payload.featureType === FeatureType.Prompt) {
             const folderTypeEntities = publications.items.filter(
               (item) => item.nodeType === BackendDataNodeType.FOLDER,
             );
@@ -698,7 +707,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.uploadRules.match),
     switchMap(({ payload }) =>
-      PublicationService.getRules(ApiUtils.encodeApiUrl(payload.path)).pipe(
+      PublicationService.getRules(payload.path).pipe(
         switchMap(({ rules }) => {
           const currentRulePath = `${constructPath('public', payload.path)}/`;
 

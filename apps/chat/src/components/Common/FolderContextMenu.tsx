@@ -136,6 +136,19 @@ export const FolderContextMenu = ({
         onClick: onPublishUpdate,
         disabled: disableAll,
       },
+      // TODO: implement Unpublish folder in https://github.com/epam/ai-dial-chat/issues/318
+      // {
+      //   name: t('Unpublish'),
+      //   dataQa: 'unpublish',
+      //   display:
+      //     !isEmpty &&
+      //     isPublishingEnabled &&
+      //     !!folder.isPublished &&
+      //     !!onUnpublish,
+      //   Icon: UnpublishIcon,
+      //   onClick: onUnpublish,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Delete'),
         display:

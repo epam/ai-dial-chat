@@ -1,9 +1,9 @@
 import { BackendDataNodeType, BackendResourceType } from './common';
 
 export enum PublicationFunctions {
-  EQUAL = 'EQUAL',
-  CONTAIN = 'CONTAIN',
-  REGEX = 'REGEX',
+  Equal = 'Equal',
+  Contain = 'Contain',
+  Regex = 'Regex',
 }
 
 export enum PublishActions {

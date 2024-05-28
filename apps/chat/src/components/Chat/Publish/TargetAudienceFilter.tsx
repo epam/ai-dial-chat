@@ -23,9 +23,9 @@ interface Props {
 const getItemLabel = (item: string) => item;
 
 const filterFunctionValues = [
-  PublicationFunctions.CONTAIN,
-  PublicationFunctions.EQUAL,
-  PublicationFunctions.REGEX,
+  PublicationFunctions.Contain,
+  PublicationFunctions.Equal,
+  PublicationFunctions.Regex,
 ];
 
 export function TargetAudienceFilterComponent({
@@ -42,7 +42,7 @@ export function TargetAudienceFilterComponent({
   );
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [filterRegexParam, setFilterRegexParam] = useState<string>(
-    (initialSelectedFilter?.filterFunction === PublicationFunctions.REGEX &&
+    (initialSelectedFilter?.filterFunction === PublicationFunctions.Regex &&
       initialSelectedFilter.filterParams[0]) ||
       '',
   );
@@ -52,7 +52,7 @@ export function TargetAudienceFilterComponent({
       if (!onChangeFilter) return;
 
       setFilterFunction(filterFunction);
-      if (filterFunction === PublicationFunctions.REGEX) {
+      if (filterFunction === PublicationFunctions.Regex) {
         onChangeFilter({
           id,
           name,
@@ -83,7 +83,7 @@ export function TargetAudienceFilterComponent({
       onChangeFilter({
         id,
         name,
-        filterFunction: PublicationFunctions.REGEX,
+        filterFunction: PublicationFunctions.Regex,
         filterParams: [filterRegexParam],
       });
     },
@@ -102,7 +102,7 @@ export function TargetAudienceFilterComponent({
         onChangeFilterFunction={handleChangeFilterFunction}
         id={id}
       />
-      {filterFunction === PublicationFunctions.REGEX ? (
+      {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
           readonly={readonly}
           regEx={filterRegexParam}
