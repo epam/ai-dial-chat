@@ -9,6 +9,7 @@ import { isConversationId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
+import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -19,21 +20,18 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
-interface Props<T extends ConversationInfo | PromptInfo> {
+interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
-  resourceToReview: {
-    publicationUrl: string;
-    reviewed: boolean;
-    reviewUrl: string;
-  };
   wrapperClassName?: string;
 }
 
-export function PublicationControls<T extends PromptInfo | ConversationInfo>({
+export function PublicationControlsView<
+  T extends PromptInfo | ConversationInfo,
+>({
   entity,
-  resourceToReview,
   wrapperClassName,
-}: Props<T>) {
+  resourceToReview,
+}: Props<T> & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -146,5 +144,26 @@ export function PublicationControls<T extends PromptInfo | ConversationInfo>({
         </button>
       </div>
     </div>
+  );
+}
+
+export function PublicationControls<T extends PromptInfo | ConversationInfo>({
+  entity,
+  wrapperClassName,
+}: Props<T>) {
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
+  );
+
+  if (!resourceToReview) {
+    return null;
+  }
+
+  return (
+    <PublicationControlsView
+      resourceToReview={resourceToReview}
+      entity={entity}
+      wrapperClassName={wrapperClassName}
+    />
   );
 }
