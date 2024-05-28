@@ -75,6 +75,10 @@ export const ChatHeader = ({
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
     useState(false);
 
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
+
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
     [conversation, model, addonsMap],
@@ -283,7 +287,7 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            {isPlayback && (
+            {isPlayback && !isExternal && (
               <button
                 className="cursor-pointer text-accent-primary"
                 onClick={onCancelPlaybackMode}
