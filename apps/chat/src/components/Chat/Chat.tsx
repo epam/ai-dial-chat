@@ -54,6 +54,7 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { HandlePublication } from './Publish/HandlePublication';
+import { PublicationControls } from './Publish/PublicationChatControls';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -823,6 +824,19 @@ export const ChatView = memo(() => {
                     <NotAllowedModel type={notAllowedType} />
                   ) : (
                     <>
+                      {isExternal && selectedConversations.length === 1 && (
+                        <div
+                          className={classNames(
+                            !isPlayback && 'relative top-[-46px]',
+                          )}
+                        >
+                          <PublicationControls
+                            entity={selectedConversations[0]}
+                            wrapperClassName="justify-center w-full"
+                          />
+                        </div>
+                      )}
+
                       {!isPlayback && (
                         <ChatInput
                           showReplayControls={showReplayControls}

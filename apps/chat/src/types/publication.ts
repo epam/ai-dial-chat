@@ -101,3 +101,9 @@ export interface TargetAudienceFilter extends TargetAudienceFilterItem {
   filterFunction: PublicationFunctions;
   filterParams: string[];
 }
+
+export interface ResourceToReview {
+  publicationUrl: string;
+  reviewed: boolean;
+  reviewUrl: string;
+}

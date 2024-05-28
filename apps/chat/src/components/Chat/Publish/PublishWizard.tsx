@@ -463,19 +463,17 @@ export function PublishModal({
                 ) : (
                   <PromptPublicationResources
                     rootFolder={entity}
-                    resources={[
-                      {
-                        action: PublishActions.ADD,
-                        sourceUrl: entity.id,
-                        targetUrl: constructPath(
-                          EnumMapper.getApiKeyByFeatureType(FeatureType.Prompt),
-                          'public',
-                          path,
-                          entity.name,
-                        ),
-                        reviewUrl: entity.id,
-                      },
-                    ]}
+                    resources={entities.map((entity) => ({
+                      action: PublishActions.ADD,
+                      sourceUrl: entity.id,
+                      targetUrl: constructPath(
+                        EnumMapper.getApiKeyByFeatureType(FeatureType.Prompt),
+                        'public',
+                        path,
+                        splitEntityId(entity.id).name,
+                      ),
+                      reviewUrl: entity.id,
+                    }))}
                     forViewOnly
                   />
                 )}
