@@ -8,4 +8,5 @@ export enum Colors {
   controlsBackgroundAccentPrimary = 'rgb(39, 100, 217)',
   controlsBackgroundDisable = 'rgb(127, 135, 146)',
   textSecondary = 'rgb(169, 114, 255)',
+  defaultBackground = 'rgba(0, 0, 0, 0)',
 }

@@ -124,9 +124,12 @@ dialTest(
       async () => {
         await dialHomePage.bringPageToFront();
         await banner.closeButton.click();
-        expect
-          .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await banner.getElementLocator(),
+            ExpectedMessages.bannerIsClosed,
+          )
+          .toBeHidden();
       },
     );
 
@@ -135,9 +138,12 @@ dialTest(
       async () => {
         await dialHomePage.reloadPage();
         await chatMessages.waitForState({ state: 'attached' });
-        expect
-          .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await banner.getElementLocator(),
+            ExpectedMessages.bannerIsClosed,
+          )
+          .toBeHidden();
       },
     );
 
@@ -149,9 +155,12 @@ dialTest(
         await confirmationDialog.confirm();
         await loginPage.ssoSignInButton.click();
         await chatMessages.waitForState({ state: 'attached' });
-        expect
-          .soft(await banner.isVisible(), ExpectedMessages.bannerIsClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await banner.getElementLocator(),
+            ExpectedMessages.bannerIsClosed,
+          )
+          .toBeHidden();
       },
     );
   },

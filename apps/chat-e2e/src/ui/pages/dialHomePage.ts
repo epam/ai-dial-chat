@@ -61,7 +61,11 @@ export class DialHomePage extends BasePage {
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
   ) {
+    const respPromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'POST',
+    );
     await this.uploadData(uploadData, method);
+    await respPromise;
     await this.getAppContainer()
       .getImportExportLoader()
       .waitForState({ state: 'hidden' });

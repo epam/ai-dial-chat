@@ -1,5 +1,5 @@
 import { Rate } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
+import { Attributes } from '@/src/ui/domData';
 
 export const appContainer = '#theme-main';
 
@@ -43,10 +43,7 @@ export const MessageInputSelectors = {
   cancelEdit: '[data-qa="cancel"]',
   inputAttachmentsContainer: '[data-qa="attachment-container"]',
   inputAttachment: '[data-qa="chat-attachment"]',
-  inputAttachmentLoadingIndicator: '[data-qa="attachment-loading"]',
   inputAttachmentName: '[data-qa="attachment-name"]',
-  inputAttachmentLoadingRetry: '[data-qa="retry-upload"]',
-  removeInputAttachment: `[data-qa="remove-file"] > ${Tags.svg}`,
 };
 
 export const PlaybackSelectors = {
@@ -141,10 +138,5 @@ export const ChatSelectors = {
   attachmentExpanded: '[data-qa="attachment-expanded"]',
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
   attachmentsGroup: '[data-qa="grouped-attachments"]',
-  menuTrigger: '[data-qa="menu-trigger"]',
-  dropdownMenu: '[data-qa="dropdown-menu"]',
-  inputAttachmentsContainer: '[data-qa="attachment-container"]',
-  inputAttachment: '[data-qa="chat-attachment"]',
-  inputAttachmentLoadingIndicator: '[data-qa="attachment-loading"]',
   messageSpinner: '[data-qa="message-input-spinner"]',
 };
