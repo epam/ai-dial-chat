@@ -5,6 +5,7 @@ import {
   Publication,
   PublicationInfo,
   PublicationRule,
+  ResourceToReview,
 } from '@/src/types/publication';
 
 import * as PublicationSelectors from './publication.selectors';
@@ -14,11 +15,7 @@ export { PublicationSelectors };
 export interface PublicationState {
   publications: (PublicationInfo & Partial<Publication>)[];
   selectedPublication: Publication | null;
-  resourcesToReview: {
-    publicationUrl: string;
-    reviewed: boolean;
-    reviewUrl: string;
-  }[];
+  resourcesToReview: ResourceToReview[];
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;
 }
@@ -112,11 +109,7 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        items: {
-          publicationUrl: string;
-          reviewed: boolean;
-          reviewUrl: string;
-        }[];
+        items: ResourceToReview[];
       }>,
     ) => {
       const reviewUrls = state.resourcesToReview.map((r) => r.reviewUrl);

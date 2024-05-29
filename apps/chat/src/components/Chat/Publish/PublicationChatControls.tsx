@@ -9,6 +9,7 @@ import { isConversationId } from '@/src/utils/app/id';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
+import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -21,11 +22,7 @@ import {
 
 interface Props<T extends ConversationInfo | PromptInfo> {
   entity: T;
-  resourceToReview: {
-    publicationUrl: string;
-    reviewed: boolean;
-    reviewUrl: string;
-  };
+  resourceToReview: ResourceToReview[];
   wrapperClassName?: string;
 }
 
