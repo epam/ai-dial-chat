@@ -46,6 +46,7 @@ export class Addons extends BaseElement {
   }
 
   public async deleteSelectedAddon(addon: string) {
+    // eslint-disable-next-line playwright/no-force-option
     await this.selectedAddon(addon).click({ force: true });
   }
 

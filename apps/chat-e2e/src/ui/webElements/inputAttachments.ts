@@ -1,5 +1,6 @@
 import { Tags } from '@/src/ui/domData';
 import { ErrorLabelSelectors, MessageInputSelectors } from '@/src/ui/selectors';
+import { FileSelectors } from '@/src/ui/selectors/fileSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
@@ -16,9 +17,7 @@ export class InputAttachments extends BaseElement {
     this.inputAttachments.getElementLocatorByText(name);
 
   public inputAttachmentLoadingIndicator = (name: string) =>
-    this.inputAttachment(name).locator(
-      MessageInputSelectors.inputAttachmentLoadingIndicator,
-    );
+    this.inputAttachment(name).locator(FileSelectors.loadingIndicator);
 
   public inputAttachmentName = (name: string) =>
     this.createElementFromLocator(
@@ -33,14 +32,10 @@ export class InputAttachments extends BaseElement {
     );
 
   public inputAttachmentLoadingRetry = (name: string) =>
-    this.inputAttachment(name).locator(
-      MessageInputSelectors.inputAttachmentLoadingRetry,
-    );
+    this.inputAttachment(name).locator(FileSelectors.loadingRetry);
 
   public removeInputAttachmentIcon = (name: string) =>
     this.createElementFromLocator(
-      this.inputAttachment(name).locator(
-        MessageInputSelectors.removeInputAttachment,
-      ),
+      this.inputAttachment(name).locator(FileSelectors.remove),
     );
 }

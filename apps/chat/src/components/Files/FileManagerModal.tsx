@@ -447,7 +447,7 @@ export const FileManagerModal = ({
           </h2>
         </div>
         {canAttachFiles && (
-          <p id={descriptionId}>
+          <p id={descriptionId} data-qa="supported-attributes">
             {t(
               'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
               {
@@ -583,6 +583,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleStartDeleteMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="delete-files"
             >
               <Tooltip tooltip="Delete files" isTriggerClickable>
                 <IconTrash size={24} />
@@ -593,6 +594,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleDownloadMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="download-files"
             >
               <Tooltip tooltip="Download files" isTriggerClickable>
                 <IconDownload size={24} />
@@ -615,6 +617,7 @@ export const FileManagerModal = ({
               'button',
               customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
+            data-qa="upload-from-device"
           >
             {t('Upload from device')}
           </button>

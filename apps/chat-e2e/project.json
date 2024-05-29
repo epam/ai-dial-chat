@@ -17,6 +17,7 @@
         }
       }
     },
+    "lint": {},
     "format": {},
     "format:fix": {}
   },
