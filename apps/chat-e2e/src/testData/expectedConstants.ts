@@ -170,8 +170,10 @@ export const API = {
   promptsHost: () => `${API.listingHost}/prompts`,
   filesListingHost: () => `${API.listingHost}/files`,
   fileHost: '/api/files',
+  importFileRootPath: (bucket: string) => `files/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
-  importFilePath: (bucket: string) => `files/${bucket}/imports`,
+  importFilePath: (bucket: string, modelId: string) =>
+    `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
   shareWithMeListing: '/api/share/listing',
