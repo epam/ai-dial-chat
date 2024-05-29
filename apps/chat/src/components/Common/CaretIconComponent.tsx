@@ -19,7 +19,7 @@ export default function CaretIconComponent({
     <span className={classNames(hidden ? 'invisible' : 'visible')}>
       <IconCaretRightFilled
         className={classNames(
-          'text-pr-primary-700 transition-all',
+          'text-secondary-bg-dark transition-all',
           isOpen && 'rotate-90',
           showOnHoverOnly
             ? 'invisible group-hover/modal:[visibility:inherit] group-hover/sidebar:[visibility:inherit]'
