@@ -40,6 +40,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -49,7 +50,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import PublishModal from '../../Chat/Publish/PublishWizard';
+import { PublishModal } from '../../Chat/Publish/PublishWizard';
 import UnpublishModal from '../../Chat/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
@@ -89,6 +90,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
   );
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
@@ -368,7 +373,6 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onShare={handleOpenSharing}
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
-              onPublishUpdate={handleOpenPublishing}
               onUnpublish={handleOpenUnpublishing}
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
@@ -390,13 +394,19 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         </div>
         {showModal && isSelected && isModalPreviewMode && (
           <PreviewPromptModal
+            prompt={prompt}
             isOpen
-            onDuplicate={(e) => {
-              handleDuplicate(e);
-              handleClose();
-            }}
+            isPublicationPreview={!!resourceToReview}
             onClose={handleClose}
-            onDelete={() => setIsDeleting(true)}
+            onDuplicate={
+              !resourceToReview
+                ? (e) => {
+                    handleDuplicate(e);
+                    handleClose();
+                  }
+                : undefined
+            }
+            onDelete={!resourceToReview ? () => setIsDeleting(true) : undefined}
           />
         )}
       </div>
@@ -404,6 +414,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isPublishing && (
         <PublishModal
           entity={prompt}
+          entities={[prompt]}
           type={SharingType.Prompt}
           isOpen
           onClose={handleClosePublishModal}
@@ -411,8 +422,8 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       )}
       {isUnpublishing && (
         <UnpublishModal
-          entity={prompt}
           type={SharingType.Prompt}
+          entity={prompt}
           isOpen
           onClose={handleCloseUnpublishModal}
         />

@@ -17,10 +17,12 @@ import fetch from 'node-fetch';
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
-  const token = await getToken({ req });
+
   if (!isSessionValid) {
     return;
   }
+
+  const token = await getToken({ req });
 
   try {
     const { invitationId } = req.body;

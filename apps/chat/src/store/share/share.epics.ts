@@ -110,7 +110,10 @@ const shareConversationEpic: AppEpic = (action$) =>
         folderId: constructPath(apiKey, bucket, parentPath),
       }).pipe(
         switchMap((res) => {
-          const internalResources = getInternalResourcesUrls(res?.messages);
+          const internalResources = getInternalResourcesUrls(
+            res?.playback?.messagesStack || res?.messages,
+          );
+
           return ShareService.share({
             invitationType: ShareRequestType.link,
             resources: [
@@ -161,7 +164,11 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
         map((res) => res.filter(Boolean) as Conversation[]),
         switchMap((conversations: Conversation[]) => {
           const internalResourcesIds = conversations
-            .flatMap((res) => getInternalResourcesUrls(res.messages))
+            .flatMap((res) =>
+              getInternalResourcesUrls(
+                res.playback?.messagesStack || res.messages,
+              ),
+            )
             .map((url) => ({ url }));
 
           return ShareService.share({

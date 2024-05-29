@@ -59,7 +59,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
-import PublishModal from '../Chat/Publish/PublishWizard';
+import { PublishModal } from '../Chat/Publish/PublishWizard';
 import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
@@ -634,15 +634,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onPlayback={
               !isReplay && !isPlayback ? handleCreatePlayback : undefined
             }
-            //TODO: remove `&& !isPlayback` for onShare, onUnshare, onPublish and onUnpublish in https://github.com/epam/ai-dial-chat/issues/1403
-            onShare={!isReplay && !isPlayback ? handleOpenSharing : undefined}
-            onUnshare={!isReplay && !isPlayback ? handleUnshare : undefined}
-            onPublish={
-              !isReplay && !isPlayback ? handleOpenPublishing : undefined
-            }
-            onUnpublish={
-              !isReplay && !isPlayback ? handleOpenUnpublishing : undefined
-            }
+            onShare={!isReplay ? handleOpenSharing : undefined}
+            onUnshare={!isReplay ? handleUnshare : undefined}
+            onPublish={!isReplay ? handleOpenPublishing : undefined}
+            onUnpublish={!isReplay ? handleOpenUnpublishing : undefined}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}
@@ -687,6 +682,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isPublishing && (
         <PublishModal
           entity={conversation}
+          entities={[conversation]}
           type={SharingType.Conversation}
           isOpen
           onClose={handleClosePublishModal}
@@ -695,9 +691,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnpublishing && (
         <UnpublishModal
           entity={conversation}
-          type={SharingType.Conversation}
           isOpen
           onClose={handleCloseUnpublishModal}
+          type={SharingType.Conversation}
         />
       )}
       {isUnshareConfirmOpened && (
