@@ -3,11 +3,13 @@ import { ChangeEvent, useCallback } from 'react';
 interface RegexParamInputProps {
   regEx: string;
   onRegExChange: (regExp: string) => void;
+  readonly?: boolean;
 }
 
 export function RegexParamInput({
   regEx,
   onRegExChange,
+  readonly,
 }: RegexParamInputProps) {
   const handleRegExChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -23,6 +25,7 @@ export function RegexParamInput({
         type="text"
         placeholder={'Enter regular expression...'}
         value={regEx}
+        disabled={readonly}
         onChange={handleRegExChange}
       />
     </div>

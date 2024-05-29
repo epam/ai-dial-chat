@@ -7,7 +7,8 @@ import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -15,7 +16,12 @@ interface Props {
 
 export default function ChatExternalControls({ conversations }: Props) {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
+  const isOverlayConversationId = useAppSelector(
+    SettingsSelectors.selectOverlayConversationId,
+  );
 
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
@@ -23,6 +29,9 @@ export default function ChatExternalControls({ conversations }: Props) {
     });
   }, [conversations, dispatch]);
 
+  if (isOverlayConversationId) {
+    return null;
+  }
   return (
     <button
       className="button button-chat !-top-10"
