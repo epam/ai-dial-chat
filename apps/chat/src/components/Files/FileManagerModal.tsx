@@ -494,7 +494,21 @@ export const FileManagerModal = ({
               </button>
               {isAllFilesOpened && (
                 <div className="flex flex-col gap-0.5 overflow-auto">
-                  {folders.length === 0 && filteredFiles.length === 0 ? (
+                  {searchQuery !== '' &&
+                  folders.every(
+                    (folder) =>
+                      !folder.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()),
+                  ) &&
+                  filteredFiles.every(
+                    (file) =>
+                      !file.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()),
+                  ) ? (
+                    <NoResultsFound />
+                  ) : folders.length === 0 && filteredFiles.length === 0 ? (
                     <NoData />
                   ) : (
                     <div className="flex flex-col gap-1 overflow-auto">
@@ -553,15 +567,6 @@ export const FileManagerModal = ({
                           </div>
                         );
                       })}
-                      {searchQuery !== '' &&
-                      filteredFiles.length === 0 &&
-                      folders.filter((folder) =>
-                        folder.name
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase()),
-                      ).length === 0 ? (
-                        <NoResultsFound />
-                      ) : null}
                     </div>
                   )}
                 </div>
