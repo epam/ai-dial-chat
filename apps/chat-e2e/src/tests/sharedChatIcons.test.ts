@@ -214,15 +214,14 @@ dialTest(
           )
           .toBeDefined();
 
-        const isArrowIconVisible = await conversations
-          .getConversationArrowIcon(ExpectedConstants.newConversationTitle)
-          .isVisible();
-        expect
+        await expect
           .soft(
-            isArrowIconVisible,
+            await conversations.getConversationArrowIcon(
+              ExpectedConstants.newConversationTitle,
+            ),
             ExpectedMessages.sharedConversationIconIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
       },
     );
 
@@ -394,15 +393,12 @@ dialTest(
           secondConversationToShare,
           thirdConversationToShare,
         ]) {
-          const isArrowIconVisible = await conversations
-            .getConversationArrowIcon(conversation.name)
-            .isVisible();
-          expect
+          await expect
             .soft(
-              isArrowIconVisible,
+              await conversations.getConversationArrowIcon(conversation.name),
               ExpectedMessages.sharedConversationIconIsNotVisible,
             )
-            .toBeFalsy();
+            .toBeHidden();
         }
       },
     );
@@ -523,15 +519,12 @@ dialTest(
           playbackConversation,
           conversationToDelete,
         ]) {
-          const isArrowIconVisible = await conversations
-            .getConversationArrowIcon(conversation.name)
-            .isVisible();
-          expect
+          await expect
             .soft(
-              isArrowIconVisible,
+              await conversations.getConversationArrowIcon(conversation.name),
               ExpectedMessages.sharedConversationIconIsNotVisible,
             )
-            .toBeFalsy();
+            .toBeHidden();
         }
       },
     );
@@ -710,30 +703,26 @@ dialTest(
           .waitFor();
 
         for (let i = 0; i < nestedFolders.length; i = i + 2) {
-          const isFolderHasArrowIcon = await folderConversations
-            .getFolderArrowIcon(nestedFolders[i].name)
-            .isVisible();
-          expect
+          await expect
             .soft(
-              isFolderHasArrowIcon,
+              await folderConversations.getFolderArrowIcon(
+                nestedFolders[i].name,
+              ),
               ExpectedMessages.sharedFolderIconIsNotVisible,
             )
-            .toBeFalsy();
+            .toBeHidden();
         }
 
         for (let i = 0; i < nestedFolders.length - 1; i++) {
-          const isConversationHasArrowIcon = await folderConversations
-            .getFolderEntityArrowIcon(
-              nestedFolders[i].name,
-              nestedConversations[i].name,
-            )
-            .isVisible();
-          expect
+          await expect
             .soft(
-              isConversationHasArrowIcon,
+              await folderConversations.getFolderEntityArrowIcon(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
               ExpectedMessages.sharedConversationIconIsNotVisible,
             )
-            .toBeFalsy();
+            .toBeHidden();
         }
       },
     );
@@ -1122,10 +1111,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await conversations.getConversationByName(conversationName).waitFor();
-        await conversations
-          .getConversationArrowIcon(conversationName)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            await conversations.getConversationByName(conversationName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            await conversations.getConversationArrowIcon(conversationName),
+            ExpectedMessages.sharedConversationIconIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -1190,9 +1187,12 @@ dialTest(
 
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await conversations
-          .getConversationArrowIcon(conversation.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            await conversations.getConversationArrowIcon(conversation.name),
+            ExpectedMessages.sharedConversationIconIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -1247,9 +1247,14 @@ dialTest(
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await folderConversations
-          .getFolderArrowIcon(folderConversation.folders.name)
-          .waitFor();
+        await expect
+          .soft(
+            await folderConversations.getFolderArrowIcon(
+              folderConversation.folders.name,
+            ),
+            ExpectedMessages.sharedFolderIconIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -1266,9 +1271,14 @@ dialTest(
 
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await folderConversations
-          .getFolderArrowIcon(folderConversation.folders.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            await folderConversations.getFolderArrowIcon(
+              folderConversation.folders.name,
+            ),
+            ExpectedMessages.sharedFolderIconIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
   },

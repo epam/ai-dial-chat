@@ -15,9 +15,11 @@ import { Feature } from '@epam/ai-dial-shared';
 export interface SettingsState {
   appName: string;
   isOverlay: boolean;
+  overlayConversationId?: string;
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
+  publicationFilters: string[];
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
@@ -35,6 +37,7 @@ const initialState: SettingsState = {
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
+  publicationFilters: [],
   codeWarning: '',
   announcement: '',
   defaultModelId: undefined,
@@ -80,6 +83,12 @@ export const settingsSlice = createSlice({
     ) => {
       state.enabledFeatures = payload;
     },
+    setPublicationFilters: (
+      state,
+      { payload }: PayloadAction<SettingsState['publicationFilters']>,
+    ) => {
+      state.publicationFilters = payload;
+    },
     setCodeWarning: (
       state,
       { payload }: PayloadAction<SettingsState['codeWarning']>,
@@ -118,6 +127,9 @@ export const settingsSlice = createSlice({
     },
     setIsolatedModelId: (state, { payload }: PayloadAction<string>) => {
       state.isolatedModelId = payload;
+    },
+    setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
+      state.overlayConversationId = payload;
     },
   },
 });
@@ -251,6 +263,14 @@ const selectIsCustomAttachmentType = createSelector(
   },
 );
 
+const selectPublicationFilters = createSelector([rootSelector], (state) => {
+  return state.publicationFilters;
+});
+
+const selectOverlayConversationId = createSelector([rootSelector], (state) => {
+  return state.overlayConversationId;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -273,4 +293,6 @@ export const SettingsSelectors = {
   selectCustomVisualizers,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
+  selectPublicationFilters,
+  selectOverlayConversationId,
 };

@@ -2,15 +2,15 @@
 
 This is a default UI for [AI DIAL](https://epam-rail.com). AI DIAL can be used as headless system, but UI is recommended to learn the capability.
 
-Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](./LICENSE), while code taken from original repository is still subject to [original MIT license](./license-original). Due to rework we introduced lots of new features such as varios IDP support, model side-by-side compare, [DIAL extensions](https://epam-rail.com/extension-framework) support, conversation replays, branding and many more.
+Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) and then completely reworked and published under [apache 2.0 license](../../LICENSE), while code taken from original repository is still subject to [original MIT license](../../license-original). Due to rework we introduced lots of new features such as varios IDP support, model side-by-side compare, [DIAL extensions](https://epam-rail.com/extension-framework) support, conversation replays, branding and many more.
 
 ![ai-dial-chat](../../docs/ai-dial-chat.png)
 
 ## Docs
 
-`AI DIAL Overlay` documentation is placed [here](./libs/overlay/README.md).
+`AI DIAL Overlay` documentation is placed [here](../../libs/overlay/README.md).
 
-`Theming and branding` documentation is placed [here](./docs/THEME-CUSTOMIZATION.md).
+`Theming and branding` documentation is placed [here](../../docs/THEME-CUSTOMIZATION.md).
 
 ## Overview
 
@@ -111,6 +111,7 @@ This project leverages environment variables for configuration.
 | `ALLOWED_IFRAME_SOURCES`            | No                              | Allowed iFrame Sources                                                                                                                                                                                                                                                                        | Any origin valid format. List of space separated sources.              | `none`                             |
 | `IS_IFRAME`                         | No                              | Is iFrame                                                                                                                                                                                                                                                                                     | `true`, `false`                                                        | `false`                            |
 | `ENABLED_FEATURES`                  | No                              | Enabled Features                                                                                                                                                                                                                                                                              | See available features [here](../../libs/shared/src/types/features.ts) |                                    |
+| `PUBLICATION_FILTERS`               | No                              | Publication Filters                                                                                                                                                                                                                                                                           | Any string. Values must be separated by a comma.                       | `title,role`                       |
 | `NEXT_PUBLIC_APP_NAME`              | No                              | Public Application Name                                                                                                                                                                                                                                                                       | Any string                                                             | `AI Dial`                          |
 | `NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT` | No                              | Public Default System Prompt                                                                                                                                                                                                                                                                  | Any string                                                             |                                    |
 | `NEXT_PUBLIC_DEFAULT_TEMPERATURE`   | No                              | Public Default Temperature                                                                                                                                                                                                                                                                    | 0 to 1                                                                 |                                    |

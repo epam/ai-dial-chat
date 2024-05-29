@@ -51,6 +51,7 @@
         }
       }
     },
+    "lint": {},
     "format": {},
     "format:fix": {}
   },

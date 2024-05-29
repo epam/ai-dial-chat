@@ -1,6 +1,7 @@
 import dialTest from '@/src/core/dialFixtures';
 import { BucketUtil } from '@/src/utils';
 
+// eslint-disable-next-line playwright/expect-expect
 dialTest(
   'Cleanup shared entities',
   async ({

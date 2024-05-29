@@ -34,6 +34,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -52,6 +53,8 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
+import { HandlePublication } from './Publish/HandlePublication';
+import { PublicationControls } from './Publish/PublicationChatControls';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -821,6 +824,19 @@ export const ChatView = memo(() => {
                     <NotAllowedModel type={notAllowedType} />
                   ) : (
                     <>
+                      {isExternal && selectedConversations.length === 1 && (
+                        <div
+                          className={classNames(
+                            !isPlayback && 'relative top-[-46px]',
+                          )}
+                        >
+                          <PublicationControls
+                            entity={selectedConversations[0]}
+                            wrapperClassName="justify-center w-full"
+                          />
+                        </div>
+                      )}
+
                       {!isPlayback && (
                         <ChatInput
                           showReplayControls={showReplayControls}
@@ -933,6 +949,13 @@ export function Chat() {
   const activeModel = useAppSelector((state) =>
     ModelsSelectors.selectModel(state, isolatedModelId || ''),
   );
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
+
+  if (selectedPublication?.resources && !selectedConversationsIds.length) {
+    return <HandlePublication publication={selectedPublication} />;
+  }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
     return (

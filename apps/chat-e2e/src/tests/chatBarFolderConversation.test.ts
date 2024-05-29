@@ -27,14 +27,14 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await chatBar.createNewFolder();
-    expect
+    await expect
       .soft(
-        await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .isVisible(),
+        await folderConversations.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        ),
         ExpectedMessages.newFolderCreated,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     await folderConversations.openFolderDropdownMenu(
       ExpectedConstants.newFolderWithIndexTitle(1),
@@ -94,25 +94,23 @@ dialTest(
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
     await folderConversations.editFolderNameWithEnter(newNameWithSpaces);
-    expect
+    await expect
       .soft(
-        await folderConversations
-          .getFolderByName(newNameWithSpaces.trim())
-          .isVisible(),
+        await folderConversations.getFolderByName(newNameWithSpaces.trim()),
         ExpectedMessages.folderNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     for (let i = 1; i <= 3; i++) {
       if (i !== randomFolderIndex) {
-        expect
+        await expect
           .soft(
-            await folderConversations
-              .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
-              .isVisible(),
+            await folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i),
+            ),
             ExpectedMessages.folderNameNotUpdated,
           )
-          .toBeTruthy();
+          .toBeVisible();
       }
     }
   },
@@ -305,21 +303,19 @@ dialTest(
       'Edit folder name using tick button and verify it is renamed',
       async () => {
         await folderConversations.editFolderNameWithTick(newConversationName);
-        expect
+        await expect
           .soft(
-            await folderConversations
-              .getFolderByName(newConversationName)
-              .isVisible(),
+            await folderConversations.getFolderByName(newConversationName),
             ExpectedMessages.folderNameUpdated,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
   },
 );
 
 dialTest(
-  'Folders can expand and collapse.\n',
+  'Folders can expand and collapse',
   async ({
     dialHomePage,
     conversationData,
@@ -412,14 +408,14 @@ dialTest(
           .toBe(ExpectedConstants.deleteFolderMessage);
 
         await confirmationDialog.cancelDialog();
-        expect
+        await expect
           .soft(
-            await folderConversations
-              .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-              .isVisible(),
+            await folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
             ExpectedMessages.folderNotDeleted,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -477,14 +473,14 @@ dialTest(
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    expect
+    await expect
       .soft(
-        await folderConversations
-          .getFolderByName(conversationInFolder.folders.name)
-          .isVisible(),
+        await folderConversations.getFolderByName(
+          conversationInFolder.folders.name,
+        ),
         ExpectedMessages.folderDeleted,
       )
-      .toBeFalsy();
+      .toBeHidden();
 
     const todayConversations = await conversations.getTodayConversations();
     expect
@@ -542,44 +538,38 @@ dialTest(
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         for (let i = levelToDelete; i <= levelsCount; i++) {
-          expect
+          await expect
             .soft(
-              await folderConversations
-                .getFolderByName(nestedFolders[i].name)
-                .isVisible(),
+              await folderConversations.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderDeleted,
             )
-            .toBeFalsy();
-          expect
+            .toBeHidden();
+          await expect
             .soft(
-              await conversations
-                .getConversationByName(nestedConversations[i].name)
-                .isVisible(),
+              await conversations.getConversationByName(
+                nestedConversations[i].name,
+              ),
               ExpectedMessages.conversationDeleted,
             )
-            .toBeFalsy();
+            .toBeHidden();
         }
 
         for (let i = 0; i <= levelsCount - levelToDelete; i++) {
-          expect
+          await expect
             .soft(
-              await folderConversations
-                .getFolderByName(nestedFolders[i].name)
-                .isVisible(),
+              await folderConversations.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderNotDeleted,
             )
-            .toBeTruthy();
-          expect
+            .toBeVisible();
+          await expect
             .soft(
-              await folderConversations
-                .getFolderEntity(
-                  nestedFolders[i].name,
-                  nestedConversations[i].name,
-                )
-                .isVisible(),
+              await folderConversations.getFolderEntity(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
               ExpectedMessages.conversationNotDeleted,
             )
-            .toBeTruthy();
+            .toBeVisible();
         }
       },
     );

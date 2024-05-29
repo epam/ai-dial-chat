@@ -13,13 +13,11 @@ import classNames from 'classnames';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
-import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
@@ -57,11 +55,10 @@ export const FileItem = ({
   const dispatch = useAppDispatch();
 
   const [isContextMenu, setIsContextMenu] = useState(false);
-
   const [isSelected, setIsSelected] = useState(false);
   const [isHighligted, setIsHighlighted] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
+
   const canAttachFiles = !!additionalItemData?.canAttachFiles;
 
   const handleCancelFile = useCallback(() => {
@@ -90,13 +87,8 @@ export const FileItem = ({
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsUnpublishing(true);
       setIsContextMenu(false);
     }, []);
-
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
 
   useEffect(() => {
     setIsSelected(
@@ -108,6 +100,7 @@ export const FileItem = ({
             item.id.startsWith(folderId),
           )),
     );
+
     setIsHighlighted(
       ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
         item.id,
@@ -206,11 +199,12 @@ export const FileItem = ({
             <div
               className="h-full bg-controls-accent"
               style={{ width: `${item.percent}%` }}
+              data-qa="attachment-loading"
             ></div>
           </div>
         )}
         {item.status === UploadStatus.FAILED && (
-          <button onClick={handleRetry}>
+          <button onClick={handleRetry} data-qa="retry-upload">
             <IconReload
               className="shrink-0 text-secondary hover:text-accent-primary"
               size={18}
@@ -218,7 +212,7 @@ export const FileItem = ({
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
-          <button onClick={handleCancelFile}>
+          <button onClick={handleCancelFile} data-qa="remove-file">
             <IconX
               className="shrink-0 text-secondary hover:text-accent-primary"
               size={18}
@@ -235,14 +229,6 @@ export const FileItem = ({
           />
         )}
       </div>
-      {isUnpublishing && (
-        <UnpublishModal
-          entity={item}
-          type={SharingType.File}
-          isOpen
-          onClose={handleCloseUnpublishModal}
-        />
-      )}
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}

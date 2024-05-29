@@ -7,7 +7,7 @@ import { getPromptRootId } from '@/src/utils/app/id';
 import { PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import CollapsableSection from '@/src/components/Common/CollapsableSection';
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 
 import { PromptComponent } from './Prompt';
 
@@ -29,7 +29,7 @@ export const Prompts: FC<Props> = ({ prompts }) => {
   }
 
   return (
-    <CollapsableSection
+    <CollapsibleSection
       name={t('Recent')}
       openByDefault
       dataQa="promps-section"
@@ -42,6 +42,6 @@ export const Prompts: FC<Props> = ({ prompts }) => {
           <PromptComponent key={prompt.id} item={prompt} />
         ))}
       </div>
-    </CollapsableSection>
+    </CollapsibleSection>
   );
 };

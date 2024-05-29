@@ -311,7 +311,6 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalShareUserLocalStorageManager,
     additionalUserItemApiHelper,
-    additionalShareUserSharedWithMeConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
@@ -796,7 +795,6 @@ dialSharedWithMeTest(
     let sharedConversations: Conversation[];
 
     let dalleImageUrl: string;
-    let secondDalleImageUrl: string;
     let gptProVisionImageUrl: string;
 
     await dialSharedWithMeTest.step(
@@ -807,7 +805,7 @@ dialSharedWithMeTest(
           API.modelFilePath(ModelIds.DALLE),
         );
 
-        secondDalleImageUrl = await fileApiHelper.putFile(
+        await fileApiHelper.putFile(
           Attachment.cloudImageName,
           API.modelFilePath(ModelIds.DALLE),
         );
@@ -1252,9 +1250,14 @@ dialSharedWithMeTest(
           triggeredHttpMethod: 'POST',
         });
 
-        await additionalShareUserSharedWithMeConversations
-          .getConversationByName(conversation.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            await additionalShareUserSharedWithMeConversations.getConversationByName(
+              conversation.name,
+            ),
+            ExpectedMessages.conversationIsNotShared,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -1554,19 +1557,27 @@ dialSharedWithMeTest(
           MenuOptions.playback,
           { triggeredHttpMethod: 'POST' },
         );
-        await additionalShareUserConversations
-          .getConversationByName(
-            ExpectedConstants.playbackConversation + conversation.name,
+        await expect
+          .soft(
+            await additionalShareUserConversations.getConversationByName(
+              ExpectedConstants.playbackConversation + conversation.name,
+            ),
+            ExpectedMessages.conversationIsShared,
           )
-          .waitFor();
-        await additionalShareUserPlaybackControl.waitForState();
+          .toBeVisible();
+        await expect
+          .soft(
+            await additionalShareUserPlaybackControl.getElementLocator(),
+            ExpectedMessages.playbackMessageIsInViewport,
+          )
+          .toBeVisible();
       },
     );
   },
 );
 
 dialSharedWithMeTest(
-  'Share Folder parent when there is no chat inside. The chat is in Folder child only.\n',
+  'Share Folder parent when there is no chat inside. The chat is in Folder child only',
   async ({
     additionalShareUserDialHomePage,
     additionalShareUserSharedFolderConversations,
@@ -1612,9 +1623,15 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
-          await additionalShareUserSharedFolderConversations
-            .getFolderEntity(nestedFolder.name, nestedConversation.name)
-            .waitFor();
+          await expect
+            .soft(
+              await additionalShareUserSharedFolderConversations.getFolderEntity(
+                nestedFolder.name,
+                nestedConversation.name,
+              ),
+              ExpectedMessages.folderIsShared,
+            )
+            .toBeVisible();
         }
       },
     );
