@@ -666,7 +666,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isHighlighted
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-secondary-bg-dark" />
+                <IconFolder size={18} className="text-secondary-bg-dark mr-1" />
               </ShareIcon>
             )}
 
@@ -796,7 +796,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-accent-primary"
+                className="text-tertiary-bg-light hover:text-accent-primary"
               />
             </SidebarActionButton>
             <SidebarActionButton
@@ -809,7 +809,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-accent-primary"
+                className="text-tertiary-bg-light hover:text-accent-primary"
                 strokeWidth="2"
               />
             </SidebarActionButton>

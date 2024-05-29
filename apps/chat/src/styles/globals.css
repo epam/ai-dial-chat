@@ -148,6 +148,10 @@ pre:has(div.codeblock) {
     --text-secondary-bg-dark: var(--text-secondary-bg-light);
   }
 
+  .file-manager-modal {
+    --text-accent-primary: var(--text-quinary-bg-light);
+  }
+
   .sidebar-left,
   .context-menu-chat {
     --bg-accent-primary: var(--bg-accent-secondary, #37babc);
