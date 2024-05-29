@@ -20,6 +20,8 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { AppEpic } from '@/src/types/store';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+
 import { errorsMessages } from '@/src/constants/errors';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
@@ -32,6 +34,7 @@ const initEpic: AppEpic = (action$, state$) =>
       const isThemesDefined = SettingsSelectors.selectThemeHostDefined(
         state$.value,
       );
+      const talkTo = ConversationsSelectors.selectTalkTo(state$.value);
 
       return forkJoin({
         theme: DataService.getTheme(),
@@ -45,6 +48,7 @@ const initEpic: AppEpic = (action$, state$) =>
         promptbarWidth: DataService.getPromptbarWidth(),
         isChatFullWidth: DataService.getIsChatFullWidth(),
         customLogo: DataService.getCustomLogo(),
+        talkTo: of(talkTo),
       });
     }),
     switchMap(
@@ -58,6 +62,7 @@ const initEpic: AppEpic = (action$, state$) =>
         promptbarWidth,
         isChatFullWidth,
         customLogo,
+        talkTo,
       }) => {
         const actions = [];
 
@@ -72,8 +77,10 @@ const initEpic: AppEpic = (action$, state$) =>
         }
 
         actions.push(UIActions.setAvailableThemes(availableThemes));
-        actions.push(UIActions.setShowChatbar(showChatbar));
-        actions.push(UIActions.setShowPromptbar(showPromptbar));
+        actions.push(UIActions.setShowChatbar(talkTo ? false : showChatbar));
+        actions.push(
+          UIActions.setShowPromptbar(talkTo ? false : showPromptbar),
+        );
         actions.push(
           UIActions.closeAnnouncement({
             announcement: textOfClosedAnnouncement,
