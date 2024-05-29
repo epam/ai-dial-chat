@@ -22,7 +22,6 @@ import {
 
 interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
-  resourceToReview: ResourceToReview;
   wrapperClassName?: string;
 }
 
