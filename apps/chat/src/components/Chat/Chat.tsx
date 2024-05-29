@@ -7,7 +7,6 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { getTimeZoneOffset } from '@/src/utils/app/common';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
@@ -130,12 +129,6 @@ export const ChatView = memo(() => {
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
-
-  useEffect(() => {
-    const timeZoneOffset = getTimeZoneOffset();
-
-    dispatch(UIActions.setTmeZoneOffset(timeZoneOffset));
-  }, []);
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;

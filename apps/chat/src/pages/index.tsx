@@ -8,6 +8,7 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
 
 import { isAuthDisabled } from '../utils/auth/auth-providers';
+import { getTimeZoneOffset } from '@/src/utils/app/common';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import { isServerSessionValid } from '@/src/utils/auth/session';
@@ -145,6 +146,12 @@ export default function Home({ initialState }: HomeProps) {
 
     dispatch(SettingsActions.initApp());
   }, [dispatch, initialState]);
+
+  useEffect(() => {
+    const timeZoneOffset = getTimeZoneOffset();
+
+    dispatch(UIActions.setTmeZoneOffset(timeZoneOffset));
+  }, []);
 
   const handleOverlayAuth = async () => {
     const timeout = 30 * 1000;
