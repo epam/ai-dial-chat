@@ -671,13 +671,16 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isRenaming && (
         <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={() => handleRename()}>
-            <IconCheck size={18} className="hover:text-accent-primary" />
+            <IconCheck
+              size={18}
+              className="text-tertiary-bg-light hover:text-accent-primary"
+            />
           </SidebarActionButton>
           <SidebarActionButton handleClick={handleCancelRename}>
             <IconX
               size={18}
               strokeWidth="2"
-              className="hover:text-accent-primary"
+              className="text-tertiary-bg-light hover:text-accent-primary"
             />
           </SidebarActionButton>
         </div>
