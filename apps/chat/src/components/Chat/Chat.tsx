@@ -36,7 +36,7 @@ import {
 } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL_ID,
@@ -969,10 +969,7 @@ export function Chat() {
         !isConversationUpdatedFromQueryParams &&
         modelIds?.includes(modelId as string)
       ) {
-        dispatch(UIActions.setShowPromptbar(false));
-        dispatch(UIActions.setShowChatbar(false));
         dispatch(ConversationsActions.updateConversationFromQueryParams(true));
-        dispatch(ConversationsActions.setTalkTo(talkto as string));
         dispatch(
           selectedConversations[0].messages.length ||
             selectedConversations[0].isPlayback ||

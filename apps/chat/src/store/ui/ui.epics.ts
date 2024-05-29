@@ -20,6 +20,8 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { AppEpic } from '@/src/types/store';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+
 import { errorsMessages } from '@/src/constants/errors';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
@@ -32,14 +34,15 @@ const initEpic: AppEpic = (action$, state$) =>
       const isThemesDefined = SettingsSelectors.selectThemeHostDefined(
         state$.value,
       );
+      const talkTo = ConversationsSelectors.selectTalkTo(state$.value);
 
       return forkJoin({
         theme: DataService.getTheme(),
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()
           : of([]),
-        showChatbar: DataService.getShowChatbar(),
-        showPromptbar: DataService.getShowPromptbar(),
+        showChatbar: talkTo ? of(false) : DataService.getShowChatbar(),
+        showPromptbar: talkTo ? of(false) : DataService.getShowPromptbar(),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
