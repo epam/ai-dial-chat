@@ -275,6 +275,7 @@ export class ChatMessages extends BaseElement {
       rate,
       rowIndex,
     );
+    // eslint-disable-next-line playwright/no-force-option
     await thumb.hover({ force: true });
     await thumb.waitFor();
     const respPromise = this.page.waitForResponse(

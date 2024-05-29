@@ -69,6 +69,7 @@ export class PromptList extends BaseElement {
         optionIndex++;
       }
     }
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 }
