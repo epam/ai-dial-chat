@@ -20,17 +20,19 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
-interface Props<T extends ConversationInfo | PromptInfo> {
+interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
   resourceToReview: ResourceToReview;
   wrapperClassName?: string;
 }
 
-export function PublicationControls<T extends PromptInfo | ConversationInfo>({
+export function PublicationControlsView<
+  T extends PromptInfo | ConversationInfo,
+>({
   entity,
-  resourceToReview,
   wrapperClassName,
-}: Props<T>) {
+  resourceToReview,
+}: Props<T> & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -143,5 +145,26 @@ export function PublicationControls<T extends PromptInfo | ConversationInfo>({
         </button>
       </div>
     </div>
+  );
+}
+
+export function PublicationControls<T extends PromptInfo | ConversationInfo>({
+  entity,
+  wrapperClassName,
+}: Props<T>) {
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
+  );
+
+  if (!resourceToReview) {
+    return null;
+  }
+
+  return (
+    <PublicationControlsView
+      resourceToReview={resourceToReview}
+      entity={entity}
+      wrapperClassName={wrapperClassName}
+    />
   );
 }

@@ -630,15 +630,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onPlayback={
               !isReplay && !isPlayback ? handleCreatePlayback : undefined
             }
-            //TODO: remove `&& !isPlayback` for onShare, onUnshare, onPublish and onUnpublish in https://github.com/epam/ai-dial-chat/issues/1403
-            onShare={!isReplay && !isPlayback ? handleOpenSharing : undefined}
-            onUnshare={!isReplay && !isPlayback ? handleUnshare : undefined}
-            onPublish={
-              !isReplay && !isPlayback ? handleOpenPublishing : undefined
-            }
-            onUnpublish={
-              !isReplay && !isPlayback ? handleOpenUnpublishing : undefined
-            }
+            onShare={!isReplay ? handleOpenSharing : undefined}
+            onUnshare={!isReplay ? handleUnshare : undefined}
+            onPublish={!isReplay ? handleOpenPublishing : undefined}
+            onUnpublish={!isReplay ? handleOpenUnpublishing : undefined}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}
