@@ -399,6 +399,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                         folderId: getFolderIdFromEntityId(newUrl),
                         publishedWithMe: true,
                         type: FolderType.Chat,
+                        status: UploadStatus.LOADED,
                       };
                     }),
                   }),

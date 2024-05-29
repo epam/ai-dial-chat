@@ -212,6 +212,7 @@ export const FolderContextMenu = ({
       onUnshare,
       isPublishingEnabled,
       onPublish,
+      onUnpublish,
       onPublishUpdate,
       onDelete,
       featureType,
