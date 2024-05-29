@@ -6,8 +6,10 @@ import { getServerSession } from 'next-auth/next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 import { isAuthDisabled } from '../utils/auth/auth-providers';
+import { getTimeZoneOffset } from '@/src/utils/app/common';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import { isServerSessionValid } from '@/src/utils/auth/session';
@@ -19,6 +21,7 @@ import { Translation } from '../types/translation';
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import { ShareActions, ShareSelectors } from '../store/share/share.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import {
   selectConversationsToMigrateAndMigratedCount,
   selectFailedMigratedConversations,
@@ -70,6 +73,7 @@ export interface HomeProps {
 }
 
 export default function Home({ initialState }: HomeProps) {
+  const router = useRouter();
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
@@ -106,6 +110,12 @@ export default function Home({ initialState }: HomeProps) {
     ImportExportSelectors.selectIsShowReplaceDialog,
   );
   const shouldOverlayLogin = isOverlay && shouldLogin;
+
+  useEffect(() => {
+    const { talkto } = router?.query || {};
+
+    dispatch(ConversationsActions.setTalkTo((talkto as string) || ''));
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -145,6 +155,12 @@ export default function Home({ initialState }: HomeProps) {
 
     dispatch(SettingsActions.initApp());
   }, [dispatch, initialState]);
+
+  useEffect(() => {
+    const timeZoneOffset = getTimeZoneOffset();
+
+    dispatch(UIActions.setTmeZoneOffset(timeZoneOffset));
+  }, []);
 
   const handleOverlayAuth = async () => {
     const timeout = 30 * 1000;

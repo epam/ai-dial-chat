@@ -7,7 +7,6 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { getTimeZoneOffset } from '@/src/utils/app/common';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
@@ -37,7 +36,7 @@ import {
 } from '@/src/store/models/models.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL_ID,
@@ -129,12 +128,6 @@ export const ChatView = memo(() => {
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
-
-  useEffect(() => {
-    const timeZoneOffset = getTimeZoneOffset();
-
-    dispatch(UIActions.setTmeZoneOffset(timeZoneOffset));
-  }, []);
 
   const showReplayControls = useMemo(() => {
     return isReplay && !messageIsStreaming && isReplayPaused;
@@ -974,10 +967,7 @@ export function Chat() {
         !isConversationUpdatedFromQueryParams &&
         modelIds?.includes(modelId as string)
       ) {
-        dispatch(UIActions.setShowPromptbar(false));
-        dispatch(UIActions.setShowChatbar(false));
         dispatch(ConversationsActions.updateConversationFromQueryParams(true));
-        dispatch(ConversationsActions.setTalkTo(talkto as string));
         dispatch(
           selectedConversations[0].messages.length ||
             selectedConversations[0].isPlayback ||
