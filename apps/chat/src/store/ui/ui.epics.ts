@@ -41,14 +41,13 @@ const initEpic: AppEpic = (action$, state$) =>
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()
           : of([]),
-        showChatbar: DataService.getShowChatbar(),
-        showPromptbar: DataService.getShowPromptbar(),
+        showChatbar: talkTo ? of(false) : DataService.getShowChatbar(),
+        showPromptbar: talkTo ? of(false) : DataService.getShowPromptbar(),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
         isChatFullWidth: DataService.getIsChatFullWidth(),
         customLogo: DataService.getCustomLogo(),
-        talkTo: of(talkTo),
       });
     }),
     switchMap(
@@ -62,7 +61,6 @@ const initEpic: AppEpic = (action$, state$) =>
         promptbarWidth,
         isChatFullWidth,
         customLogo,
-        talkTo,
       }) => {
         const actions = [];
 
@@ -77,10 +75,8 @@ const initEpic: AppEpic = (action$, state$) =>
         }
 
         actions.push(UIActions.setAvailableThemes(availableThemes));
-        actions.push(UIActions.setShowChatbar(talkTo ? false : showChatbar));
-        actions.push(
-          UIActions.setShowPromptbar(talkTo ? false : showPromptbar),
-        );
+        actions.push(UIActions.setShowChatbar(showChatbar));
+        actions.push(UIActions.setShowPromptbar(showPromptbar));
         actions.push(
           UIActions.closeAnnouncement({
             announcement: textOfClosedAnnouncement,
