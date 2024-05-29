@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { Attachment as AttachmentInterface } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -321,7 +322,7 @@ dialTest(
           expect
             .soft(
               request.messages[0].custom_content.attachments.find(
-                (a) => a.title === file,
+                (a: AttachmentInterface) => a.title === file,
               ),
               ExpectedMessages.requestCustomContentIsValid,
             )

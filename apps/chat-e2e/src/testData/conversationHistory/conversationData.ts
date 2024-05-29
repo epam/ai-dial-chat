@@ -41,18 +41,26 @@ export class ConversationData extends FolderData {
     model?: DialAIEntityModel | string,
     name?: string,
   ) {
+    const conversation = this.conversationBuilder.getConversation();
     const modelToUse = model
       ? { id: typeof model === 'string' ? model : model.id }
-      : this.conversationBuilder.getConversation().model;
+      : conversation.model;
+    const settings: MessageSettings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
     const userMessage: Message = {
       role: Role.User,
       content: 'test request',
       model: { id: modelToUse.id },
+      settings: settings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
       content: 'test response',
       model: { id: modelToUse.id },
+      settings: settings,
     };
     let conversationName;
     let conversationId;
@@ -101,15 +109,28 @@ export class ConversationData extends FolderData {
     name?: string,
   ) {
     const basicConversation = this.prepareEmptyConversation(model, name);
+    const messageModel = {
+      id: basicConversation.model.id,
+    };
+    const conversation = this.conversationBuilder.getConversation();
+    const settings: MessageSettings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
     requests.forEach((r) => {
       basicConversation.messages.push(
-        { role: Role.User, content: r },
+        {
+          role: Role.User,
+          content: r,
+          model: messageModel,
+          settings: settings,
+        },
         {
           role: Role.Assistant,
           content: `response on ${r}`,
-          model: {
-            id: basicConversation.model.id,
-          },
+          model: messageModel,
+          settings: settings,
         },
       );
     });
@@ -410,6 +431,12 @@ export class ConversationData extends FolderData {
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const attachments = attachmentUrl.map((url) => this.getAttachmentData(url));
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
     const userMessage: Message = {
       role: Role.User,
       content: hasRequest ? 'what is on picture?' : '',
@@ -417,11 +444,13 @@ export class ConversationData extends FolderData {
         attachments: attachments,
       },
       model: modelToUse,
+      settings: settings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
       content: 'Images',
       model: modelToUse,
+      settings: settings,
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder
@@ -438,10 +467,17 @@ export class ConversationData extends FolderData {
     model: DialAIEntityModel | string,
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
     const userMessage: Message = {
       role: Role.User,
       content: 'draw smiling emoticon',
       model: modelToUse,
+      settings: settings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
@@ -450,6 +486,7 @@ export class ConversationData extends FolderData {
       custom_content: {
         attachments: [this.getAttachmentData(attachmentUrl)],
       },
+      settings: settings,
     };
     const name = GeneratorUtil.randomString(10);
     return this.conversationBuilder

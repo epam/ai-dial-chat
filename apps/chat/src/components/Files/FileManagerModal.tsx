@@ -31,6 +31,8 @@ import Folder from '@/src/components/Folder/Folder';
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
+import { NoData } from '../Common/NoData';
+import { NoResultsFound } from '../Common/NoResultsFound';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 import { FileItem, FileItemEventIds } from './FileItem';
@@ -445,7 +447,7 @@ export const FileManagerModal = ({
           </h2>
         </div>
         {canAttachFiles && (
-          <p id={descriptionId}>
+          <p id={descriptionId} data-qa="supported-attributes">
             {t(
               'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
               {
@@ -494,13 +496,28 @@ export const FileManagerModal = ({
               </button>
               {isAllFilesOpened && (
                 <div className="flex flex-col gap-0.5 overflow-auto">
-                  {(folders.length !== 0 || filteredFiles.length !== 0) && (
+                  {searchQuery !== '' &&
+                  folders.every(
+                    (folder) =>
+                      !folder.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()),
+                  ) &&
+                  filteredFiles.every(
+                    (file) =>
+                      !file.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()),
+                  ) ? (
+                    <NoResultsFound />
+                  ) : folders.length === 0 && filteredFiles.length === 0 ? (
+                    <NoData />
+                  ) : (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {
                         if (!isRootId(folder.folderId)) {
                           return null;
                         }
-
                         return (
                           <div key={folder.id}>
                             <Folder
@@ -537,7 +554,6 @@ export const FileManagerModal = ({
                         if (!isRootId(file.folderId)) {
                           return null;
                         }
-
                         return (
                           <div key={file.id}>
                             <FileItem
@@ -567,6 +583,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleStartDeleteMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="delete-files"
             >
               <Tooltip tooltip="Delete files" isTriggerClickable>
                 <IconTrash size={24} />
@@ -577,6 +594,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleDownloadMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="download-files"
             >
               <Tooltip tooltip="Download files" isTriggerClickable>
                 <IconDownload size={24} />
@@ -599,6 +617,7 @@ export const FileManagerModal = ({
               'button',
               customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
+            data-qa="upload-from-device"
           >
             {t('Upload from device')}
           </button>

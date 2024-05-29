@@ -139,15 +139,36 @@ export class BasePage {
     method: () => Promise<T>,
     filename?: string,
   ): Promise<UploadDownloadData> {
-    const downloadPromise = this.page.waitForEvent('download');
+    const downloadedData = await this.downloadMultipleData(method, 1, filename);
+    return downloadedData[0];
+  }
+
+  async downloadMultipleData<T>(
+    method: () => Promise<T>,
+    expectedDownloadsCount: number,
+    filename?: string[] | string,
+  ) {
+    const downloadedData: UploadDownloadData[] = [];
+    let downloadCount = 0;
+    const receivedDownloads = new Promise<void>((fulfill) => {
+      this.page.on('download', async (download) => {
+        const filenamePath = filename
+          ? typeof filename === 'string'
+            ? filename
+            : filename[downloadCount]
+          : download.suggestedFilename();
+        const filePath = path.join(Import.exportPath, filenamePath);
+        downloadCount = downloadCount + 1;
+        downloadedData.push({ path: filePath, dataType: 'download' });
+        await download.saveAs(filePath);
+        if (downloadCount === expectedDownloadsCount) {
+          fulfill();
+        }
+      });
+    });
     await method();
-    const download = await downloadPromise;
-    const filePath = path.join(
-      Import.exportPath,
-      filename ?? download.suggestedFilename(),
-    );
-    await download.saveAs(filePath);
-    return { path: filePath, dataType: 'download' };
+    await receivedDownloads;
+    return downloadedData;
   }
 
   public async uploadData<T>(

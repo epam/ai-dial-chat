@@ -278,10 +278,12 @@ dialTest(
       )
       .toBeFalsy();
 
-    const isPromptVisible = await prompts
-      .getPromptByName(promptInFolder.prompts[0].name)
-      .isVisible();
-    expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeTruthy();
+    await expect
+      .soft(
+        await prompts.getPromptByName(promptInFolder.prompts[0].name),
+        ExpectedMessages.promptIsVisible,
+      )
+      .toBeVisible();
   },
 );
 
@@ -345,12 +347,15 @@ dialTest(
         } else {
           await page.mouse.up();
         }
-        await folderPrompts
-          .getFolderEntity(
-            ExpectedConstants.newFolderWithIndexTitle(1),
-            prompt.name,
+        await expect
+          .soft(
+            await folderPrompts.getFolderEntity(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+              prompt.name,
+            ),
+            ExpectedMessages.promptMovedToFolder,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
   },
@@ -396,9 +401,15 @@ dialTest(
           promptInFolder.prompts[0].name,
           prompt.name,
         );
-        await folderPrompts
-          .getFolderEntity(promptInFolder.folders.name, prompt.name)
-          .waitFor();
+        await expect
+          .soft(
+            await folderPrompts.getFolderEntity(
+              promptInFolder.folders.name,
+              prompt.name,
+            ),
+            ExpectedMessages.promptMovedToFolder,
+          )
+          .toBeVisible();
       },
     );
   },
