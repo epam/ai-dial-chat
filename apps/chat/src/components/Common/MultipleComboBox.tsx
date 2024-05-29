@@ -213,7 +213,7 @@ export function MultipleComboBox<T>({
               }
               inputRef.current.focus();
             }}
-            className="relative flex w-full flex-wrap gap-1 rounded border border-primary p-1 focus-within:border-accent-primary"
+            className="rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary relative flex w-full flex-wrap gap-1 border border-secondary bg-layer-2 p-1"
           >
             {selectedItems &&
               selectedItems.map((selectedItemForRender, index) => {
@@ -247,7 +247,10 @@ export function MultipleComboBox<T>({
                         removeSelectedItem(selectedItemForRender);
                       }}
                     >
-                      <IconX size={14} className="text-secondary-bg-dark" />
+                      <IconX
+                        size={14}
+                        className="text-tertiary-bg-light hover:text-primary-bg-light"
+                      />
                     </span>
                   </span>
                 );
@@ -258,7 +261,7 @@ export function MultipleComboBox<T>({
               disabled={disabled}
               placeholder={selectedItems.length ? '' : placeholder || ''}
               className={classNames(
-                'w-max min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary-bg-dark',
+                'placeholder:text-tertiary-bg-light w-max min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none',
                 selectedItems.length ? 'pl-1' : 'pl-2',
               )}
               {...getInputProps({
@@ -272,7 +275,7 @@ export function MultipleComboBox<T>({
 
           <ul
             className={classNames(
-              'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+              'rounded-primary shadow-primary z-10 max-h-80 overflow-auto border border-secondary bg-layer-2',
               !isOpen && 'hidden',
             )}
             {...getMenuProps(
@@ -304,7 +307,7 @@ export function MultipleComboBox<T>({
                     </li>
                   ))
                 : !!inputValue?.length && (
-                    <li className="px-3 py-2">
+                    <li className="rounded-primary shadow-primary border border-secondary bg-layer-2 px-3 py-2">
                       {notFoundPlaceholder || t('No available items')}
                     </li>
                   ))}

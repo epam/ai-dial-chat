@@ -206,7 +206,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
           : ModalState.CLOSED
       }
       heading={
-        <div className="flex justify-between pb-4 text-xl font-medium text-primary-bg-light ">
+        <div className="text-primary-bg-light flex justify-between pb-4 text-xl font-medium ">
           {t('Edit prompt')}
           <button
             onClick={onClose}
@@ -227,18 +227,18 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
         <>
           <div className="mb-4">
             <label
-              className="mb-1 flex text-xs text-primary-bg-light"
+              className="text-primary-bg-light mb-1 flex text-xs"
               htmlFor="promptName"
             >
               {t('Name')}
-              <span className="inline text-quinary-bg-light">*</span>
+              <span className="text-quinary-bg-light inline">*</span>
             </label>
             <input
               ref={nameInputRef}
               name="promptName"
               className={classNames(
                 inputClassName,
-                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                'rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary m-0 border border-secondary bg-layer-2',
                 isDotError &&
                   'border-error hover:border-error focus:border-error',
               )}
@@ -262,7 +262,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
           <div className="mb-4">
             <label
-              className="mb-1 flex text-xs text-primary-bg-light"
+              className="text-primary-bg-light mb-1 flex text-xs"
               htmlFor="description"
             >
               {t('Description')}
@@ -272,7 +272,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               name="description"
               className={classNames(
                 inputClassName,
-                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                'rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary m-0 border-secondary bg-layer-2',
               )}
               style={{ resize: 'none' }}
               placeholder={t('A description for your prompt.') || ''}
@@ -284,18 +284,18 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
           </div>
           <div className="mb-5">
             <label
-              className="mb-1 flex text-xs text-primary-bg-light"
+              className="text-primary-bg-light mb-1 flex text-xs"
               htmlFor="content"
             >
               {t('Prompt')}
-              <span className="inline text-quinary-bg-light">*</span>
+              <span className="text-quinary-bg-light inline">*</span>
             </label>
             <textarea
               ref={contentInputRef}
               name="content"
               className={classNames(
                 inputClassName,
-                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                'rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary m-0 border-secondary bg-layer-2',
               )}
               style={{ resize: 'none' }}
               placeholder={

@@ -1,4 +1,3 @@
-import { IconHelpCircle } from '@tabler/icons-react';
 import {
   ChangeEvent,
   ClipboardEvent,
@@ -40,6 +39,7 @@ import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 
+import HelpIcon from '../../../../public/images/icons/help.svg';
 import CollapsableSection from '../../Common/CollapsableSection';
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import { ErrorMessage } from '../../Common/ErrorMessage';
@@ -212,9 +212,13 @@ export default function PublishWizard({
     setSubmitted(true);
   }, []);
 
-  const inputClassName = classNames('input-form mx-0 py-2', 'peer', {
-    'input-invalid submitted': submitted,
-  });
+  const inputClassName = classNames(
+    'rounded-primary input-form shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary mx-0 border-secondary bg-layer-2 py-2',
+    'peer',
+    {
+      'input-invalid submitted': submitted,
+    },
+  );
 
   return (
     <Modal
@@ -228,17 +232,17 @@ export default function PublishWizard({
       onClose={onClose}
       initialFocus={nameInputRef}
     >
-      <div className="flex h-full flex-col divide-y divide-tertiary">
-        <h4 className="p-4 pr-10 text-base font-semibold">
+      <div className="flex h-full flex-col divide-y divide-secondary rounded-[10px] bg-layer-1">
+        <h4 className="text-primary-bg-light p-4 pr-10 text-xl font-medium">
           <span className="line-clamp-2 whitespace-pre break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
-          <div className="flex w-full shrink grow flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
+        <div className="flex min-h-0 grow flex-col divide-y divide-secondary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
+          <div className="flex w-full shrink grow flex-col divide-y divide-secondary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 px-5 py-4">
-              <h2>{t('General Info')}</h2>
-              <p className="text-secondary-bg-dark">
+              <h2 className="font-medium">{t('General Info')}</h2>
+              <p className="text-tertiary-bg-light">
                 {t(
                   'Your conversation will be visible to organization only after verification by the administrator',
                 )}
@@ -246,11 +250,11 @@ export default function PublishWizard({
 
               <div>
                 <label
-                  className="mb-1 flex text-xs text-secondary-bg-dark"
+                  className="text-primary-bg-light mb-1 flex text-xs"
                   htmlFor="requestName"
                 >
                   {t(`${getPrefix(entity)} name`)}
-                  <span className="ml-1 inline text-accent-primary">*</span>
+                  <span className="text-quinary-bg-light inline">*</span>
                 </label>
                 <input
                   ref={nameInputRef}
@@ -269,30 +273,30 @@ export default function PublishWizard({
 
               <div>
                 <label
-                  className="mb-1 flex text-xs text-secondary-bg-dark"
+                  className="text-primary-bg-light mb-1 flex text-xs"
                   htmlFor="requestPath"
                 >
                   {t('Path')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
+                  <span className="text-quaternary-bg-light inline">*</span>
                 </label>
                 <button
-                  className="input-form mx-0 flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary-bg-dark hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                  className="input-form rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary mx-0 flex grow items-center justify-between border border-secondary bg-layer-2 px-3 py-2"
                   onClick={handleFolderChange}
                 >
                   <span className="truncate">
                     {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
                   </span>
-                  <span className="text-accent-primary">{t('Change')}</span>
+                  <span className="text-tertiary-bg-light">{t('Change')}</span>
                 </button>
               </div>
 
               <div>
                 <label
-                  className="mb-1 flex text-xs text-secondary-bg-dark"
+                  className="text-primary-bg-light mb-1 flex text-xs"
                   htmlFor="requestVersion"
                 >
                   {t('Version')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
+                  <span className="text-quinary-bg-light inline">*</span>
                 </label>
                 <input
                   ref={nameInputRef}
@@ -321,7 +325,7 @@ export default function PublishWizard({
             </section>
 
             <section className="flex flex-col px-5 py-4">
-              <h2 className="flex flex-row gap-2">
+              <h2 className="flex flex-row gap-2 font-medium">
                 {t('Target Audience Filters')}
 
                 <Tooltip
@@ -334,10 +338,7 @@ export default function PublishWizard({
                     </div>
                   }
                 >
-                  <IconHelpCircle
-                    size={18}
-                    className="text-secondary-bg-dark  hover:text-accent-primary"
-                  />
+                  <HelpIcon width={18} height={18} />
                 </Tooltip>
               </h2>
 
@@ -390,7 +391,7 @@ export default function PublishWizard({
               </h2>
               <ErrorMessage error={errorMessage} />
               {!files.length && (
-                <p className="text-secondary-bg-dark">{t('No files')}</p>
+                <p className="text-tertiary-bg-light">{t('No files')}</p>
               )}
               {files.map((file) => (
                 <PublishAttachment
