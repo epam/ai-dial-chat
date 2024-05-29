@@ -31,6 +31,8 @@ import Folder from '@/src/components/Folder/Folder';
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
+import { NoData } from '../Common/NoData';
+import { NoResultsFound } from '../Common/NoResultsFound';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
 import { FileItem, FileItemEventIds } from './FileItem';
@@ -494,13 +496,28 @@ export const FileManagerModal = ({
               </button>
               {isAllFilesOpened && (
                 <div className="flex flex-col gap-0.5 overflow-auto">
-                  {(folders.length !== 0 || filteredFiles.length !== 0) && (
+                  {searchQuery !== '' &&
+                  folders.every(
+                    (folder) =>
+                      !folder.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()),
+                  ) &&
+                  filteredFiles.every(
+                    (file) =>
+                      !file.name
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase()),
+                  ) ? (
+                    <NoResultsFound />
+                  ) : folders.length === 0 && filteredFiles.length === 0 ? (
+                    <NoData />
+                  ) : (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {
                         if (!isRootId(folder.folderId)) {
                           return null;
                         }
-
                         return (
                           <div key={folder.id}>
                             <Folder
@@ -537,7 +554,6 @@ export const FileManagerModal = ({
                         if (!isRootId(file.folderId)) {
                           return null;
                         }
-
                         return (
                           <div key={file.id}>
                             <FileItem
