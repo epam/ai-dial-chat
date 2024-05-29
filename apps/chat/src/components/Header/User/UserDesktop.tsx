@@ -25,6 +25,7 @@ export const UserDesktop = () => {
   const { t } = useTranslation(Translation.Header);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
+  const [isClient, setIsClient] = useState(false);
   const isSmallScreenOrMobile = useIsSmallScreenOrMobile();
   const { data: session } = useSession();
   const dispatch = useAppDispatch();
@@ -35,6 +36,8 @@ export const UserDesktop = () => {
   }, [session]);
 
   const startTour = () => {
+    if (isSmallScreenOrMobile) return;
+
     dispatch(UIActions.setTourRun(true));
     dispatch(UIActions.setTourStepIndex(0));
   };
@@ -45,15 +48,21 @@ export const UserDesktop = () => {
     dispatch(UIActions.setTourStepIndex(0));
   }, [isSmallScreenOrMobile]);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <div className="flex items-center justify-center">
-      {!isSmallScreenOrMobile && (
+      <div
+        className={isClient && isSmallScreenOrMobile ? 'invisible' : 'visible'}
+      >
         <Tooltip isTriggerClickable tooltip={t('Tour Guide')}>
           <button onClick={startTour} className=" hover:text-accent-primary">
             <TourGuideIcon />
           </button>
         </Tooltip>
-      )}
+      </div>
 
       <Menu
         className="w-full"
