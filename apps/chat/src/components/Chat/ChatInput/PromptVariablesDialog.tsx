@@ -110,10 +110,15 @@ export const PromptVariablesDialog: FC<Props> = ({
     };
   }, [onClose]);
 
-  const inputClassName = classNames('input-form', 'peer', {
-    'input-invalid': submitted,
-    submitted: submitted,
-  });
+  const inputClassName = classNames(
+    'input-form',
+    'peer',
+    'rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary m-0 border-secondary bg-layer-2 ',
+    {
+      'input-invalid': submitted,
+      submitted: submitted,
+    },
+  );
 
   return (
     <div
@@ -123,7 +128,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="relative inline-block max-h-full w-full overflow-y-auto rounded-[10px] bg-layer-1 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
@@ -142,7 +147,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         )}
 
         <button
-          className="absolute right-2 top-2 rounded text-secondary-bg-dark hover:text-accent-primary"
+          className="text-quaternary-bg-light hover:text-primary-bg-light absolute right-2 top-2 rounded"
           onClick={onClose}
         >
           <IconX size={24} />
@@ -150,9 +155,9 @@ export const PromptVariablesDialog: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
-            <div className="mb-1 flex text-xs text-secondary-bg-dark">
+            <div className="text-primary-bg-light mb-1 flex text-xs">
               {variable.key}
-              <span className="ml-1 inline text-accent-primary">*</span>
+              <span className="text-quinary-bg-light inline">*</span>
             </div>
 
             <textarea
