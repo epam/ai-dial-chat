@@ -111,7 +111,7 @@ const ModelGroup = ({
         />
         <div className="flex w-full flex-col gap-0.5 text-left">
           <div className="flex items-center justify-between">
-            <span data-qa="group-entity-name" className="whitespace-pre">
+            <span data-qa="group-entity-name">
               {entities.length === 1
                 ? getOpenAIEntityFullName(currentEntity)
                 : currentEntity.name}
