@@ -26,6 +26,8 @@ config.webServer = {
   url: 'http://localhost:4200',
   timeout: 180000,
   reuseExistingServer: true,
+  stdout: 'pipe',
+  stderr: 'pipe',
 };
 
 config.projects = [
