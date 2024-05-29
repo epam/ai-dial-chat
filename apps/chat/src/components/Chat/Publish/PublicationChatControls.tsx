@@ -22,7 +22,7 @@ import {
 
 interface Props<T extends ConversationInfo | PromptInfo> {
   entity: T;
-  resourceToReview: ResourceToReview[];
+  resourceToReview: ResourceToReview;
   wrapperClassName?: string;
 }
 
