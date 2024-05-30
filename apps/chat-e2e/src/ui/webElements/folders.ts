@@ -44,7 +44,7 @@ export class Folders extends BaseElement {
 
   public getFolderByName(name: string, index?: number) {
     return this.getChildElementBySelector(
-      SideBarSelectors.folderName,
+      SideBarSelectors.folder,
     ).getElementLocatorByText(name, index);
   }
 
