@@ -722,6 +722,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClickFolder(currentFolder.id);
           }
         }}
+        draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
+        onDragStart={(e) => handleDragStart(e, currentFolder)}
+        onDragOver={(e) => {
+          if (!isExternal && hasDragEventAnyData(e, featureType)) {
+            e.preventDefault();
+          }
+        }}
       >
         {isRenaming ? (
           <div
@@ -801,13 +808,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             className="group/folder-item flex max-w-full items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 24}px`,
-            }}
-            draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
-            onDragStart={(e) => handleDragStart(e, currentFolder)}
-            onDragOver={(e) => {
-              if (!isExternal && hasDragEventAnyData(e, featureType)) {
-                e.preventDefault();
-              }
             }}
           >
             <CaretIconComponent
