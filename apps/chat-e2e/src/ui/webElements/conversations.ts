@@ -11,7 +11,11 @@ interface ConversationsChronologyType {
 
 export class Conversations extends BaseConversation {
   constructor(page: Page) {
-    super(page, ChatBarSelectors.conversations, ChatBarSelectors.conversation);
+    super(
+      page,
+      ChatBarSelectors.conversations,
+      ChatBarSelectors.conversationName,
+    );
   }
 
   public chronologyByTitle = (chronology: string) =>

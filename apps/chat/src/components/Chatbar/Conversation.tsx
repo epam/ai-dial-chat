@@ -115,18 +115,22 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div
-        className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-        data-qa="conversation-name"
-      >
+      <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
         <Tooltip
-          tooltip={t(
-            getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
-          )}
-          hideTooltip={!isNameOrPathInvalid}
-          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+          tooltip={
+            !isNameOrPathInvalid
+              ? conversation.name
+              : t(getEntityNameError(isNameInvalid, isInvalidPath, isExternal))
+          }
+          triggerClassName="max-h-5 flex-1 truncate whitespace-pre text-left"
+          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         >
-          {conversation.name}
+          <span
+            className="block max-w-full truncate whitespace-pre"
+            data-qa="conversation-name"
+          >
+            {conversation.name}
+          </span>
         </Tooltip>
       </div>
     </>
@@ -575,7 +579,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
+            'group flex max-w-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
             isSelected && 'pr-0',
           )}
           onClick={() => {
