@@ -57,7 +57,7 @@ export const PreviewPromptModal = ({
             }),
           );
         }}
-        className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
       >
         <IconFileArrowRight size={24} strokeWidth="1.5" />
       </button>
@@ -123,7 +123,7 @@ export const PreviewPromptModal = ({
                     >
                       <button
                         onClick={onDelete}
-                        className="flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
                       >
                         <IconTrashX size={24} strokeWidth="1.5" />
                       </button>
@@ -131,7 +131,7 @@ export const PreviewPromptModal = ({
                   )}
                 </div>
                 <button
-                  className="button button-primary"
+                  className="button button-secondary"
                   data-qa="save-prompt"
                   onClick={onDuplicate}
                 >

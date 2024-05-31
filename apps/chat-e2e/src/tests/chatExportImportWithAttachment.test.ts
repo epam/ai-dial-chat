@@ -62,6 +62,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
+        // eslint-disable-next-line playwright/no-force-option
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
@@ -95,24 +96,25 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        const beforeImportConversationsCount =
-          await conversations.getElementsCount();
+        const beforeImportConversations =
+          await conversations.getTodayConversations();
         await dialHomePage.throttleAPIResponse('**/*');
         await dialHomePage.uploadData(
           { path: Import.importedAttachmentsFilename },
           () => chatBar.importButton.click(),
         );
+        // eslint-disable-next-line playwright/no-force-option
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
-        const afterImportConversationsCount =
-          await conversations.getElementsCount();
+        const afterImportConversations =
+          await conversations.getTodayConversations();
         expect
           .soft(
-            beforeImportConversationsCount === afterImportConversationsCount,
+            afterImportConversations.length,
             ExpectedMessages.dataIsNotImported,
           )
-          .toBeTruthy();
+          .toBe(beforeImportConversations.length);
       },
     );
   },
@@ -151,8 +153,7 @@ dialTest(
     let gptProVisionConversation: Conversation;
     let historyConversation: Conversation;
     let exportedData: UploadDownloadData;
-    let conversationPath: string;
-    let anotherUserConversationPath: string;
+    const anotherUserFolderPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.STABLE_DIFFUSION)}`;
 
     await dialTest.step(
       'Upload images to DALL-E-3 path and root folder and prepare conversations with request and response containing this images',
@@ -184,7 +185,6 @@ dialTest(
         );
         await dataInjector.createConversations([historyConversation]);
         await localStorageManager.setSelectedConversation(historyConversation);
-        conversationPath = `${API.importFilePath(BucketUtil.getBucket())}/${historyConversation.name}`;
       },
     );
 
@@ -240,7 +240,7 @@ dialTest(
     await dialTest.step(
       'Open attachment from response and verify image is loaded, attachment url is pointing to import path',
       async () => {
-        dalleAttachmentPath = `${conversationPath}/${Attachment.sunImageName}`;
+        dalleAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.DALLE)}/${Attachment.sunImageName}`;
         await chatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
@@ -261,7 +261,7 @@ dialTest(
     await dialTest.step(
       'Download attachment from request and verify attachment url is pointing to import path',
       async () => {
-        gptProVisionAttachmentPath = `${conversationPath}/${Attachment.heartImageName}`;
+        gptProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.heartImageName}`;
         const gptProVisionActualDownloadUrl =
           await chatMessages.getChatMessageDownloadUrl(3);
         expect
@@ -276,7 +276,6 @@ dialTest(
     await dialTest.step(
       'Import file exported by another user and verify conversation is imported',
       async () => {
-        anotherUserConversationPath = `${API.importFilePath(BucketUtil.getBucket())}/${Import.importedConversationWithAttachmentsName}`;
         await dialHomePage.importFile(
           { path: Import.importedAttachmentsFilename },
           () => chatBar.importButton.click(),
@@ -299,7 +298,7 @@ dialTest(
     await dialTest.step(
       'Download attachment from request and verify attachment url is pointing to import path',
       async () => {
-        const gptProVisionAttachmentPath = `${anotherUserConversationPath}/${Import.importedGpt4VisionAttachmentName}`;
+        const gptProVisionAttachmentPath = `${anotherUserFolderPath}/${Import.importedGpt4VisionAttachmentName}`;
         const gptProVisionActualDownloadUrl =
           await chatMessages.getChatMessageDownloadUrl(1);
         expect
@@ -314,7 +313,7 @@ dialTest(
     await dialTest.step(
       'Open attachment from response and verify image is loaded, attachment url is pointing to import path',
       async () => {
-        const stableDiffusionAttachmentPath = `${anotherUserConversationPath}/${Import.importedStableDiffusionAttachmentName}`;
+        const stableDiffusionAttachmentPath = `${anotherUserFolderPath}/${Import.importedStableDiffusionAttachmentName}`;
         await chatMessages.expandChatMessageAttachment(
           4,
           Import.importedStableDiffusionAttachmentName,

@@ -326,13 +326,22 @@ dialTest(
         await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await prompts
-          .getPromptByName(promptOutsideFolder.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            await prompts.getPromptByName(promptOutsideFolder.name),
+            ExpectedMessages.noPromptsImported,
+          )
+          .toBeHidden();
+
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await expect
+          .soft(
+            await prompts.getPromptByName(promptOutsideFolder.name),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
@@ -406,19 +415,26 @@ dialTest(
           promptBar.importButton.click(),
         );
         await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
-        await folderPrompts
-          .getFolderEntity(
-            promptsInsideFolder.folders.name,
-            importedFolderPrompt.name,
-          )
-          .waitFor();
-        for (const existingPrompts of promptsInsideFolder.prompts) {
-          await folderPrompts
-            .getFolderEntity(
+        await expect
+          .soft(
+            await folderPrompts.getFolderEntity(
               promptsInsideFolder.folders.name,
-              existingPrompts.name,
+              importedFolderPrompt.name,
+            ),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
+
+        for (const existingPrompts of promptsInsideFolder.prompts) {
+          await expect
+            .soft(
+              await folderPrompts.getFolderEntity(
+                promptsInsideFolder.folders.name,
+                existingPrompts.name,
+              ),
+              ExpectedMessages.promptIsVisible,
             )
-            .waitFor();
+            .toBeVisible();
         }
       },
     );
@@ -447,8 +463,8 @@ dialTest(
           importedNewFolderPrompt.folders.name,
           importedNewFolderPrompt.prompts[0].name,
         );
-        await folderPrompts.expandFolder(importedNewFolderPrompt.folders.name),
-          await newFolderPrompt.waitFor();
+        await folderPrompts.expandFolder(importedNewFolderPrompt.folders.name);
+        await newFolderPrompt.waitFor();
       },
     );
   },

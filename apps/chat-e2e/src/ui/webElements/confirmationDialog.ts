@@ -1,19 +1,25 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ShareModalSelectors } from '@/src/ui/selectors';
-import { Dialog } from '@/src/ui/selectors/dialogSelectors';
+import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class ConfirmationDialog extends BaseElement {
   constructor(page: Page) {
-    super(page, Dialog.confirmationDialog);
+    super(page, ConfirmationDialogSelectors.container);
   }
 
-  public cancelButton = new BaseElement(this.page, Dialog.cancelDialog);
-  public confirmButton = new BaseElement(this.page, Dialog.confirm);
+  public cancelButton = new BaseElement(
+    this.page,
+    ConfirmationDialogSelectors.cancelDialog,
+  );
+  public confirmButton = new BaseElement(
+    this.page,
+    ConfirmationDialogSelectors.confirm,
+  );
   public confirmMessage = new BaseElement(
     this.page,
-    Dialog.confirmationMessage,
+    ConfirmationDialogSelectors.confirmationMessage,
   );
   public entityName = this.getChildElementBySelector(
     ShareModalSelectors.entityName,

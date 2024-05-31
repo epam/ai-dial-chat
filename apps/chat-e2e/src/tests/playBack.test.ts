@@ -676,12 +676,12 @@ dialTest(
     localStorageManager,
     dataInjector,
     conversationData,
-    conversations,
     chat,
     chatMessages,
     sendMessage,
     chatHeader,
     iconApiHelper,
+    playbackControl,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1425');
@@ -713,12 +713,18 @@ dialTest(
     await dialTest.step(
       'Click Stop Playback and verify chat messages input is available',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [defaultModel!.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
-        await conversations
-          .getConversationByName(playbackConversation.name)
-          .waitFor();
         await chatHeader.leavePlaybackMode.click();
+        await expect
+          .soft(
+            await playbackControl.getElementLocator(),
+            ExpectedMessages.playbackControlsHidden,
+          )
+          .toBeHidden();
+
         await sendMessage.messageInput.waitForState();
         await chat.sendRequestWithButton('3+4=');
 
@@ -816,7 +822,7 @@ dialTest(
         const playedBackResponse = await chatMessages.getChatMessage(
           conversation.messages[1].content,
         );
-        expect(
+        await expect(
           playedBackResponse,
           ExpectedMessages.playbackMessageIsInViewport,
         ).toBeInViewport();

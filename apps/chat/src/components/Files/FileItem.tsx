@@ -181,16 +181,22 @@ export const FileItem = ({
               </div>
             )}
         </div>
-        <span
-          className={classNames(
-            'block max-w-full truncate whitespace-pre',
-            item.status === UploadStatus.FAILED && 'text-error',
-            isSelected && 'text-accent-primary',
-          )}
-          data-qa="attached-file-name"
+        <Tooltip
+          tooltip={item.name}
+          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
+          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         >
-          {item.name}
-        </span>
+          <span
+            className={classNames(
+              'block max-w-full truncate whitespace-pre',
+              item.status === UploadStatus.FAILED && 'text-error',
+              isSelected && 'text-accent-primary',
+            )}
+            data-qa="attached-file-name"
+          >
+            {item.name}
+          </span>
+        </Tooltip>
       </div>
 
       <div className="flex items-center gap-2">
@@ -199,11 +205,12 @@ export const FileItem = ({
             <div
               className="h-full bg-controls-accent"
               style={{ width: `${item.percent}%` }}
+              data-qa="attachment-loading"
             ></div>
           </div>
         )}
         {item.status === UploadStatus.FAILED && (
-          <button onClick={handleRetry}>
+          <button onClick={handleRetry} data-qa="retry-upload">
             <IconReload
               className="shrink-0 text-secondary hover:text-accent-primary"
               size={18}
@@ -211,7 +218,7 @@ export const FileItem = ({
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
-          <button onClick={handleCancelFile}>
+          <button onClick={handleCancelFile} data-qa="remove-file">
             <IconX
               className="shrink-0 text-secondary hover:text-accent-primary"
               size={18}
