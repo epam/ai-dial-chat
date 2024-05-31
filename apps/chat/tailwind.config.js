@@ -30,7 +30,7 @@ const commonBorderColors = {
   secondary: 'var(--stroke-secondary, #E9EDF0)',
   tertiary: 'var(--stroke-tertiary, #082A5E)',
   quaternary: 'var(--stroke-quaternary, #FFFFFF)',
-  error: 'var(--stroke-error, #F76464)',
+  error: 'var(--stroke-accent-primary, #FFD440)',
   hover: 'var(--stroke-hover, #7092B8)',
   'accent-primary': 'var(--stroke-accent-primary, #FF9166)',
   'accent-secondary': 'var(--stroke-accent-secondary, #5B8CC3)',
