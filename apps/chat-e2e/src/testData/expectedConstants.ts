@@ -111,8 +111,8 @@ export const ExpectedConstants = {
   controlChars: `\b\t\f`,
   attachedFileError: (filename: string) =>
     `You've trying to upload files with incorrect type: ${filename}`,
-  allowedSpecialSymbolsInName: '(`~!@#$^*-_+[]\'|<>.?")',
-  winAllowedSpecialSymbolsInName: "(`~!@#$^_-_+[]'___.__)",
+  allowedSpecialSymbolsInName: 'Test (`~!@#$^*-_+[]\'|<>.?")',
+  winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___.__)",
 };
 
 export enum Groups {
@@ -217,6 +217,9 @@ export const Attachment = {
   allTypesLabel: 'all',
   imageTypesExtension: 'image/*',
   imagesTypesLabel: 'images',
+  zeroSizeFileName: 'test1.txt',
+  incrementedImageName: (index: number) => `test${index}.jpg`,
+  dotExtensionImageName: 'testdot..JPg',
 };
 
 export enum Side {

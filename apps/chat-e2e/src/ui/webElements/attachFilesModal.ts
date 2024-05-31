@@ -33,10 +33,12 @@ export class AttachFilesModal extends BaseElement {
     return this.modalHeader;
   }
 
+  public attachedFiles = this.getChildElementBySelector(
+    AttachFilesModalSelectors.attachedFile,
+  );
+
   public attachedFile = (filename: string) =>
-    this.getChildElementBySelector(
-      AttachFilesModalSelectors.attachedFile,
-    ).getElementLocatorByText(filename);
+    this.attachedFiles.getElementLocatorByText(filename);
 
   public attachedFileIcon = (filename: string) =>
     this.attachedFile(filename).locator(
