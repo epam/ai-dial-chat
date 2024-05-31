@@ -452,14 +452,10 @@ dialTest.only(
         await chatBar
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
-        await dialHomePage.uploadData(
-          { path: Attachment.dotExtensionImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
-        );
-        await uploadFromDeviceModal.closeButton.click();
-        await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDeviceButton.click(),
+        await attachFilesModal.uploadFromDeviceButton.click();
+        await uploadFromDeviceModal.addMoreFilesToUpload(
+          Attachment.sunImageName,
+          Attachment.dotExtensionImageName,
         );
       },
     );
