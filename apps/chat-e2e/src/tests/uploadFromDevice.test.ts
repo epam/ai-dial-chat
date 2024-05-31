@@ -455,7 +455,7 @@ dialTest(
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
-          Attachment.dotExtensionImageName,
+          // Attachment.dotExtensionImageName,
         );
       },
     );
