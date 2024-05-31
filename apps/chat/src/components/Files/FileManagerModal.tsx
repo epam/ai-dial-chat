@@ -495,7 +495,7 @@ export const FileManagerModal = ({
                 {t('All files')}
               </button>
               {isAllFilesOpened && (
-                <div className="flex flex-col gap-0.5 overflow-auto">
+                <div className="flex flex-grow flex-col gap-0.5 overflow-auto">
                   {searchQuery !== '' &&
                   folders.every(
                     (folder) =>
@@ -509,9 +509,13 @@ export const FileManagerModal = ({
                         .toLowerCase()
                         .includes(searchQuery.toLowerCase()),
                   ) ? (
-                    <NoResultsFound />
+                    <div className="my-auto">
+                      <NoResultsFound />
+                    </div>
                   ) : folders.length === 0 && filteredFiles.length === 0 ? (
-                    <NoData />
+                    <div className="my-auto">
+                      <NoData />
+                    </div>
                   ) : (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {

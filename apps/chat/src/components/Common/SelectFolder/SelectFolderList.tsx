@@ -15,6 +15,8 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 import Folder, { FolderProps } from '@/src/components/Folder/Folder';
 
+import { NoData } from '../NoData';
+
 interface Props<T, P = unknown> {
   folderProps: Omit<FolderProps<T, P>, 'currentFolder'>;
   handleFolderSelect: (folderId: string) => void;
@@ -38,9 +40,25 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
 }: Props<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const highlightedFolders = useMemo(() => {
-    return [selectedFolderId].filter(Boolean) as string[];
-  }, [selectedFolderId]);
+  const highlightedFolders = useMemo(
+    () => [selectedFolderId].filter(Boolean) as string[],
+    [selectedFolderId],
+  );
+
+  const filteredFolders = useMemo(
+    () =>
+      folderProps.searchTerm
+        ? folderProps.allFolders.filter((folder) =>
+            folder.name
+              .toLowerCase()
+              .includes(folderProps.searchTerm.toLowerCase()),
+          )
+        : folderProps.allFolders,
+    [folderProps.allFolders, folderProps.searchTerm],
+  );
+
+  const noFolders = !filteredFolders.length;
+  const isSearching = !!folderProps.searchTerm;
 
   return (
     <div className="flex min-h-[350px] flex-col overflow-auto">
@@ -57,10 +75,10 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         {t(rootFolderName)}
       </button>
       {isAllEntitiesOpened && (
-        <div className="flex flex-col gap-0.5 overflow-auto">
-          {folderProps.allFolders.length ? (
+        <div className="flex flex-grow flex-col gap-0.5 overflow-auto">
+          {!noFolders ? (
             <div className="flex flex-col gap-1 overflow-auto">
-              {folderProps.allFolders.map((folder) => {
+              {filteredFolders.map((folder) => {
                 if (
                   folder.folderId !== rootFolderId ||
                   (initiallySelectedFolderId &&
@@ -68,7 +86,6 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                 ) {
                   return null;
                 }
-
                 return (
                   <div className="relative" key={folder.id}>
                     <Folder
@@ -83,8 +100,8 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
               })}
             </div>
           ) : (
-            <div className="flex grow items-center justify-center py-10">
-              <NoResultsFound />
+            <div className="my-auto">
+              {isSearching ? <NoResultsFound /> : <NoData />}
             </div>
           )}
         </div>
