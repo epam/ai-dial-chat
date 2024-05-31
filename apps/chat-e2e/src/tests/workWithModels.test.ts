@@ -146,7 +146,7 @@ dialTest(
               )
               .toBeTruthy();
           }
-          expect
+          await expect
             .soft(
               sendMessage.sendMessageButton.getElementLocator(),
               ExpectedMessages.sendMessageButtonDisabled,
