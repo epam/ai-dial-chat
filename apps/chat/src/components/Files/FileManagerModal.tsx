@@ -495,7 +495,7 @@ export const FileManagerModal = ({
                 {t('All files')}
               </button>
               {isAllFilesOpened && (
-                <div className="flex flex-grow flex-col gap-0.5 overflow-auto">
+                <div className="flex grow flex-col gap-0.5 overflow-auto">
                   {searchQuery !== '' &&
                   folders.every(
                     (folder) =>
