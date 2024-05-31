@@ -75,7 +75,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         {t(rootFolderName)}
       </button>
       {isAllEntitiesOpened && (
-        <div className="flex flex-grow flex-col gap-0.5 overflow-auto">
+        <div className="flex grow flex-col gap-0.5 overflow-auto">
           {!noFolders ? (
             <div className="flex flex-col gap-1 overflow-auto">
               {filteredFolders.map((folder) => {
