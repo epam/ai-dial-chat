@@ -1,9 +1,8 @@
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
-import { ChatSelectors } from '@/src/ui/selectors';
+import { ChatSelectors, ShareModalSelectors } from '@/src/ui/selectors';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
-import { ShareModalSelectors } from '@/src/ui/selectors/shareModalSelectors';
 import { Page } from '@playwright/test';
 
 export class ShareModal extends BaseElement {

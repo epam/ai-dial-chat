@@ -3,6 +3,7 @@ import { Conversations } from './conversations';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
+import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
 import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
@@ -18,6 +19,7 @@ export class ChatBar extends SideBar {
   private sharedWithMeConversations!: SharedWithMeConversations;
   private folderConversations!: FolderConversations;
   private sharedFolderConversations!: SharedFolderConversations;
+  private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
   );
@@ -54,6 +56,13 @@ export class ChatBar extends SideBar {
       this.sharedFolderConversations = new SharedFolderConversations(this.page);
     }
     return this.sharedFolderConversations;
+  }
+
+  getBottomDropdownMenu(): DropdownMenu {
+    if (!this.bottomDropdownMenu) {
+      this.bottomDropdownMenu = new DropdownMenu(this.page);
+    }
+    return this.bottomDropdownMenu;
   }
 
   public async createNewConversation() {
