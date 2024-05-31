@@ -221,7 +221,7 @@ export const Attachment = {
   imagesTypesLabel: 'images',
   zeroSizeFileName: 'test1.txt',
   incrementedImageName: (index: number) => `test${index}.jpg`,
-  dotExtensionImageName: 'testdot..jpg',
+  dotExtensionImageName: 'testdot..JPg',
 };
 
 export enum Side {
