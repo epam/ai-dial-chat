@@ -122,12 +122,30 @@ const initEpic: AppEpic = (action$) =>
     ),
   );
 
-const initSelectedConversationsEpic: AppEpic = (action$) =>
+const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     takeUntil(action$.pipe(filter(ShareActions.acceptShareInvitation.match))),
     // use getSelectedConversations to load selected conversations, we can unsubscribe from this action if we try to accept a share link or we in a overlay mode
-    switchMap(() => of(ConversationsActions.getSelectedConversations())),
+    switchMap(() => {
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+      const optionsReceived = OverlaySelectors.selectOptionsReceived(
+        state$.value,
+      );
+
+      return concat(
+        iif(
+          () => !isOverlay,
+          of(ConversationsActions.getSelectedConversations()),
+          EMPTY,
+        ),
+        iif(
+          () => isOverlay && !!optionsReceived,
+          of(ConversationsActions.getSelectedConversations()),
+          EMPTY,
+        ),
+      );
+    }),
   );
 
 const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
