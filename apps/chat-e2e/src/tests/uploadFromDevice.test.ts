@@ -424,7 +424,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   `Focus stays in the file named while it's being renamed manually on "Upload from device".\n` +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension. Renamed file.\n" +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension.\n" +
