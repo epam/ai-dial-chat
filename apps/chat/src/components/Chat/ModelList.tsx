@@ -14,6 +14,7 @@ import { DialAIEntity } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { TourGuideId } from '@/src/constants/share';
 
@@ -41,6 +42,7 @@ const ModelGroup = ({
   disabled,
   isReplayAsIs,
 }: ModelGroupProps) => {
+  const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
@@ -83,6 +85,7 @@ const ModelGroup = ({
           ? 'border-accent-quaternary shadow-primary bg-accent-secondary-alpha'
           : 'hover:shadow-primary border-secondary bg-layer-2 hover:bg-accent-secondary-alpha',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
+        isCompareMode ? 'px-3 py-2' : 'px-5 py-2',
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
@@ -102,7 +105,7 @@ const ModelGroup = ({
       id={TourGuideId.modelSelection}
     >
       {disabled && <DisableOverlay />}
-      <div className="flex min-h-[48px] items-center gap-3 border-secondary px-5 py-2">
+      <div className="flex min-h-[48px] items-center gap-3 border-secondary ">
         <ModelIcon
           entityId={currentEntity.id}
           entity={currentEntity}
