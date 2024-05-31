@@ -3,6 +3,7 @@ import { BaseElement } from './baseElement';
 import { Attachment } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
+  FileSelectors,
   IconSelectors,
   UploadFromDeviceModalSelectors,
 } from '@/src/ui/selectors';
@@ -33,7 +34,7 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public addMoreFiles = this.getChildElementBySelector(
     UploadFromDeviceModalSelectors.addMoreFiles,
-  );
+  ).getChildElementBySelector(FileSelectors.fileTypeAttribute);
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 

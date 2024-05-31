@@ -341,7 +341,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Upload 3 files at once and verify scroll appears on modal window',
+      'Upload 15 files at once and verify scroll appears on modal window',
       async () => {
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         for (const attachment of attachments) {
@@ -362,9 +362,12 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click on "Upload" button and verify files are attached to request',
+      'Click on "Upload" -> "Attach" buttons and verify files are attached to request',
       async () => {
         await uploadFromDeviceModal.uploadFiles();
+        if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
+          await attachFilesModal.attachFiles();
+        }
         for (const attachment of attachments) {
           await expect
             .soft(
@@ -422,7 +425,7 @@ dialTest(
 );
 
 dialTest(
-  'Focus stays in the file named while it\'s being renamed manually on "Upload from device".\n' +
+  `Focus stays in the file named while it's being renamed manually on "Upload from device".\n` +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension. Renamed file.\n" +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension.\n" +
     'File extension is changed to lower case on "Upload from device"',
