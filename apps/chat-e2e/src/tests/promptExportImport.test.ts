@@ -93,33 +93,67 @@ dialTest(
       async () => {
         await promptBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await promptBar.deleteEntitiesButton.waitForState({ state: 'hidden' });
+        await expect
+          .soft(
+            promptBar.deleteEntitiesButton.getElementLocator(),
+            ExpectedMessages.deleteAllPromptsButtonNotVisible,
+          )
+          .toBeHidden();
 
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
 
-        await folderPrompts
-          .getFolderByName(promptsInsideFolder.folders.name)
-          .waitFor();
-        await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .waitFor();
-
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(promptsInsideFolder.folders.name),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            prompts.getPromptByName(promptOutsideFolder.name),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
 
         for (let i = 0; i < nestedFolders.length; i++) {
           const nestedFolder = nestedFolders[i];
-          await folderPrompts.getFolderByName(nestedFolder.name).waitFor();
-          await folderPrompts
-            .getFolderEntity(nestedFolder.name, nestedPrompts[i].name)
-            .waitFor();
+          await expect
+            .soft(
+              folderPrompts.getFolderByName(nestedFolder.name),
+              ExpectedMessages.folderIsVisible,
+            )
+            .toBeVisible();
+          await expect
+            .soft(
+              await folderPrompts.getFolderEntity(
+                nestedFolder.name,
+                nestedPrompts[i].name,
+              ),
+              ExpectedMessages.promptIsVisible,
+            )
+            .toBeVisible();
         }
 
         for (const prompt of promptsInsideFolder.prompts) {
-          await folderPrompts
-            .getFolderEntity(promptsInsideFolder.folders.name, prompt.name)
-            .waitFor();
+          await expect
+            .soft(
+              folderPrompts.getFolderEntity(
+                promptsInsideFolder.folders.name,
+                prompt.name,
+              ),
+              ExpectedMessages.promptIsVisible,
+            )
+            .toBeVisible();
         }
       },
     );
@@ -210,13 +244,15 @@ dialTest(
           promptBar.importButton.click(),
         );
 
-        await folderPrompts
-          .getFolderEntity(
-            promptInsideFolder.folders.name,
-            promptInsideFolder.prompts[0].name,
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              promptInsideFolder.folders.name,
+              promptInsideFolder.prompts[0].name,
+            ),
+            ExpectedMessages.promptIsVisible,
           )
-          .waitFor();
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+          .toBeVisible();
       },
     );
 
@@ -231,15 +267,21 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
-        await folderPrompts
-          .getFolderByName(promptInsideFolder.folders.name)
-          .waitFor();
-        await folderPrompts
-          .getFolderEntity(
-            promptInsideFolder.folders.name,
-            promptInsideFolder.prompts[0].name,
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(promptInsideFolder.folders.name),
+            ExpectedMessages.folderIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
+        await expect
+          .soft(
+            await folderPrompts.getFolderEntity(
+              promptInsideFolder.folders.name,
+              promptInsideFolder.prompts[0].name,
+            ),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -253,7 +295,12 @@ dialTest(
           newDescr,
           newValue,
         );
-        await prompts.getPromptByName(newName).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptByName(newName),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
         await prompts.openPromptDropdownMenu(newName);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         expect
@@ -445,8 +492,18 @@ dialTest(
         await dialHomePage.importFile(rootPromptData, () =>
           promptBar.importButton.click(),
         );
-        await prompts.getPromptByName(importedRootPrompt.name).waitFor();
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptByName(importedRootPrompt.name),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            prompts.getPromptByName(promptOutsideFolder.name),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -456,15 +513,22 @@ dialTest(
         await dialHomePage.importFile(newFolderPromptData, () =>
           promptBar.importButton.click(),
         );
-        await folderPrompts
-          .getFolderByName(importedNewFolderPrompt.folders.name)
-          .waitFor();
-        const newFolderPrompt = folderPrompts.getFolderEntity(
-          importedNewFolderPrompt.folders.name,
-          importedNewFolderPrompt.prompts[0].name,
-        );
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(importedNewFolderPrompt.folders.name),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
         await folderPrompts.expandFolder(importedNewFolderPrompt.folders.name);
-        await newFolderPrompt.waitFor();
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              importedNewFolderPrompt.folders.name,
+              importedNewFolderPrompt.prompts[0].name,
+            ),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
@@ -497,12 +561,15 @@ dialTest(
         );
 
         await folderPrompts.expandFolder(Import.oldVersionAppFolderName);
-        await folderPrompts
-          .getFolderEntity(
-            Import.oldVersionAppFolderName,
-            Import.v14AppFolderPromptName,
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              Import.oldVersionAppFolderName,
+              Import.v14AppFolderPromptName,
+            ),
+            ExpectedMessages.promptIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
 
@@ -517,9 +584,15 @@ dialTest(
         newDescr,
         newValue,
       );
-      await folderPrompts
-        .getFolderEntity(Import.oldVersionAppFolderName, newName)
-        .waitFor();
+      await expect
+        .soft(
+          folderPrompts.getFolderEntity(
+            Import.oldVersionAppFolderName,
+            newName,
+          ),
+          ExpectedMessages.folderIsVisible,
+        )
+        .toBeVisible();
     });
 
     await dialTest.step(
@@ -608,15 +681,23 @@ dialTest(
         );
 
         for (const nestedFolder of nestedFolders) {
-          await folderPrompts.getFolderByName(nestedFolder.name).waitFor();
+          await expect
+            .soft(
+              folderPrompts.getFolderByName(nestedFolder.name),
+              ExpectedMessages.folderIsVisible,
+            )
+            .toBeVisible();
         }
 
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              nestedFolders[levelsCount].name,
+              nestedPrompts[levelsCount].name,
+            ),
+            ExpectedMessages.promptIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
 
         expect
           .soft(
@@ -642,12 +723,15 @@ dialTest(
           promptBar.importButton.click(),
         );
 
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              nestedFolders[levelsCount].name,
+              nestedPrompts[levelsCount].name,
+            ),
+            ExpectedMessages.promptIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
 
@@ -664,16 +748,22 @@ dialTest(
           promptBar.importButton.click(),
         );
 
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              nestedFolders[levelsCount].name,
+              nestedPrompts[levelsCount].name,
+            ),
+            ExpectedMessages.promptIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
 
-        await folderPrompts
-          .getFolderByName(nestedFolders[levelsCount - 1].name)
-          .waitFor();
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(nestedFolders[levelsCount - 1].name),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
 
         expect
           .soft(
@@ -870,13 +960,16 @@ dialTest(
           { isHttpMethodTriggered: false },
           2,
         );
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            thirdLevelFolderPrompt.name,
-            2,
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              nestedFolders[levelsCount].name,
+              thirdLevelFolderPrompt.name,
+              2,
+            ),
+            ExpectedMessages.promptIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
 
         const foldersCount = await folderPrompts.getFoldersCount();
         expect

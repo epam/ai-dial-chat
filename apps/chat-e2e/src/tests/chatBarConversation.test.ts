@@ -718,7 +718,12 @@ dialTest(
 
         const moveToFolder =
           await conversationDropdownMenu.getMenuOption(folderName);
-        await moveToFolder.waitForState();
+        await expect
+          .soft(
+            moveToFolder.getElementLocator(),
+            ExpectedMessages.contextMenuOptionIsVisible,
+          )
+          .toBeVisible();
         const moveToFolderOverflow =
           await moveToFolder.getComputedStyleProperty(Styles.text_overflow);
         expect
@@ -918,10 +923,14 @@ dialTest(
           ExpectedMessages.conversationDeleted,
         )
         .toBeHidden();
-
-      await conversations
-        .getConversationByName(ExpectedConstants.newConversationTitle)
-        .waitFor();
+      await expect
+        .soft(
+          conversations.getConversationByName(
+            ExpectedConstants.newConversationTitle,
+          ),
+          ExpectedMessages.newConversationCreated,
+        )
+        .toBeVisible();
 
       if (i === 1) {
         await folderPrompts.expandFolder(promptInFolder.folders.name);

@@ -92,9 +92,12 @@ dialTest(
         await folderConversations.openFolderDropdownMenu(initialFolderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
-        await folderConversations
-          .getFolderByName(initialFolderName)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            folderConversations.getFolderByName(initialFolderName),
+            ExpectedMessages.folderIsNotVisible,
+          )
+          .toBeHidden();
 
         await chatBar.createNewFolder();
         await expect

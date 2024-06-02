@@ -33,7 +33,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await conversationSettings.waitForState();
+        await expect
+          .soft(
+            conversationSettings.getElementLocator(),
+            ExpectedMessages.conversationSettingsVisible,
+          )
+          .toBeVisible();
         await promptBar.hoverOverNewEntity();
         const newPromptCursor = await promptBar.getNewEntityCursor();
         expect
@@ -87,10 +92,6 @@ dialTest(
               .toBe(Colors.textError);
           });
         });
-
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor();
         await expect
           .soft(
             await promptModalDialog.getFieldBottomMessage(
@@ -124,9 +125,6 @@ dialTest(
           });
         });
 
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor();
         await expect
           .soft(
             await promptModalDialog.getFieldBottomMessage(
@@ -165,9 +163,12 @@ dialTest(
           });
         });
 
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
+            ExpectedMessages.messageIsDeleted,
+          )
+          .toBeHidden();
       },
     );
 
@@ -186,9 +187,6 @@ dialTest(
           });
         });
 
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor();
         await expect
           .soft(
             await promptModalDialog.getFieldBottomMessage(
@@ -222,9 +220,6 @@ dialTest(
           });
         });
 
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor();
         await expect
           .soft(
             await promptModalDialog.getFieldBottomMessage(
@@ -263,9 +258,12 @@ dialTest(
           });
         });
 
-        await promptModalDialog
-          .getFieldBottomMessage(promptModalDialog.prompt)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
+            ExpectedMessages.messageIsDeleted,
+          )
+          .toBeHidden();
 
         expect
           .soft(
@@ -284,7 +282,12 @@ dialTest(
           newDescr,
         );
         await promptModalDialog.saveButton.click();
-        await prompts.getPromptByName(newName).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptByName(newName),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
@@ -705,35 +708,54 @@ dialTest(
     );
     await folderPrompts.expandFolder(promptInFolder.folders.name);
     await folderConversations.expandFolder(conversationInFolder.folders.name);
-    await conversations
-      .getConversationByName(singleConversation.name)
-      .waitFor();
+    await expect
+      .soft(
+        conversations.getConversationByName(singleConversation.name),
+        ExpectedMessages.conversationIsVisible,
+      )
+      .toBeVisible();
 
     await promptBar.deleteAllEntities();
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
     while (i > 0) {
       if (i === 1) {
-        await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderIsNotVisible,
+          )
+          .toBeHidden();
         await folderConversations.expandFolder(
           conversationInFolder.folders.name,
         );
       } else {
-        await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .waitFor();
+        await expect
+          .soft(
+            folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
       }
-      await folderConversations
-        .getFolderEntity(
-          conversationInFolder.folders.name,
-          conversationInFolder.conversations[0].name,
+      await expect
+        .soft(
+          folderConversations.getFolderEntity(
+            conversationInFolder.folders.name,
+            conversationInFolder.conversations[0].name,
+          ),
+          ExpectedMessages.conversationIsVisible,
         )
-        .waitFor();
-      await conversations
-        .getConversationByName(singleConversation.name)
-        .waitFor();
+        .toBeVisible();
+      await expect
+        .soft(
+          conversations.getConversationByName(singleConversation.name),
+          ExpectedMessages.conversationIsVisible,
+        )
+        .toBeVisible();
 
       await expect
         .soft(

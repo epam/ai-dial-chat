@@ -224,11 +224,19 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-        await conversations
-          .getConversationByName(historyConversation.name)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(historyConversation.name),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
         await conversations.selectConversation(historyConversation.name);
-        await chatMessages.waitForState({ state: 'attached' });
+        await expect
+          .soft(
+            chatMessages.getElementLocator(),
+            ExpectedMessages.chatMessagesAreVisible,
+          )
+          .toBeVisible();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
@@ -280,13 +288,23 @@ dialTest(
           { path: Import.importedAttachmentsFilename },
           () => chatBar.importButton.click(),
         );
-        await conversations
-          .getConversationByName(Import.importedConversationWithAttachmentsName)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(
+              Import.importedConversationWithAttachmentsName,
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
         await conversations.selectConversation(
           Import.importedConversationWithAttachmentsName,
         );
-        await chatMessages.waitForState({ state: 'attached' });
+        await expect
+          .soft(
+            chatMessages.getElementLocator(),
+            ExpectedMessages.chatMessagesAreVisible,
+          )
+          .toBeVisible();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect

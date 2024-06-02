@@ -428,9 +428,14 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
         for (let i = 2; i <= 3; i++) {
-          await folderConversations
-            .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
-            .waitFor({ state: 'hidden' });
+          await expect
+            .soft(
+              folderConversations.getFolderByName(
+                ExpectedConstants.newFolderWithIndexTitle(i),
+              ),
+              ExpectedMessages.folderIsNotVisible,
+            )
+            .toBeHidden();
         }
       },
     );

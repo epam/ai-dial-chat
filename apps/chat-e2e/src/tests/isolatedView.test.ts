@@ -33,7 +33,12 @@ dialTest(
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
-        await isolatedView.waitForState();
+        await expect
+          .soft(
+            isolatedView.getElementLocator(),
+            ExpectedMessages.isolatedViewIsOpened,
+          )
+          .toBeVisible();
         const modelName = await isolatedView.getEntityName();
         expect
           .soft(modelName, ExpectedMessages.entityNameIsValid)
@@ -55,11 +60,24 @@ dialTest(
       'Send request to model and verify response is generated, no side panels and conversation settings are available',
       async () => {
         await chat.sendRequestWithButton(request);
-        await chatBar.waitForState({ state: 'hidden' });
-        await promptBar.waitForState({ state: 'hidden' });
-        await chatHeader.openConversationSettings.waitForState({
-          state: 'hidden',
-        });
+        await expect
+          .soft(
+            chatBar.getElementLocator(),
+            ExpectedMessages.sideBarPanelIsHidden,
+          )
+          .toBeHidden();
+        await expect
+          .soft(
+            promptBar.getElementLocator(),
+            ExpectedMessages.sideBarPanelIsHidden,
+          )
+          .toBeHidden();
+        await expect
+          .soft(
+            chatHeader.openConversationSettings.getElementLocator(),
+            ExpectedMessages.conversationSettingsNotVisible,
+          )
+          .toBeHidden();
       },
     );
 
@@ -67,8 +85,18 @@ dialTest(
       'Verify chat request controls are visible, hint is shown on hover conversation icon in the header',
       async () => {
         await chatMessages.waitForEditMessageIcon(request);
-        await chatMessages.messageDeleteIcon(request).waitFor();
-        await chatHeader.clearConversation.waitForState();
+        await expect
+          .soft(
+            chatMessages.messageDeleteIcon(request),
+            ExpectedMessages.iconIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            chatHeader.clearConversation.getElementLocator(),
+            ExpectedMessages.headerCleanConversationIconVisible,
+          )
+          .toBeVisible();
         await chatHeader.hoverOverChatModel();
 
         const modelInfo = await chatInfoTooltip.getModelInfo();
@@ -99,7 +127,12 @@ dialTest(
       'Open isolated view for a model that does not exist and verify error toast is shown',
       async () => {
         await dialHomePage.navigateToUrl(ExpectedConstants.isolatedUrl('test'));
-        await chatNotFound.waitForState();
+        await expect
+          .soft(
+            chatNotFound.getElementLocator(),
+            ExpectedMessages.noConversationsAvailable,
+          )
+          .toBeVisible();
         expect
           .soft(
             await chatNotFound.getChatNotFoundContent(),

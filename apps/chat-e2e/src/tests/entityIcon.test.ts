@@ -163,8 +163,12 @@ dialTest(
     await dialTest.step(
       'Verify app icon is jumping in chat while responding',
       async () => {
-        const jumpingIcon = await chatMessages.getMessageJumpingIcon();
-        await jumpingIcon.waitFor();
+        await expect
+          .soft(
+            await chatMessages.getMessageJumpingIcon(),
+            ExpectedMessages.chatIconIsJumping,
+          )
+          .toBeVisible();
       },
     );
 

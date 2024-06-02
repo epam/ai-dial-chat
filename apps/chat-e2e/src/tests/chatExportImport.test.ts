@@ -350,9 +350,12 @@ dialTest(
         await dialHomePage.importFile(rootConversationData, () =>
           chatBar.importButton.click(),
         );
-        await conversations
-          .getConversationByName(importedRootConversation.name)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(importedRootConversation.name),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
         await expect
           .soft(
             await conversations.getConversationByName(
@@ -531,9 +534,15 @@ dialTest(
           )
           .toBeTruthy();
 
-        await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(
+              ExpectedConstants.newConversationTitle,
+              2,
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
 
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
@@ -553,9 +562,15 @@ dialTest(
     await dialTest.step(
       'Verify New conversation with Gpt-4 icon is imported',
       async () => {
-        await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(
+              ExpectedConstants.newConversationTitle,
+              2,
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
         const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
         const newGpt4ConversationIcon = await conversations.getConversationIcon(
           ExpectedConstants.newConversationTitle,
@@ -570,9 +585,12 @@ dialTest(
     await dialTest.step(
       'Verify Bison conversation with default icon is imported',
       async () => {
-        await conversations
-          .getConversationByName(Import.v14AppBisonChatName)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(Import.v14AppBisonChatName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
 
         const defaultIcon = await iconApiHelper.getEntityIcon(
           ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
@@ -695,17 +713,23 @@ dialTest(
           chatBar.importButton.click(),
         );
 
-        await folderConversations
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedConversations[levelsCount].name,
+        await expect
+          .soft(
+            folderConversations.getFolderEntity(
+              nestedFolders[levelsCount].name,
+              nestedConversations[levelsCount].name,
+            ),
+            ExpectedMessages.conversationIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
 
         for (let i = 0; i <= levelsCount; i++) {
-          await folderConversations
-            .getFolderByName(nestedFolders[i].name)
-            .waitFor();
+          await expect
+            .soft(
+              folderConversations.getFolderByName(nestedFolders[i].name),
+              ExpectedMessages.folderIsVisible,
+            )
+            .toBeVisible();
         }
 
         for (let i = 0; i < levelsCount; i++) {
@@ -735,12 +759,15 @@ dialTest(
           chatBar.importButton.click(),
         );
 
-        await folderConversations
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedConversations[levelsCount].name,
+        await expect
+          .soft(
+            folderConversations.getFolderEntity(
+              nestedFolders[levelsCount].name,
+              nestedConversations[levelsCount].name,
+            ),
+            ExpectedMessages.conversationIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
 
@@ -757,16 +784,24 @@ dialTest(
           chatBar.importButton.click(),
         );
 
-        await folderConversations
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedConversations[levelsCount].name,
+        await expect
+          .soft(
+            folderConversations.getFolderEntity(
+              nestedFolders[levelsCount].name,
+              nestedConversations[levelsCount].name,
+            ),
+            ExpectedMessages.conversationIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
 
-        await folderConversations
-          .getFolderByName(nestedFolders[levelsCount - 1].name)
-          .waitFor();
+        await expect
+          .soft(
+            folderConversations.getFolderByName(
+              nestedFolders[levelsCount - 1].name,
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
@@ -859,9 +894,12 @@ dialTest(
       'Verify new conversations are added to root and 2nd level folders, folders structure remains the same',
       async () => {
         for (let i = 0; i <= levelsCount; i++) {
-          await folderConversations
-            .getFolderByName(nestedFolders[i].name)
-            .waitFor();
+          await expect
+            .soft(
+              folderConversations.getFolderByName(nestedFolders[i].name),
+              ExpectedMessages.folderIsVisible,
+            )
+            .toBeVisible();
         }
 
         for (let i = 0; i < levelsCount; i++) {
@@ -967,12 +1005,15 @@ dialTest(
     await dialTest.step(
       'Verify imported conversations is in 3rd level folder, under the 2nd level folder',
       async () => {
-        await folderConversations
-          .getNestedFolder(
-            nestedFolders[levelsCount - 1].name,
-            nestedFolders[levelsCount].name,
+        await expect
+          .soft(
+            folderConversations.getNestedFolder(
+              nestedFolders[levelsCount - 1].name,
+              nestedFolders[levelsCount].name,
+            ),
+            ExpectedMessages.folderIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
 
         const foldersCount = await folderConversations.getFoldersCount();
         expect

@@ -75,10 +75,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openConversationDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
-
-        await conversations
-          .getConversationByName(playbackConversationName)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(playbackConversationName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
 
         const expectedButtonBorderColor =
           theme === Theme.light
@@ -165,7 +167,12 @@ dialTest(
           .soft(lastMessage, ExpectedMessages.messageContentIsValid)
           .toBe(conversation.messages[1].content);
 
-        await chatHeader.leavePlaybackMode.waitForState();
+        await expect
+          .soft(
+            chatHeader.getElementLocator(),
+            ExpectedMessages.leavePlaybackButtonAvailable,
+          )
+          .toBeVisible();
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();
         expect
@@ -229,8 +236,12 @@ dialTest(
         expect
           .soft(lastMessage, ExpectedMessages.messageContentIsValid)
           .toBe(conversation.messages[3].content);
-
-        await chatHeader.leavePlaybackMode.waitForState();
+        await expect
+          .soft(
+            chatHeader.leavePlaybackMode.getElementLocator(),
+            ExpectedMessages.leavePlaybackButtonAvailable,
+          )
+          .toBeVisible();
 
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();
@@ -318,7 +329,12 @@ dialTest(
           .soft(playbackMessage, ExpectedMessages.playbackChatMessageIsValid)
           .toBe(conversation.messages[2].content);
 
-        await chatHeader.leavePlaybackMode.waitForState();
+        await expect
+          .soft(
+            chatHeader.leavePlaybackMode.getElementLocator(),
+            ExpectedMessages.leavePlaybackButtonAvailable,
+          )
+          .toBeVisible();
 
         const headerTitle = await chatHeader.chatTitle.getElementInnerContent();
         expect
@@ -359,8 +375,18 @@ dialTest(
           .toBe(ExpectedConstants.emptyPlaybackMessage);
 
         await chat.playPreviousChatMessage();
-        await recentEntities.waitForState();
-        await chatHeader.waitForState({ state: 'hidden' });
+        await expect
+          .soft(
+            recentEntities.getElementLocator(),
+            ExpectedMessages.recentEntitiesVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            chatHeader.getElementLocator(),
+            ExpectedMessages.chatHeaderIsNotVisible,
+          )
+          .toBeHidden();
         playbackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
@@ -368,7 +394,12 @@ dialTest(
           .toBe(conversation.messages[0].content);
 
         await chat.playPreviousChatMessage();
-        await recentEntities.waitForState();
+        await expect
+          .soft(
+            recentEntities.getElementLocator(),
+            ExpectedMessages.recentEntitiesVisible,
+          )
+          .toBeVisible();
         playbackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
@@ -465,9 +496,12 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations
-          .getConversationByName(playbackConversation.name)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationByName(playbackConversation.name),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
 
         for (let i = 0; i < playNextKeys.length; i++) {
           await chat.playChatMessageWithKey(playNextKeys[i]);
@@ -514,7 +548,12 @@ dialTest(
             expect
               .soft(lastMessage, ExpectedMessages.messageContentIsValid)
               .toBe(conversation.messages[i].content);
-            await chatHeader.leavePlaybackMode.waitForState();
+            await expect
+              .soft(
+                chatHeader.leavePlaybackMode.getElementLocator(),
+                ExpectedMessages.leavePlaybackButtonAvailable,
+              )
+              .toBeVisible();
           }
 
           const isPlaybackNextBtnEnabled =
@@ -547,7 +586,12 @@ dialTest(
         expect
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(conversation.messages.length);
-        await chatHeader.leavePlaybackMode.waitForState();
+        await expect
+          .soft(
+            chatHeader.leavePlaybackMode.getElementLocator(),
+            ExpectedMessages.leavePlaybackButtonAvailable,
+          )
+          .toBeVisible();
 
         const isPlaybackPreviousBtnEnabled =
           await playbackControl.playbackPreviousButton.isElementEnabled();
@@ -609,7 +653,12 @@ dialTest(
           }
         }
 
-        await talkToSelector.waitForState();
+        await expect
+          .soft(
+            talkToSelector.getElementLocator(),
+            ExpectedMessages.conversationSettingsVisible,
+          )
+          .toBeVisible();
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();
         const isPlaybackPreviousBtnEnabled =
@@ -639,7 +688,13 @@ dialTest(
         expect
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(0);
-        await chatHeader.leavePlaybackMode.waitForState({ state: 'hidden' });
+
+        await expect
+          .soft(
+            chatHeader.leavePlaybackMode.getElementLocator(),
+            ExpectedMessages.leavePlaybackButtonIsNotAvailable,
+          )
+          .toBeHidden();
 
         const isPlaybackPreviousBtnEnabled =
           await playbackControl.playbackPreviousButton.isElementEnabled();
@@ -725,7 +780,12 @@ dialTest(
           )
           .toBeHidden();
 
-        await sendMessage.messageInput.waitForState();
+        await expect
+          .soft(
+            sendMessage.messageInput.getElementLocator(),
+            ExpectedMessages.sendMessageInputIsAvailable,
+          )
+          .toBeVisible();
         await chat.sendRequestWithButton('3+4=');
 
         const messagesCount =
@@ -790,9 +850,12 @@ dialTest(
     await dialTest.step('Verify playback next message has scroll', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations
-        .getConversationByName(playbackConversation.name)
-        .waitFor();
+      await expect
+        .soft(
+          conversations.getConversationByName(playbackConversation.name),
+          ExpectedMessages.conversationIsVisible,
+        )
+        .toBeVisible();
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable =
         await playbackControl.playbackMessage.isElementScrollableVertically();
@@ -807,9 +870,12 @@ dialTest(
       async () => {
         await dialHomePage.throttleAPIResponse('**/*');
         await chat.playNextChatMessage(false);
-        await playbackControl.playbackNextButton.waitForState({
-          state: 'hidden',
-        });
+        await expect
+          .soft(
+            playbackControl.playbackNextButton.getElementLocator(),
+            ExpectedMessages.playbackNextButtonDisabled,
+          )
+          .toBeHidden();
 
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect
