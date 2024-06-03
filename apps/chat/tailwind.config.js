@@ -98,7 +98,7 @@ module.exports = {
         primary: '0 5px 10px 0 var(--bg-blackout-1, #1844870D)',
       },
       fontFamily: {
-        DEFAULT: ['var(--font-gilroy)'],
+        DEFAULT: ['var(--font-inter)'],
         weave: ['var(--font-weave)'],
       },
       fontSize: {
