@@ -38,7 +38,7 @@ export default defineConfig({
     trace: 'retry-with-trace',
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
-    launchOptions: { args: ['--use-gl=egl'] },
+    launchOptions: { args: ['--use-gl=egl', '--ignore-gpu-blocklist'] },
   },
   expect: {
     timeout: 20000,
