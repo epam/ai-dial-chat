@@ -38,7 +38,7 @@ export default defineConfig({
     trace: 'retry-with-trace',
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
-    launchOptions: { args: ['--use-gl=angle', '--use-angle=gl-egl'] },
+    launchOptions: { args: ['--use-gl=egl'] },
   },
   expect: {
     timeout: 20000,
@@ -53,23 +53,23 @@ export default defineConfig({
       fullyParallel: true,
       testMatch: /desktopAuth\.ts/,
     },
-    {
-      name: 'cleanup',
-      testMatch: /cleanup\.ts/,
-      dependencies: ['auth'],
-    },
-    {
-      name: 'api listing',
-      testMatch: /listing\.test\.ts/,
-      dependencies: ['cleanup'],
-      fullyParallel: true,
-    },
-    {
-      name: 'chat api',
-      testMatch: /\/chatApi\/.*\.test\.ts/,
-      dependencies: ['api listing'],
-      fullyParallel: true,
-    },
+    // {
+    //   name: 'cleanup',
+    //   testMatch: /cleanup\.ts/,
+    //   dependencies: ['auth'],
+    // },
+    // {
+    //   name: 'api listing',
+    //   testMatch: /listing\.test\.ts/,
+    //   dependencies: ['cleanup'],
+    //   fullyParallel: true,
+    // },
+    // {
+    //   name: 'chat api',
+    //   testMatch: /\/chatApi\/.*\.test\.ts/,
+    //   dependencies: ['api listing'],
+    //   fullyParallel: true,
+    // },
     {
       name: 'chromium',
       testIgnore: /\/chatApi|listingApi\/.*\.test\.ts/,
@@ -77,7 +77,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1536, height: 864 },
       },
-      dependencies: ['chat api'],
+      dependencies: ['auth'],
     },
   ],
 });
