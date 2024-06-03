@@ -66,9 +66,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
     useState<DialAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredAllEntities, setFilteredAllEntities] = useState<
-    DialAIEntity[]
-  >([]);
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(
@@ -90,7 +87,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         (entity) => entity.type === EntityType.Application,
       ),
     );
-    setFilteredAllEntities(newFilteredEntities);
   }, [models, entityTypes, searchTerm]);
 
   const handleSearch = useCallback((searchValue: string) => {
@@ -221,9 +217,20 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         filteredAssistantsEntities?.length > 0 ||
         filteredApplicationsEntities?.length > 0 ? (
           <>
-            {filteredAllEntities.length > 0 && (
+            {filteredModelsEntities.length > 0 && (
               <ModelList
-                entities={filteredAllEntities}
+                entities={filteredModelsEntities}
+                heading={t('Models') || ''}
+                onSelect={handleSelectModel}
+                selectedModelId={selectedModelId}
+                allEntities={models}
+                searchTerm={searchTerm}
+              />
+            )}
+            {filteredApplicationsEntities.length > 0 && (
+              <ModelList
+                entities={filteredApplicationsEntities}
+                heading={t('Applications') || ''}
                 onSelect={handleSelectModel}
                 selectedModelId={selectedModelId}
                 allEntities={models}
