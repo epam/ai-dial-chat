@@ -113,7 +113,7 @@ const ModelGroup = ({
           isSmallIconSize={false}
         />
         <div className="flex w-full flex-col gap-0.5 text-left">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between font-medium">
             <span data-qa="group-entity-name">
               {entities.length === 1
                 ? getOpenAIEntityFullName(currentEntity)
