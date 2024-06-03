@@ -447,7 +447,7 @@ export const FileManagerModal = ({
           </h2>
         </div>
         {canAttachFiles && (
-          <p id={descriptionId}>
+          <p id={descriptionId} data-qa="supported-attributes">
             {t(
               'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
               {
@@ -495,7 +495,7 @@ export const FileManagerModal = ({
                 {t('All files')}
               </button>
               {isAllFilesOpened && (
-                <div className="flex flex-col gap-0.5 overflow-auto">
+                <div className="flex grow flex-col gap-0.5 overflow-auto">
                   {searchQuery !== '' &&
                   folders.every(
                     (folder) =>
@@ -509,9 +509,13 @@ export const FileManagerModal = ({
                         .toLowerCase()
                         .includes(searchQuery.toLowerCase()),
                   ) ? (
-                    <NoResultsFound />
+                    <div className="my-auto">
+                      <NoResultsFound />
+                    </div>
                   ) : folders.length === 0 && filteredFiles.length === 0 ? (
-                    <NoData />
+                    <div className="my-auto">
+                      <NoData />
+                    </div>
                   ) : (
                     <div className="flex flex-col gap-1 overflow-auto">
                       {folders.map((folder) => {
@@ -583,6 +587,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleStartDeleteMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="delete-files"
             >
               <Tooltip tooltip="Delete files" isTriggerClickable>
                 <IconTrash size={24} />
@@ -593,6 +598,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleDownloadMultipleFiles}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="download-files"
             >
               <Tooltip tooltip="Download files" isTriggerClickable>
                 <IconDownload size={24} />
@@ -615,6 +621,7 @@ export const FileManagerModal = ({
               'button',
               customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
+            data-qa="upload-from-device"
           >
             {t('Upload from device')}
           </button>

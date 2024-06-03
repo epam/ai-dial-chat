@@ -1,4 +1,4 @@
-import { ChatSelectors, ErrorLabelSelectors, ModelDialog } from '../selectors';
+import { ErrorLabelSelectors, ModelDialog } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Groups } from '@/src/testData';

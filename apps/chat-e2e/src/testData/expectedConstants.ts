@@ -33,6 +33,8 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?',
+  deleteFileMessage: 'Are you sure that you want to delete this file',
+  deleteFilesMessage: 'Are you sure that you want to delete these files',
   deleteSharedFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?\n' +
     'Deleting will stop sharing and other users will no longer see this folder.',
@@ -105,7 +107,12 @@ export const ExpectedConstants = {
   duplicatedConversationRootNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists at the root.`,
   prohibitedNameSymbols: `=,:;{}/%&`,
+  // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
+  attachedFileError: (filename: string) =>
+    `You've trying to upload files with incorrect type: ${filename}`,
+  allowedSpecialSymbolsInName: 'Test (`~!@#$^*-_+[]\'|<>.?")',
+  winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___.__)",
 };
 
 export enum Groups {
@@ -132,6 +139,8 @@ export enum MenuOptions {
   unpublish = 'Unpublish',
   delete = 'Delete',
   newFolder = 'New folder',
+  attachments = 'Attachments',
+  download = 'Download',
 }
 
 export enum FilterMenuOptions {
@@ -170,8 +179,10 @@ export const API = {
   promptsHost: () => `${API.listingHost}/prompts`,
   filesListingHost: () => `${API.listingHost}/files`,
   fileHost: '/api/files',
+  importFileRootPath: (bucket: string) => `files/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
-  importFilePath: (bucket: string) => `files/${bucket}/imports`,
+  importFilePath: (bucket: string, modelId: string) =>
+    `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
   shareWithMeListing: '/api/share/listing',
@@ -203,6 +214,14 @@ export const Attachment = {
   flowerImageName: 'flower.jpg',
   longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
   specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
+  textName: 'text.txt',
+  allTypesExtension: '*/*',
+  allTypesLabel: 'all',
+  imageTypesExtension: 'image/*',
+  imagesTypesLabel: 'images',
+  zeroSizeFileName: 'test1.txt',
+  incrementedImageName: (index: number) => `test${index}.jpg`,
+  dotExtensionImageName: 'testdot..JPg',
 };
 
 export enum Side {

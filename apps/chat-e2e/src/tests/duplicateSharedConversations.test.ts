@@ -145,9 +145,14 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserChat.duplicateSharedConversation();
 
-        await additionalShareUserConversations
-          .getConversationByName(conversationName)
-          .waitFor();
+        await expect
+          .soft(
+            await additionalShareUserConversations.getConversationByName(
+              conversationName,
+            ),
+            ExpectedMessages.newConversationCreated,
+          )
+          .toBeVisible();
       },
     );
 
@@ -288,14 +293,12 @@ dialSharedWithMeTest(
         await additionalShareUserChat.duplicateSharedConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
 
-        const isDuplicateButtonVisible =
-          await additionalShareUserChat.duplicate.isVisible();
-        expect
+        await expect
           .soft(
-            isDuplicateButtonVisible,
+            await additionalShareUserChat.duplicate.getElementLocator(),
             ExpectedMessages.duplicateButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         for (const conversation of conversationsToShare) {
           const conversationBackgroundColor =
@@ -335,14 +338,12 @@ dialSharedWithMeTest(
         await additionalShareUserChat.duplicateSharedConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
 
-        const isDuplicateButtonVisible =
-          await additionalShareUserChat.duplicate.isVisible();
-        expect
+        await expect
           .soft(
-            isDuplicateButtonVisible,
+            await additionalShareUserChat.duplicate.getElementLocator(),
             ExpectedMessages.duplicateButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         for (const conversationName of [
           `${firstComparedConversation.name} 1`,

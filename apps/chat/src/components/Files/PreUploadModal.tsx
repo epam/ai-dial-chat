@@ -368,7 +368,7 @@ export const PreUploadDialog = ({
             {t('Upload from device')}
           </h2>
         </div>
-        <p id={descriptionId}>
+        <p id={descriptionId} data-qa="supported-attributes">
           {t(
             'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
             {
@@ -384,7 +384,10 @@ export const PreUploadDialog = ({
           <ErrorMessage error={errorMessage} />
         </div>
 
-        <div className="flex flex-col gap-2 overflow-auto">
+        <div
+          className="flex flex-col gap-2 overflow-auto"
+          data-qa="uploaded-files"
+        >
           <div className="flex flex-col gap-1">
             <div>
               <span className="text-xs text-secondary">{t('Upload to')}</span>
@@ -409,7 +412,11 @@ export const PreUploadDialog = ({
               </div>
               <div className="flex flex-col gap-3 overflow-auto text-sm">
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center gap-3">
+                  <div
+                    key={index}
+                    className="flex items-center gap-3"
+                    data-qa="uploaded-file"
+                  >
                     <div className="relative flex grow items-center">
                       <IconFile
                         className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"
@@ -421,12 +428,18 @@ export const PreUploadDialog = ({
                         className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
                         onChange={handleRenameFile(index)}
                       />
-                      <span className="absolute right-2">
+                      <span
+                        className="absolute right-2"
+                        data-qa="file-extension"
+                      >
                         {getFileNameExtension(file.name)}
                       </span>
                     </div>
 
-                    <button onClick={handleUnselectFile(index)}>
+                    <button
+                      onClick={handleUnselectFile(index)}
+                      data-qa="delete-file"
+                    >
                       <IconTrashX
                         size={24}
                         className="shrink-0 text-secondary hover:text-accent-primary"
@@ -440,7 +453,10 @@ export const PreUploadDialog = ({
         </div>
       </div>
       <div className="flex w-full justify-between gap-3">
-        <label className="cursor-pointer rounded py-2.5 text-accent-primary">
+        <label
+          className="cursor-pointer rounded py-2.5 text-accent-primary"
+          data-qa="add-more-files"
+        >
           {t('Add more files...')}
           <input
             ref={uploadInputRef}

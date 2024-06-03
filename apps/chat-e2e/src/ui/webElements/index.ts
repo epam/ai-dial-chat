@@ -50,3 +50,4 @@ export * from './sharedWithMeConversations';
 export * from './attachFilesModal';
 export * from './inputAttachments';
 export * from './uploadFromDeviceModal';
+export * from './filesModalHeader';
