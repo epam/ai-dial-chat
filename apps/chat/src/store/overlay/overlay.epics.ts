@@ -327,7 +327,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           iif(
             () => !AuthSelectors.selectIsShouldLogin(state$.value),
             concat(
-              of(ConversationsActions.getSelectedConversations()),
+              of(ConversationsActions.initSelectedConversations()),
               of(
                 OverlayActions.sendPMEvent({
                   type: OverlayEvents.readyToInteract,
