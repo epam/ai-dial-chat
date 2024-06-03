@@ -1,4 +1,4 @@
-import { SideBarSelectors } from '../selectors';
+import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -84,16 +84,15 @@ export class Folders extends BaseElement {
   }
 
   public async openFolderDropdownMenu(name: string, index?: number) {
-    const folderToEdit = this.getFolderByName(name, index);
-    await folderToEdit.hover();
-    await this.folderDotsMenu(name, index).click();
+    const folderDotsMenu = await this.getFolderDropdownMenu(name, index);
+    await folderDotsMenu.click();
     await this.getDropdownMenu().waitForState();
   }
 
-  public async isFolderDropdownMenuAvailable(name: string, index?: number) {
+  public async getFolderDropdownMenu(name: string, index?: number) {
     const folderToEdit = this.getFolderByName(name, index);
     await folderToEdit.hover();
-    return this.folderDotsMenu(name, index).isVisible();
+    return this.folderDotsMenu(name, index);
   }
 
   public async editFolderNameWithEnter(newName: string) {
@@ -196,6 +195,12 @@ export class Folders extends BaseElement {
 
   public async isFolderEntityVisible(folderName: string, entityName: string) {
     return this.getFolderEntity(folderName, entityName).isVisible();
+  }
+
+  public getSelectedFolderEntity(folderName: string, entityName: string) {
+    return this.getFolderEntity(folderName, entityName).locator(
+      ChatBarSelectors.selectedEntity,
+    );
   }
 
   public async selectFolderEntity(

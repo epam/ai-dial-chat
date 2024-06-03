@@ -30,6 +30,7 @@ export const ChatBarSelectors = {
   conversations: '[data-qa="conversations"]',
   conversation: '[data-qa="conversation"]',
   conversationName: '[data-qa="conversation-name"]',
+  selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',
   actionButton: '[data-qa="action-button"]',
   exportConversations: '[data-qa="export-conversations"]',
