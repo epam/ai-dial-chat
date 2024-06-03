@@ -423,7 +423,8 @@ dialTest(
 );
 
 dialTest(
-  '[Manage attachments] Download a file though context menu with special chars in a name',
+  '[Manage attachments] Download a file though context menu with special chars in a name.\n' +
+    'Allowed special chars in the file name while renaming on "Upload from device"',
   async ({
     dialHomePage,
     setTestIds,
@@ -431,7 +432,7 @@ dialTest(
     uploadFromDeviceModal,
     chatBar,
   }) => {
-    setTestIds('EPMRTC-2015');
+    setTestIds('EPMRTC-2015', 'EPMRTC-3187');
 
     await dialTest.step(
       'Upload file and set his name to contain special symbols',
@@ -452,7 +453,7 @@ dialTest(
           Attachment.sunImageName,
           ExpectedConstants.allowedSpecialSymbolsInName,
         );
-        await uploadFromDeviceModal.uploadFile();
+        await uploadFromDeviceModal.uploadFiles();
       },
     );
 
