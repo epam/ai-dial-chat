@@ -106,7 +106,6 @@ export function HandlePublication({ publication }: Props) {
         ),
       );
 
-      dispatch(UIActions.setShowChatbar(true));
       dispatch(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: conversationPaths,
