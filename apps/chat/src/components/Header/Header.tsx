@@ -123,16 +123,16 @@ const Header = () => {
         <div className="flex grow justify-center md:justify-start">
           <PrimaryLogo
             className="mr-3 self-center md:ml-5"
-            width={31}
-            height={30}
+            width={21}
+            height={20}
           />
           <div className="my-3 border-r border-primary" />
-          <SecondaryLogo className="ml-3 self-center" width={25} height={30} />
-          <span className="ml-2 flex flex-wrap content-center font-weave text-[22px] font-bold md:mr-3">
+          <SecondaryLogo className="ml-3 self-center" width={25} height={25} />
+          <span className="font-weave ml-2 flex flex-wrap content-center text-[22px] font-bold md:mr-3">
             {HEADER_TITLE_TEXT}
           </span>
           <span className="my-3 hidden border-r border-primary md:inline-block" />
-          <span className="ml-2 hidden flex-wrap content-center text-s md:flex">
+          <span className="text-s ml-2 hidden flex-wrap content-center md:flex">
             {t('Your secured IA assistant within Pernod Ricard environment')}
           </span>
         </div>
