@@ -2,6 +2,7 @@ import { Styles, Tags } from '../domData';
 
 import { ScrollState } from '@/src/testData';
 import { Locator, Page } from '@playwright/test';
+import path from 'path';
 
 export interface EntityIcon {
   entityName: string;
@@ -123,6 +124,12 @@ export class BaseElement {
 
   async scrollIntoElementView() {
     await this.rootLocator.scrollIntoViewIfNeeded();
+  }
+
+  async setElementInputFiles(filesDirectory: string, ...filenames: string[]) {
+    await this.rootLocator.setInputFiles(
+      filenames.map((filename) => path.join(filesDirectory, filename)),
+    );
   }
 
   async getAllBorderColors() {
