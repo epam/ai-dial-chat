@@ -329,7 +329,7 @@ export function HandlePublication({ publication }: Props) {
                 )}
               </section>
             </div>
-            <div className="bg-layer-2 px-5 py-4">
+            <div className="overflow-y-auto bg-layer-2 px-5 py-4">
               {sections.map(
                 ({ dataQa, sectionName, Component, featureType }) =>
                   publication.resourceTypes.includes(

@@ -27,6 +27,8 @@ interface OverlayState {
   hostDomain: string;
 
   systemPrompt: string | null;
+
+  optionsReceived?: boolean;
 }
 
 const initialState: OverlayState = {
@@ -50,7 +52,9 @@ export const overlaySlice = createSlice({
     setOverlayOptionsSuccess: (
       state,
       _action: PayloadAction<WithRequestId<{ hostDomain: string }>>,
-    ) => state,
+    ) => {
+      state.optionsReceived = true;
+    },
     signInOptionsSet: (
       state,
       _action: PayloadAction<{
@@ -94,9 +98,14 @@ const selectOverlaySystemPrompt = createSelector([rootSelector], (state) => {
   return state.systemPrompt;
 });
 
+const selectOptionsReceived = createSelector([rootSelector], (state) => {
+  return state.optionsReceived;
+});
+
 export const OverlaySelectors = {
   selectHostDomain,
   selectOverlaySystemPrompt,
+  selectOptionsReceived,
 };
 
 export const OverlayActions = overlaySlice.actions;
