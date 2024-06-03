@@ -78,11 +78,11 @@ export const CodeBlock: FC<Props> = memo(
 
     return (
       <div
-        className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text-primary-bg-dark`}
+        className={`codeblock text-primary-bg-light rounded-primary relative overflow-hidden border border-secondary font text-sm`}
       >
         <div
           className={`flex items-center justify-between border-b border-secondary p-3 ${
-            isInner ? 'bg-layer-3' : 'bg-layer-1'
+            isInner ? 'bg-layer-3' : 'bg-layer-2'
           }`}
         >
           <span className="lowercase">{language}</span>
@@ -90,10 +90,10 @@ export const CodeBlock: FC<Props> = memo(
           {!isLastMessageStreaming && (
             <div
               data-no-context-menu
-              className="flex items-center gap-3 text-secondary-bg-dark"
+              className="text-tertiary-bg-light flex items-center gap-3"
             >
               <button
-                className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
+                className="[&:not(:disabled)]:hover:text-primary-bg-light flex items-center"
                 onClick={copyToClipboard}
                 disabled={isCopied}
               >
@@ -109,7 +109,7 @@ export const CodeBlock: FC<Props> = memo(
               </button>
               <Tooltip isTriggerClickable tooltip={t('Download')}>
                 <button
-                  className="flex items-center rounded bg-none hover:text-accent-primary"
+                  className="hover:text-primary-bg-light flex items-center rounded bg-none"
                   onClick={downloadAsFile}
                 >
                   <Download width={18} height={18} />
@@ -128,12 +128,12 @@ export const CodeBlock: FC<Props> = memo(
             fontSize: 14,
             padding: 12,
             letterSpacing: 0,
-            fontFamily: 'var(--font-gilroy)',
+            fontFamily: 'var(--font-inter)',
           }}
-          className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'}`}
+          className={`${isInner ? '!bg-layer-3' : '!bg-layer-2'}`}
           codeTagProps={{
             style: {
-              fontFamily: 'var(--font-gilroy)',
+              fontFamily: 'var(--font-inter)',
             },
           }}
         >
