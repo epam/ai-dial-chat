@@ -38,6 +38,7 @@ export default defineConfig({
     trace: 'retry-with-trace',
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
+    launchOptions: { args: ['--use-gl=angle', '--use-angle=gl-egl'] },
   },
   expect: {
     timeout: 20000,
