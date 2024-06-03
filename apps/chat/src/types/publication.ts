@@ -1,4 +1,4 @@
-import { BackendDataNodeType, BackendResourceType } from './common';
+import { BackendDataNodeType, BackendResourceType, UploadStatus } from './common';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -43,7 +43,8 @@ export interface PublicationResource {
 export interface Publication {
   url: string;
   targetFolder?: string;
-  status: PublicationStatus;
+  publicationStatus: PublicationStatus;
+  uploadStatus?: UploadStatus;
   createdAt: number;
   resources: PublicationResource[];
   rules?: PublicationRule[];

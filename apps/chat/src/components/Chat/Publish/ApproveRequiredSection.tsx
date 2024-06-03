@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -58,8 +58,8 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
   );
 
   const handlePublicationSelect = useCallback(() => {
-    setIsOpen(true);
-    if (!isOpen) {
+    setIsOpen((value) => !value);
+    if (publication.uploadStatus !== UploadStatus.LOADED) {
       dispatch(PublicationActions.uploadPublication({ url: publication.url }));
     } else {
       dispatch(
