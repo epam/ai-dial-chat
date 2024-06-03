@@ -30,8 +30,8 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
 
       <div className="my-[30px] flex items-center justify-center">
         <LogoIcon />
-        <div className="ml-[10px] text-[30px] font-bold text-[#000A32]">
-          prGPT
+        <div className="font-weave ml-[10px] text-[30px] font-bold text-[#000A32]">
+          PR GPT
         </div>
       </div>
 

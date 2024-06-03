@@ -80,7 +80,7 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'rounded-primary relative flex border font-medium hover:border-tertiary',
+        'rounded-primary relative flex overflow-y-auto border font-medium hover:border-tertiary',
         isActive
           ? 'border-accent-quaternary shadow-primary bg-accent-secondary-alpha'
           : 'hover:shadow-primary border-secondary bg-layer-2 hover:bg-accent-secondary-alpha',
@@ -113,7 +113,7 @@ const ModelGroup = ({
           isSmallIconSize={false}
         />
         <div className="flex w-full flex-col gap-0.5 text-left">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between font-medium">
             <span data-qa="group-entity-name">
               {entities.length === 1
                 ? getOpenAIEntityFullName(currentEntity)
@@ -203,10 +203,14 @@ export const ModelList = ({
   }, [allEntities, displayCountLimit, entities]);
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
-      {heading && <span className="text-secondary-bg-dark">{heading}</span>}
+      {heading && (
+        <span className="text-primary-bg-light text-sm font-medium">
+          {heading}
+        </span>
+      )}
       <div
         className={classNames(
-          'grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto',
+          'grid min-h-0 shrink grid-cols-1 gap-3',
           !showInOneColumn && 'md:grid-cols-2',
         )}
       >

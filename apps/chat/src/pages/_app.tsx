@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
+import { Inter } from 'next/font/google';
 import localFont from 'next/font/local';
 import { useRouter } from 'next/router';
 
@@ -18,6 +19,11 @@ import { HomeProps } from '.';
 import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
 
+const inter = Inter({
+  subsets: ['latin'],
+  weight: 'variable',
+  variable: '--font-inter',
+});
 const weave = localFont({
   src: [
     {
@@ -30,28 +36,6 @@ const weave = localFont({
     },
   ],
   variable: '--font-weave',
-});
-
-const gilroy = localFont({
-  src: [
-    {
-      path: '../../public/fonts/gilroy/gilroy-regular-webfont.woff2',
-      weight: '400',
-    },
-    {
-      path: '../../public/fonts/gilroy/gilroy-medium-webfont.woff2',
-      weight: '500',
-    },
-    {
-      path: '../../public/fonts/gilroy/gilroy-bold-webfont.woff2',
-      weight: '700',
-    },
-    {
-      path: '../../public/fonts/gilroy/gilroy-extrabold-webfont.woff2',
-      weight: '800',
-    },
-  ],
-  variable: '--font-gilroy',
 });
 
 function App({
@@ -79,7 +63,7 @@ function App({
   return (
     <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
       <Provider store={store}>
-        <div className={`${gilroy.variable} ${weave.variable} font`}>
+        <div className={`${inter.variable} ${weave.variable} font`}>
           <TourGuide />
           <Toaster toastOptions={{ duration: 9000 }}>
             {(t) => (

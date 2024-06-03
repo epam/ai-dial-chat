@@ -102,7 +102,7 @@ function ModalView({
           >
             <Tag
               className={classNames(
-                'relative max-h-full rounded-[10px] bg-layer-1 text-left text-primary-bg-light',
+                'text-primary-bg-light relative max-h-full rounded-[10px] bg-layer-1 text-left',
                 containerClassName,
               )}
               role="dialog"
@@ -115,7 +115,7 @@ function ModalView({
                 <button
                   type="button"
                   role="button"
-                  className="absolute right-2 top-2 rounded text-quaternary-bg-light hover:text-primary-bg-light"
+                  className="text-quaternary-bg-light hover:text-primary-bg-light absolute right-2 top-2 rounded"
                   onClick={handleClose}
                 >
                   <IconX height={24} width={24} />
@@ -128,7 +128,7 @@ function ModalView({
                     headingClassName,
                   )}
                 >
-                  <Tooltip tooltip={heading}>
+                  <Tooltip hideTooltip tooltip={heading}>
                     <div
                       className="line-clamp-2 w-full break-words"
                       data-qa="modal-chat-name"

@@ -25,7 +25,7 @@ const CopyIcon = ({ Icon, onClick, copied }: CopyIconProps) => {
 
   return (
     <IconComponent
-      className="cursor-pointer text-secondary-bg-dark hover:text-accent-primary"
+      className="text-primary-bg-dark cursor-pointer hover:text-accent-primary"
       size={24}
       onClick={() => {
         if (!copied) {
@@ -147,7 +147,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
   return (
     <div className="mt-7 max-w-full overflow-auto">
       {!isLastMessageStreaming && (
-        <div className="flex max-w-full justify-end bg-layer-3 px-2 py-1">
+        <div className="text-primary-bg-dark flex max-w-full justify-end bg-layer-3 px-2 py-1">
           <div data-no-context-menu className="flex gap-2">
             <Tooltip placement="top" tooltip={t('Copy as CSV')}>
               <CopyIcon
