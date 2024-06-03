@@ -34,6 +34,12 @@ export class BaseConversation extends SideBarEntities {
     await conversationToSelect.click();
   }
 
+  public selectedConversation(name: string, index?: number) {
+    return this.getConversationByName(name, index).locator(
+      ChatBarSelectors.selectedEntity,
+    );
+  }
+
   public async openConversationDropdownMenu(name: string, index?: number) {
     await this.openEntityDropdownMenu(this.entitySelector, name, index);
   }

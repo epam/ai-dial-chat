@@ -1,3 +1,5 @@
+import { Tags } from '@/src/ui/domData';
+
 export const ConfirmationDialogSelectors = {
   container: '[data-qa="confirmation-dialog"]',
   cancelDialog: '[data-qa="cancel-dialog"]',
@@ -70,6 +72,10 @@ export const UploadFromDeviceModalSelectors = {
   modalContainer: '[data-qa="pre-upload-modal"]',
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
+  addMoreFiles: '[data-qa="add-more-files"]',
+  deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
+  fileExtension: '[data-qa="file-extension"]',
+  uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
 export const AttachFilesModalSelectors = {
