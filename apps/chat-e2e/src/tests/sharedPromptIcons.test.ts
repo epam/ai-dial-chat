@@ -83,7 +83,13 @@ dialTest.skip(
         await promptDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModal.copyLinkButton.click();
         await shareModal.closeButton.click();
-        await prompts.getPromptArrowIcon(prompt.name).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptArrowIcon(prompt.name),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
+
         const arrowIconColor = await prompts.getPromptArrowIconColor(
           prompt.name,
         );
@@ -155,7 +161,13 @@ dialTest.skip(
       'Close modal window and verify purple shared icon appears on prompt icon',
       async () => {
         await shareModal.closeButton.click();
-        await prompts.getPromptArrowIcon(prompt.name).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptArrowIcon(prompt.name),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
+
         const arrowIconColor = await prompts.getPromptArrowIconColor(
           prompt.name,
         );
@@ -176,7 +188,13 @@ dialTest.skip(
           GeneratorUtil.randomString(20),
           GeneratorUtil.randomString(20),
         );
-        await prompts.getPromptArrowIcon(newName).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptArrowIcon(newName),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
+
         const arrowIconColor = await prompts.getPromptArrowIconColor(newName);
         expect
           .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)

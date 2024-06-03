@@ -219,7 +219,7 @@ dialTest(
             await conversations.getConversationArrowIcon(
               ExpectedConstants.newConversationTitle,
             ),
-            ExpectedMessages.sharedConversationIconIsNotVisible,
+            ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeHidden();
       },
@@ -266,7 +266,7 @@ dialTest(
         expect
           .soft(
             isArrowIconVisibleInHeader,
-            ExpectedMessages.sharedConversationIconIsNotVisible,
+            ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeFalsy();
 
@@ -275,7 +275,7 @@ dialTest(
         expect
           .soft(
             isArrowIconVisibleInResponse,
-            ExpectedMessages.sharedConversationIconIsNotVisible,
+            ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeFalsy();
       },
@@ -386,9 +386,14 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations
-          .getConversationArrowIcon(firstConversationToShare.name)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationArrowIcon(
+              firstConversationToShare.name,
+            ),
+            ExpectedMessages.conversationIsNotVisible,
+          )
+          .toBeVisible();
         for (const conversation of [
           secondConversationToShare,
           thirdConversationToShare,
@@ -396,7 +401,7 @@ dialTest(
           await expect
             .soft(
               await conversations.getConversationArrowIcon(conversation.name),
-              ExpectedMessages.sharedConversationIconIsNotVisible,
+              ExpectedMessages.sharedEntityIconIsNotVisible,
             )
             .toBeHidden();
         }
@@ -522,7 +527,7 @@ dialTest(
           await expect
             .soft(
               await conversations.getConversationArrowIcon(conversation.name),
-              ExpectedMessages.sharedConversationIconIsNotVisible,
+              ExpectedMessages.sharedEntityIconIsNotVisible,
             )
             .toBeHidden();
         }
@@ -585,9 +590,15 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
         await compareConversationSelector.click();
-        await compareConversationSelector
-          .getOptionAdditionalIcon(secondSharedConversation.name)
-          .waitFor();
+        await expect
+          .soft(
+            compareConversationSelector.getOptionAdditionalIcon(
+              secondSharedConversation.name,
+            ),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
+
         const arrowIconColor =
           await compareConversationSelector.getOptionArrowIconColor(
             secondSharedConversation.name,
@@ -692,15 +703,21 @@ dialTest(
           iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await folderConversations
-          .getFolderArrowIcon(nestedFolders[1].name)
-          .waitFor();
-        await folderConversations
-          .getFolderEntityArrowIcon(
-            nestedFolders[2].name,
-            nestedConversations[2].name,
+        await expect
+          .soft(
+            folderConversations.getFolderArrowIcon(nestedFolders[1].name),
+            ExpectedMessages.sharedFolderIconIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
+        await expect
+          .soft(
+            folderConversations.getFolderEntityArrowIcon(
+              nestedFolders[2].name,
+              nestedConversations[2].name,
+            ),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
 
         for (let i = 0; i < nestedFolders.length; i = i + 2) {
           await expect
@@ -720,7 +737,7 @@ dialTest(
                 nestedFolders[i].name,
                 nestedConversations[i].name,
               ),
-              ExpectedMessages.sharedConversationIconIsNotVisible,
+              ExpectedMessages.sharedEntityIconIsNotVisible,
             )
             .toBeHidden();
         }
@@ -742,9 +759,12 @@ dialTest(
           )
           .toBe(ExpectedConstants.renameSharedFolderMessage);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await folderConversations
-          .getFolderArrowIcon(newFolderName)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            folderConversations.getFolderArrowIcon(newFolderName),
+            ExpectedMessages.sharedFolderIconIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -876,9 +896,14 @@ dialTest(
       'Click Cancel and verify arrow icon is displayed',
       async () => {
         await confirmationDialog.cancelDialog();
-        await folderConversations
-          .getFolderArrowIcon(folderConversation.folders.name)
-          .waitFor();
+        await expect
+          .soft(
+            folderConversations.getFolderArrowIcon(
+              folderConversation.folders.name,
+            ),
+            ExpectedMessages.sharedFolderIconIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -890,9 +915,14 @@ dialTest(
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await folderConversations
-          .getFolderArrowIcon(folderConversation.folders.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            folderConversations.getFolderArrowIcon(
+              folderConversation.folders.name,
+            ),
+            ExpectedMessages.sharedFolderIconIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
 
@@ -978,9 +1008,12 @@ dialTest(
       async () => {
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.cancelDialog();
-        await conversations
-          .getConversationArrowIcon(conversation.name)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationArrowIcon(conversation.name),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -990,9 +1023,12 @@ dialTest(
         await conversations.openConversationDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await conversations
-          .getConversationArrowIcon(conversation.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            conversations.getConversationArrowIcon(conversation.name),
+            ExpectedMessages.sharedEntityIconIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
 
@@ -1120,7 +1156,7 @@ dialTest(
         await expect
           .soft(
             await conversations.getConversationArrowIcon(conversationName),
-            ExpectedMessages.sharedConversationIconIsNotVisible,
+            ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeHidden();
       },
@@ -1170,9 +1206,12 @@ dialTest(
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations
-          .getConversationArrowIcon(conversation.name)
-          .waitFor();
+        await expect
+          .soft(
+            conversations.getConversationArrowIcon(conversation.name),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -1190,7 +1229,7 @@ dialTest(
         await expect
           .soft(
             await conversations.getConversationArrowIcon(conversation.name),
-            ExpectedMessages.sharedConversationIconIsNotVisible,
+            ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeHidden();
       },
