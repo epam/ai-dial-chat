@@ -31,7 +31,7 @@ interface ChatMDComponentProps {
   isInner?: boolean;
 }
 
-const transformImageUri = (src: string): string => {
+const transformUri = (src: string): string => {
   return getMappedAttachmentUrl(src) ?? '';
 };
 
@@ -130,7 +130,8 @@ const ChatMDComponent = ({
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
-        transformImageUri={transformImageUri}
+        transformImageUri={transformUri}
+        transformLinkUri={transformUri}
       >
         {`${content}${
           isShowResponseLoader ? modelCursorSignWithBackquote : ''
