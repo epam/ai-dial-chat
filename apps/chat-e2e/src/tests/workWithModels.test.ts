@@ -88,13 +88,10 @@ dialTest(
     chatMessages,
     context,
     sendMessage,
-    tooltip,
     localStorageManager,
     page,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
-    setIssueIds('790');
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
       await localStorageManager.setSettings(theme);
@@ -129,7 +126,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over Send button and verify it is disabled and tooltip is shown',
+      'Type any prompt, hit Enter button and and verify nothing happended, Send button is not shown',
       async () => {
         await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {
@@ -149,68 +146,25 @@ dialTest(
               )
               .toBeTruthy();
           }
-          const isSendMessageBtnEnabled =
-            await sendMessage.sendMessageButton.isElementEnabled();
-          expect
+          await expect
             .soft(
-              isSendMessageBtnEnabled,
+              sendMessage.sendMessageButton.getElementLocator(),
               ExpectedMessages.sendMessageButtonDisabled,
             )
-            .toBeFalsy();
-
-          await sendMessage.sendMessageButton.hoverOver();
-          const sendBtnCursor =
-            await sendMessage.sendMessageButton.getComputedStyleProperty(
-              Styles.cursor,
-            );
-          expect
-            .soft(
-              sendBtnCursor[0],
-              ExpectedMessages.sendButtonCursorIsNotAllowed,
-            )
-            .toBe(Cursors.notAllowed);
-
-          const tooltipContent = await tooltip.getContent();
-          expect
-            .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
+            .toBeHidden();
         }
-      },
-    );
-
-    await dialTest.step(
-      'Type any message, hit Enter key and verify Send button is disabled and tooltip is shown',
-      async () => {
-        const isSendMessageBtnEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(
-            isSendMessageBtnEnabled,
-            ExpectedMessages.sendMessageButtonDisabled,
-          )
-          .toBeFalsy();
-
-        await sendMessage.sendMessageButton.hoverOver();
-        const sendBtnCursor =
-          await sendMessage.sendMessageButton.getComputedStyleProperty(
-            Styles.cursor,
-          );
-        expect
-          .soft(sendBtnCursor[0], ExpectedMessages.sendButtonCursorIsNotAllowed)
-          .toBe(Cursors.notAllowed);
-
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
       },
     );
 
     await dialTest.step(
       'Click Regenerate response and validate answer received',
       async () => {
-        await chatMessages.regenerateResponse(false);
-        await chatMessages.waitForPartialMessageReceived(2);
+        await page.route(API.chatHost, async (route) => {
+          await route.fulfill({
+            body: Buffer.from('{"content":"Response"}\u0000{}\u0000'),
+          });
+        });
+        await chatMessages.regenerateResponse();
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
