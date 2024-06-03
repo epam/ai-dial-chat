@@ -129,3 +129,19 @@ dialTest(
     );
   },
 );
+
+// eslint-disable-next-line playwright/expect-expect
+dialTest.only('efrerertre', async ({ page }) => {
+  await page.goto('chrome://gpu');
+  const features = page
+    .locator('#content')
+    .locator('div')
+    .filter({ hasText: 'Graphics Feature Status' })
+    .locator('li');
+  const count = await features.count();
+  for (let i = 0; i < count; i++) {
+    const name = await features.nth(i).locator('span').nth(2).innerText();
+    const value = await features.nth(i).locator('span').nth(3).innerText();
+    console.log(`${name}${value}`);
+  }
+});
