@@ -194,7 +194,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           onChange={(e) => {
             handleSearch(e.target.value);
           }}
-          className="placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary m-0 w-full rounded-full border border-secondary bg-layer-2 py-2 pl-14 pr-3 outline-none"
+          className="placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary m-0 w-full rounded-full border border-secondary bg-layer-2 py-2 pl-14 pr-28 outline-none"
         ></input>
         <ContextMenu
           menuItems={menuItems}
