@@ -109,12 +109,7 @@ dialTest(
     await dialTest.step(
       'Verify Attachment icon is visible at the panel bottom menu',
       async () => {
-        await expect
-          .soft(
-            chatBar.attachments.getElementLocator(),
-            ExpectedMessages.attachmentIconIsVisible,
-          )
-          .toBeVisible();
+        await chatBar.attachments.waitForState();
         await expect
           .soft(
             chatBar.bottomDotsMenuIcon.getElementLocator(),
@@ -233,12 +228,7 @@ dialTest(
     await dialTest.step(
       'Verify dots menu is visible at the panel bottom menu',
       async () => {
-        await expect
-          .soft(
-            chatBar.bottomDotsMenuIcon.getElementLocator(),
-            ExpectedMessages.dotsMenuIsVisible,
-          )
-          .toBeVisible();
+        await chatBar.bottomDotsMenuIcon.waitForState();
         await expect
           .soft(
             await chatBar.attachments.getElementLocator(),

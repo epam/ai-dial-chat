@@ -64,14 +64,9 @@ dialSharedWithMeTest(
             triggeredHttpMethod: 'POST',
           },
         );
-        await expect
-          .soft(
-            additionalShareUserConversations.getConversationByName(
-              conversation.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await additionalShareUserConversations
+          .getConversationByName(conversation.name)
+          .waitFor();
       },
     );
 
@@ -168,14 +163,10 @@ dialSharedWithMeTest(
           conversationName,
         );
         await additionalShareUserChat.duplicateSharedConversation();
-        await expect
-          .soft(
-            additionalShareUserConversations.getConversationByName(
-              `${conversationName} 1`,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+
+        await additionalShareUserConversations
+          .getConversationByName(`${conversationName} 1`)
+          .waitFor();
       },
     );
   },

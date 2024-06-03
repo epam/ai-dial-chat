@@ -151,14 +151,9 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         for (let i = 1; i <= 3; i++) {
-          await expect
-            .soft(
-              folderConversations.getFolderByName(
-                ExpectedConstants.newFolderWithIndexTitle(i),
-              ),
-              ExpectedMessages.folderIsVisible,
-            )
-            .toBeVisible();
+          await folderConversations
+            .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
+            .waitFor();
         }
         await page.mouse.up();
       },
@@ -167,15 +162,12 @@ dialTest(
     await dialTest.step(
       'Verify conversation is moving to root folder, another conversation remained selected',
       async () => {
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              ExpectedConstants.newFolderWithIndexTitle(1),
-              conversationToDrop.name,
-            ),
-            ExpectedMessages.conversationIsVisible,
+        await folderConversations
+          .getFolderEntity(
+            ExpectedConstants.newFolderWithIndexTitle(1),
+            conversationToDrop.name,
           )
-          .toBeVisible();
+          .waitFor();
         const conversationBackgroundColor =
           await conversations.getConversationBackgroundColor(conversation.name);
         expect
@@ -340,14 +332,9 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
           prompt.name,
         );
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(2),
-            ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+        await folderPrompts
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(2))
+          .waitFor();
         await folderPrompts.waitForFolderGroupIsHighlighted(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );

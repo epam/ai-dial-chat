@@ -247,12 +247,9 @@ dialTest(
           secondShareLinkResponse,
         );
         await dialHomePage.reloadPage();
-        await expect
-          .soft(
-            conversations.getConversationArrowIcon(conversation.name),
-            ExpectedMessages.sharedEntityIconIsVisible,
-          )
-          .toBeVisible();
+        await conversations
+          .getConversationArrowIcon(conversation.name)
+          .waitFor();
         const arrowIconColor =
           await conversations.getConversationArrowIconColor(conversation.name);
         expect
@@ -844,14 +841,9 @@ dialTest(
       async () => {
         await additionalUserShareApiHelper.acceptInvite(shareLinkResponse);
         await dialHomePage.reloadPage();
-        await expect
-          .soft(
-            folderConversations.getFolderArrowIcon(
-              folderConversation.folders.name,
-            ),
-            ExpectedMessages.sharedFolderIconIsVisible,
-          )
-          .toBeVisible();
+        await folderConversations
+          .getFolderArrowIcon(folderConversation.folders.name)
+          .waitFor();
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
@@ -997,12 +989,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await expect
-          .soft(
-            conversations.getConversationArrowIcon(conversation.name),
-            ExpectedMessages.sharedEntityIconIsVisible,
-          )
-          .toBeVisible();
+        await conversations
+          .getConversationArrowIcon(conversation.name)
+          .waitFor();
         await conversations.openConversationDropdownMenu(conversation.name);
         const actualMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
@@ -1138,12 +1127,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await expect
-          .soft(
-            conversations.getConversationArrowIcon(conversationName),
-            ExpectedMessages.sharedEntityIconIsVisible,
-          )
-          .toBeVisible();
+        await conversations
+          .getConversationArrowIcon(conversationName)
+          .waitFor();
         await itemApiHelper.deleteConversation(conversation);
       },
     );

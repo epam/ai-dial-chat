@@ -98,16 +98,13 @@ dialTest(
     await dialTest.step(
       'Verify new Replay conversation is created and Replay button appears',
       async () => {
-        await expect
-          .soft(
-            conversations.getConversationByName(
-              `${ExpectedConstants.replayConversation}${
-                replayConversation!.name
-              }`,
-            ),
-            ExpectedMessages.conversationIsVisible,
+        await conversations
+          .getConversationByName(
+            `${ExpectedConstants.replayConversation}${
+              replayConversation!.name
+            }`,
           )
-          .toBeVisible();
+          .waitFor();
         expect
           .soft(
             await chat.replay.getElementContent(),
@@ -735,12 +732,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await expect
-          .soft(
-            chat.footer.getElementLocator(),
-            ExpectedMessages.footerIsVisible,
-          )
-          .toBeVisible();
+        await chat.footer.waitForState({ state: 'attached' });
       },
     );
 
@@ -767,12 +759,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await expect
-          .soft(
-            chat.footer.getElementLocator(),
-            ExpectedMessages.footerIsVisible,
-          )
-          .toBeVisible();
+        await chat.footer.waitForState({ state: 'attached' });
       },
     );
   },
@@ -952,12 +939,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
 
-        await expect
-          .soft(
-            talkToSelector.getElementLocator(),
-            ExpectedMessages.conversationSettingsVisible,
-          )
-          .toBeVisible();
+        await talkToSelector.waitForState({ state: 'attached' });
         await expect
           .soft(
             await chat.replay.getElementLocator(),
@@ -1020,24 +1002,18 @@ dialTest(
         await dialHomePage.importFile({ path: filename }, () =>
           chatBar.importButton.click(),
         );
-        await expect
-          .soft(
-            conversations.getConversationByName(
-              ExpectedConstants.newConversationTitle,
-              filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
-            ),
-            ExpectedMessages.conversationIsVisible,
+        await conversations
+          .getConversationByName(
+            ExpectedConstants.newConversationTitle,
+            filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
           )
-          .toBeVisible();
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              Import.oldVersionAppFolderName,
-              Import.oldVersionAppFolderChatName,
-            ),
-            ExpectedMessages.conversationIsVisible,
+          .waitFor();
+        await folderConversations
+          .getFolderEntity(
+            Import.oldVersionAppFolderName,
+            Import.oldVersionAppFolderChatName,
           )
-          .toBeVisible();
+          .waitFor();
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,
