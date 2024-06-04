@@ -374,7 +374,7 @@ export function PublishModal({
                   {t('Publish to')}
                 </label>
                 <button
-                  className="input-form mx-0 flex grow items-center rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                  className="input-form button mx-0 flex grow items-center px-3 py-2 placeholder:text-secondary"
                   onClick={handleFolderChange}
                 >
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
@@ -383,9 +383,7 @@ export function PublishModal({
                       contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                       triggerClassName="truncate whitespace-pre"
                     >
-                      <span className="truncate">
-                        {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
-                      </span>
+                      {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
                     </Tooltip>
                     <span className="text-accent-primary">{t('Change')}</span>
                   </div>

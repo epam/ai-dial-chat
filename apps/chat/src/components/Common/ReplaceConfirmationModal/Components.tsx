@@ -196,9 +196,7 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {prompt.name}
-        </div>
+        {prompt.name}
       </Tooltip>
     </FeatureContainer>
   );
