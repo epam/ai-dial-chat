@@ -591,6 +591,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
+          data-qa={isSelected ? 'selected' : null}
         >
           <ConversationView
             conversation={conversation}
