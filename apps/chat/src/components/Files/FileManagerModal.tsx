@@ -50,6 +50,7 @@ interface Props {
   customButtonLabel?: string;
   customUploadButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
+  forceShowSelectCheckBox?: boolean;
 }
 
 export const FileManagerModal = ({
@@ -61,6 +62,7 @@ export const FileManagerModal = ({
   customButtonLabel,
   customUploadButtonLabel,
   maximumAttachmentsAmount = 0,
+  forceShowSelectCheckBox,
   onClose,
 }: Props) => {
   const dispatch = useAppDispatch();
@@ -446,7 +448,7 @@ export const FileManagerModal = ({
             {headerLabel}
           </h2>
         </div>
-        {canAttachFiles && (
+        {(canAttachFiles || forceShowSelectCheckBox) && (
           <p id={descriptionId} data-qa="supported-attributes">
             {t(
               'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
@@ -538,7 +540,8 @@ export const FileManagerModal = ({
                               additionalItemData={{
                                 selectedFilesIds,
                                 selectedFolderIds,
-                                canAttachFiles,
+                                canAttachFiles:
+                                  canAttachFiles || forceShowSelectCheckBox,
                               }}
                               itemComponent={FileItem}
                               onClickFolder={handleFolderSelect}
@@ -566,7 +569,8 @@ export const FileManagerModal = ({
                               additionalItemData={{
                                 selectedFolderIds,
                                 selectedFilesIds,
-                                canAttachFiles,
+                                canAttachFiles:
+                                  canAttachFiles || forceShowSelectCheckBox,
                               }}
                               onEvent={handleItemCallback}
                             />
