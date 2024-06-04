@@ -354,7 +354,7 @@ export function PublishModal({
               tooltip={entity.name.trim()}
             >
               <div
-                className="line-clamp-2 w-full break-words"
+                className="w-full truncate break-words"
                 data-qa="modal-entity-name"
               >
                 {`${t('Publication request for')}: ${entity.name.trim()}`}
