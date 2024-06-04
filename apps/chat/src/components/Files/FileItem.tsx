@@ -56,7 +56,7 @@ export const FileItem = ({
 
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
-  const [isHighligted, setIsHighlighted] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const canAttachFiles = !!additionalItemData?.canAttachFiles;
@@ -116,7 +116,7 @@ export const FileItem = ({
     <div
       className={classNames(
         'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
-        (isHighligted || isContextMenu) && 'bg-accent-primary-alpha',
+        (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
       )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
