@@ -144,6 +144,7 @@ export function HandlePublication({ publication }: Props) {
         }),
       );
 
+      dispatch(UIActions.setShowPromptbar(true));
       dispatch(
         UIActions.setOpenedFoldersIds({
           openedFolderIds: promptPaths,

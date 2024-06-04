@@ -216,10 +216,14 @@ export function PublishModal({
         type === SharingType.ConversationFolder
       ) {
         const mappedFiles = (entities as Conversation[])
-          .filter((c) => c.messages.some((m) => m.custom_content?.attachments))
+          .filter((c) =>
+            (c.playback?.messagesStack || c.messages).some(
+              (m) => m.custom_content?.attachments,
+            ),
+          )
           .flatMap((c) => {
             const urls = compact(
-              flatMapDeep(c.messages, (m) =>
+              flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
                 m.custom_content?.attachments?.map((a) => a.url),
               ),
             );

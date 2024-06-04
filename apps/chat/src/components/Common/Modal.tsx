@@ -124,11 +124,14 @@ function ModalView({
               {heading && typeof heading === 'string' ? (
                 <h4
                   className={classNames(
-                    'mb-2 flex max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold',
+                    'mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold',
                     headingClassName,
                   )}
                 >
-                  <Tooltip tooltip={heading}>
+                  <Tooltip
+                    contentClassName="max-w-[400px] break-words"
+                    tooltip={heading}
+                  >
                     <div
                       className="line-clamp-2 w-full break-words"
                       data-qa="modal-entity-name"
