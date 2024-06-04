@@ -790,6 +790,7 @@ dialTest(
     shareModal,
     tooltip,
     setTestIds,
+    page,
   }) => {
     setTestIds(
       'EPMRTC-2729',
@@ -895,6 +896,8 @@ dialTest(
     await dialTest.step(
       'Click Cancel and verify arrow icon is displayed',
       async () => {
+        await page.mouse.move(0, 0);
+        await tooltip.waitForState({ state: 'hidden' });
         await confirmationDialog.cancelDialog();
         await expect
           .soft(

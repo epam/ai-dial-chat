@@ -275,7 +275,14 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           }
 
           return concat(
-            of(PublicationActions.uploadPublicationSuccess({ publication })),
+            of(
+              PublicationActions.uploadPublicationSuccess({
+                publication: {
+                  ...publication,
+                  uploadStatus: UploadStatus.LOADED,
+                },
+              }),
+            ),
             of(PublicationActions.selectPublication({ publication })),
             ...actions,
           );
@@ -341,22 +348,13 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          if (
-            selectedIds.some((id) =>
-              id.startsWith(`
-                ${getRootId({
-                  featureType: FeatureType.Chat,
-                  bucket: 'public',
-                })}/`),
-            )
-          ) {
-            const pathsToUpload = selectedIds.filter((id) =>
-              id.startsWith(`
-                ${getRootId({
-                  featureType: FeatureType.Prompt,
-                  bucket: 'public',
-                })}/`),
-            );
+          const pathsToUpload = selectedIds.filter((id) =>
+            id.startsWith(
+              `${getRootId({ featureType: FeatureType.Chat, bucket: 'public' })}/`,
+            ),
+          );
+
+          if (pathsToUpload.length) {
             const rootFolderIds = uniq(
               pathsToUpload.map((path) =>
                 path.split('/').slice(0, 3).join('/'),

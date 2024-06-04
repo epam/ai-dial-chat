@@ -57,7 +57,7 @@ export const PreviewPromptModal = ({
             }),
           );
         }}
-        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
       >
         <IconFileArrowRight size={24} strokeWidth="1.5" />
       </button>
@@ -85,14 +85,14 @@ export const PreviewPromptModal = ({
           <ul className="mb-4 flex max-h-[435px] flex-col gap-4 overflow-auto px-3 md:p-6">
             <li className="flex gap-2.5">
               <p className="mb-1 flex min-w-28 text-secondary">{t('Name: ')}</p>
-              <p>{prompt.name}</p>
+              <p className="line-clamp-2 w-full break-words">{prompt.name}</p>
             </li>
             {!!prompt.description && (
               <li className="flex gap-2.5">
                 <p className="mb-1 flex min-w-28 text-secondary">
                   {t('Description: ')}
                 </p>
-                <p>{prompt.description}</p>
+                <p className="w-full break-words">{prompt.description}</p>
               </li>
             )}
             {!!prompt.content && (
@@ -100,7 +100,7 @@ export const PreviewPromptModal = ({
                 <p className="mb-1 flex min-w-28 text-secondary">
                   {t('Prompt: ')}
                 </p>
-                <p>{prompt.content}</p>
+                <p className="w-full break-words">{prompt.content}</p>
               </li>
             )}
           </ul>
@@ -123,7 +123,7 @@ export const PreviewPromptModal = ({
                     >
                       <button
                         onClick={onDelete}
-                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-tertiary-alpha hover:text-accent-tertiary"
+                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                       >
                         <IconTrashX size={24} strokeWidth="1.5" />
                       </button>
