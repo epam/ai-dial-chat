@@ -3,6 +3,7 @@ import { BaseElement } from './baseElement';
 import { Attachment } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
+  ErrorLabelSelectors,
   FileSelectors,
   IconSelectors,
   UploadFromDeviceModalSelectors,
@@ -40,9 +41,11 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public getUploadedFile = (filename: string) => {
     const dotIndex = filename.lastIndexOf('.');
+    const filenameValue =
+      dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
     const inputValue = new BaseElement(
       this.page,
-      `[${Attributes.value} = "${filename.substring(0, dotIndex)}"]`,
+      `[${Attributes.value} = "${filenameValue}"]`,
     ).getElementLocator();
     return this.uploadedFiles
       .getChildElementBySelector(UploadFromDeviceModalSelectors.uploadedFile)
@@ -75,6 +78,14 @@ export class UploadFromDeviceModal extends BaseElement {
       ),
     );
   }
+
+  public getUploadError = this.getChildElementBySelector(
+    ErrorLabelSelectors.fieldError,
+  );
+
+  public getUploadErrorText = this.getUploadError.getChildElementBySelector(
+    ErrorLabelSelectors.errorText,
+  );
 
   public async setUploadedFilename(
     currentFilename: string,
