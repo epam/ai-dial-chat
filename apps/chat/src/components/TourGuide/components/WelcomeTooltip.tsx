@@ -46,7 +46,7 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.next}
         {...primaryProps}
-        className="my-[10px] mt-[27px] block rounded-[40px] bg-[#023465] px-[16px] py-[6px] text-[#fff]"
+        className="text-primary-bg-dark my-[10px] mt-[27px] block rounded-[40px] bg-layer-3 px-[16px] py-[6px]"
       >
         {t('Start a quick tour')}
       </button>
@@ -54,7 +54,7 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.close}
         onClick={closeProps.onClick}
-        className="block text-[#023465]"
+        className="text-pr-primary-700 block"
       >
         {t('Skip the tour')}
       </button>

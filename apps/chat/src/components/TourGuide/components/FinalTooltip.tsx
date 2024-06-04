@@ -35,7 +35,7 @@ const FinalTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.next}
         {...primaryProps}
-        className="mt-[48px] block rounded-[40px] bg-[#023465] px-[16px] py-[6px] text-[#fff]"
+        className="text-primary-bg-dark mt-[48px] block rounded-[40px] bg-layer-3 px-[16px] py-[6px]"
       >
         {t('Start using PR GPT')}
       </button>
