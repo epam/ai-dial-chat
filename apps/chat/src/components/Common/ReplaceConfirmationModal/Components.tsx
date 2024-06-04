@@ -145,7 +145,7 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
       />
       <Tooltip
         tooltip={conversation.name}
-        contentClassName="max-w-[400px]"
+        contentClassName="max-w-[400px] break-all"
         triggerClassName="truncate text-center w-full"
       >
         <div className="truncate whitespace-pre break-all text-left">
@@ -193,7 +193,7 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
       <IconBulb size={18} className="text-secondary" />
       <Tooltip
         tooltip={prompt.name}
-        contentClassName="max-w-[400px]"
+        contentClassName="max-w-[400px] break-all"
         triggerClassName="truncate text-center w-full"
       >
         <div className="truncate whitespace-pre break-all text-left">
@@ -241,7 +241,7 @@ const FileView = ({ item: file }: FileViewProps) => {
       <IconFile size={18} className="text-secondary" />
       <Tooltip
         tooltip={file.name}
-        contentClassName="max-w-[400px]"
+        contentClassName="max-w-[400px] break-all"
         triggerClassName="truncate text-center w-full"
       >
         <div className="truncate whitespace-pre break-all text-left">
