@@ -263,4 +263,7 @@ export enum ExpectedMessages {
   elementAttributeValueIsValid = 'Element attribute value is valid',
   uploadedFilesAreaIsScrollable = 'Uploaded files area is scrollable vertically',
   fieldIsInFocus = 'Field is in focus',
+  errorMessageIsShown = 'Error message is shown',
+  errorTextColorIsValid = 'Error text color is valid',
+  errorMessageContentIsValid = 'Error message content is valid',
 }
