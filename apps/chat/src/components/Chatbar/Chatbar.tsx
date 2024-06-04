@@ -174,7 +174,6 @@ export const Chatbar = () => {
         dispatch(ConversationsActions.setSearchFilters({ searchFilters }))
       }
       handleDrop={handleDrop}
-      footerComponent={<ChatbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}
     />
   );
