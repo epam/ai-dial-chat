@@ -179,6 +179,7 @@ export const ChatbarSettings = () => {
             setIsSelectFilesDialogOpened(false);
           }}
           headerLabel={t('Manage attachments')}
+          forceShowSelectCheckBox
         />
       )}
 
