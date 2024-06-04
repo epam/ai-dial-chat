@@ -367,7 +367,7 @@ export function PublishModal({
                     <Tooltip
                       tooltip={constructPath(t(PUBLISHING_FOLDER_NAME), path)}
                       contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-                      triggerClassName="block max-h-5 truncate whitespace-pre"
+                      triggerClassName="truncate whitespace-pre"
                     >
                       <span className="truncate">
                         {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
