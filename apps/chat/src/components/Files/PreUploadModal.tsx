@@ -13,7 +13,6 @@ import { useTranslation } from 'next-i18next';
 
 import {
   constructPath,
-  getExtensionsListForMimeTypes,
   getFileNameExtension,
   getFileNameWithoutExtension,
   getFilesWithInvalidFileName,
@@ -41,7 +40,6 @@ interface Props {
   initialFilesSelect?: boolean;
   maximumAttachmentsAmount?: number;
   allowedTypes?: string[];
-  allowedTypesLabel?: string;
   onClose: (result: boolean) => void;
   onUploadFiles: (
     selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
@@ -58,7 +56,6 @@ export const PreUploadDialog = ({
   initialFilesSelect,
   maximumAttachmentsAmount = 0,
   allowedTypes = [],
-  allowedTypesLabel,
   onClose,
   onUploadFiles,
   uploadFolderId,
@@ -93,12 +90,6 @@ export const PreUploadDialog = ({
         .join('/') || undefined
     );
   }, [folders, selectedFolderId]);
-  const allowedExtensions = useMemo(() => {
-    if (allowedTypes.includes('*/*')) {
-      return [t('all')];
-    }
-    return getExtensionsListForMimeTypes(allowedTypes);
-  }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -320,17 +311,7 @@ export const PreUploadDialog = ({
             {t('Upload from device')}
           </h2>
         </div>
-        <p id={descriptionId}>
-          {t(
-            'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
-            {
-              allowedExtensions:
-                allowedTypesLabel ||
-                allowedExtensions.join(', ') ||
-                'no available extensions',
-            },
-          )}
-        </p>
+        <p id={descriptionId}>{t('Max file size up to 512 Mb.')}</p>
 
         <ErrorMessage error={errorMessage} />
 
