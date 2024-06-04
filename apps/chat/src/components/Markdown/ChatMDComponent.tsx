@@ -2,6 +2,7 @@ import { Components } from 'react-markdown';
 
 import classnames from 'classnames';
 
+import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -29,6 +30,10 @@ interface ChatMDComponentProps {
   content: string;
   isInner?: boolean;
 }
+
+const transformUri = (src: string): string => {
+  return getMappedAttachmentUrl(src) ?? '';
+};
 
 export const getMDComponents = (
   isShowResponseLoader: boolean,
@@ -125,6 +130,8 @@ const ChatMDComponent = ({
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
+        transformImageUri={transformUri}
+        transformLinkUri={transformUri}
       >
         {`${content}${
           isShowResponseLoader ? modelCursorSignWithBackquote : ''
