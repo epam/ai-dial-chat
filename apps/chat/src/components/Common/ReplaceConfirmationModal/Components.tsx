@@ -193,7 +193,6 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
       <IconBulb size={18} className="text-secondary" />
       <Tooltip
         tooltip={prompt.name}
-        fix/1447-tooltip-placement
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName="truncate whitespace-pre"
       >
