@@ -1,4 +1,8 @@
-import { BackendDataNodeType, BackendResourceType, UploadStatus } from './common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  UploadStatus,
+} from './common';
 
 export enum PublicationFunctions {
   Equal = 'Equal',

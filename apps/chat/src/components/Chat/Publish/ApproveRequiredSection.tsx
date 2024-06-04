@@ -74,7 +74,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
         conversationIds: [],
       }),
     );
-  }, [dispatch, isOpen, publication]);
+  }, [dispatch, publication]);
 
   const ResourcesComponent =
     featureType === FeatureType.Chat

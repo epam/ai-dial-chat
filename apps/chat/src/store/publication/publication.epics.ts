@@ -275,7 +275,14 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           }
 
           return concat(
-            of(PublicationActions.uploadPublicationSuccess({ publication: {...publication, uploadStatus: UploadStatus.LOADED} })),
+            of(
+              PublicationActions.uploadPublicationSuccess({
+                publication: {
+                  ...publication,
+                  uploadStatus: UploadStatus.LOADED,
+                },
+              }),
+            ),
             of(PublicationActions.selectPublication({ publication })),
             ...actions,
           );
