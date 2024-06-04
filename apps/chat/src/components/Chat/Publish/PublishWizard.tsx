@@ -226,10 +226,14 @@ export function PublishModal({
         type === SharingType.ConversationFolder
       ) {
         const mappedFiles = (entities as Conversation[])
-          .filter((c) => c.messages.some((m) => m.custom_content?.attachments))
+          .filter((c) =>
+            (c.playback?.messagesStack || c.messages).some(
+              (m) => m.custom_content?.attachments,
+            ),
+          )
           .flatMap((c) => {
             const urls = compact(
-              flatMapDeep(c.messages, (m) =>
+              flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
                 m.custom_content?.attachments?.map((a) => a.url),
               ),
             );
@@ -347,9 +351,19 @@ export function PublishModal({
       initialFocus={nameInputRef}
     >
       <div className="flex h-full flex-col divide-y divide-tertiary">
-        <h4 className="p-4 pr-10 text-base font-semibold">
-          <span className="line-clamp-2 whitespace-pre break-words text-center">
-            {`${t('Publication request for')}: ${entity.name.trim()}`}
+        <h4 className="truncate p-4 pr-10 text-base font-semibold">
+          <span className="w-full text-center">
+            <Tooltip
+              contentClassName="max-w-[400px] break-words"
+              tooltip={entity.name.trim()}
+            >
+              <div
+                className="w-full truncate break-words"
+                data-qa="modal-entity-name"
+              >
+                {`${t('Publication request for')}: ${entity.name.trim()}`}
+              </div>
+            </Tooltip>
           </span>
         </h4>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
