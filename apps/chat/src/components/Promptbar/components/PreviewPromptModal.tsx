@@ -85,7 +85,7 @@ export const PreviewPromptModal = ({
           <ul className="mb-4 flex max-h-[435px] flex-col gap-4 overflow-auto px-3 md:p-6">
             <li className="flex gap-2.5">
               <p className="mb-1 flex min-w-28 text-secondary">{t('Name: ')}</p>
-              <p className="break-all">{prompt.name}</p>
+              <p className="line-clamp-2 break-all">{prompt.name}</p>
             </li>
             {!!prompt.description && (
               <li className="flex gap-2.5">
