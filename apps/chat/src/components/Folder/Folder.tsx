@@ -59,6 +59,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -170,6 +171,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isUploadedForUnpublishing, setIsUploadedForUnpublishing] =
+    useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
@@ -273,21 +276,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (e) => {
       e.stopPropagation();
 
-      if (
-        featureType === FeatureType.Chat &&
-        (!allChildItems.length ||
-          !allChildItems.every((item) => 'messages' in item))
-      ) {
+      if (featureType === FeatureType.Chat && !isUploadedForUnpublishing) {
         dispatch(
           ConversationsActions.uploadConversationsWithContentRecursive({
             path: currentFolder.id,
           }),
         );
+      } else if (
+        featureType === FeatureType.Prompt &&
+        !isUploadedForUnpublishing
+      ) {
+        dispatch(
+          PromptsActions.uploadPromptsWithFoldersRecursive({
+            path: currentFolder.id,
+            noLoader: true,
+          }),
+        );
       }
 
+      setIsUploadedForUnpublishing(true);
       setIsUnpublishing(true);
     },
-    [allChildItems, currentFolder.id, dispatch, featureType],
+    [currentFolder.id, dispatch, featureType, isUploadedForUnpublishing],
   );
 
   const handleCloseUnpublishModal = useCallback(() => {

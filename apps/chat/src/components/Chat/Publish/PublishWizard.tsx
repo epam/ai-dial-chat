@@ -21,7 +21,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { TargetAudienceFilter } from '@/src/types/publication';
+import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -412,6 +412,7 @@ export function PublishModal({
             path={path}
             files={files}
             containerClassNames="px-5 py-4"
+            publishAction={PublishActions.ADD}
           />
         </div>
 

@@ -7,6 +7,7 @@ import { getAttachments } from '@/src/utils/app/share';
 
 import { Entity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -98,6 +99,7 @@ export function UnpublishModal({
               entities={entities}
               path={''}
               files={files}
+              publishAction={PublishActions.DELETE}
             />
           </div>
           <div className="flex justify-end gap-3 px-6 pt-4">
