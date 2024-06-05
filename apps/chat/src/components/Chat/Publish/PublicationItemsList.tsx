@@ -32,6 +32,7 @@ interface Props {
   files: DialFile[];
   containerClassNames?: string;
   collapsibleSectionClassNames?: string;
+  publishAction: PublishActions;
 }
 
 export function PublicationItemsList({
@@ -42,6 +43,7 @@ export function PublicationItemsList({
   files,
   containerClassNames,
   collapsibleSectionClassNames,
+  publishAction,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -70,7 +72,7 @@ export function PublicationItemsList({
             <ConversationPublicationResources
               rootFolder={entity}
               resources={entities.map((entity) => ({
-                action: PublishActions.ADD,
+                action: publishAction,
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
                   ApiKeys.Conversations,
@@ -115,19 +117,17 @@ export function PublicationItemsList({
           ) : (
             <PromptPublicationResources
               rootFolder={entity}
-              resources={[
-                {
-                  action: PublishActions.ADD,
-                  sourceUrl: entity.id,
-                  targetUrl: constructPath(
-                    ApiKeys.Prompts,
-                    'public',
-                    path,
-                    entity.name,
-                  ),
-                  reviewUrl: entity.id,
-                },
-              ]}
+              resources={entities.map((entity) => ({
+                action: publishAction,
+                sourceUrl: entity.id,
+                targetUrl: constructPath(
+                  ApiKeys.Conversations,
+                  'public',
+                  path,
+                  splitEntityId(entity.id).name,
+                ),
+                reviewUrl: entity.id,
+              }))}
               forViewOnly
             />
           )}
