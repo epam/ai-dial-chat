@@ -634,6 +634,10 @@ export const conversationsSlice = createSlice({
       state.conversationsStatus = UploadStatus.LOADING;
       state.conversationsLoaded = !!payload?.noLoader;
     },
+    uploadConversationsWithContentRecursive: (
+      state,
+      _action: PayloadAction<{ path: string }>,
+    ) => state,
     uploadConversationsWithFoldersRecursiveSuccess: (state) => {
       state.conversationsLoaded = true;
     },

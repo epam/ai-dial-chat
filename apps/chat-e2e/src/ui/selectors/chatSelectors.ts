@@ -108,6 +108,7 @@ export const ErrorLabelSelectors = {
   noResultFound: '[data-qa="no-data"]',
   notAllowedModel: '[data-qa="not-allowed-model-error"]',
   fieldError: '.text-error',
+  errorText: '[data-qa="error-text"]',
 };
 
 export const ImportExportSelectors = {

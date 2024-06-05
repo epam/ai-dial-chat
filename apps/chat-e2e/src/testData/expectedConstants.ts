@@ -113,6 +113,15 @@ export const ExpectedConstants = {
     `You've trying to upload files with incorrect type: ${filename}`,
   allowedSpecialSymbolsInName: 'Test (`~!@#$^*-_+[]\'|<>.?")',
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___.__)",
+  duplicatedFilenameError: (filename: string) =>
+    `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
+  sameFilenamesError: (filename: string) =>
+    `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
+  restrictedNameChars: ':;,=/{}%&\\',
+  notAllowedFilenameError: (filename: string) =>
+    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
+  endDotFilenameError: (filename: string) =>
+    `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
 };
 
 export enum Groups {
@@ -222,6 +231,9 @@ export const Attachment = {
   zeroSizeFileName: 'test1.txt',
   incrementedImageName: (index: number) => `test${index}.jpg`,
   dotExtensionImageName: 'testdot..JPg',
+  restrictedSemicolonCharFilename: 'restricted;char.jpg',
+  restrictedEqualCharFilename: 'restricted=char.jpg',
+  fileWithoutExtension: 'withoutExtension',
 };
 
 export enum Side {
