@@ -352,6 +352,22 @@ export const filesSlice = createSlice({
         return file;
       });
     },
+    updateFoldersStatus: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ foldersIds: string[]; status: UploadStatus }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (payload.foldersIds.some((folderId) => folderId === folder.id)) {
+          return {
+            ...folder,
+            status: payload.status,
+          };
+        }
+        return folder;
+      });
+    },
   },
 });
 
