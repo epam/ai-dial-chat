@@ -13,14 +13,12 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
-import { EnumMapper } from '@/src/utils/app/mappers';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { getAttachments } from '@/src/utils/app/share';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
@@ -41,15 +39,7 @@ import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import {
-  ConversationRow,
-  PromptsRow,
-} from '../../Common/ReplaceConfirmationModal/Components';
-import {
-  ConversationPublicationResources,
-  FilePublicationResources,
-  PromptPublicationResources,
-} from './PublicationResources';
+import { PublicationItemsList } from './PublicationItemsList';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
 import compact from 'lodash-es/compact';
@@ -374,13 +364,19 @@ export function PublishModal({
                   {t('Publish to')}
                 </label>
                 <button
-                  className="input-form mx-0 flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                  className="input-form button mx-0 flex grow items-center border-primary px-3 py-2"
                   onClick={handleFolderChange}
                 >
-                  <span className="truncate">
-                    {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
-                  </span>
-                  <span className="text-accent-primary">{t('Change')}</span>
+                  <div className="flex w-full justify-between truncate whitespace-pre break-all">
+                    <Tooltip
+                      tooltip={constructPath(t(PUBLISHING_FOLDER_NAME), path)}
+                      contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                      triggerClassName="truncate whitespace-pre"
+                    >
+                      {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
+                    </Tooltip>
+                    <span className="text-accent-primary">{t('Change')}</span>
+                  </div>
                 </button>
               </div>
             </section>
@@ -415,85 +411,15 @@ export function PublishModal({
               />
             </section>
           </div>
-          <div className="flex w-full flex-col gap-[2px] px-5 py-4 md:max-w-[550px]">
-            {(type === SharingType.Conversation ||
-              type === SharingType.ConversationFolder) && (
-              <CollapsibleSection
-                name={t('Conversations')}
-                openByDefault
-                dataQa="conversations-to-send-request"
-              >
-                {type === SharingType.Conversation ? (
-                  <ConversationRow
-                    itemComponentClassNames="cursor-pointer"
-                    item={entity as ConversationInfo}
-                    level={0}
-                  />
-                ) : (
-                  <ConversationPublicationResources
-                    rootFolder={entity}
-                    resources={entities.map((entity) => ({
-                      action: PublishActions.ADD,
-                      sourceUrl: entity.id,
-                      targetUrl: constructPath(
-                        EnumMapper.getApiKeyByFeatureType(FeatureType.Chat),
-                        'public',
-                        path,
-                        splitEntityId(entity.id).name,
-                      ),
-                      reviewUrl: entity.id,
-                    }))}
-                    forViewOnly
-                  />
-                )}
-              </CollapsibleSection>
-            )}
-            {!!files.length && (
-              <CollapsibleSection
-                name={t('Files')}
-                openByDefault
-                dataQa="files-to-send-request"
-              >
-                <FilePublicationResources
-                  uploadedFiles={files}
-                  resources={[]}
-                  forViewOnly
-                />
-              </CollapsibleSection>
-            )}
-            {(type === SharingType.Prompt ||
-              type === SharingType.PromptFolder) && (
-              <CollapsibleSection
-                name={t('Prompts')}
-                openByDefault
-                dataQa="prompts-to-send-request"
-              >
-                {type === SharingType.Prompt ? (
-                  <PromptsRow
-                    itemComponentClassNames="cursor-pointer"
-                    item={entity}
-                    level={0}
-                  />
-                ) : (
-                  <PromptPublicationResources
-                    rootFolder={entity}
-                    resources={entities.map((entity) => ({
-                      action: PublishActions.ADD,
-                      sourceUrl: entity.id,
-                      targetUrl: constructPath(
-                        EnumMapper.getApiKeyByFeatureType(FeatureType.Prompt),
-                        'public',
-                        path,
-                        splitEntityId(entity.id).name,
-                      ),
-                      reviewUrl: entity.id,
-                    }))}
-                    forViewOnly
-                  />
-                )}
-              </CollapsibleSection>
-            )}
-          </div>
+          <PublicationItemsList
+            type={type}
+            entity={entity}
+            entities={entities}
+            path={path}
+            files={files}
+            containerClassNames="px-5 py-4"
+            publishAction={PublishActions.ADD}
+          />
         </div>
 
         <div className="flex justify-end gap-3 p-4">

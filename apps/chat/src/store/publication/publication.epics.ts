@@ -4,8 +4,10 @@ import {
   catchError,
   concat,
   filter,
+  from,
   iif,
   map,
+  mergeAll,
   mergeMap,
   of,
   switchMap,
@@ -21,6 +23,7 @@ import {
   getFolderFromId,
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
+  getRootFolderIdFromEntityId,
   splitEntityId,
 } from '@/src/utils/app/folders';
 import {
@@ -139,18 +142,37 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           const promptResources = publication.resources.filter((r) =>
             isPromptId(r.targetUrl),
           );
+          const unpublishResources = publication.resources.filter(
+            (r) => r.action === PublishActions.DELETE,
+          );
+
+          if (unpublishResources.length) {
+            const rootFolderPaths = uniq(
+              unpublishResources.map((r) =>
+                getRootFolderIdFromEntityId(r.reviewUrl),
+              ),
+            );
+
+            actions.push(
+              from(
+                rootFolderPaths.map((path) => {
+                  const actionCreator = isConversationId(path)
+                    ? ConversationsActions.uploadConversationsWithFoldersRecursive
+                    : PromptsActions.uploadPromptsWithFoldersRecursive;
+
+                  return of(actionCreator({ noLoader: true, path }));
+                }),
+              ).pipe(mergeAll()),
+            );
+          }
 
           if (promptResources.length) {
             const promptPaths = uniq(
-              promptResources.flatMap((resource) => {
-                const url = resource.reviewUrl
-                  ? resource.reviewUrl
-                  : resource.targetUrl;
-
-                return getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(url),
-                ).filter((id) => id !== url);
-              }),
+              promptResources.flatMap((resource) =>
+                getParentFolderIdsFromEntityId(
+                  getFolderIdFromEntityId(resource.reviewUrl),
+                ).filter((id) => id !== resource.reviewUrl),
+              ),
             );
 
             actions.push(
@@ -188,15 +210,11 @@ const uploadPublicationEpic: AppEpic = (action$) =>
           );
           if (conversationResources.length) {
             const conversationPaths = uniq(
-              conversationResources.flatMap((resource) => {
-                const url = resource.reviewUrl
-                  ? resource.reviewUrl
-                  : resource.targetUrl;
-
-                return getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(url),
-                ).filter((id) => id !== url);
-              }),
+              conversationResources.flatMap((resource) =>
+                getParentFolderIdsFromEntityId(
+                  getFolderIdFromEntityId(resource.reviewUrl),
+                ).filter((id) => id !== resource.reviewUrl),
+              ),
             );
 
             actions.push(
@@ -236,15 +254,11 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
           if (fileResources.length) {
             const filePaths = uniq(
-              fileResources.flatMap((resource) => {
-                const url = resource.reviewUrl
-                  ? resource.reviewUrl
-                  : resource.targetUrl;
-
-                return getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(url),
-                ).filter((id) => id !== url);
-              }),
+              fileResources.flatMap((resource) =>
+                getParentFolderIdsFromEntityId(
+                  getFolderIdFromEntityId(resource.reviewUrl),
+                ).filter((id) => id !== resource.reviewUrl),
+              ),
             );
 
             actions.push(
@@ -356,9 +370,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
           if (pathsToUpload.length) {
             const rootFolderIds = uniq(
-              pathsToUpload.map((path) =>
-                path.split('/').slice(0, 3).join('/'),
-              ),
+              pathsToUpload.map((path) => getRootFolderIdFromEntityId(path)),
             );
 
             rootFolderIds.forEach((path) =>
