@@ -133,6 +133,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
 
+      return of(ConversationsActions.getSelectedConversations());
       return concat(
         iif(
           () => !isOverlay,
