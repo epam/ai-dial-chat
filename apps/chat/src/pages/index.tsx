@@ -326,9 +326,9 @@ export const getServerSideProps: GetServerSideProps = async ({
           ? Feature.HideNewConversation
           : [],
       ),
-    publicationFilters: (process.env.PUBLICATION_FILTERS || 'title,role').split(
-      ',',
-    ) as string[],
+    publicationFilters: (
+      process.env.PUBLICATION_FILTERS || 'title,role,dial_roles'
+    ).split(',') as string[],
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
