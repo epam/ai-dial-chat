@@ -4,9 +4,12 @@ import { useTranslation } from 'next-i18next';
 
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getAttachments } from '@/src/utils/app/share';
+import { ApiUtils } from '@/src/utils/server/api';
 
+import { Conversation } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -15,6 +18,9 @@ import { PublicationActions } from '@/src/store/publication/publication.reducers
 
 import Modal from '../../Common/Modal';
 import { PublicationItemsList } from './PublicationItemsList';
+
+import compact from 'lodash-es/compact';
+import flatMapDeep from 'lodash-es/flatMapDeep';
 
 interface Props {
   subtitle: string;
@@ -56,13 +62,33 @@ export function UnpublishModal({
       e.preventDefault();
       e.stopPropagation();
 
+      const mappedFiles =
+        type === SharingType.Conversation ||
+        type === SharingType.ConversationFolder
+          ? (entities as Conversation[])
+              .filter((c) =>
+                (c.playback?.messagesStack || c.messages).some(
+                  (m) => m.custom_content?.attachments,
+                ),
+              )
+              .flatMap((c) => {
+                const urls = compact(
+                  flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+                    m.custom_content?.attachments?.map((a) => a.url),
+                  ),
+                );
+
+                return urls.map((oldUrl) => ApiUtils.decodeApiUrl(oldUrl));
+              })
+          : [];
+
       dispatch(
         PublicationActions.deletePublication({
           targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
             ...entities.map((entity) => ({ targetUrl: entity.id })),
-            ...files.map((f) => ({
-              targetUrl: f.id,
+            ...mappedFiles.map((url) => ({
+              targetUrl: url,
             })),
           ],
         }),
@@ -70,7 +96,7 @@ export function UnpublishModal({
 
       onClose();
     },
-    [dispatch, entities, entity.id, files, onClose],
+    [dispatch, entities, entity.id, onClose, type],
   );
 
   return (
@@ -98,6 +124,7 @@ export function UnpublishModal({
               entities={entities}
               path={''}
               files={files}
+              publishAction={PublishActions.DELETE}
             />
           </div>
           <div className="flex justify-end gap-3 px-6 pt-4">
