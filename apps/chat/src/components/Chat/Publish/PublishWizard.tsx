@@ -374,7 +374,7 @@ export function PublishModal({
                   {t('Publish to')}
                 </label>
                 <button
-                  className="input-form button mx-0 flex grow items-center px-3 py-2 placeholder:text-secondary"
+                  className="input-form button mx-0 flex grow items-center border-primary px-3 py-2"
                   onClick={handleFolderChange}
                 >
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
