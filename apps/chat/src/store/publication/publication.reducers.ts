@@ -109,11 +109,7 @@ export const publicationSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        items: {
-          publicationUrl: string;
-          reviewed: boolean;
-          reviewUrl: string;
-        }[];
+        items: ResourceToReview[];
       }>,
     ) => {
       const reviewUrls = state.resourcesToReview.map((r) => r.reviewUrl);

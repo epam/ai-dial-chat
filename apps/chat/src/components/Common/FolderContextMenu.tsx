@@ -18,6 +18,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
+import { isItemPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
@@ -29,6 +30,8 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from './ContextMenu';
+
+import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 
 interface FolderContextMenuProps {
   folder: FolderInterface;
@@ -42,6 +45,7 @@ interface FolderContextMenuProps {
   onShare?: MouseEventHandler<unknown>;
   onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
+  onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
 }
@@ -56,12 +60,14 @@ export const FolderContextMenu = ({
   onShare,
   onUnshare,
   onPublish,
+  onUnpublish,
   onPublishUpdate,
   onUpload,
   isOpen,
   isEmpty,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
+
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
@@ -136,19 +142,15 @@ export const FolderContextMenu = ({
         onClick: onPublishUpdate,
         disabled: disableAll,
       },
-      // TODO: implement Unpublish folder in https://github.com/epam/ai-dial-chat/issues/318
-      // {
-      //   name: t('Unpublish'),
-      //   dataQa: 'unpublish',
-      //   display:
-      //     !isEmpty &&
-      //     isPublishingEnabled &&
-      //     !!folder.isPublished &&
-      //     !!onUnpublish,
-      //   Icon: UnpublishIcon,
-      //   onClick: onUnpublish,
-      //   disabled: disableAll,
-      // },
+      {
+        name: t('Unpublish'),
+        dataQa: 'unpublish',
+        display:
+          isPublishingEnabled && isItemPublic(folder.id) && !!onUnpublish,
+        Icon: UnpublishIcon,
+        onClick: onUnpublish,
+        disabled: disableAll,
+      },
       {
         name: t('Delete'),
         display:
@@ -197,6 +199,7 @@ export const FolderContextMenu = ({
       onUnshare,
       isPublishingEnabled,
       onPublish,
+      onUnpublish,
       onPublishUpdate,
       onDelete,
       featureType,
