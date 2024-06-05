@@ -208,7 +208,6 @@ export function PublishModal({
           : otherTargetAudienceFilters;
       const folderRegExp = new RegExp(
         entity.folderId.split('/').slice(2).join('/'),
-        'g',
       );
 
       if (
