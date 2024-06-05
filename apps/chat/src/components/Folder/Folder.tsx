@@ -117,6 +117,7 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
   canAttachFolders?: boolean;
+  isSidePanelFolder?: boolean;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -152,6 +153,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   itemComponentClassNames,
   canAttachFolders = false,
+  isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -970,6 +972,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
+                    isSidePanelFolder={isSidePanelFolder}
                   />
                 </div>
               )}

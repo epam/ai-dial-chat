@@ -204,6 +204,7 @@ export const ChangePathDialog = ({
               type === SharingType.ConversationFolder
                 ? FeatureType.Chat
                 : FeatureType.Prompt,
+            isSidePanelFolder: false,
           }}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}

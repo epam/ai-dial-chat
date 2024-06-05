@@ -368,7 +368,7 @@ export function PublishModal({
                   onClick={handleFolderChange}
                 >
                   <span className="truncate">
-                    {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
+                    {constructPath(PUBLISHING_FOLDER_NAME, path)}
                   </span>
                   <span className="text-accent-primary">{t('Change')}</span>
                 </button>

@@ -95,6 +95,7 @@ export const PromptPublicationResources = ({
         return (
           <Folder
             readonly
+            isSidePanelFolder={false}
             noCaretIcon={!!forViewOnly}
             level={forViewOnly ? 0 : 1}
             key={f.id}
