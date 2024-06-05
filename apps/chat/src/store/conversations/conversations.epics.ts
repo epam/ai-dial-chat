@@ -55,6 +55,7 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getFolderFromId,
+  getFolderIdFromEntityId,
   getFoldersFromIds,
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
@@ -99,6 +100,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
+import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
@@ -126,7 +128,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
     takeUntil(action$.pipe(filter(ShareActions.acceptShareInvitation.match))),
-    // use getSelectedConversations to load selected conversations, we can unsubscribe from this action if we try to accept a share link or we in a overlay mode
+    // use getSelectedConversations to load selected conversations, we can unsubscribe from this action if we try to accept a share link
     switchMap(() => {
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const optionsReceived = OverlaySelectors.selectOptionsReceived(
@@ -1026,19 +1028,51 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
       if (!conversation || !conversation.messages[payload.messageIndex]) {
         return EMPTY;
       }
+
+      const actions = [];
       const messages = [...conversation.messages];
       messages[payload.messageIndex] = {
         ...messages[payload.messageIndex],
         ...payload.values,
       };
-      return of(
-        ConversationsActions.updateConversation({
-          id: payload.conversationId,
-          values: {
-            messages: [...messages],
-          },
-        }),
+
+      actions.push(
+        of(
+          ConversationsActions.updateConversation({
+            id: payload.conversationId,
+            values: {
+              messages: [...messages],
+            },
+          }),
+        ),
       );
+      const attachments =
+        messages[payload.messageIndex].custom_content?.attachments;
+
+      if (attachments) {
+        const attachmentFolders = uniq(
+          attachments
+            .map(
+              (attachment) =>
+                attachment.url &&
+                getFolderIdFromEntityId(decodeURIComponent(attachment.url)),
+            )
+            .filter(Boolean),
+        ) as string[];
+
+        if (attachmentFolders.length) {
+          actions.push(
+            of(
+              FilesActions.updateFoldersStatus({
+                foldersIds: attachmentFolders,
+                status: UploadStatus.UNINITIALIZED,
+              }),
+            ),
+          );
+        }
+      }
+
+      return concat(...actions);
     }),
   );
 
