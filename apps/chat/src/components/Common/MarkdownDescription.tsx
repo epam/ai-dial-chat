@@ -29,7 +29,7 @@ export const EntityMarkdownDescription = ({
 
   return (
     <MemoizedReactMarkdown
-      className="prose-sm text-xs hover:prose-a:underline"
+      className="leading-4 hover:prose-a:underline"
       linkTarget="_blank"
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[

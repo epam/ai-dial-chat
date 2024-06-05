@@ -90,7 +90,7 @@ function ModalView({
         <FloatingOverlay
           lockScroll={lockScroll}
           className={classNames(
-            'z-50 flex items-center justify-center bg-blackout p-3 md:p-5',
+            'z-50 flex items-center justify-center bg-blackout p-3 md:p-5 md:pb-24 md:pt-20',
             overlayClassName,
           )}
           data-floating-overlay
@@ -102,7 +102,7 @@ function ModalView({
           >
             <Tag
               className={classNames(
-                'relative max-h-full rounded bg-layer-3 text-left',
+                'text-primary-bg-light relative max-h-full rounded-[10px] bg-layer-1 text-left',
                 containerClassName,
               )}
               role="dialog"
@@ -115,7 +115,7 @@ function ModalView({
                 <button
                   type="button"
                   role="button"
-                  className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+                  className="text-quaternary-bg-light hover:text-primary-bg-light absolute right-2 top-2 rounded"
                   onClick={handleClose}
                 >
                   <IconX height={24} width={24} />
@@ -128,7 +128,7 @@ function ModalView({
                     headingClassName,
                   )}
                 >
-                  <Tooltip tooltip={heading}>
+                  <Tooltip hideTooltip tooltip={heading}>
                     <div
                       className="line-clamp-2 w-full break-words"
                       data-qa="modal-chat-name"

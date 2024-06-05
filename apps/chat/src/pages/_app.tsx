@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
@@ -22,6 +23,19 @@ const inter = Inter({
   subsets: ['latin'],
   weight: 'variable',
   variable: '--font-inter',
+});
+const weave = localFont({
+  src: [
+    {
+      path: '../../public/fonts/weave/weave-bold.ttf',
+      weight: '700',
+    },
+    {
+      path: '../../public/fonts/weave/weave-extrabold.ttf',
+      weight: '800',
+    },
+  ],
+  variable: '--font-weave',
 });
 
 function App({
@@ -49,7 +63,7 @@ function App({
   return (
     <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
       <Provider store={store}>
-        <div className={`${inter.variable} font`}>
+        <div className={`${inter.variable} ${weave.variable} font`}>
           <TourGuide />
           <Toaster toastOptions={{ duration: 9000 }}>
             {(t) => (
@@ -81,7 +95,9 @@ function App({
                     <div
                       className={classNames(
                         'mx-0.5 whitespace-pre-wrap text-sm leading-[21px] *:!whitespace-pre-wrap',
-                        t.type === 'error' ? 'text-error' : 'text-primary',
+                        t.type === 'error'
+                          ? 'text-error'
+                          : 'text-primary-bg-dark',
                       )}
                     >
                       {message}
@@ -91,7 +107,7 @@ function App({
                         <IconX
                           stroke={1}
                           size={24}
-                          className="text-secondary"
+                          className="text-primary-bg-dark"
                         />
                       </button>
                     )}

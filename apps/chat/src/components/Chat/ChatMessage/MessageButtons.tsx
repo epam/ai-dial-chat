@@ -32,7 +32,7 @@ const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
     <button
       type={type}
       className={classNames(
-        '[&:not(:disabled)]:hover:text-accent-primary',
+        '[&:not(:disabled)]:hover:text-primary-bg-light',
         className,
       )}
       {...props}
@@ -64,8 +64,8 @@ export const MessageUserButtons = ({
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full items-center justify-end gap-2',
-        isOverlay ? 'mt-3' : 'mt-4',
+        'flex h-[18px] w-full items-center justify-start gap-2',
+        isOverlay ? 'mt-3' : 'mt-2',
       )}
     >
       {!isMessageStreaming && (
@@ -73,7 +73,7 @@ export const MessageUserButtons = ({
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
-                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+                className="text-tertiary-bg-light hover:text-primary-bg-light disabled:cursor-not-allowed"
                 onClick={toggleEditing}
                 disabled={editDisabled}
               >
@@ -83,7 +83,7 @@ export const MessageUserButtons = ({
           )}
           <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
             <button
-              className="text-secondary hover:text-accent-primary"
+              className="text-tertiary-bg-light hover:text-primary-bg-light"
               onClick={onDelete}
             >
               <IconTrash size={18} />
@@ -119,8 +119,8 @@ export const MessageAssistantButtons = ({
   return (
     <div
       className={classNames(
-        'flex w-full justify-end gap-2',
-        isOverlay ? 'mt-3' : 'mt-4',
+        'flex w-full justify-start gap-2',
+        isOverlay ? 'mt-3' : 'mt-2',
       )}
     >
       {onRegenerate && (
@@ -128,7 +128,7 @@ export const MessageAssistantButtons = ({
           <Button
             onClick={onRegenerate}
             data-qa="regenerate"
-            className="text-secondary"
+            className="text-tertiary-bg-light"
           >
             <IconRefresh size={18} />
           </Button>
@@ -136,7 +136,7 @@ export const MessageAssistantButtons = ({
       )}
       {messageCopied ? (
         <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
-          <IconCheck size={18} className="text-secondary" />
+          <IconCheck size={18} className="text-secondary-bg-dark" />
         </Tooltip>
       ) : (
         <Tooltip
@@ -145,7 +145,7 @@ export const MessageAssistantButtons = ({
           isTriggerClickable
           tooltip={t('Copy text')}
         >
-          <Button className="text-secondary" onClick={copyOnClick}>
+          <Button className="text-tertiary-bg-light" onClick={copyOnClick}>
             <IconCopy size={18} />
           </Button>
         </Tooltip>
@@ -169,8 +169,8 @@ export const MessageAssistantButtons = ({
                   }}
                   className={
                     message.like !== LikeState.Liked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
+                      ? 'text-tertiary-bg-light'
+                      : 'text-primary-bg-light'
                   }
                   disabled={message.like === LikeState.Liked}
                   data-qa="like"
@@ -197,8 +197,8 @@ export const MessageAssistantButtons = ({
                   }}
                   className={
                     message.like !== LikeState.Disliked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
+                      ? 'text-tertiary-bg-light'
+                      : 'text-primary-bg-light'
                   }
                   disabled={message.like === LikeState.Disliked}
                   data-qa="dislike"
@@ -256,7 +256,7 @@ export const MessageMobileButtons = ({
             <MenuItem
               item={
                 <div className="flex items-center gap-3">
-                  <IconCheck size={20} className="text-secondary" />
+                  <IconCheck size={20} className="text-primary-bg-dark" />
                   <p>{t('Copied')}</p>
                 </div>
               }
@@ -266,7 +266,7 @@ export const MessageMobileButtons = ({
               className="hover:bg-accent-primary-alpha"
               item={
                 <div className="flex items-center gap-3">
-                  <IconCopy className="text-secondary" size={18} />
+                  <IconCopy className="text-primary-bg-dark" size={18} />
                   {t('Copy')}
                 </div>
               }
@@ -277,7 +277,7 @@ export const MessageMobileButtons = ({
             <MenuItem
               item={
                 <div className="flex items-center gap-3">
-                  <IconRefresh className="text-secondary" size={18} />
+                  <IconRefresh className="text-primary-bg-dark" size={18} />
                   {t('Regenerate')}
                 </div>
               }
@@ -292,13 +292,16 @@ export const MessageMobileButtons = ({
                   'hover:bg-accent-primary-alpha',
               )}
               item={
-                <div className="flex items-center gap-3">
-                  <IconThumbUp className="text-secondary" size={18} />
-                  <p
-                    className={classNames(
-                      message.like === LikeState.Liked && 'text-secondary',
-                    )}
-                  >
+                <div
+                  className={classNames(
+                    'flex items-center gap-3',
+                    message.like === LikeState.Liked
+                      ? 'text-accent-primary'
+                      : 'text-primary-bg-dark',
+                  )}
+                >
+                  <IconThumbUp size={18} />
+                  <p>
                     {message.like === LikeState.Liked ? t('Liked') : t('Like')}
                   </p>
                 </div>
@@ -321,13 +324,16 @@ export const MessageMobileButtons = ({
               )}
               data-qa="dislike"
               item={
-                <div className="flex items-center gap-3">
-                  <IconThumbDown className="text-secondary" size={18} />
-                  <p
-                    className={classNames(
-                      message.like === LikeState.Disliked && 'text-secondary',
-                    )}
-                  >
+                <div
+                  className={classNames(
+                    'flex items-center gap-3',
+                    message.like === LikeState.Disliked
+                      ? 'text-accent-primary'
+                      : 'text-primary-bg-dark',
+                  )}
+                >
+                  <IconThumbDown className="" size={18} />
+                  <p>
                     {message.like === LikeState.Disliked
                       ? t('Disliked')
                       : t('Dislike')}
@@ -356,7 +362,7 @@ export const MessageMobileButtons = ({
           disabled={editDisabled}
           item={
             <div className="flex items-center gap-3">
-              <IconEdit className="text-secondary" size={18} />
+              <IconEdit className="text-primary-bg-dark" size={18} />
               <p>{t('Edit')}</p>
             </div>
           }
@@ -366,7 +372,7 @@ export const MessageMobileButtons = ({
           onClick={onDelete}
           item={
             <div className="flex items-center gap-3">
-              <IconTrash className="text-secondary" size={18} />
+              <IconTrash className="text-primary-bg-dark" size={18} />
               <p>{t('Delete')}</p>
             </div>
           }

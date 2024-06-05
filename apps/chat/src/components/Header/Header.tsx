@@ -14,15 +14,18 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { HEADER_TITLE_TEXT } from '@/src/constants/chat';
+
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
+import PrimaryLogo from '../../../public/images/icons/primary-logo.svg';
+import SecondaryLogo from '../../../public/images/icons/secondary-logo.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
-import cssEscape from 'css.escape';
 
 const DEFAULT_HEADER_ICON_SIZE = 24;
 const OVERLAY_HEADER_ICON_SIZE = 18;
@@ -92,20 +95,20 @@ const Header = () => {
             {showChatbar ? (
               <>
                 <IconX
-                  className="text-secondary md:hidden"
+                  className="md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
 
                 <MoveLeftIcon
-                  className="text-secondary hover:text-accent-secondary max-md:hidden"
+                  className="hover:text-accent-primary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
               <MoveRightIcon
-                className="text-secondary hover:text-accent-secondary"
+                className="hover:text-accent-primary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
@@ -117,17 +120,22 @@ const Header = () => {
         <CreateNewChatMobile iconSize={headerIconSize} />
       )}
       <div className="flex grow justify-between">
-        <span
-          className={classNames(
-            'min-w-[165px] grow bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
-            { 'bg-contain': customLogoUrl },
-          )}
-          style={{
-            backgroundImage: customLogoUrl
-              ? `url(${cssEscape(customLogoUrl)})`
-              : `var(--app-logo)`,
-          }}
-        ></span>
+        <div className="flex grow justify-center md:justify-start">
+          <PrimaryLogo
+            className="mr-3 self-center md:ml-5"
+            width={21}
+            height={20}
+          />
+          <div className="my-3 border-r border-primary" />
+          <SecondaryLogo className="ml-3 self-center" width={25} height={25} />
+          <span className="font-weave ml-2 flex flex-wrap content-center text-[22px] font-bold md:mr-3">
+            {HEADER_TITLE_TEXT}
+          </span>
+          <span className="my-3 hidden border-r border-primary md:inline-block" />
+          <span className="text-s ml-2 hidden flex-wrap content-center md:flex">
+            {t('Your secured IA assistant within Pernod Ricard environment')}
+          </span>
+        </div>
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
           <User />
         </div>
@@ -143,20 +151,20 @@ const Header = () => {
             {showPromptbar ? (
               <>
                 <IconX
-                  className="text-secondary md:hidden"
+                  className="md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
 
                 <MoveRightIcon
-                  className="text-secondary hover:text-accent-tertiary max-md:hidden"
+                  className="hover:text-accent-primary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
               <MoveLeftIcon
-                className="text-secondary hover:text-accent-tertiary"
+                className="hover:text-accent-primary"
                 width={headerIconSize}
                 height={headerIconSize}
               />

@@ -215,7 +215,7 @@ export default function Home({ initialState }: HomeProps) {
       </Head>
 
       {shouldOverlayLogin ? (
-        <div className="grid size-full min-h-[100px] place-items-center bg-layer-1 text-sm text-primary">
+        <div className="grid size-full min-h-[100px] place-items-center bg-layer-1 text-sm text-primary-bg-dark">
           <button
             onClick={handleOverlayAuth}
             className="button button-secondary"
@@ -227,7 +227,7 @@ export default function Home({ initialState }: HomeProps) {
       ) : (
         <main
           // eslint-disable-next-line tailwindcss/enforces-shorthand
-          className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
+          className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary-bg-dark"
           id="theme-main"
         >
           {conversationsToMigrateCount + promptsToMigrateCount !==

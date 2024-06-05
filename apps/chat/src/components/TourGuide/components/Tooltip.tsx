@@ -25,7 +25,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
     <div
       {...tooltipProps}
       //With the new theme design, styles will be updated with theme variables
-      className="h-[150px] w-[320px] rounded-md bg-[#023465] text-xs text-[#BAD9FF]"
+      className="h-[165px] w-[320px] rounded-md bg-layer-3 text-xs text-[#BAD9FF]"
     >
       <div className="flex items-center justify-between p-[10px_15px_0]">
         <div>{step.title}</div>
@@ -35,10 +35,10 @@ const Tooltip: FC<TooltipRenderProps> = ({
       </div>
 
       <div className="p-4">{step.content}</div>
-      <div className="relative bottom-[-9px] flex h-[35px] w-[320px] items-center justify-between rounded-b-md bg-gradient-to-r from-[#C0DDF2] to-[#F3E8CE] px-4 text-[#023465]">
+      <div className="text-pr-primary-700 from-layer-8 to-layer-9 relative bottom-[-16px] flex h-[35px] w-[320px] items-center justify-between rounded-b-md bg-gradient-to-r px-4">
         {index > 1 ? (
           <button
-            className="flex h-[25px] w-[55px] items-center justify-center rounded-full bg-[#023465] text-[#fff]"
+            className="text-primary-bg-dark flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3"
             id={TooltipId.back}
             {...backProps}
           >
@@ -56,7 +56,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
           <button
             id={TooltipId.next}
             {...primaryProps}
-            className="flex h-[25px] w-[55px] items-center justify-center rounded-full bg-[#023465] text-[#fff]"
+            className="text-primary-bg-dark flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3"
           >
             <div className="mr-[5px]"> {t('Next')} </div>
             <ArrowRightIcon />

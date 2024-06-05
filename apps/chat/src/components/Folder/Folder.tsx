@@ -626,7 +626,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       className={classNames(
         'transition-colors duration-200',
         isDraggingOver && 'bg-accent-primary-alpha',
-        currentFolder.temporary && 'text-primary',
+        currentFolder.temporary && 'text-primary-bg-dark',
       )}
       onDrop={dropHandler}
       onDragOver={allowDrop}
@@ -640,7 +640,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           !withBorderHighlight && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
-          isHighlighted && withBorderHighlight && 'border-accent-primary',
+          isHighlighted && withBorderHighlight && 'border-tertiary',
           folderClassName,
         )}
         data-qa="folder"
@@ -666,7 +666,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isHighlighted
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-secondary" />
+                <IconFolder size={18} className="text-secondary-bg-dark mr-1" />
               </ShareIcon>
             )}
 
@@ -714,13 +714,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isHighlighted={isContextMenu}
                 featureType={featureType}
               >
-                <IconFolder size={18} className="mr-1 text-secondary" />
+                <IconFolder size={18} className="mr-1" />
               </ShareIcon>
             )}
             <div
               className={classNames(
                 'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
-                isNameOrPathInvalid && 'text-secondary',
+                isNameOrPathInvalid && 'text-secondary-bg-dark',
               )}
               data-qa="folder-name"
             >
@@ -733,14 +733,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   'max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
-                      ? 'text-primary'
-                      : 'text-secondary'),
+                      ? 'text-primary-bg-dark'
+                      : 'text-secondary-bg-dark'),
                   isNameOrPathInvalid
-                    ? 'text-secondary'
+                    ? 'text-secondary-bg-dark'
                     : highlightedFolders?.includes(currentFolder.id) &&
                         featureType
                       ? 'text-accent-primary'
-                      : 'text-primary',
+                      : 'text-primary-bg-dark',
                 )}
               >
                 {currentFolder.name}
@@ -796,7 +796,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-accent-primary"
+                className="text-tertiary-bg-light hover:text-accent-primary"
               />
             </SidebarActionButton>
             <SidebarActionButton
@@ -809,7 +809,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 width={18}
                 height={18}
                 size={18}
-                className="hover:text-accent-primary"
+                className="text-tertiary-bg-light hover:text-accent-primary"
                 strokeWidth="2"
               />
             </SidebarActionButton>

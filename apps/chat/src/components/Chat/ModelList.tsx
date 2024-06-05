@@ -14,6 +14,7 @@ import { DialAIEntity } from '@/src/types/models';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { TourGuideId } from '@/src/constants/share';
 
@@ -41,6 +42,7 @@ const ModelGroup = ({
   disabled,
   isReplayAsIs,
 }: ModelGroupProps) => {
+  const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
@@ -78,11 +80,12 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'relative rounded border',
+        'rounded-primary relative flex overflow-y-auto border font-medium hover:border-tertiary',
         isActive
-          ? 'border-accent-primary'
-          : 'border-primary hover:border-hover',
+          ? 'border-accent-quaternary shadow-primary bg-accent-secondary-alpha'
+          : 'hover:shadow-primary border-secondary bg-layer-2 hover:bg-accent-secondary-alpha',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
+        isCompareMode ? 'px-3 py-2' : 'px-5 py-2',
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
@@ -99,21 +102,19 @@ const ModelGroup = ({
         }
       }}
       data-qa="group-entity"
+      id={TourGuideId.modelSelection}
     >
       {disabled && <DisableOverlay />}
-      <div
-        className="flex h-full items-center gap-3 px-3 py-2"
-        id={TourGuideId.modelSelection}
-      >
+      <div className="flex min-h-[48px] items-center gap-3 border-secondary ">
         <ModelIcon
           entityId={currentEntity.id}
           entity={currentEntity}
           size={24}
           isSmallIconSize={false}
         />
-        <div className="flex w-full flex-col gap-1 text-left">
-          <div className="flex items-center justify-between">
-            <span data-qa="group-entity-name" className="whitespace-pre">
+        <div className="flex w-full flex-col gap-0.5 text-left">
+          <div className="flex items-center justify-between font-medium">
+            <span data-qa="group-entity-name">
               {entities.length === 1
                 ? getOpenAIEntityFullName(currentEntity)
                 : currentEntity.name}
@@ -126,7 +127,7 @@ const ModelGroup = ({
           </div>
           {description && (
             <span
-              className="text-secondary"
+              className="text-quaternary-bg-light text-[11px]"
               onClick={(e) => {
                 if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                   e.stopPropagation();
@@ -202,10 +203,14 @@ export const ModelList = ({
   }, [allEntities, displayCountLimit, entities]);
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
-      {heading && <span className="text-secondary">{heading}</span>}
+      {heading && (
+        <span className="text-primary-bg-light text-sm font-medium">
+          {heading}
+        </span>
+      )}
       <div
         className={classNames(
-          'grid min-h-0 shrink grid-cols-1 gap-3 overflow-y-auto',
+          'grid min-h-0 shrink grid-cols-1 gap-3',
           !showInOneColumn && 'md:grid-cols-2',
         )}
       >

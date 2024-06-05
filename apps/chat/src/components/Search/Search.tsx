@@ -16,6 +16,7 @@ interface Props {
   onSearchFiltersChanged: (searchFilters: SearchFilters) => void;
   searchFilters: SearchFilters;
   featureType: FeatureType;
+  isShowSearchFilter?: boolean;
 }
 
 export default function Search({
@@ -25,6 +26,7 @@ export default function Search({
   searchFilters,
   onSearchFiltersChanged,
   featureType,
+  isShowSearchFilter = false,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -36,25 +38,30 @@ export default function Search({
   );
 
   return (
-    <div className="relative flex items-center py-1 pl-5 pr-2" data-qa="search">
+    <div
+      className="relative mx-5 my-2 flex items-center rounded-full border border-quaternary"
+      data-qa="search"
+    >
       <IconSearch
-        className="absolute left-5 text-secondary"
+        className="absolute left-4"
         size={18}
         width={18}
         height={18}
       />
       <input
-        className="w-full bg-transparent px-8 py-2 text-[14px] leading-3 outline-none placeholder:text-secondary"
+        className="w-full bg-transparent py-2 pl-12 pr-8 text-[14px] leading-3 outline-none placeholder:text-primary-bg-dark"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}
         onChange={handleSearchChange}
       />
-      <SearchFiltersView
-        featureType={featureType}
-        onSearchFiltersChanged={onSearchFiltersChanged}
-        searchFilters={searchFilters}
-      />
+      {isShowSearchFilter && (
+        <SearchFiltersView
+          featureType={featureType}
+          onSearchFiltersChanged={onSearchFiltersChanged}
+          searchFilters={searchFilters}
+        />
+      )}
     </div>
   );
 }

@@ -45,8 +45,8 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none',
-          isInvalid ? 'text-secondary' : 'text-primary',
+          'model-icon-template relative inline-block shrink-0 leading-none',
+          isInvalid ? 'text-secondary-bg-dark' : 'text-primary-bg-dark',
           animate && 'animate-bounce',
         )}
         style={{ width: `${boxSize}px` }}
@@ -56,13 +56,13 @@ const ModelIconTemplate = memo(
           src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
-          height='100%'
+          height="100%"
           description={description}
         >
           <SVG
             src={fallbackUrl}
             width={size}
-            height='100%'
+            height="100%"
             description={description}
           />
         </SVG>

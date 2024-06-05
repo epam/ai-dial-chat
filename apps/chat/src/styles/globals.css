@@ -49,7 +49,7 @@
 }
 
 html {
-  @apply bg-layer-1 text-primary;
+  @apply bg-layer-1 text-primary-bg-dark;
 }
 
 pre:has(div.codeblock) {
@@ -63,15 +63,15 @@ pre:has(div.codeblock) {
   }
 
   .temperature-slider .rc-slider-rail {
-    @apply rounded-full bg-layer-1;
+    @apply rounded-full bg-gradient-to-r from-layer-5 to-layer-3;
   }
 
   .temperature-slider .rc-slider-track {
-    @apply rounded-full bg-controls-accent;
+    @apply rounded-full bg-transparent;
   }
 
   .input-form {
-    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
+    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary-bg-dark hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
 
   .submitted {
@@ -83,7 +83,7 @@ pre:has(div.codeblock) {
 }
 @layer components {
   .input {
-    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none;
+    @apply m-0.5 w-full rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary-bg-dark hover:border-accent-primary focus:border-accent-primary focus:outline-none;
   }
   .input.touched.invalid,
   .input.dirty.invalid {
@@ -93,7 +93,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .button {
-    @apply rounded border border-transparent px-3 py-2.5 outline-none;
+    @apply rounded-primary border border-transparent px-3 py-2.5 outline-none;
   }
 
   .button:disabled {
@@ -110,15 +110,15 @@ pre:has(div.codeblock) {
   }
 
   .button.button-primary:not(:disabled) {
-    @apply bg-controls-accent hover:bg-controls-accent-hover;
+    @apply bg-layer-4 hover:bg-layer-3;
   }
 
   .button.button-secondary {
-    @apply border-primary text-primary;
+    @apply border-primary text-primary-bg-dark;
   }
 
   .button.button-secondary:not(:disabled) {
-    @apply bg-transparent hover:bg-layer-4;
+    @apply bg-controls-accent hover:bg-layer-3;
   }
 
   .button.button-secondary:disabled {
@@ -126,31 +126,50 @@ pre:has(div.codeblock) {
   }
 
   .button.button-chat {
-    @apply absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 border-primary bg-layer-2 p-3 hover:bg-layer-4;
+    @apply absolute inset-x-0 -top-14 mx-auto mb-3 flex w-fit items-center gap-3 border-primary bg-layer-2 p-3;
   }
 }
 
 @layer components {
   .checkbox {
-    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
+    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border text-tertiary-bg-light checked:text-pr-primary-700 hover:text-pr-primary-700 focus-visible:outline-none;
   }
 }
 
 @layer components {
+  #chat .model-icon-template {
+    --text-primary-bg-dark: var(--text-quinary-bg-light);
+  }
+
+  .file-manager-modal,
+  .select-folder-header,
+  .select-folder-footer {
+    --text-primary-bg-dark: var(--text-primary-bg-light);
+    --text-secondary-bg-dark: var(--text-secondary-bg-light);
+  }
+
+  .file-manager-modal {
+    --text-accent-primary: var(--text-quinary-bg-light);
+  }
+
   .sidebar-left,
   .context-menu-chat {
-    --text-accent-primary: var(--text-accent-secondary, #37babc);
-    --stroke-accent-primary: var(--stroke-accent-secondary, #37babc);
-    --bg-accent-primary-alpha: var(--bg-accent-secondary-alpha, #37babc26);
     --bg-accent-primary: var(--bg-accent-secondary, #37babc);
   }
 
   .sidebar-right,
   .context-menu-prompt {
-    --text-accent-primary: var(--text-accent-tertiary, #a972ff);
-    --stroke-accent-primary: var(--stroke-accent-tertiary, #a972ff);
-    --bg-accent-primary-alpha: var(--bg-accent-tertiary-alpha, #a972ff26);
-    --bg-accent-primary: var(--bg-accent-tertiary, #a972ff);
+    --bg-accent-primary: var(--bg-accent-secondary, #a972ff);
+  }
+
+  .sidebar-right .menu-trigger,
+  .sidebar-left .menu-trigger {
+    --text-quaternary-bg-light: var(--text-primary-bg-dark);
+  }
+
+  .select-folder-header {
+    --text-accent-primary: var(--text-primary-bg-light);
+    --border-accent-primary: var(--border-tertiary);
   }
 }
 

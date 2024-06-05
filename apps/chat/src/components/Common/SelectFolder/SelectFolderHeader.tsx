@@ -31,14 +31,14 @@ export const SelectFolderHeader = ({
           <Spinner />
         </div>
       ) : (
-        <div className="group/modal flex flex-col gap-2 overflow-auto px-6 pb-4">
+        <div className="select-folder-header group/modal flex flex-col gap-2 overflow-auto px-6 pb-4 text-primary-bg-dark">
           <ErrorMessage error={errorMessage} />
           <input
             name="titleInput"
             placeholder={t('Search folders') || ''}
             type="text"
             onChange={handleSearch}
-            className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+            className="m-0 w-full rounded-primary border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"
             value={searchQuery}
           />
           {children}

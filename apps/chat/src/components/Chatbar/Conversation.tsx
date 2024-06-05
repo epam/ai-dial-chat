@@ -530,7 +530,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ? 'border-l-accent-primary bg-accent-primary-alpha'
           : 'border-l-transparent',
         { 'bg-accent-primary-alpha': isContextMenu },
-        isNameOrPathInvalid && !isRenaming && 'text-secondary',
+        isNameOrPathInvalid && !isRenaming && 'text-secondary-bg-dark',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -671,13 +671,16 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isRenaming && (
         <div className="absolute right-1 z-10 flex">
           <SidebarActionButton handleClick={() => handleRename()}>
-            <IconCheck size={18} className="hover:text-accent-primary" />
+            <IconCheck
+              size={18}
+              className="text-tertiary-bg-light hover:text-accent-primary"
+            />
           </SidebarActionButton>
           <SidebarActionButton handleClick={handleCancelRename}>
             <IconX
               size={18}
               strokeWidth="2"
-              className="hover:text-accent-primary"
+              className="text-tertiary-bg-light hover:text-accent-primary"
             />
           </SidebarActionButton>
         </div>

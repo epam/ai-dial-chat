@@ -26,18 +26,11 @@ function ContextMenuItemRenderer({
     <div
       className={classNames(
         'flex w-full items-center gap-3 truncate break-words',
-        !!childMenuItems && !disabled && 'text-primary',
+        !!childMenuItems && !disabled && 'text-primary-bg-dark',
         !!childMenuItems && className,
       )}
     >
-      {Icon && (
-        <Icon
-          className="shrink-0 text-secondary"
-          size={18}
-          height={18}
-          width={18}
-        />
-      )}
+      {Icon && <Icon className="shrink-0" size={18} height={18} width={18} />}
       <span className="truncate break-words">{name}</span>
     </div>
   );
@@ -48,7 +41,7 @@ function ContextMenuItemRenderer({
         featureType={featureType}
         triggerIconClassName={classNames(
           className,
-          'text-secondary',
+          'text-secondary-bg-dark',
           'hover:bg-accent-primary-alpha',
         )}
         TriggerCustomRenderer={item}
@@ -59,7 +52,7 @@ function ContextMenuItemRenderer({
   return (
     <MenuItem
       className={classNames(
-        disabled ? 'text-secondary' : 'hover:bg-accent-primary-alpha',
+        disabled ? 'text-secondary-bg-dark' : 'hover:bg-accent-primary-alpha',
         className,
       )}
       item={item}
@@ -121,8 +114,8 @@ export default function ContextMenu({
         <div
           data-qa="menu-trigger"
           className={classNames(
-            'flex w-full items-center justify-center rounded text-secondary',
-            triggerIconHighlight && 'hover:text-accent-primary',
+            'menu-trigger flex w-full items-center justify-center rounded text-quaternary-bg-light',
+            triggerIconHighlight && 'hover:text-primary-bg-light',
             className,
           )}
         >

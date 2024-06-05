@@ -67,9 +67,9 @@ const PromptActionsBlock = () => {
   }, [dispatch]);
 
   return (
-    <div className="flex px-2 py-1" id={TourGuideId.newPrompt}>
+    <div className="flex">
       <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
+        className="hover:bg-accent-quaternary mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded rounded-2xl bg-accent-primary px-3 py-2 transition-colors duration-200 disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(PromptsActions.setIsNewPromptCreating(true));
           dispatch(PromptsActions.resetSearch());
@@ -77,8 +77,9 @@ const PromptActionsBlock = () => {
         }}
         disabled={isNewPromptCreating}
         data-qa="new-entity"
+        id={TourGuideId.newPrompt}
       >
-        <PlusIcon className="text-secondary" width={18} height={18} />
+        <PlusIcon width={18} height={18} />
         {t('New prompt')}
       </button>
       {showModal && !isModalPreviewMode && (

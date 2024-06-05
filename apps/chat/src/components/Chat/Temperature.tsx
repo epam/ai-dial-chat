@@ -18,8 +18,6 @@ import { DisableOverlay } from '../Common/DisableOverlay';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { HandleProps } from 'rc-slider/lib/Handles/Handle';
-import { TEMPERATURE_TOOLTIP } from "@/src/constants/chat";
-import { TooltipContainer } from "@/src/components/Common/TooltipContainer";
 
 interface TemperatureIndicatorProps extends HandleProps {
   onKeyDown: KeyboardEventHandler<HTMLDivElement>;
@@ -33,18 +31,15 @@ const TemperatureIndicator = ({
   onKeyDown,
   onMouseDown,
   onTouchStart,
-  children,
 }: TemperatureIndicatorProps) => {
   return (
     <div
-      className="absolute top-[calc(50%-20px)] flex size-10 cursor-pointer items-center justify-center rounded-full bg-layer-3 shadow"
+      className="absolute top-[calc(50%-12px)] flex size-6 cursor-pointer items-center justify-center rounded-full bg-layer-6 text-primary-bg-dark shadow-primary"
       style={style}
       onKeyDown={onKeyDown}
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
-    >
-      {children}
-    </div>
+    />
   );
 };
 
@@ -61,7 +56,7 @@ export const TemperatureSlider: FC<Props> = ({
   temperature,
   disabled,
 }) => {
-  const [currentTemperature, setCurrentTemperature] = useState<number>(() => {
+  const [, setCurrentTemperature] = useState<number>(() => {
     return temperature ?? DEFAULT_TEMPERATURE;
   });
   const { t } = useTranslation(Translation.Chat);
@@ -74,10 +69,23 @@ export const TemperatureSlider: FC<Props> = ({
   return (
     <div className="flex flex-col gap-2" data-qa="temp-slider">
       <div className="flex items-center gap-2">
-        <label className="text-left">{label}</label>
-        <TooltipContainer description={t(TEMPERATURE_TOOLTIP)} />
+        <label className="text-left font-medium">{label}</label>
       </div>
-      <div className="relative px-5">
+      <span className="mb-4 text-quaternary-bg-light">
+        {t(
+          'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+        )}
+      </span>
+      <div className="grid h-4 w-full grid-cols-3 font-medium">
+        <span className="text-temperature-primary">{t('Precise')}</span>
+        <span className="text-center text-temperature-secondary">
+          {t('Neutral')}
+        </span>
+        <span className="text-right text-temperature-tertiary">
+          {t('Creative')}
+        </span>
+      </div>
+      <div className="relative">
         {disabled && <DisableOverlay />}
         <Slider
           className="temperature-slider !h-10"
@@ -87,16 +95,9 @@ export const TemperatureSlider: FC<Props> = ({
           max={1}
           step={0.1}
           handleRender={({ props }) => (
-            <TemperatureIndicator {...(props as TemperatureIndicatorProps)}>
-              {currentTemperature}
-            </TemperatureIndicator>
+            <TemperatureIndicator {...(props as TemperatureIndicatorProps)} />
           )}
         />
-      </div>
-      <div className="grid h-4 w-full grid-cols-3 text-xs">
-        <span className="">{t('Precise')}</span>
-        <span className="text-center">{t('Neutral')}</span>
-        <span className="text-right">{t('Creative')}</span>
       </div>
     </div>
   );

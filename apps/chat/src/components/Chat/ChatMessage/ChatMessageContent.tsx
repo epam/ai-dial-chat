@@ -1,4 +1,3 @@
-import { IconUser } from '@tabler/icons-react';
 import {
   MouseEvent,
   RefObject,
@@ -47,6 +46,7 @@ import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { AdjustedTextarea } from './AdjustedTextarea';
 
+import UserIcon from '@/public/images/icons/user-chat.svg';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -320,10 +320,7 @@ export const ChatMessageContent = ({
   return (
     <div
       ref={messageRef}
-      className={classNames(
-        'group h-full border-b border-secondary md:px-4 xl:px-8',
-        isAssistant && 'bg-layer-2',
-      )}
+      className={classNames('group h-full md:px-4 xl:px-8')}
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
@@ -354,10 +351,11 @@ export const ChatMessageContent = ({
                   undefined
                 }
                 animate={isShowResponseLoader}
-                size={chatIconSize} isSmallIconSize={false}
+                size={chatIconSize}
+                isSmallIconSize={false}
               />
             ) : (
-              <IconUser size={chatIconSize} />
+              <UserIcon width={30} height={30} />
             )}
           </div>
         </div>
@@ -371,7 +369,7 @@ export const ChatMessageContent = ({
               <div className="flex w-full flex-col gap-3">
                 <div
                   className={classNames(
-                    'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+                    'relative min-h-[100px] rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary focus-within:border-accent-secondary',
                     !isOverlay && 'text-base',
                   )}
                 >

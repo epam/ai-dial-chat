@@ -58,8 +58,6 @@ export const MODEL_ICON_SIZE_DEFAULT = {
   small: 22.5,
 };
 
-export const CONVERSATION_SETTINGS_TITLE = 'Conversation settings';
-export const CONVERSATION_SETTINGS_SUB_TITLE =
-  'Choose and configure model / application you want to interact with';
+export const HEADER_TITLE_TEXT = 'PR GPT';
 
 export const CHINA_TIME_ZONE_OFFSET = 8;

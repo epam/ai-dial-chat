@@ -46,9 +46,9 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
     <div className="flex min-h-[350px] flex-col overflow-auto">
       <button
         className={classNames(
-          'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
+          'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary-bg-dark',
           selectedFolderId === rootFolderId
-            ? 'border-accent-primary bg-accent-primary-alpha'
+            ? 'border-tertiary bg-accent-primary-alpha'
             : 'border-transparent',
         )}
         onClick={() => handleFolderSelect(rootFolderId)}

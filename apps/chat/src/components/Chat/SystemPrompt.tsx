@@ -1,4 +1,4 @@
-import {
+import React, {
   ChangeEvent,
   FC,
   KeyboardEvent,
@@ -31,6 +31,7 @@ import { PromptList } from './ChatInput/PromptList';
 import { PromptVariablesDialog } from './ChatInput/PromptVariablesDialog';
 import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
 
+import HelpIcon from '@/public/images/icons/help.svg';
 import debounce from 'lodash-es/debounce';
 
 interface Props {
@@ -164,7 +165,7 @@ export const SystemPrompt: FC<Props> = ({
 
   return (
     <div className="flex flex-col">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex items-center gap-2 font-medium">
         <label className="text-left">{t('System prompt')}</label>
         <TooltipContainer description={t(SYSTEM_PROMPT_TOOLTIP)} />
       </div>
@@ -172,7 +173,7 @@ export const SystemPrompt: FC<Props> = ({
         {disabled && <DisableOverlay />}
         <AdjustedTextarea
           ref={textareaRef}
-          className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
+          className="placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary w-full resize-none overflow-y-auto rounded-3xl border border-secondary bg-transparent px-4 py-3 outline-none"
           placeholder={t('Type a text or «/» to use a prompt...') || ''}
           maxHeight={MAX_HEIGHT}
           value={content}

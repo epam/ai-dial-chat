@@ -158,7 +158,7 @@ export const PublishAttachment = ({
       )}
       onContextMenu={handleContextMenuOpen}
     >
-      <IconFile className="mr-2 shrink-0 text-secondary" size={18} />
+      <IconFile className="text-pr-primary-700 mr-2 shrink-0" size={18} />
       <div
         className={classNames(
           'flex min-w-0 shrink grow flex-col',
@@ -177,7 +177,7 @@ export const PublishAttachment = ({
             </Tooltip>
             <Tooltip
               tooltip={fullPath}
-              triggerClassName="block max-w-full truncate text-secondary whitespace-pre"
+              triggerClassName="block max-w-full truncate text-tertiary-bg-light whitespace-pre"
               hideTooltip={isContextMenu}
             >
               {fullPath}
@@ -186,7 +186,7 @@ export const PublishAttachment = ({
         ) : (
           <div className="relative flex grow items-center">
             <input
-              className="mr-14 grow text-ellipsis rounded bg-transparent p-2 pl-0 placeholder:text-secondary focus:outline-none"
+              className="placeholder:text-secondary-bg-dark mr-14 grow text-ellipsis rounded bg-transparent p-2 pl-0 focus:outline-none"
               type="text"
               value={nameWithoutExtension}
               onChange={(e) => setName(e.target.value)}

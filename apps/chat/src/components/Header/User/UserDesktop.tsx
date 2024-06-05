@@ -16,15 +16,13 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import ChevronDownIcon from '../../../../public/images/icons/chevron-down.svg';
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
-import UserIcon from '../../../../public/images/icons/user.svg';
+import UserDesktopIcon from '../../../../public/images/icons/user-desktop.svg';
 
 import { TourGuideIcon } from '@/src/icons';
 
 export const UserDesktop = () => {
   const { t } = useTranslation(Translation.Header);
-  const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -55,12 +53,12 @@ export const UserDesktop = () => {
   }, []);
 
   return (
-    <div className="mt-[15px] flex items-center justify-center">
+    <div className="flex items-center justify-center">
       <div
         className={isClient && isSmallScreenOrMobile ? 'invisible' : 'visible'}
       >
         <Tooltip isTriggerClickable tooltip={t('Tour Guide')}>
-          <button onClick={startTour} className="ml-[25px] mr-[25px]">
+          <button onClick={startTour} className=" hover:text-accent-primary">
             <TourGuideIcon />
           </button>
         </Tooltip>
@@ -68,12 +66,13 @@ export const UserDesktop = () => {
 
       <Menu
         className="w-full"
-        onOpenChange={setIsOpen}
         trigger={
           <div
-            className="flex min-w-[120px] items-center justify-between gap-2 pr-3"
+            className="flex min-w-[120px] items-center justify-end gap-2 pl-5 pr-3 hover:text-accent-primary"
             data-qa="account-settings"
           >
+            <span>{session?.user?.name || t('User')}</span>
+
             <div className="flex items-center gap-3">
               {session?.user?.image ? (
                 <img
@@ -84,18 +83,9 @@ export const UserDesktop = () => {
                   alt={t(`User avatar`) || ''}
                 />
               ) : (
-                <UserIcon width={18} height={18} />
+                <UserDesktopIcon width={30} height={30} />
               )}
-
-              <span className="grow">{session?.user?.name || t('User')}</span>
             </div>
-            <ChevronDownIcon
-              className={`shrink-0 text-primary transition-all ${
-                isOpen ? 'rotate-180' : ''
-              }`}
-              width={18}
-              height={18}
-            />
           </div>
         }
       >
@@ -103,7 +93,7 @@ export const UserDesktop = () => {
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
-              <IconSettings size={18} className="text-secondary" />
+              <IconSettings size={18} />
               <span className="ml-3">{t('Settings')}</span>
             </div>
           }
@@ -115,7 +105,7 @@ export const UserDesktop = () => {
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
-              <LogOutIcon width={18} height={18} className="text-secondary" />
+              <LogOutIcon width={18} height={18} />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>
           }

@@ -42,7 +42,6 @@ import { TourGuideId } from '@/src/constants/share';
 import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
 import { AttachButton } from '../../Files/AttachButton';
 import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
@@ -64,8 +63,6 @@ const MAX_HEIGHT = 320;
 
 export const ChatInputMessage = ({
   textareaRef,
-  showScrollDownButton,
-  onScrollDownClick,
   onSend,
   onStopConversation,
   onRegenerate,
@@ -404,7 +401,7 @@ export const ChatInputMessage = ({
       : 'pl-12'
     : isOverlay
       ? 'pl-3'
-      : 'pl-4';
+      : 'pl-6';
 
   return (
     <div
@@ -415,21 +412,21 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
+        className="shadow-primary relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded-3xl border border-secondary bg-layer-2"
         data-qa="message"
       >
         <AdjustedTextarea
           ref={textareaRef}
           className={classNames(
-            'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
-            isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-3',
+            'placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary m-0 min-h-[38px] w-full grow resize-none rounded-3xl bg-transparent leading-[150%] outline-none placeholder:text-xs',
+            isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-2',
             paddingLeftClass,
           )}
           maxHeight={MAX_HEIGHT}
           placeholder={
             isOverlay || isIsolatedView
               ? t('Type a message') || ''
-              : t('Type a text or «/» to use a prompt...') || ''
+              : t('Ask me a question...') || ''
           }
           disabled={isLoading}
           value={content}
@@ -469,13 +466,6 @@ export const ChatInputMessage = ({
               </div>
             )}
           </>
-        )}
-
-        {showScrollDownButton && (
-          <ScrollDownButton
-            className="-top-16 right-0 md:-top-20"
-            onScrollDownClick={onScrollDownClick}
-          />
         )}
 
         {showPromptList && filteredPrompts.length > 0 && (

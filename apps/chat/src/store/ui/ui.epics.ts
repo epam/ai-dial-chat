@@ -37,7 +37,6 @@ const initEpic: AppEpic = (action$, state$) =>
       const talkTo = ConversationsSelectors.selectTalkTo(state$.value);
 
       return forkJoin({
-        theme: DataService.getTheme(),
         availableThemes: isThemesDefined
           ? DataService.getAvailableThemes()
           : of([]),
@@ -52,7 +51,6 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
     switchMap(
       ({
-        theme,
         availableThemes,
         showChatbar,
         showPromptbar,
@@ -64,9 +62,7 @@ const initEpic: AppEpic = (action$, state$) =>
       }) => {
         const actions = [];
 
-        if (theme) {
-          actions.push(UIActions.setTheme(theme));
-        } else if (typeof availableThemes[0] !== 'undefined') {
+        if (typeof availableThemes[0] !== 'undefined') {
           actions.push(UIActions.setTheme(availableThemes[0]?.id));
         }
 

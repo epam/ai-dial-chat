@@ -139,7 +139,7 @@ export const ChatSettings = ({
   return (
     <div className="absolute z-30 flex size-full grow items-start justify-center bg-blackout md:top-0 md:p-5">
       <div className="max-h-full w-full overflow-auto rounded xl:max-w-[720px] 2xl:max-w-[1000px]">
-        <div className="flex flex-col divide-y divide-tertiary bg-layer-2">
+        <div className="flex flex-col divide-y divide-secondary bg-layer-2">
           <ConversationSettings
             conversation={conversation}
             isCloseEnabled

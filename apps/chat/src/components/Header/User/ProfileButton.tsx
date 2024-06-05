@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import UserIcon from '../../../../public/images/icons/user.svg';
+import UserMobileIcon from '../../../../public/images/icons/user-profile.svg';
 
 export const ProfileButton = () => {
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
@@ -36,11 +36,15 @@ export const ProfileButton = () => {
 
   return (
     <button
-      className="flex size-full items-center justify-center text-secondary md:text-primary"
+      className="flex size-full items-center justify-center text-primary-bg-dark md:text-primary-bg-dark"
       onClick={onClick}
     >
       {isProfileOpen ? (
-        <IconX className="text-secondary" width={iconSize} height={iconSize} />
+        <IconX
+          className="text-primary-bg-dark"
+          width={iconSize}
+          height={iconSize}
+        />
       ) : session?.user?.image ? (
         <img
           className="rounded"
@@ -50,7 +54,7 @@ export const ProfileButton = () => {
           alt={t('User avatar') || ''}
         />
       ) : (
-        <UserIcon width={iconSize} height={iconSize} />
+        <UserMobileIcon width={iconSize} height={iconSize} />
       )}
     </button>
   );

@@ -63,7 +63,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">
           <label
-            className="mb-1 flex text-xs text-secondary"
+            className="mb-1 flex text-xs text-secondary-bg-dark"
             htmlFor="addressNameInput"
           >
             {t('Address')}
@@ -91,7 +91,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
 
         <div className="mb-5">
           <label
-            className="mb-1 flex text-xs text-secondary"
+            className="mb-1 flex text-xs text-secondary-bg-dark"
             htmlFor="titleInput"
           >
             {t('Title')}

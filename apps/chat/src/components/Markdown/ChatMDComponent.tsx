@@ -71,7 +71,7 @@ export const getMDComponents = (
     },
     th({ children }) {
       return (
-        <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">
+        <th className="text-primary-bg-dark break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm">
           {children}
         </th>
       );
@@ -110,7 +110,7 @@ const ChatMDComponent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
-    'prose min-w-full dark:prose-invert prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
+    'prose min-w-full prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
     {
       'max-w-none': isChatFullWidth,
       'text-sm': isOverlay,

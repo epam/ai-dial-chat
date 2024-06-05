@@ -89,7 +89,7 @@ export const ChatCompareSelect = ({
           <h5 className="text-base font-semibold">
             {t('Select conversation to compare with')}
           </h5>
-          <span className="text-secondary">
+          <span className="text-tertiary-bg-light">
             (
             {t(
               'Only conversations containing the same number of messages can be compared.',
@@ -104,11 +104,11 @@ export const ChatCompareSelect = ({
             onChange={handleChangeShowAll}
             title=""
             type="checkbox"
-            className="checkbox peer"
+            className="checkbox peer hover:text-pr-primary-700"
           />
           <IconCheck
             size={16}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+            className="pointer-events-none invisible absolute text-pr-primary-700 peer-checked:visible"
           />
           <label className="" htmlFor="showAllCheckbox">
             {t('Show all conversations')}

@@ -97,3 +97,15 @@ export enum ApiKeys {
   Conversations = 'conversations',
   Prompts = 'prompts',
 }
+
+export interface TextColor {
+  primary: string;
+  secondary: string;
+}
+
+export enum TextColors {
+  PRIMARY_BG_DARK = 'text-primary-bg-dark',
+  SECONDARY_BG_DARK = 'text-primary-bg-dark',
+  PRIMARY_BG_LIGHT = 'text-primary-bg-light',
+  SECONDARY_BG_LIGHT = 'text-primary-bg-light',
+}

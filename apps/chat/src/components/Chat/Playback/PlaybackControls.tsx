@@ -217,13 +217,13 @@ export const PlaybackControls = ({
           data-qa="playback-prev"
           onClick={handlePrevMessage}
           disabled={activeIndex === 0 && phase !== 'MESSAGE'}
-          className="absolute bottom-3 left-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+          className="absolute bottom-3 left-4 rounded text-quaternary-bg-light outline-none hover:text-primary-bg-light disabled:cursor-not-allowed disabled:text-controls-disable"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
         </button>
         <div
           ref={nextMessageBoxRef}
-          className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
+          className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded-full border border-secondary bg-layer-2 px-12 py-3 text-left shadow-primary outline-none placeholder:text-xs placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (
@@ -238,7 +238,7 @@ export const PlaybackControls = ({
                   <span
                     className={classNames(
                       'break-words',
-                      phase === 'EMPTY' && 'text-secondary',
+                      phase === 'EMPTY' && 'text-quaternary-bg-light',
                     )}
                     data-qa="playback-message-content"
                   >
@@ -255,7 +255,7 @@ export const PlaybackControls = ({
                   <button
                     data-qa="playback-next"
                     onClick={handlePlayNextMessage}
-                    className="absolute bottom-3 right-4 rounded outline-none hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    className="absolute bottom-3 right-4 rounded text-quaternary-bg-light outline-none hover:text-primary-bg-light disabled:cursor-not-allowed disabled:text-controls-disable"
                     disabled={isMessageStreaming || !isNextMessageInStack}
                   >
                     <IconPlayerPlay size={20} className="shrink-0" />

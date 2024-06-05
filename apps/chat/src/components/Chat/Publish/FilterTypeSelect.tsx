@@ -35,18 +35,19 @@ export function FilterTypeSelect({
   return (
     <div
       data-qa={`filter-selector-${id}`}
-      className="h-[38px] w-full max-w-[140px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary"
+      className="rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary h-[38px] w-full max-w-[140px] grow border border-secondary bg-layer-2"
     >
       <Menu
         className="w-full px-3"
         onOpenChange={setIsOpen}
+        listClassName="rounded-primary shadow-primary border border-secondary bg-layer-2 text-primary-bg-light"
         trigger={
           <div className="flex items-center justify-between gap-2">
             {selectedType}
             <IconChevronDown
               data-qa={`open-filter-dropdown-${id}`}
               className={classNames(
-                'shrink-0 text-primary transition-all',
+                'text-primary-bg-light shrink-0 transition-all',
                 isOpen && 'rotate-180',
               )}
               width={18}
@@ -55,7 +56,7 @@ export function FilterTypeSelect({
           </div>
         }
       >
-        <div className="bg-layer-3">
+        <div>
           {filterTypes.map((filterType) => (
             <MenuItem
               key={filterType}

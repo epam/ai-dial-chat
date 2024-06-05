@@ -66,7 +66,7 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
     <div
       className={classNames(
         'flex items-center gap-2',
-        isNotAllowed && 'text-secondary',
+        isNotAllowed && 'text-secondary-bg-light',
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
@@ -135,9 +135,9 @@ export const ConversationSettings = ({
   const isPlayback = conversation.playback?.isPlayback;
 
   return (
-    <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
+    <div className="flex w-full flex-col overflow-hidden rounded-b-primary bg-layer-1 shadow-primary">
       <div
-        className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1"
+        className="relative size-full divide-x divide-secondary overflow-auto md:grid md:grid-cols-3 md:grid-rows-1"
         data-qa="conversation-settings"
       >
         <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
@@ -153,7 +153,7 @@ export const ConversationSettings = ({
           />
         </div>
         <div
-          className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+          className="col-span-2 flex shrink flex-col divide-y divide-secondary overflow-auto bg-layer-2"
           data-qa="entity-settings"
         >
           {!conversation.replay?.replayAsIs ? (
@@ -201,17 +201,17 @@ export const ConversationSettings = ({
                   />
                 </SettingContainer>
               )}
-              {(!model || model.type !== EntityType.Application) && (
-                <SettingContainer>
-                  <Addons
-                    preselectedAddonsIds={model?.selectedAddons || []}
-                    selectedAddonsIds={selectedAddons}
-                    onChangeAddon={onChangeAddon}
-                    onApplyAddons={onApplyAddons}
-                    disabled={isPlayback}
-                  />
-                </SettingContainer>
-              )}
+              {/*{(!model || model.type !== EntityType.Application) && (*/}
+              <SettingContainer>
+                <Addons
+                  preselectedAddonsIds={model?.selectedAddons || []}
+                  selectedAddonsIds={selectedAddons}
+                  onChangeAddon={onChangeAddon}
+                  onApplyAddons={onApplyAddons}
+                  disabled={isPlayback}
+                />
+              </SettingContainer>
+              {/*)}*/}
             </>
           ) : (
             <ReplayAsIsDescription
@@ -221,7 +221,7 @@ export const ConversationSettings = ({
         </div>
         {isCloseEnabled && (
           <button
-            className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
+            className="absolute right-3 top-3 text-secondary-bg-dark hover:text-pr-primary-700"
             onClick={onClose}
           >
             <IconX height={24} width={24} />

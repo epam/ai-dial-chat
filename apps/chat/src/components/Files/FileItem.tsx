@@ -114,7 +114,7 @@ export const FileItem = ({
       }}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary">
+        <div className="text-secondary-bg-dark">
           {!isSelected && item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
@@ -155,14 +155,14 @@ export const FileItem = ({
                 )}
               >
                 <input
-                  className="checkbox peer size-[18px] bg-layer-3"
+                  className="checkbox peer size-[18px]"
                   type="checkbox"
                   checked={isSelected}
                   onChange={handleToggleFile}
                 />
                 <IconCheck
                   size={18}
-                  className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                  className="pointer-events-none invisible absolute text-quaternary-bg-light peer-checked:visible"
                 />
               </div>
             )}
@@ -171,7 +171,7 @@ export const FileItem = ({
           className={classNames(
             'block max-w-full truncate whitespace-pre',
             item.status === UploadStatus.FAILED && 'text-error',
-            isSelected && 'text-accent-primary',
+            isSelected && 'text-pr-primary-700',
           )}
         >
           {item.name}
@@ -190,7 +190,7 @@ export const FileItem = ({
         {item.status === UploadStatus.FAILED && (
           <button onClick={handleRetry}>
             <IconReload
-              className="shrink-0 text-secondary hover:text-accent-primary"
+              className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
               size={18}
             />
           </button>
@@ -198,7 +198,7 @@ export const FileItem = ({
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
             <IconX
-              className="shrink-0 text-secondary hover:text-accent-primary"
+              className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
               size={18}
             />
           </button>

@@ -94,7 +94,9 @@ export default function SearchFiltersView({
         <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
           <IconFilter
             size={18}
-            className={classNames('text-secondary hover:text-accent-primary')}
+            className={classNames(
+              'text-secondary-bg-dark hover:text-accent-primary',
+            )}
           />
           {searchFilters !== SearchFilters.None && (
             <IconCircleFilled

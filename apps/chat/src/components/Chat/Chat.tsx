@@ -71,7 +71,6 @@ enum DocumentId {
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
-  const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
@@ -588,7 +587,7 @@ export const ChatView = memo(() => {
 
   return (
     <div
-      className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
+      className="relative min-w-0 shrink grow basis-0 overflow-y-auto text-primary-bg-light"
       data-qa="chat"
       id="chat"
     >
@@ -741,7 +740,6 @@ export const ChatView = memo(() => {
                                   onChangeTemperature={(temperature) =>
                                     handleChangeTemperature(conv, temperature)
                                   }
-                                  appName={appName}
                                   onApplyAddons={handleOnApplyAddons}
                                 />
                               </div>

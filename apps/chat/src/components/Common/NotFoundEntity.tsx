@@ -24,12 +24,12 @@ export const NotFoundEntity = ({
   return (
     <div
       className={classNames(
-        'flex flex-col items-center justify-center',
+        'flex flex-col items-center justify-center text-primary-bg-light',
         containerClassName || 'h-full',
       )}
       data-qa={dataQa}
     >
-      <IconAlertTriangle stroke={1} className="text-secondary" size={60} />
+      <IconAlertTriangle stroke={1} size={60} />
       <p className="mt-3 text-center text-sm">{t(`${entity} not found.`)}</p>
       {additionalText && (
         <p className="mt-1 text-center text-sm">{t(additionalText)}</p>

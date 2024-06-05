@@ -1,13 +1,12 @@
-import { IconX } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { IconSearch, IconX } from '@tabler/icons-react';
+import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-
-import classNames from 'classnames';
 
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -15,37 +14,21 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import ModelsDialogFilterRenderer from '@/src/components/Chat/ModelsDialogFilterRenderer';
+import ContextMenu from '@/src/components/Common/ContextMenu';
 import Modal from '@/src/components/Common/Modal';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { ModelList } from './ModelList';
+
+import FilterIcon from '@/public/images/icons/filter.svg';
 
 interface ModelsDialogProps {
   selectedModelId: string | undefined;
   isOpen: boolean;
   onModelSelect: (selectedModelId: string, rearrange?: boolean) => void;
   onClose: () => void;
-}
-
-interface Model {
-  id: string;
-  name: string;
-  isDefault: boolean;
-  description: string;
-  iconUrl: string;
-  type: EntityType;
-  limits?: {
-    maxRequestTokens: number;
-    maxResponseTokens: number;
-    maxTotalTokens: number;
-    isMaxRequestTokensCustom: boolean;
-  };
-  features: {
-    systemPrompt: boolean;
-    truncatePrompt: boolean;
-    urlAttachments: boolean;
-  };
-  inputAttachmentTypes?: string[];
 }
 
 const getFilteredEntities = (
@@ -83,28 +66,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
     useState<DialAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-
-  const countEntityTypes = (models: Model[]): Record<EntityType, number> => {
-    const counts: Record<EntityType, number> = {
-      model: 0,
-      assistant: 0,
-      application: 0,
-      addon: 0,
-    };
-
-    models.forEach((model) => {
-      if (counts[model.type] !== undefined) {
-        counts[model.type]++;
-      }
-    });
-
-    return counts;
-  };
-
-  const typeCounts = useMemo(
-    () => countEntityTypes(models as Model[]),
-    [models],
-  );
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(
@@ -161,6 +122,44 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     [onClose, onModelSelect],
   );
 
+  const onClickMenuItemHandler = (entityType: any) => {
+    handleFilterType(entityType);
+  };
+
+  const menuItems: DisplayMenuItemProps[] = [
+    {
+      display: true,
+      name: t('Models'),
+      dataQa: 'models',
+      customTriggerData: {
+        type: EntityType.Model,
+        isSelected: entityTypes.includes(EntityType.Model),
+      },
+    },
+    {
+      display: false,
+      name: t('Assistants'),
+      dataQa: 'assistants',
+      customTriggerData: {
+        type: EntityType.Assistant,
+        isSelected: entityTypes.includes(EntityType.Assistant),
+      },
+    },
+    {
+      display: true,
+      name: t('Applications'),
+      dataQa: 'applications',
+      customTriggerData: {
+        type: EntityType.Application,
+        isSelected: entityTypes.includes(EntityType.Application),
+      },
+    },
+  ].map((item) => ({
+    ...item,
+    onClick: onClickMenuItemHandler,
+    CustomTriggerRenderer: ModelsDialogFilterRenderer,
+  }));
+
   return (
     <Modal
       dataQa="models-dialog"
@@ -169,20 +168,25 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       overlayClassName="fixed inset-0 top-[48px]"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose
-      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto pb-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
     >
-      <div className="flex justify-between px-3 md:px-5">
+      <div className="text-primary-bg-dark flex justify-between bg-layer-3 px-3 py-6 text-xl font-medium md:px-5">
         {t('Talk to')}
         <button
           onClick={onClose}
-          className="text-secondary hover:text-accent-primary"
+          className="text-primary-bg-dark hover:text-accent-primary"
           data-qa="close-models-dialog"
         >
           <IconX height={24} width={24} />
         </button>
       </div>
 
-      <div className="px-3 md:px-5">
+      <div className="relative px-3 md:px-5">
+        <IconSearch
+          className="absolute left-9 top-2.5 md:left-11"
+          width={18}
+          height={18}
+        />
         <input
           name="titleInput"
           placeholder={t('Search model or application') || ''}
@@ -190,53 +194,22 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           onChange={(e) => {
             handleSearch(e.target.value);
           }}
-          className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary m-0 w-full rounded-full border border-secondary bg-layer-2 py-2 pl-14 pr-28 outline-none"
         ></input>
-      </div>
-
-      <div className="flex gap-2 px-3 md:px-5">
-        <button
-          className={classNames(
-            'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
-            entityTypes.includes(EntityType.Model)
-              ? 'border-accent-primary bg-accent-primary-alpha'
-              : 'border-primary bg-layer-4 hover:border-transparent',
-          )}
-          onClick={() => {
-            handleFilterType(EntityType.Model);
-          }}
-          data-qa="models-tab"
-        >
-          {`${t('Models')} (${typeCounts.model})`}
-        </button>
-        {/*<button*/}
-        {/*  className={classNames(*/}
-        {/*    'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',*/}
-        {/*    entityTypes.includes(EntityType.Assistant)*/}
-        {/*      ? 'border-accent-primary bg-accent-primary-alpha'*/}
-        {/*      : 'border-primary bg-layer-4 hover:border-transparent',*/}
-        {/*  )}*/}
-        {/*  onClick={() => {*/}
-        {/*    handleFilterType(EntityType.Assistant);*/}
-        {/*  }}*/}
-        {/*  data-qa="assistants-tab"*/}
-        {/*>*/}
-        {/*  {`${t('Assistants')} (${typeCounts.assistant})`}*/}
-        {/*</button>*/}
-        <button
-          className={classNames(
-            'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
-            entityTypes.includes(EntityType.Application)
-              ? 'border-accent-primary bg-accent-primary-alpha'
-              : 'border-primary bg-layer-4 hover:border-transparent',
-          )}
-          onClick={() => {
-            handleFilterType(EntityType.Application);
-          }}
-          data-qa="applications-tab"
-        >
-          {`${t('Applications')} (${typeCounts.application})`}
-        </button>
+        <ContextMenu
+          menuItems={menuItems}
+          triggerIconClassName="absolute right-8 md:right-12 cursor-pointer max-h-[38px]"
+          TriggerCustomRenderer={
+            <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
+              <div className="text-quaternary-bg-light hover:text-primary-bg-light flex items-end">
+                <FilterIcon width={20} height={20} className="inline-block" />
+                <span className="hidden pl-2 md:inline-block">
+                  {t('Filters')}
+                </span>
+              </div>
+            </Tooltip>
+          }
+        ></ContextMenu>
       </div>
 
       <div className="flex grow flex-col gap-4 overflow-auto px-3 pb-2 md:px-5">
@@ -248,16 +221,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
               <ModelList
                 entities={filteredModelsEntities}
                 heading={t('Models') || ''}
-                onSelect={handleSelectModel}
-                selectedModelId={selectedModelId}
-                allEntities={models}
-                searchTerm={searchTerm}
-              />
-            )}
-            {filteredAssistantsEntities.length > 0 && (
-              <ModelList
-                entities={filteredAssistantsEntities}
-                heading={t('Assistants') || ''}
                 onSelect={handleSelectModel}
                 selectedModelId={selectedModelId}
                 allEntities={models}

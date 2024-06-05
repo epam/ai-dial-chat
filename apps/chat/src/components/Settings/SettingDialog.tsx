@@ -124,21 +124,25 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[500px] overflow-y-auto p-4 align-bottom transition-all md:max-h-[400px]"
+      containerClassName="inline-block w-[500px] overflow-y-auto pb-4 align-bottom transition-all md:max-h-[400px]"
       dataQa="settings-modal"
+      hideClose
       state={open ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <button
-        className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-        onClick={handleClose}
-      >
-        <IconX height={24} width={24} />
-      </button>
-      <div className="mb-4 text-base font-bold">{t('Settings')}</div>
-      <div className="mb-4 flex flex-col gap-5">
+      <div className="front-medium mb-4 flex justify-between bg-layer-3 px-3 py-4 text-xl text-primary-bg-dark md:px-5">
+        {t('Settings')}
+        <button
+          onClick={handleClose}
+          className="text-primary-bg-dark hover:text-accent-primary"
+        >
+          <IconX height={24} width={24} />
+        </button>
+      </div>
+
+      <div className="mb-4 flex flex-col gap-5 px-3 md:px-5">
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
@@ -159,7 +163,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           <ToggleSwitchLabeled
             isOn={isChatFullWidthLocal}
             labelText={t('Full width chat')}
-            labelClassName="basis-1/3 md:basis-1/4"
+            labelClassName="basis-1/3 md:basis-1/4 font-medium"
             handleSwitch={onChangeHandlerFullWidth}
             switchOnText={t('ON')}
             switchOFFText={t('OFF')}
@@ -167,7 +171,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pr-3 md:pr-5">
         <button
           type="button"
           ref={saveBtnRef}

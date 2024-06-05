@@ -308,7 +308,7 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
             <h2 className="text-base font-semibold">
               {t('Some items failed to import due to duplicate names')}
             </h2>
-            <p className="text-secondary">
+            <p className="text-secondary-bg-dark">
               {t(
                 'Add a postfix, ignore or replace existing items with importing ones.',
               )}

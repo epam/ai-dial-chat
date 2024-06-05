@@ -51,9 +51,9 @@ const ChatActionsBlock = () => {
   }
 
   return (
-    <div className="flex px-2 py-1" id={TourGuideId.newConversation}>
+    <div className="flex">
       <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
+        className="hover:bg-accent-quaternary mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 disabled:cursor-not-allowed"
         onClick={() => {
           talkTo && dispatch(ConversationsActions.setTalkTo(''));
           dispatch(
@@ -65,11 +65,12 @@ const ChatActionsBlock = () => {
         }}
         disabled={messageIsStreaming || isActiveNewConversationRequest}
         data-qa="new-entity"
+        id={TourGuideId.newConversation}
       >
         {isActiveNewConversationRequest ? (
-          <Spinner size={18} className="text-secondary" />
+          <Spinner size={18} className={'text-primary-bg-dark'} />
         ) : (
-          <PlusIcon className="text-secondary" width={18} height={18} />
+          <PlusIcon width={18} height={18} />
         )}
         {t('New conversation')}
       </button>

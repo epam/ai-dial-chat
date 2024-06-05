@@ -11,7 +11,7 @@ export const NoResultsFound = () => {
       className="flex flex-col items-center justify-center gap-3"
       data-qa="no-data"
     >
-      <Magnifier height={60} width={60} className="text-secondary" />
+      <Magnifier height={60} width={60} className="text-primary-bg-dark" />
       <span>{t('No results found')}</span>
     </div>
   );
