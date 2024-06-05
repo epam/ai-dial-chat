@@ -109,7 +109,7 @@ export const FileManagerModal = ({
   const [deletingFileIds, setDeletingFileIds] = useState<string[]>([]);
   const [deletingFolderIds, setDeletingFolderIds] = useState<string[]>([]);
 
-  const hightlightFolderIds = useMemo(() => {
+  const highlightFolderIds = useMemo(() => {
     return uniq(
       selectedFolderIds
         .flatMap((folderId) => getParentFolderIdsFromFolderId(folderId))
@@ -530,7 +530,7 @@ export const FileManagerModal = ({
                               searchTerm={searchQuery}
                               currentFolder={folder}
                               allFolders={folders}
-                              highlightedFolders={hightlightFolderIds}
+                              highlightedFolders={highlightFolderIds}
                               isInitialRenameEnabled
                               newAddedFolderId={newFolderId}
                               displayCaretAlways
