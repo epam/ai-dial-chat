@@ -2429,6 +2429,47 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
     ),
   );
 
+const uploadConversationsWithContentRecursiveEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversationsWithContentRecursive.match),
+    mergeMap(({ payload }) =>
+      ConversationService.getConversations(payload.path, true).pipe(
+        mergeMap((conversations) => {
+          const paths = uniq(
+            conversations.flatMap((c) =>
+              getParentFolderIdsFromFolderId(c.folderId),
+            ),
+          );
+
+          return concat(
+            of(
+              ConversationsActions.addConversations({
+                conversations,
+              }),
+            ),
+            of(
+              ConversationsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Chat),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            of(
+              ConversationsActions.uploadConversationsByIds({
+                conversationIds: conversations.map((c) => c.id),
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error('Error during upload conversations and folders', err);
+          return of(ConversationsActions.uploadConversationsFail());
+        }),
+      ),
+    ),
+  );
+
 const toggleFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.toggleFolder.match),
@@ -2602,6 +2643,7 @@ export const ConversationsEpics = combineEpics(
 
   uploadConversationsWithFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
+  uploadConversationsWithContentRecursiveEpic,
   uploadConversationsFailEpic,
   toggleFolderEpic,
   openFolderEpic,

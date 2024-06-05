@@ -266,7 +266,7 @@ export default function ItemContextMenu({
         onClick: onPublish,
         disabled: disableAll,
       },
-      // TODO: implement Unpublish folder in https://github.com/epam/ai-dial-chat/issues/318
+      // TODO: implement publication update in https://github.com/epam/ai-dial-chat/issues/318
       // {
       //   name: t('Update'),
       //   dataQa: 'update-publishing',

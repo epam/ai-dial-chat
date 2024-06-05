@@ -51,7 +51,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import { PublishModal } from '../../Chat/Publish/PublishWizard';
-import UnpublishModal from '../../Chat/UnpublishModal';
+import { UnpublishModal } from '../../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
@@ -409,8 +409,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       )}
       {isUnpublishing && (
         <UnpublishModal
+          subtitle={t('Prompt will no longer be visible to the organization')}
           type={SharingType.Prompt}
           entity={prompt}
+          entities={[prompt]}
           isOpen
           onClose={handleCloseUnpublishModal}
         />
