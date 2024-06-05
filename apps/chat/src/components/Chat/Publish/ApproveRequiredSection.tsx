@@ -47,7 +47,9 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
     ConversationsSelectors.selectSelectedConversationsIds,
   );
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(
+    selectedPublication?.url === publication.url,
+  );
 
   const selectedItemIsPublication = useMemo(
     () =>
@@ -59,6 +61,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
 
   const handlePublicationSelect = useCallback(() => {
     setIsOpen((value) => !value);
+
     if (publication.uploadStatus !== UploadStatus.LOADED) {
       dispatch(PublicationActions.uploadPublication({ url: publication.url }));
     } else {
