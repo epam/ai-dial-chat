@@ -155,20 +155,13 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
             actions.push(
               from(
-                rootFolderPaths.map((path) =>
-                  isConversationId(path)
-                    ? of(
-                        ConversationsActions.uploadConversationsWithFoldersRecursive(
-                          { noLoader: true, path: path },
-                        ),
-                      )
-                    : of(
-                        PromptsActions.uploadPromptsWithFoldersRecursive({
-                          noLoader: true,
-                          path: path,
-                        }),
-                      ),
-                ),
+                rootFolderPaths.map((path) => {
+                  const actionCreator = isConversationId(path)
+                    ? ConversationsActions.uploadConversationsWithFoldersRecursive
+                    : PromptsActions.uploadPromptsWithFoldersRecursive;
+
+                  return of(actionCreator({ noLoader: true, path }));
+                }),
               ).pipe(mergeAll()),
             );
           }
