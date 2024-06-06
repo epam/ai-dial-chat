@@ -26,6 +26,7 @@ export interface UIState {
   chatbarWidth?: number;
   promptbarWidth?: number;
   customLogo?: string;
+  collapsedSections: Record<FeatureType, string[]>;
 }
 
 export const openFoldersInitialState = {
@@ -49,6 +50,7 @@ const initialState: UIState = {
   isChatFullWidth: false,
   showSelectToMigrateWindow: false,
   customLogo: '',
+  collapsedSections: openFoldersInitialState,
 };
 
 export const uiSlice = createSlice({
@@ -187,6 +189,17 @@ export const uiSlice = createSlice({
     ) => {
       state.showSelectToMigrateWindow = payload;
     },
+    setCollapsedSections: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        featureType: FeatureType;
+        collapsedSections: string[];
+      }>,
+    ) => {
+      state.collapsedSections[payload.featureType] = payload.collapsedSections;
+    },
   },
 });
 
@@ -278,6 +291,13 @@ export const selectIsAnyMenuOpen = createSelector(
     state.isProfileOpen,
 );
 
+export const selectCollapsedSections = createSelector(
+  [rootSelector, (_state, featureType: FeatureType) => featureType],
+  (state, featureType) => {
+    return state.collapsedSections[featureType];
+  },
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -298,4 +318,5 @@ export const UISelectors = {
   selectCustomLogo,
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,
+  selectCollapsedSections,
 };
