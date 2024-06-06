@@ -1052,6 +1052,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
                     canAttachFolders={canAttachFolders}
+                    isSidePanelFolder={isSidePanelFolder}
                   />
                 </Fragment>
               );
