@@ -368,7 +368,7 @@ export function PublishModal({
                 >
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
                     <Tooltip
-                      tooltip={constructPath(t(PUBLISHING_FOLDER_NAME), path)}
+                      tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
                       contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                       triggerClassName="truncate whitespace-pre"
                     >

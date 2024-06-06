@@ -38,6 +38,7 @@ interface FolderContextMenuProps {
   featureType: FeatureType;
   isOpen?: boolean;
   isEmpty?: boolean;
+  isSidePanelFolder?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
@@ -65,6 +66,7 @@ export const FolderContextMenu = ({
   onUpload,
   isOpen,
   isEmpty,
+  isSidePanelFolder,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -146,7 +148,10 @@ export const FolderContextMenu = ({
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
-          isPublishingEnabled && isItemPublic(folder.id) && !!onUnpublish,
+          isPublishingEnabled &&
+          isItemPublic(folder.id) &&
+          !!onUnpublish &&
+          isSidePanelFolder,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -199,8 +204,9 @@ export const FolderContextMenu = ({
       onUnshare,
       isPublishingEnabled,
       onPublish,
-      onUnpublish,
       onPublishUpdate,
+      onUnpublish,
+      isSidePanelFolder,
       onDelete,
       featureType,
       onAddFolder,

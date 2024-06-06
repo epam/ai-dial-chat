@@ -358,7 +358,7 @@ export function ChatFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: t(PUBLISHING_FOLDER_NAME),
+          name: PUBLISHING_FOLDER_NAME,
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
