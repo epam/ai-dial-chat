@@ -8,6 +8,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ApiUtils } from '../server/api';
+import { isAbsoluteUrl } from './attachments';
 import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
 import { isFolderId } from './id';
@@ -172,8 +173,7 @@ const parseAttachmentUrl = (url: string) => {
   };
 };
 
-export const isAttachmentLink = (url: string): boolean =>
-  url.startsWith('http') || url.startsWith('//');
+export const isAttachmentLink = (url: string): boolean => isAbsoluteUrl(url);
 
 export const getDialFilesFromAttachments = (
   attachments: Attachment[] | undefined,

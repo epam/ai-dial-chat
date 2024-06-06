@@ -18,14 +18,14 @@ import {
 import { prepareEntityName } from './common';
 import { constructPath } from './file';
 import { getConversationRootId } from './id';
+import { isAbsoluteUrl } from './attachments';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
     url &&
     !url.startsWith('metadata') &&
     !url.startsWith('files') &&
-    !url.startsWith('http') &&
-    !url.startsWith('//')
+    !isAbsoluteUrl(url) &&
       ? constructPath('files', url)
       : url;
 
