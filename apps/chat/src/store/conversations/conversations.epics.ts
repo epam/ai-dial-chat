@@ -59,7 +59,6 @@ import {
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
-  getRootFolderIdFromEntityId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -1054,10 +1053,12 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
             .map(
               (attachment) =>
                 attachment.url &&
-                getRootFolderIdFromEntityId(decodeURIComponent(attachment.url)),
+                getParentFolderIdsFromEntityId(
+                  decodeURIComponent(attachment.url),
+                ),
             )
             .filter(Boolean),
-        ) as string[];
+        ).flat();
 
         if (attachmentRootFolders.length) {
           actions.push(
