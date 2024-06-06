@@ -365,6 +365,7 @@ export const filesSlice = createSlice({
             status: payload.status,
           };
         }
+
         return folder;
       });
     },

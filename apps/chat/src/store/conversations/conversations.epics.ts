@@ -55,11 +55,11 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getFolderFromId,
-  getFolderIdFromEntityId,
   getFoldersFromIds,
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
+  getRootFolderIdFromEntityId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -1049,21 +1049,21 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
         messages[payload.messageIndex].custom_content?.attachments;
 
       if (attachments) {
-        const attachmentFolders = uniq(
+        const attachmentRootFolders = uniq(
           attachments
             .map(
               (attachment) =>
                 attachment.url &&
-                getFolderIdFromEntityId(decodeURIComponent(attachment.url)),
+                getRootFolderIdFromEntityId(decodeURIComponent(attachment.url)),
             )
             .filter(Boolean),
         ) as string[];
 
-        if (attachmentFolders.length) {
+        if (attachmentRootFolders.length) {
           actions.push(
             of(
               FilesActions.updateFoldersStatus({
-                foldersIds: attachmentFolders,
+                foldersIds: attachmentRootFolders,
                 status: UploadStatus.UNINITIALIZED,
               }),
             ),
