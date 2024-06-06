@@ -7,7 +7,6 @@ import { FeatureType } from '@/src/types/common';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import CollapsibleSection from '../Common/CollapsibleSection';
 import { ConversationComponent } from './Conversation';
