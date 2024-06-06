@@ -1048,7 +1048,7 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
         messages[payload.messageIndex].custom_content?.attachments;
 
       if (attachments) {
-        const attachmentRootFolders = uniq(
+        const attachmentParentFolders = uniq(
           attachments
             .map(
               (attachment) =>
@@ -1060,11 +1060,11 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
             .filter(Boolean),
         ).flat();
 
-        if (attachmentRootFolders.length) {
+        if (attachmentParentFolders.length) {
           actions.push(
             of(
               FilesActions.updateFoldersStatus({
-                foldersIds: attachmentRootFolders,
+                foldersIds: attachmentParentFolders,
                 status: UploadStatus.UNINITIALIZED,
               }),
             ),
