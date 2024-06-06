@@ -86,6 +86,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                 ) {
                   return null;
                 }
+
                 return (
                   <div className="relative" key={folder.id}>
                     <Folder
