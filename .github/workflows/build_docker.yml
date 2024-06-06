@@ -1,0 +1,32 @@
+name: Build and push docker image
+
+on:
+  push:
+    branches: [development]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to push image to (Dev/Uat/Prod)'
+        required: true
+        default: 'Dev'
+
+jobs:
+  build-image:
+    environment: ${{ github.event.inputs.environment || 'Dev' }}
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image to ACR
+        run: |
+          az acr build --image ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/dial/ai-dial-chat:${{ github.sha }} --registry ${{ vars.AZURE_CONTAINER_REGISTRY }} -g ${{ vars.RESOURCE_GROUP }} .
