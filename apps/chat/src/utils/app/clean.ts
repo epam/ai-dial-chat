@@ -15,17 +15,17 @@ import {
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
+import { isAbsoluteUrl } from './attachments';
 import { prepareEntityName } from './common';
 import { constructPath } from './file';
 import { getConversationRootId } from './id';
-import { isAbsoluteUrl } from './attachments';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
     url &&
     !url.startsWith('metadata') &&
     !url.startsWith('files') &&
-    !isAbsoluteUrl(url) &&
+    !isAbsoluteUrl(url)
       ? constructPath('files', url)
       : url;
 
