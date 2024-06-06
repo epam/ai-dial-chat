@@ -311,7 +311,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             : of(conversations),
         }),
     ),
-    switchMap(({ names, lastConversation, conversations }) => {
+    switchMap(({ names, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
         map((state) => {
@@ -344,8 +344,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   id: model?.id || process.env.DEFAULT_MODEL || ModelId.GPT_35,
                 },
                 prompt: DEFAULT_SYSTEM_PROMPT,
-                temperature:
-                  lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
+                temperature: DEFAULT_TEMPERATURE,
                 selectedAddons: [],
                 lastActivityDate: Date.now(),
                 status: UploadStatus.LOADED,
