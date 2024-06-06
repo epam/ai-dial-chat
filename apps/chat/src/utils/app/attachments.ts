@@ -4,9 +4,17 @@ export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {
     return undefined;
   }
-  return url.startsWith('data:') ||
-    url.startsWith('//') ||
-    url.startsWith('http')
+  const urlLower = url.toLowerCase();
+  return [
+    'data:',
+    '//',
+    'http://',
+    'https://',
+    'file://',
+    'ftp://',
+    'mailto:',
+    'telnet://',
+  ].some((prefix) => urlLower.startsWith(prefix))
     ? url
     : `api/${url}`;
 };
