@@ -262,10 +262,10 @@ export const PromptSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
-      (!!displayRootFiles &&
-        !isSelectedPublicationResource &&
-        rootPrompts.some(({ id }) => selectedPromptId === id));
+      !isSelectedPublicationResource &&
+      (rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+        (!!displayRootFiles &&
+          rootPrompts.some(({ id }) => selectedPromptId === id)));
     if (isSectionHighlighted !== shouldBeHighlighted) {
       setIsSectionHighlighted(shouldBeHighlighted);
     }
