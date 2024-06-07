@@ -45,15 +45,16 @@ export class BaseConversation extends SideBarEntities {
   }
 
   public async editConversationNameWithTick(newName: string) {
-    const input = await this.openEditConversationNameMode(newName);
+    await this.openEditConversationNameMode(newName);
+    const editInputActions = this.getEditInputActions();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );
-      await input.clickTickButton();
+      await editInputActions.clickTickButton();
       return respPromise;
     }
-    await input.clickTickButton();
+    await editInputActions.clickTickButton();
   }
 
   public async editConversationNameWithEnter(newName: string) {

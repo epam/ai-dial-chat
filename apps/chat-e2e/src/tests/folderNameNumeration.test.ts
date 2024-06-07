@@ -196,10 +196,8 @@ dialTest(
           ExpectedConstants.newFolderTitle,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const folderNameInput = await folderConversations.editFolderName(
-          expectedDuplicatedFolderName,
-        );
-        await folderNameInput.clickTickButton();
+        await folderConversations.editFolderName(expectedDuplicatedFolderName);
+        await folderConversations.getEditInputActions().clickTickButton();
 
         const errorMessage = await errorToast.getElementContent();
         expect

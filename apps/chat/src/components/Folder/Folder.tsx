@@ -771,6 +771,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             style={{
               paddingLeft: `${level * 1.5}rem`,
             }}
+            data-qa="edit-container"
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
@@ -835,7 +836,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
-              name="rename-input"
+              name="edit-input"
             />
           </div>
         ) : (

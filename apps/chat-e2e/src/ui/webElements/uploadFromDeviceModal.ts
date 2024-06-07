@@ -39,6 +39,18 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
+  public changeUploadToButton = this.getChildElementBySelector(
+    UploadFromDeviceModalSelectors.changeUploadTo,
+  );
+
+  public async changeUploadToLocation() {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'GET',
+    );
+    await this.changeUploadToButton.click();
+    await responsePromise;
+  }
+
   public getUploadedFile = (filename: string) => {
     const dotIndex = filename.lastIndexOf('.');
     const filenameValue =

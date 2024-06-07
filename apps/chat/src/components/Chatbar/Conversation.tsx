@@ -531,7 +531,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       data-qa="conversation"
     >
       {isRenaming ? (
-        <div className="flex w-full items-center gap-2 pr-12">
+        <div
+          className="flex w-full items-center gap-2 pr-12"
+          data-qa="edit-container"
+        >
           <ShareIcon
             {...conversation}
             isHighlighted={isHighlighted}
@@ -561,7 +564,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
-            name="rename-input"
+            name="edit-input"
             onChange={(e) =>
               setRenameValue(
                 e.target.value.replaceAll(notAllowedSymbolsRegex, ''),

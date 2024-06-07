@@ -6,11 +6,16 @@ import {
 } from '@/chat/types/share';
 import { MenuOptions } from '@/src/testData';
 import { Folders } from '@/src/ui/webElements/folders';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class FolderConversations extends Folders {
-  constructor(page: Page) {
-    super(page, ChatBarSelectors.pinnedChats(), ChatBarSelectors.conversation);
+  constructor(page: Page, parentLocator: Locator) {
+    super(
+      page,
+      parentLocator,
+      ChatBarSelectors.pinnedChats(),
+      ChatBarSelectors.conversation,
+    );
   }
 
   public async selectShareMenuOption() {

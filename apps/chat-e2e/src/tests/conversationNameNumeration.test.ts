@@ -8,7 +8,6 @@ import {
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
-import { Input } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -360,7 +359,6 @@ dialTest(
     let firstFolderConversation: Conversation;
     let secondFolderConversation: Conversation;
     let rootConversation: Conversation;
-    let input: Input;
 
     await dialTest.step(
       'Prepare two conversations inside folder and one in the root with equal name',
@@ -403,9 +401,8 @@ dialTest(
           secondFolderConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        input =
-          await conversations.openEditConversationNameMode(duplicatedName);
-        await input.clickTickButton();
+        await conversations.openEditConversationNameMode(duplicatedName);
+        await conversations.getEditInputActions().clickTickButton();
 
         await expect
           .soft(
@@ -422,7 +419,7 @@ dialTest(
             ),
           );
         await errorToast.closeToast();
-        await input.clickCancelButton();
+        await conversations.getEditInputActions().clickCancelButton();
       },
     );
 
@@ -526,10 +523,10 @@ dialTest(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const input = await conversations.openEditConversationNameMode(
+        const inputContainer = await conversations.openEditConversationNameMode(
           conversation.name,
         );
-        await input.clickTickButton();
+        await conversations.getEditInputActions().clickTickButton();
 
         await expect
           .soft(

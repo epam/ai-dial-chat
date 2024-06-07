@@ -4,8 +4,10 @@ import { BaseElement } from './baseElement';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Styles, Tags } from '@/src/ui/domData';
+import { EditSelectors } from '@/src/ui/selectors/editSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { Input } from '@/src/ui/webElements/input';
+import { EditInput } from '@/src/ui/webElements/editInput';
+import { EditInputActions } from '@/src/ui/webElements/editInputActions';
 import { Page } from '@playwright/test';
 
 export class SideBarEntities extends BaseElement {
@@ -16,16 +18,29 @@ export class SideBarEntities extends BaseElement {
     this.entitySelector = entitySelector;
   }
 
-  private entityInput!: Input;
+  private editEntityInput!: EditInput;
 
-  getEntityInput(selector: string): Input {
-    if (!this.entityInput) {
-      this.entityInput = new Input(
+  getEditEntityInput(selector: string): EditInput {
+    if (!this.editEntityInput) {
+      this.editEntityInput = new EditInput(
         this.page,
-        `${selector} >> ${SideBarSelectors.renameInput}`,
+        this.getElementLocator(),
+        `${selector} >> ${EditSelectors.editContainer}`,
       );
     }
-    return this.entityInput;
+    return this.editEntityInput;
+  }
+
+  private editInputActions!: EditInputActions;
+
+  getEditInputActions(): EditInputActions {
+    if (!this.editInputActions) {
+      this.editInputActions = new EditInputActions(
+        this.page,
+        this.getElementLocator(),
+      );
+    }
+    return this.editInputActions;
   }
 
   private dropdownMenu!: DropdownMenu;
@@ -93,7 +108,7 @@ export class SideBarEntities extends BaseElement {
   }
 
   protected async openEditEntityNameMode(selector: string, newName: string) {
-    const input = await this.getEntityInput(selector);
+    const input = await this.getEditEntityInput(selector);
     await input.editValue(newName);
     return input;
   }

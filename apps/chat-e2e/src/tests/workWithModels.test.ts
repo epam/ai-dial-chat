@@ -211,7 +211,7 @@ dialTest(
         await expect
           .soft(
             await chatMessages.getChatMessageTextarea(userRequests[1]),
-            ExpectedMessages.editModeIsClosed,
+            ExpectedMessages.editRequestModeIsClosed,
           )
           .toBeHidden();
 
