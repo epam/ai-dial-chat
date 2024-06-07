@@ -1,0 +1,60 @@
+name: Promote Docker Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      src_tag:
+        description: 'Source tag'
+        required: true
+      src_env:
+        description: 'Source registry (Dev/Uat/Prod)'
+        required: true
+        default: 'Dev'
+      dst_tag:
+        description: 'Destination tag'
+        required: true
+      dst_env:
+        description: 'Destination registry (Dev/Uat/Prod)'
+        required: true
+        default: 'Uat'
+
+env:
+  IMAGE_NAME: dial/ai-dial-chat
+
+jobs:
+  set-src-env:
+    environment: ${{ github.event.inputs.src_env }}
+    runs-on: ubuntu-latest
+    outputs:
+      AZURE_CONTAINER_REGISTRY: ${{ steps.set-env-vars.outputs.AZURE_CONTAINER_REGISTRY }}
+      RESOURCE_GROUP: ${{ steps.set-env-vars.outputs.RESOURCE_GROUP }}
+    steps:
+      - name: Set source environment variables and outputs
+        id: set-env-vars
+        run: |
+            echo "AZURE_CONTAINER_REGISTRY=${{ vars.AZURE_CONTAINER_REGISTRY }}" >> $GITHUB_OUTPUT
+            echo "RESOURCE_GROUP=${{ vars.RESOURCE_GROUP }}" >> $GITHUB_OUTPUT
+
+
+  promote-image:
+    environment: ${{ github.event.inputs.dst_env }}
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: [set-src-env]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image to ACR
+        run: |
+          az acr import --name ${{ vars.AZURE_CONTAINER_REGISTRY }} \
+          --source ${{ needs.set-src-env.outputs.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.event.inputs.src_tag }} \
+          --image ${{ env.IMAGE_NAME }}:${{ github.event.inputs.dst_tag }}

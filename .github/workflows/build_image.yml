@@ -1,4 +1,4 @@
-name: Build and push docker image
+name: Build and Push Docker Image
 
 on:
   push:
@@ -9,6 +9,9 @@ on:
         description: 'Environment to push image to (Dev/Uat/Prod)'
         required: true
         default: 'Dev'
+
+env:
+  IMAGE_NAME: dial/ai-dial-chat
 
 jobs:
   build-image:
@@ -29,4 +32,4 @@ jobs:
 
       - name: Build and push image to ACR
         run: |
-          az acr build --image ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/dial/ai-dial-chat:${{ github.sha }} --registry ${{ vars.AZURE_CONTAINER_REGISTRY }} -g ${{ vars.RESOURCE_GROUP }} .
+          az acr build --image ${{ vars.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} --registry ${{ vars.AZURE_CONTAINER_REGISTRY }} -g ${{ vars.RESOURCE_GROUP }} .
