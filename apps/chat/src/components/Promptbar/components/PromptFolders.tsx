@@ -249,7 +249,7 @@ export const PromptSection = ({
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-  const { selectedPromptId, isPublicationResource } = useAppSelector(
+  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
 
@@ -264,7 +264,7 @@ export const PromptSection = ({
     const shouldBeHighlighted =
       rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
       (!!displayRootFiles &&
-        !isPublicationResource &&
+        !isSelectedPublicationResource &&
         rootPrompts.some(({ id }) => selectedPromptId === id));
     if (isSectionHighlighted !== shouldBeHighlighted) {
       setIsSectionHighlighted(shouldBeHighlighted);
@@ -276,7 +276,7 @@ export const PromptSection = ({
     selectedPromptId,
     selectedFoldersIds,
     rootPrompts,
-    isPublicationResource,
+    isSelectedPublicationResource,
   ]);
 
   if (

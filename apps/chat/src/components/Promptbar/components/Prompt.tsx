@@ -80,12 +80,13 @@ export const PromptComponent = ({
       true,
     ),
   );
-  const { selectedPromptId, isPublicationResource } = useAppSelector(
+  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
   const isSelected =
     selectedPromptId === prompt.id &&
-    !!additionalItemData?.isPublicationResource === isPublicationResource;
+    !!additionalItemData?.isPublicationResource ===
+      isSelectedPublicationResource;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
@@ -390,7 +391,7 @@ export const PromptComponent = ({
           isSelected &&
           isModalPreviewMode &&
           !!additionalItemData?.isPublicationResource ===
-            isPublicationResource && (
+            isSelectedPublicationResource && (
             <PreviewPromptModal
               prompt={prompt}
               isOpen
