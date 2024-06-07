@@ -392,28 +392,23 @@ export const PromptComponent = ({
             />
           )}
         </div>
-        {showModal &&
-          isSelected &&
-          isModalPreviewMode &&
-          isPublicationResource === isSelectedPublicationResource && (
-            <PreviewPromptModal
-              prompt={prompt}
-              isOpen
-              isPublicationPreview={!!resourceToReview}
-              onClose={handleClose}
-              onDuplicate={
-                !resourceToReview
-                  ? (e) => {
-                      handleDuplicate(e);
-                      handleClose();
-                    }
-                  : undefined
-              }
-              onDelete={
-                !resourceToReview ? () => setIsDeleting(true) : undefined
-              }
-            />
-          )}
+        {showModal && isSelected && isModalPreviewMode && (
+          <PreviewPromptModal
+            prompt={prompt}
+            isOpen
+            isPublicationPreview={!!resourceToReview}
+            onClose={handleClose}
+            onDuplicate={
+              !resourceToReview
+                ? (e) => {
+                    handleDuplicate(e);
+                    handleClose();
+                  }
+                : undefined
+            }
+            onDelete={!resourceToReview ? () => setIsDeleting(true) : undefined}
+          />
+        )}
       </div>
 
       {isPublishing && (
