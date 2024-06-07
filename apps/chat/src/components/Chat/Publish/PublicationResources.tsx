@@ -38,12 +38,14 @@ interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
   rootFolder?: ShareEntity;
+  isOpen: boolean;
 }
 
 export const PromptPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  isOpen,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -90,7 +92,7 @@ export const PromptPublicationResources = ({
   }, [allFolders, resources, rootFolder]);
 
   return (
-    <>
+    <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.filter(Boolean).map((f) => {
         return (
           <Folder
@@ -146,7 +148,7 @@ export const PromptPublicationResources = ({
           />
         ),
       )}
-    </>
+    </div>
   );
 };
 
@@ -154,6 +156,7 @@ export const ConversationPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  isOpen,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -202,7 +205,7 @@ export const ConversationPublicationResources = ({
   }, [allFolders, resources, rootFolder]);
 
   return (
-    <>
+    <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.filter(Boolean).map((f) => {
         return (
           <Folder
@@ -254,7 +257,7 @@ export const ConversationPublicationResources = ({
           <ConversationComponent key={c.id} item={c} level={1} />
         ),
       )}
-    </>
+    </div>
   );
 };
 
