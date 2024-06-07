@@ -58,6 +58,9 @@ export const PromptPublicationResources = ({
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const { isSelectedPublicationResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const resourceUrls = useMemo(
     () => resources.map((r) => r.reviewUrl),
@@ -122,7 +125,11 @@ export const PromptPublicationResources = ({
               }
             }}
             featureType={FeatureType.Prompt}
-            highlightedFolders={forViewOnly ? undefined : highlightedFolders}
+            highlightedFolders={
+              !isSelectedPublicationResource || forViewOnly
+                ? undefined
+                : highlightedFolders
+            }
             folderClassName={classNames(forViewOnly && 'h-[38px]')}
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
