@@ -208,7 +208,6 @@ export function PublishModal({
           : otherTargetAudienceFilters;
       const folderRegExp = new RegExp(
         entity.folderId.split('/').slice(2).join('/'),
-        'g',
       );
 
       if (
@@ -364,13 +363,19 @@ export function PublishModal({
                   {t('Publish to')}
                 </label>
                 <button
-                  className="input-form mx-0 flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                  className="input-form button mx-0 flex grow items-center border-primary px-3 py-2"
                   onClick={handleFolderChange}
                 >
-                  <span className="truncate">
-                    {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
-                  </span>
-                  <span className="text-accent-primary">{t('Change')}</span>
+                  <div className="flex w-full justify-between truncate whitespace-pre break-all">
+                    <Tooltip
+                      tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
+                      contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                      triggerClassName="truncate whitespace-pre"
+                    >
+                      {constructPath(PUBLISHING_FOLDER_NAME, path)}
+                    </Tooltip>
+                    <span className="text-accent-primary">{t('Change')}</span>
+                  </div>
                 </button>
               </div>
             </section>

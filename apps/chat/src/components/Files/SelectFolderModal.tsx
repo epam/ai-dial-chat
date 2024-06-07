@@ -127,6 +127,7 @@ export const SelectFolderModal = ({
             newAddedFolderId: newFolderId,
             loadingFolderIds: loadingFolderIds,
             featureType: FeatureType.File,
+            isSidePanelFolder: false,
           }}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}

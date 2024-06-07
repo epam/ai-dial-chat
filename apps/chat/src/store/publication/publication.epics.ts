@@ -57,7 +57,7 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
-import { PromptsActions } from '../prompts/prompts.reducers';
+import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   PublicationActions,
@@ -523,21 +523,45 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
       PublicationService.approvePublication(payload.url).pipe(
         switchMap(() => {
           const actions: Observable<AnyAction>[] = [];
-          const publication = PublicationSelectors.selectSelectedPublication(
-            state$.value,
-          );
+          const selectedPublication =
+            PublicationSelectors.selectSelectedPublication(state$.value);
 
-          if (!publication) {
+          if (!selectedPublication) {
             return of(PublicationActions.approvePublicationFail());
           }
 
-          const conversationResources = publication.resources.filter((r) =>
-            isConversationId(r.targetUrl),
+          const conversationResources = selectedPublication.resources.filter(
+            (r) => isConversationId(r.targetUrl),
+          );
+          const conversationResourcesToPublish = conversationResources.filter(
+            (r) => r.action === PublishActions.ADD,
+          );
+          const conversationResourcesToUnpublish = conversationResources.filter(
+            (r) => r.action === PublishActions.DELETE,
           );
 
-          if (conversationResources.length) {
+          if (conversationResourcesToUnpublish.length) {
+            const allConversations = ConversationsSelectors.selectConversations(
+              state$.value,
+            );
+            const conversationsToRemove = conversationResourcesToUnpublish.map(
+              (r) => r.reviewUrl,
+            );
+
+            actions.push(
+              of(
+                ConversationsActions.setConversations({
+                  conversations: allConversations.filter(
+                    (c) => !conversationsToRemove.includes(c.id),
+                  ),
+                }),
+              ),
+            );
+          }
+
+          if (conversationResourcesToPublish.length) {
             const conversationPaths = uniq(
-              conversationResources.flatMap((resource) =>
+              conversationResourcesToPublish.flatMap((resource) =>
                 getParentFolderIdsFromEntityId(
                   getFolderIdFromEntityId(resource.targetUrl),
                 ).filter((p) => p !== resource.targetUrl),
@@ -557,33 +581,60 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   ConversationsActions.addConversations({
-                    conversations: conversationResources.map((item) => {
-                      const parsedApiKey = parseConversationApiKey(
-                        splitEntityId(item.targetUrl).name,
-                      );
-                      const folderId = getFolderIdFromEntityId(item.targetUrl);
+                    conversations: conversationResourcesToPublish.map(
+                      (item) => {
+                        const parsedApiKey = parseConversationApiKey(
+                          splitEntityId(item.targetUrl).name,
+                        );
+                        const folderId = getFolderIdFromEntityId(
+                          item.targetUrl,
+                        );
 
-                      return {
-                        id: item.targetUrl,
-                        folderId,
-                        model: parsedApiKey.model,
-                        name: parsedApiKey.name,
-                        publishedWithMe: isRootId(folderId),
-                      };
-                    }),
+                        return {
+                          id: item.targetUrl,
+                          folderId,
+                          model: parsedApiKey.model,
+                          name: parsedApiKey.name,
+                          publishedWithMe: isRootId(folderId),
+                        };
+                      },
+                    ),
                   }),
                 ),
               ),
             );
           }
 
-          const promptResources = publication.resources.filter((r) =>
+          const promptResources = selectedPublication.resources.filter((r) =>
             isPromptId(r.targetUrl),
           );
+          const promptResourcesToPublish = promptResources.filter(
+            (r) => r.action === PublishActions.ADD,
+          );
+          const promptResourcesToUnpublish = promptResources.filter(
+            (r) => r.action === PublishActions.DELETE,
+          );
 
-          if (promptResources.length) {
+          if (promptResourcesToUnpublish.length) {
+            const allPrompts = PromptsSelectors.selectPrompts(state$.value);
+            const promptsToRemove = promptResourcesToUnpublish.map(
+              (r) => r.reviewUrl,
+            );
+
+            actions.push(
+              of(
+                PromptsActions.setPrompts({
+                  prompts: allPrompts.filter(
+                    (p) => !promptsToRemove.includes(p.id),
+                  ),
+                }),
+              ),
+            );
+          }
+
+          if (promptResourcesToPublish.length) {
             const promptPaths = uniq(
-              promptResources.flatMap((resource) =>
+              promptResourcesToPublish.flatMap((resource) =>
                 getParentFolderIdsFromEntityId(
                   getFolderIdFromEntityId(resource.targetUrl),
                 ).filter((p) => p !== resource.targetUrl),
@@ -603,7 +654,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   PromptsActions.addPrompts({
-                    prompts: promptResources.map((item) => {
+                    prompts: promptResourcesToPublish.map((item) => {
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(item.targetUrl).name,
                       );
