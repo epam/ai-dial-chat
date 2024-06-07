@@ -262,10 +262,7 @@ export const ChatSection = ({
     ConversationsSelectors.selectSelectedConversationsIds,
   );
 
-  const { handleToggle, isCollapsed } = useSectionToggle(
-    name,
-    FeatureType.Chat,
-  );
+  const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.Chat);
 
   const sortedRootConversations = useMemo(
     () => sortByName(rootConversations),
@@ -304,7 +301,7 @@ export const ChatSection = ({
     <CollapsibleSection
       onToggle={handleToggle}
       name={name}
-      openByDefault={openByDefault ?? isCollapsed}
+      openByDefault={openByDefault ?? isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >

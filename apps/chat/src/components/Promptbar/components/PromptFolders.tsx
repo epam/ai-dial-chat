@@ -253,7 +253,7 @@ export const PromptSection = ({
     PromptsSelectors.selectSelectedPromptId,
   );
 
-  const { handleToggle, isCollapsed } = useSectionToggle(
+  const { handleToggle, isExpanded } = useSectionToggle(
     name,
     FeatureType.Prompt,
   );
@@ -289,7 +289,7 @@ export const PromptSection = ({
     <CollapsibleSection
       onToggle={handleToggle}
       name={name}
-      openByDefault={openByDefault ?? isCollapsed}
+      openByDefault={openByDefault ?? isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >

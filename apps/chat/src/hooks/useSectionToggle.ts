@@ -35,6 +35,6 @@ export const useSectionToggle = (
 
   return {
     handleToggle,
-    isCollapsed: !collapsedSections.includes(sectionName),
+    isExpanded: !collapsedSections.includes(sectionName),
   };
 };

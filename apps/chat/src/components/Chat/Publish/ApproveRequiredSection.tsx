@@ -140,7 +140,7 @@ export const ApproveRequiredSection = ({
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
-  const { handleToggle, isCollapsed } = useSectionToggle(name, featureType);
+  const { handleToggle, isExpanded } = useSectionToggle(name, featureType);
 
   useEffect(() => {
     const publicationReviewIds = publicationItems.flatMap((p) =>
@@ -172,7 +172,7 @@ export const ApproveRequiredSection = ({
     <CollapsibleSection
       onToggle={handleToggle}
       name={name}
-      openByDefault={openByDefault ?? isCollapsed}
+      openByDefault={openByDefault ?? isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
