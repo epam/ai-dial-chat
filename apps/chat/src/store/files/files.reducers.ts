@@ -356,7 +356,10 @@ export const filesSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ foldersIds: string[]; status: UploadStatus }>,
+      }: PayloadAction<{
+        foldersIds: (string | undefined)[];
+        status: UploadStatus;
+      }>,
     ) => {
       state.folders = state.folders.map((folder) => {
         if (payload.foldersIds.some((folderId) => folderId === folder.id)) {
@@ -365,6 +368,7 @@ export const filesSlice = createSlice({
             status: payload.status,
           };
         }
+
         return folder;
       });
     },
