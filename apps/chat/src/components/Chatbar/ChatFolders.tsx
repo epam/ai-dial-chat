@@ -2,6 +2,8 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -232,11 +234,9 @@ export const ChatSection = ({
   hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
-  openByDefault = false,
+  openByDefault,
   dataQa,
 }: FolderSectionProps) => {
-  const { t } = useTranslation(Translation.SideBar);
-
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
@@ -261,6 +261,8 @@ export const ChatSection = ({
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+
+  const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.Chat);
 
   const sortedRootConversations = useMemo(
     () => sortByName(rootConversations),
@@ -297,8 +299,9 @@ export const ChatSection = ({
 
   return (
     <CollapsibleSection
-      name={t(name)}
-      openByDefault={openByDefault}
+      onToggle={handleToggle}
+      name={name}
+      openByDefault={openByDefault ?? isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
@@ -347,10 +350,9 @@ export function ChatFolders() {
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
-    name: t(PUBLISHING_APPROVE_REQUIRED_NAME),
+    name: PUBLISHING_APPROVE_REQUIRED_NAME,
     displayRootFiles: true,
     dataQa: 'approve-required',
-    openByDefault: true,
   };
 
   const folderItems: FolderSectionProps[] = useMemo(
@@ -358,11 +360,10 @@ export function ChatFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: t(PUBLISHING_FOLDER_NAME),
+          name: PUBLISHING_FOLDER_NAME,
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
-          openByDefault: true,
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
@@ -370,13 +371,11 @@ export function ChatFolders() {
           filters: SharedWithMeFilters,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
-          openByDefault: true,
         },
         {
           name: t('Pinned conversations'),
           filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
-          openByDefault: true,
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
