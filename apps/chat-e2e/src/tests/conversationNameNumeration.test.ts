@@ -523,9 +523,7 @@ dialTest(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const inputContainer = await conversations.openEditConversationNameMode(
-          conversation.name,
-        );
+        await conversations.openEditConversationNameMode(conversation.name);
         await conversations.getEditInputActions().clickTickButton();
 
         await expect
