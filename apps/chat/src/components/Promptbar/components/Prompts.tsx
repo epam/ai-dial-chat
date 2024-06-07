@@ -19,7 +19,7 @@ interface Props {
 const RECENT_SECTION_NAME = translate('Recent');
 
 export const Prompts: FC<Props> = ({ prompts }) => {
-  const { handleToggle, collapsedSections } = useSectionToggle(
+  const { handleToggle, isCollapsed } = useSectionToggle(
     RECENT_SECTION_NAME,
     FeatureType.Prompt,
   );
@@ -39,7 +39,7 @@ export const Prompts: FC<Props> = ({ prompts }) => {
     <CollapsibleSection
       name={RECENT_SECTION_NAME}
       onToggle={handleToggle}
-      openByDefault={!collapsedSections.includes(RECENT_SECTION_NAME)}
+      openByDefault={isCollapsed}
       dataQa="promps-section"
     >
       <div

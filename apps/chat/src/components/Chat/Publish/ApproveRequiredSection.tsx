@@ -22,8 +22,6 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
-import { PUBLISHING_APPROVE_REQUIRED_NAME } from '@/src/constants/folders';
-
 import CaretIconComponent from '../../Common/CaretIconComponent';
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import {
@@ -142,10 +140,7 @@ export const ApproveRequiredSection = ({
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
-  const { handleToggle, collapsedSections } = useSectionToggle(
-    name,
-    featureType,
-  );
+  const { handleToggle, isCollapsed } = useSectionToggle(name, featureType);
 
   useEffect(() => {
     const publicationReviewIds = publicationItems.flatMap((p) =>
@@ -177,10 +172,7 @@ export const ApproveRequiredSection = ({
     <CollapsibleSection
       onToggle={handleToggle}
       name={name}
-      openByDefault={
-        openByDefault ??
-        !collapsedSections.includes(PUBLISHING_APPROVE_REQUIRED_NAME)
-      }
+      openByDefault={openByDefault ?? isCollapsed}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >

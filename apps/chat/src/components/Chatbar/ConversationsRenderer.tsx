@@ -26,7 +26,7 @@ export const ConversationsRenderer = ({
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
-  const { handleToggle, collapsedSections } = useSectionToggle(
+  const { handleToggle, isCollapsed } = useSectionToggle(
     label,
     FeatureType.Chat,
   );
@@ -45,7 +45,7 @@ export const ConversationsRenderer = ({
           onToggle={handleToggle}
           dataQa="chronology"
           isHighlighted={isSectionHighlighted}
-          openByDefault={!collapsedSections.includes(label)}
+          openByDefault={isCollapsed}
         >
           <div className="flex flex-col gap-1 py-1">
             {conversations.map((conversation) => (

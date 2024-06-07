@@ -33,5 +33,8 @@ export const useSectionToggle = (
     [collapsedSections, dispatch, featureType, sectionName],
   );
 
-  return { handleToggle, collapsedSections };
+  return {
+    handleToggle,
+    isCollapsed: !collapsedSections.includes(sectionName),
+  };
 };

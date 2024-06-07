@@ -262,7 +262,7 @@ export const ChatSection = ({
     ConversationsSelectors.selectSelectedConversationsIds,
   );
 
-  const { handleToggle, collapsedSections } = useSectionToggle(
+  const { handleToggle, isCollapsed } = useSectionToggle(
     name,
     FeatureType.Chat,
   );
@@ -304,7 +304,7 @@ export const ChatSection = ({
     <CollapsibleSection
       onToggle={handleToggle}
       name={name}
-      openByDefault={openByDefault ?? !collapsedSections.includes(name)}
+      openByDefault={openByDefault ?? isCollapsed}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >

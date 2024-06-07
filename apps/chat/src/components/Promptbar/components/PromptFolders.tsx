@@ -253,7 +253,7 @@ export const PromptSection = ({
     PromptsSelectors.selectSelectedPromptId,
   );
 
-  const { handleToggle, collapsedSections } = useSectionToggle(
+  const { handleToggle, isCollapsed } = useSectionToggle(
     name,
     FeatureType.Prompt,
   );
@@ -289,7 +289,7 @@ export const PromptSection = ({
     <CollapsibleSection
       onToggle={handleToggle}
       name={name}
-      openByDefault={openByDefault ?? !collapsedSections.includes(name)}
+      openByDefault={openByDefault ?? isCollapsed}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
@@ -316,7 +316,7 @@ export const PromptSection = ({
 };
 
 export function PromptFolders() {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.PromptBar);
 
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
