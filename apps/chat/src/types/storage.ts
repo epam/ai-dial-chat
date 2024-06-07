@@ -31,6 +31,8 @@ export enum UIStorageKeys {
   OpenedPromptFoldersIds = 'openedPromptFoldersIds',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
   CustomLogo = 'customLogo',
+  ChatCollapsedSections = 'chatCollapsedSections',
+  PromptCollapsedSections = 'promptCollapsedSections',
 }
 
 export enum MigrationStorageKeys {

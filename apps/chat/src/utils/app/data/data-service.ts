@@ -154,4 +154,30 @@ export class DataService {
   public static setCustomLogo(customLogo: string): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.CustomLogo, customLogo);
   }
+
+  public static getChatCollapsedSections(): Observable<string[]> {
+    return BrowserStorage.getData(UIStorageKeys.ChatCollapsedSections, []);
+  }
+
+  public static setChatCollapsedSections(
+    collapsedSections: string[],
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ChatCollapsedSections,
+      collapsedSections,
+    );
+  }
+
+  public static getPromptCollapsedSections(): Observable<string[]> {
+    return BrowserStorage.getData(UIStorageKeys.PromptCollapsedSections, []);
+  }
+
+  public static setPromptCollapsedSections(
+    collapsedSections: string[],
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.PromptCollapsedSections,
+      collapsedSections,
+    );
+  }
 }
