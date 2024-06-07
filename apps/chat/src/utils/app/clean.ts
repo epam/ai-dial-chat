@@ -1,3 +1,5 @@
+import { isAbsoluteUrl } from '@/src/utils/app/file';
+
 import {
   Attachment,
   Conversation,
@@ -15,7 +17,6 @@ import {
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
-import { isAbsoluteUrl } from './attachments';
 import { prepareEntityName } from './common';
 import { constructPath } from './file';
 import { getConversationRootId } from './id';

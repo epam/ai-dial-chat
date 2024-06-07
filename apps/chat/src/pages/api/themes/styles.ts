@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import { isAbsoluteUrl } from '@/src/utils/app/attachments';
+import { isAbsoluteUrl } from '@/src/utils/app/file';
 import { logger } from '@/src/utils/server/logger';
 
 import { ThemesConfig } from '@/src/types/themes';

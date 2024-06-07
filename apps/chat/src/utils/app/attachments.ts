@@ -1,18 +1,6 @@
-import { Attachment } from '@/src/types/chat';
+import { isAbsoluteUrl } from '@/src/utils/app/file';
 
-export const isAbsoluteUrl = (url: string): boolean => {
-  const urlLower = url.toLowerCase();
-  return [
-    'data:',
-    '//',
-    'http://',
-    'https://',
-    'file://',
-    'ftp://',
-    'mailto:',
-    'telnet://',
-  ].some((prefix) => urlLower.startsWith(prefix));
-};
+import { Attachment } from '@/src/types/chat';
 
 export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {

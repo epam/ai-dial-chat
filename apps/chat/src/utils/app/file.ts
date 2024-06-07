@@ -8,7 +8,6 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ApiUtils } from '../server/api';
-import { isAbsoluteUrl } from './attachments';
 import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
 import { isFolderId } from './id';
@@ -416,3 +415,17 @@ export const getNextFileName = (
 
 export const prepareFileName = (filename: string) =>
   `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
+
+export const isAbsoluteUrl = (url: string): boolean => {
+  const urlLower = url.toLowerCase();
+  return [
+    'data:',
+    '//',
+    'http://',
+    'https://',
+    'file://',
+    'ftp://',
+    'mailto:',
+    'telnet://',
+  ].some((prefix) => urlLower.startsWith(prefix));
+};
