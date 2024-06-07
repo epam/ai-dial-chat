@@ -48,6 +48,7 @@ interface promptFolderProps {
   isLast: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
+  allowHighlight?: boolean;
 }
 
 const PromptFolderTemplate = ({
@@ -55,6 +56,7 @@ const PromptFolderTemplate = ({
   isLast,
   filters,
   includeEmpty = false,
+  allowHighlight = true,
 }: promptFolderProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -184,7 +186,7 @@ const PromptFolderTemplate = ({
         allFolders={promptFolders}
         allFoldersWithoutFilters={allFolders}
         loadingFolderIds={loadingFolderIds}
-        highlightedFolders={highlightedFolders}
+        highlightedFolders={allowHighlight ? highlightedFolders : []}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
@@ -249,7 +251,7 @@ export const PromptSection = ({
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-  const selectSelectedPromptId = useAppSelector(
+  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
 
@@ -262,9 +264,10 @@ export const PromptSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
-      (!!displayRootFiles &&
-        rootPrompts.some(({ id }) => selectSelectedPromptId === id));
+      !isSelectedPublicationResource &&
+      (rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+        (!!displayRootFiles &&
+          rootPrompts.some(({ id }) => selectedPromptId === id)));
     if (isSectionHighlighted !== shouldBeHighlighted) {
       setIsSectionHighlighted(shouldBeHighlighted);
     }
@@ -272,9 +275,10 @@ export const PromptSection = ({
     displayRootFiles,
     rootFolders,
     isSectionHighlighted,
-    selectSelectedPromptId,
+    selectedPromptId,
     selectedFoldersIds,
     rootPrompts,
+    isSelectedPublicationResource,
   ]);
 
   if (
@@ -301,6 +305,7 @@ export const PromptSection = ({
             isLast={index === arr.length - 1}
             filters={{ searchFilter: filters.searchFilter }}
             includeEmpty={showEmptyFolders}
+            allowHighlight={!isSelectedPublicationResource}
           />
         ))}
       </div>
