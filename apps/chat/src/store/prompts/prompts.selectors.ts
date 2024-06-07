@@ -177,13 +177,16 @@ export const selectIsEditModalOpen = createSelector([rootSelector], (state) => {
 export const selectSelectedPromptId = createSelector(
   [rootSelector],
   (state) => {
-    return state.selectedPromptId;
+    return {
+      selectedPromptId: state.selectedPromptId,
+      isPublicationResource: state.isSelectedPromptPublicationResource,
+    };
   },
 );
 
 export const selectSelectedPrompt = createSelector(
   [selectPrompts, selectSelectedPromptId],
-  (prompts, selectedPromptId): Prompt | undefined => {
+  (prompts, { selectedPromptId }): Prompt | undefined => {
     if (!selectedPromptId) {
       return undefined;
     }

@@ -125,6 +125,7 @@ export const PromptPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            additionalItemData={{ isPublicationResource: true }}
           />
         );
       })}
@@ -137,7 +138,12 @@ export const PromptPublicationResources = ({
             level={0}
           />
         ) : (
-          <PromptComponent key={p.id} item={p} level={1} />
+          <PromptComponent
+            key={p.id}
+            item={p}
+            level={1}
+            additionalItemData={{ isPublicationResource: true }}
+          />
         ),
       )}
     </>

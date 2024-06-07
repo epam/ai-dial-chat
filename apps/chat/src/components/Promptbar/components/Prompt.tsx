@@ -60,9 +60,14 @@ import { PreviewPromptModal } from './PreviewPromptModal';
 interface Props {
   item: PromptInfo;
   level?: number;
+  additionalItemData?: Record<string, unknown>;
 }
 
-export const PromptComponent = ({ item: prompt, level }: Props) => {
+export const PromptComponent = ({
+  item: prompt,
+  level,
+  additionalItemData,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -75,10 +80,12 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       true,
     ),
   );
-  const selectedPromptId = useAppSelector(
+  const { selectedPromptId, isPublicationResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
-  const isSelected = selectedPromptId === prompt.id;
+  const isSelected =
+    selectedPromptId === prompt.id &&
+    !!additionalItemData?.isPublicationResource === isPublicationResource;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
@@ -379,23 +386,29 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
             />
           )}
         </div>
-        {showModal && isSelected && isModalPreviewMode && (
-          <PreviewPromptModal
-            prompt={prompt}
-            isOpen
-            isPublicationPreview={!!resourceToReview}
-            onClose={handleClose}
-            onDuplicate={
-              !resourceToReview
-                ? (e) => {
-                    handleDuplicate(e);
-                    handleClose();
-                  }
-                : undefined
-            }
-            onDelete={!resourceToReview ? () => setIsDeleting(true) : undefined}
-          />
-        )}
+        {showModal &&
+          isSelected &&
+          isModalPreviewMode &&
+          !!additionalItemData?.isPublicationResource ===
+            isPublicationResource && (
+            <PreviewPromptModal
+              prompt={prompt}
+              isOpen
+              isPublicationPreview={!!resourceToReview}
+              onClose={handleClose}
+              onDuplicate={
+                !resourceToReview
+                  ? (e) => {
+                      handleDuplicate(e);
+                      handleClose();
+                    }
+                  : undefined
+              }
+              onDelete={
+                !resourceToReview ? () => setIsDeleting(true) : undefined
+              }
+            />
+          )}
       </div>
 
       {isPublishing && (
