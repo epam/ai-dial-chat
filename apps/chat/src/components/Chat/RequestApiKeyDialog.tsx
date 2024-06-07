@@ -142,7 +142,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isSuccessfullySent) {
-      dispatch(ServiceActions.resetIsSuccessfullySent);
+      dispatch(ServiceActions.resetIsSuccessfullySent());
 
       setScenario('');
       setBusinessJustification('');
