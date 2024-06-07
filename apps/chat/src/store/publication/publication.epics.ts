@@ -27,8 +27,6 @@ import {
   splitEntityId,
 } from '@/src/utils/app/folders';
 import {
-  getConversationRootId,
-  getPromptRootId,
   getRootId,
   isConversationId,
   isFileId,
@@ -692,49 +690,6 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const approvePublicationSuccessEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(PublicationActions.approvePublicationSuccess.match),
-    switchMap(() => {
-      const allConversationFolders = ConversationsSelectors.selectFolders(
-        state$.value,
-      );
-      const emptyConversationFoldersIds =
-        ConversationsSelectors.selectEmptyFolderIds(state$.value);
-      const allPromptFolders = PromptsSelectors.selectFolders(state$.value);
-      const emptyPromptFoldersIds = PromptsSelectors.selectEmptyFolderIds(
-        state$.value,
-      );
-
-      return concat(
-        of(
-          ConversationsActions.setFolders({
-            folders: allConversationFolders.filter(
-              (f) =>
-                !(
-                  emptyConversationFoldersIds.some((id) => id === f.id) &&
-                  f.id.startsWith(getConversationRootId('public')) &&
-                  f.status
-                ),
-            ),
-          }),
-        ),
-        of(
-          PromptsActions.setFolders({
-            folders: allPromptFolders.filter(
-              (f) =>
-                !(
-                  emptyPromptFoldersIds.some((id) => id === f.id) &&
-                  f.id.startsWith(getPromptRootId('public')) &&
-                  f.status
-                ),
-            ),
-          }),
-        ),
-      );
-    }),
-  );
-
 const approvePublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.approvePublicationFail.match),
@@ -861,7 +816,6 @@ export const PublicationEpics = combineEpics(
   uploadPublishedWithMeItemsEpic,
   uploadPublishedWithMeItemsFailEpic,
   approvePublicationEpic,
-  approvePublicationSuccessEpic,
   approvePublicationFailEpic,
   rejectPublicationEpic,
   rejectPublicationFailEpic,
