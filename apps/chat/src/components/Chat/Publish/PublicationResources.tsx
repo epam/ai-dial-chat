@@ -38,12 +38,14 @@ interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
   rootFolder?: ShareEntity;
+  isOpen?: boolean;
 }
 
 export const PromptPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  isOpen = true,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -56,6 +58,9 @@ export const PromptPublicationResources = ({
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const { isSelectedPublicationResource } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
 
   const resourceUrls = useMemo(
     () => resources.map((r) => r.reviewUrl),
@@ -90,7 +95,7 @@ export const PromptPublicationResources = ({
   }, [allFolders, resources, rootFolder]);
 
   return (
-    <>
+    <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.filter(Boolean).map((f) => {
         return (
           <Folder
@@ -120,11 +125,16 @@ export const PromptPublicationResources = ({
               }
             }}
             featureType={FeatureType.Prompt}
-            highlightedFolders={forViewOnly ? undefined : highlightedFolders}
+            highlightedFolders={
+              !isSelectedPublicationResource || forViewOnly
+                ? undefined
+                : highlightedFolders
+            }
             folderClassName={classNames(forViewOnly && 'h-[38px]')}
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            additionalItemData={{ isPublicationResource: true }}
           />
         );
       })}
@@ -137,10 +147,15 @@ export const PromptPublicationResources = ({
             level={0}
           />
         ) : (
-          <PromptComponent key={p.id} item={p} level={1} />
+          <PromptComponent
+            key={p.id}
+            item={p}
+            level={1}
+            additionalItemData={{ isPublicationResource: true }}
+          />
         ),
       )}
-    </>
+    </div>
   );
 };
 
@@ -148,6 +163,7 @@ export const ConversationPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  isOpen = true,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -196,7 +212,7 @@ export const ConversationPublicationResources = ({
   }, [allFolders, resources, rootFolder]);
 
   return (
-    <>
+    <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.filter(Boolean).map((f) => {
         return (
           <Folder
@@ -248,7 +264,7 @@ export const ConversationPublicationResources = ({
           <ConversationComponent key={c.id} item={c} level={1} />
         ),
       )}
-    </>
+    </div>
   );
 };
 
@@ -256,6 +272,7 @@ export const FilePublicationResources = ({
   resources,
   forViewOnly,
   uploadedFiles,
+  isOpen = true,
 }: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
@@ -299,7 +316,7 @@ export const FilePublicationResources = ({
   }, [allFolders, resources]);
 
   return (
-    <>
+    <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.filter(Boolean).map((f) => {
         return (
           <Folder
@@ -340,6 +357,6 @@ export const FilePublicationResources = ({
           <FileItem key={f.id} item={f} level={1} />
         ),
       )}
-    </>
+    </div>
   );
 };
