@@ -38,14 +38,14 @@ interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
   rootFolder?: ShareEntity;
-  isOpen: boolean;
+  isOpen?: boolean;
 }
 
 export const PromptPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
-  isOpen,
+  isOpen = true,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -156,7 +156,7 @@ export const ConversationPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
-  isOpen,
+  isOpen = true,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -265,6 +265,7 @@ export const FilePublicationResources = ({
   resources,
   forViewOnly,
   uploadedFiles,
+  isOpen = true,
 }: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
@@ -308,7 +309,7 @@ export const FilePublicationResources = ({
   }, [allFolders, resources]);
 
   return (
-    <>
+    <div className={classNames(!isOpen && 'hidden')}>
       {rootFolders.filter(Boolean).map((f) => {
         return (
           <Folder
@@ -349,6 +350,6 @@ export const FilePublicationResources = ({
           <FileItem key={f.id} item={f} level={1} />
         ),
       )}
-    </>
+    </div>
   );
 };
