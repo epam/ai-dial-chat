@@ -1,12 +1,13 @@
 import { isAbsoluteUrl } from '../file';
 
-describe.skip('File utility methods', () => {
+describe('File utility methods', () => {
   it.each([
     ['http://test.com'],
     ['https://test.com'],
     ['ftp://test.com'],
     ['file://test.com'],
     ['data:some_data'],
+    ['//abc/cde'],
   ])('isAbsoluteUrl (%s, %s, %s, %s) returns true', (url) => {
     expect(isAbsoluteUrl(url)).toBe(true);
   });
