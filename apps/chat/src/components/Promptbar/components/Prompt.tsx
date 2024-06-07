@@ -198,11 +198,16 @@ export const PromptComponent = ({
       e.stopPropagation();
       e.preventDefault();
       setIsRenaming(true);
-      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: prompt.id,
+          isPublicationResource: !!additionalItemData?.isPublicationResource,
+        }),
+      );
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
-    [dispatch, prompt.id],
+    [additionalItemData?.isPublicationResource, dispatch, prompt.id],
   );
 
   const handleExportPrompt = useCallback(
