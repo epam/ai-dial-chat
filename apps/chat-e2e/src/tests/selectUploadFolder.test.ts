@@ -143,7 +143,7 @@ dialTest(
       async () => {
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusV);
-        await selectUploadFolder.getEditInputActions().clickTickButton();
+        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             selectUploadFolder.getFolderByName(
@@ -295,7 +295,7 @@ dialTest(
             ExpectedMessages.elementAttributeValueIsValid,
           )
           .toBe(ExpectedConstants.newFolderWithIndexTitle(1));
-        await selectUploadFolder.getEditInputActions().clickTickButton();
+        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
       },
     );
 
@@ -314,7 +314,7 @@ dialTest(
       'Click "Create new folder" again, confirm creation and verify "New folder 1000" folder is created',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.getEditInputActions().clickTickButton();
+        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             selectUploadFolder.getFolderByName(

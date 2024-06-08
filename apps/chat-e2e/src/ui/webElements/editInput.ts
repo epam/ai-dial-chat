@@ -6,7 +6,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class EditInput extends BaseElement {
   constructor(page: Page, parentLocator: Locator, selector: string) {
-    super(page, selector, parentLocator);
+    super(page, `${selector} >> ${EditSelectors.editContainer}`, parentLocator);
   }
 
   public editInput = this.getChildElementBySelector(EditSelectors.editInput);

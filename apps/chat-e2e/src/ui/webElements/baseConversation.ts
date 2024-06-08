@@ -70,7 +70,7 @@ export class BaseConversation extends SideBarEntities {
   }
 
   public async openEditConversationNameMode(newName: string) {
-    return this.openEditEntityNameMode(this.entitySelector, newName);
+    return this.openEditEntityNameMode(newName);
   }
 
   public async shareConversation() {

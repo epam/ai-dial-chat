@@ -401,8 +401,12 @@ dialTest(
           secondFolderConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditConversationNameMode(duplicatedName);
-        await conversations.getEditInputActions().clickTickButton();
+        const editFolderConversationInputActions =
+          folderConversations.getEditFolderEntityInputActions();
+        await folderConversations
+          .getEditFolderEntityInput()
+          .editValue(duplicatedName);
+        await editFolderConversationInputActions.clickTickButton();
 
         await expect
           .soft(
@@ -419,7 +423,7 @@ dialTest(
             ),
           );
         await errorToast.closeToast();
-        await conversations.getEditInputActions().clickCancelButton();
+        await editFolderConversationInputActions.clickCancelButton();
       },
     );
 

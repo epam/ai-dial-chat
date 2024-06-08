@@ -143,7 +143,7 @@ dialTest(
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
     await folderPrompts.editFolderName(newName);
-    await folderPrompts.getEditInputActions().clickCancelButton();
+    await folderPrompts.getEditFolderInputActions().clickCancelButton();
     await expect
       .soft(
         await folderPrompts.getFolderByName(

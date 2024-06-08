@@ -386,7 +386,7 @@ dialTest(
         await editInputContainer.editValue(
           ExpectedConstants.prohibitedNameSymbols,
         );
-        const inputContent = await editInputContainer.getElementContent();
+        const inputContent = await editInputContainer.getEditInputValue();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
           .toBe('');

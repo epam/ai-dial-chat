@@ -4,7 +4,6 @@ import { BaseElement } from './baseElement';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Styles, Tags } from '@/src/ui/domData';
-import { EditSelectors } from '@/src/ui/selectors/editSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
@@ -20,12 +19,12 @@ export class SideBarEntities extends BaseElement {
 
   private editEntityInput!: EditInput;
 
-  getEditEntityInput(selector: string): EditInput {
+  getEditEntityInput(): EditInput {
     if (!this.editEntityInput) {
       this.editEntityInput = new EditInput(
         this.page,
         this.getElementLocator(),
-        `${selector} >> ${EditSelectors.editContainer}`,
+        this.entitySelector,
       );
     }
     return this.editEntityInput;
@@ -38,6 +37,7 @@ export class SideBarEntities extends BaseElement {
       this.editInputActions = new EditInputActions(
         this.page,
         this.getElementLocator(),
+        this.entitySelector,
       );
     }
     return this.editInputActions;
@@ -107,8 +107,8 @@ export class SideBarEntities extends BaseElement {
     await this.getDropdownMenu().waitForState();
   }
 
-  protected async openEditEntityNameMode(selector: string, newName: string) {
-    const input = await this.getEditEntityInput(selector);
+  protected async openEditEntityNameMode(newName: string) {
+    const input = this.getEditEntityInput();
     await input.editValue(newName);
     return input;
   }

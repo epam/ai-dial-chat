@@ -151,7 +151,7 @@ dialTest(
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderConversations.editFolderName(newNameWithEndDot);
-      await folderConversations.getEditInputActions().clickCancelButton();
+      await folderConversations.getEditFolderInputActions().clickCancelButton();
       await expect
         .soft(
           folderConversations.getFolderByName(
@@ -171,7 +171,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         editFolderInput =
           await folderConversations.editFolderName(newNameWithEndDot);
-        await folderConversations.getEditInputActions().clickTickButton();
+        await folderConversations.getEditFolderInputActions().clickTickButton();
 
         const errorMessage = await errorToast.getElementContent();
         expect
@@ -216,7 +216,7 @@ dialTest(
       async () => {
         const name = GeneratorUtil.randomArrayElement(['', '   ']);
         await folderConversations.editFolderName(name);
-        await folderConversations.getEditInputActions().clickTickButton();
+        await folderConversations.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             folderConversations.getFolderByName(
@@ -600,7 +600,7 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderConversations.editFolderName(specialSymbols);
-        await folderConversations.getEditInputActions().clickTickButton();
+        await folderConversations.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             folderConversations.getFolderByName(specialSymbols),
@@ -651,7 +651,7 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderConversations.editFolderName(updatedFolderName);
-        await folderConversations.getEditInputActions().clickTickButton();
+        await folderConversations.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             folderConversations.getFolderByName(updatedFolderName),

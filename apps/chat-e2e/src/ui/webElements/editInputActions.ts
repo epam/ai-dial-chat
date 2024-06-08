@@ -3,8 +3,8 @@ import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export class EditInputActions extends BaseElement {
-  constructor(page: Page, parentLocator: Locator) {
-    super(page, EditSelectors.actionButton, parentLocator);
+  constructor(page: Page, parentLocator: Locator, selector: string) {
+    super(page, `${selector} >> ${EditSelectors.actionButton}`, parentLocator);
   }
 
   public async clickTickButton() {

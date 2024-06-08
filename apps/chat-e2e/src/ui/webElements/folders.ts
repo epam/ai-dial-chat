@@ -5,7 +5,6 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { EditSelectors } from '@/src/ui/selectors/editSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
@@ -31,22 +30,49 @@ export class Folders extends BaseElement {
       this.editFolderInput = new EditInput(
         this.page,
         this.getElementLocator(),
-        `${SideBarSelectors.folder} >> ${EditSelectors.editContainer}`,
+        SideBarSelectors.folder,
       );
     }
     return this.editFolderInput;
   }
 
-  private editInputActions!: EditInputActions;
+  private editFolderEntityInput!: EditInput;
 
-  getEditInputActions(): EditInputActions {
-    if (!this.editInputActions) {
-      this.editInputActions = new EditInputActions(
+  getEditFolderEntityInput(): EditInput {
+    if (!this.editFolderEntityInput) {
+      this.editFolderEntityInput = new EditInput(
         this.page,
         this.getElementLocator(),
+        this.entitySelector!,
       );
     }
-    return this.editInputActions;
+    return this.editFolderEntityInput;
+  }
+
+  private editFolderInputActions!: EditInputActions;
+
+  getEditFolderInputActions(): EditInputActions {
+    if (!this.editFolderInputActions) {
+      this.editFolderInputActions = new EditInputActions(
+        this.page,
+        this.getElementLocator(),
+        SideBarSelectors.folder,
+      );
+    }
+    return this.editFolderInputActions;
+  }
+
+  private editFolderEntityInputActions!: EditInputActions;
+
+  getEditFolderEntityInputActions(): EditInputActions {
+    if (!this.editFolderEntityInputActions) {
+      this.editFolderEntityInputActions = new EditInputActions(
+        this.page,
+        this.getElementLocator(),
+        this.entitySelector!,
+      );
+    }
+    return this.editFolderEntityInputActions;
   }
 
   private dropdownMenu!: DropdownMenu;
@@ -131,7 +157,7 @@ export class Folders extends BaseElement {
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     await this.editFolderName(newName);
-    const folderInputActions = this.getEditInputActions();
+    const folderInputActions = this.getEditFolderInputActions();
     if (isHttpMethodTriggered && isApiStorageType) {
       const respPromise = this.page.waitForResponse((resp) => {
         return (
