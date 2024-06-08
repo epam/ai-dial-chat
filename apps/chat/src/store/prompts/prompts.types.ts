@@ -9,6 +9,7 @@ export interface PromptsState {
   searchTerm: string;
   searchFilters: SearchFilters;
   selectedPromptId: string | undefined;
+  isSelectedPromptPublicationResource: boolean;
   isEditModalOpen: boolean;
   isModalPreviewMode: boolean;
   newAddedFolderId?: string;

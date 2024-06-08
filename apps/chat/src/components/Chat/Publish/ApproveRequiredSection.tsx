@@ -109,8 +109,8 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
           </div>
         </div>
       </div>
-      {isOpen && publication.resources && (
-        <ResourcesComponent resources={publication.resources} />
+      {publication.resources && (
+        <ResourcesComponent resources={publication.resources} isOpen={isOpen} />
       )}
     </div>
   );

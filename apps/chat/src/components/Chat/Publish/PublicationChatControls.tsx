@@ -65,6 +65,7 @@ export function PublicationControlsView<
         dispatch(
           PromptsActions.setSelectedPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
+            isPublicationResource: true,
           }),
         );
       }
