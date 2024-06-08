@@ -53,8 +53,11 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public getUploadedFile = (filename: string) => {
     const dotIndex = filename.lastIndexOf('.');
-    const filenameValue =
+    let filenameValue =
       dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
+    if (filename.includes('\\')) {
+      filenameValue = filenameValue.replaceAll('\\', '\\\\');
+    }
     const inputValue = new BaseElement(
       this.page,
       `[${Attributes.value} = "${filenameValue}"]`,
