@@ -18,6 +18,7 @@ import { combineEpics } from 'redux-observable';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
+import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -45,6 +46,8 @@ const initEpic: AppEpic = (action$, state$) =>
         promptbarWidth: DataService.getPromptbarWidth(),
         isChatFullWidth: DataService.getIsChatFullWidth(),
         customLogo: DataService.getCustomLogo(),
+        chatCollapsedSections: DataService.getChatCollapsedSections(),
+        promptCollapsedSections: DataService.getPromptCollapsedSections(),
       });
     }),
     switchMap(
@@ -58,6 +61,8 @@ const initEpic: AppEpic = (action$, state$) =>
         promptbarWidth,
         isChatFullWidth,
         customLogo,
+        chatCollapsedSections,
+        promptCollapsedSections,
       }) => {
         const actions = [];
 
@@ -82,6 +87,18 @@ const initEpic: AppEpic = (action$, state$) =>
         actions.push(UIActions.setChatbarWidth(chatbarWidth));
         actions.push(UIActions.setPromptbarWidth(promptbarWidth));
         actions.push(UIActions.setIsChatFullWidth(isChatFullWidth));
+        actions.push(
+          UIActions.setCollapsedSections({
+            featureType: FeatureType.Chat,
+            collapsedSections: chatCollapsedSections,
+          }),
+        );
+        actions.push(
+          UIActions.setCollapsedSections({
+            featureType: FeatureType.Prompt,
+            collapsedSections: promptCollapsedSections,
+          }),
+        );
 
         return concat(actions);
       },
@@ -258,6 +275,17 @@ const deleteCustomLogoEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const setCollapsedSectionsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.setCollapsedSections.match),
+    switchMap(({ payload }) =>
+      payload.featureType === FeatureType.Chat
+        ? DataService.setChatCollapsedSections(payload.collapsedSections)
+        : DataService.setPromptCollapsedSections(payload.collapsedSections),
+    ),
+    ignoreElements(),
+  );
+
 const UIEpics = combineEpics(
   initEpic,
   saveThemeEpic,
@@ -272,6 +300,7 @@ const UIEpics = combineEpics(
   savePromptbarWidthEpic,
   saveIsChatFullWidthEpic,
   setCustomLogoEpic,
+  setCollapsedSectionsEpic,
   deleteCustomLogoEpic,
   resizeEpic,
 );

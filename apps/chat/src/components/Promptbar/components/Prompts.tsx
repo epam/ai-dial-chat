@@ -1,11 +1,12 @@
 import { FC, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { getPromptRootId } from '@/src/utils/app/id';
+import { translate } from '@/src/utils/app/translation';
 
+import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
-import { Translation } from '@/src/types/translation';
 
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 
@@ -15,8 +16,14 @@ interface Props {
   prompts: PromptInfo[];
 }
 
+const RECENT_SECTION_NAME = translate('Recent');
+
 export const Prompts: FC<Props> = ({ prompts }) => {
-  const { t } = useTranslation(Translation.PromptBar);
+  const { handleToggle, isExpanded } = useSectionToggle(
+    RECENT_SECTION_NAME,
+    FeatureType.Prompt,
+  );
+
   const promptsToDisplay = useMemo(() => {
     const promptRootId = getPromptRootId();
     return prompts
@@ -30,8 +37,9 @@ export const Prompts: FC<Props> = ({ prompts }) => {
 
   return (
     <CollapsibleSection
-      name={t('Recent')}
-      openByDefault
+      name={RECENT_SECTION_NAME}
+      onToggle={handleToggle}
+      openByDefault={isExpanded}
       dataQa="promps-section"
     >
       <div
