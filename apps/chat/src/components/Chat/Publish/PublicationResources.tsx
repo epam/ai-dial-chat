@@ -38,12 +38,14 @@ interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
   rootFolder?: ShareEntity;
+  isHaveTooltip?: boolean;
 }
 
 export const PromptPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  isHaveTooltip,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -125,6 +127,7 @@ export const PromptPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            isHaveTooltip={isHaveTooltip}
           />
         );
       })}
@@ -148,6 +151,7 @@ export const ConversationPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  isHaveTooltip,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -233,6 +237,7 @@ export const ConversationPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            isHaveTooltip={isHaveTooltip}
           />
         );
       })}

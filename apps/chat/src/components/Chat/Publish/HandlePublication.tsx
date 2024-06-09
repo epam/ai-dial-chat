@@ -180,12 +180,14 @@ export function HandlePublication({ publication }: Props) {
       sectionName: t('Conversations'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
+      isHaveTooltip: true,
     },
     {
       featureType: FeatureType.Prompt,
       sectionName: t('Prompts'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
+      isHaveTooltip: true,
     },
     {
       featureType: FeatureType.File,
@@ -227,8 +229,8 @@ export function HandlePublication({ publication }: Props) {
                       disabled
                     >
                       <Tooltip
-                        placement="top"
-                        triggerClassName="w-full truncate text-start"
+                        contentClassName="max-w-[400px] break-all"
+                        triggerClassName="truncate whitespace-pre"
                         tooltip={
                           <div className="flex break-words text-xs">
                             {publishToUrl}
@@ -260,11 +262,20 @@ export function HandlePublication({ publication }: Props) {
                         {getPublicationId(publication.url)}
                       </span>
                       <p className="text-secondary">{t('Path: ')}</p>
-                      <span className="col-span-2">
-                        {publication.targetFolder?.replace(
-                          /^[^/]+/,
-                          'Organization',
-                        )}
+                      <span className="col-span-2 flex truncate whitespace-pre">
+                        <Tooltip
+                          tooltip={publication.targetFolder?.replace(
+                            /^[^/]+/,
+                            'Organization',
+                          )}
+                          contentClassName="max-w-[400px] break-all"
+                          triggerClassName="truncate whitespace-pre"
+                        >
+                          {publication.targetFolder?.replace(
+                            /^[^/]+/,
+                            'Organization',
+                          )}
+                        </Tooltip>
                       </span>
                       <p className="text-secondary">
                         {t('Publication date: ')}
@@ -331,7 +342,13 @@ export function HandlePublication({ publication }: Props) {
             </div>
             <div className="overflow-y-auto bg-layer-2 px-5 py-4">
               {sections.map(
-                ({ dataQa, sectionName, Component, featureType }) =>
+                ({
+                  dataQa,
+                  sectionName,
+                  Component,
+                  featureType,
+                  isHaveTooltip,
+                }) =>
                   publication.resourceTypes.includes(
                     EnumMapper.getBackendResourceTypeByFeatureType(featureType),
                   ) && (
@@ -344,6 +361,7 @@ export function HandlePublication({ publication }: Props) {
                       <Component
                         resources={publication.resources}
                         forViewOnly
+                        isHaveTooltip={isHaveTooltip}
                       />
                     </CollapsibleSection>
                   ),

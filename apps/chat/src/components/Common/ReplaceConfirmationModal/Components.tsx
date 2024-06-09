@@ -146,11 +146,9 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
       <Tooltip
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate text-center w-full"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {conversation.name}
-        </div>
+        {conversation.name}
       </Tooltip>
     </FeatureContainer>
   );
