@@ -83,7 +83,7 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               forViewOnly
-              isHaveTooltip={true}
+              isHaveTooltip
             />
           )}
         </CollapsibleSection>
@@ -130,7 +130,7 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               forViewOnly
-              isHaveTooltip={true}
+              isHaveTooltip
             />
           )}
         </CollapsibleSection>
