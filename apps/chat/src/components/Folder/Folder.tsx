@@ -1102,10 +1102,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           entity={currentFolder}
           entities={
             featureType === FeatureType.Chat
-              ? allChildItems.filter(
-                  (item) =>
-                    parseConversationApiKey(splitEntityId(item.id).name).model
-                      .id !== PseudoModel.Replay,
+              ? (allChildItems as ConversationInfo[]).filter(
+                  (item) => !item.isReplay,
                 )
               : allChildItems
           }
