@@ -131,7 +131,7 @@ export default function Home({ initialState }: HomeProps) {
   // EFFECTS  --------------------------------------------
   useEffect(() => {
     if (!isOverlay && shouldLogin) {
-      signIn();
+      signIn('azure-ad');
     }
   }, [isOverlay, shouldLogin]);
 
@@ -300,12 +300,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     params = new URL(req.url, `http://${req.headers.host}`).searchParams;
   }
   if (!isServerSessionValid(session)) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: `api/auth/signin${params?.size ? `?callbackUrl=/?${params.toString()}` : ''}`,
-      },
-    };
+    return { props: {} };
   }
 
   const settings: SettingsState = {
