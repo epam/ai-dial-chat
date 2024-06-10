@@ -281,6 +281,7 @@ export enum ModelIds {
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_1_5 = 'gemini-1.5-pro-preview-0409',
+  GEMINI_FLASH_1_5 = 'gemini-1.5-flash-001',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
   GEMINI_PRO = 'gemini-pro',
   META_LLAMA_2 = 'meta.llama2',
