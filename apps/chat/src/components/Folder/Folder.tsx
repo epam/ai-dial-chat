@@ -914,7 +914,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             >
               <Tooltip
                 tooltip={
-                  (featureType === 'file' || showTooltip) &&
+                  (featureType === FeatureType.File || showTooltip) &&
                   !isNameOrPathInvalid
                     ? currentFolder.name
                     : t(
