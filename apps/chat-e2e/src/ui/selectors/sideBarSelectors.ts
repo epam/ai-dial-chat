@@ -1,5 +1,3 @@
-import { Attributes, Tags } from '@/src/ui/domData';
-
 export const SideBarSelectors = {
   chatBar: '[data-qa="chatbar"]',
   promptBar: '[data-qa="promptbar"]',
@@ -8,7 +6,6 @@ export const SideBarSelectors = {
   folderGroup: '#folder',
   folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',
-  renameInput: `${Tags.input}[${Attributes.name}="rename-input"]`,
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',
@@ -32,7 +29,6 @@ export const ChatBarSelectors = {
   conversationName: '[data-qa="conversation-name"]',
   selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',
-  actionButton: '[data-qa="action-button"]',
   exportConversations: '[data-qa="export-conversations"]',
   exportPrompts: '[data-qa="export-prompts"]',
   pinnedChats: () =>

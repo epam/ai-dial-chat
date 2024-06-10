@@ -9,7 +9,7 @@ import {
 } from '@/src/testData';
 import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { Input } from '@/src/ui/webElements';
+import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -140,7 +140,7 @@ dialTest(
       'EPMRTC-575',
     );
     const newNameWithEndDot = 'updated folder name.';
-    let folderInput: Input;
+    let editFolderInput: EditInput;
 
     await dialTest.step('Start editing folder and cancel', async () => {
       await dialHomePage.openHomePage();
@@ -150,9 +150,8 @@ dialTest(
         ExpectedConstants.newFolderWithIndexTitle(1),
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-      const folderInput =
-        await folderConversations.editFolderName(newNameWithEndDot);
-      await folderInput.clickCancelButton();
+      await folderConversations.editFolderName(newNameWithEndDot);
+      await folderConversations.getEditFolderInputActions().clickCancelButton();
       await expect
         .soft(
           folderConversations.getFolderByName(
@@ -170,9 +169,9 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        folderInput =
+        editFolderInput =
           await folderConversations.editFolderName(newNameWithEndDot);
-        await folderInput.clickTickButton();
+        await folderConversations.getEditFolderInputActions().clickTickButton();
 
         const errorMessage = await errorToast.getElementContent();
         expect
@@ -184,9 +183,11 @@ dialTest(
     await dialTest.step(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await folderInput.click();
-        await folderInput.editValue(ExpectedConstants.prohibitedNameSymbols);
-        const inputContent = await folderInput.getElementContent();
+        await editFolderInput.click();
+        await editFolderInput.editValue(
+          ExpectedConstants.prohibitedNameSymbols,
+        );
+        const inputContent = await editFolderInput.getElementContent();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
           .toBe('');
@@ -201,9 +202,9 @@ dialTest(
         );
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusC);
-        await folderInput.click();
+        await editFolderInput.click();
         await page.keyboard.press(keys.ctrlPlusV);
-        const inputContent = await folderInput.getElementContent();
+        const inputContent = await editFolderInput.getElementContent();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
           .toBe('');
@@ -214,8 +215,8 @@ dialTest(
       'Set empty folder name or spaces and verify initial name is preserved',
       async () => {
         const name = GeneratorUtil.randomArrayElement(['', '   ']);
-        folderInput = await folderConversations.editFolderName(name);
-        await folderInput.clickTickButton();
+        await folderConversations.editFolderName(name);
+        await folderConversations.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             folderConversations.getFolderByName(
@@ -291,8 +292,8 @@ dialTest(
         await folderConversations.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         const folderInputOverflow = await folderConversations
-          .getFolderInput()
-          .getComputedStyleProperty(Styles.text_overflow);
+          .getEditFolderInput()
+          .editInput.getComputedStyleProperty(Styles.text_overflow);
         expect
           .soft(folderInputOverflow[0], ExpectedMessages.folderNameIsTruncated)
           .toBe(Overflow.ellipsis);
@@ -598,9 +599,8 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const folderInput =
-          await folderConversations.editFolderName(specialSymbols);
-        await folderInput.clickTickButton();
+        await folderConversations.editFolderName(specialSymbols);
+        await folderConversations.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             folderConversations.getFolderByName(specialSymbols),
@@ -650,9 +650,8 @@ dialTest(
           folderConversation.folders.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const folderInput =
-          await folderConversations.editFolderName(updatedFolderName);
-        await folderInput.clickTickButton();
+        await folderConversations.editFolderName(updatedFolderName);
+        await folderConversations.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
             folderConversations.getFolderByName(updatedFolderName),

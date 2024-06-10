@@ -6,3 +6,4 @@ export * from './headerSelectors';
 export * from './iconSelectors';
 export * from './menuSelectors';
 export * from './fileSelectors';
+export * from './editSelectors';

@@ -11,8 +11,10 @@ import {
   ConversationToCompare,
   Conversations,
   EntitySelector,
+  Folders,
   MoreInfo,
   PromptBar,
+  SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
 
@@ -163,6 +165,8 @@ const dialTest = test.extend<
     chatNotFound: ChatNotFound;
     attachFilesModal: AttachFilesModal;
     uploadFromDeviceModal: UploadFromDeviceModal;
+    selectFolderModal: SelectFolderModal;
+    selectUploadFolder: Folders;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -564,6 +568,14 @@ const dialTest = test.extend<
   uploadFromDeviceModal: async ({ page }, use) => {
     const uploadFromDeviceModal = new UploadFromDeviceModal(page);
     await use(uploadFromDeviceModal);
+  },
+  selectFolderModal: async ({ page }, use) => {
+    const selectFolderModal = new SelectFolderModal(page);
+    await use(selectFolderModal);
+  },
+  selectUploadFolder: async ({ selectFolderModal }, use) => {
+    const selectUploadFolder = selectFolderModal.getUploadFolder();
+    await use(selectUploadFolder);
   },
 });
 
