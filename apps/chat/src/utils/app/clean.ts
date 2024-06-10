@@ -1,3 +1,5 @@
+import { isAbsoluteUrl } from '@/src/utils/app/file';
+
 import {
   Attachment,
   Conversation,
@@ -24,8 +26,7 @@ const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
     url &&
     !url.startsWith('metadata') &&
     !url.startsWith('files') &&
-    !url.startsWith('http') &&
-    !url.startsWith('//')
+    !isAbsoluteUrl(url)
       ? constructPath('files', url)
       : url;
 
