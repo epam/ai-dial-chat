@@ -48,7 +48,6 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { PseudoModel, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
