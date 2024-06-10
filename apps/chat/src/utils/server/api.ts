@@ -11,7 +11,7 @@ import { constructPath } from '../app/file';
 const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
 
-enum PseudoModel {
+export enum PseudoModel {
   Replay = 'replay',
   Playback = 'playback',
 }

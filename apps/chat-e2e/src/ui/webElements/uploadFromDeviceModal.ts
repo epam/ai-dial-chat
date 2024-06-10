@@ -39,10 +39,25 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
+  public changeUploadToButton = this.getChildElementBySelector(
+    UploadFromDeviceModalSelectors.changeUploadTo,
+  );
+
+  public async changeUploadToLocation() {
+    const responsePromise = this.page.waitForResponse(
+      (resp) => resp.request().method() === 'GET',
+    );
+    await this.changeUploadToButton.click();
+    await responsePromise;
+  }
+
   public getUploadedFile = (filename: string) => {
     const dotIndex = filename.lastIndexOf('.');
-    const filenameValue =
+    let filenameValue =
       dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
+    if (filename.includes('\\')) {
+      filenameValue = filenameValue.replaceAll('\\', '\\\\');
+    }
     const inputValue = new BaseElement(
       this.page,
       `[${Attributes.value} = "${filenameValue}"]`,

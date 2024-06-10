@@ -34,6 +34,7 @@ import {
   getFoldersDepth,
   getParentFolderIdsFromFolderId,
   sortByName,
+  splitEntityId,
 } from '@/src/utils/app/folders';
 import {
   hasParentWithAttribute,
@@ -47,6 +48,7 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { PseudoModel, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -775,6 +777,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             style={{
               paddingLeft: `${level * 1.5}rem`,
             }}
+            data-qa="edit-container"
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
@@ -839,7 +842,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
-              name="rename-input"
+              name="edit-input"
             />
           </div>
         ) : (
@@ -982,7 +985,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           </div>
         )}
         {isRenaming && (
-          <div className="absolute right-1 z-10 flex">
+          <div className="absolute right-1 z-10 flex" data-qa="actions">
             <SidebarActionButton
               handleClick={(e) => {
                 e.stopPropagation();
@@ -990,6 +993,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   handleRename();
                 }
               }}
+              dataQA="confirm-edit"
             >
               <CheckIcon
                 width={18}
@@ -1004,6 +1008,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 setIsRenaming(false);
                 handleNewFolderRename();
               }}
+              dataQA="cancel-edit"
             >
               <IconX
                 width={18}
@@ -1099,7 +1104,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isPublishing && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
-          entities={allChildItems}
+          entities={
+            featureType === FeatureType.Chat
+              ? allChildItems.filter(
+                  (item) =>
+                    parseConversationApiKey(splitEntityId(item.id).name).model
+                      .id !== PseudoModel.Replay,
+                )
+              : allChildItems
+          }
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder

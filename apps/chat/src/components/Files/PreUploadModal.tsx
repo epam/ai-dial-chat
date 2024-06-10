@@ -400,7 +400,9 @@ export const PreUploadDialog = ({
               <span className="truncate">
                 {constructPath(t('All files'), folderPath)}
               </span>
-              <span className="text-accent-primary">{t('Change')}</span>
+              <span className="text-accent-primary" data-qa="change-upload-to">
+                {t('Change')}
+              </span>
             </button>
           </div>
 
