@@ -34,7 +34,6 @@ import {
   getFoldersDepth,
   getParentFolderIdsFromFolderId,
   sortByName,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import {
   hasParentWithAttribute,
