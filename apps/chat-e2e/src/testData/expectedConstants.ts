@@ -150,6 +150,7 @@ export enum MenuOptions {
   newFolder = 'New folder',
   attachments = 'Attachments',
   download = 'Download',
+  addNewFolder = 'Add new folder',
 }
 
 export enum FilterMenuOptions {
