@@ -109,7 +109,7 @@ export function UnpublishModal({
 
       onClose();
     },
-    [dispatch, entities, entity.id, onClose, type],
+    [dispatch, entities, entity.id, files, onClose, type],
   );
 
   return (
