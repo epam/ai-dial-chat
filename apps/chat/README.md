@@ -8,23 +8,23 @@ Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) 
 
 ## Docs
 
-`AI DIAL Overlay` documentation is placed [here](../../libs/overlay/README.md).
-
-`Theming and branding` documentation is placed [here](../../docs/THEME-CUSTOMIZATION.md).
+* **AI DIAL Overlay** documentation is placed [here](../../libs/overlay/README.md).
+* **Theming and branding** documentation is placed [here](../../docs/THEME-CUSTOMIZATION.md).
+* In [AI DIAL repository](https://github.com/epam/ai-dial/blob/main/docs/user-guide.md), you can find a **User Guide** for the AI DIAL Chat.
 
 ## Overview
 
 This project is a web application built using [Next.js](https://nextjs.org/), a React framework with server-rendering capabilities. It can be easily customized and adapted to your needs by following the steps mentioned below.
 
-## Developer Environment
+## Set Up Developer Environment
 
-This project is managed by nx ([NX](https://nextjs.org/)).
+This project is managed by [NX](https://nextjs.org/).
 
-Before diving into the development environment, you should have Node.js (version >=18.18.2) and npm (version >=9.8.1) installed on your system. If you don't already have them, follow the instructions [here](https://nodejs.org/en/download/).
+Before diving into the development environment, install Node.js (version >=18.18.2) and npm (version >=9.8.1) on your system. If you don't already have them, follow the [instruction](https://nodejs.org/en/download/).
 
 Once you've installed Node.js and npm, follow these steps to set up your developer environment:
 
-1. Clone the repository:
+1. Clone the AI DIAL Chat repository:
 
 ```
 git clone https://github.com/epam/ai-dial-chat.git
@@ -36,7 +36,7 @@ git clone https://github.com/epam/ai-dial-chat.git
 npm install
 ```
 
-3. Create `.env.local` file and add next variables with appropriate values(more info in [Environment Variables](#environment-variables)):
+3. Create `.env.local` file in the `\apps\chat` project directory and add the required variables with appropriate values. These three are the only required environment variables. Refer to [Environment Variables](#environment-variables) to learn more.
 
 ```
 DIAL_API_HOST="ADD_VALUE_HERE"
@@ -50,6 +50,16 @@ NEXTAUTH_SECRET="ADD_VALUE_HERE"
 npm run nx serve chat
 ```
 
+Once the server is up and running, open `http://localhost:3000` in your browser to view your application.
+
+To run the optimized production build, run:
+
+```bash
+npm run nx serve chat --configuration=production
+```
+
+This will start a production server on the default port 3000.
+
 ## Build
 
 To create an optimized build of your application, run the following command:
@@ -58,25 +68,7 @@ To create an optimized build of your application, run the following command:
 npm run nx build chat --configuration=production
 ```
 
-After running the command, you'll see a `.next` folder created in your project directory which contains the optimized output.
-
-## Run
-
-To start the development server, run:
-
-```bash
-npm run nx serve chat
-```
-
-Once the server is up and running, open `http://localhost:3000` in your browser to view your application.
-
-To run the optimized production build, first build the app and then run:
-
-```bash
-npm run nx serve chat --configuration=production
-```
-
-This will start a production server on the default port 3000.
+After running the command, you will see a `.next` folder created in your project directory with the optimized output.
 
 ## Test
 
@@ -92,25 +84,26 @@ To run the e2e tests run the following command:
 npm run nx e2e chat-e2e
 ```
 
-For more info check [E2E tests documentation](../chat-e2e/README.md)
+> For more info refer to [E2E tests documentation](../chat-e2e/README.md).
 
 ## Environment Variables
 
-This project leverages environment variables for configuration.
+This project uses environment variables for configuration. The `.env` file contains environment variables that can be used to configure your app's settings and behavior. These values can be changed as needed to suit your specific requirements.
 
-**Note: for development we have some predefined variables located in `.env.development`**
+> Selected variables were predefined for the development purposes in the `.env.development` file.
+
 
 | Variable                            | Required                        | Description                                                                                                                                                                                                                                                                                   | Available Values                                                       | Default values                     |
-| ----------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------- |
-| `DIAL_API_HOST`                     | Yes                             | Dial API Host                                                                                                                                                                                                                                                                                 | Any string                                                             |                                    |
-| `DIAL_API_KEY`                      | Yes                             | Dial API Key                                                                                                                                                                                                                                                                                  | Any string                                                             |                                    |
-| `DIAL_API_VERSION`                  | No                              | Dial API Version                                                                                                                                                                                                                                                                              | Any string                                                             | `2024-02-01`                       |
+| ----------------------------------- | :-------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------- |
+| `DIAL_API_HOST`                     | Yes                             | AI DIAL Core API Host. Refer to [AI DIAL Core](https://github.com/epam/ai-dial-core?tab=readme-ov-file#dynamic-settings).                                                                                                                                                                                                                                                                                 | Any string                                                             |                                    |
+| `DIAL_API_KEY`                      | Yes                             | AI DIAL Core API Key. Refer to [AI DIAL Core](https://github.com/epam/ai-dial-core?tab=readme-ov-file#dynamic-settings).                                                                                                                                                                                                                                                                                  | Any string                                                             |                                    |
+| `DIAL_API_VERSION`                  | No                              | AI DIAL API Version                                                                                                                                                                                                                                                                              | Any string                                                             | `2024-02-01`                       |
 | `APP_BASE_PATH`                     | No                              | Application base path                                                                                                                                                                                                                                                                         | Any string                                                             |                                    |
-| `APP_BASE_ORIGIN`                   | Yes (if `APP_BASE_PATH` is set) | Application base origin                                                                                                                                                                                                                                                                       | Any string                                                             |                                    |
+| `APP_BASE_ORIGIN`                   | Optional.<br />  Required if `APP_BASE_PATH` is set. | Application base origin                                                                                                                                                                                                                                                                       | Any string                                                             |                                    |
 | `ALLOWED_IFRAME_ORIGINS`            | No                              | Allowed iFrame Origins                                                                                                                                                                                                                                                                        | Any origin valid format. List of space separated sources.              | `none`                             |
 | `ALLOWED_IFRAME_SOURCES`            | No                              | Allowed iFrame Sources                                                                                                                                                                                                                                                                        | Any origin valid format. List of space separated sources.              | `none`                             |
 | `IS_IFRAME`                         | No                              | Is iFrame                                                                                                                                                                                                                                                                                     | `true`, `false`                                                        | `false`                            |
-| `ENABLED_FEATURES`                  | No                              | Enabled Features                                                                                                                                                                                                                                                                              | See available features [here](../../libs/shared/src/types/features.ts) |                                    |
+| `ENABLED_FEATURES`                  | No                              | Enabled Features                                                                                                                                                                                                                                                                              | Refer to [Features](../../libs/shared/src/types/features.ts) to view all the available features. |                                    |
 | `PUBLICATION_FILTERS`               | No                              | Publication Filters                                                                                                                                                                                                                                                                           | Any string. Values must be separated by a comma.                       | `title,role`                       |
 | `NEXT_PUBLIC_APP_NAME`              | No                              | Public Application Name                                                                                                                                                                                                                                                                       | Any string                                                             | `AI Dial`                          |
 | `NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT` | No                              | Public Default System Prompt                                                                                                                                                                                                                                                                  | Any string                                                             |                                    |
@@ -119,7 +112,7 @@ This project leverages environment variables for configuration.
 | `DEFAULT_ASSISTANT_SUB_MODEL`       | No                              | Default Assistant Sub Model                                                                                                                                                                                                                                                                   | Any string                                                             | `gpt-4`                            |
 | `RECENT_MODELS_IDS`                 | No                              | A list of IDs for recently used AI models.                                                                                                                                                                                                                                                    | Any string                                                             |                                    |
 | `RECENT_ADDONS_IDS`                 | No                              | A list of IDs for recently used AI model addons.                                                                                                                                                                                                                                              | Any string                                                             |                                    |
-| `THEMES_CONFIG_HOST`                | No                              | The host URL for custom themes configuration. More info in [Themes configuration documentation](docs/THEME-CUSTOMIZATION.md)                                                                                                                                                                  | Any string                                                             |                                    |
+| `THEMES_CONFIG_HOST`                | No                              | The host URL for custom themes configuration. Refe to [Theme CCustomization](docs/THEME-CUSTOMIZATION.md) to learn more.                                                                                                                                                                | Any string                                                             |                                    |
 | `FOOTER_HTML_MESSAGE`               | No                              | Footer HTML Message                                                                                                                                                                                                                                                                           | Any string                                                             |                                    |
 | `ANNOUNCEMENT_HTML_MESSAGE`         | No                              | Announcement banner HTML Message                                                                                                                                                                                                                                                              | Any string                                                             |                                    |
 | `AZURE_FUNCTIONS_API_HOST`          | No                              | Azure Functions API Host                                                                                                                                                                                                                                                                      | Any string                                                             |                                    |
@@ -127,20 +120,26 @@ This project leverages environment variables for configuration.
 | `REQUEST_API_KEY_CODE`              | No                              | Request API Key Code used when sending request api key info to Azure Functions API Host                                                                                                                                                                                                       | Any string                                                             |                                    |
 | `CODE_GENERATION_WARNING`           | No                              | Warning text regarding code generation                                                                                                                                                                                                                                                        | Any string                                                             |                                    |
 | `SHOW_TOKEN_SUB`                    | No                              | Show token sub in refresh login error logs                                                                                                                                                                                                                                                    | `true`, `false`                                                        | `false`                            |
-| `STORAGE_TYPE`                      | No                              | Type of storage used for getting and saving information generated by user. Now supported only `api`                                                                                                                                                                                           | `browserStorage`, `api`                                                | `api`                              |
-| `KEEP_ALIVE_TIMEOUT`                | No                              | Determines the maximum time in milliseconds in seconds that a connection may be idle before it is closed by the server. This is needed because infrastructure usually have default keep alive timeout 60 seconds and next server should have bigger value. Used only when running dockerfile. | Any number string                                                      | `61000`                            |
+| `STORAGE_TYPE`                      | No                              | Type of storage used for getting and saving information generated by a user. Now supported only `api`                                                                                                                                                                                           | `browserStorage`, `api`                                                | `api`                              |
+| `KEEP_ALIVE_TIMEOUT`                | No                              | Determines the maximum time in milliseconds in seconds for an idle connection before it is closed by the server. This is needed because infrastructures usually have a default keep alive timeout 60 seconds and the Next server should have a larger value. This variable is used only when running a `dockerfile`. | Any number string                                                      | `61000`                            |
 | `TRACES_URL`                        | No                              | Traces URL                                                                                                                                                                                                                                                                                    | Any string                                                             |                                    |
-| `MAX_PROMPT_TOKENS_DEFAULT_PERCENT` | No                              | Max prompt tokens default percent value of maxTotalTokens if max_prompt_tokens for model not presented. It used when calculate max_prompt_tokens for completions requests like minimum of it and `MAX_PROMPT_TOKENS_DEFAULT_VALUE`                                                            | Any string                                                             | `75`                               |
-| `MAX_PROMPT_TOKENS_DEFAULT_VALUE`   | No                              | Max prompt tokens default value if max_prompt_tokens for model not presented. It used when calculate max_prompt_tokens for completions requests like minimum of it and `MAX_PROMPT_TOKENS_DEFAULT_PERCENT`                                                                                    | Any string                                                             | `2000`                             |
-| `CUSTOM_VISUALIZERS`                | No                              | List of the custom visualizers configurations. More info in [Chat Visualizer Connector documentation](../../libs/chat-visualizer-connector/README.md)                                                                                                                                         | [{ title, description, icon, contentType, url }]                       |                                    |
+| `MAX_PROMPT_TOKENS_DEFAULT_PERCENT` | No                              | A default value in percent of `MAX_PROMPT_TOKENS_DEFAULT_VALUE`. If not set, the value of `MAX_PROMPT_TOKENS_DEFAULT_VALUE` applies.| Any string                                                             | `75`                               |
+| `MAX_PROMPT_TOKENS_DEFAULT_VALUE`   | No                              | Max prompt tokens default value if max_prompt_tokens for model not presented. It used when calculate `max_prompt_tokens` for completions requests like minimum of it and `MAX_PROMPT_TOKENS_DEFAULT_PERCENT`                                                                                    | Any string                                                             | `2000`                             |
+| `CUSTOM_VISUALIZERS`                | No                              | A list of configurations of custom visualizers. Refer to [Chat Visualizer](../../libs/chat-visualizer-connector/README.md) to learn more.                                                                                                                                         | [{ title, description, icon, contentType, url }]                       |                                    |
 
-The .env file contains environment variables that can be used to configure your app's settings and behavior. These values can be changed as needed to suit your specific requirements.
 
-Also we have a lot of auth specific env variables:
+### Environment Variables for the Configuration of Auth Providers
+
+> Refer to [IDP Configuration](https://github.com/epam/ai-dial/blob/main/docs/Deployment/idp-configuration/auth0.md) to view configuration examples for supported IDP providers.
+
+The table below presents a list of environment variables you can use to configure a specific IDP provider.
+
+> **NOTE**: to test the AI DIAL Chat application in an **unauthenticated** mode, do not provide any of these variables. The only required variable is `NEXTAUTH_SECRET`.
+
 
 | Variable                  | Required             | Description                                                                                                                                                                                                                                        | Available Values | Default values                                  |
-| ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------- |
-| `NEXTAUTH_URL`            | Yes (for production) | NextAuth URL                                                                                                                                                                                                                                       | Any string       |                                                 |
+| ------------------------- | :--------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------- |
+| `NEXTAUTH_URL`            | Optional.<br /> Required for **production** deployments. | NextAuth URL                                                                                                                                                                                                                                       | Any string       |                                                 |
 | `NEXTAUTH_SECRET`         | Yes                  | NextAuth Secret (generate by `openssl rand -base64 32` for example)                                                                                                                                                                                | Any string       |                                                 |
 | `AUTH_AUTH0_AUDIENCE`     | No                   | Auth0 Audience                                                                                                                                                                                                                                     | Any string       |                                                 |
 | `AUTH_AUTH0_CLIENT_ID`    | No                   | Auth0 Client ID                                                                                                                                                                                                                                    | Any string       |                                                 |
@@ -181,5 +180,3 @@ Also we have a lot of auth specific env variables:
 | `AUTH_OKTA_CLIENT_SECRET` | No                   | Okta Client Secret                                                                                                                                                                                                                                 | Any string       |                                                 |
 | `AUTH_OKTA_ISSUER`        | No                   | Okta domain issuer                                                                                                                                                                                                                                 | Any string       |                                                 |
 | `AUTH_OKTA_SCOPE`         | No                   | Okta Scope                                                                                                                                                                                                                                         | Any string       | `openid email profile`                          |
-
-_NOTE: to being able to test the app in unauthenticated mode just not set any of auth providers variables_
