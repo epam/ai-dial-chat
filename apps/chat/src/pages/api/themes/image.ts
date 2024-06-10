@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { isAbsoluteUrl } from '@/src/utils/app/file';
 import { logger } from '@/src/utils/server/logger';
 
 import { ThemesConfig } from '@/src/types/themes';
@@ -33,7 +34,7 @@ const getImage = async (
   }
 
   let finalUrl = imageUrl;
-  if (!finalUrl.startsWith('http') && !finalUrl.startsWith('//')) {
+  if (!isAbsoluteUrl(finalUrl)) {
     finalUrl = `${process.env.THEMES_CONFIG_HOST}/${finalUrl}`;
   }
   const response = await fetch(finalUrl);
