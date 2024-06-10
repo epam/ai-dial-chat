@@ -590,33 +590,28 @@ export const getAttachments = createSelector(
   (state, entityId) => {
     const folders = selectFolders(state);
     const conversation = selectConversation(state, entityId);
+
     if (conversation) {
       return getUniqueAttachments(
-        getConversationAttachmentWithPath(
-          conversation as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-          folders,
-        ),
-      );
-    } else {
-      const folderIds = new Set(
-        getChildAndCurrentFoldersIdsById(entityId, folders),
-      );
-
-      if (!folderIds.size) return [];
-
-      const conversations = selectConversations(state).filter(
-        (conv) => conv.folderId && folderIds.has(conv.folderId),
-      );
-
-      return getUniqueAttachments(
-        conversations.flatMap((conv) =>
-          getConversationAttachmentWithPath(
-            conv as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-            folders,
-          ),
-        ),
+        getConversationAttachmentWithPath(conversation, folders),
       );
     }
+
+    const folderIds = new Set(
+      getChildAndCurrentFoldersIdsById(entityId, folders),
+    );
+
+    if (!folderIds.size) return [];
+
+    const conversations = selectConversations(state).filter(
+      (conv) => conv.folderId && folderIds.has(conv.folderId),
+    );
+
+    return getUniqueAttachments(
+      conversations.flatMap((conv) =>
+        getConversationAttachmentWithPath(conv, folders),
+      ),
+    );
   },
 );
 
