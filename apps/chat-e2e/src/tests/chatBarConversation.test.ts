@@ -11,7 +11,7 @@ import {
   ModelIds,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
-import { Input } from '@/src/ui/webElements';
+import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
@@ -160,9 +160,8 @@ dialTest(
     await dialTest.step(
       'Set new conversation name, cancel edit and verify conversation with initial name shown',
       async () => {
-        const nameInput =
-          await conversations.openEditConversationNameMode(newName);
-        await nameInput.clickCancelButton();
+        await conversations.openEditConversationNameMode(newName);
+        await conversations.getEditInputActions().clickCancelButton();
         await expect
           .soft(
             await conversations.getConversationByName(newName),
@@ -354,7 +353,7 @@ dialTest(
       'EPMRTC-1574',
       'EPMRTC-1276',
     );
-    let input: Input;
+    let editInputContainer: EditInput;
     const specialSymbolsName = `(\`~!@#$^*-_+[]'|<>.?")`;
     const newNameWithEndDot = 'updated folder name.';
 
@@ -369,9 +368,9 @@ dialTest(
           ExpectedConstants.newConversationTitle,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        input =
+        editInputContainer =
           await conversations.openEditConversationNameMode(newNameWithEndDot);
-        await input.clickTickButton();
+        await conversations.getEditInputActions().clickTickButton();
 
         const errorMessage = await errorToast.getElementContent();
         expect
@@ -383,9 +382,11 @@ dialTest(
     await dialTest.step(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await input.click();
-        await input.editValue(ExpectedConstants.prohibitedNameSymbols);
-        const inputContent = await input.getElementContent();
+        await editInputContainer.editInput.click();
+        await editInputContainer.editValue(
+          ExpectedConstants.prohibitedNameSymbols,
+        );
+        const inputContent = await editInputContainer.getEditInputValue();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
           .toBe('');
@@ -396,8 +397,9 @@ dialTest(
       'Set empty conversation name or spaces and verify initial name is preserved',
       async () => {
         const name = GeneratorUtil.randomArrayElement(['', '   ']);
-        input = await conversations.openEditConversationNameMode(name);
-        await input.clickTickButton();
+        editInputContainer =
+          await conversations.openEditConversationNameMode(name);
+        await conversations.getEditInputActions().clickTickButton();
         await expect
           .soft(
             conversations.getConversationByName(

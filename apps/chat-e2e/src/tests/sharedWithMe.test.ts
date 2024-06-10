@@ -186,7 +186,6 @@ dialSharedWithMeTest(
     dialHomePage,
     folderConversations,
     conversationDropdownMenu,
-    conversations,
     confirmationDialog,
     page,
     localStorageManager,
@@ -256,7 +255,9 @@ dialSharedWithMeTest(
           conversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditConversationNameMode(updatedName);
+        await folderConversations
+          .getEditFolderEntityInput()
+          .editValue(updatedName);
         await page.keyboard.press(keys.enter);
 
         expect

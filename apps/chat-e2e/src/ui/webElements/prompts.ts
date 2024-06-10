@@ -1,17 +1,12 @@
 import { PromptBarSelectors } from '../selectors';
 
 import { MenuOptions } from '@/src/testData';
-import { Input } from '@/src/ui/webElements/input';
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
 import { Page } from '@playwright/test';
 
 export class Prompts extends SideBarEntities {
   constructor(page: Page) {
     super(page, PromptBarSelectors.prompts, PromptBarSelectors.prompt);
-  }
-
-  getPromptInput(): Input {
-    return this.getEntityInput(this.entitySelector);
   }
 
   public getPromptByName(name: string, index?: number) {

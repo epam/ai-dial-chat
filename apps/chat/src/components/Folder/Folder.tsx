@@ -773,6 +773,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             style={{
               paddingLeft: `${level * 1.5}rem`,
             }}
+            data-qa="edit-container"
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
@@ -837,7 +838,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
-              name="rename-input"
+              name="edit-input"
             />
           </div>
         ) : (
@@ -979,7 +980,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           </div>
         )}
         {isRenaming && (
-          <div className="absolute right-1 z-10 flex">
+          <div className="absolute right-1 z-10 flex" data-qa="actions">
             <SidebarActionButton
               handleClick={(e) => {
                 e.stopPropagation();
@@ -987,6 +988,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   handleRename();
                 }
               }}
+              dataQA="confirm-edit"
             >
               <CheckIcon
                 width={18}
@@ -1001,6 +1003,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 setIsRenaming(false);
                 handleNewFolderRename();
               }}
+              dataQA="cancel-edit"
             >
               <IconX
                 width={18}

@@ -531,7 +531,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       data-qa="conversation"
     >
       {isRenaming ? (
-        <div className="flex w-full items-center gap-2 pr-12">
+        <div
+          className="flex w-full items-center gap-2 pr-12"
+          data-qa="edit-container"
+        >
           <ShareIcon
             {...conversation}
             isHighlighted={isHighlighted}
@@ -561,7 +564,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
-            name="rename-input"
+            name="edit-input"
             onChange={(e) =>
               setRenameValue(
                 e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
@@ -663,11 +666,17 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       </div>
 
       {isRenaming && (
-        <div className="absolute right-1 z-10 flex">
-          <SidebarActionButton handleClick={() => handleRename()}>
+        <div className="absolute right-1 z-10 flex" data-qa="actions">
+          <SidebarActionButton
+            handleClick={() => handleRename()}
+            dataQA="confirm-edit"
+          >
             <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
-          <SidebarActionButton handleClick={handleCancelRename}>
+          <SidebarActionButton
+            handleClick={handleCancelRename}
+            dataQA="cancel-edit"
+          >
             <IconX
               size={18}
               strokeWidth="2"

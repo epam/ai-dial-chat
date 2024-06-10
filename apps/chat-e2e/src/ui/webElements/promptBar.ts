@@ -15,7 +15,10 @@ export class PromptBar extends SideBar {
 
   getFolderPrompts(): FolderPrompts {
     if (!this.folderPrompts) {
-      this.folderPrompts = new FolderPrompts(this.page);
+      this.folderPrompts = new FolderPrompts(
+        this.page,
+        this.getElementLocator(),
+      );
     }
     return this.folderPrompts;
   }
