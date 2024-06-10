@@ -172,8 +172,7 @@ const parseAttachmentUrl = (url: string) => {
   };
 };
 
-export const isAttachmentLink = (url: string): boolean =>
-  url.startsWith('http') || url.startsWith('//');
+export const isAttachmentLink = (url: string): boolean => isAbsoluteUrl(url);
 
 export const getDialFilesFromAttachments = (
   attachments: Attachment[] | undefined,
@@ -416,3 +415,17 @@ export const getNextFileName = (
 
 export const prepareFileName = (filename: string) =>
   `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
+
+export const isAbsoluteUrl = (url: string): boolean => {
+  const urlLower = url.toLowerCase();
+  return [
+    'data:',
+    '//',
+    'http://',
+    'https://',
+    'file://',
+    'ftp://',
+    'mailto:',
+    'telnet://',
+  ].some((prefix) => urlLower.startsWith(prefix));
+};
