@@ -38,7 +38,7 @@ interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
   rootFolder?: ShareEntity;
-  isHaveTooltip?: boolean;
+  showTooltip?: boolean;
   isOpen?: boolean;
 }
 
@@ -46,7 +46,7 @@ export const PromptPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
-  isHaveTooltip,
+  showTooltip,
   isOpen = true,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
@@ -136,7 +136,7 @@ export const PromptPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
-            isHaveTooltip={isHaveTooltip}
+            showTooltip={showTooltip}
             additionalItemData={{ isPublicationResource: true }}
           />
         );
@@ -166,7 +166,7 @@ export const ConversationPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
-  isHaveTooltip,
+  showTooltip,
   isOpen = true,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
@@ -253,7 +253,7 @@ export const ConversationPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
-            isHaveTooltip={isHaveTooltip}
+            showTooltip={showTooltip}
           />
         );
       })}

@@ -181,14 +181,14 @@ export function HandlePublication({ publication }: Props) {
       sectionName: t('Conversations'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
-      isHaveTooltip: true,
+      showTooltip: true,
     },
     {
       featureType: FeatureType.Prompt,
       sectionName: t('Prompts'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
-      isHaveTooltip: true,
+      showTooltip: true,
     },
     {
       featureType: FeatureType.File,
@@ -348,7 +348,7 @@ export function HandlePublication({ publication }: Props) {
                   sectionName,
                   Component,
                   featureType,
-                  isHaveTooltip,
+                  showTooltip,
                 }) =>
                   publication.resourceTypes.includes(
                     EnumMapper.getBackendResourceTypeByFeatureType(featureType),
@@ -362,7 +362,7 @@ export function HandlePublication({ publication }: Props) {
                       <Component
                         resources={publication.resources}
                         forViewOnly
-                        isHaveTooltip={isHaveTooltip}
+                        showTooltip={showTooltip}
                       />
                     </CollapsibleSection>
                   ),
