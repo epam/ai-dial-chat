@@ -4,14 +4,18 @@ import { Locator, Page } from '@playwright/test';
 
 export class EditInputActions extends BaseElement {
   constructor(page: Page, parentLocator: Locator, selector: string) {
-    super(page, `${selector} >> ${EditSelectors.actionButton}`, parentLocator);
+    super(
+      page,
+      `${selector} >> ${EditSelectors.actionsContainer}`,
+      parentLocator,
+    );
   }
 
   public async clickTickButton() {
-    await this.getNthElement(1).click();
+    await this.getChildElementBySelector(EditSelectors.confirmEdit).click();
   }
 
   public async clickCancelButton() {
-    await this.getNthElement(2).click();
+    await this.getChildElementBySelector(EditSelectors.cancelEdit).click();
   }
 }

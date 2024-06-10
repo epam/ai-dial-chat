@@ -666,11 +666,17 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       </div>
 
       {isRenaming && (
-        <div className="absolute right-1 z-10 flex">
-          <SidebarActionButton handleClick={() => handleRename()}>
+        <div className="absolute right-1 z-10 flex" data-qa="actions">
+          <SidebarActionButton
+            handleClick={() => handleRename()}
+            dataQA="confirm-edit"
+          >
             <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
-          <SidebarActionButton handleClick={handleCancelRename}>
+          <SidebarActionButton
+            handleClick={handleCancelRename}
+            dataQA="cancel-edit"
+          >
             <IconX
               size={18}
               strokeWidth="2"
