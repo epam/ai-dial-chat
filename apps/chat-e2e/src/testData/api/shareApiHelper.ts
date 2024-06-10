@@ -85,14 +85,18 @@ export class ShareApiHelper extends BaseApiHelper {
     const response = await this.request.post(API.shareWithMeListing, {
       data: requestData,
     });
-    const entities = (await response.json()) as {
-      resources: BackendChatEntity[];
-    };
-    expect(
-      response.status(),
-      `Received shared items: ${JSON.stringify(entities)}`,
-    ).toBe(200);
-    return entities;
+    const statusCode = response.status();
+    if (statusCode == 200) {
+      return (await response.json()) as {
+        resources: BackendChatEntity[];
+      };
+    } else {
+      expect(
+        statusCode,
+        `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ).toBe(200);
+      return { resources: [] };
+    }
   }
 
   public async deleteSharedWithMeEntities(entities: BackendChatEntity[]) {
