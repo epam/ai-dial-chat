@@ -12,6 +12,7 @@ export class EditInput extends BaseElement {
   public editInput = this.getChildElementBySelector(EditSelectors.editInput);
 
   public async editValue(newValue: string) {
+    await this.editInput.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     await this.editInput.fillInInput(newValue);
   }
