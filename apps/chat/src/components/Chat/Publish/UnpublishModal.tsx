@@ -6,7 +6,6 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getAttachments } from '@/src/utils/app/share';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { Conversation } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { PublishActions } from '@/src/types/publication';
@@ -18,9 +17,6 @@ import { PublicationActions } from '@/src/store/publication/publication.reducers
 
 import Modal from '../../Common/Modal';
 import { PublicationItemsList } from './PublicationItemsList';
-
-import compact from 'lodash-es/compact';
-import flatMapDeep from 'lodash-es/flatMapDeep';
 
 interface Props {
   subtitle: string;
@@ -62,54 +58,22 @@ export function UnpublishModal({
       e.preventDefault();
       e.stopPropagation();
 
-      const mappedFiles =
-        type === SharingType.Conversation ||
-        type === SharingType.ConversationFolder
-          ? (entities as Conversation[])
-              .filter((c) =>
-                (c.playback?.messagesStack || c.messages).some(
-                  (m) => m.custom_content?.attachments,
-                ),
-              )
-              .flatMap((c) => {
-                const urls = compact(
-                  flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
-                    m.custom_content?.attachments?.map((a) => a.url),
-                  ),
-                );
-
-                return urls.map((oldUrl) => ApiUtils.decodeApiUrl(oldUrl));
-              })
-          : [];
-
       dispatch(
         PublicationActions.deletePublication({
           targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
             ...entities.map((entity) => ({ targetUrl: entity.id })),
-            ...files.reduce<{ sourceUrl: string; targetUrl: string }[]>(
-              (acc, file) => {
-                const decodedFileId = ApiUtils.decodeApiUrl(file.id);
-                const url = mappedFiles.find((id) => id === decodedFileId);
-
-                if (url) {
-                  acc.push({
-                    sourceUrl: decodedFileId,
-                    targetUrl: url,
-                  });
-                }
-
-                return acc;
-              },
-              [],
-            ),
+            ...files.map((f) => ({
+              sourceUrl: ApiUtils.decodeApiUrl(f.id),
+              targetUrl: ApiUtils.decodeApiUrl(f.id),
+            })),
           ],
         }),
       );
 
       onClose();
     },
-    [dispatch, entities, entity.id, files, onClose, type],
+    [dispatch, entities, entity.id, files, onClose],
   );
 
   return (
