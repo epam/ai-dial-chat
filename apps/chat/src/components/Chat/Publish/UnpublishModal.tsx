@@ -87,9 +87,22 @@ export function UnpublishModal({
           targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
             ...entities.map((entity) => ({ targetUrl: entity.id })),
-            ...mappedFiles.map((url) => ({
-              targetUrl: url,
-            })),
+            ...files.reduce<{ sourceUrl: string; targetUrl: string }[]>(
+              (acc, file) => {
+                const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+                const url = mappedFiles.find((id) => id === decodedFileId);
+
+                if (url) {
+                  acc.push({
+                    sourceUrl: decodedFileId,
+                    targetUrl: url,
+                  });
+                }
+
+                return acc;
+              },
+              [],
+            ),
           ],
         }),
       );
