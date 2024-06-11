@@ -969,11 +969,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onShare={handleShare}
                     onUnshare={handleUnshare}
                     onPublish={
-                      (featureType === FeatureType.Chat &&
-                        !allChildItems.every(
-                          (item) => (item as ConversationInfo).isReplay,
-                        )) ||
-                      featureType !== FeatureType.Chat
+                      featureType !== FeatureType.Chat ||
+                      !allChildItems.every(
+                        (item) => (item as ConversationInfo).isReplay,
+                      )
                         ? handleOpenPublishing
                         : undefined
                     }
