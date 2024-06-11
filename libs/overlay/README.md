@@ -1,44 +1,43 @@
 # DIAL Overlay
 
-Dial Overlay is a library for using AI DIAL Chat in overlay. You can configure and communicate with chat using iframe event based protocol.
+Dial Overlay is a library designed for using AI DIAL Chat in an overlay format. It allows you to set up and interact with the chat via an iframe event-based protocol.
 
-## Public classes to use
+## Public Classes to Use
 
-`ChatOverlay` - class which creates iframe with DIAL, allows to interact with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`.
-
-`ChatOverlayManager` - class which provides overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`.
-
-If you need **only 1 iframe** and API to interact and nothing more - **use `ChatOverlay`**
-
-If you need **several iframes** with API and you want that it should be placed with pre-prepared styles options - **use `ChatOverlayManager`**
+* `ChatOverlay` - a class which creates an iframe with DIAL and enables the interacting with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to interact.
+* `ChatOverlayManager` - a class which provides an overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`. Use it if what you need is **several iframes** with API and you want that it placed with pre-prepared styles options.
 
 ## Prerequisites
 
-Your Dial Chat application should configure host where you are using this library with `ALLOWED_IFRAME_ORIGINS` env variable
+[AI DIAL Chat application configuration](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/README.md):
 
-\_Note: For development purposes you can set `*`\_
+* `IS_IFRAME`: set this flag to `true` to enable Overlay.
+* `ALLOWED_IFRAME_ORIGINS`:  list all hosts where you are using the Overlay library. Note: For development purposes you can set `*`.
 
 ```
+IS_IFRAME=true
 ALLOWED_IFRAME_ORIGINS=http://localhost:8000
 ```
 
-## For integration with _DIAL CHAT_ you should do these steps:
+## Integration with AI DIAL Chat
 
-1. Install library
+Follow these steps to integrate the Overlay library with the AI DIAL Chat application:
+
+1. Install the Overlay library
 
 ```bash
 npm i @epam/ai-dial-overlay
 ```
 
-2. Add file to serving folder in your application or just import it in code
+2. Add a file to the serving folder in your application or just import it in code
 
 ```typescript
 import { ChatOverlay, ChatOverlayManager, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 ```
 
-3. Create an instance of `ChatOverlay` (to just overlay and nothing more) or `ChatOverlayManager` (if you want create more than 1 ChatOverlay, or additional style options, like positions, animations, etc.)
+3. Create an instance of `ChatOverlay` (to use just one overlay and nothing more) or `ChatOverlayManager` (if you want to create more than one ChatOverlay, or additional style options, like positions, animations, etc.)
 
-`ChatOverlay:`
+`ChatOverlay`:
 
 ```typescript
 const container = document.create('div');
@@ -54,7 +53,7 @@ const run = async () => {
     theme: 'light',
     // optional, name of model that could be by default
     modelId: 'gpt-4',
-    // optional, if DIAL doesn't respond in requestTimeout ms, overlay will throw exception
+    // optional, if DIAL doesn't respond in requestTimeout ms, overlay will throw an exception
     requestTimeout: 20000,
     // optional, features that should be enabled
     enabledFeatures: ['conversations-section', 'prompts-section', 'top-settings', 'top-clear-conversation', 'top-chat-info', 'top-chat-model-settings', 'empty-chat-settings', 'header', 'footer', 'request-api-key', 'report-an-issue', 'likes'],
@@ -64,17 +63,17 @@ const run = async () => {
     },
     // optional, class for loader
     loaderClass: 'overlay__loader',
-    // optional, id of the conversation to be selected on start
+    // optional, id of the conversation to be selected at the start
     overlayConversationId: 'some-conversation-id',
   });
 
-  // overlay loaded application and ready to send and receive information from the application.
+  // overlay loaded application and ready to send and receive information from the application
   await overlay.ready();
 
-  // return messages from the first selected conversation.
+  // return messages from the first selected conversation
   const { messages } = await overlay.getMessages();
 
-  // send message to the first selected conversation.
+  // send message to the first selected conversation
   await overlay.sendMessage('Hello chat!');
 
   // set system prompt. For chat gpt is first message like { role: 'system', message: "be patient and supportive!"}.
@@ -92,14 +91,14 @@ const run = async () => {
   // subscribing to GPT_START_GENERATING event
   const unsubscribe = overlay.subscribe('@DIAL_OVERLAY/GPT_START_GENERATING', () => console.log('Starting...'));
 
-  // to unsubscribe use callback that method subscribe is returned
+  // to unsubscribe use a callback returned by the subscribe method
   unsubscribe();
 };
 ```
 
-`ChatOverlayManager:`
+`ChatOverlayManager`:
 
-For manager the same as for `ChatOverlay` but with some minor changes. You should specify overlay displaying options and id for new instance.
+The same principle applies to `ChatOverlayManager` as for `ChatOverlay` but with minor changes. Specify overlay displaying options and id for a new instance.
 
 ```typescript
 ChatOverlayManager.createOverlay({
@@ -120,23 +119,22 @@ ChatOverlayManager.sendMessage('test', 'Hi chat!');
 ...
 ```
 
-## Internal structure
+## Internal Structure
 
-That part would be useful for overlay developers or people who might be interested in tech implementation.
+Information in this section can be useful for overlay developers or anyone interested in its technical implementation.
 
-Overlay communication, as all iframe communication, implemented using [javascript post message](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).
+Overlay communication, as all iframe communication, is implemented using [javascript post message](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).
 
-There is 2 parts of implementation:
+There are 2 parts of implementation:
 
-1. ChatOverlay library
-2. DIAL post message listeners
+1. `ChatOverlay` library
+2. DIAL `postMessage` listeners
 
 ### ChatOverlay
 
 Main methods and practices that allow us to communicate with DIAL:
 
-1. `ChatOverlay` is the class which in constructor is creating iframe and set origin of deployed version of DIAL.
-   That how it should work for end user
+1. `ChatOverlay` is the class which in constructor creates an iframe and sets the origin of the deployed version of DIAL. That how it should work for the end user:
 
 ```typescript
 const overlay = new ChatOverlay({domain: "https://overlay-domain.com", ...});
@@ -144,9 +142,9 @@ const overlay = new ChatOverlay({domain: "https://overlay-domain.com", ...});
 overlay.getSomething().then(...);
 ```
 
-2. `Overlay` uses `Task`, it's a class which contain `Promise` with external function resolve. It's needed for cases when you want resolve promise not only in this way `Promise((resolve) => resolve(...))`, you want to do something like this: `currentPromise.complete()`
+2. `Overlay` uses `Task` - a class which contains `Promise` with external function `resolve`. It is needed for cases when you want to resolve `promise` not only in this way `Promise((resolve) => resolve(...))`, but also like this: `currentPromise.complete()`
 
-Main logic that used there:
+Main logic that is used there:
 
 ```typescript
 let complete;
@@ -158,11 +156,11 @@ const promise = new Promise((resolve) => {
 complete(); // we can resolve promise outside the constructor callback
 ```
 
-3. `Overlay` uses `DeferredRequest`, it's the same as `Task` by conception, but contains more business specific logic. For example: timeout for completing task, generating uuid of request, payload of request, matching request algorithm, etc.
-4. Chat overlay contains `Task` which called `this.iframeInteraction`. When `this.iframeInteraction` is complete, that's mean we can receive and send messages. There is method `ready()`, it's displaying `this.iframeInteraction.ready()`
-5. For communication ChatOverlay uses the method `send()`. There are parts that you should know about this method:
-   1. It's creating the new `DeferredRequest`, setting necessary info and putting to `this.requests`, and sending post message.
-   2. That's totally depends `this.ready()`. No requests would be processed until `this.ready()`
+3. `Overlay` uses `DeferredRequest`. Its principle is similar to the one of `Task`, but contains an additional business logic. For example: a timeout for completing a task, generating uuid of request, payload of request, matching request algorithm, etc.
+4. `Overlay` includes a `Task` which is called `this.iframeInteraction`. When `this.iframeInteraction` is completed, it means that we can receive and send messages. There is a method `ready()`, it displays `this.iframeInteraction.ready()`.
+5. For communication, `ChatOverlay` uses a method `send()`. Things to know about this method:
+   1. It generates a new `DeferredRequest`, inputs the required information into `this.requests`, and sends a post message.
+   2. It entirely relies on `this.ready()`. No requests will be processed until `this.ready()`.
 
 ```typescript
 ...send method...
@@ -170,12 +168,12 @@ await send() {
     await this.ready();
 
     ...
-    // it shouldn't executed until this.ready()
+    // it shouldn't be executed until this.ready()
     this.requests.push(new DeferredRequest(...));
 }
 ```
 
-6. `window.addEventListener('message', this.process)`, `this.process` is checking that some message contains payload that we can match with some request in `this.requests` or just event. Before them all is checking that application send us `@DIAL_OVERLAY/READY` and we can complete `this.iframeInteraction`.
+6. In `window.addEventListener('message', this.process)`, `this.process` checks that the message contains a payload that can be matched with any request in `this.requests` or just an event. Prior to all this, it is necessary to check that application has sent us `@DIAL_OVERLAY/READY` and we can complete `this.iframeInteraction`.
 
 ```typescript
 ...handle post message...
@@ -186,7 +184,7 @@ if (event.data.type === "@DIAL_OVERLAY/READY") {
 }
 ```
 
-7. In constructor we're sending configuration to application (it's handshake, we will get ready event, after we will say our domain and additional information), `this.send()` depends from `this.iframeInteraction`. Until we don't get the `'@DIAL_OVERLAY/READY'` we don't send something, don't worry.
+7. In constructor, we send a configuration to the application (it's handshake, we will get a ready event, after we will say our domain and additional information), `this.send()` depends from `this.iframeInteraction`.  we **Note**: nothing is sent, until we get the `'@DIAL_OVERLAY/READY'`!
 
 ```typescript
     constructor() {
@@ -195,7 +193,7 @@ if (event.data.type === "@DIAL_OVERLAY/READY") {
     }
 ```
 
-8. Method `subscribe` just add callback to `this.subscriptions`. In `this.process` we call `this.processEvent` if we don't have `requestId`. Returns the callback which removes `callback` from `this.subscriptions`
+8. Method `subscribe` just adds a callback to `this.subscriptions`. In `this.process`, we call `this.processEvent` if we don't have `requestId`. Returns the callback which removes `callback` from `this.subscriptions`
 
 ```typescript
 subscribe(eventType: string, callback: () => void) {
@@ -203,27 +201,25 @@ subscribe(eventType: string, callback: () => void) {
 }
 ```
 
-9. We're showing loader until DIAL Chat notify that OverlayOptions is installed.
+9. We are showing the loader until AI DIAL Chat notifies that `OverlayOptions` is installed.
 
-### DIAL Chat side
+### DIAL Chat
 
-Main methods and practices that allow us to communicate with host.
+This part includes main methods and practices for communication with the host. Business logic related to overlay is located in `overlay.epics.ts, overlay.reducers.ts` and has own slice.
 
-Business logic which related to overlays are located in `overlay.epics.ts, overlay.reducers.ts` and has own slice.
+1. `postMessageMapperEpic`: the main `epic` that parses post messages and dispatches the necessary actions to other internal epics to separate business logic.
+2. `notifyHostAboutReadyEpic`: sends `'@DIAL_OVERLAY/READY'` to the host.
+3. `setOverlayConfigEpic`: listens when the host sends a configuration (incl. `hostDomain`, to not broadcast information to other participants of the host page).
 
-1. `postMessageMapperEpic`, main epic that parse post message and dispatch necessary action to other internal epics to separate business logic.
-2. `notifyHostAboutReadyEpic`, send to host `'@DIAL_OVERLAY/READY'`
-3. `setOverlayConfigEpic`, listens when host send configuration (incl. hostDomain, to not broadcast information to other participants of host page).
+Other epics are self-explanatory.
 
-Other epics self described.
+**To add a new method**:
 
-**Flow to add some new method**:
+1. Add action to the overlay slice.
+2. Add dispatch action to `postMessageMapper`.
+3. Add `epic` which gets all needed information from the common store and sends the result using `sendPMResponse`.
 
-1. Add action to overlay slice
-2. Add dispatch action to postMessageMapper
-3. Add epic which get all needed information from common store and send result using `sendPMResponse`.
+**To add a new event**:
 
-**Flow to add some new event**:
-
-1. Add epic which get necessary information
-2. Send result to host using `sendPMEvent`
+1. Add `epic` which gets the necessary information.
+2. Send the result to the host using `sendPMEvent`.
