@@ -22,7 +22,7 @@ This project is managed by [NX](https://nextjs.org/).
 
 Before diving into the development environment, install Node.js (version >=18.18.2) and npm (version >=9.8.1) on your system. If you don't already have them, follow the [instruction](https://nodejs.org/en/download/).
 
-Once you've installed Node.js and npm, follow these steps to set up your developer environment:
+Once you have Node.js and npm installed, follow these steps to set up your developer environment:
 
 1. Clone the AI DIAL Chat repository:
 
@@ -50,9 +50,9 @@ NEXTAUTH_SECRET="ADD_VALUE_HERE"
 npm run nx serve chat
 ```
 
-Once the server is up and running, open `http://localhost:3000` in your browser to view your application.
+Once the server is up and running, open `http://localhost:3000` in your browser to view the AI DIAL Chat application.
 
-To run the optimized production build, run:
+To run the optimized production build, execute this command:
 
 ```bash
 npm run nx serve chat --configuration=production
@@ -78,13 +78,13 @@ To run the unit tests suite for your application, execute the following command:
 npm run nx test chat
 ```
 
-To run the e2e tests run the following command:
+To run e2e tests, run the following command:
 
 ```bash
 npm run nx e2e chat-e2e
 ```
 
-> For more info refer to [E2E tests documentation](../chat-e2e/README.md).
+> For more information refer to [E2E tests documentation](../chat-e2e/README.md).
 
 ## Environment Variables
 
