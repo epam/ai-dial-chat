@@ -208,7 +208,7 @@ export class Folders extends BaseElement {
     await folder.waitFor();
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
-        resp.url().includes(API.conversationsHost()),
+        resp.url().includes(API.listingHost),
       );
       await folder.click();
       return respPromise;

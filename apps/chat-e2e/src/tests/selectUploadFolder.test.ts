@@ -420,7 +420,8 @@ dialTest(
 
 dialTest(
   '[Select folder] Cancel renaming of new nested folder just after its creation.\n' +
-    '[Select folder] Rename nested folder through context menu',
+    '[Select folder] Rename nested folder through context menu.\n' +
+    '[Select folder] Rename a folder on root level through context menu',
   async ({
     dialHomePage,
     setTestIds,
@@ -431,8 +432,9 @@ dialTest(
     selectUploadFolder,
     folderDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-3256', 'EPMRTC-3258');
-    const newFolderName = GeneratorUtil.randomString(10);
+    setTestIds('EPMRTC-3256', 'EPMRTC-3258', 'EPMRTC-3257');
+    const newChildFolderName = GeneratorUtil.randomString(10);
+    const newParentFolderName = GeneratorUtil.randomString(10);
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
@@ -465,7 +467,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-        await selectUploadFolder.editFolderName(newFolderName);
+        await selectUploadFolder.editFolderName(newChildFolderName);
         await selectUploadFolder
           .getEditFolderInputActions()
           .clickCancelButton();
@@ -490,16 +492,42 @@ dialTest(
           2,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectUploadFolder.editFolderNameWithTick(newFolderName, {
+        await selectUploadFolder.editFolderNameWithTick(newChildFolderName, {
           isHttpMethodTriggered: false,
         });
         await expect
           .soft(
             selectUploadFolder.getNestedFolder(
               ExpectedConstants.newFolderWithIndexTitle(1),
-              newFolderName,
+              newChildFolderName,
             ),
             ExpectedMessages.folderNameUpdated,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Open parent folder dropdown menu, select "Rename" option, set new name, confirm and verify new child folder is visible',
+      async () => {
+        await selectUploadFolder.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await selectUploadFolder.editFolderNameWithTick(newParentFolderName, {
+          isHttpMethodTriggered: false,
+        });
+        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/1551
+        await selectUploadFolder.expandCollapseFolder(newParentFolderName, {
+          isHttpMethodTriggered: true,
+        });
+        await expect
+          .soft(
+            selectUploadFolder.getNestedFolder(
+              newParentFolderName,
+              newChildFolderName,
+            ),
+            ExpectedMessages.folderIsVisible,
           )
           .toBeVisible();
       },
@@ -566,12 +594,16 @@ dialTest(
             ExpectedMessages.errorMessageContentIsValid,
           )
           .toBe(ExpectedConstants.nameWithDotErrorMessage);
+        await selectUploadFolder
+          .getEditFolderInputActions()
+          .clickCancelButton();
       },
     );
 
     await dialTest.step(
-      'Set new folder name to already existing one, confirm and verify error message is shown',
+      'Create new folder, set name to already existing one, confirm and verify error message is shown',
       async () => {
+        await selectFolderModal.newFolderButton.click();
         await selectUploadFolder.editFolderNameWithTick(
           ExpectedConstants.newFolderWithIndexTitle(1),
           { isHttpMethodTriggered: false },
@@ -585,7 +617,7 @@ dialTest(
         await expect
           .soft(
             selectUploadFolder.getFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(2),
+              ExpectedConstants.newFolderWithIndexTitle(3),
             ),
             ExpectedMessages.folderIsVisible,
           )
