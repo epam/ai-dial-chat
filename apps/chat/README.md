@@ -88,7 +88,7 @@ npm run nx e2e chat-e2e
 
 ## Environment Variables
 
-This project uses environment variables for configuration. The `.env` file contains environment variables that can be used to configure your app's settings and behavior. These values can be changed as needed to suit your specific requirements.
+This project uses environment variables for configuration. The `.env` file includes environment variables that can be used to configure settings and behavior of the AI DIAL Chat application to suit your specific requirements.
 
 > Selected variables were predefined for the development purposes in the `.env.development` file.
 
