@@ -968,7 +968,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
                     onUnshare={handleUnshare}
-                    onPublish={handleOpenPublishing}
+                    onPublish={
+                      (featureType === FeatureType.Chat &&
+                        !allChildItems.every(
+                          (item) => (item as ConversationInfo).isReplay,
+                        )) ||
+                      featureType !== FeatureType.Chat
+                        ? handleOpenPublishing
+                        : undefined
+                    }
                     onUnpublish={handleOpenUnpublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onOpenChange={setIsContextMenu}
