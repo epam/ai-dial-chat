@@ -184,7 +184,7 @@ if (event.data.type === "@DIAL_OVERLAY/READY") {
 }
 ```
 
-7. In constructor, we send a configuration to the application (it's handshake, we will get a ready event, after we will say our domain and additional information), `this.send()` depends from `this.iframeInteraction`.  we **Note**: nothing is sent, until we get the `'@DIAL_OVERLAY/READY'`!
+7. In constructor, we send a configuration to the application (it's handshake, we will get a ready event, after we will say our domain and additional information), `this.send()` depends from `this.iframeInteraction`. **Note**: nothing is sent, until we get the `'@DIAL_OVERLAY/READY'`!
 
 ```typescript
     constructor() {
