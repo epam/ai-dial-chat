@@ -1,4 +1,8 @@
-import { SelectFolderModalSelectors } from '@/src/ui/selectors';
+import {
+  ErrorLabelSelectors,
+  IconSelectors,
+  SelectFolderModalSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Folders } from '@/src/ui/webElements/folders';
 import { Page } from '@playwright/test';
@@ -13,6 +17,12 @@ export class SelectFolderModal extends BaseElement {
   public allFoldersSection = this.getChildElementBySelector(
     SelectFolderModalSelectors.allFolders,
   );
+
+  public selectFolderErrorText = this.getChildElementBySelector(
+    ErrorLabelSelectors.errorText,
+  );
+
+  public closeModal = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   getUploadFolder() {
     if (!this.uploadFolder) {
