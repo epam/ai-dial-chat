@@ -132,9 +132,9 @@ There are 2 parts of implementation:
 
 ### ChatOverlay
 
-Main methods and practices that allow us to communicate with DIAL:
+Main methods and practices that allow us to communicate with AI DIAL:
 
-1. `ChatOverlay` is the class which in constructor creates an iframe and sets the origin of the deployed version of DIAL. That how it should work for the end user:
+1. `ChatOverlay` is the class which in constructor creates an iframe and sets the origin of the deployed version of DIAL. That is how it works for the end user:
 
 ```typescript
 const overlay = new ChatOverlay({domain: "https://overlay-domain.com", ...});
