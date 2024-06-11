@@ -26,6 +26,7 @@ const allProviders: (Provider | boolean)[] = [
           scope:
             process.env.AUTH_AZURE_AD_SCOPE ||
             'openid profile user.Read email offline_access',
+          prompt: 'select_account',
         },
       },
       token: tokenConfig,
