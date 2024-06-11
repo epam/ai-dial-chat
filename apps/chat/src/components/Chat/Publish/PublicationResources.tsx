@@ -219,7 +219,7 @@ export const FilePublicationResources = ({
   // TODO: get rid of uploaded files in https://github.com/epam/ai-dial-chat/issues/1502
   uploadedFiles,
   isOpen = true,
-}: PublicationResources & { uploadedFiles: DialFile[] }) => {
+}: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
   const openedFoldersIds = useAppSelector((state) =>
@@ -228,11 +228,8 @@ export const FilePublicationResources = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allFolders = useAppSelector(FilesSelectors.selectFolders);
 
-  const { rootFolders, folderItemsToDisplay } = usePublicationResources(
-    allFolders,
-    resources,
-    files,
-  );
+  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
+    usePublicationResources(allFolders, resources, files);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
@@ -268,7 +265,7 @@ export const FilePublicationResources = ({
           />
         );
       })}
-      {uploadedFiles.map((f) =>
+      {(uploadedFiles ?? itemsToDisplay).map((f) =>
         forViewOnly ? (
           <FilesRow
             itemComponentClassNames="cursor-pointer"
