@@ -8,7 +8,7 @@ Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) 
 
 ## Overview
 
-This repository is managed as monorepo by [NX](https://nx.dev/) tools .
+This repository is managed as monorepo by [NX](https://nx.dev/) tools.
 
 ## Docs
 

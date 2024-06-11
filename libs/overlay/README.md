@@ -4,15 +4,15 @@ DIAL Overlay is a library designed for using AI DIAL Chat in an overlay format. 
 
 ## Public Classes to Use
 
-* `ChatOverlay` - a class which creates an iframe with DIAL and enables the interaction with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to for interaction.
-* `ChatOverlayManager` - a class which provides an overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`. Use it if what you need is **several iframes** with API and you want it placed with predefined styles options.
+- `ChatOverlay` - a class which creates an iframe with DIAL and enables the interaction with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to for interaction.
+- `ChatOverlayManager` - a class which provides an overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`. Use it if what you need is **several iframes** with API and you want it placed with predefined styles options.
 
 ## Prerequisites
 
 [AI DIAL Chat application configuration](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/README.md):
 
-* `IS_IFRAME`: set this flag to `true` to enable Overlay.
-* `ALLOWED_IFRAME_ORIGINS`:  list all hosts where you are using the Overlay library. Note: For development purposes you can set `*`.
+- `IS_IFRAME`: set this flag to `true` to enable Overlay.
+- `ALLOWED_IFRAME_ORIGINS`: list all hosts where you are using the Overlay library. Note: For development purposes you can set `*`.
 
 ```
 IS_IFRAME=true
