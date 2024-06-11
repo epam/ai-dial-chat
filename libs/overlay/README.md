@@ -5,7 +5,7 @@ DIAL Overlay is a library designed for using AI DIAL Chat in an overlay format. 
 ## Public Classes to Use
 
 * `ChatOverlay` - a class which creates an iframe with DIAL and enables the interaction with it (send/receive messages). Types for configuration options is `ChatOverlayOptions`. Use it if you need nothing more than **1 iframe** and API to for interaction.
-* `ChatOverlayManager` - a class which provides an overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`. Use it if what you need is **several iframes** with API and you want that it placed with pre-prepared styles options.
+* `ChatOverlayManager` - a class which provides an overlay factory, different styles and animation for overlay (for example: opening animation, auto placement, fullscreen button, etc.). Types for configuration options is `ChatOverlayManagerOptions`. Use it if what you need is **several iframes** with API and you want it placed with pre-prepared styles options.
 
 ## Prerequisites
 
