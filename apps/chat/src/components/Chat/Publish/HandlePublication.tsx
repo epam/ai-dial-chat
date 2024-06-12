@@ -195,6 +195,7 @@ export function HandlePublication({ publication }: Props) {
       sectionName: t('Files'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
+      showTooltip: true,
     },
   ];
 

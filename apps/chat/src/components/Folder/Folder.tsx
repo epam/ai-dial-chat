@@ -917,8 +917,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             >
               <Tooltip
                 tooltip={
-                  (featureType === FeatureType.File || showTooltip) &&
-                  !isNameOrPathInvalid
+                  showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
                     : t(
                         getEntityNameError(
