@@ -24,7 +24,7 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: '../../coverage/libs/overlay',
+      reportsDirectory: '../../reports/coverage/libs/overlay',
       provider: 'v8',
       thresholds: {
         statements: 80,

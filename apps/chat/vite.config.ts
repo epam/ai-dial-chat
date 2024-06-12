@@ -29,7 +29,7 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [...configDefaults.exclude],
     coverage: {
-      reportsDirectory: '../../coverage/chat',
+      reportsDirectory: '../../reports/coverage/apps/chat',
       reporter: ['text', 'json', 'html'],
       provider: 'v8',
     },

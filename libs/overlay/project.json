@@ -37,6 +37,8 @@
     },
     "lint": {
       "options": {
+        "format": "html",
+        "outputFile": "reports/eslint/libs/overlay/eslint-report.html",
         "lintFilePatterns": [
           "libs/overlay/**/*.{ts,tsx,js,jsx}",
           "libs/overlay/package.json"
@@ -45,6 +47,8 @@
     },
     "lint:fix": {
       "options": {
+        "format": "html",
+        "outputFile": "reports/eslint/libs/overlay/eslint-report.html",
         "lintFilePatterns": [
           "libs/overlay/**/*.{ts,tsx,js,jsx}",
           "libs/overlay/package.json"

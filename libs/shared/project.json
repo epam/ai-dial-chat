@@ -36,21 +36,31 @@
     "publish": {
       "command": "node tools/publish-lib.mjs shared --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
     },
-    "lint": {},
-    "lint:fix": {},
+    "lint": {
+      "options": {
+        "format": "html",
+        "outputFile": "reports/eslint/libs/shared/eslint-report.html"
+      }
+    },
+    "lint:fix": {
+      "options": {
+        "format": "html",
+        "outputFile": "reports/eslint/libs/shared/eslint-report.html"
+      }
+    },
     "test": {
       "options": {
-        "reportsDirectory": "../../coverage/libs/shared"
+        "reportsDirectory": "../../reports/coverage/libs/shared"
       }
     },
     "test:watch": {
       "options": {
-        "reportsDirectory": "../../coverage/libs/shared"
+        "reportsDirectory": "../../reports/coverage/libs/shared"
       }
     },
     "test:coverage": {
       "options": {
-        "reportsDirectory": "../../coverage/libs/shared"
+        "reportsDirectory": "../../reports/coverage/libs/shared"
       }
     },
     "format": {},

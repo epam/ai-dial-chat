@@ -52,17 +52,17 @@
     },
     "test": {
       "options": {
-        "reportsDirectory": "reports/coverage/apps/chat"
+        "reportsDirectory": "../../reports/coverage/apps/chat"
       }
     },
     "test:watch": {
       "options": {
-        "reportsDirectory": "reports/coverage/apps/chat"
+        "reportsDirectory": "../../reports/coverage/apps/chat"
       }
     },
     "test:coverage": {
       "options": {
-        "reportsDirectory": "reports/coverage/apps/chat"
+        "reportsDirectory": "../../reports/coverage/apps/chat"
       }
     },
     "format": {},
