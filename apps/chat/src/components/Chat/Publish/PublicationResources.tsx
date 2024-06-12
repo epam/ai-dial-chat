@@ -1,12 +1,9 @@
-import { useMemo } from 'react';
-
 import classNames from 'classnames';
 
-import { isRootId } from '@/src/utils/app/id';
+import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
 import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
 import { PublicationResource } from '@/src/types/publication';
 
 import {
@@ -31,8 +28,6 @@ import {
 } from '../../Common/ReplaceConfirmationModal/Components';
 import { FileItem } from '../../Files/FileItem';
 import Folder from '../../Folder/Folder';
-
-import uniqBy from 'lodash-es/uniqBy';
 
 interface PublicationResources {
   resources: PublicationResource[];
@@ -64,37 +59,8 @@ export const PromptPublicationResources = ({
     PromptsSelectors.selectSelectedPromptId,
   );
 
-  const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
-    [resources],
-  );
-  const promptsToDisplay = useMemo(() => {
-    return prompts.filter(
-      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
-    );
-  }, [prompts, resourceUrls]);
-  const folderPromptsToDisplay = useMemo(() => {
-    return prompts.filter(
-      (c) => c.folderId.split('/').length !== 2 && resourceUrls.includes(c.id),
-    );
-  }, [prompts, resourceUrls]);
-  const rootFolders = useMemo(() => {
-    if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
-
-    const folders = resources.map((resource) => {
-      const relevantFolders = allFolders.filter((folder) =>
-        resource.reviewUrl
-          ? resource.reviewUrl.startsWith(folder.id)
-          : resource.targetUrl.startsWith(folder.id),
-      );
-
-      return relevantFolders.find((folder) => isRootId(folder.folderId));
-    });
-
-    const existingFolders = folders.filter(Boolean) as FolderInterface[];
-
-    return uniqBy(existingFolders, 'id');
-  }, [allFolders, resources, rootFolder]);
+  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
+    usePublicationResources(allFolders, resources, prompts, rootFolder);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
@@ -106,12 +72,16 @@ export const PromptPublicationResources = ({
             level={forViewOnly ? 0 : 1}
             key={f.id}
             currentFolder={f}
-            allFolders={allFolders}
+            allFolders={allFolders.filter((f) =>
+              folderItemsToDisplay.some((item) =>
+                item.id.startsWith(`${f.id}/`),
+              ),
+            )}
             searchTerm={forViewOnly ? '' : searchTerm}
             openedFoldersIds={
               forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
-            allItems={folderPromptsToDisplay}
+            allItems={folderItemsToDisplay}
             itemComponent={forViewOnly ? PromptsRow : PromptComponent}
             onClickFolder={(folderId: string) => {
               if (forViewOnly) return;
@@ -141,7 +111,7 @@ export const PromptPublicationResources = ({
           />
         );
       })}
-      {promptsToDisplay.map((p) =>
+      {itemsToDisplay.map((p) =>
         forViewOnly ? (
           <PromptsRow
             itemComponentClassNames="cursor-pointer"
@@ -183,37 +153,8 @@ export const ConversationPublicationResources = ({
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
 
-  const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
-    [resources],
-  );
-  const conversationsToDisplay = useMemo(() => {
-    return conversations.filter(
-      (c) => c.folderId.split('/').length === 2 && resourceUrls.includes(c.id),
-    );
-  }, [conversations, resourceUrls]);
-  const folderConversationsToDisplay = useMemo(() => {
-    return conversations.filter(
-      (c) => c.folderId.split('/').length !== 2 && resourceUrls.includes(c.id),
-    );
-  }, [conversations, resourceUrls]);
-  const rootFolders = useMemo(() => {
-    if (rootFolder) return allFolders.filter((f) => f.id === rootFolder.id);
-
-    const folders = resources.map((resource) => {
-      const relevantFolders = allFolders.filter((folder) =>
-        resource.reviewUrl
-          ? resource.reviewUrl.startsWith(folder.id)
-          : resource.targetUrl.startsWith(folder.id),
-      );
-
-      return relevantFolders.find((folder) => isRootId(folder.folderId));
-    });
-
-    const existingFolders = folders.filter(Boolean) as FolderInterface[];
-
-    return uniqBy(existingFolders, 'id');
-  }, [allFolders, resources, rootFolder]);
+  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
+    usePublicationResources(allFolders, resources, conversations, rootFolder);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
@@ -225,12 +166,16 @@ export const ConversationPublicationResources = ({
             level={forViewOnly ? 0 : 1}
             key={f.id}
             currentFolder={f}
-            allFolders={allFolders}
+            allFolders={allFolders.filter((f) =>
+              folderItemsToDisplay.some((item) =>
+                item.id.startsWith(`${f.id}/`),
+              ),
+            )}
             searchTerm={forViewOnly ? '' : searchTerm}
             openedFoldersIds={
               forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
-            allItems={folderConversationsToDisplay}
+            allItems={folderItemsToDisplay}
             itemComponent={
               forViewOnly ? ConversationRow : ConversationComponent
             }
@@ -257,7 +202,7 @@ export const ConversationPublicationResources = ({
           />
         );
       })}
-      {conversationsToDisplay.map((c) =>
+      {itemsToDisplay.map((c) =>
         forViewOnly ? (
           <ConversationRow
             itemComponentClassNames="cursor-pointer"
@@ -276,49 +221,20 @@ export const ConversationPublicationResources = ({
 export const FilePublicationResources = ({
   resources,
   forViewOnly,
+  // TODO: get rid of uploaded files in https://github.com/epam/ai-dial-chat/issues/1502
   uploadedFiles,
   isOpen = true,
 }: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
   const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
+    UISelectors.selectOpenedFoldersIds(state, FeatureType.File),
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allFolders = useAppSelector(FilesSelectors.selectFolders);
 
-  const resourceUrls = useMemo(
-    () => resources.map((r) => r.reviewUrl),
-    [resources],
-  );
-  const filesToDisplay = useMemo(() => {
-    return uploadedFiles
-      ? uploadedFiles
-      : files.filter(
-          (f) =>
-            f.folderId.split('/').length === 2 && resourceUrls.includes(f.id),
-        );
-  }, [files, uploadedFiles, resourceUrls]);
-  const folderFilesToDisplay = useMemo(() => {
-    return files.filter(
-      (c) => c.folderId.split('/').length !== 2 && resourceUrls.includes(c.id),
-    );
-  }, [files, resourceUrls]);
-  const rootFolders = useMemo(() => {
-    const folders = resources.map((resource) => {
-      const relevantFolders = allFolders.filter((folder) =>
-        resource.reviewUrl
-          ? resource.reviewUrl.startsWith(folder.id)
-          : resource.targetUrl.startsWith(folder.id),
-      );
-
-      return relevantFolders.find((folder) => isRootId(folder.folderId));
-    });
-
-    const existingFolders = folders.filter(Boolean) as FolderInterface[];
-
-    return uniqBy(existingFolders, 'id');
-  }, [allFolders, resources]);
+  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
+    usePublicationResources(allFolders, resources, files);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
@@ -331,12 +247,16 @@ export const FilePublicationResources = ({
             level={forViewOnly ? 0 : 1}
             key={f.id}
             currentFolder={f}
-            allFolders={allFolders}
+            allFolders={allFolders.filter((f) =>
+              folderItemsToDisplay.some((item) =>
+                item.id.startsWith(`${f.id}/`),
+              ),
+            )}
             searchTerm={''}
             openedFoldersIds={
               forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
-            allItems={folderFilesToDisplay}
+            allItems={folderItemsToDisplay}
             itemComponent={forViewOnly ? FilesRow : FileItem}
             onClickFolder={(folderId: string) => {
               if (forViewOnly) return;
@@ -350,7 +270,7 @@ export const FilePublicationResources = ({
           />
         );
       })}
-      {filesToDisplay.map((f) =>
+      {(uploadedFiles ?? itemsToDisplay).map((f) =>
         forViewOnly ? (
           <FilesRow
             itemComponentClassNames="cursor-pointer"
