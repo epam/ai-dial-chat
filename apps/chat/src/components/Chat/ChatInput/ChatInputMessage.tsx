@@ -171,12 +171,14 @@ export const ChatInputMessage = ({
         setContent(selectedPrompt?.content);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPrompt?.content, isPromptContentCopying]);
 
   useEffect(() => {
     if (selectedPrompt?.content && content === selectedPrompt?.content) {
       clearPromptCopying();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, selectedPrompt?.content]);
 
   const isInputEmpty = useMemo(() => {
@@ -297,6 +299,7 @@ export const ChatInputMessage = ({
         textareaRef.current.focus();
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       getTokensLength,
       maxTokensLength,
@@ -412,13 +415,13 @@ export const ChatInputMessage = ({
       )}
     >
       <div
-        className="shadow-primary relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded-3xl border border-secondary bg-layer-2"
+        className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded-3xl border border-secondary bg-layer-2 shadow-primary"
         data-qa="message"
       >
         <AdjustedTextarea
           ref={textareaRef}
           className={classNames(
-            'placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary m-0 min-h-[38px] w-full grow resize-none rounded-3xl bg-transparent leading-[150%] outline-none placeholder:text-xs',
+            'm-0 min-h-[38px] w-full grow resize-none rounded-3xl bg-transparent leading-[150%] outline-none placeholder:text-xs placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary',
             isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-2',
             paddingLeftClass,
           )}

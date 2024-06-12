@@ -22,6 +22,7 @@ export default function ModelsDialogFilterRenderer({
     setChecked((check: boolean) => !check);
     const clickHandler = onClick as (type: string) => void;
     clickHandler && clickHandler(type);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClick, checked]);
 
   return (

@@ -30,7 +30,7 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
 
       <div className="my-[30px] flex items-center justify-center">
         <LogoIcon />
-        <div className="font-weave ml-[10px] text-[30px] font-bold text-[#000A32]">
+        <div className="ml-[10px] font-weave text-[30px] font-bold text-[#000A32]">
           PR GPT
         </div>
       </div>
@@ -46,7 +46,7 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.next}
         {...primaryProps}
-        className="text-primary-bg-dark my-[10px] mt-[27px] block rounded-[40px] bg-layer-3 px-[16px] py-[6px]"
+        className="my-[10px] mt-[27px] block rounded-[40px] bg-layer-3 px-[16px] py-[6px] text-primary-bg-dark"
       >
         {t('Start a quick tour')}
       </button>
@@ -54,7 +54,7 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.close}
         onClick={closeProps.onClick}
-        className="text-pr-primary-700 block"
+        className="block text-pr-primary-700"
       >
         {t('Skip the tour')}
       </button>

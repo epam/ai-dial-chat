@@ -27,7 +27,6 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
-import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -53,7 +52,7 @@ const ChatActionsBlock = () => {
   return (
     <div className="flex">
       <button
-        className="hover:bg-accent-quaternary mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 disabled:cursor-not-allowed"
+        className="mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 hover:bg-accent-quaternary disabled:cursor-not-allowed"
         onClick={() => {
           talkTo && dispatch(ConversationsActions.setTalkTo(''));
           dispatch(

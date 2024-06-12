@@ -42,13 +42,13 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
         <CircleCheck
           height={20}
           width={20}
-          className="text-primary-bg-light shrink-0 grow-0 basis-auto"
+          className="shrink-0 grow-0 basis-auto text-primary-bg-light"
           data-qa="stage-completed"
         />
       ) : (
         <IconExclamationCircle
           size={20}
-          className="text-tertiary-bg-light shrink-0 grow-0 basis-auto"
+          className="shrink-0 grow-0 basis-auto text-tertiary-bg-light"
         />
       )}
       {!!addon && <ModelIcon entity={addon} entityId={addon.id} size={18} />}
@@ -79,7 +79,7 @@ export const MessageStage = ({ stage }: Props) => {
   }, [stage?.content, stage?.attachments?.length]);
 
   return (
-    <div className="rounded-primary block min-w-0 shrink border border-secondary bg-layer-2">
+    <div className="block min-w-0 shrink rounded-primary border border-secondary bg-layer-2">
       {hasContent ? (
         <button
           className="flex w-full min-w-0 shrink items-center gap-2 p-2"
@@ -93,7 +93,7 @@ export const MessageStage = ({ stage }: Props) => {
             height={20}
             width={20}
             className={classNames(
-              'text-tertiary-bg-light hover:text-primary-bg-light shrink-0 transition',
+              'shrink-0 text-tertiary-bg-light transition hover:text-primary-bg-light',
               isOpened && 'rotate-180',
             )}
           />

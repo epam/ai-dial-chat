@@ -35,7 +35,7 @@ export function FilterTypeSelect({
   return (
     <div
       data-qa={`filter-selector-${id}`}
-      className="rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary h-[38px] w-full max-w-[140px] grow border border-secondary bg-layer-2"
+      className="h-[38px] w-full max-w-[140px] grow rounded-primary border border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary"
     >
       <Menu
         className="w-full px-3"
@@ -47,7 +47,7 @@ export function FilterTypeSelect({
             <IconChevronDown
               data-qa={`open-filter-dropdown-${id}`}
               className={classNames(
-                'text-primary-bg-light shrink-0 transition-all',
+                'shrink-0 text-primary-bg-light transition-all',
                 isOpen && 'rotate-180',
               )}
               width={18}

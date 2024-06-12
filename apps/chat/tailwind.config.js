@@ -52,7 +52,10 @@ module.exports = {
       'controls-disable': 'var(--controls-bg-disable, #333942)',
     },
     borderColor: commonBorderColors,
-    stroke: commonBorderColors,
+    stroke: {
+      ...commonBorderColors,
+      'controls-disable': 'var(--controls-bg-disable, #333942)',
+    },
     divideColor: commonBorderColors,
     textColor: {
       transparent: 'transparent',

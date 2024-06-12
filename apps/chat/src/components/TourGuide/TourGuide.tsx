@@ -72,6 +72,7 @@ const TourGuide = () => {
       dispatch(UIActions.setShowPromptbar(true));
       dispatch(UIActions.setShowChatbar(true));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPromptBar, showChatBar, isTourRun]);
 
   useEffect(() => {
@@ -82,6 +83,7 @@ const TourGuide = () => {
 
       setSteps(updatedSteps);
     } else setSteps(DEFAULT_STEPS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEmptyConversation]);
 
   const handleJoyrideCallback = ({

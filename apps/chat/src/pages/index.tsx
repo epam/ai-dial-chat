@@ -115,7 +115,7 @@ export default function Home({ initialState }: HomeProps) {
     const { talkto } = router?.query || {};
 
     dispatch(ConversationsActions.setTalkTo((talkto as string) || ''));
-  }, []);
+  });
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -160,7 +160,7 @@ export default function Home({ initialState }: HomeProps) {
     const timeZoneOffset = getTimeZoneOffset();
 
     dispatch(UIActions.setTmeZoneOffset(timeZoneOffset));
-  }, []);
+  });
 
   const handleOverlayAuth = async () => {
     const timeout = 30 * 1000;

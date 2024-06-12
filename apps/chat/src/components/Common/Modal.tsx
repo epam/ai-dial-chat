@@ -102,7 +102,7 @@ function ModalView({
           >
             <Tag
               className={classNames(
-                'text-primary-bg-light relative max-h-full rounded-[10px] bg-layer-1 text-left',
+                'relative max-h-full rounded-[10px] bg-layer-1 text-left text-primary-bg-light',
                 containerClassName,
               )}
               role="dialog"
@@ -115,7 +115,7 @@ function ModalView({
                 <button
                   type="button"
                   role="button"
-                  className="text-quaternary-bg-light hover:text-primary-bg-light absolute right-2 top-2 rounded"
+                  className="absolute right-2 top-2 rounded text-quaternary-bg-light hover:text-primary-bg-light"
                   onClick={handleClose}
                 >
                   <IconX height={24} width={24} />

@@ -204,7 +204,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     <div
       data-no-context-menu
       className={classNames(
-        'border border-secondary bg-layer-2 bg-layer-2 px-1 py-2 shadow-primary hover:border-accent-quaternary',
+        'border border-secondary bg-layer-2 px-1 py-2 shadow-primary hover:border-accent-quaternary',
         isExpanded
           ? 'col-span-1 col-start-1 rounded-primary sm:col-span-2 md:col-span-3'
           : 'rounded-full hover:bg-accent-secondary-alpha',

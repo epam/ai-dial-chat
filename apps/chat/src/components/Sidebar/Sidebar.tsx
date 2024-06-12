@@ -11,7 +11,6 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { EnumMapper } from '@/src/utils/app/mappers';
 import { hasDragEventEntityData } from '@/src/utils/app/move';
 
 import { FeatureType } from '@/src/types/common';
@@ -31,7 +30,6 @@ import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 
-import trimEnd from 'lodash-es/trimEnd';
 import { Resizable, ResizableProps } from 're-resizable';
 
 interface Props<T> {

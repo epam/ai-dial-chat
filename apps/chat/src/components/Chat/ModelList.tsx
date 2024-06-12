@@ -80,10 +80,10 @@ const ModelGroup = ({
   return (
     <div
       className={classNames(
-        'rounded-primary relative flex overflow-y-auto border font-medium hover:border-tertiary',
+        'relative flex overflow-y-auto rounded-primary border font-medium hover:border-tertiary',
         isActive
-          ? 'border-accent-quaternary shadow-primary bg-accent-secondary-alpha'
-          : 'hover:shadow-primary border-secondary bg-layer-2 hover:bg-accent-secondary-alpha',
+          ? 'border-accent-quaternary bg-accent-secondary-alpha shadow-primary'
+          : 'border-secondary bg-layer-2 hover:bg-accent-secondary-alpha hover:shadow-primary',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
         isCompareMode ? 'px-3 py-2' : 'px-5 py-2',
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
@@ -127,7 +127,7 @@ const ModelGroup = ({
           </div>
           {description && (
             <span
-              className="text-quaternary-bg-light text-[11px]"
+              className="text-[11px] text-quaternary-bg-light"
               onClick={(e) => {
                 if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
                   e.stopPropagation();
@@ -204,7 +204,7 @@ export const ModelList = ({
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
       {heading && (
-        <span className="text-primary-bg-light text-sm font-medium">
+        <span className="text-sm font-medium text-primary-bg-light">
           {heading}
         </span>
       )}

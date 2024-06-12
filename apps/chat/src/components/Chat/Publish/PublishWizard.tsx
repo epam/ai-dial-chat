@@ -213,7 +213,7 @@ export default function PublishWizard({
   }, []);
 
   const inputClassName = classNames(
-    'rounded-primary input-form shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary mx-0 border-secondary bg-layer-2 py-2',
+    'input-form mx-0 rounded-primary border-secondary bg-layer-2 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
     'peer',
     {
       'input-invalid submitted': submitted,
@@ -233,7 +233,7 @@ export default function PublishWizard({
       initialFocus={nameInputRef}
     >
       <div className="flex h-full flex-col divide-y divide-secondary rounded-[10px] bg-layer-1">
-        <h4 className="text-primary-bg-light p-4 pr-10 text-xl font-medium">
+        <h4 className="p-4 pr-10 text-xl font-medium text-primary-bg-light">
           <span className="line-clamp-2 whitespace-pre break-words">
             {`${t('Publication request for')}: ${entity.name.trim()}`}
           </span>
@@ -250,11 +250,11 @@ export default function PublishWizard({
 
               <div>
                 <label
-                  className="text-primary-bg-light mb-1 flex text-xs"
+                  className="mb-1 flex text-xs text-primary-bg-light"
                   htmlFor="requestName"
                 >
                   {t(`${getPrefix(entity)} name`)}
-                  <span className="text-quinary-bg-light inline">*</span>
+                  <span className="inline text-quinary-bg-light">*</span>
                 </label>
                 <input
                   ref={nameInputRef}
@@ -273,14 +273,14 @@ export default function PublishWizard({
 
               <div>
                 <label
-                  className="text-primary-bg-light mb-1 flex text-xs"
+                  className="mb-1 flex text-xs text-primary-bg-light"
                   htmlFor="requestPath"
                 >
                   {t('Path')}
-                  <span className="text-quaternary-bg-light inline">*</span>
+                  <span className="inline text-quaternary-bg-light">*</span>
                 </label>
                 <button
-                  className="input-form rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary mx-0 flex grow items-center justify-between border border-secondary bg-layer-2 px-3 py-2"
+                  className="input-form mx-0 flex grow items-center justify-between rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary"
                   onClick={handleFolderChange}
                 >
                   <span className="truncate">
@@ -292,11 +292,11 @@ export default function PublishWizard({
 
               <div>
                 <label
-                  className="text-primary-bg-light mb-1 flex text-xs"
+                  className="mb-1 flex text-xs text-primary-bg-light"
                   htmlFor="requestVersion"
                 >
                   {t('Version')}
-                  <span className="text-quinary-bg-light inline">*</span>
+                  <span className="inline text-quinary-bg-light">*</span>
                 </label>
                 <input
                   ref={nameInputRef}

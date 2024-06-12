@@ -35,10 +35,10 @@ const Tooltip: FC<TooltipRenderProps> = ({
       </div>
 
       <div className="p-4">{step.content}</div>
-      <div className="text-pr-primary-700 from-layer-8 to-layer-9 relative bottom-[-16px] flex h-[35px] w-[320px] items-center justify-between rounded-b-md bg-gradient-to-r px-4">
+      <div className="relative bottom-[-16px] flex h-[35px] w-[320px] items-center justify-between rounded-b-md bg-gradient-to-r from-layer-8 to-layer-9 px-4 text-pr-primary-700">
         {index > 1 ? (
           <button
-            className="text-primary-bg-dark flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3"
+            className="flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3 text-primary-bg-dark"
             id={TooltipId.back}
             {...backProps}
           >
@@ -56,7 +56,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
           <button
             id={TooltipId.next}
             {...primaryProps}
-            className="text-primary-bg-dark flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3"
+            className="flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3 text-primary-bg-dark"
           >
             <div className="mr-[5px]"> {t('Next')} </div>
             <ArrowRightIcon />

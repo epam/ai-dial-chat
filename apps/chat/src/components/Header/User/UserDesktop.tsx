@@ -46,6 +46,7 @@ export const UserDesktop = () => {
   useEffect(() => {
     dispatch(UIActions.setTourRun(false));
     dispatch(UIActions.setTourStepIndex(0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSmallScreenOrMobile]);
 
   useEffect(() => {

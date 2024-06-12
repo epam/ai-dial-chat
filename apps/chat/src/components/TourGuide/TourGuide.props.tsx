@@ -1,5 +1,7 @@
 import { Step } from 'react-joyride';
 
+import { TFunction } from 'next-i18next';
+
 import { TourGuideId } from '@/src/constants/share';
 
 export enum TourStepAction {
@@ -91,11 +93,11 @@ export const isTargetInDocument = (selector: string): boolean => {
   return document.querySelector(selector) !== null;
 };
 
-export const translateSteps = (steps: Step[], t: any) =>
+export const translateSteps = (steps: Step[], t: TFunction) =>
   steps.map((step) => ({
     ...step,
-    title: t(step.title),
-    content: t(step.content),
+    title: typeof step.title === 'string' ? t(step.title) : step.title,
+    content: typeof step.content === 'string' ? t(step.content) : step.title,
   }));
 
 export const styles = {

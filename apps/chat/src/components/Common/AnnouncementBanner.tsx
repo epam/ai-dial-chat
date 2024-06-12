@@ -21,7 +21,7 @@ export const AnnouncementsBanner = () => {
 
   return (
     <div
-      className="from-layer-8 to-layer-9 relative flex items-center justify-center bg-gradient-to-r text-pr-primary-700"
+      className="relative flex items-center justify-center bg-gradient-to-r from-layer-8 to-layer-9 text-pr-primary-700"
       data-qa="banner"
     >
       <div className="flex grow items-center justify-center gap-2 py-2 pl-2 pr-8 text-center md:gap-3 md:px-14">

@@ -71,7 +71,7 @@ export const getMDComponents = (
     },
     th({ children }) {
       return (
-        <th className="text-primary-bg-dark break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm">
+        <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-primary-bg-dark">
           {children}
         </th>
       );

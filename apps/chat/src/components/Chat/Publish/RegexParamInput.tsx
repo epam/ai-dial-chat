@@ -17,7 +17,7 @@ export function RegexParamInput({
   );
 
   return (
-    <div className="rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary  hover:border-accent-quaternary flex w-full flex-wrap border border-secondary bg-layer-2 p-1">
+    <div className="flex w-full flex-wrap rounded-primary  border border-secondary bg-layer-2 p-1 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary">
       <input
         className="w-full bg-transparent py-1 pl-2 outline-none"
         type="text"

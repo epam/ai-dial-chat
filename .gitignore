@@ -53,8 +53,8 @@ pnpm-lock.yaml
 /apps/chat-e2e/src/testData/export/
 /apps/chat-e2e/.env.local
 
-# coverage
-*/coverage
+# reports: eslint coverage
+/reports
 
 # NX
 .nx/cache

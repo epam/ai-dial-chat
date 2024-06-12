@@ -134,6 +134,7 @@ export const ChatSettings = ({
 
   useEffect(() => {
     if (isTourRun) onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTourRun]);
 
   return (
