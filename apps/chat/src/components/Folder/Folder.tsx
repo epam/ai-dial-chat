@@ -34,7 +34,6 @@ import {
   getFoldersDepth,
   getParentFolderIdsFromFolderId,
   sortByName,
-  splitEntityId,
 } from '@/src/utils/app/folders';
 import {
   hasParentWithAttribute,
@@ -48,7 +47,6 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
-import { PseudoModel, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -1109,10 +1107,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           entity={currentFolder}
           entities={
             featureType === FeatureType.Chat
-              ? allChildItems.filter(
-                  (item) =>
-                    parseConversationApiKey(splitEntityId(item.id).name).model
-                      .id !== PseudoModel.Replay,
+              ? (allChildItems as ConversationInfo[]).filter(
+                  (item) => !item.isReplay,
                 )
               : allChildItems
           }
