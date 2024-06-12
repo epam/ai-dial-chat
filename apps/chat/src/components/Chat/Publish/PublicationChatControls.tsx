@@ -24,9 +24,9 @@ import { ScrollDownButton } from '../../Common/ScrollDownButton';
 
 interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
-  showScrollDownButton: boolean;
+  showScrollDownButton?: boolean;
   wrapperClassName?: string;
-  onScrollDownClick: () => void;
+  onScrollDownClick?: () => void;
 }
 
 export function PublicationControlsView<
@@ -148,7 +148,7 @@ export function PublicationControlsView<
         >
           {t('Back to publication request')}
         </button>
-        {showScrollDownButton && (
+        {showScrollDownButton && onScrollDownClick && (
           <ScrollDownButton
             className="-right-16"
             onScrollDownClick={onScrollDownClick}
