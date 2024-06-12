@@ -1,24 +1,11 @@
-import { FolderPrompts } from '../ui/webElements';
-
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
-import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
-  FolderConversation,
-  FolderPrompt,
   MenuOptions,
 } from '@/src/testData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-
-let defaultModel: DialAIEntityModel;
-dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
-});
 
 dialTest(
   'Prompt folder: default numeration',
@@ -26,7 +13,6 @@ dialTest(
     dialHomePage,
     promptBar,
     folderPrompts,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1621');
@@ -62,13 +48,11 @@ dialTest(
     promptBar,
     folderPrompts,
     promptDropdownMenu,
-    promptModalDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1623');
     let prompt: Prompt;
-    let folderNumber = 1;
-    // let folder: Fold;
+    const folderNumber = 1;
 
     await dialTest.step('Preparation', async () => {
       prompt = promptData.preparePrompt('{{A}} + {{B}}', 'Prompt description');
@@ -100,7 +84,6 @@ dialTest(
         ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber + 1),
       );
       await expect(
-        //TODO replace with soft
         folderPrompts.getFolderEntity(
           ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
           prompt.name,
@@ -200,7 +183,6 @@ dialTest(
     promptBar,
     folderPrompts,
     promptDropdownMenu,
-    confirmationDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2967');
@@ -245,22 +227,16 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Prompt folder: names can be equal on different levels',
   async ({
     dialHomePage,
-    promptData,
-    dataInjector,
     promptBar,
     folderPrompts,
     promptDropdownMenu,
-    confirmationDialog,
     setTestIds,
-    prompts,
   }) => {
     setTestIds('EPMRTC-2968');
-    let nestedFolders: FolderInterface[];
-    let nestedPrompts: Prompt[];
     const duplicatedFolderName = 'Duplicated Name';
 
     await dialTest.step('Create four folders', async () => {
