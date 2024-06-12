@@ -208,7 +208,7 @@ export class Folders extends BaseElement {
     await folder.waitFor();
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
-        resp.url().includes(API.conversationsHost()),
+        resp.url().includes(API.listingHost),
       );
       await folder.click();
       return respPromise;
@@ -226,9 +226,9 @@ export class Folders extends BaseElement {
   public getNestedFolder(
     parentName: string,
     childName: string,
-    index?: number,
+    parentIndex?: number,
   ) {
-    return this.getFolderByName(parentName, index)
+    return this.getFolderByName(parentName, parentIndex)
       .locator('~*')
       .locator(SideBarSelectors.folder)
       .filter({ hasText: childName });
