@@ -20,17 +20,22 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
+import { ScrollDownButton } from '../../Common/ScrollDownButton';
+
 interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
+  showScrollDownButton: boolean;
   wrapperClassName?: string;
+  onScrollDownClick: () => void;
 }
 
 export function PublicationControlsView<
   T extends PromptInfo | ConversationInfo,
 >({
   entity,
-  wrapperClassName,
   resourceToReview,
+  showScrollDownButton,
+  onScrollDownClick,
 }: Props<T> & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -84,8 +89,8 @@ export function PublicationControlsView<
   }, [entity, resourceToReview, dispatch]);
 
   return (
-    <div className={classNames('!-top-10 flex h-[38px]', wrapperClassName)}>
-      <div className="flex justify-center gap-3">
+    <div className="flex justify-center">
+      <div className="relative mt-5 flex items-center justify-center gap-3">
         <button
           className={classNames(
             'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
@@ -143,6 +148,12 @@ export function PublicationControlsView<
         >
           {t('Back to publication request')}
         </button>
+        {showScrollDownButton && (
+          <ScrollDownButton
+            className="-right-16"
+            onScrollDownClick={onScrollDownClick}
+          />
+        )}
       </div>
     </div>
   );
@@ -150,7 +161,7 @@ export function PublicationControlsView<
 
 export function PublicationControls<T extends PromptInfo | ConversationInfo>({
   entity,
-  wrapperClassName,
+  ...props
 }: Props<T>) {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
@@ -164,7 +175,7 @@ export function PublicationControls<T extends PromptInfo | ConversationInfo>({
     <PublicationControlsView
       resourceToReview={resourceToReview}
       entity={entity}
-      wrapperClassName={wrapperClassName}
+      {...props}
     />
   );
 }
