@@ -1,9 +1,9 @@
 import { IconClipboard } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
@@ -11,7 +11,6 @@ import { getPublicationId } from '@/src/utils/app/publications';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
-import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -110,8 +109,8 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
           </div>
         </div>
       </div>
-      {isOpen && publication.resources && (
-        <ResourcesComponent resources={publication.resources} />
+      {publication.resources && (
+        <ResourcesComponent resources={publication.resources} isOpen={isOpen} />
       )}
     </div>
   );
@@ -121,13 +120,11 @@ export const ApproveRequiredSection = ({
   name,
   featureType,
   displayRootFiles,
-  openByDefault = false,
+  openByDefault,
   dataQa,
 }: Omit<FolderSectionProps, 'filters'> & {
   featureType: FeatureType;
 }) => {
-  const { t } = useTranslation(Translation.SideBar);
-
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
@@ -142,6 +139,8 @@ export const ApproveRequiredSection = ({
   );
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+
+  const { handleToggle, isExpanded } = useSectionToggle(name, featureType);
 
   useEffect(() => {
     const publicationReviewIds = publicationItems.flatMap((p) =>
@@ -171,8 +170,9 @@ export const ApproveRequiredSection = ({
 
   return (
     <CollapsibleSection
-      name={t(name)}
-      openByDefault={openByDefault}
+      onToggle={handleToggle}
+      name={name}
+      openByDefault={openByDefault ?? isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >

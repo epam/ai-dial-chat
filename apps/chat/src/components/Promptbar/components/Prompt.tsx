@@ -60,9 +60,14 @@ import { PreviewPromptModal } from './PreviewPromptModal';
 interface Props {
   item: PromptInfo;
   level?: number;
+  additionalItemData?: Record<string, unknown>;
 }
 
-export const PromptComponent = ({ item: prompt, level }: Props) => {
+export const PromptComponent = ({
+  item: prompt,
+  level,
+  additionalItemData,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -75,10 +80,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       true,
     ),
   );
-  const selectedPromptId = useAppSelector(
+  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
-  const isSelected = selectedPromptId === prompt.id;
+  const isPublicationResource = !!additionalItemData?.isPublicationResource;
+  const isSelected =
+    selectedPromptId === prompt.id &&
+    isPublicationResource === isSelectedPublicationResource;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
@@ -190,11 +198,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       e.stopPropagation();
       e.preventDefault();
       setIsRenaming(true);
-      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: prompt.id,
+          isPublicationResource,
+        }),
+      );
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
-    [dispatch, prompt.id],
+    [dispatch, isPublicationResource, prompt.id],
   );
 
   const handleExportPrompt = useCallback(

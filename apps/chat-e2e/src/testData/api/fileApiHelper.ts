@@ -53,12 +53,16 @@ export class FileApiHelper extends BaseApiHelper {
         filter: nodeType,
       },
     });
-    const entities = (await response.json()) as BackendDataEntity[];
-    expect(
-      response.status(),
-      `Received entities: ${JSON.stringify(entities)}`,
-    ).toBe(200);
-    return entities;
+    const statusCode = response.status();
+    if (statusCode == 200) {
+      return (await response.json()) as BackendDataEntity[];
+    } else {
+      expect(
+        statusCode,
+        `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ).toBe(200);
+      return [];
+    }
   }
 
   public async deleteAllFiles(url?: string) {
