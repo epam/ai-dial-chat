@@ -25,7 +25,8 @@ declare global {
       E2E_HOST?: string;
       E2E_USERNAME?: string;
       E2E_PASSWORD?: string;
-      TRACES_URL?: string;
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT?: string;
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT?: string;
       TMS_URL?: string;
       ISSUE_URL?: string;
       THEMES_CONFIG_HOST?: string;
@@ -37,7 +38,6 @@ declare global {
       CODE_GENERATION_WARNING?: string;
       SHOW_TOKEN_SUB?: string;
       STORAGE_TYPE?: string;
-      TRACES_URL?: string;
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
 

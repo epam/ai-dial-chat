@@ -18,9 +18,9 @@ const exporter = new PrometheusExporter({
 
 let spanProcessor: SimpleSpanProcessor | undefined;
 let traceExporter: SpanExporter | undefined;
-if (process.env.TRACES_URL) {
+if (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT) {
   traceExporter = new OTLPTraceExporter({
-    url: process.env.TRACES_URL,
+    url: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
     headers: {},
   });
   spanProcessor = new SimpleSpanProcessor(traceExporter);
