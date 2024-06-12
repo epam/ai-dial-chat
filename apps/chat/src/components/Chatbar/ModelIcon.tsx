@@ -89,6 +89,7 @@ export const ModelIcon = ({
 
   const iconSize = useMemo(
     () => modelIconWidth?.[entityId as ModelId] || modelIconWidthDefault,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [entityId, isSmallIconSize],
   );
 

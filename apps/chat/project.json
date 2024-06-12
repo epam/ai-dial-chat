@@ -38,21 +38,31 @@
         }
       }
     },
-    "lint": {},
-    "lint:fix": {},
+    "lint": {
+      "options": {
+        "format": "html",
+        "outputFile": "../../reports/eslint/apps/chat/eslint-report.html"
+      }
+    },
+    "lint:fix": {
+      "options": {
+        "format": "html",
+        "outputFile": "../../reports/eslint/apps/chat/eslint-report.html"
+      }
+    },
     "test": {
       "options": {
-        "reportsDirectory": "../../coverage/apps/chat"
+        "reportsDirectory": "../../reports/coverage/apps/chat"
       }
     },
     "test:watch": {
       "options": {
-        "reportsDirectory": "../../coverage/apps/chat"
+        "reportsDirectory": "../../reports/coverage/apps/chat"
       }
     },
     "test:coverage": {
       "options": {
-        "reportsDirectory": "../../coverage/apps/chat"
+        "reportsDirectory": "../../reports/coverage/apps/chat"
       }
     },
     "format": {},

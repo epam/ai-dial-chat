@@ -31,7 +31,6 @@ import { PromptList } from './ChatInput/PromptList';
 import { PromptVariablesDialog } from './ChatInput/PromptVariablesDialog';
 import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
 
-import HelpIcon from '@/public/images/icons/help.svg';
 import debounce from 'lodash-es/debounce';
 
 interface Props {
@@ -173,7 +172,7 @@ export const SystemPrompt: FC<Props> = ({
         {disabled && <DisableOverlay />}
         <AdjustedTextarea
           ref={textareaRef}
-          className="placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary w-full resize-none overflow-y-auto rounded-3xl border border-secondary bg-transparent px-4 py-3 outline-none"
+          className="w-full resize-none overflow-y-auto rounded-3xl border border-secondary bg-transparent px-4 py-3 outline-none placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary"
           placeholder={t('Type a text or «/» to use a prompt...') || ''}
           maxHeight={MAX_HEIGHT}
           value={content}

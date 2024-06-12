@@ -6,7 +6,7 @@ import { useTranslation } from 'next-i18next';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { DisplayMenuItemProps, onClickMenuItemHandler } from '@/src/types/menu';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -122,7 +122,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     [onClose, onModelSelect],
   );
 
-  const onClickMenuItemHandler = (entityType: any) => {
+  const onClickMenuItemHandler = (entityType: EntityType) => {
     handleFilterType(entityType);
   };
 
@@ -156,7 +156,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     },
   ].map((item) => ({
     ...item,
-    onClick: onClickMenuItemHandler,
+    onClick: onClickMenuItemHandler as onClickMenuItemHandler,
     CustomTriggerRenderer: ModelsDialogFilterRenderer,
   }));
 
@@ -170,7 +170,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       hideClose
       containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto pb-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
     >
-      <div className="text-primary-bg-dark flex justify-between bg-layer-3 px-3 py-6 text-xl font-medium md:px-5">
+      <div className="flex justify-between bg-layer-3 px-3 py-6 text-xl font-medium text-primary-bg-dark md:px-5">
         {t('Talk to')}
         <button
           onClick={onClose}
@@ -194,14 +194,14 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           onChange={(e) => {
             handleSearch(e.target.value);
           }}
-          className="placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary m-0 w-full rounded-full border border-secondary bg-layer-2 py-2 pl-14 pr-28 outline-none"
+          className="m-0 w-full rounded-full border border-secondary bg-layer-2 py-2 pl-14 pr-28 outline-none placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary"
         ></input>
         <ContextMenu
           menuItems={menuItems}
           triggerIconClassName="absolute right-8 md:right-12 cursor-pointer max-h-[38px]"
           TriggerCustomRenderer={
             <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
-              <div className="text-quaternary-bg-light hover:text-primary-bg-light flex items-end">
+              <div className="flex items-end text-quaternary-bg-light hover:text-primary-bg-light">
                 <FilterIcon width={20} height={20} className="inline-block" />
                 <span className="hidden pl-2 md:inline-block">
                   {t('Filters')}

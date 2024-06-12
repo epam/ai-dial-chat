@@ -2,7 +2,6 @@ import { IconX } from '@tabler/icons-react';
 import { ReactNode, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -114,7 +113,6 @@ export const ConversationSettings = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const router = useRouter();
 
   const model = useMemo(
     () => (modelId ? modelsMap[modelId] : undefined),

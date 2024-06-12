@@ -53,8 +53,18 @@
         "readyWhen": "Ready"
       }
     },
-    "lint": {},
-    "lint:fix": {},
+    "lint": {
+      "options": {
+        "format": "html",
+        "outputFile": "../../reports/eslint/apps/overlay-sandbox/eslint-report.html"
+      }
+    },
+    "lint:fix": {
+      "options": {
+        "format": "html",
+        "outputFile": "../../reports/eslint/apps/overlay-sandbox/eslint-report.html"
+      }
+    },
     "format": {},
     "format:fix": {}
   },

@@ -13,7 +13,6 @@ import {
   IconTrashX,
   IconUserShare,
   IconUserX,
-  IconWorldShare,
 } from '@tabler/icons-react';
 import { MouseEventHandler, useMemo } from 'react';
 
@@ -85,7 +84,6 @@ export default function ItemContextMenu({
   onOpenMoveToModal,
   onShare,
   onUnshare,
-  onPublish,
   onUnpublish,
   onPublishUpdate,
   onOpenChange,
@@ -255,19 +253,6 @@ export default function ItemContextMenu({
         onClick: onUnshare,
         disabled: disableAll,
       },
-      // {
-      //   name: t('Publish'),
-      //   dataQa: 'publish',
-      //   display:
-      //     !isEmptyConversation &&
-      //     isPublishingEnabled &&
-      //     !entity.isPublished &&
-      //     !!onPublish &&
-      //     !isExternal,
-      //   Icon: IconWorldShare,
-      //   onClick: onPublish,
-      //   disabled: disableAll,
-      // },
       {
         name: t('Update'),
         dataQa: 'update-publishing',
@@ -326,7 +311,6 @@ export default function ItemContextMenu({
       onOpenExportModal,
       onOpenMoveToModal,
       onPlayback,
-      onPublish,
       onPublishUpdate,
       onRename,
       onReplay,

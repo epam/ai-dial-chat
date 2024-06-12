@@ -97,7 +97,7 @@ export default function ShareModal() {
             <input
               type="text"
               readOnly
-              className="w-full gap-2 truncate rounded rounded-primary border border-primary bg-layer-3 p-3 pr-10 text-primary-bg-dark outline-none"
+              className="w-full gap-2 truncate rounded-primary border border-primary bg-layer-3 p-3 pr-10 text-primary-bg-dark outline-none"
               onCopyCapture={handleCopy}
               value={url}
               data-qa="share-link"

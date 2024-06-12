@@ -113,7 +113,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   const inputClassName = classNames(
     'input-form',
     'peer',
-    'rounded-primary shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary m-0 border-secondary bg-layer-2 ',
+    'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary ',
     {
       'input-invalid': submitted,
       submitted: submitted,
@@ -147,7 +147,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         )}
 
         <button
-          className="text-quaternary-bg-light hover:text-primary-bg-light absolute right-2 top-2 rounded"
+          className="absolute right-2 top-2 rounded text-quaternary-bg-light hover:text-primary-bg-light"
           onClick={onClose}
         >
           <IconX size={24} />
@@ -155,9 +155,9 @@ export const PromptVariablesDialog: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
-            <div className="text-primary-bg-light mb-1 flex text-xs">
+            <div className="mb-1 flex text-xs text-primary-bg-light">
               {variable.key}
-              <span className="text-quinary-bg-light inline">*</span>
+              <span className="inline text-quinary-bg-light">*</span>
             </div>
 
             <textarea

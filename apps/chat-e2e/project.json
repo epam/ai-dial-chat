@@ -17,8 +17,18 @@
         }
       }
     },
-    "format": {},
-    "format:fix": {}
+    "format": {
+      "options": {
+        "format": "html",
+        "outputFile": "../../reports/eslint/apps/chat-e2e/eslint-report.html"
+      }
+    },
+    "format:fix": {
+      "options": {
+        "format": "html",
+        "outputFile": "../../reports/eslint/apps/chat-e2e/eslint-report.html"
+      }
+    }
   },
   "implicitDependencies": ["chat"]
 }

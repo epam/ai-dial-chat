@@ -78,7 +78,7 @@ export const CodeBlock: FC<Props> = memo(
 
     return (
       <div
-        className={`codeblock text-primary-bg-light rounded-primary relative overflow-hidden border border-secondary font text-sm`}
+        className={`codeblock relative overflow-hidden rounded-primary border border-secondary font text-sm text-primary-bg-light`}
       >
         <div
           className={`flex items-center justify-between border-b border-secondary p-3 ${
@@ -90,10 +90,10 @@ export const CodeBlock: FC<Props> = memo(
           {!isLastMessageStreaming && (
             <div
               data-no-context-menu
-              className="text-tertiary-bg-light flex items-center gap-3"
+              className="flex items-center gap-3 text-tertiary-bg-light"
             >
               <button
-                className="[&:not(:disabled)]:hover:text-primary-bg-light flex items-center"
+                className="flex items-center [&:not(:disabled)]:hover:text-primary-bg-light"
                 onClick={copyToClipboard}
                 disabled={isCopied}
               >
@@ -109,7 +109,7 @@ export const CodeBlock: FC<Props> = memo(
               </button>
               <Tooltip isTriggerClickable tooltip={t('Download')}>
                 <button
-                  className="hover:text-primary-bg-light flex items-center rounded bg-none"
+                  className="flex items-center rounded bg-none hover:text-primary-bg-light"
                   onClick={downloadAsFile}
                 >
                   <Download width={18} height={18} />

@@ -961,7 +961,7 @@ export function Chat() {
         talkto === DocumentId.queryParam ? DocumentId.modelId : talkto;
 
       if (
-        (currentConversation as any)?.id !== modelId &&
+        currentConversation?.id !== modelId &&
         areSelectedConversationsLoaded &&
         isInitFoldersAndConversations &&
         !isConversationUpdatedFromQueryParams &&
@@ -984,6 +984,7 @@ export function Chat() {
         );
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areSelectedConversationsLoaded, isInitFoldersAndConversations]);
 
   useEffect(() => {
@@ -993,6 +994,7 @@ export function Chat() {
       dispatch(ConversationsActions.updateConversationFromQueryParams(false));
       router.push(pathname, undefined, { shallow: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [talkTo]);
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
@@ -1011,7 +1013,7 @@ export function Chat() {
     (!selectedConversations.length ||
       selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
   ) {
-    return <Loader />;
+    return <Loader containerClassName="text-primary-bg-light h-full" />;
   }
   if (
     selectedConversations.length !== selectedConversationsIds.length ||

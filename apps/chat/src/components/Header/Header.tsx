@@ -6,7 +6,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
@@ -37,14 +36,6 @@ const Header = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-  const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
-  );
-  const customLogoUrl =
-    isCustomLogoFeatureEnabled &&
-    customLogo &&
-    `api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const dispatch = useAppDispatch();
 
@@ -128,11 +119,11 @@ const Header = () => {
           />
           <div className="my-3 border-r border-primary" />
           <SecondaryLogo className="ml-3 self-center" width={25} height={25} />
-          <span className="font-weave ml-2 flex flex-wrap content-center text-[22px] font-bold md:mr-3">
+          <span className="ml-2 flex flex-wrap content-center font-weave text-[22px] font-bold md:mr-3">
             {HEADER_TITLE_TEXT}
           </span>
           <span className="my-3 hidden border-r border-primary md:inline-block" />
-          <span className="text-s ml-2 hidden flex-wrap content-center md:flex">
+          <span className="ml-2 hidden flex-wrap content-center text-s md:flex">
             {t('Your secured IA assistant within Pernod Ricard environment')}
           </span>
         </div>

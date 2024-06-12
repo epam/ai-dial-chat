@@ -344,7 +344,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       talkTo && dispatch(ConversationsActions.setTalkTo(''));
       dispatch(ConversationsActions.createNewReplayConversation(conversation));
     },
-    [conversation, dispatch],
+    [conversation, dispatch, talkTo],
   );
 
   const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
@@ -354,7 +354,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         ConversationsActions.createNewPlaybackConversation(conversation),
       );
       setIsContextMenu(false);
-    }, [conversation, dispatch]);
+    }, [conversation, dispatch, talkTo]);
 
   const handleCompare: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -374,7 +374,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       talkTo && dispatch(ConversationsActions.setTalkTo(''));
       dispatch(ConversationsActions.duplicateConversation(conversation));
     },
-    [conversation, dispatch],
+    [conversation, dispatch, talkTo],
   );
 
   useEffect(() => {

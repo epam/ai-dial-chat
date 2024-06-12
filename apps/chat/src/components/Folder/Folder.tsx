@@ -666,7 +666,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isHighlighted
                 featureType={featureType}
               >
-                <IconFolder size={18} className="text-secondary-bg-dark mr-1" />
+                <IconFolder size={18} className="mr-1 text-secondary-bg-dark" />
               </ShareIcon>
             )}
 

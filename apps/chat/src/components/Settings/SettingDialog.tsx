@@ -132,7 +132,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       initialFocus={saveBtnRef}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="front-medium mb-4 flex justify-between bg-layer-3 px-3 py-4 text-xl text-primary-bg-dark md:px-5">
+      <div className="mb-4 flex justify-between bg-layer-3 px-3 py-4 text-xl font-medium text-primary-bg-dark md:px-5">
         {t('Settings')}
         <button
           onClick={handleClose}
