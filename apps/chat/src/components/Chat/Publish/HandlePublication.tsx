@@ -204,15 +204,21 @@ export function HandlePublication({ publication }: Props) {
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
         <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
-          <h4
-            data-qa="app-name"
-            className="w-full whitespace-pre text-center text-base font-semibold"
+          <Tooltip
+            tooltip={getPublicationId(publication.url)}
+            contentClassName="max-w-[400px] break-all"
+            triggerClassName="truncate text-center w-full"
           >
-            {publication.resources[0].action !== PublishActions.DELETE
-              ? t('Publication request for: ')
-              : t('Unpublish: ')}
-            {getPublicationId(publication.url)}
-          </h4>
+            <h4
+              data-qa="app-name"
+              className="truncate whitespace-pre break-all text-center"
+            >
+              {publication.resources[0].action !== PublishActions.DELETE
+                ? t('Publication request for: ')
+                : t('Unpublish: ')}
+              {getPublicationId(publication.url)}
+            </h4>
+          </Tooltip>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
