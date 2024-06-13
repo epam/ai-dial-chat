@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-
 import {
   ChatOverlayManager,
   ChatOverlayManagerOptions,
 } from '@epam/ai-dial-overlay';
 import { Feature } from '@epam/ai-dial-shared';
+import { useEffect, useRef } from 'react';
 
 const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
   id: 'test',
