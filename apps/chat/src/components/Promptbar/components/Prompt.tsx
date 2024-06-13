@@ -373,7 +373,11 @@ export const PromptComponent = ({
               onShare={handleOpenSharing}
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
-              onUnpublish={handleOpenUnpublishing}
+              onUnpublish={
+                additionalItemData?.isApproveRequiredResource
+                  ? undefined
+                  : handleOpenUnpublishing
+              }
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
               onView={(e) => handleOpenEditModal(e, true)}
