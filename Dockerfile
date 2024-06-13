@@ -18,6 +18,7 @@ RUN npm run build
 FROM build AS run_dependencies
 WORKDIR /app/dist/apps/chat
 COPY /tools /app/dist/apps/chat/tools
+COPY /patches /app/dist/apps/chat/patches
 RUN npm i
 RUN node tools/patch-nextjs.js
 
