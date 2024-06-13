@@ -80,13 +80,13 @@ export const PromptComponent = ({
       true,
     ),
   );
-  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
-  );
-  const isPublicationResource = !!additionalItemData?.isPublicationResource;
+  const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
+    useAppSelector(PromptsSelectors.selectSelectedPromptId);
+  const isApproveRequiredResource =
+    !!additionalItemData?.isApproveRequiredResource;
   const isSelected =
     selectedPromptId === prompt.id &&
-    isPublicationResource === isSelectedPublicationResource;
+    isApproveRequiredResource === isSelectedPromptApproveRequiredResource;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
@@ -201,13 +201,13 @@ export const PromptComponent = ({
       dispatch(
         PromptsActions.setSelectedPrompt({
           promptId: prompt.id,
-          isPublicationResource,
+          isApproveRequiredResource,
         }),
       );
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
-    [dispatch, isPublicationResource, prompt.id],
+    [dispatch, isApproveRequiredResource, prompt.id],
   );
 
   const handleExportPrompt = useCallback(

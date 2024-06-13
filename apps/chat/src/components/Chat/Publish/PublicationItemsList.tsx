@@ -83,6 +83,7 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               forViewOnly
+              showTooltip
             />
           )}
         </CollapsibleSection>
@@ -121,7 +122,7 @@ export function PublicationItemsList({
                 action: publishAction,
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
-                  ApiKeys.Conversations,
+                  ApiKeys.Prompts,
                   'public',
                   path,
                   splitEntityId(entity.id).name,
@@ -129,6 +130,7 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               forViewOnly
+              showTooltip
             />
           )}
         </CollapsibleSection>
