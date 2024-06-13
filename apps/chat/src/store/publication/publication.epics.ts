@@ -238,10 +238,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       );
 
                       return {
+                        ...parsedApiKey,
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        model: parsedApiKey.model,
-                        name: parsedApiKey.name,
                       };
                     }),
                   }),
@@ -433,10 +432,9 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       );
 
                       return {
+                        ...parsedApiKey,
                         id: decodedUrl,
                         folderId: getFolderIdFromEntityId(decodedUrl),
-                        model: parsedApiKey.model,
-                        name: parsedApiKey.name,
                         publishedWithMe: true,
                       };
                     }),
@@ -613,10 +611,9 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                         );
 
                         return {
+                          ...parsedApiKey,
                           id: item.targetUrl,
                           folderId,
-                          model: parsedApiKey.model,
-                          name: parsedApiKey.name,
                           publishedWithMe: isRootId(folderId),
                         };
                       },
