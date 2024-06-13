@@ -179,7 +179,8 @@ export const selectSelectedPromptId = createSelector(
   (state) => {
     return {
       selectedPromptId: state.selectedPromptId,
-      isSelectedPublicationResource: state.isSelectedPromptPublicationResource,
+      isSelectedPromptApproveRequiredResource:
+        state.isSelectedPromptApproveRequiredResource,
     };
   },
 );
