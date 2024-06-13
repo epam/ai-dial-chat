@@ -181,7 +181,7 @@ export const ChangePathDialog = ({
       isOpen={isOpen}
       modalDataQa="change-path-dialog"
       onClose={() => onClose(undefined)}
-      title="Change path"
+      title={t('Change path')}
     >
       <SelectFolderHeader
         handleSearch={handleSearch}
@@ -199,7 +199,12 @@ export const ChangePathDialog = ({
             onDeleteFolder: handleDeleteFolder,
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
-            featureType: FeatureType.File,
+            featureType:
+              type === SharingType.Conversation ||
+              type === SharingType.ConversationFolder
+                ? FeatureType.Chat
+                : FeatureType.Prompt,
+            isSidePanelFolder: false,
           }}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}

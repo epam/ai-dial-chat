@@ -59,8 +59,8 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
-import PublishModal from '../Chat/Publish/PublishWizard';
-import UnpublishModal from '../Chat/UnpublishModal';
+import { PublishModal } from '../Chat/Publish/PublishWizard';
+import { UnpublishModal } from '../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
@@ -136,9 +136,14 @@ export function ConversationView({
 interface Props {
   item: ConversationInfo;
   level?: number;
+  additionalItemData?: Record<string, unknown>;
 }
 
-export const ConversationComponent = ({ item: conversation, level }: Props) => {
+export const ConversationComponent = ({
+  item: conversation,
+  level,
+  additionalItemData,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -150,9 +155,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isReplay = useAppSelector(
-    ConversationsSelectors.selectIsReplaySelectedConversations,
-  );
+  const isReplay = (conversation as Conversation).replay?.isReplay;
   const folders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
       state,
@@ -161,9 +164,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       true,
     ),
   );
-  const isPlayback = useAppSelector(
-    ConversationsSelectors.selectIsPlaybackSelectedConversations,
-  );
+  const isPlayback = (conversation as Conversation).playback?.isPlayback;
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
@@ -210,7 +211,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   );
 
   const performRename = useCallback(
-    (name: string, deleteShareIcon?: boolean) => {
+    (name: string) => {
       if (name.length > 0) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -218,7 +219,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             values: {
               name,
               isNameChanged: true,
-              isShared: deleteShareIcon ? false : conversation.isShared,
+              isShared: false,
             },
           }),
         );
@@ -229,7 +230,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
       setIsRenaming(false);
     },
-    [conversation.id, conversation.isShared, dispatch],
+    [conversation.id, dispatch],
   );
 
   const handleRename = useCallback(() => {
@@ -539,7 +540,10 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       data-qa="conversation"
     >
       {isRenaming ? (
-        <div className="flex w-full items-center gap-2 pr-12">
+        <div
+          className="flex w-full items-center gap-2 pr-12"
+          data-qa="edit-container"
+        >
           <ShareIcon
             {...conversation}
             isHighlighted={isHighlighted}
@@ -569,6 +573,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
+            name="edit-input"
             onChange={(e) =>
               setRenameValue(
                 e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
@@ -601,6 +606,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
+          data-qa={isSelected ? 'selected' : null}
         >
           <ConversationView
             conversation={conversation}
@@ -615,7 +621,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'absolute right-3 z-50 flex justify-end group-hover:visible',
+            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
           )}
@@ -623,7 +629,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         >
           <ItemContextMenu
             entity={conversation}
-            isEmptyConversation={isEmptyConversation}
+            isEmptyConversation={
+              !isReplay && !isPlayback && isEmptyConversation
+            }
             folders={folders}
             featureType={FeatureType.Chat}
             onOpenMoveToModal={() => setIsShowMoveToModal(true)}
@@ -634,13 +642,18 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onOpenExportModal={handleOpenExportModal}
             onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
             onDuplicate={handleDuplicate}
-            onReplay={!isPlayback ? handleStartReplay : undefined}
-            onPlayback={handleCreatePlayback}
-            onShare={handleOpenSharing}
-            onUnshare={handleUnshare}
-            onPublish={handleOpenPublishing}
-            onPublishUpdate={handleOpenPublishing}
-            onUnpublish={handleOpenUnpublishing}
+            onReplay={!isReplay && !isPlayback ? handleStartReplay : undefined}
+            onPlayback={
+              !isReplay && !isPlayback ? handleCreatePlayback : undefined
+            }
+            onShare={!isReplay ? handleOpenSharing : undefined}
+            onUnshare={!isReplay ? handleUnshare : undefined}
+            onPublish={!isReplay ? handleOpenPublishing : undefined}
+            onUnpublish={
+              isReplay || additionalItemData?.isApproveRequiredResource
+                ? undefined
+                : handleOpenUnpublishing
+            }
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}
@@ -669,14 +682,20 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       </div>
 
       {isRenaming && (
-        <div className="absolute right-1 z-10 flex">
-          <SidebarActionButton handleClick={() => handleRename()}>
+        <div className="absolute right-1 z-10 flex" data-qa="actions">
+          <SidebarActionButton
+            handleClick={() => handleRename()}
+            dataQA="confirm-edit"
+          >
             <IconCheck
               size={18}
               className="text-tertiary-bg-light hover:text-accent-primary"
             />
           </SidebarActionButton>
-          <SidebarActionButton handleClick={handleCancelRename}>
+          <SidebarActionButton
+            handleClick={handleCancelRename}
+            dataQA="cancel-edit"
+          >
             <IconX
               size={18}
               strokeWidth="2"
@@ -688,6 +707,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isPublishing && (
         <PublishModal
           entity={conversation}
+          entities={[conversation]}
           type={SharingType.Conversation}
           isOpen
           onClose={handleClosePublishModal}
@@ -695,24 +715,26 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       )}
       {isUnpublishing && (
         <UnpublishModal
+          subtitle={t(
+            'Conversation will no longer be visible to the organization',
+          )}
           entity={conversation}
-          type={SharingType.Conversation}
+          entities={[conversation]}
           isOpen
           onClose={handleCloseUnpublishModal}
+          type={SharingType.Conversation}
         />
       )}
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{conversationName}}', {
+          heading={t('Confirm unsharing: {{conversationName}}', {
             conversationName: conversation.name,
           })}
           description={
-            t(
-              'Are you sure that you want to revoke access to this conversation?',
-            ) || ''
+            t('Are you sure that you want to unshare this conversation?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);

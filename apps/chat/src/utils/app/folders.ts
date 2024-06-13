@@ -5,7 +5,11 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import { Conversation, PrepareNameOptions } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationInfo,
+  PrepareNameOptions,
+} from '@/src/types/chat';
 import {
   Entity,
   PartialBy,
@@ -371,16 +375,25 @@ export const validateFolderRenaming = (
   }
 };
 
-export const getConversationAttachmentWithPath = (
-  conversation: Conversation,
+export const getConversationAttachmentWithPath = <
+  T extends Conversation | ConversationInfo,
+>(
+  conversation: T,
   folders: FolderInterface[],
 ): DialFile[] => {
   const { path } = getPathToFolderById(folders, conversation.folderId);
-  return getDialFilesFromAttachments(
-    conversation?.messages.flatMap(
-      (message) => message.custom_content?.attachments || [],
-    ) || [],
-  ).map((file) => ({ ...file, relativePath: path, contentLength: 0 }));
+  const attachments =
+    'messages' in conversation
+      ? (conversation.playback?.messagesStack || conversation.messages).flatMap(
+          (message) => message.custom_content?.attachments || [],
+        )
+      : [];
+
+  return getDialFilesFromAttachments(attachments || []).map((file) => ({
+    ...file,
+    relativePath: path,
+    contentLength: 0,
+  }));
 };
 
 const getGeneratedFolderId = (folder: PartialBy<FolderInterface, 'id'>) =>
@@ -496,3 +509,9 @@ export const updateMovedEntityId = (
   }
   return entityId;
 };
+
+export const getFolderIdFromEntityId = (id: string) =>
+  id.split('/').slice(0, -1).join('/');
+
+export const getRootFolderIdFromEntityId = (id: string) =>
+  id.split('/').slice(0, 3).join('/');

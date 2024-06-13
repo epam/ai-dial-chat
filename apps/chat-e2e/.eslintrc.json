@@ -1,22 +1,21 @@
 {
   "extends": ["plugin:playwright/recommended", "../../.eslintrc.json"],
-  "ignorePatterns": ["!**/*"],
+  "plugins": ["playwright"],
+  "settings": {
+    "playwright": {
+      "globalAliases": {
+        "test": ["base", "dialTest", "dialSharedWithMeTest"]
+      }
+    }
+  },
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.ts", "*.tsx"],
-      "rules": {}
-    },
-    {
-      "files": ["*.js", "*.jsx"],
-      "rules": {}
-    },
-    {
       "files": ["src/**/*.{ts,js,tsx,jsx}"],
-      "rules": {}
+      "rules": {
+        "playwright/no-conditional-in-test": "off",
+        "playwright/no-conditional-expect": "off",
+        "playwright/no-skipped-test": "off"
+      }
     }
   ]
 }

@@ -20,17 +20,10 @@ import { Translation } from '../types/translation';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
+import { MigrationSelectors } from '../store/migration/migration.reducers';
 import { ShareActions, ShareSelectors } from '../store/share/share.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import {
-  selectConversationsToMigrateAndMigratedCount,
-  selectFailedMigratedConversations,
-} from '@/src/store/conversations/conversations.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  selectFailedMigratedPrompts,
-  selectPromptsToMigrateAndMigratedCount,
-} from '@/src/store/prompts/prompts.selectors';
 import {
   SettingsActions,
   SettingsSelectors,
@@ -91,14 +84,18 @@ export default function Home({ initialState }: HomeProps) {
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
   const { conversationsToMigrateCount, migratedConversationsCount } =
-    useAppSelector(selectConversationsToMigrateAndMigratedCount);
+    useAppSelector(
+      MigrationSelectors.selectConversationsToMigrateAndMigratedCount,
+    );
   const { promptsToMigrateCount, migratedPromptsCount } = useAppSelector(
-    selectPromptsToMigrateAndMigratedCount,
+    MigrationSelectors.selectPromptsToMigrateAndMigratedCount,
   );
   const failedMigratedConversations = useAppSelector(
-    selectFailedMigratedConversations,
+    MigrationSelectors.selectFailedMigratedConversations,
   );
-  const failedMigratedPrompts = useAppSelector(selectFailedMigratedPrompts);
+  const failedMigratedPrompts = useAppSelector(
+    MigrationSelectors.selectFailedMigratedPrompts,
+  );
   const showSelectToMigrateWindow = useAppSelector(
     selectShowSelectToMigrateWindow,
   );
@@ -252,7 +249,7 @@ export default function Home({ initialState }: HomeProps) {
                   <Chatbar />
                 )}
 
-                <div className="flex min-w-0 grow flex-col">
+                <div className="flex min-w-0 grow flex-col overflow-y-auto">
                   <AnnouncementsBanner />
                   <Chat />
 
@@ -287,11 +284,17 @@ export const getServerSideProps: GetServerSideProps = async ({
   req,
   res,
 }) => {
+  const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
+    ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
+    : 'frame-ancestors none';
+
+  const frameSrcDirective = process.env.ALLOWED_IFRAME_SOURCES
+    ? 'frame-src ' + process.env.ALLOWED_IFRAME_SOURCES
+    : 'frame-src none';
+
   res.setHeader(
     'Content-Security-Policy',
-    process.env.ALLOWED_IFRAME_ORIGINS
-      ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
-      : 'frame-ancestors none',
+    ancestorsDirective + '; ' + frameSrcDirective,
   );
 
   const session = await getServerSession(req, res, authOptions);
@@ -302,6 +305,10 @@ export const getServerSideProps: GetServerSideProps = async ({
   if (!isServerSessionValid(session)) {
     return { props: {} };
   }
+
+  const customRenderers =
+    process.env.CUSTOM_VISUALIZERS &&
+    JSON.parse(process.env.CUSTOM_VISUALIZERS);
 
   const settings: SettingsState = {
     appName: process.env.NEXT_PUBLIC_APP_NAME ?? 'AI Dial',
@@ -328,6 +335,9 @@ export const getServerSideProps: GetServerSideProps = async ({
           ? Feature.HideNewConversation
           : [],
       ),
+    publicationFilters: (
+      process.env.PUBLICATION_FILTERS || 'title,role,dial_roles'
+    ).split(',') as string[],
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
@@ -341,6 +351,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
+    customRenderers: customRenderers || [],
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

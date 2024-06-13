@@ -21,12 +21,17 @@ export const SelectFolderFooter = ({
         <button
           onClick={handleNewFolder}
           className="flex size-[34px] items-center justify-center rounded text-quaternary-bg-light hover:bg-accent-primary-alpha hover:text-primary-bg-light"
+          data-qa="new-folder"
         >
           <FolderPlus height={24} width={24} />
         </button>
       </div>
       <div>
-        <button onClick={onSelectFolderClick} className="button button-primary">
+        <button
+          onClick={onSelectFolderClick}
+          className="button button-primary"
+          data-qa="select-folder"
+        >
           {t('Select folder')}
         </button>
       </div>

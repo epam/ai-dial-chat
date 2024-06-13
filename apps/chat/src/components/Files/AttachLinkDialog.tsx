@@ -84,7 +84,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
                 checkUrl: FormValidations.checkUrl,
               },
             })}
-          ></input>
+          />
 
           <FieldErrorMessage error={errors.href} />
         </div>
@@ -112,7 +112,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           <button
             type="submit"
             className="button button-primary"
-            disabled={!!errors.href?.message}
+            disabled={!isValid}
           >
             {t('Attach')}
           </button>

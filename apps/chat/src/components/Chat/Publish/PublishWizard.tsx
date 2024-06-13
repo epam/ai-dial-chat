@@ -1,8 +1,8 @@
 import {
-  ChangeEvent,
   ClipboardEvent,
   MouseEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -11,141 +11,168 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  constructPath,
-  validatePublishingFileRenaming,
-} from '@/src/utils/app/file';
+import { constructPath } from '@/src/utils/app/file';
 import { getRootId } from '@/src/utils/app/id';
-import {
-  getAttachments,
-  getPublishActionByType,
-  isPublishVersionUnique,
-} from '@/src/utils/app/share';
-import { onBlur } from '@/src/utils/app/style-helpers';
+import { createTargetUrl } from '@/src/utils/app/publications';
+import { getAttachments } from '@/src/utils/app/share';
+import { ApiUtils } from '@/src/utils/server/api';
 
-import { ShareEntity } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import {
-  SharingType,
-  TargetAudienceFilter,
-  UserGroup,
-} from '@/src/types/share';
+import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
+import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
+import Modal from '@/src/components/Common/Modal';
+import Tooltip from '@/src/components/Common/Tooltip';
 
 import HelpIcon from '../../../../public/images/icons/help.svg';
-import CollapsableSection from '../../Common/CollapsableSection';
-import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
-import { ErrorMessage } from '../../Common/ErrorMessage';
-import Modal from '../../Common/Modal';
-import Tooltip from '../../Common/Tooltip';
-import { PublishAttachment } from './PublishAttachment';
+import { PublicationItemsList } from './PublicationItemsList';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
-import { UserGroupFilter } from './UserGroupFilter';
+
+import compact from 'lodash-es/compact';
+import flatMapDeep from 'lodash-es/flatMapDeep';
+import startCase from 'lodash-es/startCase';
+import toLower from 'lodash-es/toLower';
+
+interface PublishModalFiltersProps {
+  path: string;
+  otherTargetAudienceFilters: TargetAudienceFilter[];
+  onChangeFilters: (targetFilter: TargetAudienceFilter) => void;
+}
+
+function PublishModalFilters({
+  path,
+  otherTargetAudienceFilters,
+  onChangeFilters,
+}: PublishModalFiltersProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const rules = useAppSelector((state) =>
+    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
+  );
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
+  );
+  const publicationFilters = useAppSelector(
+    SettingsSelectors.selectPublicationFilters,
+  );
+
+  if (!path || (rules && !rules.length)) {
+    return (
+      <p>
+        {t(
+          'This publication will be available to all users in the organization',
+        )}
+      </p>
+    );
+  }
+
+  if (isRulesLoading) {
+    return null; // TODO: loader for rules
+  }
+
+  if (rules) {
+    return rules.map((rule, idx) => (
+      <CollapsibleSection
+        name={startCase(toLower(rule.source))}
+        dataQa={`filter-${rule.source}`}
+        key={`filter-${idx}`}
+        openByDefault
+        className="!pl-0"
+      >
+        <TargetAudienceFilterComponent
+          readonly
+          name={rule.source}
+          initialSelectedFilter={{
+            filterFunction: rule.function,
+            filterParams: rule.targets,
+            id: rule.source,
+            name: rule.source,
+          }}
+          id={rule.source}
+          onChangeFilter={onChangeFilters}
+        />
+      </CollapsibleSection>
+    ));
+  }
+
+  return publicationFilters.map((filter, idx) => {
+    const initialSelectedFilter = otherTargetAudienceFilters.find(
+      ({ id }) => id === filter,
+    );
+
+    return (
+      <CollapsibleSection
+        name={startCase(toLower(filter))}
+        dataQa={`filter-${filter}`}
+        key={`filter-${idx}`}
+        openByDefault={false}
+        className="!pl-0"
+      >
+        <TargetAudienceFilterComponent
+          name={startCase(toLower(filter))}
+          id={filter}
+          initialSelectedFilter={initialSelectedFilter}
+          onChangeFilter={onChangeFilters}
+        />
+      </CollapsibleSection>
+    );
+  });
+}
 
 interface Props {
   entity: ShareEntity;
+  entities: ShareEntity[];
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
   depth?: number;
 }
 
-const getPrefix = (item: ShareEntity): string => {
-  if ('messages' in item) {
-    return 'Conversation';
-  } else if ('description' in item) {
-    return 'Prompt';
-  } else {
-    return 'Collection';
-  }
-};
-
-export default function PublishWizard({
+export function PublishModal({
   entity,
   isOpen,
   onClose,
   type,
   depth,
+  entities,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
-  const dispatch = useAppDispatch();
-  const publishAction = getPublishActionByType(type);
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [name, setName] = useState<string>(entity.name);
-  const [path, setPath] = useState<string>('');
-  const [renamingFile, setRenamingFile] = useState<DialFile>();
-  const newFileNames = useRef(new Map());
-  const [errorMessage, setErrorMessage] = useState('');
 
+  const dispatch = useAppDispatch();
+
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const [path, setPath] = useState<string>('');
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
-  const [version, setVersion] = useState<string>('');
-  const isVersionUnique = useAppSelector((state) =>
-    isPublishVersionUnique(type)(state, entity.id, version.trim()),
-  );
-
-  const files = useAppSelector((state) =>
-    getAttachments(type)(state, entity.id),
-  );
-  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
 
-  const nameOnChangeHandler = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setName(e.target.value);
-    },
-    [],
+  const rules = useAppSelector((state) =>
+    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
+  );
+  const files = useAppSelector((state) =>
+    getAttachments(type)(state, entity.id),
   );
 
-  const versionOnChangeHandler = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setVersion(e.target.value);
-    },
-    [],
-  );
-
-  const handleStartFileRename = useCallback((file: DialFile) => {
-    setRenamingFile(file);
-  }, []);
-
-  const handleFileRename = useCallback(
-    (name: string, cancel?: boolean) => {
-      if (cancel || !renamingFile) {
-        setErrorMessage('');
-        setRenamingFile(undefined);
-        return;
-      }
-
-      const error = validatePublishingFileRenaming(files, name, renamingFile);
-      if (error) {
-        setErrorMessage(t(error) as string);
-        return;
-      } else setErrorMessage('');
-
-      const nameMap = newFileNames.current;
-      let oldPath = constructPath(renamingFile.relativePath, renamingFile.name);
-      const newPath = constructPath(renamingFile.relativePath, name);
-      if (nameMap.has(oldPath)) {
-        const originalPath = nameMap.get(oldPath);
-        nameMap.delete(oldPath);
-        oldPath = originalPath;
-      }
-      newFileNames.current.set(newPath, oldPath);
-      renamingFile.name = name;
-      setRenamingFile(undefined);
-    },
-    [files, renamingFile, t],
-  );
+  useEffect(() => {
+    dispatch(PublicationActions.uploadRules({ path }));
+  }, [dispatch, path]);
 
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
@@ -165,59 +192,139 @@ export default function PublishWizard({
       e.preventDefault();
       e.stopPropagation();
 
-      setSubmitted(true);
+      const trimmedPath = path.trim();
+      const notEmptyFilters = otherTargetAudienceFilters.filter(
+        (filter) =>
+          filter.filterParams.filter((param) => Boolean(param.trim())).length,
+      );
+      const preparedFilters =
+        rules && !notEmptyFilters.length
+          ? rules.map((rule) => ({
+              filterFunction: rule.function,
+              filterParams: rule.targets,
+              id: rule.source,
+              name: rule.source,
+            }))
+          : otherTargetAudienceFilters;
+      const folderRegExp = new RegExp(
+        entity.folderId.split('/').slice(2).join('/'),
+      );
 
-      const trimmedName = name?.trim();
-      const trimmedVersion = version?.trim();
-      const trimmedPath = path?.trim();
+      if (
+        type === SharingType.Conversation ||
+        type === SharingType.ConversationFolder
+      ) {
+        const mappedFiles = (entities as Conversation[])
+          .filter((c) =>
+            (c.playback?.messagesStack || c.messages).some(
+              (m) => m.custom_content?.attachments,
+            ),
+          )
+          .flatMap((c) => {
+            const urls = compact(
+              flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+                m.custom_content?.attachments?.map((a) => a.url),
+              ),
+            );
 
-      if (!trimmedName || !trimmedVersion) {
-        return;
+            return urls.map((oldUrl) => {
+              const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+
+              return {
+                oldUrl: decodedOldUrl,
+                newUrl: createTargetUrl(
+                  FeatureType.File,
+                  trimmedPath,
+                  constructPath(
+                    ...c.id.split('/').slice(0, -1),
+                    ...decodedOldUrl.split('/').slice(-1),
+                  ).replace(folderRegExp, ''),
+                  type,
+                ),
+              };
+            });
+          });
+
+        dispatch(
+          PublicationActions.publish({
+            targetFolder: trimmedPath,
+            resources: [
+              ...entities.map((item) => ({
+                sourceUrl: item.id,
+                targetUrl: createTargetUrl(
+                  FeatureType.Chat,
+                  trimmedPath,
+                  type === SharingType.ConversationFolder
+                    ? item.id.replace(folderRegExp, '')
+                    : item.id,
+                  type,
+                ),
+              })),
+              ...files.reduce<{ sourceUrl: string; targetUrl: string }[]>(
+                (acc, file) => {
+                  const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+                  const item = mappedFiles.find(
+                    (f) => f.oldUrl === decodedFileId,
+                  );
+
+                  if (item) {
+                    acc.push({
+                      sourceUrl: decodedFileId,
+                      targetUrl: item.newUrl,
+                    });
+                  }
+
+                  return acc;
+                },
+                [],
+              ),
+            ],
+            rules: preparedFilters.map((filter) => ({
+              function: filter.filterFunction,
+              source: filter.id,
+              targets: filter.filterParams,
+            })),
+          }),
+        );
+      } else {
+        dispatch(
+          PublicationActions.publish({
+            resources: [
+              ...entities.map((item) => ({
+                sourceUrl: item.id,
+                targetUrl: createTargetUrl(
+                  FeatureType.Prompt,
+                  trimmedPath,
+                  type === SharingType.PromptFolder
+                    ? item.id.replace(folderRegExp, '')
+                    : item.id,
+                  type,
+                ),
+              })),
+            ],
+            targetFolder: trimmedPath,
+            rules: preparedFilters.map((filter) => ({
+              function: filter.filterFunction,
+              source: filter.id,
+              targets: filter.filterParams,
+            })),
+          }),
+        );
       }
 
-      if (!isVersionUnique) return;
-
-      dispatch(
-        publishAction({
-          id: entity.id,
-          name: trimmedName,
-          path: trimmedPath,
-          version: trimmedVersion,
-          fileNameMapping: new Map( // invert mapping
-            Array.from(newFileNames.current, (entry) => [entry[1], entry[0]]),
-          ),
-          targetAudienceFilters: {
-            userGroups,
-            other: otherTargetAudienceFilters,
-          },
-        }),
-      );
       onClose();
     },
     [
       dispatch,
-      entity.id,
-      isVersionUnique,
-      name,
+      entities,
+      entity.folderId,
+      files,
       onClose,
-      path,
-      publishAction,
-      version,
-      userGroups,
       otherTargetAudienceFilters,
+      path,
+      rules,
+      type,
     ],
-  );
-
-  const handleBlur = useCallback(() => {
-    setSubmitted(true);
-  }, []);
-
-  const inputClassName = classNames(
-    'input-form mx-0 rounded-primary border-secondary bg-layer-2 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
-    'peer',
-    {
-      'input-invalid submitted': submitted,
-    },
   );
 
   return (
@@ -233,177 +340,81 @@ export default function PublishWizard({
       initialFocus={nameInputRef}
     >
       <div className="flex h-full flex-col divide-y divide-secondary rounded-[10px] bg-layer-1">
-        <h4 className="p-4 pr-10 text-xl font-medium text-primary-bg-light">
-          <span className="line-clamp-2 whitespace-pre break-words">
-            {`${t('Publication request for')}: ${entity.name.trim()}`}
+        <h4 className="truncate p-4 pr-10 text-xl font-medium text-primary-bg-light">
+          <span className="w-full text-center">
+            <Tooltip
+              contentClassName="max-w-[400px] break-words"
+              tooltip={entity.name.trim()}
+            >
+              <div
+                className="w-full truncate break-words"
+                data-qa="modal-entity-name"
+              >
+                {`${t('Publication request for')}: ${entity.name.trim()}`}
+              </div>
+            </Tooltip>
           </span>
         </h4>
         <div className="flex min-h-0 grow flex-col divide-y divide-secondary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink grow flex-col divide-y divide-secondary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 px-5 py-4">
-              <h2 className="font-medium">{t('General Info')}</h2>
-              <p className="text-tertiary-bg-light">
-                {t(
-                  'Your conversation will be visible to organization only after verification by the administrator',
-                )}
-              </p>
-
               <div>
-                <label
-                  className="mb-1 flex text-xs text-primary-bg-light"
-                  htmlFor="requestName"
-                >
-                  {t(`${getPrefix(entity)} name`)}
-                  <span className="inline text-quinary-bg-light">*</span>
-                </label>
-                <input
-                  ref={nameInputRef}
-                  name="requestName"
-                  className={inputClassName}
-                  placeholder={t('A name for your request.') || ''}
-                  value={name}
-                  required
-                  type="text"
-                  onBlur={onBlur}
-                  onChange={nameOnChangeHandler}
-                  data-qa="request-name"
-                />
-                <EmptyRequiredInputMessage useDisplay className="!mb-0" />
-              </div>
-
-              <div>
-                <label
-                  className="mb-1 flex text-xs text-primary-bg-light"
-                  htmlFor="requestPath"
-                >
-                  {t('Path')}
-                  <span className="inline text-quaternary-bg-light">*</span>
+                <label className="mb-4 flex text-sm" htmlFor="requestPath">
+                  {t('Publish to')}
                 </label>
                 <button
                   className="input-form mx-0 flex grow items-center justify-between rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary"
                   onClick={handleFolderChange}
                 >
-                  <span className="truncate">
-                    {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
-                  </span>
-                  <span className="text-tertiary-bg-light">{t('Change')}</span>
-                </button>
-              </div>
-
-              <div>
-                <label
-                  className="mb-1 flex text-xs text-primary-bg-light"
-                  htmlFor="requestVersion"
-                >
-                  {t('Version')}
-                  <span className="inline text-quinary-bg-light">*</span>
-                </label>
-                <input
-                  ref={nameInputRef}
-                  name="requestVersion"
-                  className={classNames(inputClassName, {
-                    '!border-error': !isVersionUnique && submitted,
-                  })}
-                  placeholder={t('A version for your request.') || ''}
-                  value={version}
-                  required
-                  type="text"
-                  data-qa="request-version"
-                  onBlur={handleBlur}
-                  onChange={versionOnChangeHandler}
-                />
-                {submitted && (!isVersionUnique || !version.trim()) && (
-                  <div className="text-xxs text-error">
-                    {t(
-                      !isVersionUnique
-                        ? 'Please provide unique version'
-                        : 'Please fill in all required fields',
-                    )}
+                  <div className="flex w-full justify-between truncate whitespace-pre break-all">
+                    <Tooltip
+                      tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
+                      contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                      triggerClassName="truncate whitespace-pre"
+                    >
+                      {constructPath(PUBLISHING_FOLDER_NAME, path)}
+                    </Tooltip>
+                    <span className="text-tertiary-bg-light">{t('Change')}</span>
                   </div>
-                )}
+                </button>
               </div>
             </section>
 
             <section className="flex flex-col px-5 py-4">
-              <h2 className="flex flex-row gap-2 font-medium">
+              <h2 className="mb-4 flex gap-2 font-medium">
                 {t('Target Audience Filters')}
 
-                <Tooltip
-                  placement="top"
-                  tooltip={
-                    <div className="max-w-[230px] break-words text-xs">
-                      {t(
-                        'The collection will be published for all users who meet AT LEAST ONE option from every',
-                      )}
-                    </div>
-                  }
-                >
-                  <HelpIcon width={18} height={18} />
-                </Tooltip>
+                {!!(path && rules && rules.length) && (
+                  <Tooltip
+                    placement="top"
+                    tooltip={
+                      <div className="flex max-w-[230px] break-words text-xs">
+                        {t(
+                          'The collection will be published for all users who meet AT LEAST ONE option from every',
+                        )}
+                      </div>
+                    }
+                  >
+                    <HelpIcon width={18} height={18} />
+                </Tooltip>)}
               </h2>
 
-              <CollapsableSection
-                name={t('User Group')}
-                dataQa="filter-user-group"
-                openByDefault={false}
-                className="!pl-0"
-              >
-                <UserGroupFilter
-                  onChangeUserGroups={setUserGroups}
-                  initialSelectedUserGroups={userGroups}
-                />
-              </CollapsableSection>
-
-              {[
-                { id: 'JobTitle', name: 'Job Title' },
-                { id: 'AssignedProjects', name: 'Assigned Projects' },
-                { id: 'filter4', name: 'Filter 4' },
-                { id: 'filter5', name: 'Filter 5' },
-                { id: 'filter6', name: 'Filter 6' },
-              ].map((v, idx) => {
-                const initialSelectedFilter = otherTargetAudienceFilters.find(
-                  ({ id }) => id === v.id,
-                );
-                return (
-                  <CollapsableSection
-                    name={v.name}
-                    dataQa={`filter-${v.id}`}
-                    key={`filter-${v.id}-${idx}`}
-                    openByDefault={false}
-                    className="!pl-0"
-                  >
-                    <TargetAudienceFilterComponent
-                      name={v.name}
-                      id={v.id}
-                      initialSelectedFilter={initialSelectedFilter}
-                      onChangeFilter={handleOnChangeFilters}
-                    />
-                  </CollapsableSection>
-                );
-              })}
+              <PublishModalFilters
+                path={path}
+                otherTargetAudienceFilters={otherTargetAudienceFilters}
+                onChangeFilters={handleOnChangeFilters}
+              />
             </section>
           </div>
-          {(type === SharingType.Conversation ||
-            type === SharingType.ConversationFolder) && (
-            <div className="flex w-full flex-col gap-[2px] px-5 py-4 md:max-w-[550px]">
-              <h2 className="mb-2">
-                {t(`Files contained in the ${getPrefix(entity).toLowerCase()}`)}
-              </h2>
-              <ErrorMessage error={errorMessage} />
-              {!files.length && (
-                <p className="text-tertiary-bg-light">{t('No files')}</p>
-              )}
-              {files.map((file) => (
-                <PublishAttachment
-                  key={constructPath(file?.relativePath, file?.name)}
-                  isRenaming={file === renamingFile}
-                  file={file}
-                  onRename={handleFileRename}
-                  onStartRename={handleStartFileRename}
-                />
-              ))}
-            </div>
-          )}
+          <PublicationItemsList
+            type={type}
+            entity={entity}
+            entities={entities}
+            path={path}
+            files={files}
+            containerClassNames="px-5 py-4"
+            publishAction={PublishActions.ADD}
+          />
         </div>
 
         <div className="flex justify-end gap-3 p-4">
@@ -424,11 +435,17 @@ export default function PublishWizard({
           if (typeof folderId === 'string') {
             setPath(folderId);
           }
+
           setIsChangeFolderModalOpened(false);
         }}
         type={type}
         depth={depth}
-        rootFolderId={getRootId()}
+        rootFolderId={
+          type === SharingType.Conversation ||
+          type === SharingType.ConversationFolder
+            ? getRootId({ featureType: FeatureType.Chat, bucket: 'public' })
+            : getRootId({ featureType: FeatureType.Prompt, bucket: 'public' })
+        }
       />
     </Modal>
   );

@@ -1,10 +1,7 @@
+import { DialLibRequest, Styles } from './common';
 import { Feature } from './features';
 
-export interface OverlayRequest {
-  type: string;
-  requestId: string;
-  payload?: unknown;
-}
+export type OverlayRequest = DialLibRequest;
 
 export interface ChatOverlayOptions {
   domain: string;
@@ -12,6 +9,7 @@ export interface ChatOverlayOptions {
 
   theme?: string;
   modelId?: string;
+  overlayConversationId?: string;
 
   enabledFeatures?: Feature[] | string;
 
@@ -28,5 +26,3 @@ interface OverlaySignInOptions {
   autoSignIn: boolean;
   signInProvider?: string;
 }
-
-export type Styles = { [property in keyof CSSStyleDeclaration]?: string };

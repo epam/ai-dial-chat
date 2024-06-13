@@ -14,36 +14,30 @@ export class ItemApiHelper extends BaseApiHelper {
   }
 
   public async listItems(url: string, bucket?: string) {
-    const response = await this.request.get(
-      `${url}/${bucket ?? BucketUtil.getBucket()}`,
-      {
-        params: {
-          filter: BackendDataNodeType.ITEM,
-          recursive: true,
-        },
-      },
-    );
-    const entities = (await response.json()) as BackendDataEntity[];
-    expect(
-      response.status(),
-      `Received items: ${JSON.stringify(entities)}`,
-    ).toBe(200);
-    return entities;
+    return this.getItems(`${url}/${bucket ?? BucketUtil.getBucket()}`);
   }
 
   public async listItem(itemUrl: string) {
-    const response = await this.request.get(`${API.listingHost}/${itemUrl}`, {
+    return this.getItems(`${API.listingHost}/${itemUrl}`);
+  }
+
+  public async getItems(url: string) {
+    const response = await this.request.get(url, {
       params: {
         filter: BackendDataNodeType.ITEM,
         recursive: true,
       },
     });
-    const entities = (await response.json()) as BackendDataEntity[];
-    expect(
-      response.status(),
-      `Received items: ${JSON.stringify(entities)}`,
-    ).toBe(200);
-    return entities;
+    const statusCode = response.status();
+    if (statusCode == 200) {
+      return (await response.json()) as BackendDataEntity[];
+    } else {
+      expect(
+        statusCode,
+        `Received response code: ${statusCode} with body: ${await response.text()}`,
+      ).toBe(200);
+      return [];
+    }
   }
 
   public async deleteBackendItem(...items: BackendDataEntity[]) {

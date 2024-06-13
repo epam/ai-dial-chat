@@ -1,4 +1,4 @@
-import { MouseEvent, useState } from 'react';
+import { MouseEvent, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -27,6 +27,14 @@ export const ThemeSelect = ({
   const { t } = useTranslation(Translation.Settings);
   const availableThemes = useAppSelector(UISelectors.selectAvailableThemes);
 
+  const themeName = useMemo(() => {
+    const name = availableThemes.find(
+      ({ id }) => id === localTheme,
+    )?.displayName;
+
+    return name ?? localTheme;
+  }, [availableThemes, localTheme]);
+
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onThemeChangeHandler(e.currentTarget.value);
     setIsOpen(false);
@@ -41,11 +49,11 @@ export const ThemeSelect = ({
       <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
       <div className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary">
         <Menu
-          className="w-full px-3"
+          className="flex w-full items-center px-3"
           onOpenChange={setIsOpen}
           trigger={
-            <div className="flex min-w-[120px] items-center justify-between gap-2 capitalize">
-              {localTheme}
+            <div className="flex w-full min-w-[120px] cursor-pointer items-center justify-between gap-2 capitalize">
+              {themeName}
               <ChevronDownIcon
                 className={classNames(
                   'shrink-0 text-primary-bg-dark transition-all',

@@ -1,5 +1,7 @@
+import { Placement } from '@floating-ui/react';
 import {
   IconFileDescription,
+  IconFolder,
   IconLink,
   IconPaperclip,
   IconUpload,
@@ -30,6 +32,8 @@ interface Props {
     folderPath: string | undefined,
   ) => void;
   onAddLinkToMessage: (link: DialLink) => void;
+  TriggerCustomRenderer?: JSX.Element;
+  contextMenuPlacement?: Placement;
 }
 
 export const AttachButton = ({
@@ -37,6 +41,8 @@ export const AttachButton = ({
   onSelectAlreadyUploaded,
   onUploadFromDevice,
   onAddLinkToMessage,
+  TriggerCustomRenderer,
+  contextMenuPlacement,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const messageIsStreaming = useAppSelector(
@@ -51,6 +57,9 @@ export const AttachButton = ({
   );
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
   );
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
@@ -75,10 +84,12 @@ export const AttachButton = ({
     () =>
       [
         {
-          name: t('Attach uploaded files'),
+          name: t(
+            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
+          ),
           dataQa: 'attach_uploaded',
-          display: canAttachFiles,
-          Icon: IconFileDescription,
+          display: canAttachFiles || canAttachFolders,
+          Icon: !canAttachFiles ? IconFolder : IconFileDescription,
           onClick: handleOpenAttachmentsModal,
         },
         {
@@ -98,6 +109,7 @@ export const AttachButton = ({
       ] as DisplayMenuItemProps[],
     [
       canAttachFiles,
+      canAttachFolders,
       canAttachLinks,
       handleAttachFromComputer,
       handleAttachLink,
@@ -106,15 +118,23 @@ export const AttachButton = ({
     ],
   );
 
-  if (!canAttachFiles && !canAttachLinks) return null;
+  if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
+
+  const label = canAttachFiles
+    ? 'Attach files'
+    : canAttachFolders
+      ? 'Attach folders'
+      : '';
 
   return (
     <>
       <ContextMenu
+        placement={contextMenuPlacement}
         menuItems={menuItems}
+        TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
-        triggerTooltip={t('Attach files') || ''}
+        triggerTooltip={t(label) || ''}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
         featureType={FeatureType.File}
@@ -124,8 +144,8 @@ export const AttachButton = ({
           isOpen
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
-          headerLabel={t('Attach files')}
-          customButtonLabel={t('Attach files') as string}
+          headerLabel={t(label)}
+          customButtonLabel={t('Attach') as string}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);

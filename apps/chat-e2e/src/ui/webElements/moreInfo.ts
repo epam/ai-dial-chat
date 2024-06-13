@@ -1,25 +1,39 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import { Tags } from '@/src/ui/domData';
 import { Locator, Page } from '@playwright/test';
 
 export class MoreInfo extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.moreInfo, parentLocator);
+    super(page, ChatSettingsSelectors.moreInfo, parentLocator);
+  }
+  public entityInfo = this.getChildElementBySelector(
+    ChatSettingsSelectors.entityInfo,
+  );
+
+  public entityDescription = this.getChildElementBySelector(
+    ChatSettingsSelectors.entityDescription,
+  );
+  public entityIcon = this.getChildElementBySelector(Tags.svg);
+
+  async getEntityIcon() {
+    await this.entityIcon.waitForState();
+    return this.getElementIconHtml(this.rootLocator);
   }
 
-  public infoApplication = this.getChildElementBySelector(
-    ChatSelectors.infoApplication,
-  );
-
-  public applicationDescription = this.getChildElementBySelector(
-    ChatSelectors.description,
-  );
-
-  public async getApplicationDescription() {
-    if (await this.applicationDescription.isVisible()) {
-      return this.applicationDescription.getElementInnerContent();
+  public async getEntityDescription() {
+    if (await this.entityDescription.isVisible()) {
+      return this.entityDescription.getElementInnerContent();
     }
     return '';
+  }
+
+  public async getEntityName() {
+    return this.entityInfo
+      .getElementLocator()
+      .locator(Tags.span)
+      .last()
+      .textContent();
   }
 }

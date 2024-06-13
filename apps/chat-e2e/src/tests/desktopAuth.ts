@@ -6,9 +6,10 @@ import { API } from '@/src/testData';
 
 const usernames = process.env
   .E2E_USERNAME!.split(',')
-  .slice(0, +config.workers! + 1);
+  .slice(0, +config.workers! + 2);
 
 for (let i = 0; i < usernames.length; i++) {
+  // eslint-disable-next-line playwright/expect-expect
   test(`Authenticate user: ${usernames[i]}`, async ({
     page,
     loginPage,

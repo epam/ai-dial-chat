@@ -18,14 +18,14 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await promptBar.createNewFolder();
-    expect
+    await expect
       .soft(
-        await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .isVisible(),
+        await folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        ),
         ExpectedMessages.newFolderCreated,
       )
-      .toBeTruthy();
+      .toBeVisible();
   },
 );
 
@@ -101,27 +101,24 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderPrompts.editFolderNameWithEnter(
-      ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
-      newName,
-    );
-    expect
+    await folderPrompts.editFolderNameWithEnter(newName);
+    await expect
       .soft(
-        await folderPrompts.getFolderByName(newName).isVisible(),
+        await folderPrompts.getFolderByName(newName),
         ExpectedMessages.folderNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     for (let i = 1; i <= 3; i++) {
       if (i !== randomFolderIndex) {
-        expect
+        await expect
           .soft(
-            await folderPrompts
-              .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
-              .isVisible(),
+            await folderPrompts.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i),
+            ),
             ExpectedMessages.folderNameNotUpdated,
           )
-          .toBeTruthy();
+          .toBeVisible();
       }
     }
   },
@@ -145,19 +142,16 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    const folderInput = await folderPrompts.editFolderName(
-      ExpectedConstants.newFolderWithIndexTitle(1),
-      newName,
-    );
-    await folderInput.clickCancelButton();
-    expect
+    await folderPrompts.editFolderName(newName);
+    await folderPrompts.getEditFolderInputActions().clickCancelButton();
+    await expect
       .soft(
-        await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .isVisible(),
+        await folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        ),
         ExpectedMessages.folderNameNotUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
   },
 );
 
@@ -183,16 +177,13 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await folderPrompts.openFolderDropdownMenu(promptInFolder.folders.name);
     await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderPrompts.editFolderNameWithTick(
-      promptInFolder.folders.name,
-      newName,
-    );
-    expect
+    await folderPrompts.editFolderNameWithTick(newName);
+    await expect
       .soft(
-        await folderPrompts.getFolderByName(newName).isVisible(),
+        await folderPrompts.getFolderByName(newName),
         ExpectedMessages.folderNameUpdated,
       )
-      .toBeTruthy();
+      .toBeVisible();
   },
 );
 
@@ -218,12 +209,15 @@ dialTest(
     await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
 
     await folderPrompts.expandFolder(ExpectedConstants.newFolderTitle);
-    await folderPrompts
-      .getFolderEntity(
-        ExpectedConstants.newFolderWithIndexTitle(1),
-        prompt.name,
+    await expect
+      .soft(
+        await folderPrompts.getFolderEntity(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          prompt.name,
+        ),
+        ExpectedMessages.newFolderCreated,
       )
-      .waitFor();
+      .toBeVisible();
   },
 );
 
@@ -289,19 +283,19 @@ dialTest(
     await folderPrompts.openFolderDropdownMenu(promptInFolder.folders.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm();
-    expect
+    await expect
       .soft(
-        await folderPrompts
-          .getFolderByName(promptInFolder.folders.name)
-          .isVisible(),
+        await folderPrompts.getFolderByName(promptInFolder.folders.name),
         ExpectedMessages.folderDeleted,
       )
-      .toBeFalsy();
+      .toBeHidden();
 
-    const isPromptVisible = await prompts
-      .getPromptByName(promptInFolder.prompts[0].name)
-      .isVisible();
-    expect.soft(isPromptVisible, ExpectedMessages.promptIsVisible).toBeFalsy();
+    await expect
+      .soft(
+        await prompts.getPromptByName(promptInFolder.prompts[0].name),
+        ExpectedMessages.promptIsVisible,
+      )
+      .toBeHidden();
   },
 );
 
@@ -346,14 +340,14 @@ dialTest(
       )
       .toBe(ExpectedConstants.deleteFolderMessage);
     await confirmationDialog.cancelDialog();
-    expect
+    await expect
       .soft(
-        await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .isVisible(),
+        await folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        ),
         ExpectedMessages.folderNotDeleted,
       )
-      .toBeTruthy();
+      .toBeVisible();
 
     await folderPrompts.openFolderDropdownMenu(
       ExpectedConstants.newFolderWithIndexTitle(1),
@@ -361,14 +355,14 @@ dialTest(
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm();
     for (let i = 1; i <= 3; i++) {
-      expect
+      await expect
         .soft(
-          await folderPrompts
-            .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(i))
-            .isVisible(),
+          await folderPrompts.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i),
+          ),
           ExpectedMessages.folderDeleted,
         )
-        .toBeFalsy();
+        .toBeHidden();
     }
   },
 );
@@ -400,17 +394,15 @@ dialTest(
     );
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    expect
+    await expect
       .soft(
-        await folderPrompts
-          .getFolderEntity(
-            promptInFolder.folders.name,
-            promptInFolder.prompts[0].name,
-          )
-          .isVisible(),
+        await folderPrompts.getFolderEntity(
+          promptInFolder.folders.name,
+          promptInFolder.prompts[0].name,
+        ),
         ExpectedMessages.promptDeleted,
       )
-      .toBeFalsy();
+      .toBeHidden();
   },
 );
 
@@ -439,8 +431,8 @@ dialTest(
         for (let i = 0; i <= levelsCount; i++) {
           const nestedPrompt = promptData.prepareDefaultPrompt();
           nestedPrompts.push(nestedPrompt);
-          nestedPrompt.folderId = nestedFolders[i].folderId;
-          nestedPrompt.id = `${nestedFolders[i].folderId}/${nestedPrompt.id}`;
+          nestedPrompt.folderId = nestedFolders[i].id;
+          nestedPrompt.id = `${nestedFolders[i].id}/${nestedPrompt.id}`;
           promptData.resetData();
         }
         await dataInjector.createPrompts(nestedPrompts, ...nestedFolders);
@@ -462,39 +454,36 @@ dialTest(
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         for (let i = levelToDelete; i <= levelsCount; i++) {
-          expect
+          await expect
             .soft(
-              await folderPrompts
-                .getFolderByName(nestedFolders[i].name)
-                .isVisible(),
+              await folderPrompts.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderDeleted,
             )
-            .toBeFalsy();
-          expect
+            .toBeHidden();
+          await expect
             .soft(
-              await prompts.getPromptByName(nestedPrompts[i].name).isVisible(),
+              await prompts.getPromptByName(nestedPrompts[i].name),
               ExpectedMessages.promptDeleted,
             )
-            .toBeFalsy();
+            .toBeHidden();
         }
 
         for (let i = 0; i <= levelsCount - levelToDelete; i++) {
-          expect
+          await expect
             .soft(
-              await folderPrompts
-                .getFolderByName(nestedFolders[i].name)
-                .isVisible(),
+              await folderPrompts.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderNotDeleted,
             )
-            .toBeTruthy();
-          expect
+            .toBeVisible();
+          await expect
             .soft(
-              await folderPrompts
-                .getFolderEntity(nestedFolders[i].name, nestedPrompts[i].name)
-                .isVisible(),
+              await folderPrompts.getFolderEntity(
+                nestedFolders[i].name,
+                nestedPrompts[i].name,
+              ),
               ExpectedMessages.promptNotDeleted,
             )
-            .toBeTruthy();
+            .toBeVisible();
         }
       },
     );

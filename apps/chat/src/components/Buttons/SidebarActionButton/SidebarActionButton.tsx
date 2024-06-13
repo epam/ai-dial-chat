@@ -3,13 +3,14 @@ import { MouseEventHandler, ReactElement } from 'react';
 interface Props {
   handleClick: MouseEventHandler<HTMLButtonElement>;
   children: ReactElement;
+  dataQA?: string;
 }
 
-const SidebarActionButton = ({ handleClick, children }: Props) => (
+const SidebarActionButton = ({ handleClick, children, dataQA }: Props) => (
   <button
     className={`min-w-[20px] p-1 text-secondary-bg-dark`}
     onClick={handleClick}
-    data-qa="action-button"
+    data-qa={dataQA ?? 'action-button'}
   >
     {children}
   </button>

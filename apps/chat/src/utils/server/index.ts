@@ -184,7 +184,7 @@ export const OpenAIStream = async ({
               idSend = true;
             }
 
-            if (json.choices?.[0].delta) {
+            if (json.choices?.[0]?.delta) {
               if (json.choices[0].finish_reason === 'content_filter') {
                 throw new DialAIError(
                   errorsMessages.contentFiltering,

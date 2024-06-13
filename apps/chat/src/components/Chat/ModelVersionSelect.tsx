@@ -15,12 +15,14 @@ interface ModelVersionSelectProps {
   entities: DialAIEntity[];
   currentEntity: DialAIEntity;
   onSelect: (id: string) => void;
+  className?: string;
 }
 
 export const ModelVersionSelect = ({
   currentEntity,
   entities,
   onSelect,
+  className,
 }: ModelVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -40,6 +42,7 @@ export const ModelVersionSelect = ({
 
   return (
     <Menu
+      className={className}
       type="contextMenu"
       placement="bottom-end"
       onOpenChange={setIsOpen}

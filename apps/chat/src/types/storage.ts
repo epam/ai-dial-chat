@@ -17,6 +17,7 @@ export enum UIStorageKeys {
   ConversationHistory = 'conversationHistory',
   Folders = 'folders',
   SelectedConversationIds = 'selectedConversationIds',
+  SelectedPublicationId = 'selectedPublicationId',
   RecentModelsIds = 'recentModelsIds',
   RecentAddonsIds = 'recentAddonsIds',
   Settings = 'settings',
@@ -30,6 +31,8 @@ export enum UIStorageKeys {
   OpenedPromptFoldersIds = 'openedPromptFoldersIds',
   TextOfClosedAnnouncement = 'textOfClosedAnnouncement',
   CustomLogo = 'customLogo',
+  ChatCollapsedSections = 'chatCollapsedSections',
+  PromptCollapsedSections = 'promptCollapsedSections',
 }
 
 export enum MigrationStorageKeys {

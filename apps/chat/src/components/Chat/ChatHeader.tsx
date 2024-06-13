@@ -78,6 +78,10 @@ export const ChatHeader = ({
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
     useState(false);
 
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
+
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
     [conversation, model, addonsMap],
@@ -115,9 +119,8 @@ export const ChatHeader = ({
             tooltip={conversation.name}
             triggerClassName={classNames(
               'truncate text-center',
-              isChatFullWidth
-                ? 'flex h-full max-w-full items-center justify-center lg:max-w-[90%]'
-                : '',
+              isChatFullWidth &&
+                'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
             )}
           >
             <span
@@ -291,7 +294,7 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            {isPlayback && (
+            {isPlayback && !isExternal && (
               <button
                 className="cursor-pointer text-tertiary-bg-light hover:text-primary-bg-light"
                 onClick={onCancelPlaybackMode}

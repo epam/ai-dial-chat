@@ -13,13 +13,11 @@ import classNames from 'classnames';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
-import UnpublishModal from '../Chat/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
@@ -29,6 +27,7 @@ export enum FileItemEventIds {
   Cancel = 'cancel',
   Retry = 'retry',
   Toggle = 'toggle',
+  ToggleFolder = 'toggleFolder',
   Delete = 'delete',
 }
 
@@ -56,10 +55,11 @@ export const FileItem = ({
   const dispatch = useAppDispatch();
 
   const [isContextMenu, setIsContextMenu] = useState(false);
-
   const [isSelected, setIsSelected] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
+
+  const canAttachFiles = !!additionalItemData?.canAttachFiles;
 
   const handleCancelFile = useCallback(() => {
     onEvent?.(FileItemEventIds.Cancel, item.id);
@@ -87,39 +87,51 @@ export const FileItem = ({
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsUnpublishing(true);
       setIsContextMenu(false);
     }, []);
-
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
 
   useEffect(() => {
     setIsSelected(
       ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
         item.id,
+      ) ||
+        (!!additionalItemData?.selectedFolderIds &&
+          (additionalItemData.selectedFolderIds as string[]).some((folderId) =>
+            item.id.startsWith(folderId),
+          )),
+    );
+
+    setIsHighlighted(
+      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
+        item.id,
       ),
     );
-  }, [additionalItemData?.selectedFilesIds, item.id]);
+  }, [
+    additionalItemData?.selectedFilesIds,
+    additionalItemData?.selectedFolderIds,
+    item.id,
+  ]);
 
   return (
     <div
       className={classNames(
         'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
-        isContextMenu && 'bg-accent-primary-alpha',
+        (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
       )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
+      data-qa="attached-file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <div className="text-secondary-bg-dark">
-          {!isSelected && item.status !== UploadStatus.FAILED ? (
+        <div className="text-secondary-bg-dark" data-qa="attached-file-icon">
+          {(!canAttachFiles || !isSelected) &&
+          item.status !== UploadStatus.FAILED ? (
             <ShareIcon
               {...item}
               containerClassName={classNames(
                 item.status !== UploadStatus.LOADING &&
+                  canAttachFiles &&
                   'group-hover/file-item:hidden',
               )}
               featureType={FeatureType.Chat}
@@ -128,6 +140,7 @@ export const FileItem = ({
               <IconFile
                 className={classNames(
                   item.status !== UploadStatus.LOADING &&
+                    canAttachFiles &&
                     'group-hover/file-item:hidden',
                 )}
                 size={18}
@@ -147,7 +160,8 @@ export const FileItem = ({
             )
           )}
           {item.status !== UploadStatus.LOADING &&
-            item.status !== UploadStatus.FAILED && (
+            item.status !== UploadStatus.FAILED &&
+            canAttachFiles && (
               <div
                 className={classNames(
                   'relative size-[18px] group-hover/file-item:flex',
@@ -167,14 +181,21 @@ export const FileItem = ({
               </div>
             )}
         </div>
-        <span
-          className={classNames(
-            'block max-w-full truncate whitespace-pre',
-            isSelected && 'text-pr-primary-700',
-          )}
+        <Tooltip
+          tooltip={item.name}
+          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
+          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         >
-          {item.name}
-        </span>
+          <span
+            className={classNames(
+              'block max-w-full truncate whitespace-pre',
+              isSelected && 'text-pr-primary-700',
+            )}
+            data-qa="attached-file-name"
+          >
+            {item.name}
+          </span>
+        </Tooltip>
       </div>
 
       <div className="flex items-center gap-2">
@@ -183,11 +204,12 @@ export const FileItem = ({
             <div
               className="h-full bg-controls-accent"
               style={{ width: `${item.percent}%` }}
+              data-qa="attachment-loading"
             ></div>
           </div>
         )}
         {item.status === UploadStatus.FAILED && (
-          <button onClick={handleRetry}>
+          <button onClick={handleRetry} data-qa="retry-upload">
             <IconReload
               className="shrink-0 text-quaternary-bg-light hover:text-primary-bg-light"
               size={18}
@@ -195,7 +217,7 @@ export const FileItem = ({
           </button>
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
-          <button onClick={handleCancelFile}>
+          <button onClick={handleCancelFile} data-qa="remove-file">
             <IconX
               className="shrink-0 text-quaternary-bg-light hover:text-primary-bg-light"
               size={18}
@@ -212,24 +234,16 @@ export const FileItem = ({
           />
         )}
       </div>
-      {isUnpublishing && (
-        <UnpublishModal
-          entity={item}
-          type={SharingType.File}
-          isOpen
-          onClose={handleCloseUnpublishModal}
-        />
-      )}
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{fileName}}', {
+          heading={t('Confirm unsharing: {{fileName}}', {
             fileName: item.name,
           })}
           description={
-            t('Are you sure that you want to revoke access to this file?') || ''
+            t('Are you sure that you want to unshare this file?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);

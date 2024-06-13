@@ -1,5 +1,4 @@
 import {
-  IconClockShare,
   IconCopy,
   IconDots,
   IconEye,
@@ -25,6 +24,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
+import { isItemPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -59,7 +59,6 @@ interface ItemContextMenuProps {
   onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
-  onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
@@ -84,8 +83,8 @@ export default function ItemContextMenu({
   onOpenMoveToModal,
   onShare,
   onUnshare,
+  onPublish,
   onUnpublish,
-  onPublishUpdate,
   onOpenChange,
   onDuplicate,
   onView,
@@ -126,7 +125,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Duplicate'),
-        display: !!onDuplicate,
+        display: !isEmptyConversation && !!onDuplicate,
         dataQa: 'duplicate',
         Icon: IconCopy,
         onClick: onDuplicate,
@@ -253,26 +252,24 @@ export default function ItemContextMenu({
         onClick: onUnshare,
         disabled: disableAll,
       },
-      {
-        name: t('Update'),
-        dataQa: 'update-publishing',
-        display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onPublishUpdate,
-        Icon: IconClockShare,
-        onClick: onPublishUpdate,
-        disabled: disableAll,
-      },
+      // TODO: implement publication update in https://github.com/epam/ai-dial-chat/issues/318
+      // {
+      //   name: t('Update'),
+      //   dataQa: 'update-publishing',
+      //   display:
+      //     !isEmptyConversation &&
+      //     isPublishingEnabled &&
+      //     !!entity.isPublished &&
+      //     !!onPublishUpdate,
+      //   Icon: IconClockShare,
+      //   onClick: onPublishUpdate,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onUnpublish,
+          isPublishingEnabled && !!onUnpublish && isItemPublic(entity.id),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -285,7 +282,7 @@ export default function ItemContextMenu({
             getRootId({
               featureType,
             }),
-          ) || entity.sharedWithMe,
+          ) || !!entity.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -311,7 +308,7 @@ export default function ItemContextMenu({
       onOpenExportModal,
       onOpenMoveToModal,
       onPlayback,
-      onPublishUpdate,
+      onPublish,
       onRename,
       onReplay,
       onShare,

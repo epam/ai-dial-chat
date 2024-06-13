@@ -18,6 +18,7 @@ const EmptyRequiredInputMessage = ({
   isShown,
 }: Props) => {
   const { t } = useTranslation(Translation.Settings);
+
   return (
     <div
       className={classNames(

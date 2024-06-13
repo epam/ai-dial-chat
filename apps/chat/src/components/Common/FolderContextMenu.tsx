@@ -18,6 +18,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
+import { isItemPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
@@ -37,6 +38,7 @@ interface FolderContextMenuProps {
   featureType: FeatureType;
   isOpen?: boolean;
   isEmpty?: boolean;
+  isSidePanelFolder?: boolean;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
@@ -64,8 +66,10 @@ export const FolderContextMenu = ({
   onUpload,
   isOpen,
   isEmpty,
+  isSidePanelFolder,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
+
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
@@ -92,7 +96,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Rename'),
-        display: !!onRename && !isExternal,
+        display: (!!onRename && !isExternal) || !!folder.temporary,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -144,10 +148,10 @@ export const FolderContextMenu = ({
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
-          !isEmpty &&
           isPublishingEnabled &&
-          !!folder.isPublished &&
-          !!onUnpublish,
+          isItemPublic(folder.id) &&
+          !!onUnpublish &&
+          isSidePanelFolder,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -155,12 +159,13 @@ export const FolderContextMenu = ({
       {
         name: t('Delete'),
         display:
-          !!onDelete &&
-          folder.id.startsWith(
-            getRootId({
-              featureType,
-            }),
-          ),
+          (!!onDelete &&
+            folder.id.startsWith(
+              getRootId({
+                featureType,
+              }),
+            )) ||
+          !!folder.temporary,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
@@ -187,19 +192,21 @@ export const FolderContextMenu = ({
       isExternal,
       disableAll,
       onRename,
+      folder.temporary,
+      folder.isShared,
+      folder.isPublished,
+      folder.id,
+      folder.sharedWithMe,
       isNameInvalid,
       isEmpty,
       isSharingEnabled,
       onShare,
       onUnshare,
-      folder.isShared,
-      folder.isPublished,
-      folder.id,
-      folder.sharedWithMe,
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,
       onUnpublish,
+      isSidePanelFolder,
       onDelete,
       featureType,
       onAddFolder,

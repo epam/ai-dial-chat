@@ -1,5 +1,3 @@
-import { Attributes, Tags } from '@/src/ui/domData';
-
 export const SideBarSelectors = {
   chatBar: '[data-qa="chatbar"]',
   promptBar: '[data-qa="promptbar"]',
@@ -8,11 +6,6 @@ export const SideBarSelectors = {
   folderGroup: '#folder',
   folderName: '[data-qa="folder-name"]',
   dotsMenu: '[aria-haspopup="menu"]',
-  renameInput: (value: string) =>
-    `${Tags.input}[${Attributes.value}="${value}"]`,
-  renameDefaultNameInput: (value: string) =>
-    `${Tags.input}[${Attributes.value}^="${value}"]`,
-  dropdownMenu: '[data-qa="dropdown-menu"]',
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',
@@ -23,8 +16,8 @@ export const SideBarSelectors = {
   bottomPanel: '[data-qa="bottom-panel"]',
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   search: '[data-qa="search"]',
-  filterMenuTrigger: '[data-qa="menu-trigger"]',
   folderSeparator: '.h-1',
+  pinnedEntities: '[data-qa^="pinned"]',
 };
 
 export const ChatBarSelectors = {
@@ -34,8 +27,8 @@ export const ChatBarSelectors = {
   conversations: '[data-qa="conversations"]',
   conversation: '[data-qa="conversation"]',
   conversationName: '[data-qa="conversation-name"]',
+  selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',
-  actionButton: '[data-qa="action-button"]',
   exportConversations: '[data-qa="export-conversations"]',
   exportPrompts: '[data-qa="export-prompts"]',
   pinnedChats: () =>

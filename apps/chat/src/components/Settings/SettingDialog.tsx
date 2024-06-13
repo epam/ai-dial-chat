@@ -101,12 +101,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     dispatch(UIActions.setTheme(localTheme));
     dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
     if (localLogoFile && !deleteLogo) {
-      dispatch(UIActions.setCustomLogo({ logo: localLogoFile?.id }));
+      dispatch(UIActions.setCustomLogo({ logo: localLogoFile.id }));
     }
     if (deleteLogo) {
       dispatch(UIActions.deleteCustomLogo());
     }
 
+    setLocalLogoFile(undefined);
     onClose();
   }, [
     dispatch,

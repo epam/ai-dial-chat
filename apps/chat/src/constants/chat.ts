@@ -17,9 +17,12 @@ export const resetShareEntity: ShareInterface = {
   sharedWithMe: false,
 };
 
-export const chartType = 'application/vnd.plotly.v1+json';
+export const PLOTLY_CONTENT_TYPE = 'application/vnd.plotly.v1+json';
 
 export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
+
+export const DEFAULT_CUSTOM_ATTACHMENT_WIDTH = 150;
+export const DEFAULT_CUSTOM_ATTACHMENT_HEIGHT = 150;
 
 export const TALK_TO_TOOLTIP =
   'Choice of available models and applications you can use. Below is the list of latest models you have interacted with. You may click on “See full list…” for a complete list of available models and applications';

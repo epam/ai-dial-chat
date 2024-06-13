@@ -4,6 +4,7 @@ import {
   concat,
   filter,
   ignoreElements,
+  iif,
   map,
   mergeMap,
   of,
@@ -22,7 +23,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
-import { UIActions } from '../ui/ui.reducers';
+import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
 
 const uploadFileEpic: AppEpic = (action$) =>
@@ -170,10 +171,21 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
       }
 
       return FileService.deleteFile(payload.fileId).pipe(
-        map(() => {
-          return FilesActions.deleteFileSuccess({
-            fileId: payload.fileId,
-          });
+        mergeMap(() => {
+          const customLogo = UISelectors.selectCustomLogo(state$.value);
+
+          return concat(
+            iif(
+              () => !!customLogo && customLogo === payload.fileId,
+              of(UIActions.deleteCustomLogo()),
+              EMPTY,
+            ),
+            of(
+              FilesActions.deleteFileSuccess({
+                fileId: payload.fileId,
+              }),
+            ),
+          );
         }),
         catchError(() => {
           return of(FilesActions.deleteFileFail({ fileName: file.name }));

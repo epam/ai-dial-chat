@@ -227,7 +227,7 @@ dialTest(
           promptInsideFolder.folders.name,
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
@@ -326,13 +326,22 @@ dialTest(
         await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await prompts
-          .getPromptByName(promptOutsideFolder.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            await prompts.getPromptByName(promptOutsideFolder.name),
+            ExpectedMessages.noPromptsImported,
+          )
+          .toBeHidden();
+
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await expect
+          .soft(
+            await prompts.getPromptByName(promptOutsideFolder.name),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
@@ -406,19 +415,26 @@ dialTest(
           promptBar.importButton.click(),
         );
         await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
-        await folderPrompts
-          .getFolderEntity(
-            promptsInsideFolder.folders.name,
-            importedFolderPrompt.name,
-          )
-          .waitFor();
-        for (const existingPrompts of promptsInsideFolder.prompts) {
-          await folderPrompts
-            .getFolderEntity(
+        await expect
+          .soft(
+            await folderPrompts.getFolderEntity(
               promptsInsideFolder.folders.name,
-              existingPrompts.name,
+              importedFolderPrompt.name,
+            ),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
+
+        for (const existingPrompts of promptsInsideFolder.prompts) {
+          await expect
+            .soft(
+              await folderPrompts.getFolderEntity(
+                promptsInsideFolder.folders.name,
+                existingPrompts.name,
+              ),
+              ExpectedMessages.promptIsVisible,
             )
-            .waitFor();
+            .toBeVisible();
         }
       },
     );
@@ -447,8 +463,8 @@ dialTest(
           importedNewFolderPrompt.folders.name,
           importedNewFolderPrompt.prompts[0].name,
         );
-        await folderPrompts.expandFolder(importedNewFolderPrompt.folders.name),
-          await newFolderPrompt.waitFor();
+        await folderPrompts.expandFolder(importedNewFolderPrompt.folders.name);
+        await newFolderPrompt.waitFor();
       },
     );
   },
@@ -586,7 +602,7 @@ dialTest(
       'Delete all prompts and folders, import exported prompt and verify folder structure with 3rd level prompt are displayed',
       async () => {
         await promptBar.deleteAllEntities();
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
         );
@@ -620,7 +636,7 @@ dialTest(
           nestedFolders[levelsCount].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
@@ -642,7 +658,7 @@ dialTest(
           nestedFolders[levelsCount - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),
@@ -807,7 +823,7 @@ dialTest(
       async () => {
         nestedFolders = promptData.prepareNestedFolder(levelsCount);
         thirdLevelFolderPrompt = promptData.prepareDefaultPrompt();
-        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].folderId;
+        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].id;
         thirdLevelFolderPrompt.id = `${thirdLevelFolderPrompt.folderId}/${thirdLevelFolderPrompt.name}`;
 
         await dataInjector.createPrompts(
@@ -838,6 +854,7 @@ dialTest(
         await promptBar.drugAndDropFolderToFolder(
           nestedFolders[levelsCount].name,
           nestedFolders[0].name,
+          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           promptBar.importButton.click(),

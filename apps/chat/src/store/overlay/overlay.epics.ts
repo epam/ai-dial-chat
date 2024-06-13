@@ -202,6 +202,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         requestId,
         enabledFeatures,
         signInOptions,
+        overlayConversationId,
       }) => {
         const actions = [];
 
@@ -309,6 +310,11 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             }
           }
         }
+        if (overlayConversationId) {
+          actions.push(
+            of(SettingsActions.setOverlayConversationId(overlayConversationId)),
+          );
+        }
 
         // after all actions will send notify that settings are set
         actions.push(
@@ -320,12 +326,16 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           // Send ready to Interact when options set and not needed to login
           iif(
             () => !AuthSelectors.selectIsShouldLogin(state$.value),
-            of(
-              OverlayActions.sendPMEvent({
-                type: OverlayEvents.readyToInteract,
-                eventParams: { hostDomain },
-              }),
+            concat(
+              of(ConversationsActions.initSelectedConversations()),
+              of(
+                OverlayActions.sendPMEvent({
+                  type: OverlayEvents.readyToInteract,
+                  eventParams: { hostDomain },
+                }),
+              ),
             ),
+
             EMPTY,
           ),
         );

@@ -210,14 +210,12 @@ dialTest(
         await chatHeader.clearConversation.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
-        const isConversationSettingsVisible =
-          await conversationSettings.isVisible();
-        expect
+        await expect
           .soft(
-            isConversationSettingsVisible,
+            await conversationSettings.getElementLocator(),
             ExpectedMessages.conversationSettingsVisible,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
   },

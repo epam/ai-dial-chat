@@ -172,7 +172,7 @@ export const ChatSettings = ({
       <ConfirmDialog
         isOpen={isConfirmModelChanging}
         heading={t('Confirm model changing')}
-        confirmLabel={t('Rename')}
+        confirmLabel={t('Confirm')}
         cancelLabel={t('Cancel')}
         description={
           t(

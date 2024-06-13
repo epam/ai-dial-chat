@@ -10,6 +10,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { ConversationInfo } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import {
@@ -22,6 +24,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Select, SelectOption } from '../Select';
 import Tooltip from '../Tooltip';
@@ -61,6 +65,7 @@ interface EntityRowProps {
   entityId: string;
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
+  entityRowClassNames?: string;
 }
 
 export const EntityRow = ({
@@ -69,6 +74,7 @@ export const EntityRow = ({
   entityId,
   additionalItemData,
   onEvent,
+  entityRowClassNames,
 }: EntityRowProps) => {
   const [selectedOption, setSelectedOption] = useState<ReplaceOptions>(
     ReplaceOptions.Postfix,
@@ -99,16 +105,21 @@ export const EntityRow = ({
 
   return (
     <div
-      className="flex justify-between hover:rounded hover:bg-accent-primary-alpha"
+      className={classNames(
+        'flex h-[38px] justify-between hover:rounded hover:bg-accent-primary-alpha',
+        entityRowClassNames,
+      )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
     >
       {children}
-      <ReplaceSelector
-        selectedOption={selectedOption}
-        onOptionChangeHandler={onOptionChangeHandler}
-      />
+      {!!mappedActions && (
+        <ReplaceSelector
+          selectedOption={selectedOption}
+          onOptionChangeHandler={onOptionChangeHandler}
+        />
+      )}
     </div>
   );
 };
@@ -129,18 +140,29 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
 
   return (
     <FeatureContainer>
-      <ModelIcon
-        size={18}
-        entityId={conversation.model.id}
-        entity={modelsMap[conversation.model.id]}
-      />
+      {conversation.isReplay && (
+        <span className="flex shrink-0">
+          <ReplayAsIsIcon size={18} />
+        </span>
+      )}
+      {conversation.isPlayback && (
+        <span className="flex shrink-0">
+          <PlaybackIcon size={18} />
+        </span>
+      )}
+      {!conversation.isReplay && !conversation.isPlayback && (
+        <ModelIcon
+          size={18}
+          entityId={conversation.model.id}
+          entity={modelsMap[conversation.model.id]}
+        />
+      )}
       <Tooltip
         tooltip={conversation.name}
-        triggerClassName="truncate text-center w-full"
+        contentClassName="max-w-[400px] break-all"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {conversation.name}
-        </div>
+        {conversation.name}
       </Tooltip>
     </FeatureContainer>
   );
@@ -150,6 +172,7 @@ export interface ConversationRowProps extends ConversationViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: Record<string, unknown>;
+  itemComponentClassNames?: string;
 }
 
 export const ConversationRow = ({
@@ -157,6 +180,7 @@ export const ConversationRow = ({
   item: conversation,
   additionalItemData,
   onEvent,
+  itemComponentClassNames,
 }: ConversationRowProps) => {
   return (
     <EntityRow
@@ -164,6 +188,7 @@ export const ConversationRow = ({
       level={level}
       additionalItemData={additionalItemData}
       onEvent={onEvent}
+      entityRowClassNames={itemComponentClassNames}
     >
       <ConversationView item={conversation} />
     </EntityRow>
@@ -180,11 +205,10 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
       <IconBulb size={18} className="text-secondary-bg-dark" />
       <Tooltip
         tooltip={prompt.name}
-        triggerClassName="truncate text-center w-full"
+        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {prompt.name}
-        </div>
+        {prompt.name}
       </Tooltip>
     </FeatureContainer>
   );
@@ -194,6 +218,7 @@ export interface PromptRowProps extends PromptViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: Record<string, unknown>;
+  itemComponentClassNames?: string;
 }
 
 export const PromptsRow = ({
@@ -201,6 +226,7 @@ export const PromptsRow = ({
   item: prompt,
   additionalItemData,
   onEvent,
+  itemComponentClassNames,
 }: PromptRowProps) => {
   return (
     <EntityRow
@@ -208,6 +234,7 @@ export const PromptsRow = ({
       level={level}
       additionalItemData={additionalItemData}
       onEvent={onEvent}
+      entityRowClassNames={itemComponentClassNames}
     >
       <PromptView item={prompt} />
     </EntityRow>
@@ -224,11 +251,10 @@ const FileView = ({ item: file }: FileViewProps) => {
       <IconFile size={18} className="text-secondary-bg-dark" />
       <Tooltip
         tooltip={file.name}
-        triggerClassName="truncate text-center w-full"
+        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {file.name}
-        </div>
+        {file.name}
       </Tooltip>
     </FeatureContainer>
   );
@@ -238,6 +264,7 @@ export interface FileRowProps extends FileViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   additionalItemData?: Record<string, unknown>;
+  itemComponentClassNames?: string;
 }
 
 export const FilesRow = ({
@@ -245,6 +272,7 @@ export const FilesRow = ({
   item,
   additionalItemData,
   onEvent,
+  itemComponentClassNames,
 }: FileRowProps) => {
   return (
     <EntityRow
@@ -252,6 +280,7 @@ export const FilesRow = ({
       level={level}
       additionalItemData={additionalItemData}
       onEvent={onEvent}
+      entityRowClassNames={itemComponentClassNames}
     >
       <FileView item={item} />
     </EntityRow>

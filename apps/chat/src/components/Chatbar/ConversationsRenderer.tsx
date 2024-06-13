@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+
 import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import CollapsableSection from '../Common/CollapsableSection';
+import CollapsibleSection from '../Common/CollapsibleSection';
 import { ConversationComponent } from './Conversation';
 
 interface ConversationsRendererProps {
@@ -20,7 +23,13 @@ export const ConversationsRenderer = ({
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+
+  const { handleToggle, isExpanded } = useSectionToggle(
+    label,
+    FeatureType.Chat,
+  );
 
   useEffect(() => {
     setIsSectionHighlighted(
@@ -31,11 +40,12 @@ export const ConversationsRenderer = ({
   return (
     <>
       {conversations.length > 0 && (
-        <CollapsableSection
+        <CollapsibleSection
           name={label}
+          onToggle={handleToggle}
           dataQa="chronology"
           isHighlighted={isSectionHighlighted}
-          openByDefault
+          openByDefault={isExpanded}
         >
           <div className="flex flex-col gap-1 py-1">
             {conversations.map((conversation) => (
@@ -45,7 +55,7 @@ export const ConversationsRenderer = ({
               />
             ))}
           </div>
-        </CollapsableSection>
+        </CollapsibleSection>
       )}
     </>
   );

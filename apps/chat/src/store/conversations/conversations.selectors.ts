@@ -42,7 +42,7 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { cloneDeep } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState): ConversationsState =>
@@ -51,6 +51,19 @@ const rootSelector = (state: RootState): ConversationsState =>
 export const selectConversations = createSelector(
   [rootSelector],
   (state) => state.conversations,
+);
+
+export const selectExternalConversations = createSelector(
+  [(state: RootState) => state, selectConversations],
+  (state, conversations) =>
+    conversations.filter((conversation) =>
+      isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+    ),
+);
+
+export const selectPublishedOrSharedByMeConversations = createSelector(
+  [selectConversations],
+  (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
 );
 
 export const selectFilteredConversations = createSelector(
@@ -80,6 +93,13 @@ export const selectFolders = createSelector(
   [rootSelector],
   (state: ConversationsState) => {
     return state.folders;
+  },
+);
+
+export const selectPublicationFolders = createSelector(
+  [rootSelector],
+  (state: ConversationsState) => {
+    return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
 
@@ -439,6 +459,17 @@ export const selectCanAttachLink = createSelector(
   },
 );
 
+export const selectCanAttachFolders = createSelector(
+  [selectSelectedConversationsModels],
+  (models) => {
+    if (models.length === 0) {
+      return false;
+    }
+
+    return models.every((model) => model?.features?.folderAttachments);
+  },
+);
+
 export const selectCanAttachFile = createSelector(
   [
     (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
@@ -559,33 +590,28 @@ export const getAttachments = createSelector(
   (state, entityId) => {
     const folders = selectFolders(state);
     const conversation = selectConversation(state, entityId);
+
     if (conversation) {
       return getUniqueAttachments(
-        getConversationAttachmentWithPath(
-          conversation as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-          folders,
-        ),
-      );
-    } else {
-      const folderIds = new Set(
-        getChildAndCurrentFoldersIdsById(entityId, folders),
-      );
-
-      if (!folderIds.size) return [];
-
-      const conversations = selectConversations(state).filter(
-        (conv) => conv.folderId && folderIds.has(conv.folderId),
-      );
-
-      return getUniqueAttachments(
-        conversations.flatMap((conv) =>
-          getConversationAttachmentWithPath(
-            conv as Conversation, //TODO: fix in https://github.com/epam/ai-dial-chat/issues/640
-            folders,
-          ),
-        ),
+        getConversationAttachmentWithPath(conversation, folders),
       );
     }
+
+    const folderIds = new Set(
+      getChildAndCurrentFoldersIdsById(entityId, folders),
+    );
+
+    if (!folderIds.size) return [];
+
+    const conversations = selectConversations(state).filter(
+      (conv) => conv.folderId && folderIds.has(conv.folderId),
+    );
+
+    return getUniqueAttachments(
+      conversations.flatMap((conv) =>
+        getConversationAttachmentWithPath(conv, folders),
+      ),
+    );
   },
 );
 
@@ -594,14 +620,6 @@ export const areConversationsUploaded = createSelector(
   (state) => {
     return state.conversationsLoaded;
   },
-);
-
-export const selectConversationsToMigrateAndMigratedCount = createSelector(
-  [rootSelector],
-  (state) => ({
-    conversationsToMigrateCount: state.conversationsToMigrateCount,
-    migratedConversationsCount: state.migratedConversationsCount,
-  }),
 );
 
 export const selectFoldersStatus = createSelector([rootSelector], (state) => {
@@ -643,11 +661,6 @@ export const selectLoadingFolderIds = createSelector(
   },
 );
 
-export const selectFailedMigratedConversations = createSelector(
-  [rootSelector],
-  (state) => state.failedMigratedConversations,
-);
-
 export const selectIsCompareLoading = createSelector(
   [rootSelector],
   (state) => {
@@ -660,11 +673,6 @@ export const selectIsActiveNewConversationRequest = createSelector(
   (state) => {
     return state.isActiveNewConversationRequest;
   },
-);
-
-export const selectIsChatsBackedUp = createSelector(
-  [rootSelector],
-  (state) => state.isChatsBackedUp,
 );
 
 export const selectIsMessageSending = createSelector(
@@ -693,6 +701,34 @@ export const selectDuplicatedConversation = createSelector(
         conversation.name === conversationName
       );
     });
+  },
+);
+
+export const selectCustomAttachmentLoading = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.customAttachmentDataLoading;
+  },
+);
+
+export const selectLoadedCustomAttachments = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.loadedCustomAttachmentsData;
+  },
+);
+
+export const selectCustomAttachmentData = createSelector(
+  [
+    selectLoadedCustomAttachments,
+    (_state: RootState, attachmentUrl: string) => attachmentUrl,
+  ],
+  (loadedCustomAttachment, attachmentUrl) => {
+    return attachmentUrl
+      ? loadedCustomAttachment.find((loadedData) =>
+          loadedData.url.endsWith(attachmentUrl),
+        )?.data
+      : undefined;
   },
 );
 

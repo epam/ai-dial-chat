@@ -5,7 +5,8 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
 import { Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { Input } from '@/src/ui/webElements/input';
+import { EditInput } from '@/src/ui/webElements/editInput';
+import { EditInputActions } from '@/src/ui/webElements/editInputActions';
 import { Page } from '@playwright/test';
 
 export class SideBarEntities extends BaseElement {
@@ -16,16 +17,30 @@ export class SideBarEntities extends BaseElement {
     this.entitySelector = entitySelector;
   }
 
-  private entityInput!: Input;
+  private editEntityInput!: EditInput;
 
-  getEntityInput(selector: string, name: string): Input {
-    if (!this.entityInput) {
-      this.entityInput = new Input(
+  getEditEntityInput(): EditInput {
+    if (!this.editEntityInput) {
+      this.editEntityInput = new EditInput(
         this.page,
-        `${selector} >> ${SideBarSelectors.renameDefaultNameInput(name)}`,
+        this.getElementLocator(),
+        this.entitySelector,
       );
     }
-    return this.entityInput;
+    return this.editEntityInput;
+  }
+
+  private editInputActions!: EditInputActions;
+
+  getEditInputActions(): EditInputActions {
+    if (!this.editInputActions) {
+      this.editInputActions = new EditInputActions(
+        this.page,
+        this.getElementLocator(),
+        this.entitySelector,
+      );
+    }
+    return this.editInputActions;
   }
 
   private dropdownMenu!: DropdownMenu;
@@ -92,12 +107,8 @@ export class SideBarEntities extends BaseElement {
     await this.getDropdownMenu().waitForState();
   }
 
-  protected async openEditEntityNameMode(
-    selector: string,
-    name: string,
-    newName: string,
-  ) {
-    const input = await this.getEntityInput(selector, name);
+  protected async openEditEntityNameMode(newName: string) {
+    const input = this.getEditEntityInput();
     await input.editValue(newName);
     return input;
   }
@@ -127,13 +138,23 @@ export class SideBarEntities extends BaseElement {
   }
 
   public async selectMoveToMenuOption(name: string) {
+    return this.selectEntityMenuOption(name, { triggeredHttpMethod: 'DELETE' });
+  }
+
+  public async selectEntityMenuOption(
+    option: string,
+    {
+      triggeredHttpMethod = undefined,
+    }: { triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' } = {},
+  ) {
+    const menu = this.getDropdownMenu();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
+        (resp) => resp.request().method() === triggeredHttpMethod,
       );
-      await this.getDropdownMenu().selectMenuOption(name);
+      await menu.selectMenuOption(option);
       return respPromise;
     }
-    await this.getDropdownMenu().selectMenuOption(name);
+    await menu.selectMenuOption(option);
   }
 }

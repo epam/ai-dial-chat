@@ -7,15 +7,14 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
-import { isEntityExternal } from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { PromptsHistory } from '@/src/types/import-export';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
-import { PublishRequest } from '@/src/types/share';
+import '@/src/types/share';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -25,16 +24,13 @@ import { PromptsState } from './prompts.types';
 export { PromptsSelectors };
 
 const initialState: PromptsState = {
-  promptsToMigrateCount: 0,
-  migratedPromptsCount: 0,
-  isPromptsBackedUp: false,
-  failedMigratedPrompts: [],
   prompts: [],
   folders: [],
   temporaryFolders: [],
   searchTerm: '',
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
+  isSelectedPromptApproveRequiredResource: false,
   isEditModalOpen: false,
   isModalPreviewMode: false,
   newAddedFolderId: undefined,
@@ -50,6 +46,9 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFoldersAndPromptsSuccess: (state) => {
+      state.promptsLoaded = true;
+    },
     uploadPromptsWithFoldersRecursive: (
       state,
       {
@@ -60,51 +59,8 @@ export const promptsSlice = createSlice({
     ) => {
       state.promptsLoaded = !!payload?.noLoader;
     },
-    initPromptsSuccess: (state) => state,
-    migratePromptsIfRequired: (state) => state,
-    skipFailedMigratedPrompts: (
-      state,
-      _action: PayloadAction<{ idsToMarkAsMigrated: string[] }>,
-    ) => state,
-    initPromptsMigration: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        promptsToMigrateCount: number;
-      }>,
-    ) => {
-      state.promptsToMigrateCount = payload.promptsToMigrateCount;
-    },
-    migratePromptFinish: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        migratedPromptsCount: number;
-      }>,
-    ) => {
-      state.migratedPromptsCount = payload.migratedPromptsCount;
-    },
-    setFailedMigratedPrompts: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        failedMigratedPrompts: Prompt[];
-      }>,
-    ) => {
-      state.failedMigratedPrompts = payload.failedMigratedPrompts;
-    },
-    setIsPromptsBackedUp: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        isPromptsBackedUp: boolean;
-      }>,
-    ) => {
-      state.isPromptsBackedUp = payload.isPromptsBackedUp;
+    uploadPromptsWithFoldersRecursiveSuccess: (state) => {
+      state.promptsLoaded = true;
     },
     createNewPrompt: (state, _action: PayloadAction<Prompt>) => state,
     createNewPromptSuccess: (
@@ -122,29 +78,16 @@ export const promptsSlice = createSlice({
     },
     saveNewPrompt: (state, _action: PayloadAction<{ newPrompt: Prompt }>) =>
       state,
-    deletePrompts: (
+    deletePrompts: (state, _action: PayloadAction<{ promptIds: string[] }>) =>
       state,
-      { payload }: PayloadAction<{ promptsToDelete: PromptInfo[] }>,
-    ) => {
-      const promptToDeleteIds = payload.promptsToDelete.map(
-        (prompt) => prompt.id,
-      );
-
-      state.prompts = state.prompts.filter(
-        (p) => !promptToDeleteIds.includes(p.id),
-      );
-    },
     deletePromptsComplete: (
       state,
-      { payload }: PayloadAction<{ deletePrompts: PromptInfo[] }>,
+      { payload }: PayloadAction<{ promptIds: Set<string> }>,
     ) => {
-      const deleteIds = new Set(
-        payload.deletePrompts.map((prompt) => prompt.id),
-      );
-
       state.prompts = state.prompts.filter(
-        (prompt) => !deleteIds.has(prompt.id),
+        (prompt) => !payload.promptIds.has(prompt.id),
       );
+      state.promptsLoaded = true;
     },
     deletePrompt: (
       state,
@@ -176,11 +119,7 @@ export const promptsSlice = createSlice({
     },
     updatePrompt: (
       state,
-      _action: PayloadAction<{
-        id: string;
-        values: Partial<Prompt>;
-        isImportFinish?: boolean;
-      }>,
+      _action: PayloadAction<{ id: string; values: Partial<Prompt> }>,
     ) => state,
     updatePromptSuccess: (
       state,
@@ -197,68 +136,12 @@ export const promptsSlice = createSlice({
         return prompt;
       });
     },
-    publishPrompt: (state, { payload }: PayloadAction<PublishRequest>) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.id) {
-          return {
-            ...prompt,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isPublished: true,
-          };
-        }
-
-        return prompt;
-      });
-    },
-    publishFolder: (state, { payload }: PayloadAction<PublishRequest>) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: send newShareId to API to store {id, createdDate, type: conversation/prompt/folder}
-            isPublished: true,
-          };
-        }
-
-        return folder;
-      });
-    },
-    unpublishPrompt: (state, { payload }: PayloadAction<{ id: string }>) => {
-      state.prompts = state.prompts.map((prompt) => {
-        if (prompt.id === payload.id) {
-          return {
-            ...prompt,
-            //TODO: unpublish prompt by API
-            isPublished: false,
-          };
-        }
-
-        return prompt;
-      });
-    },
-    unpublishFolder: (state, { payload }: PayloadAction<{ id: string }>) => {
-      state.folders = state.folders.map((folder) => {
-        if (folder.id === payload.id) {
-          return {
-            ...folder,
-            //TODO: unpublish folder by API
-            isPublished: false,
-          };
-        }
-
-        return folder;
-      });
-    },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     setPrompts: (
       state,
-      {
-        payload,
-      }: PayloadAction<{ prompts: PromptInfo[]; ignoreCombining?: boolean }>,
+      { payload }: PayloadAction<{ prompts: PromptInfo[] }>,
     ) => {
-      state.prompts = payload.ignoreCombining
-        ? payload.prompts
-        : combineEntities(state.prompts, payload.prompts);
+      state.prompts = payload.prompts;
       state.promptsLoaded = true;
     },
     addPrompts: (state, { payload }: PayloadAction<{ prompts: Prompt[] }>) => {
@@ -268,29 +151,21 @@ export const promptsSlice = createSlice({
       state.promptsLoaded = false;
     },
     clearPromptsSuccess: (state) => {
-      state.prompts = state.prompts.filter(
-        (prompt) =>
-          isEntityExternal(prompt) ||
-          PromptsSelectors.hasExternalParent(
-            { prompts: state },
-            prompt.folderId,
-          ),
+      state.prompts = state.prompts.filter((prompt) =>
+        isEntityOrParentsExternal(
+          { prompts: state },
+          prompt,
+          FeatureType.Prompt,
+        ),
       );
-      state.folders = state.folders.filter(
-        (folder) =>
-          isEntityExternal(folder) ||
-          PromptsSelectors.hasExternalParent(
-            { prompts: state },
-            folder.folderId,
-          ),
+      state.folders = state.folders.filter((folder) =>
+        isEntityOrParentsExternal(
+          { prompts: state },
+          folder,
+          FeatureType.Prompt,
+        ),
       );
     },
-    exportPrompt: (state, _action: PayloadAction<{ id: string }>) => state,
-    exportPrompts: (state) => state,
-    importPrompts: (
-      state,
-      _action: PayloadAction<{ promptsHistory: PromptsHistory }>,
-    ) => state,
     importPromptsSuccess: (
       state,
       {
@@ -349,7 +224,7 @@ export const promptsSlice = createSlice({
         id,
         name: folderName,
         type: FolderType.Prompt,
-        folderId: payload.relativePath,
+        folderId: payload.relativePath || getPromptRootId(),
         temporary: true,
       });
       state.newAddedFolderId = id;
@@ -456,9 +331,16 @@ export const promptsSlice = createSlice({
     },
     setSelectedPrompt: (
       state,
-      { payload }: PayloadAction<{ promptId: string | undefined }>,
+      {
+        payload,
+      }: PayloadAction<{
+        promptId: string | undefined;
+        isApproveRequiredResource?: boolean;
+      }>,
     ) => {
       state.selectedPromptId = payload.promptId;
+      state.isSelectedPromptApproveRequiredResource =
+        !!payload.isApproveRequiredResource;
       state.isPromptLoading = !!payload.promptId;
     },
     uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {

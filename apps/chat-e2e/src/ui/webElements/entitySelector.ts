@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { DialAIEntityModel } from '@/chat/types/models';
@@ -9,13 +9,13 @@ import { Locator, Page } from '@playwright/test';
 
 export class EntitySelector extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.entitySelector, parentLocator);
+    super(page, ChatSettingsSelectors.entitySelector, parentLocator);
   }
 
   private recentEntities!: RecentEntities;
   private modelsDialog!: ModelsDialog;
   private seeFullListButton = this.getChildElementBySelector(
-    ChatSelectors.seeFullList,
+    ChatSettingsSelectors.seeFullList,
   );
 
   getRecentEntities(): RecentEntities {

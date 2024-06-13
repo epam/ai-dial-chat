@@ -1,0 +1,58 @@
+{
+  "name": "chat-visualizer-connector",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/chat-visualizer-connector/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "options": {
+        "outputPath": "dist/libs/chat-visualizer-connector",
+        "main": "libs/chat-visualizer-connector/src/index.ts",
+        "tsConfig": "libs/chat-visualizer-connector/tsconfig.lib.json",
+        "project": "libs/chat-visualizer-connector/package.json",
+        "compiler": "tsc",
+        "format": ["esm"],
+        "assets": [
+          {
+            "glob": "libs/chat-visualizer-connector/README.md",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": ".gitignore",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": "LICENSE",
+            "input": ".",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "publish": {
+      "command": "node tools/publish-lib.mjs chat-visualizer-connector --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+    },
+    "lint": {
+      "options": {
+        "lintFilePatterns": [
+          "libs/chat-visualizer-connector/**/*.{ts,tsx,js,jsx}",
+          "libs/chat-visualizer-connector/package.json"
+        ]
+      }
+    },
+    "lint:fix": {
+      "options": {
+        "lintFilePatterns": [
+          "libs/chat-visualizer-connector/**/*.{ts,tsx,js,jsx}",
+          "libs/chat-visualizer-connector/package.json"
+        ]
+      }
+    },
+    "format": {},
+    "format:fix": {}
+  },
+  "tags": []
+}

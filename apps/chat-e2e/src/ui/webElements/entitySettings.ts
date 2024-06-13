@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Addons } from '@/src/ui/webElements/addons';
@@ -11,11 +11,11 @@ import { Locator, Page } from '@playwright/test';
 
 export class EntitySettings extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.entitySettings, parentLocator);
+    super(page, ChatSettingsSelectors.entitySettings, parentLocator);
   }
 
   public systemPrompt = this.getChildElementBySelector(
-    ChatSelectors.systemPrompt,
+    ChatSettingsSelectors.systemPrompt,
   );
   private temperatureSlider!: TemperatureSlider;
   private addons!: Addons;
@@ -63,6 +63,7 @@ export class EntitySettings extends BaseElement {
 
   public async setSystemPrompt(prompt: string) {
     await this.systemPrompt.fillInInput(prompt);
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 

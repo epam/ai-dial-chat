@@ -6,14 +6,14 @@ import { splitEntityId } from './folders';
 import { EnumMapper } from './mappers';
 
 export const getRootId = ({
+  featureType,
   id,
-  featureType = FeatureType.File,
   bucket,
 }: {
+  featureType: FeatureType;
   id?: string;
-  featureType?: FeatureType;
   bucket?: string;
-} = {}) => {
+}) => {
   const splittedEntityId = id ? splitEntityId(id) : undefined;
 
   return constructPath(
@@ -27,6 +27,9 @@ export const getConversationRootId = (bucket?: string) =>
 
 export const getPromptRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Prompt, bucket });
+
+export const getFileRootId = (bucket?: string) =>
+  getRootId({ featureType: FeatureType.File, bucket });
 
 export const isRootId = (id?: string) => {
   return id?.split('/').length === 2 ?? false;
@@ -44,3 +47,5 @@ export const isConversationId = (id?: string) =>
 
 export const isPromptId = (id?: string) =>
   id?.startsWith(`${ApiKeys.Prompts}/`);
+
+export const isFileId = (id?: string) => id?.startsWith(`${ApiKeys.Files}/`);

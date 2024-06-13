@@ -1,17 +1,21 @@
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
-import { ChatSelectors, SideBarSelectors } from '@/src/ui/selectors';
+import { ModelControlSelectors, SideBarSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export class ModelSelector extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.modelSelector, parentLocator);
+    super(page, ModelControlSelectors.modelSelector, parentLocator);
   }
 
-  private modelInput = this.getChildElementBySelector(ChatSelectors.combobox);
-  public listbox = this.getChildElementBySelector(ChatSelectors.listbox);
+  private modelInput = this.getChildElementBySelector(
+    ModelControlSelectors.combobox,
+  );
+  public listbox = this.getChildElementBySelector(
+    ModelControlSelectors.listbox,
+  );
   private listOptions = this.listbox.getChildElementBySelector(
-    ChatSelectors.listOptions,
+    ModelControlSelectors.listOptions,
   );
   private listOption = (option: string) =>
     this.listOptions.getElementLocatorByText(option);

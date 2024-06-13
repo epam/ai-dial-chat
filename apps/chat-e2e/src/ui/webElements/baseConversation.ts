@@ -34,24 +34,31 @@ export class BaseConversation extends SideBarEntities {
     await conversationToSelect.click();
   }
 
+  public selectedConversation(name: string, index?: number) {
+    return this.getConversationByName(name, index).locator(
+      ChatBarSelectors.selectedEntity,
+    );
+  }
+
   public async openConversationDropdownMenu(name: string, index?: number) {
     await this.openEntityDropdownMenu(this.entitySelector, name, index);
   }
 
-  public async editConversationNameWithTick(name: string, newName: string) {
-    const input = await this.openEditConversationNameMode(name, newName);
+  public async editConversationNameWithTick(newName: string) {
+    await this.openEditConversationNameMode(newName);
+    const editInputActions = this.getEditInputActions();
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );
-      await input.clickTickButton();
+      await editInputActions.clickTickButton();
       return respPromise;
     }
-    await input.clickTickButton();
+    await editInputActions.clickTickButton();
   }
 
-  public async editConversationNameWithEnter(name: string, newName: string) {
-    await this.openEditConversationNameMode(name, newName);
+  public async editConversationNameWithEnter(newName: string) {
+    await this.openEditConversationNameMode(newName);
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
@@ -62,18 +69,15 @@ export class BaseConversation extends SideBarEntities {
     await this.page.keyboard.press(keys.enter);
   }
 
-  public async openEditConversationNameMode(name: string, newName: string) {
-    return this.openEditEntityNameMode(this.entitySelector, name, newName);
+  public async openEditConversationNameMode(newName: string) {
+    return this.openEditEntityNameMode(newName);
   }
 
-  public async selectMenuOption(option: MenuOptions) {
-    const menu = this.getDropdownMenu();
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
-      await menu.selectMenuOption(option);
-      const response = await respPromise;
+  public async shareConversation() {
+    const response = await this.selectEntityMenuOption(MenuOptions.share, {
+      triggeredHttpMethod: 'POST',
+    });
+    if (response !== undefined) {
       const responseText = await response.text();
       const request = await response.request().postDataJSON();
       return {
@@ -81,7 +85,6 @@ export class BaseConversation extends SideBarEntities {
         response: JSON.parse(responseText) as ShareByLinkResponseModel,
       };
     }
-    await menu.selectMenuOption(option);
   }
 
   public async getConversationIcon(name: string, index?: number) {

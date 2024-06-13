@@ -94,11 +94,19 @@ export const SelectFolderModal = ({
     [handleToggleFolder],
   );
 
+  const handleClose = useCallback(
+    (folderId: string | undefined) => {
+      onClose(folderId);
+      setErrorMessage(undefined);
+    },
+    [onClose],
+  );
+
   return (
     <SelectFolder
       isOpen={isOpen}
       modalDataQa="select-folder-modal"
-      onClose={() => onClose(undefined)}
+      onClose={() => handleClose(undefined)}
       title="Select folder"
     >
       <SelectFolderHeader
@@ -119,6 +127,7 @@ export const SelectFolderModal = ({
             newAddedFolderId: newFolderId,
             loadingFolderIds: loadingFolderIds,
             featureType: FeatureType.File,
+            isSidePanelFolder: false,
           }}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
@@ -129,7 +138,7 @@ export const SelectFolderModal = ({
       </SelectFolderHeader>
       <SelectFolderFooter
         handleNewFolder={handleNewFolder}
-        onSelectFolderClick={() => onClose(selectedFolderId)}
+        onSelectFolderClick={() => handleClose(selectedFolderId)}
       />
     </SelectFolder>
   );

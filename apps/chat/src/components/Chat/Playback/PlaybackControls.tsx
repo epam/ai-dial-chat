@@ -33,6 +33,11 @@ interface Props {
   nextMessageBoxRef: MutableRefObject<HTMLDivElement | null>;
 }
 
+enum PlaybackPhases {
+  EMPTY = 'EMPTY',
+  MESSAGE = 'MESSAGE',
+}
+
 export const PlaybackControls = ({
   onScrollDownClick,
   onResize,
@@ -59,7 +64,7 @@ export const PlaybackControls = ({
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   const controlsContainerRef = useRef<HTMLDivElement | null>(null);
-  const [phase, setPhase] = useState<'EMPTY' | 'MESSAGE'>('EMPTY');
+  const [phase, setPhase] = useState<PlaybackPhases>(PlaybackPhases.EMPTY);
 
   const isActiveIndex = typeof activeIndex === 'number';
 
@@ -116,23 +121,23 @@ export const PlaybackControls = ({
     if (isMessageStreaming || !isNextMessageInStack) {
       return;
     }
-    if (phase === 'EMPTY') {
-      setPhase('MESSAGE');
+    if (phase === PlaybackPhases.EMPTY) {
+      setPhase(PlaybackPhases.MESSAGE);
       return;
     }
-    setPhase('EMPTY');
+    setPhase(PlaybackPhases.EMPTY);
 
     dispatch(ConversationsActions.playbackNextMessageStart());
   }, [dispatch, isMessageStreaming, isNextMessageInStack, phase]);
 
   const handlePrevMessage = useCallback(() => {
-    if (activeIndex === 0 && phase !== 'MESSAGE') {
+    if (activeIndex === 0 && phase !== PlaybackPhases.MESSAGE) {
       return;
     }
-    if (phase === 'EMPTY') {
-      setPhase('MESSAGE');
+    if (phase === PlaybackPhases.EMPTY) {
+      setPhase(PlaybackPhases.MESSAGE);
     } else {
-      setPhase('EMPTY');
+      setPhase(PlaybackPhases.EMPTY);
       if (isPrevMessageInStack) {
         return;
       }
@@ -216,7 +221,7 @@ export const PlaybackControls = ({
         <button
           data-qa="playback-prev"
           onClick={handlePrevMessage}
-          disabled={activeIndex === 0 && phase !== 'MESSAGE'}
+          disabled={activeIndex === 0 && phase !== PlaybackPhases.MESSAGE}
           className="absolute bottom-3 left-4 rounded text-quaternary-bg-light outline-none hover:text-primary-bg-light disabled:cursor-not-allowed disabled:text-controls-disable"
         >
           <IconPlayerPlay size={20} className="rotate-180" />
@@ -238,16 +243,16 @@ export const PlaybackControls = ({
                   <span
                     className={classNames(
                       'break-words',
-                      phase === 'EMPTY' && 'text-quaternary-bg-light',
+                      phase === PlaybackPhases.EMPTY && 'text-quaternary-bg-light',
                     )}
                     data-qa="playback-message-content"
                   >
-                    {phase === 'EMPTY'
+                    {phase === PlaybackPhases.EMPTY
                       ? t('Type a message')
                       : activeMessage.content ?? ''}
                   </span>
 
-                  {hasAttachments && (
+                  {phase === PlaybackPhases.MESSAGE && hasAttachments && (
                     <PlaybackAttachments
                       attachments={activeMessage.custom_content.attachments}
                     />

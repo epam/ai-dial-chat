@@ -1,10 +1,10 @@
-import { SideBarSelectors } from '@/src/ui/selectors';
+import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export abstract class Menu extends BaseElement {
   constructor(page: Page) {
-    super(page, SideBarSelectors.dropdownMenu);
+    super(page, MenuSelectors.dropdownMenu);
   }
 
   abstract menuOptions(): BaseElement;

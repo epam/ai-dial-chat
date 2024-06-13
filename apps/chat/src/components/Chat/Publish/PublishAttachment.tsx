@@ -139,7 +139,7 @@ export const PublishAttachment = ({
 
   if (!file) return null;
 
-  const fullPath = constructPath(t(PUBLISHING_FOLDER_NAME), file.relativePath);
+  const fullPath = constructPath(PUBLISHING_FOLDER_NAME, file.relativePath);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (isRenaming) {

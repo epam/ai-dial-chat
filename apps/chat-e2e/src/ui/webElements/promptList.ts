@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { PromptListSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -10,11 +10,11 @@ import { Locator, Page } from '@playwright/test';
 
 export class PromptList extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.promptList, parentLocator);
+    super(page, PromptListSelectors.promptList, parentLocator);
   }
 
   public getPromptOptions() {
-    return this.getChildElementBySelector(ChatSelectors.promptOption);
+    return this.getChildElementBySelector(PromptListSelectors.promptOption);
   }
 
   public getPromptByName(name: string) {
@@ -69,6 +69,7 @@ export class PromptList extends BaseElement {
         optionIndex++;
       }
     }
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 }

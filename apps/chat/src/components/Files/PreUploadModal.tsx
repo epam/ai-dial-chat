@@ -19,9 +19,10 @@ import {
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
   notAllowedSymbols,
+  prepareFileName,
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getFileRootId } from '@/src/utils/app/id';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -76,7 +77,7 @@ export const PreUploadDialog = ({
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(
-    uploadFolderId || getRootId(),
+    uploadFolderId || getFileRootId(),
   );
 
   const headingId = useId();
@@ -142,8 +143,12 @@ export const PreUploadDialog = ({
           filteredFiles.map((file) => {
             return {
               fileContent: file,
-              id: constructPath(getRootId(), folderPath, file.name),
-              name: file.name,
+              id: constructPath(
+                getFileRootId(),
+                folderPath,
+                prepareFileName(file.name),
+              ),
+              name: prepareFileName(file.name),
             };
           }),
         ),
@@ -160,7 +165,7 @@ export const PreUploadDialog = ({
     if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
         t(
-          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploadings amount will be {{selectedAttachmentsAmount}}`,
+          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}`,
           {
             maxAttachmentsAmount: maximumAttachmentsAmount,
             selectedAttachmentsAmount:
@@ -169,42 +174,79 @@ export const PreUploadDialog = ({
         ) as string,
       );
     }
-    const incorrectFileNames: string[] = getFilesWithInvalidFileName(
-      selectedFiles,
-    ).map((file) => file.name);
+    const { filesWithNotAllowedSymbols, filesWithDotInTheEnd } =
+      getFilesWithInvalidFileName(selectedFiles);
+    const filesWithNotAllowedSymbolsNames = filesWithNotAllowedSymbols.map(
+      (f) => f.name,
+    );
+    const filesWithDotInTheEndNames = filesWithDotInTheEnd.map((f) => f.name);
 
-    if (incorrectFileNames.length > 0) {
+    if (
+      filesWithNotAllowedSymbolsNames.length &&
+      filesWithDotInTheEndNames.length
+    ) {
       errors.push(
         t(
-          `The symbols {{notAllowedSymbols}} are not allowed in file name. Also using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}`,
+          `The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}`,
           {
             notAllowedSymbols,
-            fileNames: incorrectFileNames.join(', '),
+            fileNames: filesWithNotAllowedSymbolsNames.join(', '),
           },
         ) as string,
       );
+    } else {
+      if (filesWithNotAllowedSymbolsNames.length) {
+        errors.push(
+          t(
+            `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}`,
+            {
+              notAllowedSymbols,
+              fileNames: filesWithNotAllowedSymbolsNames.join(', '),
+            },
+          ) as string,
+        );
+      }
+
+      if (filesWithDotInTheEndNames.length) {
+        errors.push(
+          t(
+            `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}`,
+            {
+              fileNames: filesWithDotInTheEndNames.join(', '),
+            },
+          ) as string,
+        );
+      }
     }
 
-    const attachmentsNames = files
-      .filter((file) => file.folderId === folderPath)
-      .map((file) => file.name);
+    const attachmentsSameLevelNames = files
+      .filter((file) => file.folderId === selectedFolderId)
+      .map((file) => prepareFileName(file.name));
     const localIncorrectSameNameFiles = selectedFiles
-      .filter((file) => attachmentsNames.includes(file.name))
-      .map((file) => file.name);
+      .filter((file) =>
+        attachmentsSameLevelNames.includes(prepareFileName(file.name)),
+      )
+      .map((file) => prepareFileName(file.name));
+
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
         t(
-          'Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}',
+          `${errors.length ? '\n' : ''}Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}`,
           { fileNames: localIncorrectSameNameFiles.join(', ') },
         ) as string,
       );
     }
 
-    const fileNameSet = new Set(selectedFiles.map((file) => file.name));
-    if (fileNameSet.size < selectedFiles.length) {
+    const duplicateNames = selectedFiles
+      .map((file) => file.name)
+      .filter((value, index, self) => self.indexOf(value) !== index);
+    if (duplicateNames.length) {
       errors.push(
         t(
-          'Files which you trying to upload have same names. Please rename or delete them from uploading files list',
+          `${errors.length ? '\n' : ''}Files which you trying to upload have same names. Please rename or delete them from uploading files list: {{fileNames}}`,
+          {
+            fileNames: duplicateNames.join(', '),
+          },
         ) as string,
       );
     }
@@ -225,6 +267,7 @@ export const PreUploadDialog = ({
     onClose,
     onUploadFiles,
     selectedFiles,
+    selectedFolderId,
     t,
   ]);
 
@@ -237,14 +280,11 @@ export const PreUploadDialog = ({
               const indexDot = file.name.lastIndexOf('.');
               const formatFile =
                 indexDot !== -1 ? file.name.slice(indexDot) : '';
+              const fileName = prepareFileName(e.target.value + formatFile);
               return {
                 ...file,
-                name: e.target.value + formatFile,
-                id: constructPath(
-                  getRootId(),
-                  folderPath,
-                  e.target.value + formatFile,
-                ),
+                name: fileName,
+                id: constructPath(getFileRootId(), folderPath, fileName),
               };
             }
 
@@ -272,7 +312,9 @@ export const PreUploadDialog = ({
   useEffect(() => {
     if (isOpen) {
       dispatch(
-        FilesActions.getFiles({ id: constructPath(getRootId(), folderPath) }),
+        FilesActions.getFiles({
+          id: constructPath(getFileRootId(), folderPath),
+        }),
       );
     }
   }, [dispatch, folderPath, isOpen]);
@@ -289,7 +331,12 @@ export const PreUploadDialog = ({
       oldFiles.map((file) => {
         return {
           ...file,
-          id: constructPath(getRootId(), folderPath, file.name),
+          name: prepareFileName(file.name),
+          id: constructPath(
+            getFileRootId(),
+            folderPath,
+            prepareFileName(file.name),
+          ),
           folderPath,
         };
       }),
@@ -299,7 +346,7 @@ export const PreUploadDialog = ({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 p-6 md:w-[425px] w-full max-w-[425px]"
+      containerClassName="flex flex-col gap-4 md:w-[425px] w-full max-w-[425px] px-3 py-4 md:p-6"
       dataQa="pre-upload-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
@@ -311,69 +358,91 @@ export const PreUploadDialog = ({
             {t('Upload from device')}
           </h2>
         </div>
-        <p id={descriptionId}>{t('Max file size up to 512 Mb.')}</p>
+        <p id={descriptionId} data-qa="supported-attributes">{t('Max file size up to 512 Mb.')}</p>
 
-        <ErrorMessage error={errorMessage} />
-
-        <div className="flex flex-col gap-1">
-          <div>
-            <span className="text-xs text-tertiary-bg-light">
-              {t('Upload to')}
-            </span>
-            <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
-          </div>
-          <button
-            className="flex grow items-center justify-between rounded-primary border border-accent-quaternary bg-transparent px-3 py-2 placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"
-            onClick={handleFolderChange}
-          >
-            <span className="truncate">
-              {constructPath(t('All files'), folderPath)}
-            </span>
-            <span className="text-tertiary-bg-light">{t('Change')}</span>
-          </button>
+        <div>
+          <ErrorMessage error={errorMessage} />
         </div>
 
-        {selectedFiles.length !== 0 && (
-          <div className="flex flex-col gap-1 overflow-auto">
+        <div
+          className="flex flex-col gap-2 overflow-auto"
+          data-qa="uploaded-files"
+        >
+          <div className="flex flex-col gap-1">
             <div>
               <span className="text-xs text-tertiary-bg-light">
-                {t('Files')}
-              </span>
+              {t('Upload to')}
+            </span>
               <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
             </div>
-            <div className="flex flex-col gap-3 overflow-auto text-sm">
-              {selectedFiles.map((file, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <div className="relative flex grow items-center">
-                    <IconFile
-                      className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-primary-bg-light"
-                      size={18}
-                    />
-                    <input
-                      type="text"
-                      value={getFileNameWithoutExtension(file.name)}
-                      className="grow text-ellipsis rounded-primary border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"
-                      onChange={handleRenameFile(index)}
-                    />
-                    <span className="absolute right-2">
-                      {getFileNameExtension(file.name)}
-                    </span>
-                  </div>
-
-                  <button onClick={handleUnselectFile(index)}>
-                    <IconTrashX
-                      size={24}
-                      className="shrink-0 text-quaternary-bg-light hover:text-primary-bg-light"
-                    />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <button
+              className="flex grow items-center justify-between rounded-primary border border-accent-quaternary bg-transparent px-3 py-2 placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"
+              onClick={handleFolderChange}
+            >
+              <span className="truncate">
+                {constructPath(t('All files'), folderPath)}
+              </span>
+              <span className="text-tertiary-bg-light" data-qa="change-upload-to">
+                {t('Change')}
+              </span>
+            </button>
           </div>
-        )}
+
+          {selectedFiles.length !== 0 && (
+            <div className="flex flex-col gap-1">
+              <div>
+                <span className="text-xs text-tertiary-bg-light">
+                {t('Files')}
+              </span>
+                <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
+              </div>
+              <div className="flex flex-col gap-3 overflow-auto text-sm">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3"
+                    data-qa="uploaded-file"
+                  >
+                    <div className="relative flex grow items-center">
+                      <IconFile
+                        className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-primary-bg-light"
+                        size={18}
+                      />
+                      <input
+                        type="text"
+                        value={getFileNameWithoutExtension(file.name)}
+                        className="grow text-ellipsis rounded-primary border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"
+                        onChange={handleRenameFile(index)}
+                      />
+                      <span
+                        className="absolute right-2"
+                        data-qa="file-extension"
+                      >
+                        {getFileNameExtension(file.name)}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={handleUnselectFile(index)}
+                      data-qa="delete-file"
+                    >
+                      <IconTrashX
+                        size={24}
+                        className="shrink-0 text-quaternary-bg-light hover:text-primary-bg-light"
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex w-full justify-between gap-3">
-        <label className="cursor-pointer rounded py-2.5 text-quaternary-bg-light hover:text-primary-bg-light">
+        <label
+          className="cursor-pointer rounded py-2.5 text-quaternary-bg-light hover:text-primary-bg-light"
+          data-qa="add-more-files"
+        >
           {t('Add more files...')}
           <input
             ref={uploadInputRef}
@@ -390,17 +459,16 @@ export const PreUploadDialog = ({
           className="button button-primary disabled:cursor-not-allowed"
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
+          data-qa="upload"
         >
-          {customUploadButtonLabel
-            ? customUploadButtonLabel
-            : t('Upload and attach files')}
+          {customUploadButtonLabel ? customUploadButtonLabel : t('Upload')}
         </button>
       </div>
 
       <SelectFolderModal
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
-        rootFolderId={getRootId()}
+        rootFolderId={getFileRootId()}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);

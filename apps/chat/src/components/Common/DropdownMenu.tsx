@@ -74,12 +74,13 @@ interface MenuProps {
   placement?: Placement;
   shouldFlip?: boolean;
   shouldApplySize?: boolean;
-  dismissIfScroll?: boolean;
+  enableAncestorScroll?: boolean;
   noFocusReturn?: boolean;
+  isTriggerEnabled?: boolean;
 }
 
 export const MenuComponent = forwardRef<
-  HTMLButtonElement,
+  HTMLDivElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(
   {
@@ -96,7 +97,8 @@ export const MenuComponent = forwardRef<
     shouldFlip = true,
     shouldApplySize = true,
     noFocusReturn = false,
-    dismissIfScroll = false,
+    enableAncestorScroll = false,
+    isTriggerEnabled = true,
     ...props
   },
   forwardedRef,
@@ -171,12 +173,13 @@ export const MenuComponent = forwardRef<
   const click = useClick(context, {
     event: 'mousedown',
     toggle: !isNested,
+    enabled: isTriggerEnabled,
     ignoreMouse: isNested,
   });
   const role = useRole(context, { role: 'menu' });
   const dismiss = useDismiss(context, {
     bubbles: true,
-    ancestorScroll: dismissIfScroll,
+    ancestorScroll: enableAncestorScroll,
   });
   const listNavigation = useListNavigation(context, {
     listRef: elementsRef,
@@ -227,7 +230,7 @@ export const MenuComponent = forwardRef<
 
   return (
     <FloatingNode id={nodeId}>
-      <button
+      <div
         ref={useMergeRefs([refs.setReference, item.ref, forwardedRef])}
         tabIndex={
           !isNested ? undefined : parent.activeIndex === item.index ? 0 : -1
@@ -256,7 +259,7 @@ export const MenuComponent = forwardRef<
         {!trigger && label && (
           <span className="inline-block truncate">{label}</span>
         )}
-      </button>
+      </div>
       <MenuContext.Provider
         value={{
           activeIndex,
@@ -356,7 +359,7 @@ export const MenuItem = forwardRef<
 });
 
 export const Menu = forwardRef<
-  HTMLButtonElement,
+  HTMLDivElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function Menu(props, ref) {
   const parentId = useFloatingParentNodeId();

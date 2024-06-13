@@ -17,8 +17,11 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GPT_4, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_1106_PREVIEW, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_0125_PREVIEW, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_TURBO_2024_04_29, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_TURBO, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0314, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0613, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_O_2024_05_13, isSysPromptAllowed: true },
   { modelId: ModelIds.BISON_001, isSysPromptAllowed: true },
   { modelId: ModelIds.BISON_32k_002, isSysPromptAllowed: true },
   { modelId: ModelIds.CODE_BISON_001, isSysPromptAllowed: false },
@@ -28,11 +31,25 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.AI21_JUMBO, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V2, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V21, isSysPromptAllowed: true },
+  { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_SONNET, isSysPromptAllowed: true },
+  { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_HAIKU, isSysPromptAllowed: true },
+  { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_OPUS, isSysPromptAllowed: true },
   {
     modelId: ModelIds.ANTHROPIC_CLAUDE_INSTANT_V1,
     isSysPromptAllowed: true,
   },
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
+  { modelId: ModelIds.LLAMA3_8B_INSTRUCT_V1, isSysPromptAllowed: true },
+  { modelId: ModelIds.LLAMA3_70B_INSTRUCT_V1, isSysPromptAllowed: true },
+  { modelId: ModelIds.DATABRICKS_DBRX_INSTRUCT, isSysPromptAllowed: true },
+  {
+    modelId: ModelIds.DATABRICKS_MIXTRAL_8X7B_INSTRUCT,
+    isSysPromptAllowed: true,
+  },
+  { modelId: ModelIds.DATABRICKS_LLAMA_2_70B_CHAT, isSysPromptAllowed: true },
+  { modelId: ModelIds.MISTRAL_LARGE, isSysPromptAllowed: true },
+  { modelId: ModelIds.GEMINI_PRO_1_5, isSysPromptAllowed: true },
+  { modelId: ModelIds.GEMINI_FLASH_1_5, isSysPromptAllowed: true },
 );
 
 for (const modelToUse of modelsForArithmeticRequest) {

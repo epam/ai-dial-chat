@@ -32,7 +32,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    chat,
     localStorageManager,
     dataInjector,
     setTestIds,
@@ -89,13 +88,10 @@ dialTest(
     chatMessages,
     context,
     sendMessage,
-    tooltip,
     localStorageManager,
     page,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
-    setIssueIds('790');
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
       await localStorageManager.setSettings(theme);
@@ -120,19 +116,17 @@ dialTest(
           .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
           .toBe(ExpectedConstants.answerError);
 
-        const isGenerateResponseVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
+        await expect
           .soft(
-            isGenerateResponseVisible,
+            await chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
     await dialTest.step(
-      'Hover over Send button and verify it is disabled and tooltip is shown',
+      'Type any prompt, hit Enter button and and verify nothing happended, Send button is not shown',
       async () => {
         await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {
@@ -152,68 +146,25 @@ dialTest(
               )
               .toBeTruthy();
           }
-          const isSendMessageBtnEnabled =
-            await sendMessage.sendMessageButton.isElementEnabled();
-          expect
+          await expect
             .soft(
-              isSendMessageBtnEnabled,
+              sendMessage.sendMessageButton.getElementLocator(),
               ExpectedMessages.sendMessageButtonDisabled,
             )
-            .toBeFalsy();
-
-          await sendMessage.sendMessageButton.hoverOver();
-          const sendBtnCursor =
-            await sendMessage.sendMessageButton.getComputedStyleProperty(
-              Styles.cursor,
-            );
-          expect
-            .soft(
-              sendBtnCursor[0],
-              ExpectedMessages.sendButtonCursorIsNotAllowed,
-            )
-            .toBe(Cursors.notAllowed);
-
-          const tooltipContent = await tooltip.getContent();
-          expect
-            .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
+            .toBeHidden();
         }
-      },
-    );
-
-    await dialTest.step(
-      'Type any message, hit Enter key and verify Send button is disabled and tooltip is shown',
-      async () => {
-        const isSendMessageBtnEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(
-            isSendMessageBtnEnabled,
-            ExpectedMessages.sendMessageButtonDisabled,
-          )
-          .toBeFalsy();
-
-        await sendMessage.sendMessageButton.hoverOver();
-        const sendBtnCursor =
-          await sendMessage.sendMessageButton.getComputedStyleProperty(
-            Styles.cursor,
-          );
-        expect
-          .soft(sendBtnCursor[0], ExpectedMessages.sendButtonCursorIsNotAllowed)
-          .toBe(Cursors.notAllowed);
-
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.regenerateResponseToContinueTooltip);
       },
     );
 
     await dialTest.step(
       'Click Regenerate response and validate answer received',
       async () => {
-        await chatMessages.regenerateResponse(false);
-        await chatMessages.waitForPartialMessageReceived(2);
+        await page.route(API.chatHost, async (route) => {
+          await route.fulfill({
+            body: Buffer.from('{"content":"Response"}\u0000{}\u0000'),
+          });
+        });
+        await chatMessages.regenerateResponse();
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
@@ -257,12 +208,12 @@ dialTest(
         await chatMessages.fillEditData(userRequests[1], editData);
         await chatMessages.cancel.click();
 
-        const isEditTextareaVisible = await chatMessages
-          .getChatMessageTextarea(userRequests[1])
-          .isVisible();
-        expect
-          .soft(isEditTextareaVisible, ExpectedMessages.editModeIsClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatMessages.getChatMessageTextarea(userRequests[1]),
+            ExpectedMessages.editRequestModeIsClosed,
+          )
+          .toBeHidden();
 
         const isResponseLoading = await chatMessages.isResponseLoading();
         expect
@@ -276,11 +227,12 @@ dialTest(
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], '');
-
-        const isSaveButtonDisabled = await chatMessages.isSaveButtonEnabled();
-        expect
-          .soft(isSaveButtonDisabled, ExpectedMessages.saveIsDisabled)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatMessages.saveAndSubmit.getElementLocator(),
+            ExpectedMessages.saveIsDisabled,
+          )
+          .toBeDisabled();
         await chatMessages.cancel.click();
       },
     );
@@ -297,12 +249,12 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe((userRequests.length - 1) * 2);
 
-        const isMessageEdited = await chatMessages
-          .getChatMessage(editData)
-          .isVisible();
-        expect
-          .soft(isMessageEdited, ExpectedMessages.requestMessageIsEdited)
-          .toBeTruthy();
+        await expect
+          .soft(
+            await chatMessages.getChatMessage(editData),
+            ExpectedMessages.requestMessageIsEdited,
+          )
+          .toBeVisible();
 
         const lastMessage = await chatMessages.getLastMessageContent();
         expect
@@ -363,12 +315,12 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe((userRequests.length - 1) * 2);
 
-        const isMessageVisible = await chatMessages
-          .getChatMessage(userRequests[1])
-          .isVisible();
-        expect
-          .soft(isMessageVisible, ExpectedMessages.messageIsDeleted)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chatMessages.getChatMessage(userRequests[1]),
+            ExpectedMessages.messageIsDeleted,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -444,7 +396,7 @@ dialTest(
         });
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -463,14 +415,12 @@ dialTest(
           .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedModelIcon);
 
-        const isRegenerateButtonVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
+        await expect
           .soft(
-            isRegenerateButtonVisible,
+            await chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -526,7 +476,7 @@ dialTest(
       async () => {
         await chatMessages.regenerateResponse(false);
         await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
       },
     );
 
@@ -543,14 +493,12 @@ dialTest(
           .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedModelIcon);
 
-        const isRegenerateButtonVisible =
-          await chatMessages.regenerate.isVisible();
-        expect
+        await expect
           .soft(
-            isRegenerateButtonVisible,
+            await chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -602,8 +550,8 @@ dialTest(
           .toBeFalsy();
 
         await chatMessages.waitForPartialMessageReceived(2);
-        await chat.stopGenerating.click();
-        await chat.stopGenerating.waitForState({ state: 'hidden' });
+        await sendMessage.stopGenerating.click();
+        await sendMessage.stopGenerating.waitForState({ state: 'hidden' });
       },
     );
 

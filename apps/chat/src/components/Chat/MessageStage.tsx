@@ -57,6 +57,7 @@ const StageTitle = ({ isOpened, stage }: StageTitleProps) => {
           'block whitespace-pre text-start',
           isOpened ? 'max-w-full' : 'truncate',
         )}
+        data-qa={isOpened ? 'stage-opened' : 'stage-closed'}
       >
         {stage.name}
       </span>

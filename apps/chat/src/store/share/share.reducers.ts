@@ -21,9 +21,10 @@ export interface ShareState {
   shareModalState: ModalState;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
-  needToUploadFolder: boolean;
   shareFeatureType?: FeatureType;
   shareIsFolder?: boolean;
+  isConversation?: boolean;
+  isPrompt?: boolean;
 }
 
 const initialState: ShareState = {
@@ -36,7 +37,8 @@ const initialState: ShareState = {
   isFolderAccepted: undefined,
   shareFeatureType: undefined,
   shareIsFolder: undefined,
-  needToUploadFolder: true,
+  isConversation: undefined,
+  isPrompt: undefined,
 };
 
 export const shareSlice = createSlice({
@@ -158,11 +160,22 @@ export const shareSlice = createSlice({
     ) => state,
     acceptShareInvitationSuccess: (
       state,
-      { payload }: PayloadAction<{ acceptedId: string; isFolder: boolean }>,
+      {
+        payload,
+      }: PayloadAction<{
+        acceptedId: string;
+        isFolder: boolean;
+        isConversation?: boolean;
+        isPrompt?: boolean;
+      }>,
     ) => {
       state.acceptedId = payload.acceptedId;
       state.isFolderAccepted = payload.isFolder;
+      state.isConversation = payload.isConversation;
+      state.isPrompt = payload.isPrompt;
     },
+    triggerGettingSharedConversationListings: (state) => state,
+    triggerGettingSharedPromptListings: (state) => state,
     acceptShareInvitationFail: (
       state,
       _action: PayloadAction<{
@@ -172,6 +185,8 @@ export const shareSlice = createSlice({
     resetAcceptedEntityInfo: (state) => {
       state.acceptedId = undefined;
       state.isFolderAccepted = undefined;
+      state.isConversation = undefined;
+      state.isPrompt = undefined;
     },
     getSharedListing: (
       state,
@@ -192,9 +207,6 @@ export const shareSlice = createSlice({
       }>,
     ) => state,
     getSharedListingFail: (state) => state,
-    resetNeedToUploadFolder: (state) => {
-      state.needToUploadFolder = false;
-    },
   },
 });
 
@@ -222,11 +234,8 @@ const selectAcceptedEntityInfo = createSelector([rootSelector], (state) => {
   return {
     acceptedId: state.acceptedId,
     isFolderAccepted: state.isFolderAccepted,
-  };
-});
-const selectNeedToUploadFolder = createSelector([rootSelector], (state) => {
-  return {
-    needToUploadFolder: state.needToUploadFolder,
+    isConversation: state.isConversation,
+    isPrompt: state.isPrompt,
   };
 });
 
@@ -238,7 +247,6 @@ export const ShareSelectors = {
   selectAcceptedEntityInfo,
   selectShareFeatureType,
   selectShareIsFolder,
-  selectNeedToUploadFolder,
 };
 
 export const ShareActions = shareSlice.actions;

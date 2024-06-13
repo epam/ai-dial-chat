@@ -1,11 +1,16 @@
+import { TFunction } from 'next-i18next';
+
 import { Attachment, Conversation } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
-import { DialFile, DialLink } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
+import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
+import { FolderInterface, FolderType } from '@/src/types/folder';
+
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById } from './folders';
+import { isFolderId } from './id';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import { extensions } from 'mime-types';
@@ -40,9 +45,10 @@ export const getFileName = (path: string | undefined): string | undefined => {
 
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
+  folders?: FolderInterface[],
   links?: DialLink[],
 ): { attachments: Attachment[] } | undefined => {
-  if (!files?.length && !links?.length) {
+  if (!files?.length && !links?.length && !folders?.length) {
     return undefined;
   }
 
@@ -60,6 +66,16 @@ export const getUserCustomContent = (
       }),
     );
 
+  const folderAttachments: Attachment[] | undefined = folders?.map(
+    (folder: FolderInterface) => ({
+      type: FOLDER_ATTACHMENT_CONTENT_TYPE,
+      title: folder.name ?? folder.id,
+      url: !folder.id.startsWith('metadata/')
+        ? `metadata/${ApiUtils.encodeApiUrl(`${folder.id}`)}/`
+        : folder.id,
+    }),
+  );
+
   const linksAttachments: Attachment[] | undefined = links?.map(
     (link): Attachment => ({
       title: link.title ?? link.href,
@@ -71,7 +87,9 @@ export const getUserCustomContent = (
 
   return {
     attachments: (
-      [filesAttachments, linksAttachments].filter(Boolean) as Attachment[][]
+      [folderAttachments, filesAttachments, linksAttachments].filter(
+        Boolean,
+      ) as Attachment[][]
     ).flat(),
   };
 };
@@ -84,10 +102,12 @@ export const isAllowedMimeType = (
     return true;
   }
 
-  const [resourceSubset, resourceTypeName] = resourceMimeType.split('/');
+  const [resourceSubset, resourceTypeName] = resourceMimeType
+    .toLowerCase()
+    .split('/');
 
   return allowedMimeTypes.some((allowedMimeType) => {
-    const [subset, name] = allowedMimeType.split('/');
+    const [subset, name] = allowedMimeType.toLowerCase().split('/');
 
     return (
       subset === resourceSubset && (name === '*' || name === resourceTypeName)
@@ -121,19 +141,19 @@ export const getFilesWithInvalidFileType = (
     ? []
     : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
 };
-export const notAllowedSymbols = ':;,=/{}%&\\\t\x00-\x1F';
+export const notAllowedSymbols = ':;,=/{}%&\\';
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)`,
+  `[${escapeRegExp(notAllowedSymbols)}]|(\r\n|\n|\r|\t)|[\x00-\x1F]`,
   'gm',
 );
 export const getFilesWithInvalidFileName = <T extends { name: string }>(
   files: T[],
-): T[] => {
-  return files.filter(
-    ({ name }) =>
-      name.match(notAllowedSymbolsRegex) || doesHaveDotsInTheEnd(name),
-  );
-};
+): { filesWithNotAllowedSymbols: T[]; filesWithDotInTheEnd: T[] } => ({
+  filesWithNotAllowedSymbols: files.filter(({ name }) =>
+    name.match(notAllowedSymbolsRegex),
+  ),
+  filesWithDotInTheEnd: files.filter(({ name }) => doesHaveDotsInTheEnd(name)),
+});
 
 export const getFilesWithInvalidFileSize = (
   files: File[],
@@ -152,6 +172,8 @@ const parseAttachmentUrl = (url: string) => {
   };
 };
 
+export const isAttachmentLink = (url: string): boolean => isAbsoluteUrl(url);
+
 export const getDialFilesFromAttachments = (
   attachments: Attachment[] | undefined,
 ): Omit<DialFile, 'contentLength'>[] => {
@@ -163,8 +185,8 @@ export const getDialFilesFromAttachments = (
     .map((attachment): Omit<DialFile, 'contentLength'> | null => {
       if (
         !attachment.url ||
-        attachment.url.startsWith('http') ||
-        attachment.url.startsWith('//')
+        isAttachmentLink(attachment.url) ||
+        isFolderId(attachment.url)
       ) {
         return null;
       }
@@ -182,6 +204,36 @@ export const getDialFilesFromAttachments = (
     .filter(Boolean) as Omit<DialFile, 'contentLength'>[];
 };
 
+export const getDialFoldersFromAttachments = (
+  attachments: Attachment[] | undefined,
+): FileFolderInterface[] => {
+  if (!attachments) {
+    return [];
+  }
+
+  return attachments
+    .map((attachment): FileFolderInterface | null => {
+      if (
+        !attachment.url ||
+        isAttachmentLink(attachment.url) ||
+        !isFolderId(attachment.url)
+      ) {
+        return null;
+      }
+
+      const { absolutePath, name } = parseAttachmentUrl(attachment.url);
+
+      return {
+        id: attachment.url,
+        type: FolderType.File,
+        name,
+        folderId: absolutePath,
+        absolutePath,
+      };
+    })
+    .filter(Boolean) as FileFolderInterface[];
+};
+
 export const getDialLinksFromAttachments = (
   attachments: Attachment[] | undefined,
 ): DialLink[] => {
@@ -191,10 +243,7 @@ export const getDialLinksFromAttachments = (
 
   return attachments
     .map((attachment): DialLink | null => {
-      if (
-        !attachment.url ||
-        (!attachment.url.startsWith('http') && !attachment.url.startsWith('//'))
-      ) {
+      if (!attachment.url || !isAttachmentLink(attachment.url)) {
         return null;
       }
 
@@ -232,11 +281,32 @@ export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
     .map((type) => `.${type}`);
 };
 
+export const getShortExtentionsListFromMimeType = (
+  mimeTypes: string[],
+  t: TFunction,
+) => {
+  return mimeTypes
+    .map((mimeType) => {
+      if (mimeType.endsWith('/*')) {
+        return t(mimeType.replace('/*', 's'));
+      }
+
+      return getExtensionsListForMimeType(mimeType)
+        .flat()
+        .map((type) => `.${type}`);
+    })
+    .flat();
+};
+
 export const getFileNameWithoutExtension = (filename: string) =>
-  filename.slice(0, filename.lastIndexOf('.'));
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(0, filename.lastIndexOf('.'))
+    : filename;
 
 export const getFileNameExtension = (filename: string) =>
-  filename.slice(filename.lastIndexOf('.'));
+  filename.lastIndexOf('.') > 0
+    ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
+    : '';
 
 export const validatePublishingFileRenaming = (
   files: DialFile[],
@@ -341,4 +411,21 @@ export const getNextFileName = (
   }
 
   return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
+};
+
+export const prepareFileName = (filename: string) =>
+  `${getFileNameWithoutExtension(filename)}${getFileNameExtension(filename)}`;
+
+export const isAbsoluteUrl = (url: string): boolean => {
+  const urlLower = url.toLowerCase();
+  return [
+    'data:',
+    '//',
+    'http://',
+    'https://',
+    'file://',
+    'ftp://',
+    'mailto:',
+    'telnet://',
+  ].some((prefix) => urlLower.startsWith(prefix));
 };
