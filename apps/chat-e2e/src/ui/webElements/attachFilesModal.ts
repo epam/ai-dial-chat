@@ -4,8 +4,9 @@ import { Tags } from '@/src/ui/domData';
 import {
   AttachFilesModalSelectors,
   ErrorLabelSelectors,
+  IconSelectors,
+  MenuSelectors,
   SelectFolderModalSelectors,
-  SideBarSelectors,
 } from '@/src/ui/selectors';
 import { FileSelectors } from '@/src/ui/selectors/fileSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
@@ -101,6 +102,8 @@ export class AttachFilesModal extends BaseElement {
     SelectFolderModalSelectors.newFolderButton,
   );
 
+  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
+
   public async checkAttachedFile(filename: string) {
     await this.attachedFileIcon(filename).click();
   }
@@ -113,7 +116,7 @@ export class AttachFilesModal extends BaseElement {
   public async openFileDropdownMenu(filename: string) {
     const file = this.attachedFile(filename);
     await file.hover();
-    await file.locator(SideBarSelectors.dotsMenu).click();
+    await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();
   }
 
