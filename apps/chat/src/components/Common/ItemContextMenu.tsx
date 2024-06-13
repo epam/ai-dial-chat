@@ -336,6 +336,7 @@ export default function ItemContextMenu({
       onUnpublish,
       onUnshare,
       onView,
+      resourceToReview,
       t,
     ],
   );
