@@ -30,7 +30,7 @@ const initialState: PromptsState = {
   searchTerm: '',
   searchFilters: SearchFilters.None,
   selectedPromptId: undefined,
-  isSelectedPromptPublicationResource: false,
+  isSelectedPromptApproveRequiredResource: false,
   isEditModalOpen: false,
   isModalPreviewMode: false,
   newAddedFolderId: undefined,
@@ -331,12 +331,12 @@ export const promptsSlice = createSlice({
         payload,
       }: PayloadAction<{
         promptId: string | undefined;
-        isPublicationResource?: boolean;
+        isApproveRequiredResource?: boolean;
       }>,
     ) => {
       state.selectedPromptId = payload.promptId;
-      state.isSelectedPromptPublicationResource =
-        !!payload.isPublicationResource;
+      state.isSelectedPromptApproveRequiredResource =
+        !!payload.isApproveRequiredResource;
       state.isPromptLoading = !!payload.promptId;
     },
     uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
