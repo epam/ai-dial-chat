@@ -117,6 +117,7 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
   canAttachFolders?: boolean;
+  showTooltip?: boolean;
   isSidePanelFolder?: boolean;
 }
 
@@ -153,6 +154,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   itemComponentClassNames,
   canAttachFolders = false,
+  showTooltip,
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
@@ -913,7 +915,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             >
               <Tooltip
                 tooltip={
-                  featureType === 'file' && !isNameOrPathInvalid
+                  showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
                     : t(
                         getEntityNameError(
@@ -1062,6 +1064,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
                     canAttachFolders={canAttachFolders}
+                    showTooltip={showTooltip}
                     isSidePanelFolder={isSidePanelFolder}
                   />
                 </Fragment>
