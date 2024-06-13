@@ -110,7 +110,11 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
         </div>
       </div>
       {publication.resources && (
-        <ResourcesComponent resources={publication.resources} isOpen={isOpen} />
+        <ResourcesComponent
+          resources={publication.resources}
+          isOpen={isOpen}
+          additionalItemData={{ isApproveRequiredResource: true }}
+        />
       )}
     </div>
   );

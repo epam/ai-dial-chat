@@ -12,6 +12,8 @@ export const ExpectedConstants = {
   newFolderTitle: 'New folder',
   newFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  newPromptFolderWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newFolderTitle} ${index}`,
   emptyString: '',
   defaultTemperature: '1',
   signInButtonTitle: 'Sign in with Credentials',
