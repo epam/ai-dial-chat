@@ -1112,7 +1112,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             featureType === FeatureType.Chat
               ? (
                   allChildItems as (Partial<Conversation> & ConversationInfo)[]
-                ).filter((item) => !item.isReplay && item.messages?.length)
+                ).filter(
+                  (item) =>
+                    item.isPlayback ||
+                    (!item.isReplay && item.messages?.length),
+                )
               : allChildItems
           }
           type={
