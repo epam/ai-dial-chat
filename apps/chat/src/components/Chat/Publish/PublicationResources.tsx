@@ -34,6 +34,7 @@ interface PublicationResources {
   forViewOnly?: boolean;
   rootFolder?: ShareEntity;
   isOpen?: boolean;
+  additionalItemData?: Record<string, unknown>;
 }
 
 export const PromptPublicationResources = ({
@@ -41,6 +42,7 @@ export const PromptPublicationResources = ({
   forViewOnly,
   rootFolder,
   isOpen = true,
+  additionalItemData,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -53,7 +55,7 @@ export const PromptPublicationResources = ({
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
-  const { isSelectedPublicationResource } = useAppSelector(
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
 
@@ -96,7 +98,7 @@ export const PromptPublicationResources = ({
             }}
             featureType={FeatureType.Prompt}
             highlightedFolders={
-              !isSelectedPublicationResource || forViewOnly
+              !isSelectedPromptApproveRequiredResource || forViewOnly
                 ? undefined
                 : highlightedFolders
             }
@@ -104,7 +106,7 @@ export const PromptPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
-            additionalItemData={{ isPublicationResource: true }}
+            additionalItemData={additionalItemData}
           />
         );
       })}
@@ -121,7 +123,7 @@ export const PromptPublicationResources = ({
             key={p.id}
             item={p}
             level={1}
-            additionalItemData={{ isPublicationResource: true }}
+            additionalItemData={additionalItemData}
           />
         ),
       )}
@@ -134,6 +136,7 @@ export const ConversationPublicationResources = ({
   forViewOnly,
   rootFolder,
   isOpen = true,
+  additionalItemData,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -194,6 +197,7 @@ export const ConversationPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            additionalItemData={additionalItemData}
           />
         );
       })}
@@ -206,7 +210,12 @@ export const ConversationPublicationResources = ({
             level={0}
           />
         ) : (
-          <ConversationComponent key={c.id} item={c} level={1} />
+          <ConversationComponent
+            additionalItemData={additionalItemData}
+            key={c.id}
+            item={c}
+            level={1}
+          />
         ),
       )}
     </div>

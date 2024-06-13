@@ -34,7 +34,6 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import ContextMenu from './ContextMenu';
@@ -101,9 +100,6 @@ export default function ItemContextMenu({
   );
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, entity, featureType),
-  );
-  const resourceToReview = useAppSelector((state) =>
-    PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );
 
   const isNameInvalid = isEntityNameInvalid(entity.name);
@@ -287,10 +283,7 @@ export default function ItemContextMenu({
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
-          isPublishingEnabled &&
-          !!onUnpublish &&
-          isItemPublic(entity.id) &&
-          !resourceToReview,
+          isPublishingEnabled && !!onUnpublish && isItemPublic(entity.id),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -336,7 +329,6 @@ export default function ItemContextMenu({
       onUnpublish,
       onUnshare,
       onView,
-      resourceToReview,
       t,
     ],
   );
