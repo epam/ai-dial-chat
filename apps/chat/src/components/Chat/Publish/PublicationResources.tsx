@@ -33,6 +33,7 @@ interface PublicationResources {
   resources: PublicationResource[];
   forViewOnly?: boolean;
   rootFolder?: ShareEntity;
+  showTooltip?: boolean;
   isOpen?: boolean;
   additionalItemData?: Record<string, unknown>;
 }
@@ -41,6 +42,7 @@ export const PromptPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  showTooltip,
   isOpen = true,
   additionalItemData,
 }: PublicationResources) => {
@@ -107,6 +109,7 @@ export const PromptPublicationResources = ({
               forViewOnly && 'cursor-pointer',
             )}
             additionalItemData={additionalItemData}
+            showTooltip={showTooltip}
           />
         );
       })}
@@ -135,6 +138,7 @@ export const ConversationPublicationResources = ({
   resources,
   forViewOnly,
   rootFolder,
+  showTooltip,
   isOpen = true,
   additionalItemData,
 }: PublicationResources) => {
@@ -198,6 +202,7 @@ export const ConversationPublicationResources = ({
               forViewOnly && 'cursor-pointer',
             )}
             additionalItemData={additionalItemData}
+            showTooltip={showTooltip}
           />
         );
       })}
