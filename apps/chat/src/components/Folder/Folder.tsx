@@ -48,7 +48,7 @@ import {
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -1107,9 +1107,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           entity={currentFolder}
           entities={
             featureType === FeatureType.Chat
-              ? (allChildItems as ConversationInfo[]).filter(
-                  (item) => !item.isReplay,
-                )
+              ? (
+                  allChildItems as (Partial<Conversation> & ConversationInfo)[]
+                ).filter((item) => !item.isReplay && item.messages?.length)
               : allChildItems
           }
           type={
