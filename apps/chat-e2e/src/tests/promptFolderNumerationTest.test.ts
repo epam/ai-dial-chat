@@ -9,12 +9,7 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Prompt folder: default numeration',
-  async ({
-    dialHomePage,
-    promptBar,
-    folderPrompts,
-    setTestIds,
-  }) => {
+  async ({ dialHomePage, promptBar, folderPrompts, setTestIds }) => {
     setTestIds('EPMRTC-1621');
 
     await dialTest.step(
@@ -55,7 +50,7 @@ dialTest(
     const folderNumber = 1;
 
     await dialTest.step('Preparation', async () => {
-      prompt = promptData.preparePrompt('{{A}} + {{B}}', 'Prompt description');
+      prompt = promptData.prepareDefaultPrompt();
       await dataInjector.createPrompts([prompt]);
     });
 
@@ -79,6 +74,13 @@ dialTest(
       await promptDropdownMenu.selectMenuOption(
         ExpectedConstants.newFolderTitle,
       );
+
+      await expect(
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(folderNumber + 1),
+        ),
+        ExpectedMessages.folderIsVisible,
+      ).toBeVisible();
 
       await folderPrompts.expandFolder(
         ExpectedConstants.newPromptFolderWithIndexTitle(folderNumber + 1),
@@ -135,7 +137,7 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm();
         await expect(
-          await folderPrompts.getFolderByName(
+          folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(1),
           ),
           ExpectedMessages.folderDeleted,
@@ -256,28 +258,21 @@ dialTest(
     });
 
     await dialTest.step('Create nested folder hierarchy', async () => {
-      await promptBar.dragAndDropEntityToFolder(
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newPromptFolderWithIndexTitle(3),
-        ),
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newPromptFolderWithIndexTitle(2),
-        ),
-      );
-      await promptBar.dragAndDropEntityToFolder(
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newPromptFolderWithIndexTitle(2),
-        ),
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newPromptFolderWithIndexTitle(1),
-        ),
-      );
-      await folderPrompts.expandFolder(
-        ExpectedConstants.newPromptFolderWithIndexTitle(2),
-      );
-      await folderPrompts.expandFolder(
-        ExpectedConstants.newPromptFolderWithIndexTitle(3),
-      );
+      for (let i = 3; i >= 2; i--) {
+        await promptBar.dragAndDropEntityToFolder(
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newPromptFolderWithIndexTitle(i),
+          ),
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newPromptFolderWithIndexTitle(i - 1),
+          ),
+        );
+      }
+      for (let i = 2; i <= 3; i++) {
+        await folderPrompts.expandFolder(
+          ExpectedConstants.newPromptFolderWithIndexTitle(i),
+        );
+      }
     });
 
     await dialTest.step('Rename all folders to the same name', async () => {
@@ -288,7 +283,7 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
         await expect(
-          await folderPrompts.getFolderByName(duplicatedFolderName, i),
+          folderPrompts.getFolderByName(duplicatedFolderName, i),
           ExpectedMessages.folderNameUpdated,
         ).toBeVisible();
       }
