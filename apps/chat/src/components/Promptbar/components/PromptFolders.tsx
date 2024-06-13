@@ -251,9 +251,8 @@ export const PromptSection = ({
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
-  );
+  const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
+    useAppSelector(PromptsSelectors.selectSelectedPromptId);
 
   const { handleToggle, isExpanded } = useSectionToggle(
     name,
@@ -264,7 +263,7 @@ export const PromptSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      !isSelectedPublicationResource &&
+      !isSelectedPromptApproveRequiredResource &&
       (rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
         (!!displayRootFiles &&
           rootPrompts.some(({ id }) => selectedPromptId === id)));
@@ -278,7 +277,7 @@ export const PromptSection = ({
     selectedPromptId,
     selectedFoldersIds,
     rootPrompts,
-    isSelectedPublicationResource,
+    isSelectedPromptApproveRequiredResource,
   ]);
 
   if (
@@ -305,7 +304,7 @@ export const PromptSection = ({
             isLast={index === arr.length - 1}
             filters={{ searchFilter: filters.searchFilter }}
             includeEmpty={showEmptyFolders}
-            allowHighlight={!isSelectedPublicationResource}
+            allowHighlight={!isSelectedPromptApproveRequiredResource}
           />
         ))}
       </div>

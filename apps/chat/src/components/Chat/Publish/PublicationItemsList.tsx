@@ -122,7 +122,7 @@ export function PublicationItemsList({
                 action: publishAction,
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
-                  ApiKeys.Conversations,
+                  ApiKeys.Prompts,
                   'public',
                   path,
                   splitEntityId(entity.id).name,
