@@ -6,3 +6,5 @@ export interface Token extends JWT {
   userId: string;
   refreshToken: string | TokenSet;
 }
+
+export type SameSite = true | false | 'lax' | 'strict' | 'none' | undefined;

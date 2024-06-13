@@ -114,7 +114,7 @@ pre:has(div.codeblock) {
   }
 
   .button.button-secondary {
-    @apply border-primary text-primary-bg-dark;
+    @apply border-primary text-controls-permanent;
   }
 
   .button.button-secondary:not(:disabled) {

@@ -28,9 +28,12 @@ export const ChatInputFileAttachment = ({
       className="flex items-center gap-3 rounded border border-primary bg-layer-1 px-3 py-2"
     >
       {file.status !== UploadStatus.FAILED ? (
-        <IconFile className="shrink-0 text-secondary-bg-dark" size={18} />
+        <IconFile className="shrink-0 text-secondary-bg-light" size={18} />
       ) : (
-        <IconExclamationCircle className="shrink-0 text-error" size={18} />
+        <IconExclamationCircle
+          className="shrink-0 text-accent-primary"
+          size={18}
+        />
       )}
 
       <div className="flex grow justify-between gap-3 overflow-hidden">
@@ -38,7 +41,6 @@ export const ChatInputFileAttachment = ({
           <span
             className={classNames(
               'block max-w-full truncate whitespace-pre text-sm',
-              file.status === UploadStatus.FAILED && 'text-error',
             )}
           >
             {file.name}
@@ -56,7 +58,7 @@ export const ChatInputFileAttachment = ({
           {onRetryFile && file.status === UploadStatus.FAILED && (
             <button onClick={() => onRetryFile(file.id)}>
               <IconReload
-                className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
+                className="shrink-0 text-tertiary-bg-light hover:text-primary-bg-light"
                 size={18}
               />
             </button>
@@ -64,7 +66,7 @@ export const ChatInputFileAttachment = ({
           {onUnselectFile && (
             <button onClick={() => onUnselectFile(file.id)}>
               <IconX
-                className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
+                className="shrink-0 text-tertiary-bg-light hover:text-primary-bg-light"
                 size={18}
               />
             </button>

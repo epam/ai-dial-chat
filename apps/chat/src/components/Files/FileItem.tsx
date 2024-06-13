@@ -140,7 +140,7 @@ export const FileItem = ({
                 tooltip={t('Uploading failed. Please, try again')}
               >
                 <IconExclamationCircle
-                  className="shrink-0 text-error"
+                  className="shrink-0 text-accent-primary"
                   size={18}
                 />
               </Tooltip>
@@ -170,7 +170,6 @@ export const FileItem = ({
         <span
           className={classNames(
             'block max-w-full truncate whitespace-pre',
-            item.status === UploadStatus.FAILED && 'text-error',
             isSelected && 'text-pr-primary-700',
           )}
         >
@@ -190,7 +189,7 @@ export const FileItem = ({
         {item.status === UploadStatus.FAILED && (
           <button onClick={handleRetry}>
             <IconReload
-              className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
+              className="shrink-0 text-quaternary-bg-light hover:text-primary-bg-light"
               size={18}
             />
           </button>
@@ -198,7 +197,7 @@ export const FileItem = ({
         {item.status && cancelAllowedStatuses.has(item.status) ? (
           <button onClick={handleCancelFile}>
             <IconX
-              className="shrink-0 text-secondary-bg-dark hover:text-accent-primary"
+              className="shrink-0 text-quaternary-bg-light hover:text-primary-bg-light"
               size={18}
             />
           </button>

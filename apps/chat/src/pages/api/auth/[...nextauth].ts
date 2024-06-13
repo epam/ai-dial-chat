@@ -4,10 +4,12 @@ import NextAuth from 'next-auth/next';
 import { callbacks } from '@/src/utils/auth/auth-callbacks';
 import { authProviders } from '@/src/utils/auth/auth-providers';
 
+import { SameSite } from '@/src/types/auth';
+
 // https://github.com/nextauthjs/next-auth/blob/a8dfc8ebb11ccb96fd694db888e52f0d20395e64/packages/core/src/lib/cookie.ts#L53
 function defaultCookies(
   useSecureCookies: boolean,
-  sameSite = 'lax',
+  sameSite: SameSite = 'lax',
 ): CookiesOptions {
   const cookiePrefix = useSecureCookies ? '__Secure-' : '';
   return {

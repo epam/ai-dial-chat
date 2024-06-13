@@ -30,7 +30,7 @@ export const MessageStages = ({ stages }: Props) => {
       {stages.length > NUMBER_OF_VISIBLE_STAGES && (
         <button
           onClick={() => setShowMore(!showMore)}
-          className="mt-2 flex leading-[18px] text-accent-primary"
+          className="mt-2 flex leading-[18px] text-quaternary-bg-light hover:text-primary-bg-light"
         >
           {showMore ? 'Show less' : 'Show more'}
           <ChevronDown
