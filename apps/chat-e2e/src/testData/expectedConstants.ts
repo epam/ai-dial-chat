@@ -98,6 +98,8 @@ export const ExpectedConstants = {
   modelNotFountErrorMessage:
     'Model is not found.Please contact your administrator.',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
+  notAllowedDuplicatedFolderNameErrorMessage:
+    'Not allowed to have folders with same names',
   duplicatedFolderNameErrorMessage: (name: string) =>
     `Folder with name "${name}" already exists in this folder.`,
   duplicatedFolderRootNameErrorMessage: (name: string) =>

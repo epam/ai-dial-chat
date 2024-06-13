@@ -24,6 +24,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Select, SelectOption } from '../Select';
 import Tooltip from '../Tooltip';
@@ -138,19 +140,29 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
 
   return (
     <FeatureContainer>
-      <ModelIcon
-        size={18}
-        entityId={conversation.model.id}
-        entity={modelsMap[conversation.model.id]}
-      />
+      {conversation.isReplay && (
+        <span className="flex shrink-0">
+          <ReplayAsIsIcon size={18} />
+        </span>
+      )}
+      {conversation.isPlayback && (
+        <span className="flex shrink-0">
+          <PlaybackIcon size={18} />
+        </span>
+      )}
+      {!conversation.isReplay && !conversation.isPlayback && (
+        <ModelIcon
+          size={18}
+          entityId={conversation.model.id}
+          entity={modelsMap[conversation.model.id]}
+        />
+      )}
       <Tooltip
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate text-center w-full"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {conversation.name}
-        </div>
+        {conversation.name}
       </Tooltip>
     </FeatureContainer>
   );
@@ -239,12 +251,10 @@ const FileView = ({ item: file }: FileViewProps) => {
       <IconFile size={18} className="text-secondary" />
       <Tooltip
         tooltip={file.name}
-        contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate text-center w-full"
+        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {file.name}
-        </div>
+        {file.name}
       </Tooltip>
     </FeatureContainer>
   );

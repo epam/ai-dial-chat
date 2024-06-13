@@ -27,6 +27,8 @@ import {
   splitEntityId,
 } from '@/src/utils/app/folders';
 import {
+  getConversationRootId,
+  getPromptRootId,
   getRootId,
   isConversationId,
   isFileId,
@@ -236,10 +238,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       );
 
                       return {
+                        ...parsedApiKey,
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        model: parsedApiKey.model,
-                        name: parsedApiKey.name,
                       };
                     }),
                   }),
@@ -431,10 +432,9 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       );
 
                       return {
+                        ...parsedApiKey,
                         id: decodedUrl,
                         folderId: getFolderIdFromEntityId(decodedUrl),
-                        model: parsedApiKey.model,
-                        name: parsedApiKey.name,
                         publishedWithMe: true,
                       };
                     }),
@@ -544,16 +544,36 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             const allConversations = ConversationsSelectors.selectConversations(
               state$.value,
             );
+            const allFolders = ConversationsSelectors.selectFolders(
+              state$.value,
+            );
             const conversationsToRemove = conversationResourcesToUnpublish.map(
               (r) => r.reviewUrl,
+            );
+            const filteredConversations = allConversations.filter(
+              (c) => !conversationsToRemove.includes(c.id),
+            );
+            const filteredFolders = allFolders.filter(
+              (f) =>
+                f.status !== UploadStatus.LOADED ||
+                !f.id.startsWith(getConversationRootId('public')) ||
+                (filteredConversations.some((c) =>
+                  c.id.startsWith(`${f.id}/`),
+                ) &&
+                  f.id.startsWith(getConversationRootId('public'))),
             );
 
             actions.push(
               of(
                 ConversationsActions.setConversations({
-                  conversations: allConversations.filter(
-                    (c) => !conversationsToRemove.includes(c.id),
-                  ),
+                  conversations: filteredConversations,
+                }),
+              ),
+            );
+            actions.push(
+              of(
+                ConversationsActions.setFolders({
+                  folders: filteredFolders,
                 }),
               ),
             );
@@ -591,10 +611,9 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                         );
 
                         return {
+                          ...parsedApiKey,
                           id: item.targetUrl,
                           folderId,
-                          model: parsedApiKey.model,
-                          name: parsedApiKey.name,
                           publishedWithMe: isRootId(folderId),
                         };
                       },
@@ -620,13 +639,29 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             const promptsToRemove = promptResourcesToUnpublish.map(
               (r) => r.reviewUrl,
             );
+            const allFolders = PromptsSelectors.selectFolders(state$.value);
+            const filteredPrompts = allPrompts.filter(
+              (p) => !promptsToRemove.includes(p.id),
+            );
+            const filteredFolders = allFolders.filter(
+              (f) =>
+                f.status !== UploadStatus.LOADED ||
+                !f.id.startsWith(getPromptRootId('public')) ||
+                (filteredPrompts.some((c) => c.id.startsWith(`${f.id}/`)) &&
+                  f.id.startsWith(getPromptRootId('public'))),
+            );
 
             actions.push(
               of(
                 PromptsActions.setPrompts({
-                  prompts: allPrompts.filter(
-                    (p) => !promptsToRemove.includes(p.id),
-                  ),
+                  prompts: filteredPrompts,
+                }),
+              ),
+            );
+            actions.push(
+              of(
+                ConversationsActions.setFolders({
+                  folders: filteredFolders,
                 }),
               ),
             );

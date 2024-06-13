@@ -117,6 +117,7 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
   canAttachFolders?: boolean;
+  showTooltip?: boolean;
   isSidePanelFolder?: boolean;
 }
 
@@ -153,6 +154,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   itemComponentClassNames,
   canAttachFolders = false,
+  showTooltip,
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
@@ -913,7 +915,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             >
               <Tooltip
                 tooltip={
-                  featureType === 'file' && !isNameOrPathInvalid
+                  showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
                     : t(
                         getEntityNameError(
@@ -966,7 +968,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
                     onUnshare={handleUnshare}
-                    onPublish={handleOpenPublishing}
+                    onPublish={
+                      featureType !== FeatureType.Chat ||
+                      !allChildItems.every(
+                        (item) => (item as ConversationInfo).isReplay,
+                      )
+                        ? handleOpenPublishing
+                        : undefined
+                    }
                     onUnpublish={handleOpenUnpublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onOpenChange={setIsContextMenu}
@@ -1055,6 +1064,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
                     canAttachFolders={canAttachFolders}
+                    showTooltip={showTooltip}
                     isSidePanelFolder={isSidePanelFolder}
                   />
                 </Fragment>
@@ -1098,7 +1108,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isPublishing && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
-          entities={allChildItems}
+          entities={
+            featureType === FeatureType.Chat
+              ? (allChildItems as ConversationInfo[]).filter(
+                  (item) => !item.isReplay,
+                )
+              : allChildItems
+          }
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder
