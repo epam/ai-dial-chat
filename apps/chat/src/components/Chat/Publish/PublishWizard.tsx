@@ -208,7 +208,6 @@ export function PublishModal({
           : otherTargetAudienceFilters;
       const folderRegExp = new RegExp(
         entity.folderId.split('/').slice(2).join('/'),
-        'g',
       );
 
       if (
@@ -369,11 +368,11 @@ export function PublishModal({
                 >
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
                     <Tooltip
-                      tooltip={constructPath(t(PUBLISHING_FOLDER_NAME), path)}
+                      tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
                       contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                       triggerClassName="truncate whitespace-pre"
                     >
-                      {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
+                      {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
                     <span className="text-accent-primary">{t('Change')}</span>
                   </div>

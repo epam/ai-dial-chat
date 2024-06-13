@@ -76,6 +76,7 @@ export const UploadFromDeviceModalSelectors = {
   deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
   fileExtension: '[data-qa="file-extension"]',
   uploadedFiles: '[data-qa="uploaded-files"]',
+  changeUploadTo: '[data-qa="change-upload-to"]',
 };
 
 export const AttachFilesModalSelectors = {
@@ -91,4 +92,12 @@ export const AttachFilesModalSelectors = {
 
 export const FilesModalSelectors = {
   supportedAttributesLabel: '[data-qa="supported-attributes"]',
+};
+
+export const SelectFolderModalSelectors = {
+  modalContainer: '[data-qa="select-folder-modal"]',
+  newFolderButton: '[data-qa="new-folder"]',
+  selectFolderButton: '[data-qa="select-folder"]',
+  uploadFolders: '[data-qa="upload-folders"]',
+  allFolders: '[data-qa="all-folders"]',
 };

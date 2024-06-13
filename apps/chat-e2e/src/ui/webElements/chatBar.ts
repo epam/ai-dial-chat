@@ -46,14 +46,20 @@ export class ChatBar extends SideBar {
 
   getFolderConversations(): FolderConversations {
     if (!this.folderConversations) {
-      this.folderConversations = new FolderConversations(this.page);
+      this.folderConversations = new FolderConversations(
+        this.page,
+        this.getElementLocator(),
+      );
     }
     return this.folderConversations;
   }
 
   getSharedFolderConversations(): SharedFolderConversations {
     if (!this.sharedFolderConversations) {
-      this.sharedFolderConversations = new SharedFolderConversations(this.page);
+      this.sharedFolderConversations = new SharedFolderConversations(
+        this.page,
+        this.getElementLocator(),
+      );
     }
     return this.sharedFolderConversations;
   }

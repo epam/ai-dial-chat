@@ -112,9 +112,11 @@ export const publicationSlice = createSlice({
         items: ResourceToReview[];
       }>,
     ) => {
-      const reviewUrls = state.resourcesToReview.map((r) => r.reviewUrl);
+      const publicationUrls = state.resourcesToReview.map(
+        (r) => r.publicationUrl,
+      );
       const itemsToReview = payload.items.filter(
-        (item) => !reviewUrls.includes(item.reviewUrl),
+        (item) => !publicationUrls.includes(item.publicationUrl),
       );
 
       state.resourcesToReview = state.resourcesToReview.concat(itemsToReview);

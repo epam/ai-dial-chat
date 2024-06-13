@@ -117,6 +117,7 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
   canAttachFolders?: boolean;
+  isSidePanelFolder?: boolean;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -152,6 +153,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   itemComponentClassNames,
   canAttachFolders = false,
+  isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -771,6 +773,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             style={{
               paddingLeft: `${level * 1.5}rem`,
             }}
+            data-qa="edit-container"
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
@@ -835,7 +838,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
-              name="rename-input"
+              name="edit-input"
             />
           </div>
         ) : (
@@ -963,20 +966,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
                     onUnshare={handleUnshare}
-                    onPublish={handleOpenPublishing}
+                    onPublish={
+                      featureType !== FeatureType.Chat ||
+                      !allChildItems.every(
+                        (item) => (item as ConversationInfo).isReplay,
+                      )
+                        ? handleOpenPublishing
+                        : undefined
+                    }
                     onUnpublish={handleOpenUnpublishing}
                     onPublishUpdate={handleOpenPublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
+                    isSidePanelFolder={isSidePanelFolder}
                   />
                 </div>
               )}
           </div>
         )}
         {isRenaming && (
-          <div className="absolute right-1 z-10 flex">
+          <div className="absolute right-1 z-10 flex" data-qa="actions">
             <SidebarActionButton
               handleClick={(e) => {
                 e.stopPropagation();
@@ -984,6 +995,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   handleRename();
                 }
               }}
+              dataQA="confirm-edit"
             >
               <CheckIcon
                 width={18}
@@ -998,6 +1010,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 setIsRenaming(false);
                 handleNewFolderRename();
               }}
+              dataQA="cancel-edit"
             >
               <IconX
                 width={18}
@@ -1049,6 +1062,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
                     canAttachFolders={canAttachFolders}
+                    isSidePanelFolder={isSidePanelFolder}
                   />
                 </Fragment>
               );
@@ -1091,7 +1105,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isPublishing && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
-          entities={allChildItems}
+          entities={
+            featureType === FeatureType.Chat
+              ? (allChildItems as ConversationInfo[]).filter(
+                  (item) => !item.isReplay,
+                )
+              : allChildItems
+          }
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder

@@ -98,6 +98,8 @@ export const ExpectedConstants = {
   modelNotFountErrorMessage:
     'Model is not found.Please contact your administrator.',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
+  notAllowedDuplicatedFolderNameErrorMessage:
+    'Not allowed to have folders with same names',
   duplicatedFolderNameErrorMessage: (name: string) =>
     `Folder with name "${name}" already exists in this folder.`,
   duplicatedFolderRootNameErrorMessage: (name: string) =>
@@ -150,6 +152,7 @@ export enum MenuOptions {
   newFolder = 'New folder',
   attachments = 'Attachments',
   download = 'Download',
+  addNewFolder = 'Add new folder',
 }
 
 export enum FilterMenuOptions {
@@ -280,6 +283,7 @@ export enum ModelIds {
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
   GEMINI_PRO_1_5 = 'gemini-1.5-pro-preview-0409',
+  GEMINI_FLASH_1_5 = 'gemini-1.5-flash-001',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
   GEMINI_PRO = 'gemini-pro',
   META_LLAMA_2 = 'meta.llama2',

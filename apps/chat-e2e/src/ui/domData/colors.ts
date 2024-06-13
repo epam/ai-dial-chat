@@ -10,4 +10,5 @@ export enum Colors {
   textSecondary = 'rgb(169, 114, 255)',
   defaultBackground = 'rgba(0, 0, 0, 0)',
   textPermanent = 'rgb(252, 252, 252)',
+  backgroundAccentPrimaryAlpha = 'rgba(92, 141, 234, 0.17)',
 }

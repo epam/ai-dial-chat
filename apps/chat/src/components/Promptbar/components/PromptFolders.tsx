@@ -2,6 +2,8 @@ import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
@@ -46,6 +48,7 @@ interface promptFolderProps {
   isLast: boolean;
   filters: EntityFilters;
   includeEmpty: boolean;
+  allowHighlight?: boolean;
 }
 
 const PromptFolderTemplate = ({
@@ -53,6 +56,7 @@ const PromptFolderTemplate = ({
   isLast,
   filters,
   includeEmpty = false,
+  allowHighlight = true,
 }: promptFolderProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -81,7 +85,6 @@ const PromptFolderTemplate = ({
   const loadingFolderIds = useAppSelector((state) =>
     PromptsSelectors.selectLoadingFolderIds(state),
   );
-
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
   );
@@ -183,7 +186,7 @@ const PromptFolderTemplate = ({
         allFolders={promptFolders}
         allFoldersWithoutFilters={allFolders}
         loadingFolderIds={loadingFolderIds}
-        highlightedFolders={highlightedFolders}
+        highlightedFolders={allowHighlight ? highlightedFolders : []}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
         onRenameFolder={(name, folderId) => {
@@ -228,12 +231,12 @@ export const PromptSection = ({
   hideIfEmpty = true,
   displayRootFiles,
   showEmptyFolders = false,
-  openByDefault = false,
+  openByDefault,
   dataQa,
 }: FolderSectionProps) => {
-  const { t } = useTranslation(Translation.PromptBar);
-  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+
+  const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const rootFolders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(
       state,
@@ -245,22 +248,26 @@ export const PromptSection = ({
   const prompts = useAppSelector((state) =>
     PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
   );
-
-  const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
-
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-
-  const selectSelectedPromptId = useAppSelector(
+  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
 
+  const { handleToggle, isExpanded } = useSectionToggle(
+    name,
+    FeatureType.Prompt,
+  );
+
+  const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
+
   useEffect(() => {
     const shouldBeHighlighted =
-      rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
-      (!!displayRootFiles &&
-        rootPrompts.some(({ id }) => selectSelectedPromptId === id));
+      !isSelectedPublicationResource &&
+      (rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
+        (!!displayRootFiles &&
+          rootPrompts.some(({ id }) => selectedPromptId === id)));
     if (isSectionHighlighted !== shouldBeHighlighted) {
       setIsSectionHighlighted(shouldBeHighlighted);
     }
@@ -268,9 +275,10 @@ export const PromptSection = ({
     displayRootFiles,
     rootFolders,
     isSectionHighlighted,
-    selectSelectedPromptId,
+    selectedPromptId,
     selectedFoldersIds,
     rootPrompts,
+    isSelectedPublicationResource,
   ]);
 
   if (
@@ -283,8 +291,9 @@ export const PromptSection = ({
 
   return (
     <CollapsibleSection
-      name={t(name)}
-      openByDefault={openByDefault}
+      onToggle={handleToggle}
+      name={name}
+      openByDefault={openByDefault ?? isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
@@ -296,6 +305,7 @@ export const PromptSection = ({
             isLast={index === arr.length - 1}
             filters={{ searchFilter: filters.searchFilter }}
             includeEmpty={showEmptyFolders}
+            allowHighlight={!isSelectedPublicationResource}
           />
         ))}
       </div>
@@ -331,10 +341,9 @@ export function PromptFolders() {
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
-    name: t(PUBLISHING_APPROVE_REQUIRED_NAME),
+    name: PUBLISHING_APPROVE_REQUIRED_NAME,
     displayRootFiles: true,
     dataQa: 'approve-required',
-    openByDefault: true,
   };
 
   const folderItems: FolderSectionProps[] = useMemo(
@@ -342,11 +351,10 @@ export function PromptFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: t(PUBLISHING_FOLDER_NAME),
+          name: PUBLISHING_FOLDER_NAME,
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
-          openByDefault: true,
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
@@ -355,22 +363,20 @@ export function PromptFolders() {
           ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
-          openByDefault: true,
         },
         {
           name: t('Pinned prompts'),
           filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
-          openByDefault: true,
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hidden }) => !hidden),
     [
+      t,
       commonSearchFilter,
       isFilterEmpty,
       isPublishingEnabled,
       isSharingEnabled,
-      t,
     ],
   );
 

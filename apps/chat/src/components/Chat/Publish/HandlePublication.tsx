@@ -163,6 +163,7 @@ export function HandlePublication({ publication }: Props) {
           promptId: promptsToReviewIds.length
             ? promptsToReviewIds[0].reviewUrl
             : reviewedPromptsIds[0].reviewUrl,
+          isPublicationResource: true,
         }),
       );
       dispatch(
