@@ -1,10 +1,10 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.12.0-rc",
+  "version": "0.13.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
-    "postinstall": "node tools/patch-nextjs.js",
+    "postinstall": "patch-package && node tools/patch-nextjs.js",
     "graph": "nx graph",
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
@@ -133,7 +133,9 @@
     "jsdom": "^21.1.1",
     "minimist": "^1.2.8",
     "nx": "17.2.8",
+    "patch-package": "^8.0.0",
     "postcss": "^8.4.21",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwindcss": "^3.3.5",
@@ -149,9 +151,9 @@
   "optionalDependencies": {
     "@nx/playwright": "^18.2.2",
     "@playwright/test": "^1.44.0",
-    "playwright-chromium": "^1.44.0",
     "allure-playwright": "^2.15.0",
-    "eslint-plugin-playwright": "^1.6.1"
+    "eslint-plugin-playwright": "^1.6.1",
+    "playwright-chromium": "^1.44.0"
   },
   "engines": {
     "node": ">=18.18.2",
