@@ -8,7 +8,7 @@ export class FolderPrompts extends Folders {
     super(
       page,
       parentLocator,
-      PromptBarSelectors.promptFolders,
+      PromptBarSelectors.pinnedChats(),
       PromptBarSelectors.prompt,
     );
   }
