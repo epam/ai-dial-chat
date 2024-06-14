@@ -161,8 +161,6 @@
   },
   "browser": {
     "fs": false,
-    "path": false,
-    "os": false,
     "net": false,
     "tls": false
   }
