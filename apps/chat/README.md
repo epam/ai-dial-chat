@@ -16,6 +16,14 @@ Originally forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui) 
 
 This project is a web application built using [Next.js](https://nextjs.org/), a React framework with server-rendering capabilities. It can be easily customized and adapted to your needs by following the steps mentioned below.
 
+## Helm Deployment
+
+You have the option to deploy the chat application on the Kubernetes cluster by utilizing an _umbrella_ [dial](https://github.com/epam/ai-dial-helm/blob/main/charts/dial/README.md) Helm chart, which also deploys other AI DIAL components. Alternatively, you can establish a dedicated Helm chart exclusively for the chat application using the [dial-extension](https://github.com/epam/ai-dial-helm/blob/main/charts/dial-extension/README.md) Helm chart. 
+
+> Refer to [Examples](https://github.com/epam/ai-dial-helm/blob/main/charts/dial/examples/README.md) for guidelines.
+
+In any case, in your Helm chart values.yaml file, it is necessary to provide application's configurations described in the [Environment Variables](#environment-variables) section.
+
 ## Set Up Developer Environment
 
 This project is managed by [NX](https://nextjs.org/).
