@@ -50,8 +50,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(2),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderName(duplicatedFolderName);
-        await folderPrompts.getEditFolderInputActions().clickTickButton();
+        await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
 
         const errorMessage = await errorToast.getElementContent();
         expect
@@ -116,7 +115,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Drag & drop "New folder 2" to "New folder 1"',
+      'Drag & drop "New folder 2" to "New folder 1 and expect an error"',
       async () => {
         await promptBar.dragAndDropEntityToFolder(
           folderPrompts.getFolderByName(duplicatedFolderName, 2),
@@ -196,14 +195,14 @@ dialTest(
       await folderPrompts.openFolderDropdownMenu(
         ExpectedConstants.newFolderWithIndexTitle(3),
       );
-      folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderPrompts.editFolderNameWithTick(
         ExpectedConstants.newFolderWithIndexTitle(2),
       );
     });
 
     await dialTest.step(
-      'Drag renamed folder to the level where namesake exists',
+      'Drag renamed folder to the level where namesake exists and expect an error',
       async () => {
         await promptBar.dragAndDropEntityToFolder(
           folderPrompts.getFolderByName(
@@ -285,7 +284,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Drag & drop "New folder 2"  located in "New folder 1" to the root',
+      'Drag & drop "New folder 2"  located in "New folder 1" to the root and expect an error',
       async () => {
         await promptBar.dragFolderToRoot(
           folderPrompts.getFolderByName(
