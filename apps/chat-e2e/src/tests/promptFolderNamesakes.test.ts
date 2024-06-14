@@ -50,8 +50,9 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(2),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderPrompts.editFolderNameWithTick(duplicatedFolderName);
-
+        await folderPrompts.editFolderNameWithTick(duplicatedFolderName, {
+          isHttpMethodTriggered: false,
+        });
         const errorMessage = await errorToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
