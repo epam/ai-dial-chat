@@ -37,7 +37,7 @@ export default function CollapsibleSection({
 
   return (
     <div
-      className={classNames('flex w-full flex-col', className)}
+      className={classNames('flex w-full flex-col py-1 pl-2 pr-0.5', className)}
       data-qa={dataQa?.concat('-container')}
     >
       <div

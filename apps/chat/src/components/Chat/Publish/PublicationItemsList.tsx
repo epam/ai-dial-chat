@@ -33,6 +33,7 @@ interface Props {
   containerClassNames?: string;
   collapsibleSectionClassNames?: string;
   publishAction: PublishActions;
+  showTooltip?: Boolean;
 }
 
 export function PublicationItemsList({
@@ -59,7 +60,7 @@ export function PublicationItemsList({
         <CollapsibleSection
           name={t('Conversations')}
           openByDefault
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
           dataQa="conversations-to-send-request"
         >
           {type === SharingType.Conversation ? (
@@ -93,7 +94,7 @@ export function PublicationItemsList({
           name={t('Files')}
           openByDefault
           dataQa="files-to-send-request"
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
         >
           <FilePublicationResources
             uploadedFiles={files}
@@ -108,7 +109,7 @@ export function PublicationItemsList({
           name={t('Prompts')}
           openByDefault
           dataQa="prompts-to-send-request"
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
         >
           {type === SharingType.Prompt ? (
             <PromptsRow
