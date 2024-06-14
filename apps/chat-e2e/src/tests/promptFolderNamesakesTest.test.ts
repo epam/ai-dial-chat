@@ -57,7 +57,7 @@ dialTest(
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
-            ExpectedConstants.duplicatedFolderRootNameErrorMessage(
+            ExpectedConstants.duplicatedFolderNameErrorMessage(
               duplicatedFolderName,
             ),
           );
@@ -150,6 +150,7 @@ dialTest(
     dialHomePage,
     promptBar,
     folderPrompts,
+    folderDropdownMenu,
     errorToast,
     setTestIds,
   }) => {
@@ -195,6 +196,7 @@ dialTest(
       await folderPrompts.openFolderDropdownMenu(
         ExpectedConstants.newFolderWithIndexTitle(3),
       );
+      folderDropdownMenu.selectMenuOption(MenuOptions.rename);
       await folderPrompts.editFolderNameWithTick(
         ExpectedConstants.newFolderWithIndexTitle(2),
       );
@@ -229,19 +231,10 @@ dialTest(
           );
       },
     );
-
-    await dialTest.step(
-      'Drag "New folder 2" located in "New folder 1" to the root',
-      async () => {
-        await promptBar.dragFolderToRoot(
-          folderPrompts.getFolderByName(duplicatedFolderName),
-        );
-      },
-    );
   },
 );
 
-dialTest.only(
+dialTest(
   'Prompt folder: error message appears if to drag prompt folder out to root where the same name exists',
   async ({
     dialHomePage,
@@ -250,8 +243,8 @@ dialTest.only(
     errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2972')
-    
+    setTestIds('EPMRTC-2972');
+
     await dialTest.step('Create 3 folders', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
@@ -269,45 +262,49 @@ dialTest.only(
     });
 
     await dialTest.step('Create nested structure', async () => {
-        await promptBar.dragAndDropEntityToFolder(
-          folderPrompts.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(2),
-          ),
-          folderPrompts.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(1),
-          ),
-        );
+      await promptBar.dragAndDropEntityToFolder(
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(2),
+        ),
+        folderPrompts.getFolderByName(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        ),
+      );
     });
 
     await dialTest.step('Create new Folder', async () => {
-        await promptBar.createNewFolder();
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(2),
-            ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+      await promptBar.createNewFolder();
+      await expect
+        .soft(
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+          ),
+          ExpectedMessages.folderIsVisible,
+        )
+        .toBeVisible();
     });
-
 
     await dialTest.step(
       'Drag & drop "New folder 2"  located in "New folder 1" to the root',
       async () => {
         await promptBar.dragFolderToRoot(
-          folderPrompts.getFolderByName('New folder 2'),
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+          ),
         );
 
         await expect
-          .soft(errorToast.getElementLocator(), ExpectedMessages.errorToastIsShown)
+          .soft(
+            errorToast.getElementLocator(),
+            ExpectedMessages.errorToastIsShown,
+          )
           .toBeVisible();
         const errorMessage = await errorToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
             ExpectedConstants.duplicatedFolderRootNameErrorMessage(
-              'New folder 2',
+              ExpectedConstants.newFolderWithIndexTitle(2),
             ),
           );
       },
