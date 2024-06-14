@@ -44,5 +44,7 @@ export const PromptBarSelectors = {
   prompts: '[data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
   deletePrompts: '[data-qa="delete-prompts"]',
+  pinnedChats: () =>
+    `${PromptBarSelectors.promptFolders} > [data-qa="pinned-prompts-container"]`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
 };
