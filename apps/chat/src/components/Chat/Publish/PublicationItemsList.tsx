@@ -33,7 +33,7 @@ interface Props {
   containerClassNames?: string;
   collapsibleSectionClassNames?: string;
   publishAction: PublishActions;
-  showTooltip?: Boolean;
+  showTooltip?: boolean;
 }
 
 export function PublicationItemsList({
