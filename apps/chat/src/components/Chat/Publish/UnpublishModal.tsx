@@ -79,7 +79,7 @@ export function UnpublishModal({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="h-full py-4 align-bottom transition-all !max-h-[445px] sm:w-[424px] w-full"
+      containerClassName="py-4 align-bottom transition-all !max-h-[454px] sm:w-[424px] w-full"
       dataQa="unpublish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}

@@ -219,7 +219,7 @@ export function HandlePublication({ publication }: Props) {
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
-            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 py-4">
+            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 py-4 md:px-5">
                 {publication.resources[0].action !== PublishActions.DELETE ? (
                   <>
@@ -234,9 +234,7 @@ export function HandlePublication({ publication }: Props) {
                         contentClassName="max-w-[400px] break-all"
                         triggerClassName="truncate whitespace-pre"
                         tooltip={
-                          <div className="flex break-words text-xs">
-                            {publishToUrl}
-                          </div>
+                          <div className="flex break-words">{publishToUrl}</div>
                         }
                       >
                         <span className="w-full">{publishToUrl}</span>

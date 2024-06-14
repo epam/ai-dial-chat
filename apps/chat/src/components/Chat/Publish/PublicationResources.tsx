@@ -233,6 +233,7 @@ export const FilePublicationResources = ({
   // TODO: get rid of uploaded files in https://github.com/epam/ai-dial-chat/issues/1502
   uploadedFiles,
   isOpen = true,
+  showTooltip,
 }: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
@@ -276,6 +277,7 @@ export const FilePublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            showTooltip={showTooltip}
           />
         );
       })}

@@ -99,6 +99,7 @@ export function PublicationItemsList({
             uploadedFiles={files}
             resources={[]}
             forViewOnly
+            showTooltip
           />
         </CollapsibleSection>
       )}

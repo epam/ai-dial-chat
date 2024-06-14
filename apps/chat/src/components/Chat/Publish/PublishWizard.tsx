@@ -421,7 +421,7 @@ export function PublishModal({
           />
         </div>
 
-        <div className="flex justify-end gap-3 px-3 md:p-4">
+        <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <button
             className="button button-primary py-2"
             onClick={handlePublish}
