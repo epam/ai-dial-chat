@@ -340,7 +340,7 @@ export function HandlePublication({ publication }: Props) {
                     </CollapsibleSection>
                   ))
                 ) : (
-                  <h2 className="mt-4 flex items-center gap-4 text-sm">
+                  <h2 className="mt-4 flex items-center gap-4 text-sm text-secondary">
                     {t(
                       'This publication will be available to all users in the organization',
                     )}
