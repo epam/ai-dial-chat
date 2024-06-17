@@ -204,9 +204,9 @@ export function HandlePublication({ publication }: Props) {
     : '';
 
   return (
-    <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
-      <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-        <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+    <div className="size-full flex-col items-center p-0 text-primary-bg-light md:px-5 md:pt-5">
+      <div className="flex size-full flex-col items-center gap-[1px] rounded-primary 2xl:max-w-[1000px]">
+        <div className="flex w-full items-center justify-center rounded-t-primary bg-layer-2 p-4 shadow-primary">
           <h4
             data-qa="app-name"
             className="w-full whitespace-pre text-center text-base font-semibold"
@@ -217,17 +217,20 @@ export function HandlePublication({ publication }: Props) {
             {getPublicationId(publication.url)}
           </h4>
         </div>
-        <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
+        <div className="flex w-full flex-col gap-[1px] overflow-hidden bg-layer-1 [&:first-child]:rounded-t-primary">
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
-            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 py-4">
+            <div className="flex shrink flex-col divide-y divide-secondary overflow-auto bg-layer-2 py-4">
               <div className="px-5">
                 {publication.resources[0].action !== PublishActions.DELETE ? (
                   <>
-                    <label className="flex text-sm" htmlFor="approvePath">
+                    <label
+                      className="flex text-sm font-medium"
+                      htmlFor="approvePath"
+                    >
                       {t('Publish to')}
                     </label>
                     <button
-                      className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
+                      className="mt-4 flex w-full items-center rounded-primary border border-secondary bg-transparent px-3 py-2 shadow-primary"
                       disabled
                     >
                       <Tooltip
@@ -243,7 +246,7 @@ export function HandlePublication({ publication }: Props) {
                       </Tooltip>
                     </button>
                     <div className="my-4">
-                      <p className="text-xs text-secondary">
+                      <p className="text-xs font-medium text-secondary-bg-light">
                         {t('Request creation date: ')}
                       </p>
                       <p className="mt-1 text-sm">
@@ -253,17 +256,20 @@ export function HandlePublication({ publication }: Props) {
                   </>
                 ) : (
                   <>
-                    <label className="flex text-sm" htmlFor="approvePath">
+                    <label
+                      className="flex text-sm font-medium"
+                      htmlFor="approvePath"
+                    >
                       {t('General info')}
                     </label>
                     <div className="my-4 grid w-full grid-cols-3 gap-3 text-xs">
-                      <p className="text-secondary">
+                      <p className="text-secondary-bg-light">
                         <span>{t('Publication id: ')}</span>
                       </p>
                       <span className="col-span-2 truncate">
                         {getPublicationId(publication.url)}
                       </span>
-                      <p className="text-secondary">{t('Path: ')}</p>
+                      <p className="text-secondary-bg-light">{t('Path: ')}</p>
                       <span className="col-span-2 flex truncate whitespace-pre">
                         <Tooltip
                           tooltip={publication.targetFolder?.replace(
@@ -279,7 +285,7 @@ export function HandlePublication({ publication }: Props) {
                           )}
                         </Tooltip>
                       </span>
-                      <p className="text-secondary">
+                      <p className="text-secondary-bg-light">
                         {t('Publication date: ')}
                       </p>
                       <span className="col-span-2">
@@ -290,7 +296,7 @@ export function HandlePublication({ publication }: Props) {
                 )}
               </div>
               <section className="px-5">
-                <h2 className="my-4 flex items-center gap-2 text-sm">
+                <h2 className="my-4 flex items-center gap-2 text-sm font-medium">
                   {t('Target Audience Filters')}
 
                   {!!filters.length && (
@@ -306,7 +312,7 @@ export function HandlePublication({ publication }: Props) {
                     >
                       <IconHelpCircle
                         size={18}
-                        className="text-secondary hover:text-accent-primary"
+                        className="text-secondary-bg-light hover:text-accent-primary"
                       />
                     </Tooltip>
                   )}
@@ -342,7 +348,7 @@ export function HandlePublication({ publication }: Props) {
                 )}
               </section>
             </div>
-            <div className="overflow-y-auto bg-layer-2 px-5 py-4">
+            <div className="publication-sections overflow-y-auto bg-layer-2 px-5 py-4">
               {sections.map(
                 ({
                   dataQa,
@@ -371,9 +377,9 @@ export function HandlePublication({ publication }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 p-4">
+        <div className="flex w-full items-center justify-between gap-2 rounded-b-primary bg-layer-2 p-4 shadow-primary">
           <button
-            className="text-accent-primary"
+            className="text-quaternary-bg-light hover:text-pr-primary-700"
             onClick={handlePublicationReview}
           >
             {t('Go to a publication review...')}
