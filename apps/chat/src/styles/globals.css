@@ -147,7 +147,11 @@ pre:has(div.codeblock) {
 
   .file-manager-modal,
   .select-folder-header,
-  .select-folder-footer {
+  .select-folder-footer,
+  .publish-wizard-modal,
+  .unpublish-modal,
+  .preview-prompt-modal,
+  .prompt-modal {
     --text-primary-bg-dark: var(--text-primary-bg-light);
     --text-secondary-bg-dark: var(--text-secondary-bg-light);
   }
@@ -174,6 +178,10 @@ pre:has(div.codeblock) {
   .select-folder-header {
     --text-accent-primary: var(--text-primary-bg-light);
     --border-accent-primary: var(--border-tertiary);
+  }
+
+  #publish-wizard {
+    --text-primary-bg-dark: var(--text-primary-bg-light);
   }
 }
 

@@ -79,7 +79,7 @@ export function UnpublishModal({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="h-full py-4 align-bottom transition-all !max-h-[434px] sm:w-[424px] w-full"
+      containerClassName="unpublish-modal h-full py-4 align-bottom transition-all !max-h-[434px] sm:w-[424px] w-full"
       dataQa="unpublish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
@@ -90,7 +90,7 @@ export function UnpublishModal({
             {`${t('Unpublish')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <h5 className="mb-4 mt-2 px-6 text-secondary">{subtitle}</h5>
+        <h5 className="mb-4 mt-2 px-6 text-secondary-bg-dark">{subtitle}</h5>
         <div className="flex h-full flex-col justify-between gap-4 divide-y divide-tertiary">
           <div className="max-h-[250px] overflow-scroll">
             <PublicationItemsList
