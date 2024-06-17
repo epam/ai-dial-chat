@@ -51,6 +51,7 @@ interface Props {
   customUploadButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
   forceShowSelectCheckBox?: boolean;
+  showTooltip?: boolean;
 }
 
 export const FileManagerModal = ({
@@ -64,6 +65,7 @@ export const FileManagerModal = ({
   maximumAttachmentsAmount = 0,
   forceShowSelectCheckBox,
   onClose,
+  showTooltip,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -556,6 +558,7 @@ export const FileManagerModal = ({
                               withBorderHighlight={false}
                               featureType={FeatureType.File}
                               canAttachFolders={canAttachFolders}
+                              showTooltip={showTooltip}
                             />
                           </div>
                         );
