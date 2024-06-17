@@ -339,7 +339,7 @@ export function PublishModal({
       initialFocus={nameInputRef}
     >
       <div className="flex h-full flex-col divide-y divide-tertiary">
-        <h4 className="truncate p-4 pr-10 text-base font-semibold">
+        <h4 className="truncate px-3 py-4 pr-10 text-base font-semibold md:px-4">
           <span className="w-full text-center">
             <Tooltip
               contentClassName="max-w-[400px] break-words"
@@ -356,7 +356,7 @@ export function PublishModal({
         </h4>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink grow flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
-            <section className="flex flex-col gap-3 px-5 py-4">
+            <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
               <div>
                 <label className="mb-4 flex text-sm" htmlFor="requestPath">
                   {t('Publish to')}
@@ -379,7 +379,7 @@ export function PublishModal({
               </div>
             </section>
 
-            <section className="flex flex-col px-5 py-4">
+            <section className="flex flex-col px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2">
                 {t('Target Audience Filters')}
 
@@ -415,12 +415,12 @@ export function PublishModal({
             entities={entities}
             path={path}
             files={files}
-            containerClassNames="px-5 py-4"
+            containerClassNames="px-3 py-4 md:px-5"
             publishAction={PublishActions.ADD}
           />
         </div>
 
-        <div className="flex justify-end gap-3 p-4">
+        <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <button
             className="button button-primary py-2"
             onClick={handlePublish}

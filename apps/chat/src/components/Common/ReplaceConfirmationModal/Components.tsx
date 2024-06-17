@@ -160,11 +160,9 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
       <Tooltip
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate text-center w-full"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {conversation.name}
-        </div>
+        {conversation.name}
       </Tooltip>
     </FeatureContainer>
   );
@@ -253,12 +251,10 @@ const FileView = ({ item: file }: FileViewProps) => {
       <IconFile size={18} className="text-secondary" />
       <Tooltip
         tooltip={file.name}
-        contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate text-center w-full"
+        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {file.name}
-        </div>
+        {file.name}
       </Tooltip>
     </FeatureContainer>
   );

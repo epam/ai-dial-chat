@@ -111,6 +111,8 @@ export const ChatView = memo(() => {
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
+  const [inputHeight, setInputHeight] = useState<number>(142);
+  const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -119,8 +121,6 @@ export const ChatView = memo(() => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
-  const [inputHeight, setInputHeight] = useState<number>(142);
-  const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
 
@@ -825,16 +825,11 @@ export const ChatView = memo(() => {
                   ) : (
                     <>
                       {isExternal && selectedConversations.length === 1 && (
-                        <div
-                          className={classNames(
-                            !isPlayback && 'relative top-[-46px]',
-                          )}
-                        >
-                          <PublicationControls
-                            entity={selectedConversations[0]}
-                            wrapperClassName="justify-center w-full"
-                          />
-                        </div>
+                        <PublicationControls
+                          showScrollDownButton={showScrollDownButton}
+                          entity={selectedConversations[0]}
+                          onScrollDownClick={handleScrollDown}
+                        />
                       )}
 
                       {!isPlayback && (
@@ -861,6 +856,8 @@ export const ChatView = memo(() => {
                           {isExternal && (
                             <ChatExternalControls
                               conversations={selectedConversations}
+                              showScrollDownButton={showScrollDownButton}
+                              onScrollDownClick={handleScrollDown}
                             />
                           )}
                         </ChatInput>

@@ -33,6 +33,7 @@ interface Props {
   containerClassNames?: string;
   collapsibleSectionClassNames?: string;
   publishAction: PublishActions;
+  showTooltip?: boolean;
 }
 
 export function PublicationItemsList({
@@ -59,7 +60,7 @@ export function PublicationItemsList({
         <CollapsibleSection
           name={t('Conversations')}
           openByDefault
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
           dataQa="conversations-to-send-request"
         >
           {type === SharingType.Conversation ? (
@@ -83,6 +84,7 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               forViewOnly
+              showTooltip
             />
           )}
         </CollapsibleSection>
@@ -92,12 +94,13 @@ export function PublicationItemsList({
           name={t('Files')}
           openByDefault
           dataQa="files-to-send-request"
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
         >
           <FilePublicationResources
             uploadedFiles={files}
             resources={[]}
             forViewOnly
+            showTooltip
           />
         </CollapsibleSection>
       )}
@@ -106,7 +109,7 @@ export function PublicationItemsList({
           name={t('Prompts')}
           openByDefault
           dataQa="prompts-to-send-request"
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
         >
           {type === SharingType.Prompt ? (
             <PromptsRow
@@ -121,7 +124,7 @@ export function PublicationItemsList({
                 action: publishAction,
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
-                  ApiKeys.Conversations,
+                  ApiKeys.Prompts,
                   'public',
                   path,
                   splitEntityId(entity.id).name,
@@ -129,6 +132,7 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               forViewOnly
+              showTooltip
             />
           )}
         </CollapsibleSection>

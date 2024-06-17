@@ -163,7 +163,7 @@ export function HandlePublication({ publication }: Props) {
           promptId: promptsToReviewIds.length
             ? promptsToReviewIds[0].reviewUrl
             : reviewedPromptsIds[0].reviewUrl,
-          isPublicationResource: true,
+          isApproveRequiredResource: true,
         }),
       );
       dispatch(
@@ -181,18 +181,21 @@ export function HandlePublication({ publication }: Props) {
       sectionName: t('Conversations'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
+      showTooltip: true,
     },
     {
       featureType: FeatureType.Prompt,
       sectionName: t('Prompts'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
+      showTooltip: true,
     },
     {
       featureType: FeatureType.File,
       sectionName: t('Files'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
+      showTooltip: true,
     },
   ];
 
@@ -203,7 +206,7 @@ export function HandlePublication({ publication }: Props) {
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-        <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+        <div className="flex w-full items-center justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <h4
             data-qa="app-name"
             className="w-full whitespace-pre text-center text-base font-semibold"
@@ -216,8 +219,8 @@ export function HandlePublication({ publication }: Props) {
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
-            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 py-4">
-              <div className="px-5">
+            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
+              <div className="px-3 py-4 md:px-5">
                 {publication.resources[0].action !== PublishActions.DELETE ? (
                   <>
                     <label className="flex text-sm" htmlFor="approvePath">
@@ -228,12 +231,10 @@ export function HandlePublication({ publication }: Props) {
                       disabled
                     >
                       <Tooltip
-                        placement="top"
-                        triggerClassName="w-full truncate text-start"
+                        contentClassName="max-w-[400px] break-all"
+                        triggerClassName="truncate whitespace-pre"
                         tooltip={
-                          <div className="flex break-words text-xs">
-                            {publishToUrl}
-                          </div>
+                          <div className="flex break-words">{publishToUrl}</div>
                         }
                       >
                         <span className="w-full">{publishToUrl}</span>
@@ -261,11 +262,20 @@ export function HandlePublication({ publication }: Props) {
                         {getPublicationId(publication.url)}
                       </span>
                       <p className="text-secondary">{t('Path: ')}</p>
-                      <span className="col-span-2">
-                        {publication.targetFolder?.replace(
-                          /^[^/]+/,
-                          'Organization',
-                        )}
+                      <span className="col-span-2 flex truncate whitespace-pre">
+                        <Tooltip
+                          tooltip={publication.targetFolder?.replace(
+                            /^[^/]+/,
+                            'Organization',
+                          )}
+                          contentClassName="max-w-[400px] break-all"
+                          triggerClassName="truncate whitespace-pre"
+                        >
+                          {publication.targetFolder?.replace(
+                            /^[^/]+/,
+                            'Organization',
+                          )}
+                        </Tooltip>
                       </span>
                       <p className="text-secondary">
                         {t('Publication date: ')}
@@ -277,7 +287,7 @@ export function HandlePublication({ publication }: Props) {
                   </>
                 )}
               </div>
-              <section className="px-5">
+              <section className="px-3 py-4 md:px-5">
                 <h2 className="my-4 flex items-center gap-2 text-sm">
                   {t('Target Audience Filters')}
 
@@ -330,9 +340,15 @@ export function HandlePublication({ publication }: Props) {
                 )}
               </section>
             </div>
-            <div className="overflow-y-auto bg-layer-2 px-5 py-4">
+            <div className="overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">
               {sections.map(
-                ({ dataQa, sectionName, Component, featureType }) =>
+                ({
+                  dataQa,
+                  sectionName,
+                  Component,
+                  featureType,
+                  showTooltip,
+                }) =>
                   publication.resourceTypes.includes(
                     EnumMapper.getBackendResourceTypeByFeatureType(featureType),
                   ) && (
@@ -345,6 +361,7 @@ export function HandlePublication({ publication }: Props) {
                       <Component
                         resources={publication.resources}
                         forViewOnly
+                        showTooltip={showTooltip}
                       />
                     </CollapsibleSection>
                   ),
@@ -352,7 +369,7 @@ export function HandlePublication({ publication }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 p-4">
+        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 px-3 py-4 md:px-4">
           <button
             className="text-accent-primary"
             onClick={handlePublicationReview}

@@ -48,7 +48,7 @@ import {
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -117,6 +117,7 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
   canAttachFolders?: boolean;
+  showTooltip?: boolean;
   isSidePanelFolder?: boolean;
 }
 
@@ -153,6 +154,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   itemComponentClassNames,
   canAttachFolders = false,
+  showTooltip,
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
@@ -913,7 +915,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             >
               <Tooltip
                 tooltip={
-                  featureType === 'file' && !isNameOrPathInvalid
+                  showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
                     : t(
                         getEntityNameError(
@@ -1062,6 +1064,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
                     canAttachFolders={canAttachFolders}
+                    showTooltip={showTooltip}
                     isSidePanelFolder={isSidePanelFolder}
                   />
                 </Fragment>
@@ -1107,8 +1110,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           entity={currentFolder}
           entities={
             featureType === FeatureType.Chat
-              ? (allChildItems as ConversationInfo[]).filter(
-                  (item) => !item.isReplay,
+              ? (
+                  allChildItems as (Partial<Conversation> & ConversationInfo)[]
+                ).filter(
+                  (item) =>
+                    item.isPlayback ||
+                    (!item.isReplay && item.messages?.length),
                 )
               : allChildItems
           }
