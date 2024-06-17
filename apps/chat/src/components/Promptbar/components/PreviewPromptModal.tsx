@@ -57,7 +57,7 @@ export const PreviewPromptModal = ({
             }),
           );
         }}
-        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary-bg-dark hover:bg-accent-primary-alpha hover:text-accent-primary"
+        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-quaternary-bg-light hover:bg-accent-primary-alpha hover:text-primary-bg-light"
       >
         <IconFileArrowRight size={24} strokeWidth="1.5" />
       </button>

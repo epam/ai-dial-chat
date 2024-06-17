@@ -263,7 +263,7 @@ export const PromptSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      !isSelectedPromptApproveRequiredResource &&
+      isSelectedPromptApproveRequiredResource &&
       (rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
         (!!displayRootFiles &&
           rootPrompts.some(({ id }) => selectedPromptId === id)));
@@ -304,7 +304,7 @@ export const PromptSection = ({
             isLast={index === arr.length - 1}
             filters={{ searchFilter: filters.searchFilter }}
             includeEmpty={showEmptyFolders}
-            allowHighlight={!isSelectedPromptApproveRequiredResource}
+            allowHighlight={isSelectedPromptApproveRequiredResource}
           />
         ))}
       </div>

@@ -151,7 +151,8 @@ pre:has(div.codeblock) {
   .publish-wizard-modal,
   .unpublish-modal,
   .preview-prompt-modal,
-  .prompt-modal {
+  .prompt-modal,
+  .publication-sections {
     --text-primary-bg-dark: var(--text-primary-bg-light);
     --text-secondary-bg-dark: var(--text-secondary-bg-light);
   }
