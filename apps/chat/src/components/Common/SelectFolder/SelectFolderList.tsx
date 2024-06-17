@@ -73,6 +73,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             : 'border-transparent',
         )}
         onClick={() => handleFolderSelect(rootFolderId)}
+        data-qa="root-folder"
       >
         <CaretIconComponent isOpen={isAllEntitiesOpened} />
         {t(rootFolderName)}
