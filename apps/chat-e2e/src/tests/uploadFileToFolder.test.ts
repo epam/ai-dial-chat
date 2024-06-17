@@ -125,7 +125,9 @@ dialTest(
     dialHomePage,
     tooltip,
     setTestIds,
+    setIssueIds,
   }) => {
+    setIssueIds('1508');
     setTestIds('EPMRTC-3022', 'EPMRTC-1615');
     const folderName = GeneratorUtil.randomString(7);
 
