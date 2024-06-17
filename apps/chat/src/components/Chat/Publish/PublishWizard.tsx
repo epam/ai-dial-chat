@@ -339,7 +339,7 @@ export function PublishModal({
       onClose={onClose}
       initialFocus={nameInputRef}
     >
-      <div className="flex flex-col divide-y divide-tertiary overflow-auto">
+      <div className="flex flex-col divide-y divide-tertiary overflow-y-auto">
         <h4 className="truncate px-3 py-4 pr-10 text-base font-semibold md:px-4">
           <span className="w-full text-center">
             <Tooltip
@@ -416,7 +416,7 @@ export function PublishModal({
             entities={entities}
             path={path}
             files={files}
-            containerClassNames="px-3 py-4 md:px-5 overflow-auto"
+            containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
             publishAction={PublishActions.ADD}
           />
         </div>
