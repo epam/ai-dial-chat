@@ -125,7 +125,7 @@ export const PreviewPromptModal = ({
                     >
                       <button
                         onClick={onDelete}
-                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary-bg-dark hover:bg-accent-primary-alpha hover:text-accent-primary"
+                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-quaternary-bg-light hover:bg-accent-primary-alpha hover:text-primary-bg-light"
                       >
                         <IconTrashX size={24} strokeWidth="1.5" />
                       </button>
