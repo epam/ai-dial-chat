@@ -39,6 +39,11 @@ export const selectSelectedPublication = createSelector(
   (state) => state.selectedPublication,
 );
 
+export const selectResourceToReview = createSelector(
+  [rootSelector],
+  (state) => state.resourcesToReview,
+);
+
 export const selectResourceToReviewByReviewUrl = createSelector(
   [rootSelector, (_state, id: string) => id],
   (state, id) => state.resourcesToReview.find((r) => r.reviewUrl === id),
