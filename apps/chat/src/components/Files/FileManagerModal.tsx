@@ -8,10 +8,7 @@ import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
-import {
-  getDialFilesWithInvalidFileType,
-  getShortExtentionsListFromMimeType,
-} from '@/src/utils/app/file';
+import { getDialFilesWithInvalidFileType } from '@/src/utils/app/file';
 import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
 

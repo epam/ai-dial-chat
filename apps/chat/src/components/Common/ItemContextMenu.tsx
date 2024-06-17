@@ -287,6 +287,7 @@ export default function ItemContextMenu({
         onClick: onDelete,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       disableAll,
       entity.id,
