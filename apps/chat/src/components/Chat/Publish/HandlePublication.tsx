@@ -206,7 +206,7 @@ export function HandlePublication({ publication }: Props) {
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-        <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+        <div className="flex w-full items-center justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
             tooltip={getPublicationId(publication.url)}
             contentClassName="max-w-[400px] break-all"
@@ -225,8 +225,8 @@ export function HandlePublication({ publication }: Props) {
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
-            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 py-4">
-              <div className="px-5">
+            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
+              <div className="px-3 py-4 md:px-5">
                 {publication.resources[0].action !== PublishActions.DELETE ? (
                   <>
                     <label className="flex text-sm" htmlFor="approvePath">
@@ -240,9 +240,7 @@ export function HandlePublication({ publication }: Props) {
                         contentClassName="max-w-[400px] break-all"
                         triggerClassName="truncate whitespace-pre"
                         tooltip={
-                          <div className="flex break-words text-xs">
-                            {publishToUrl}
-                          </div>
+                          <div className="flex break-words">{publishToUrl}</div>
                         }
                       >
                         <span className="w-full">{publishToUrl}</span>
@@ -295,7 +293,7 @@ export function HandlePublication({ publication }: Props) {
                   </>
                 )}
               </div>
-              <section className="px-5">
+              <section className="px-3 py-4 md:px-5">
                 <h2 className="my-4 flex items-center gap-2 text-sm">
                   {t('Target Audience Filters')}
 
@@ -348,7 +346,7 @@ export function HandlePublication({ publication }: Props) {
                 )}
               </section>
             </div>
-            <div className="overflow-y-auto bg-layer-2 px-5 py-4">
+            <div className="overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">
               {sections.map(
                 ({
                   dataQa,
@@ -377,7 +375,7 @@ export function HandlePublication({ publication }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 p-4">
+        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 px-3 py-4 md:px-4">
           <button
             className="text-accent-primary"
             onClick={handlePublicationReview}
