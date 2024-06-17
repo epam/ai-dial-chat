@@ -33,6 +33,7 @@ export const TEMPERATURE_TOOLTIP =
 
 export enum ModelId {
   GPT_4 = 'gpt-4',
+  GPT_4_turbo = 'gpt-4-turbo-2024-04-09',
   GPT_4_32K = 'gpt-4-32k',
   GPT_35 = 'gpt-35-turbo',
   GPT_4_vision = 'gpt-4-vision',
@@ -42,6 +43,7 @@ export enum ModelId {
 export const MODEL_ICON_SIZE = {
   large: {
     [ModelId.GPT_4]: 24,
+    [ModelId.GPT_4_turbo]: 24,
     [ModelId.GPT_4_32K]: 24,
     [ModelId.GPT_35]: 33.7,
     [ModelId.GPT_4_vision]: 33.5,
@@ -49,6 +51,7 @@ export const MODEL_ICON_SIZE = {
   },
   small: {
     [ModelId.GPT_4]: 18,
+    [ModelId.GPT_4_turbo]: 18,
     [ModelId.GPT_4_32K]: 18,
     [ModelId.GPT_35]: 25.28,
     [ModelId.GPT_4_vision]: 25.13,
