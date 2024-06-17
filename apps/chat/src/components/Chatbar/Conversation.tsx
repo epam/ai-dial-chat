@@ -136,9 +136,14 @@ export function ConversationView({
 interface Props {
   item: ConversationInfo;
   level?: number;
+  additionalItemData?: Record<string, unknown>;
 }
 
-export const ConversationComponent = ({ item: conversation, level }: Props) => {
+export const ConversationComponent = ({
+  item: conversation,
+  level,
+  additionalItemData,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -637,7 +642,11 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onShare={!isReplay ? handleOpenSharing : undefined}
             onUnshare={!isReplay ? handleUnshare : undefined}
             onPublish={!isReplay ? handleOpenPublishing : undefined}
-            onUnpublish={!isReplay ? handleOpenUnpublishing : undefined}
+            onUnpublish={
+              isReplay || additionalItemData?.isApproveRequiredResource
+                ? undefined
+                : handleOpenUnpublishing
+            }
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}

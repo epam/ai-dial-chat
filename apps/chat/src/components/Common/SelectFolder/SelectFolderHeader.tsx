@@ -27,11 +27,11 @@ export const SelectFolderHeader = ({
   return (
     <>
       {showSpinner ? (
-        <div className="flex min-h-[300px] items-center justify-center px-6 pb-4">
+        <div className="flex min-h-[300px] items-center justify-center px-3 pb-4 md:px-6">
           <Spinner />
         </div>
       ) : (
-        <div className="group/modal flex flex-col gap-2 overflow-auto px-6 pb-4">
+        <div className="group/modal flex flex-col gap-2 overflow-auto px-3 pb-4 md:px-6">
           <ErrorMessage error={errorMessage} />
           <input
             name="titleInput"

@@ -35,6 +35,7 @@ interface PublicationResources {
   rootFolder?: ShareEntity;
   showTooltip?: boolean;
   isOpen?: boolean;
+  additionalItemData?: Record<string, unknown>;
 }
 
 export const PromptPublicationResources = ({
@@ -43,6 +44,7 @@ export const PromptPublicationResources = ({
   rootFolder,
   showTooltip,
   isOpen = true,
+  additionalItemData,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -55,7 +57,7 @@ export const PromptPublicationResources = ({
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
-  const { isSelectedPublicationResource } = useAppSelector(
+  const { isSelectedPromptApproveRequiredResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
   );
 
@@ -98,7 +100,7 @@ export const PromptPublicationResources = ({
             }}
             featureType={FeatureType.Prompt}
             highlightedFolders={
-              !isSelectedPublicationResource || forViewOnly
+              !isSelectedPromptApproveRequiredResource || forViewOnly
                 ? undefined
                 : highlightedFolders
             }
@@ -106,8 +108,8 @@ export const PromptPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            additionalItemData={additionalItemData}
             showTooltip={showTooltip}
-            additionalItemData={{ isPublicationResource: true }}
           />
         );
       })}
@@ -124,7 +126,7 @@ export const PromptPublicationResources = ({
             key={p.id}
             item={p}
             level={1}
-            additionalItemData={{ isPublicationResource: true }}
+            additionalItemData={additionalItemData}
           />
         ),
       )}
@@ -138,6 +140,7 @@ export const ConversationPublicationResources = ({
   rootFolder,
   showTooltip,
   isOpen = true,
+  additionalItemData,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -198,6 +201,7 @@ export const ConversationPublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            additionalItemData={additionalItemData}
             showTooltip={showTooltip}
           />
         );
@@ -211,7 +215,12 @@ export const ConversationPublicationResources = ({
             level={0}
           />
         ) : (
-          <ConversationComponent key={c.id} item={c} level={1} />
+          <ConversationComponent
+            additionalItemData={additionalItemData}
+            key={c.id}
+            item={c}
+            level={1}
+          />
         ),
       )}
     </div>
@@ -224,6 +233,7 @@ export const FilePublicationResources = ({
   // TODO: get rid of uploaded files in https://github.com/epam/ai-dial-chat/issues/1502
   uploadedFiles,
   isOpen = true,
+  showTooltip,
 }: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
@@ -267,6 +277,7 @@ export const FilePublicationResources = ({
             itemComponentClassNames={classNames(
               forViewOnly && 'cursor-pointer',
             )}
+            showTooltip={showTooltip}
           />
         );
       })}
