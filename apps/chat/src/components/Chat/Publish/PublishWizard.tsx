@@ -197,15 +197,14 @@ export function PublishModal({
         (filter) =>
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
-      const preparedFilters =
-        rules && !notEmptyFilters.length
-          ? rules.map((rule) => ({
-              filterFunction: rule.function,
-              filterParams: rule.targets,
-              id: rule.source,
-              name: rule.source,
-            }))
-          : otherTargetAudienceFilters;
+      const preparedFilters = rules
+        ? rules.map((rule) => ({
+            filterFunction: rule.function,
+            filterParams: rule.targets,
+            id: rule.source,
+            name: rule.source,
+          }))
+        : notEmptyFilters;
       const folderRegExp = new RegExp(
         entity.folderId.split('/').slice(2).join('/'),
       );
