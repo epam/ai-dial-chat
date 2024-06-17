@@ -331,7 +331,7 @@ export function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal  inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
+        'publish-wizard-modal group/modal  inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -374,7 +374,9 @@ export function PublishModal({
                     >
                       {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
-                    <span className="text-tertiary-bg-light">{t('Change')}</span>
+                    <span className="text-tertiary-bg-light">
+                      {t('Change')}
+                    </span>
                   </div>
                 </button>
               </div>
@@ -396,7 +398,8 @@ export function PublishModal({
                     }
                   >
                     <HelpIcon width={18} height={18} />
-                </Tooltip>)}
+                  </Tooltip>
+                )}
               </h2>
 
               <PublishModalFilters

@@ -195,7 +195,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 inline-block w-full overflow-y-auto bg-layer-1 px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="prompt-modal flex flex-col gap-4 inline-block w-full overflow-y-auto bg-layer-1 px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
       hideClose
       state={
@@ -242,9 +242,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 name="promptName"
                 className={classNames(
                   inputClassName,
-                'm-0 rounded-primary border border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
-                isDotError &&
-                  'border-error hover:border-error focus:border-error',
+                  'm-0 rounded-primary border border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                  isDotError &&
+                    'border-error hover:border-error focus:border-error',
                 )}
                 placeholder={t('A name for your prompt.') || ''}
                 value={name}
@@ -275,20 +275,20 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 ref={descriptionInputRef}
                 name="description"
                 className={classNames(
-                inputClassName,
-                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
-              )}
-              style={{ resize: 'none' }}
-              placeholder={t('A description for your prompt.') || ''}
-              value={description}
-              onChange={descriptionOnChangeHandler}
-              rows={3}
-              data-qa="prompt-descr"
-            />
-          </div>
-          <div className="mb-5">
-            <label
-              className="mb-1 flex text-xs text-primary-bg-light"
+                  inputClassName,
+                  'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                )}
+                style={{ resize: 'none' }}
+                placeholder={t('A description for your prompt.') || ''}
+                value={description}
+                onChange={descriptionOnChangeHandler}
+                rows={3}
+                data-qa="prompt-descr"
+              />
+            </div>
+            <div className="mb-5">
+              <label
+                className="mb-1 flex text-xs text-primary-bg-light"
                 htmlFor="content"
               >
                 {t('Prompt')}
@@ -298,9 +298,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 ref={contentInputRef}
                 name="content"
                 className={classNames(
-                inputClassName,
-                'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
-              )}
+                  inputClassName,
+                  'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                )}
                 style={{ resize: 'none' }}
                 placeholder={
                   t(

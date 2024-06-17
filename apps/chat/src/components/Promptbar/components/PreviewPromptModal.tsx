@@ -57,7 +57,7 @@ export const PreviewPromptModal = ({
             }),
           );
         }}
-        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+        className="text-secondary flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-primary-alpha hover:text-accent-primary"
       >
         <IconFileArrowRight size={24} strokeWidth="1.5" />
       </button>
@@ -67,7 +67,7 @@ export const PreviewPromptModal = ({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-full overflow-y-auto py-4 md:p-0 align-bottom transition-all xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="preview-prompt-modal inline-block w-full overflow-y-auto py-4 md:p-0 align-bottom transition-all xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
       headingClassName="px-3 md:p-6"
       state={
@@ -125,7 +125,7 @@ export const PreviewPromptModal = ({
                     >
                       <button
                         onClick={onDelete}
-                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                        className="text-secondary flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-primary-alpha hover:text-accent-primary"
                       >
                         <IconTrashX size={24} strokeWidth="1.5" />
                       </button>
