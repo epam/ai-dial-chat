@@ -98,7 +98,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
         <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
           <CaretIconComponent isOpen={isOpen} />
           <IconClipboard
-            className="text-secondary-bg-light"
+            className="text-primary-bg-dark"
             width={18}
             height={18}
           />
