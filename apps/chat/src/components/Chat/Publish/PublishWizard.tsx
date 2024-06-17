@@ -72,7 +72,7 @@ function PublishModalFilters({
 
   if (!path || (rules && !rules.length)) {
     return (
-      <p>
+      <p className="text-secondary">
         {t(
           'This publication will be available to all users in the organization',
         )}
@@ -331,7 +331,7 @@ export function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal  inline-block h-[747px] min-w-full max-w-[1100px] !bg-layer-2 md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
+        'group/modal flex min-h-[579px] min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -339,7 +339,7 @@ export function PublishModal({
       onClose={onClose}
       initialFocus={nameInputRef}
     >
-      <div className="flex h-full flex-col divide-y divide-tertiary">
+      <div className="flex flex-col divide-y divide-tertiary overflow-y-auto">
         <h4 className="truncate px-3 py-4 pr-10 text-base font-semibold md:px-4">
           <span className="w-full text-center">
             <Tooltip
@@ -356,7 +356,7 @@ export function PublishModal({
           </span>
         </h4>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
-          <div className="flex w-full shrink grow flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
+          <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
               <div>
                 <label className="mb-4 flex text-sm" htmlFor="requestPath">
@@ -416,7 +416,7 @@ export function PublishModal({
             entities={entities}
             path={path}
             files={files}
-            containerClassNames="px-3 py-4 md:px-5"
+            containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
             publishAction={PublishActions.ADD}
           />
         </div>
