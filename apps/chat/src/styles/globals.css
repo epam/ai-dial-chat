@@ -110,7 +110,7 @@ pre:has(div.codeblock) {
   }
 
   .button.button-primary:disabled {
-    @apply text-controls-disable;
+    @apply text-controls-permanent;
   }
 
   .button.button-primary:not(:disabled) {

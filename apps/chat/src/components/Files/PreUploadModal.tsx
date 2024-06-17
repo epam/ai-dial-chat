@@ -358,7 +358,9 @@ export const PreUploadDialog = ({
             {t('Upload from device')}
           </h2>
         </div>
-        <p id={descriptionId} data-qa="supported-attributes">{t('Max file size up to 512 Mb.')}</p>
+        <p id={descriptionId} data-qa="supported-attributes">
+          {t('Max file size up to 512 Mb.')}
+        </p>
 
         <div>
           <ErrorMessage error={errorMessage} />
@@ -371,8 +373,8 @@ export const PreUploadDialog = ({
           <div className="flex flex-col gap-1">
             <div>
               <span className="text-xs text-tertiary-bg-light">
-              {t('Upload to')}
-            </span>
+                {t('Upload to')}
+              </span>
               <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
             </div>
             <button
@@ -382,7 +384,10 @@ export const PreUploadDialog = ({
               <span className="truncate">
                 {constructPath(t('All files'), folderPath)}
               </span>
-              <span className="text-tertiary-bg-light" data-qa="change-upload-to">
+              <span
+                className="text-tertiary-bg-light"
+                data-qa="change-upload-to"
+              >
                 {t('Change')}
               </span>
             </button>
@@ -392,8 +397,8 @@ export const PreUploadDialog = ({
             <div className="flex flex-col gap-1">
               <div>
                 <span className="text-xs text-tertiary-bg-light">
-                {t('Files')}
-              </span>
+                  {t('Files')}
+                </span>
                 <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
               </div>
               <div className="flex flex-col gap-3 overflow-auto text-sm">

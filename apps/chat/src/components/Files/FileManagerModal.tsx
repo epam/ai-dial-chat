@@ -590,7 +590,7 @@ export const FileManagerModal = ({
           {customButtonLabel && (
             <button
               onClick={handleAttachFiles}
-              className="button button-primary"
+              className="button button-primary disabled:cursor-not-allowed"
               disabled={
                 selectedFilesIds.length === 0 && selectedFolderIds.length === 0
               }

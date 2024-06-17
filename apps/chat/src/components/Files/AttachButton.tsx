@@ -145,7 +145,8 @@ export const AttachButton = ({
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
-          customButtonLabel={t('Attach') as string}
+          customButtonLabel={t('Attach files') as string}
+          customUploadButtonLabel={t('Upload and attach files') as string}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
@@ -160,6 +161,7 @@ export const AttachButton = ({
           initialFilesSelect
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onUploadFiles={onUploadFromDevice}
+          customUploadButtonLabel={t('Upload and attach files') as string}
           onClose={() => {
             setIsPreUploadDialogOpened(false);
           }}
