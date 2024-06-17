@@ -204,7 +204,7 @@ export function HandlePublication({ publication }: Props) {
     : '';
 
   return (
-    <div className="size-full flex-col items-center p-0 text-primary-bg-light md:px-5 md:pt-5">
+    <div className="flex size-full flex-col items-center p-0 text-primary-bg-light md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded-primary 2xl:max-w-[1000px]">
         <div className="flex w-full items-center justify-center rounded-t-primary bg-layer-2 p-4 shadow-primary">
           <h4
