@@ -218,7 +218,7 @@ export function HandlePublication({ publication }: Props) {
           </h4>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden bg-layer-1 [&:first-child]:rounded-t-primary">
-          <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
+          <div className="relative size-full gap-[1px] divide-x divide-secondary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
             <div className="flex shrink flex-col divide-y divide-secondary overflow-auto bg-layer-2 py-4">
               <div className="px-5">
                 {publication.resources[0].action !== PublishActions.DELETE ? (
