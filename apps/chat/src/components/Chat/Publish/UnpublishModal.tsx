@@ -90,7 +90,7 @@ export function UnpublishModal({
             {`${t('Unpublish')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <h5 className="text-secondary mb-4 mt-2 px-6">{subtitle}</h5>
+        <h5 className="mb-4 mt-2 px-6 text-secondary-bg-dark">{subtitle}</h5>
         <div className="flex h-full flex-col justify-between gap-4 divide-y divide-tertiary">
           <div className="max-h-[250px] overflow-scroll">
             <PublicationItemsList
