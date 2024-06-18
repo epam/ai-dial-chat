@@ -108,6 +108,8 @@ export const ExpectedConstants = {
     `Folder with name "${name}" already exists at the root.`,
   duplicatedConversationNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists in this folder.`,
+  duplicatedPromptNameErrorMessage: (name: string) =>
+    `Prompt with name "${name}" already exists in this folder`,
   duplicatedConversationRootNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists at the root.`,
   prohibitedNameSymbols: `=,:;{}/%&`,

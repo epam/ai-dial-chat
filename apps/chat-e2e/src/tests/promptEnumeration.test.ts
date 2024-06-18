@@ -7,7 +7,9 @@ import {
 import { expect } from '@playwright/test';
 
 dialTest.only(
-  'Default prompt numeration, renamed and deleted prompts are not counted',
+  'Default prompt numeration, renamed and deleted prompts are not counted\n' +
+    'Numeration Continues after 999\n' +
+    'Error message is shown if to rename prompt manually to already existed prompt name when prompts are located in root',
   async ({
     dialHomePage,
     prompts,
@@ -15,6 +17,7 @@ dialTest.only(
     promptDropdownMenu,
     promptModalDialog,
     confirmationDialog,
+    errorToast,
     setTestIds,
   }) => {
     setTestIds(
@@ -22,6 +25,7 @@ dialTest.only(
       'EPMRTC-1620',
       'EPMRTC-1566',
       'EPMRTC-2983',
+      'EPMRTC-2986',
     );
     const promptValue = 'That is just a test prompt';
     const renamedPrompt = 'renamed ';
@@ -171,6 +175,38 @@ dialTest.only(
             )
             .toBeVisible();
         }
+      },
+    );
+
+    await dialTest.step(
+      'Try to rename prompt to already existing name and verify error message is shown',
+      async () => {
+        // Rename Prompt 1000 to "Prompt 999"
+        await prompts.openPromptDropdownMenu(
+          ExpectedConstants.newPromptTitle(1000),
+        );
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.setField(
+          promptModalDialog.name,
+          ExpectedConstants.newPromptTitle(999),
+        );
+        await promptModalDialog.saveButton.click();
+
+        // Check for error message
+        await expect
+          .soft(
+            errorToast.getElementLocator(),
+            ExpectedMessages.errorToastIsShown,
+          )
+          .toBeVisible();
+        const errorMessage = await errorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
+          .toBe(
+            ExpectedConstants.duplicatedPromptNameErrorMessage(
+              ExpectedConstants.newPromptTitle(999),
+            ),
+          );
       },
     );
   },
