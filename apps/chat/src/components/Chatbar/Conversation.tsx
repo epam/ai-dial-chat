@@ -99,8 +99,10 @@ export function ConversationView({
       <div
         className={classNames(
           'relative size-[18px]',
-          isSelectMode && 'shrink-0 group-hover/conversation-item:flex',
-          isSelectMode && isChosen ? 'flex' : 'hidden',
+          isSelectMode &&
+            !isExternal &&
+            'shrink-0 group-hover/conversation-item:flex',
+          isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
         )}
       >
         <input
@@ -120,8 +122,8 @@ export function ConversationView({
         featureType={FeatureType.Chat}
         isInvalid={isInvalid}
         containerClassName={classNames(
-          isSelectMode && 'group-hover/conversation-item:hidden',
-          isChosen && 'hidden',
+          isSelectMode && !isExternal && 'group-hover/conversation-item:hidden',
+          isChosen && !isExternal && 'hidden',
         )}
       >
         {conversation.isReplay && (
@@ -578,9 +580,10 @@ export const ConversationComponent = ({
     <div
       className={classNames(
         'group/conversation-item relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
-        isHighlighted
-          ? 'border-l-accent-primary bg-accent-primary-alpha'
+        !isSelectMode && isHighlighted
+          ? 'border-l-accent-primary'
           : 'border-l-transparent',
+        isHighlighted && 'bg-accent-primary-alpha',
         { 'bg-accent-primary-alpha': isContextMenu },
         isNameOrPathInvalid && !isRenaming && 'text-secondary',
       )}
@@ -646,17 +649,19 @@ export const ConversationComponent = ({
           onClick={() => {
             setIsDeleting(false);
             setIsRenaming(false);
-            dispatch(
-              !isSelectMode
-                ? ConversationsActions.selectConversations({
-                    conversationIds: [conversation.id],
-                  })
-                : ConversationsActions.toggleChosenConversation(
-                    conversation.id,
-                  ),
-            );
+            if (!isSelectMode || !isExternal) {
+              dispatch(
+                !isSelectMode
+                  ? ConversationsActions.selectConversations({
+                      conversationIds: [conversation.id],
+                    })
+                  : ConversationsActions.toggleChosenConversation(
+                      conversation.id,
+                    ),
+              );
+            }
           }}
-          disabled={messageIsStreaming}
+          disabled={messageIsStreaming || (isSelectMode && isExternal)}
           draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
