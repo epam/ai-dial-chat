@@ -15,8 +15,10 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
+let modelsWithoutAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  modelsWithoutAttachments = ModelsUtil.getModelsWithoutAttachment();
 });
 
 dialTest(
@@ -510,6 +512,75 @@ dialTest(
               Attachment.dotExtensionImageName.toLowerCase(),
             ),
             ExpectedMessages.fileIsUploaded,
+          )
+          .toBeVisible();
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Manage attachments] Any type file is uploaded in Manage Attachments without any dependency on model set in chat',
+  async ({
+    dialHomePage,
+    chatBar,
+    setTestIds,
+    attachFilesModal,
+    uploadFromDeviceModal,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+  }) => {
+    setTestIds('EPMRTC-1614');
+    const modelWithAttachmentExtensions = modelsWithAttachments.find(
+      (m) => m.inputAttachmentTypes![0] !== '*/*',
+    );
+    const conversationModel = GeneratorUtil.randomArrayElement([
+      modelWithAttachmentExtensions,
+      ...modelsWithoutAttachments,
+    ]);
+    let conversation: Conversation;
+
+    await dialTest.step(
+      'Create conversation with model that do not allow input attachments or have limited attachment extensions',
+      async () => {
+        conversation =
+          conversationData.prepareDefaultConversation(conversationModel);
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setSelectedConversation(conversation);
+      },
+    );
+
+    await dialTest.step(
+      'Open "Manage attachments" modal and verify "Supported types" label has "all" value',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.bottomDotsMenuIcon.click();
+        await chatBar
+          .getBottomDropdownMenu()
+          .selectMenuOption(MenuOptions.attachments);
+        expect
+          .soft(
+            await attachFilesModal.getModalHeader().getSupportedTypes(),
+            ExpectedMessages.supportedTypesLabelIsCorrect,
+          )
+          .toBe(Attachment.allTypesLabel);
+      },
+    );
+
+    await dialTest.step(
+      'Upload a new file and verify it is displayed on "Manage attachments" modal',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.cloudImageName, dataType: 'upload' },
+          () => attachFilesModal.uploadFromDeviceButton.click(),
+        );
+        await uploadFromDeviceModal.uploadFiles();
+        await expect
+          .soft(
+            await attachFilesModal.attachedFile(Attachment.cloudImageName),
+            ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();
       },

@@ -39,7 +39,15 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public changeUploadToButton = this.getChildElementBySelector(
+  public uploadToButton = this.getChildElementBySelector(
+    UploadFromDeviceModalSelectors.uploadTo,
+  );
+
+  public uploadToPath = this.uploadToButton.getChildElementBySelector(
+    UploadFromDeviceModalSelectors.uploadToPath,
+  );
+
+  public changeUploadToButton = this.uploadToButton.getChildElementBySelector(
     UploadFromDeviceModalSelectors.changeUploadTo,
   );
 

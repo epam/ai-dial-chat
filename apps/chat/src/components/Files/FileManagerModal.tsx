@@ -485,7 +485,10 @@ export const FileManagerModal = ({
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
-            <div className="flex min-h-[350px] flex-col overflow-auto">
+            <div
+              className="flex min-h-[350px] flex-col overflow-auto"
+              data-qa="all-files"
+            >
               <button
                 className={classNames(
                   'flex items-center gap-1 rounded py-1 text-xs ',
@@ -616,6 +619,7 @@ export const FileManagerModal = ({
             <button
               onClick={handleNewFolder}
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              data-qa="new-folder"
             >
               <FolderPlus height={24} width={24} />
             </button>
