@@ -79,23 +79,23 @@ export function UnpublishModal({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="h-full py-4 align-bottom transition-all !max-h-[434px] sm:w-[424px] w-full"
+      containerClassName="py-4 align-bottom transition-all !max-h-[454px] sm:w-[424px] w-full"
       dataQa="unpublish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
     >
       <div className="flex h-full flex-col">
-        <h4 className="px-6 text-base font-semibold">
+        <h4 className="px-3 text-base font-semibold md:px-6">
           <span className="line-clamp-2 break-words">
             {`${t('Unpublish')}: ${entity.name.trim()}`}
           </span>
         </h4>
-        <h5 className="mb-4 mt-2 px-6 text-secondary">{subtitle}</h5>
+        <h5 className="mb-4 mt-2 px-3 text-secondary md:px-6">{subtitle}</h5>
         <div className="flex h-full flex-col justify-between gap-4 divide-y divide-tertiary">
           <div className="max-h-[250px] overflow-scroll">
             <PublicationItemsList
               collapsibleSectionClassNames="!px-0"
-              containerClassNames="px-6"
+              containerClassNames="px-3 md:px-6"
               type={type}
               entity={entity}
               entities={entities}
@@ -104,7 +104,7 @@ export function UnpublishModal({
               publishAction={PublishActions.DELETE}
             />
           </div>
-          <div className="flex justify-end gap-3 px-6 pt-4">
+          <div className="flex justify-end gap-3 px-3 pt-4 md:px-6">
             <button
               className="button button-secondary"
               onClick={handleClose}

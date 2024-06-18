@@ -7,6 +7,7 @@ import {
   IconSelectors,
   MenuSelectors,
   SelectFolderModalSelectors,
+  SideBarSelectors,
 } from '@/src/ui/selectors';
 import { FileSelectors } from '@/src/ui/selectors/fileSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';

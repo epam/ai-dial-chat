@@ -246,8 +246,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, []);
 
   const allChildItems = useMemo(() => {
+    const folderPath = `${currentFolder.id}/`;
     return sortByName(
-      allItems?.filter((item) => item.id.startsWith(currentFolder.id)) || [],
+      allItems?.filter((item) => item.id.startsWith(folderPath)) || [],
     );
   }, [allItems, currentFolder.id]);
 
