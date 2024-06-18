@@ -4,11 +4,13 @@ import { Tags } from '@/src/ui/domData';
 import {
   AttachFilesModalSelectors,
   ErrorLabelSelectors,
+  SelectFolderModalSelectors,
   SideBarSelectors,
 } from '@/src/ui/selectors';
 import { FileSelectors } from '@/src/ui/selectors/fileSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { FolderFiles } from '@/src/ui/webElements/folderFiles';
 import { Page } from '@playwright/test';
 
 export class AttachFilesModal extends BaseElement {
@@ -18,6 +20,7 @@ export class AttachFilesModal extends BaseElement {
 
   private fileDropdownMenu!: DropdownMenu;
   private modalHeader!: FilesModalHeader;
+  private folderFiles!: FolderFiles;
 
   getFileDropdownMenu(): DropdownMenu {
     if (!this.fileDropdownMenu) {
@@ -31,6 +34,13 @@ export class AttachFilesModal extends BaseElement {
       this.modalHeader = new FilesModalHeader(this.page, this.rootLocator);
     }
     return this.modalHeader;
+  }
+
+  getFolderFiles(): FolderFiles {
+    if (!this.folderFiles) {
+      this.folderFiles = new FolderFiles(this.page, this.rootLocator);
+    }
+    return this.folderFiles;
   }
 
   public attachedFiles = this.getChildElementBySelector(
@@ -85,6 +95,10 @@ export class AttachFilesModal extends BaseElement {
 
   public downloadFilesButton = this.getChildElementBySelector(
     AttachFilesModalSelectors.downloadFilesButton,
+  );
+
+  public newFolderButton = this.getChildElementBySelector(
+    SelectFolderModalSelectors.newFolderButton,
   );
 
   public async checkAttachedFile(filename: string) {

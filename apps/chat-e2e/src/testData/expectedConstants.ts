@@ -12,6 +12,8 @@ export const ExpectedConstants = {
   newFolderTitle: 'New folder',
   newFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  newPromptFolderWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newFolderTitle} ${index}`,
   emptyString: '',
   defaultTemperature: '1',
   signInButtonTitle: 'Sign in with Credentials',
@@ -124,6 +126,7 @@ export const ExpectedConstants = {
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
+  allFilesRoot: 'All files',
 };
 
 export enum Groups {
@@ -153,6 +156,7 @@ export enum MenuOptions {
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
+  upload = 'Upload',
 }
 
 export enum FilterMenuOptions {
@@ -252,7 +256,6 @@ export enum ModelIds {
   GPT_3_5_TURBO_16K = 'gpt-35-turbo-16k',
   GPT_3_5_TURBO_0125 = 'gpt-35-turbo-0125',
   GPT_4 = 'gpt-4',
-  GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
   GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',

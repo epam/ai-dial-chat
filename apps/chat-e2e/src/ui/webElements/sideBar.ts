@@ -130,7 +130,7 @@ export class SideBar extends BaseElement {
       .boundingBox();
     await this.page.mouse.move(
       draggableBounding!.x + draggableBounding!.width / 2,
-      draggableBounding!.y + draggableBounding!.height / 2,
+      draggableBounding!.y,
     );
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(

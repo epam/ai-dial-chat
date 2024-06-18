@@ -272,4 +272,7 @@ export enum ExpectedMessages {
   folderBackgroundColorIsValid = 'Folder background color is valid',
   folderTextColorIsValid = 'Folder text color is valid',
   selectFolderAreaIsScrollable = 'Select folder area is scrollable vertically',
+  borderColorsAreValid = 'Element border colors are valid',
+  uploadToPathIsValid = 'Upload to path is valid',
+  uploadToPathIsTruncated = 'Upload to path is truncated',
 }
