@@ -38,6 +38,7 @@ const initialState: PromptsState = {
   isPromptLoading: false,
   loadingFolderIds: [],
   isNewPromptCreating: false,
+  chosenPromptIds: [],
 };
 
 export const promptsSlice = createSlice({
@@ -392,6 +393,27 @@ export const promptsSlice = createSlice({
         })),
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
+    },
+    toggleChosenPrompt: (
+      state,
+      { payload: conversationId }: PayloadAction<string>,
+    ) => {
+      if (state.chosenPromptIds.includes(conversationId)) {
+        state.chosenPromptIds = state.chosenPromptIds.filter(
+          (id: string) => id !== conversationId,
+        );
+      } else {
+        state.chosenPromptIds = [...state.chosenPromptIds, conversationId];
+      }
+    },
+    resetChosenPromptIds: (state) => {
+      state.chosenPromptIds = [];
+    },
+    setChosenPromptIds: (state, { payload }: PayloadAction<string[]>) => {
+      state.chosenPromptIds = payload;
+    },
+    setAllChosenPromptIds: (state) => {
+      state.chosenPromptIds = state.prompts.map(({ id }) => id);
     },
   },
 });
