@@ -301,7 +301,7 @@ export class Folders extends BaseElement {
     folderName: string,
     entityName: string,
   ) {
-    const folderEntity = await this.getFolderEntity(folderName, entityName);
+    const folderEntity = this.getFolderEntity(folderName, entityName);
     await folderEntity.waitFor({
       state: 'attached',
     });
@@ -324,5 +324,17 @@ export class Folders extends BaseElement {
     return this.getFolderEntity(folderName, entityName, index).locator(
       SideBarSelectors.arrowAdditionalIcon,
     );
+  }
+
+  public async getFolderEntityArrowIconColor(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntityArrowIcon(folderName, entityName, index),
+    )
+      .getChildElementBySelector(Tags.svg)
+      .getComputedStyleProperty(Styles.color);
   }
 }

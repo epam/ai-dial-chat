@@ -200,16 +200,12 @@ dialTest(
           .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedDefaultModelIcon);
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -266,16 +262,12 @@ dialTest(
           .soft(headerIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedSecondModelIcon);
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -330,16 +322,12 @@ dialTest(
           .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedDefaultModelIcon);
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -393,16 +381,12 @@ dialTest(
           )
           .toBeFalsy();
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
   },

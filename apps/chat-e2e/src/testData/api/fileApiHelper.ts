@@ -88,6 +88,8 @@ export class FileApiHelper extends BaseApiHelper {
         return 'image/gif';
       case 'webp':
         return 'image/webp';
+      case 'json':
+        return 'application/vnd.plotly.v1+json';
       default:
         return 'text/plain';
     }

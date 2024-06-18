@@ -7,11 +7,14 @@ import {
   ChatMessages,
   Compare,
   ConfirmationDialog,
+  ConversationSettings,
   ConversationToCompare,
   Conversations,
   DropdownMenu,
+  EntitySelector,
   ErrorToast,
   ModelSelector,
+  RecentEntities,
 } from '../ui/webElements';
 
 import config from '@/config/playwright.config';
@@ -34,6 +37,9 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedWithMeConversations: SharedWithMeConversations;
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
   additionalShareUserChat: Chat;
+  additionalShareUserConversationSettings: ConversationSettings;
+  additionalShareUserTalkToSelector: EntitySelector;
+  additionalShareUserRecentEntities: RecentEntities;
   additionalShareUserChatHeader: ChatHeader;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserChatInfoTooltip: ChatInfoTooltip;
@@ -134,6 +140,30 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserCompareConversationSelector =
       additionalShareUserCompareConversation.getConversationSelector();
     await use(additionalShareUserCompareConversationSelector);
+  },
+  additionalShareUserConversationSettings: async (
+    { additionalShareUserChat },
+    use,
+  ) => {
+    const additionalShareUserConversationSettings =
+      additionalShareUserChat.getConversationSettings();
+    await use(additionalShareUserConversationSettings);
+  },
+  additionalShareUserTalkToSelector: async (
+    { additionalShareUserConversationSettings },
+    use,
+  ) => {
+    const additionalShareUserTalkToSelector =
+      additionalShareUserConversationSettings.getTalkToSelector();
+    await use(additionalShareUserTalkToSelector);
+  },
+  additionalShareUserRecentEntities: async (
+    { additionalShareUserTalkToSelector },
+    use,
+  ) => {
+    const additionalShareUserRecentEntities =
+      additionalShareUserTalkToSelector.getRecentEntities();
+    await use(additionalShareUserRecentEntities);
   },
   additionalShareUserChatHeader: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatHeader =
