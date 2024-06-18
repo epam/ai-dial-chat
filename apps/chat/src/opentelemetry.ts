@@ -1,6 +1,8 @@
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import pkg from '../../../package.json';
 
+import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api';
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
@@ -10,6 +12,9 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SpanExporter } from '@opentelemetry/sdk-trace-base';
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
+// For troubleshooting, set the log level to DiagLogLevel.DEBUG
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
 const exporter = new PrometheusExporter({
   port: 9464,
@@ -34,7 +39,11 @@ const sdk = new NodeSDK({
       [SemanticResourceAttributes.SERVICE_VERSION]: pkg.version,
     }),
   ),
-  instrumentations: [new HttpInstrumentation(), new PinoInstrumentation()],
+  instrumentations: [
+    new HttpInstrumentation(),
+    new PinoInstrumentation(),
+    getNodeAutoInstrumentations(),
+  ],
   spanProcessor,
 });
 sdk.start();
