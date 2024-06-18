@@ -1,3 +1,4 @@
+import { API } from '@/src/testData';
 import {
   ErrorLabelSelectors,
   IconSelectors,
@@ -16,6 +17,10 @@ export class SelectFolderModal extends BaseElement {
 
   public allFoldersSection = this.getChildElementBySelector(
     SelectFolderModalSelectors.allFolders,
+  );
+
+  public allFilesRoot = this.getChildElementBySelector(
+    SelectFolderModalSelectors.uploadRootFolder,
   );
 
   public selectFolderErrorText = this.getChildElementBySelector(
@@ -42,4 +47,20 @@ export class SelectFolderModal extends BaseElement {
   public selectFolderButton = this.getChildElementBySelector(
     SelectFolderModalSelectors.selectFolderButton,
   );
+
+  public async selectFolder(folderName: string) {
+    const respPremise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.listingHost),
+    );
+    await this.getUploadFolder().getFolderName(folderName).click();
+    await respPremise;
+  }
+
+  public async selectRootFolder() {
+    const respPremise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.listingHost),
+    );
+    await this.allFilesRoot.click();
+    await respPremise;
+  }
 }

@@ -13,7 +13,9 @@ dialTest(
   '[Select folder] Create new folder on the root level.\n' +
     '[Select folder] Rename new folder just after its creation on Enter.\n' +
     '[Select folder] Allowed special characters.\n' +
-    '[Select folder] Spaces in the middle of folder name stay',
+    '[Select folder] Spaces in the middle of folder name stay.\n' +
+    '[Upload from device] Change upload to folder with long name which is cut at the end with three dots.\n' +
+    '[Upload from device] Change upload to root folder',
   async ({
     dialHomePage,
     setTestIds,
@@ -23,7 +25,14 @@ dialTest(
     selectFolderModal,
     selectUploadFolder,
   }) => {
-    setTestIds('EPMRTC-3253', 'EPMRTC-3268', 'EPMRTC-3247', 'EPMRTC-3250');
+    setTestIds(
+      'EPMRTC-3253',
+      'EPMRTC-3268',
+      'EPMRTC-3247',
+      'EPMRTC-3250',
+      'EPMRTC-3237',
+      'EPMRTC-3238',
+    );
     const updatedFolderName = 'New folder 1    (`~!@#$^*-_+[]\'|<>.?")';
 
     await dialTest.step(
@@ -80,6 +89,53 @@ dialTest(
             ExpectedMessages.folderIsVisible,
           )
           .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Select created folder and verify correct path is displayed in "Upload to" field, the field is highlighted and has text_overflow=ellipsis property',
+      async () => {
+        await selectFolderModal.selectFolder(updatedFolderName);
+        await selectFolderModal.selectFolderButton.click();
+
+        const uploadToBordersColor =
+          await uploadFromDeviceModal.uploadToButton.getAllBorderColors();
+        Object.values(uploadToBordersColor).forEach((borders) => {
+          borders.forEach((borderColor) => {
+            expect
+              .soft(borderColor, ExpectedMessages.borderColorsAreValid)
+              .toBe(Colors.controlsBackgroundAccent);
+          });
+        });
+        expect
+          .soft(
+            await uploadFromDeviceModal.uploadToPath.getElementContent(),
+            ExpectedMessages.uploadToPathIsValid,
+          )
+          .toBe(`${ExpectedConstants.allFilesRoot}/${updatedFolderName}`);
+
+        const uploadPathOverflow =
+          await uploadFromDeviceModal.uploadToPath.getComputedStyleProperty(
+            Styles.text_overflow,
+          );
+        expect
+          .soft(uploadPathOverflow[0], ExpectedMessages.uploadToPathIsTruncated)
+          .toBe(Overflow.ellipsis);
+      },
+    );
+
+    await dialTest.step(
+      'Click on Change link, select "All files" and verify root is displayed in "Upload to" field',
+      async () => {
+        await uploadFromDeviceModal.changeUploadToLocation();
+        await selectFolderModal.selectRootFolder();
+        await selectFolderModal.selectFolderButton.click();
+        expect
+          .soft(
+            await uploadFromDeviceModal.uploadToPath.getElementContent(),
+            ExpectedMessages.uploadToPathIsValid,
+          )
+          .toBe(ExpectedConstants.allFilesRoot);
       },
     );
   },
