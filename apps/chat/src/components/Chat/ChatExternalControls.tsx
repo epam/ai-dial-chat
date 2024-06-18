@@ -8,14 +8,26 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
+import { ScrollDownButton } from '../Common/ScrollDownButton';
 
 interface Props {
   conversations: ConversationInfo[];
+  showScrollDownButton: boolean;
+  onScrollDownClick: () => void;
 }
 
-export default function ChatExternalControls({ conversations }: Props) {
+export default function ChatExternalControls({
+  conversations,
+  showScrollDownButton,
+  onScrollDownClick,
+}: Props) {
   const { t } = useTranslation(Translation.Chat);
+  const approveRequiredResources = useAppSelector(
+    PublicationSelectors.selectResourceToReview,
+  );
 
   const dispatch = useAppDispatch();
 
@@ -29,19 +41,35 @@ export default function ChatExternalControls({ conversations }: Props) {
     });
   }, [conversations, dispatch]);
 
-  if (isOverlayConversationId) {
+  if (
+    isOverlayConversationId ||
+    conversations.some((c) =>
+      approveRequiredResources.some((r) => r.reviewUrl === c.id),
+    )
+  ) {
     return null;
   }
+
   return (
-    <button
-      className="button button-chat !-top-10"
-      onClick={handleDuplicate}
-      data-qa="duplicate"
-    >
-      <span className="text-secondary">
-        <IconCopy width={18} height={18} />
-      </span>
-      {t('Duplicate the conversation to be able to edit it')}
-    </button>
+    <div className="flex justify-center">
+      <div className="relative flex items-center justify-center">
+        <button
+          className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center gap-3 border-primary bg-layer-2 p-3 hover:bg-layer-4"
+          onClick={handleDuplicate}
+          data-qa="duplicate"
+        >
+          <span className="text-secondary">
+            <IconCopy width={18} height={18} />
+          </span>
+          {t('Duplicate the conversation to be able to edit it')}
+        </button>
+        {showScrollDownButton && (
+          <ScrollDownButton
+            className="-right-16"
+            onScrollDownClick={onScrollDownClick}
+          />
+        )}
+      </div>
+    </div>
   );
 }

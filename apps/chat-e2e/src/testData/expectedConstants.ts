@@ -126,6 +126,7 @@ export const ExpectedConstants = {
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
+  allFilesRoot: 'All files',
 };
 
 export enum Groups {
@@ -155,6 +156,7 @@ export enum MenuOptions {
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
+  upload = 'Upload',
 }
 
 export enum FilterMenuOptions {

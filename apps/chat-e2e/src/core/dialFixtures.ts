@@ -48,6 +48,7 @@ import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
+import { FolderFiles } from '@/src/ui/webElements/folderFiles';
 import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
 import { GroupEntity } from '@/src/ui/webElements/groupEntity';
 import { Header } from '@/src/ui/webElements/header';
@@ -167,6 +168,7 @@ const dialTest = test.extend<
     uploadFromDeviceModal: UploadFromDeviceModal;
     selectFolderModal: SelectFolderModal;
     selectUploadFolder: Folders;
+    attachedAllFiles: FolderFiles;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -576,6 +578,10 @@ const dialTest = test.extend<
   selectUploadFolder: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getUploadFolder();
     await use(selectUploadFolder);
+  },
+  attachedAllFiles: async ({ attachFilesModal }, use) => {
+    const attachedAllFiles = attachFilesModal.getFolderFiles();
+    await use(attachedAllFiles);
   },
 });
 
