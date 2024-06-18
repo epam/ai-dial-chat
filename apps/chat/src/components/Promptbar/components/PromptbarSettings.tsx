@@ -92,11 +92,11 @@ export function PromptbarSettings() {
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t('Confirm clearing all prompts')}
+        heading={t('Confirm deleting all prompts')}
         description={
           t('Are you sure that you want to delete all prompts?') || ''
         }
-        confirmLabel={t('Clear')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           setIsClearModalOpen(false);

@@ -96,57 +96,55 @@ export function ConversationView({
 
   return (
     <>
-      <div className="group/conversation-item">
-        <div
-          className={classNames(
-            'relative size-[18px]',
-            isSelectMode && 'shrink-0 group-hover/conversation-item:flex',
-            isSelectMode && isChosen ? 'flex' : 'hidden',
-          )}
-        >
-          <input
-            className="checkbox peer size-[18px] bg-layer-3"
-            type="checkbox"
-            checked={isChosen}
-            onChange={handleToggle}
-          />
-          <IconCheck
-            size={18}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
-        </div>
-        <ShareIcon
-          {...conversation}
-          isHighlighted={isHighlited}
-          featureType={FeatureType.Chat}
-          isInvalid={isInvalid}
-          containerClassName={classNames(
-            isSelectMode && 'group-hover/conversation-item:hidden',
-            isChosen && 'hidden',
-          )}
-        >
-          {conversation.isReplay && (
-            <span className="flex shrink-0">
-              <ReplayAsIsIcon size={18} />
-            </span>
-          )}
-
-          {conversation.isPlayback && (
-            <span className="flex shrink-0">
-              <PlaybackIcon size={18} />
-            </span>
-          )}
-
-          {!conversation.isReplay && !conversation.isPlayback && (
-            <ModelIcon
-              size={18}
-              entityId={conversation.model.id}
-              entity={modelsMap[conversation.model.id]}
-              isInvalid={isInvalid}
-            />
-          )}
-        </ShareIcon>
+      <div
+        className={classNames(
+          'relative size-[18px]',
+          isSelectMode && 'shrink-0 group-hover/conversation-item:flex',
+          isSelectMode && isChosen ? 'flex' : 'hidden',
+        )}
+      >
+        <input
+          className="checkbox peer size-[18px] bg-layer-3"
+          type="checkbox"
+          checked={isChosen}
+          onChange={handleToggle}
+        />
+        <IconCheck
+          size={18}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
       </div>
+      <ShareIcon
+        {...conversation}
+        isHighlighted={isHighlited}
+        featureType={FeatureType.Chat}
+        isInvalid={isInvalid}
+        containerClassName={classNames(
+          isSelectMode && 'group-hover/conversation-item:hidden',
+          isChosen && 'hidden',
+        )}
+      >
+        {conversation.isReplay && (
+          <span className="flex shrink-0">
+            <ReplayAsIsIcon size={18} />
+          </span>
+        )}
+
+        {conversation.isPlayback && (
+          <span className="flex shrink-0">
+            <PlaybackIcon size={18} />
+          </span>
+        )}
+
+        {!conversation.isReplay && !conversation.isPlayback && (
+          <ModelIcon
+            size={18}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
+            isInvalid={isInvalid}
+          />
+        )}
+      </ShareIcon>
       <div
         className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         data-qa="conversation-name"
@@ -579,7 +577,7 @@ export const ConversationComponent = ({
   return (
     <div
       className={classNames(
-        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
+        'group/conversation-item relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
         isHighlighted
           ? 'border-l-accent-primary bg-accent-primary-alpha'
           : 'border-l-transparent',
@@ -640,8 +638,10 @@ export const ConversationComponent = ({
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed',
-            isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
+            'group/conversation-item flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed',
+            isSelectMode
+              ? 'pr-0'
+              : '[&:not(:disabled)]:group-hover/conversation-item:pr-6',
           )}
           onClick={() => {
             setIsDeleting(false);
@@ -677,7 +677,7 @@ export const ConversationComponent = ({
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
+            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover/conversation-item:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
           )}

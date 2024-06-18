@@ -89,6 +89,8 @@ export const ChatbarSettings = () => {
     [dispatch],
   );
 
+  const deleteTerm = isSelectMode ? 'selected' : 'all';
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -106,15 +108,6 @@ export const ChatbarSettings = () => {
         Icon: IconSquareOff,
         onClick: () => {
           dispatch(ConversationsActions.resetChosenConversationIds());
-        },
-        display: isSelectMode,
-      },
-      {
-        name: t('Delete selected'),
-        dataQa: 'delete',
-        Icon: IconTrashX,
-        onClick: () => {
-          //TODO
         },
         display: isSelectMode,
       },
@@ -159,8 +152,8 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: t('Delete all conversations'),
-        display: isMyItemsExist && !isSelectMode,
+        name: t(`Delete ${deleteTerm} conversations`),
+        display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -193,6 +186,7 @@ export const ChatbarSettings = () => {
       t,
       isSelectMode,
       isMyItemsExist,
+      deleteTerm,
       isStreaming,
       isActiveNewConversationRequest,
       enabledFeatures,
@@ -223,16 +217,22 @@ export const ChatbarSettings = () => {
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t('Confirm clearing all conversations')}
+        heading={t(`Confirm deleting ${deleteTerm} conversations`)}
         description={
-          t('Are you sure that you want to delete all conversations?') || ''
+          t(
+            `Are you sure that you want to delete ${deleteTerm} conversations?`,
+          ) || ''
         }
-        confirmLabel={t('Clear')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {
-            dispatch(ConversationsActions.clearConversations());
+            if (!isSelectMode) {
+              dispatch(ConversationsActions.clearConversations());
+            } else {
+              // TODO
+            }
           }
         }}
       />
