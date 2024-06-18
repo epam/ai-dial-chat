@@ -54,6 +54,7 @@ const initialState: ConversationsState = {
   isMessageSending: false,
   loadedCustomAttachmentsData: [],
   customAttachmentDataLoading: false,
+  chosenConversationIds: [],
 };
 
 export const conversationsSlice = createSlice({
@@ -741,6 +742,30 @@ export const conversationsSlice = createSlice({
         state.conversations,
         payload.conversations,
       );
+    },
+    toggleChosenConversation: (
+      state,
+      { payload: conversationId }: PayloadAction<string>,
+    ) => {
+      if (state.chosenConversationIds.includes(conversationId)) {
+        state.chosenConversationIds = state.chosenConversationIds.filter(
+          (id: string) => id !== conversationId,
+        );
+      } else {
+        state.chosenConversationIds = [
+          ...state.chosenConversationIds,
+          conversationId,
+        ];
+      }
+    },
+    resetChosenConversationIds: (state) => {
+      state.chosenConversationIds = [];
+    },
+    setChosenConversationIds: (state, { payload }: PayloadAction<string[]>) => {
+      state.chosenConversationIds = payload;
+    },
+    setAllChosenConversationIds: (state) => {
+      state.chosenConversationIds = state.conversations.map(({ id }) => id);
     },
   },
 });

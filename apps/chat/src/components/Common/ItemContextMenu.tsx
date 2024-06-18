@@ -9,6 +9,7 @@ import {
   IconPlayerPlay,
   IconRefreshDot,
   IconScale,
+  IconSquareCheck,
   IconTrashX,
   IconUserShare,
   IconUserX,
@@ -63,6 +64,7 @@ interface ItemContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
+  onSelect: MouseEventHandler<unknown>;
   isLoading?: boolean;
 }
 
@@ -90,6 +92,7 @@ export default function ItemContextMenu({
   onDuplicate,
   onView,
   isLoading,
+  onSelect,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -108,6 +111,14 @@ export default function ItemContextMenu({
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Select'),
+        display: !isExternal,
+        dataQa: 'select',
+        Icon: IconSquareCheck,
+        onClick: onSelect,
+        disabled: disableAll,
+      },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
         display: !isExternal,
@@ -325,6 +336,7 @@ export default function ItemContextMenu({
       onPublish,
       onRename,
       onReplay,
+      onSelect,
       onShare,
       onUnpublish,
       onUnshare,

@@ -30,4 +30,5 @@ export interface ConversationsState {
   compareLoading?: boolean;
   loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[];
   customAttachmentDataLoading: boolean;
+  chosenConversationIds: string[];
 }

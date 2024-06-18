@@ -731,3 +731,14 @@ export const selectCustomAttachmentData = createSelector(
       : undefined;
   },
 );
+
+export const selectIsSelectMode = createSelector([rootSelector], (state) => {
+  return state.chosenConversationIds.length > 0;
+});
+
+export const selectChosenConversationIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.chosenConversationIds;
+  },
+);

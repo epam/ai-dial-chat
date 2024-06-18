@@ -304,6 +304,14 @@ export const PromptComponent = ({
     [dispatch, prompt],
   );
 
+  const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      //TODO
+    },
+    [],
+  );
+
   return (
     <>
       <div
@@ -382,6 +390,7 @@ export const PromptComponent = ({
               onDuplicate={handleDuplicate}
               onView={(e) => handleOpenEditModal(e, true)}
               isOpen={isContextMenu}
+              onSelect={handleSelect}
             />
           </div>
         )}

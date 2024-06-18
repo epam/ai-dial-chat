@@ -70,12 +70,16 @@ interface ViewProps {
   conversation: ConversationInfo;
   isHighlited: boolean;
   isInvalid: boolean;
+  isChosen?: boolean;
+  isSelectMode?: boolean;
 }
 
 export function ConversationView({
   conversation,
   isHighlited,
   isInvalid,
+  isChosen,
+  isSelectMode,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -86,35 +90,63 @@ export function ConversationView({
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
 
+  const handleToggle = useCallback(() => {
+    ConversationsActions.toggleChosenConversation(conversation.id);
+  }, [conversation]);
+
   return (
     <>
-      <ShareIcon
-        {...conversation}
-        isHighlighted={isHighlited}
-        featureType={FeatureType.Chat}
-        isInvalid={isInvalid}
-      >
-        {conversation.isReplay && (
-          <span className="flex shrink-0">
-            <ReplayAsIsIcon size={18} />
-          </span>
-        )}
-
-        {conversation.isPlayback && (
-          <span className="flex shrink-0">
-            <PlaybackIcon size={18} />
-          </span>
-        )}
-
-        {!conversation.isReplay && !conversation.isPlayback && (
-          <ModelIcon
-            size={18}
-            entityId={conversation.model.id}
-            entity={modelsMap[conversation.model.id]}
-            isInvalid={isInvalid}
+      <div className="group/conversation-item">
+        <div
+          className={classNames(
+            'relative size-[18px]',
+            isSelectMode && 'shrink-0 group-hover/conversation-item:flex',
+            isSelectMode && isChosen ? 'flex' : 'hidden',
+          )}
+        >
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={handleToggle}
           />
-        )}
-      </ShareIcon>
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+        <ShareIcon
+          {...conversation}
+          isHighlighted={isHighlited}
+          featureType={FeatureType.Chat}
+          isInvalid={isInvalid}
+          containerClassName={classNames(
+            isSelectMode && 'group-hover/conversation-item:hidden',
+            isChosen && 'hidden',
+          )}
+        >
+          {conversation.isReplay && (
+            <span className="flex shrink-0">
+              <ReplayAsIsIcon size={18} />
+            </span>
+          )}
+
+          {conversation.isPlayback && (
+            <span className="flex shrink-0">
+              <PlaybackIcon size={18} />
+            </span>
+          )}
+
+          {!conversation.isReplay && !conversation.isPlayback && (
+            <ModelIcon
+              size={18}
+              entityId={conversation.model.id}
+              entity={modelsMap[conversation.model.id]}
+              isInvalid={isInvalid}
+            />
+          )}
+        </ShareIcon>
+      </div>
       <div
         className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
         data-qa="conversation-name"
@@ -152,6 +184,9 @@ export const ConversationComponent = ({
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+  const chosenConversationIds = useAppSelector(
+    ConversationsSelectors.selectChosenConversationIds,
+  );
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -186,6 +221,10 @@ export const ConversationComponent = ({
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isSelected = selectedConversationIds.includes(conversation.id);
+  const isChosen = chosenConversationIds.includes(conversation.id);
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -374,6 +413,15 @@ export const ConversationComponent = ({
     [conversation, dispatch],
   );
 
+  const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setIsContextMenu(false);
+      dispatch(ConversationsActions.toggleChosenConversation(conversation.id));
+    },
+    [conversation.id, dispatch],
+  );
+
   useEffect(() => {
     if (isRenaming) {
       setIsDeleting(false);
@@ -516,8 +564,17 @@ export const ConversationComponent = ({
     setIsContextMenu(true);
   };
 
-  const isHighlighted = isSelected || isRenaming || isDeleting;
+  const isHighlighted = !isSelectMode
+    ? isSelected || isRenaming || isDeleting
+    : isChosen;
   const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
+
+  useEffect(() => {
+    if (isSelectMode) {
+      setIsRenaming(false);
+      setIsDeleting(false);
+    }
+  }, [isSelectMode]);
 
   return (
     <div
@@ -583,16 +640,20 @@ export const ConversationComponent = ({
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
-            isSelected && 'pr-0',
+            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed',
+            isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
           )}
           onClick={() => {
             setIsDeleting(false);
             setIsRenaming(false);
             dispatch(
-              ConversationsActions.selectConversations({
-                conversationIds: [conversation.id],
-              }),
+              !isSelectMode
+                ? ConversationsActions.selectConversations({
+                    conversationIds: [conversation.id],
+                  })
+                : ConversationsActions.toggleChosenConversation(
+                    conversation.id,
+                  ),
             );
           }}
           disabled={messageIsStreaming}
@@ -605,11 +666,13 @@ export const ConversationComponent = ({
             conversation={conversation}
             isHighlited={isHighlighted || isContextMenu}
             isInvalid={isNameOrPathInvalid}
+            isChosen={isChosen}
+            isSelectMode={isSelectMode}
           />
         </button>
       )}
 
-      {!isDeleting && !isRenaming && !messageIsStreaming && (
+      {!isSelectMode && !isDeleting && !isRenaming && !messageIsStreaming && (
         <div
           ref={refs.setFloating}
           {...getFloatingProps()}
@@ -650,6 +713,7 @@ export const ConversationComponent = ({
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}
+            onSelect={handleSelect}
           />
         </div>
       )}

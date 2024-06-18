@@ -3,6 +3,8 @@ import {
   IconFileArrowRight,
   IconPaperclip,
   IconScale,
+  IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -57,6 +59,9 @@ export const ChatbarSettings = () => {
   const isMyItemsExist = useAppSelector(
     ConversationsSelectors.selectDoesAnyMyItemExist,
   );
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -87,6 +92,33 @@ export const ChatbarSettings = () => {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: t('Select all'),
+        dataQa: 'select-all',
+        Icon: IconSquareCheck,
+        onClick: () => {
+          dispatch(ConversationsActions.setAllChosenConversationIds());
+        },
+        display: !isSelectMode,
+      },
+      {
+        name: t('Unselect all'),
+        dataQa: 'unselect all',
+        Icon: IconSquareOff,
+        onClick: () => {
+          dispatch(ConversationsActions.resetChosenConversationIds());
+        },
+        display: isSelectMode,
+      },
+      {
+        name: t('Delete selected'),
+        dataQa: 'delete',
+        Icon: IconTrashX,
+        onClick: () => {
+          //TODO
+        },
+        display: isSelectMode,
+      },
+      {
         name: t('Create new folder'),
         dataQa: 'create-folder',
         Icon: FolderPlus,
@@ -97,6 +129,7 @@ export const ChatbarSettings = () => {
             }),
           );
         },
+        display: !isSelectMode,
       },
       {
         name: t('Import conversations'),
@@ -113,20 +146,21 @@ export const ChatbarSettings = () => {
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
+        display: !isSelectMode,
       },
       {
         name: t('Export conversations without attachments'),
         dataQa: 'export',
         className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
-        display: isMyItemsExist,
+        display: isMyItemsExist && !isSelectMode,
         onClick: () => {
           dispatch(ImportExportActions.exportConversations());
         },
       },
       {
         name: t('Delete all conversations'),
-        display: isMyItemsExist,
+        display: isMyItemsExist && !isSelectMode,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
         onClick: () => {
@@ -141,10 +175,12 @@ export const ChatbarSettings = () => {
         onClick: () => {
           handleToggleCompare();
         },
+        display: !isSelectMode,
       },
       {
         name: t('Attachments'),
-        display: enabledFeatures.has(Feature.AttachmentsManager),
+        display:
+          enabledFeatures.has(Feature.AttachmentsManager) && !isSelectMode,
         dataQa: 'attachments',
         Icon: IconPaperclip,
         disabled: isStreaming,
@@ -155,6 +191,7 @@ export const ChatbarSettings = () => {
     ],
     [
       t,
+      isSelectMode,
       isMyItemsExist,
       isStreaming,
       isActiveNewConversationRequest,
