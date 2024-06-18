@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb } from '@tabler/icons-react';
+import { IconBulb, IconCheck } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEvent,
@@ -326,6 +326,10 @@ export const PromptComponent = ({
     }
   }, [isSelectMode]);
 
+  const handleToggle = useCallback(() => {
+    PromptsActions.toggleChosenPrompt(prompt.id);
+  }, [prompt.id]);
+
   return (
     <>
       <button
@@ -359,10 +363,34 @@ export const PromptComponent = ({
           draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
+          <div
+            className={classNames(
+              'relative size-[18px]',
+              isSelectMode &&
+                !isExternal &&
+                'shrink-0 group-hover/prompt-item:flex',
+              isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
+            )}
+          >
+            <input
+              className="checkbox peer size-[18px] bg-layer-3"
+              type="checkbox"
+              checked={isChosen}
+              onChange={handleToggle}
+            />
+            <IconCheck
+              size={18}
+              className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+            />
+          </div>
           <ShareIcon
             {...prompt}
             isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
+            containerClassName={classNames(
+              isSelectMode && !isExternal && 'group-hover/prompt-item:hidden',
+              isChosen && !isExternal && 'hidden',
+            )}
           >
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>

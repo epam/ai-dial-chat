@@ -9,7 +9,10 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import {
@@ -765,7 +768,9 @@ export const conversationsSlice = createSlice({
       state.chosenConversationIds = payload;
     },
     setAllChosenConversationIds: (state) => {
-      state.chosenConversationIds = state.conversations.map(({ id }) => id);
+      state.chosenConversationIds = state.conversations
+        .filter((conv) => !isEntityExternal(conv))
+        .map(({ id }) => id);
     },
   },
 });

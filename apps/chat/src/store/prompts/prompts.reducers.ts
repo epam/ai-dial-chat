@@ -7,7 +7,10 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -413,7 +416,9 @@ export const promptsSlice = createSlice({
       state.chosenPromptIds = payload;
     },
     setAllChosenPromptIds: (state) => {
-      state.chosenPromptIds = state.prompts.map(({ id }) => id);
+      state.chosenPromptIds = state.prompts
+        .filter((conv) => !isEntityExternal(conv))
+        .map(({ id }) => id);
     },
   },
 });
