@@ -97,6 +97,7 @@ export const ChatSettingsEmpty = ({
             onChangeAddon={onChangeAddon}
             onApplyAddons={handleOnApplyAddons}
             debounceSystemPromptChanges
+            isEmptySettings
           />
         )}
       </div>

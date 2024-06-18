@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,9 +14,11 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { MIN_TWO_CAL_CHAT_SETTINGS_WIDTH } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -56,6 +58,7 @@ interface Props {
   onChangeAddon: (addonsId: string) => void;
   onClose?: () => void;
   debounceSystemPromptChanges?: boolean;
+  isEmptySettings?: boolean;
 }
 
 export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
@@ -110,9 +113,14 @@ export const ConversationSettings = ({
   onChangeAddon,
   onApplyAddons,
   debounceSystemPromptChanges = false,
+  isEmptySettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const settingsWidth = useAppSelector(UISelectors.selectChatSettingsWidth);
+
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const model = useMemo(
     () => (modelId ? modelsMap[modelId] : undefined),
@@ -132,10 +140,42 @@ export const ConversationSettings = ({
 
   const isPlayback = conversation.playback?.isPlayback;
 
+  useEffect(() => {
+    if (!isEmptySettings) {
+      return;
+    }
+    if (!settingsRef.current) {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (
+        settingsRef?.current?.offsetWidth &&
+        settingsRef?.current?.offsetWidth !== settingsWidth
+      ) {
+        dispatch(
+          UIActions.setChatSettingsWidth(settingsRef.current.offsetWidth),
+        );
+      }
+    });
+
+    resizeObserver.observe(settingsRef.current);
+
+    return function cleanup() {
+      resizeObserver.disconnect();
+    };
+  }, [settingsWidth, isEmptySettings, settingsRef, dispatch]);
+
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
       <div
-        className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1"
+        ref={settingsRef}
+        className={classNames(
+          'relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1',
+          settingsWidth &&
+            settingsWidth <= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
+            'lg:grid-cols-1',
+        )}
         data-qa="conversation-settings"
       >
         <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
