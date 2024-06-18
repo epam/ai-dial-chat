@@ -97,7 +97,11 @@ const TourGuide = () => {
     handleBodyScroll(status, lifecycle); //To fix the built-in bug in react-joyride for target: body
 
     if (!isTargetInDocument(step.target as string)) {
-      dispatch(UIActions.setTourStepIndex(index + 1));
+      dispatch(
+        UIActions.setTourStepIndex(
+          index + (action === TourStepAction.prev ? -1 : 1),
+        ),
+      );
     }
 
     switch (true) {
