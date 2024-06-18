@@ -13,6 +13,7 @@ import { FolderSelectors } from '@/src/ui/selectors/folderSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
+import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Locator, Page } from '@playwright/test';
 
 export class Folders extends BaseElement {
@@ -87,6 +88,15 @@ export class Folders extends BaseElement {
       this.dropdownMenu = new DropdownMenu(this.page);
     }
     return this.dropdownMenu;
+  }
+
+  private tooltip!: Tooltip;
+
+  getTooltip(): Tooltip {
+    if (!this.tooltip) {
+      this.tooltip = new Tooltip(this.page);
+    }
+    return this.tooltip;
   }
 
   public folderDotsMenu = (name: string, index?: number) => {
@@ -221,6 +231,10 @@ export class Folders extends BaseElement {
       const respPromise = this.page.waitForResponse((resp) =>
         resp.url().includes(API.listingHost),
       );
+      if (await this.getTooltip().isVisible()) {
+        await this.page.mouse.move(0, 0);
+        await this.getTooltip().waitForState({ state: 'hidden' });
+      }
       await folder.click();
       return respPromise;
     }
