@@ -157,6 +157,8 @@ export enum MenuOptions {
   download = 'Download',
   addNewFolder = 'Add new folder',
   upload = 'Upload',
+  attachFolders = 'Attach folders',
+  attachLink = 'Attach link',
 }
 
 export enum FilterMenuOptions {
