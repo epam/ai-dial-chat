@@ -396,9 +396,13 @@ export const selectPublicationFolders = createSelector(
 );
 
 export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return state.chosenPromptIds.length > 0;
+  return state.chosenPromptIds.length > 0 || state.chosenFolderIds.length > 0;
 });
 
 export const selectChosenPromptIds = createSelector([rootSelector], (state) => {
   return state.chosenPromptIds;
+});
+
+export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
+  return state.chosenFolderIds;
 });

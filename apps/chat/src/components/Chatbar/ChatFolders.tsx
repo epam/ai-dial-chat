@@ -170,6 +170,42 @@ const ChatFolderTemplate = ({
     [dispatch],
   );
 
+  const handleFolderRename = useCallback(
+    (name: string, folderId: string) => {
+      dispatch(
+        ConversationsActions.updateFolder({
+          folderId,
+          values: { name, isShared: false },
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleFolderDelete = useCallback(
+    (folderId: string) => {
+      if (folder.sharedWithMe) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceId: folder.id,
+            isFolder: true,
+            featureType: FeatureType.Chat,
+          }),
+        );
+      } else {
+        dispatch(ConversationsActions.deleteFolder({ folderId }));
+      }
+    },
+    [dispatch, folder.id, folder.sharedWithMe],
+  );
+
+  const handleFolderSelect = useCallback(
+    (folderId: string) => {
+      dispatch(ConversationsActions.toggleChosenConversation(folderId));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <BetweenFoldersLine
@@ -191,30 +227,12 @@ const ChatFolderTemplate = ({
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
-        onRenameFolder={(name, folderId) => {
-          dispatch(
-            ConversationsActions.updateFolder({
-              folderId,
-              values: { name, isShared: false },
-            }),
-          );
-        }}
-        onDeleteFolder={(folderId: string) => {
-          if (folder.sharedWithMe) {
-            dispatch(
-              ShareActions.discardSharedWithMe({
-                resourceId: folder.id,
-                isFolder: true,
-                featureType: FeatureType.Chat,
-              }),
-            );
-          } else {
-            dispatch(ConversationsActions.deleteFolder({ folderId }));
-          }
-        }}
+        onRenameFolder={handleFolderRename}
+        onDeleteFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Chat}
         loadingFolderIds={loadingFolderIds}
+        onSelectFolder={handleFolderSelect}
       />
       {isLast && (
         <BetweenFoldersLine

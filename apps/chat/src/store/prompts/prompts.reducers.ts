@@ -6,7 +6,7 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
 import {
   isEntityExternal,
   isEntityOrParentsExternal,
@@ -42,6 +42,7 @@ const initialState: PromptsState = {
   loadingFolderIds: [],
   isNewPromptCreating: false,
   chosenPromptIds: [],
+  chosenFolderIds: [],
 };
 
 export const promptsSlice = createSlice({
@@ -409,15 +410,31 @@ export const promptsSlice = createSlice({
         state.chosenPromptIds = [...state.chosenPromptIds, conversationId];
       }
     },
+    toggleChosenFolder: (
+      state,
+      { payload: folderId }: PayloadAction<string>,
+    ) => {
+      if (state.chosenFolderIds.includes(folderId)) {
+        state.chosenFolderIds = state.chosenFolderIds.filter(
+          (id: string) => id !== folderId,
+        );
+      } else {
+        state.chosenFolderIds = [...state.chosenFolderIds, folderId];
+      }
+    },
     resetChosenPromptIds: (state) => {
       state.chosenPromptIds = [];
+      state.chosenFolderIds = [];
     },
-    setChosenPromptIds: (state, { payload }: PayloadAction<string[]>) => {
-      state.chosenPromptIds = payload;
-    },
+    // setChosenPromptIds: (state, { payload }: PayloadAction<string[]>) => {
+    //   state.chosenPromptIds = payload;
+    // },
     setAllChosenPromptIds: (state) => {
       state.chosenPromptIds = state.prompts
         .filter((conv) => !isEntityExternal(conv))
+        .map(({ id }) => id);
+      state.chosenFolderIds = state.folders
+        .filter((folder) => isRootPromptId(folder.folderId))
         .map(({ id }) => id);
     },
   },

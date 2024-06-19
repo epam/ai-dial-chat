@@ -8,7 +8,10 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import {
+  getConversationRootId,
+  isRootConversationsId,
+} from '@/src/utils/app/id';
 import {
   isEntityExternal,
   isEntityOrParentsExternal,
@@ -58,6 +61,7 @@ const initialState: ConversationsState = {
   loadedCustomAttachmentsData: [],
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
+  chosenFolderIds: [],
 };
 
 export const conversationsSlice = createSlice({
@@ -761,15 +765,31 @@ export const conversationsSlice = createSlice({
         ];
       }
     },
+    toggleChosenFolder: (
+      state,
+      { payload: folderId }: PayloadAction<string>,
+    ) => {
+      if (state.chosenFolderIds.includes(folderId)) {
+        state.chosenFolderIds = state.chosenFolderIds.filter(
+          (id: string) => id !== folderId,
+        );
+      } else {
+        state.chosenFolderIds = [...state.chosenFolderIds, folderId];
+      }
+    },
     resetChosenConversationIds: (state) => {
       state.chosenConversationIds = [];
+      state.chosenFolderIds = [];
     },
-    setChosenConversationIds: (state, { payload }: PayloadAction<string[]>) => {
-      state.chosenConversationIds = payload;
-    },
+    // setChosenConversationIds: (state, { payload }: PayloadAction<string[]>) => {
+    //   state.chosenConversationIds = payload;
+    // },
     setAllChosenConversationIds: (state) => {
       state.chosenConversationIds = state.conversations
         .filter((conv) => !isEntityExternal(conv))
+        .map(({ id }) => id);
+      state.chosenFolderIds = state.folders
+        .filter((folder) => isRootConversationsId(folder.folderId))
         .map(({ id }) => id);
     },
   },

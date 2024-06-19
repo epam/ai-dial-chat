@@ -18,4 +18,5 @@ export interface PromptsState {
   loadingFolderIds: string[];
   isNewPromptCreating: boolean;
   chosenPromptIds: string[];
+  chosenFolderIds: string[];
 }

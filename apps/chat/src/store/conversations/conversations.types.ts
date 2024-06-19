@@ -31,4 +31,5 @@ export interface ConversationsState {
   loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[];
   customAttachmentDataLoading: boolean;
   chosenConversationIds: string[];
+  chosenFolderIds: string[];
 }

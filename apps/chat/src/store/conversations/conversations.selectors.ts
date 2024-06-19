@@ -733,7 +733,9 @@ export const selectCustomAttachmentData = createSelector(
 );
 
 export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return state.chosenConversationIds.length > 0;
+  return (
+    state.chosenConversationIds.length > 0 || state.chosenFolderIds.length > 0
+  );
 });
 
 export const selectChosenConversationIds = createSelector(
@@ -742,3 +744,7 @@ export const selectChosenConversationIds = createSelector(
     return state.chosenConversationIds;
   },
 );
+
+export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
+  return state.chosenFolderIds;
+});

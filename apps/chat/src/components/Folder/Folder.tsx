@@ -101,6 +101,7 @@ export interface FolderProps<T, P = unknown> {
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
+  onSelectFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder?: (folderId: string) => void;
   featureType: FeatureType;
@@ -140,6 +141,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   handleDrop,
   onRenameFolder,
   onDeleteFolder,
+  onSelectFolder,
   onClickFolder,
   onAddFolder,
   onFileUpload,
@@ -648,6 +650,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [onDeleteFolder],
   );
+  const onSelect: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onSelectFolder) {
+        return;
+      }
+
+      e.stopPropagation();
+      onSelectFolder(currentFolder.id);
+    },
+    [currentFolder.id, onSelectFolder],
+  );
   const onAdd: MouseEventHandler = useCallback(
     (e) => {
       if (!onAddFolder) {
@@ -984,6 +997,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
                     isSidePanelFolder={isSidePanelFolder}
+                    onSelect={onSelectFolder && onSelect}
                   />
                 </div>
               )}

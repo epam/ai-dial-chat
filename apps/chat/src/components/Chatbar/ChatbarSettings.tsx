@@ -100,7 +100,6 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(ConversationsActions.setAllChosenConversationIds());
         },
-        display: !isSelectMode,
       },
       {
         name: t('Unselect all'),

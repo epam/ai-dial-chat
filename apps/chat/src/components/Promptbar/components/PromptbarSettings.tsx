@@ -51,7 +51,6 @@ export function PromptbarSettings() {
         onClick: () => {
           dispatch(PromptsActions.setAllChosenPromptIds());
         },
-        display: !isSelectMode,
       },
       {
         name: t('Unselect all'),
