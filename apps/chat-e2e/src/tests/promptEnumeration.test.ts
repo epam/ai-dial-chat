@@ -197,7 +197,8 @@ dialTest(
 
 dialTest.only(
   'Prompt names can be equal on different levels\n' +
-    'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder',
+    'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder\n' +
+    'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists',
   async ({
     dialHomePage,
     prompts,
@@ -208,7 +209,7 @@ dialTest.only(
     errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2984', 'EPMRTC-2987');
+    setTestIds('EPMRTC-2984', 'EPMRTC-2987', 'EPMRTC-2988');
     const promptValue = 'That is just a test prompt';
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
@@ -293,7 +294,6 @@ dialTest.only(
         );
 
         // Try to rename it
-        
         await folderPrompts.openFolderEntityDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
           ExpectedConstants.newPromptTitle(2),
@@ -320,6 +320,45 @@ dialTest.only(
               duplicatedPromptName,
             ),
           );
+        await promptModalDialog.closeButton.click();
+        await errorToast.waitForState({ state: 'hidden' });
+      },
+    );
+
+    await dialTest.step(
+      'Try to move prompt to folder with already existing name and verify error message is shown',
+      async () => {
+        // Create a new prompt and move it to a folder
+        await prompts.openPromptDropdownMenu(duplicatedPromptName);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
+        await prompts.selectMoveToMenuOption(
+          ExpectedConstants.newPromptFolderWithIndexTitle(2),
+          false,
+        );
+
+        // Check for the error message
+        await expect
+          .soft(
+            errorToast.getElementLocator(),
+            ExpectedMessages.errorToastIsShown,
+          )
+          .toBeVisible();
+        errorMessage = await errorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
+          .toBe(
+            ExpectedConstants.duplicatedPromptNameErrorMessage(
+              duplicatedPromptName,
+            ),
+          );
+
+        // Verify the prompt is not moved and stays in Recent
+        await expect
+          .soft(
+            prompts.getPromptByName(duplicatedPromptName),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
