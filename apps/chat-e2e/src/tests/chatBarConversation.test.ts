@@ -67,7 +67,7 @@ dialTest(
       async () => {
         await expect
           .soft(
-            await chatMessages.getChatMessage(1),
+            chatMessages.getChatMessage(1),
             ExpectedMessages.messageContentIsValid,
           )
           .toHaveText(messageToSend);
@@ -1372,8 +1372,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2958');
-    const updatedRequest = `Chat"${ExpectedConstants.prohibitedNameSymbols}name.....`;
-    const expectedConversationName = `Chat"${' '.repeat(ExpectedConstants.prohibitedNameSymbols.length)}name`;
+    const updatedRequest = `Chat${ExpectedConstants.prohibitedNameSymbols}name.....`;
+    const expectedConversationName = `Chat${' '.repeat(ExpectedConstants.prohibitedNameSymbols.length)}name`;
     let conversation: Conversation;
 
     await dialTest.step('Prepare new conversation', async () => {
