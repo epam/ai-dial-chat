@@ -71,7 +71,6 @@ dialTest(
           )
           .toBeVisible();
 
-        // Create Prompt 4 (should still be Prompt 4 even though Prompt 1 was renamed)
         await promptBar.createNewPrompt();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
@@ -82,7 +81,6 @@ dialTest(
           )
           .toBeVisible();
 
-        // Rename Prompt 4
         await prompts.openPromptDropdownMenu(
           ExpectedConstants.newPromptTitle(4),
         );
@@ -99,7 +97,6 @@ dialTest(
           )
           .toBeVisible();
 
-        // Create another Prompt 4 (should reuse the index 4)
         await promptBar.createNewPrompt();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
@@ -115,7 +112,6 @@ dialTest(
     await dialTest.step(
       'Delete prompts and verify new prompts still use correct numeration',
       async () => {
-        // Delete Prompt 2 and Prompt 3
         for (let i = 2; i <= 3; i++) {
           await prompts.openPromptDropdownMenu(
             ExpectedConstants.newPromptTitle(i),
@@ -126,7 +122,6 @@ dialTest(
           });
         }
 
-        // Create Prompt 5 (should be Prompt 5 even though previous prompts were deleted)
         await promptBar.createNewPrompt();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
@@ -142,7 +137,6 @@ dialTest(
     await dialTest.step(
       'Verify prompt numeration continues correctly after 999',
       async () => {
-        // Rename Prompt 1 to "Prompt 999"
         await prompts.openPromptDropdownMenu(renamedPrompt + 1);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         await promptModalDialog.setField(
@@ -151,7 +145,6 @@ dialTest(
         );
         await promptModalDialog.saveButton.click();
 
-        // Create Prompt 1000 and Prompt 1001
         for (let i = 1000; i <= 1001; i++) {
           await promptBar.createNewPrompt();
           await promptModalDialog.setField(
@@ -172,7 +165,6 @@ dialTest(
     await dialTest.step(
       'Try to rename prompt to already existing name and verify error message is shown',
       async () => {
-        // Rename Prompt 1000 to "Prompt 999"
         await prompts.openPromptDropdownMenu(
           ExpectedConstants.newPromptTitle(1000),
         );
@@ -183,7 +175,6 @@ dialTest(
         );
         await promptModalDialog.saveButton.click();
 
-        // Check for error message
         await expect
           .soft(
             errorToast.getElementLocator(),
@@ -221,7 +212,6 @@ dialTest.only(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
 
-      // Create folders in a loop
       for (let i = 1; i <= 2; i++) {
         await promptBar.createNewFolder();
         await expect
@@ -234,7 +224,6 @@ dialTest.only(
           .toBeVisible();
       }
 
-      // Move "New folder 1" into "New folder 2"
       await promptBar.drugAndDropFolderToFolder(
         ExpectedConstants.newPromptFolderWithIndexTitle(1),
         ExpectedConstants.newPromptFolderWithIndexTitle(2),
@@ -244,7 +233,6 @@ dialTest.only(
     await dialTest.step(
       'Create new prompts and move them to corresponding folders',
       async () => {
-        // Create prompts and move them in a loop
         for (let i = 1; i <= 2; i++) {
           await promptBar.createNewPrompt();
           await promptModalDialog.setField(
@@ -278,7 +266,6 @@ dialTest.only(
             .toBeVisible();
         }
 
-        // Create the last prompt without moving
         await promptBar.createNewPrompt();
         await promptModalDialog.setField(
           promptModalDialog.prompt,
