@@ -29,6 +29,7 @@ dialTest(
     );
     const promptValue = 'That is just a test prompt';
     const renamedPrompt = 'renamed ';
+    let errorMessage;
 
     await dialTest.step(
       'Create several new prompts and verify their names are incremented',
@@ -181,7 +182,7 @@ dialTest(
             ExpectedMessages.errorToastIsShown,
           )
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        errorMessage = await errorToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -195,18 +196,22 @@ dialTest(
 );
 
 dialTest.only(
-  'Prompt names can be equal on different levels',
+  'Prompt names can be equal on different levels\n' +
+    'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder',
   async ({
     dialHomePage,
     prompts,
     promptBar,
+    promptDropdownMenu,
     promptModalDialog,
     folderPrompts,
+    errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2984');
+    setTestIds('EPMRTC-2984', 'EPMRTC-2987');
     const promptValue = 'That is just a test prompt';
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
+    let errorMessage;
 
     await dialTest.step('Create nested folders structure', async () => {
       await dialHomePage.openHomePage();
@@ -242,24 +247,17 @@ dialTest.only(
           await promptModalDialog.saveButton.click();
 
           await promptBar.dragAndDropEntityToFolder(
-            prompts.getPromptByName(
-              duplicatedPromptName
-            ),
+            prompts.getPromptByName(duplicatedPromptName),
             folderPrompts.getFolderByName(
               ExpectedConstants.newPromptFolderWithIndexTitle(i),
             ),
           );
 
-          // await promptBar.drugPromptToFolder(
-          //   ExpectedConstants.newPromptFolderWithIndexTitle(i),
-          //   duplicatedPromptName,
-          // );
-
           await expect
             .soft(
               folderPrompts.getFolderEntity(
                 ExpectedConstants.newPromptFolderWithIndexTitle(i),
-                duplicatedPromptName
+                duplicatedPromptName,
               ),
               ExpectedMessages.promptIsVisible,
             )
@@ -267,10 +265,7 @@ dialTest.only(
         }
 
         await promptBar.createNewPrompt();
-        await promptModalDialog.setField(
-          promptModalDialog.prompt,
-          promptValue,
-        );
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
@@ -278,6 +273,53 @@ dialTest.only(
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Try to rename prompt to already existing name in the same folder and verify error message is shown',
+      async () => {
+        // Create one more prompt
+        await promptBar.createNewPrompt();
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
+        await promptModalDialog.saveButton.click();
+
+        // Move it
+        await promptBar.dragAndDropEntityToFolder(
+          prompts.getPromptByName(ExpectedConstants.newPromptTitle(2)),
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newPromptFolderWithIndexTitle(1),
+          ),
+        );
+
+        // Try to rename it
+        
+        await folderPrompts.openFolderEntityDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          ExpectedConstants.newPromptTitle(2),
+        );
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.setField(
+          promptModalDialog.name,
+          ExpectedConstants.newPromptTitle(1),
+        );
+        await promptModalDialog.saveButton.click();
+
+        // Check for the error message
+        await expect
+          .soft(
+            errorToast.getElementLocator(),
+            ExpectedMessages.errorToastIsShown,
+          )
+          .toBeVisible();
+        errorMessage = await errorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
+          .toBe(
+            ExpectedConstants.duplicatedPromptNameErrorMessage(
+              duplicatedPromptName,
+            ),
+          );
       },
     );
   },
