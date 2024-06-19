@@ -7,6 +7,7 @@ import {
   MouseEventHandler,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -184,9 +185,7 @@ export const ConversationComponent = ({
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
-  const chosenConversationIds = useAppSelector(
-    ConversationsSelectors.selectChosenConversationIds,
-  );
+
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -221,9 +220,23 @@ export const ConversationComponent = ({
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isSelected = selectedConversationIds.includes(conversation.id);
-  const isChosen = chosenConversationIds.includes(conversation.id);
+
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
+  );
+  const chosenConversationIds = useAppSelector(
+    ConversationsSelectors.selectChosenConversationIds,
+  );
+  const chosenFolderIds = useAppSelector(
+    ConversationsSelectors.selectChosenFolderIds,
+  );
+  const isChosen = useMemo(
+    () =>
+      chosenConversationIds.includes(conversation.id) ||
+      chosenFolderIds.some((folderId) =>
+        conversation.id.startsWith(`${folderId}/`),
+      ),
+    [chosenConversationIds, chosenFolderIds, conversation.id],
   );
 
   const { refs, context } = useFloating({

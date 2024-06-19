@@ -206,6 +206,63 @@ export const FileManagerModal = ({
     setDeletingFolderIds(selectedFolderIds);
   }, [selectedFilesIds, selectedFolderIds]);
 
+  const handleFolderToggle = useCallback(
+    (folderId: string) => {
+      const parentFolderIds = getParentFolderIdsFromFolderId(folderId)
+        .slice(0, -2)
+        .map((fid) => `${fid}/`);
+      if (selectedFolderIds.some((fid) => parentFolderIds.includes(fid))) {
+        setSelectedFilesIds((oldFileIds) =>
+          !canAttachFiles
+            ? []
+            : oldFileIds.concat(
+                files
+                  .filter((file) =>
+                    parentFolderIds.some((parentId) =>
+                      file.id.startsWith(parentId),
+                    ),
+                  )
+                  .map((f) => f.id),
+              ),
+        );
+        setSelectedFolderIds((oldFolderIds) => {
+          return oldFolderIds
+            .concat(
+              folders
+                .filter((folder) =>
+                  parentFolderIds.some((parentId) =>
+                    folder.id.startsWith(parentId),
+                  ),
+                )
+                .map((f) => `${f.id}/`),
+            )
+            .filter(
+              (oldFolderId) =>
+                oldFolderId !== folderId &&
+                !parentFolderIds.includes(oldFolderId),
+            );
+        });
+      } else {
+        setSelectedFolderIds((oldValues) => {
+          if (oldValues.includes(folderId)) {
+            return oldValues.filter((oldValue) => oldValue !== folderId);
+          }
+          setSelectedFilesIds((oldFileIds) =>
+            !canAttachFiles
+              ? []
+              : oldFileIds.filter(
+                  (oldFileId) => !oldFileId.startsWith(folderId),
+                ),
+          );
+          return oldValues
+            .filter((oldFolderId) => !oldFolderId.startsWith(folderId))
+            .concat(folderId);
+        });
+      }
+    },
+    [canAttachFiles, files, folders, selectedFolderIds],
+  );
+
   const handleItemCallback = useCallback(
     (eventId: string, data: unknown) => {
       if (typeof data !== 'string') {
@@ -260,63 +317,6 @@ export const FileManagerModal = ({
             });
           }
           break;
-        case FileItemEventIds.ToggleFolder:
-          {
-            const parentFolderIds = getParentFolderIdsFromFolderId(data)
-              .slice(0, -2)
-              .map((fid) => `${fid}/`);
-            if (
-              selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
-            ) {
-              setSelectedFilesIds((oldFileIds) =>
-                !canAttachFiles
-                  ? []
-                  : oldFileIds.concat(
-                      files
-                        .filter((file) =>
-                          parentFolderIds.some((parentId) =>
-                            file.id.startsWith(parentId),
-                          ),
-                        )
-                        .map((f) => f.id),
-                    ),
-              );
-              setSelectedFolderIds((oldFolderIds) => {
-                return oldFolderIds
-                  .concat(
-                    folders
-                      .filter((folder) =>
-                        parentFolderIds.some((parentId) =>
-                          folder.id.startsWith(parentId),
-                        ),
-                      )
-                      .map((f) => `${f.id}/`),
-                  )
-                  .filter(
-                    (oldFolderId) =>
-                      oldFolderId !== data &&
-                      !parentFolderIds.includes(oldFolderId),
-                  );
-              });
-            } else {
-              setSelectedFolderIds((oldValues) => {
-                if (oldValues.includes(data)) {
-                  return oldValues.filter((oldValue) => oldValue !== data);
-                }
-                setSelectedFilesIds((oldFileIds) =>
-                  !canAttachFiles
-                    ? []
-                    : oldFileIds.filter(
-                        (oldFileId) => !oldFileId.startsWith(data),
-                      ),
-                );
-                return oldValues
-                  .filter((oldFolderId) => !oldFolderId.startsWith(data))
-                  .concat(data);
-              });
-            }
-          }
-          break;
         case FileItemEventIds.Cancel:
           dispatch(FilesActions.deleteFile({ fileId: data }));
           break;
@@ -327,7 +327,7 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [canAttachFiles, dispatch, files, folders, selectedFolderIds],
+    [dispatch, files, folders, selectedFolderIds],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -557,8 +557,9 @@ export const FileManagerModal = ({
                               onItemEvent={handleItemCallback}
                               withBorderHighlight={false}
                               featureType={FeatureType.File}
-                              canAttachFolders={canAttachFolders}
+                              canSelectFolders={canAttachFolders}
                               showTooltip={showTooltip}
+                              onSelectFolder={handleFolderToggle}
                             />
                           </div>
                         );

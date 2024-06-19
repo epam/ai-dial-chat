@@ -75,7 +75,6 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
-import { FileItemEventIds } from '../Files/FileItem';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -117,7 +116,7 @@ export interface FolderProps<T, P = unknown> {
   skipFolderRenameValidation?: boolean;
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
-  canAttachFolders?: boolean;
+  canSelectFolders?: boolean;
   showTooltip?: boolean;
   isSidePanelFolder?: boolean;
 }
@@ -155,7 +154,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   skipFolderRenameValidation = false,
   noCaretIcon = false,
   itemComponentClassNames,
-  canAttachFolders = false,
+  canSelectFolders = false,
   showTooltip,
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
@@ -195,10 +194,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (e: ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
       setIsSelected((value) => !value);
-      onItemEvent?.(FileItemEventIds.ToggleFolder, `${currentFolder.id}/`);
+      onSelectFolder?.(currentFolder.id);
       return;
     },
-    [currentFolder.id, onItemEvent],
+    [currentFolder.id, onSelectFolder],
   );
 
   useEffect(() => {
@@ -807,19 +806,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted
                     featureType={featureType}
                     containerClassName={
-                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                      canSelectFolders ? 'group-hover/folder-item:hidden' : ''
                     }
                   >
                     <IconFolder
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        canAttachFolders && 'group-hover/folder-item:hidden',
+                        canSelectFolders && 'group-hover/folder-item:hidden',
                       )}
                     />
                   </ShareIcon>
                 )}
-                {canAttachFolders &&
+                {canSelectFolders &&
                   !loadingFolderIds.includes(currentFolder.id) && (
                     <div
                       className={classNames(
@@ -885,19 +884,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted={isContextMenu}
                     featureType={featureType}
                     containerClassName={
-                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                      canSelectFolders ? 'group-hover/folder-item:hidden' : ''
                     }
                   >
                     <IconFolder
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        canAttachFolders && 'group-hover/folder-item:hidden',
+                        canSelectFolders && 'group-hover/folder-item:hidden',
                       )}
                     />
                   </ShareIcon>
                 )}
-                {canAttachFolders &&
+                {canSelectFolders &&
                   !loadingFolderIds.includes(currentFolder.id) && (
                     <div
                       className={classNames(
@@ -1078,9 +1077,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
-                    canAttachFolders={canAttachFolders}
+                    canSelectFolders={canSelectFolders}
                     showTooltip={showTooltip}
                     isSidePanelFolder={isSidePanelFolder}
+                    onSelectFolder={onSelectFolder}
                   />
                 </Fragment>
               );

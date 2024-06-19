@@ -6,6 +6,7 @@ import {
   MouseEventHandler,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -112,8 +113,16 @@ export const PromptComponent = ({
   const chosenPromptIds = useAppSelector(
     PromptsSelectors.selectChosenPromptIds,
   );
-  const isChosen = chosenPromptIds.includes(prompt.id);
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const chosenFolderIds = useAppSelector(
+    PromptsSelectors.selectChosenFolderIds,
+  );
+  const isChosen = useMemo(
+    () =>
+      chosenPromptIds.includes(prompt.id) ||
+      chosenFolderIds.some((folderId) => prompt.id.startsWith(`${folderId}/`)),
+    [chosenPromptIds, chosenFolderIds, prompt.id],
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,

@@ -168,6 +168,11 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const selectedFolderIds = useAppSelector(
+    PromptsSelectors.selectChosenFolderIds,
+  );
+
   return (
     <>
       <BetweenFoldersLine
@@ -212,6 +217,10 @@ const PromptFolderTemplate = ({
         }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
+        canSelectFolders={isSelectMode}
+        additionalItemData={{
+          selectedFolderIds,
+        }}
       />
       {isLast && (
         <BetweenFoldersLine

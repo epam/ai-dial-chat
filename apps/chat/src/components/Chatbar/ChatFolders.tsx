@@ -201,9 +201,15 @@ const ChatFolderTemplate = ({
 
   const handleFolderSelect = useCallback(
     (folderId: string) => {
-      dispatch(ConversationsActions.toggleChosenConversation(folderId));
+      dispatch(ConversationsActions.toggleChosenConversation(`${folderId}/`));
     },
     [dispatch],
+  );
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
+  const selectedFolderIds = useAppSelector(
+    ConversationsSelectors.selectChosenFolderIds,
   );
 
   return (
@@ -233,6 +239,10 @@ const ChatFolderTemplate = ({
         featureType={FeatureType.Chat}
         loadingFolderIds={loadingFolderIds}
         onSelectFolder={handleFolderSelect}
+        canSelectFolders={isSelectMode}
+        additionalItemData={{
+          selectedFolderIds,
+        }}
       />
       {isLast && (
         <BetweenFoldersLine
