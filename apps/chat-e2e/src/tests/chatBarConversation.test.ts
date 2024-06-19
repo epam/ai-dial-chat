@@ -354,7 +354,7 @@ dialTest(
       'EPMRTC-1276',
     );
     let editInputContainer: EditInput;
-    const specialSymbolsName = `(\`~!@#$^*-_+[]'|<>.?")`;
+    const specialSymbolsName = `(\`~!@#$^*-_+[]'|<>.?)`;
     const newNameWithEndDot = 'updated folder name.';
 
     await dialTest.step(

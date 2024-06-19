@@ -115,7 +115,7 @@ export const ExpectedConstants = {
   controlChars: `\b\t\f`,
   attachedFileError: (filename: string) =>
     `You've trying to upload files with incorrect type: ${filename}`,
-  allowedSpecialSymbolsInName: 'Test (`~!@#$^*-_+[]\'|<>.?")',
+  allowedSpecialSymbolsInName: "Test (`~!@#$^*-_+[]'|<>.?)",
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___.__)",
   duplicatedFilenameError: (filename: string) =>
     `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
