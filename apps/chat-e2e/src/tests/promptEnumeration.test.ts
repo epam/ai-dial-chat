@@ -6,7 +6,7 @@ import {
 } from '@/src/testData';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Default prompt numeration, renamed and deleted prompts are not counted\n' +
     'Numeration Continues after 999\n' +
     'Error message is shown if to rename prompt manually to already existed prompt name when prompts are located in root',
@@ -73,10 +73,7 @@ dialTest.only(
 
         // Create Prompt 4 (should still be Prompt 4 even though Prompt 1 was renamed)
         await promptBar.createNewPrompt();
-        await promptModalDialog.setField(
-          promptModalDialog.prompt,
-          promptValue,
-        );
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
@@ -104,10 +101,7 @@ dialTest.only(
 
         // Create another Prompt 4 (should reuse the index 4)
         await promptBar.createNewPrompt();
-        await promptModalDialog.setField(
-          promptModalDialog.prompt,
-          promptValue,
-        );
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
@@ -134,10 +128,7 @@ dialTest.only(
 
         // Create Prompt 5 (should be Prompt 5 even though previous prompts were deleted)
         await promptBar.createNewPrompt();
-        await promptModalDialog.setField(
-          promptModalDialog.prompt,
-          promptValue,
-        );
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
@@ -207,6 +198,99 @@ dialTest.only(
               ExpectedConstants.newPromptTitle(999),
             ),
           );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  'Prompt names can be equal on different levels',
+  async ({
+    dialHomePage,
+    prompts,
+    promptBar,
+    promptModalDialog,
+    folderPrompts,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2984');
+    const promptValue = 'That is just a test prompt';
+    const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
+
+    await dialTest.step('Create nested folders structure', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+
+      // Create folders in a loop
+      for (let i = 1; i <= 2; i++) {
+        await promptBar.createNewFolder();
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newPromptFolderWithIndexTitle(i),
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+      }
+
+      // Move "New folder 1" into "New folder 2"
+      await promptBar.drugAndDropFolderToFolder(
+        ExpectedConstants.newPromptFolderWithIndexTitle(1),
+        ExpectedConstants.newPromptFolderWithIndexTitle(2),
+      );
+    });
+
+    await dialTest.step(
+      'Create new prompts and move them to corresponding folders',
+      async () => {
+        // Create prompts and move them in a loop
+        for (let i = 1; i <= 2; i++) {
+          await promptBar.createNewPrompt();
+          await promptModalDialog.setField(
+            promptModalDialog.prompt,
+            promptValue,
+          );
+          await promptModalDialog.saveButton.click();
+
+          await promptBar.dragAndDropEntityToFolder(
+            prompts.getPromptByName(
+              duplicatedPromptName
+            ),
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newPromptFolderWithIndexTitle(i),
+            ),
+          );
+
+          // await promptBar.drugPromptToFolder(
+          //   ExpectedConstants.newPromptFolderWithIndexTitle(i),
+          //   duplicatedPromptName,
+          // );
+
+          await expect
+            .soft(
+              folderPrompts.getFolderEntity(
+                ExpectedConstants.newPromptFolderWithIndexTitle(i),
+                duplicatedPromptName
+              ),
+              ExpectedMessages.promptIsVisible,
+            )
+            .toBeVisible();
+        }
+
+        // Create the last prompt without moving
+        await promptBar.createNewPrompt();
+        await promptModalDialog.setField(
+          promptModalDialog.prompt,
+          promptValue,
+        );
+        await promptModalDialog.saveButton.click();
+        await expect
+          .soft(
+            prompts.getPromptByName(duplicatedPromptName),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
