@@ -204,7 +204,7 @@ export function HandlePublication({ publication }: Props) {
     : '';
 
   return (
-    <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
+    <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
         <div className="flex w-full items-center justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
