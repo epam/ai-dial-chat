@@ -338,7 +338,7 @@ export function PublishModal({
       onClose={onClose}
       initialFocus={nameInputRef}
     >
-      <div className="flex flex-col divide-y divide-tertiary overflow-y-auto">
+      <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
         <h4 className="truncate px-3 py-4 pr-10 text-base font-semibold md:px-4">
           <span className="w-full text-center">
             <Tooltip
