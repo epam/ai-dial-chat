@@ -275,4 +275,5 @@ export enum ExpectedMessages {
   borderColorsAreValid = 'Element border colors are valid',
   uploadToPathIsValid = 'Upload to path is valid',
   uploadToPathIsTruncated = 'Upload to path is truncated',
+  folderCheckboxIsNotVisible = 'Folder check-box is not visible',
 }
