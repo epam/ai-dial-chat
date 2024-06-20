@@ -51,10 +51,6 @@ interface Props {
   ) => void;
   uploadFolderId?: string;
   customUploadButtonLabel?: string;
-  IFolderChange: (
-    e: React.MouseEvent<HTMLElement>,
-    handlerType: string,
-  ) => void;
 }
 
 const bytesInMb = 1_048_576;
