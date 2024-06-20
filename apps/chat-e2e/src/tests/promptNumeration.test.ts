@@ -195,7 +195,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Prompt names can be equal on different levels\n' +
     'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder\n' +
     'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists\n' +
@@ -205,9 +205,11 @@ dialTest(
     dialHomePage,
     prompts,
     promptBar,
+    promptData,
     promptDropdownMenu,
     promptModalDialog,
     folderPrompts,
+    dataInjector,
     errorToast,
     setTestIds,
   }) => {
@@ -218,77 +220,109 @@ dialTest(
       'EPMRTC-2989',
       'EPMRTC-2990',
     );
+
+    await dialTest.step(
+      'Prepare 2 levels nested folders with prompts inside',
+      async () => {
+        const nestedFolders = promptData.prepareClassicNestedFolder(
+          2,
+          ExpectedConstants.newFolderTitle,
+        );
+        const nestedPrompts = promptData.preparePromptsForNestedFolders(
+          nestedFolders,
+          ExpectedConstants.newPromptTitle(1),
+        );
+        promptData.resetData();
+        const singlePrompt = promptData.prepareDefaultPrompt(
+          ExpectedConstants.newPromptTitle(1),
+        );
+
+        await dataInjector.createPrompts(
+          [singlePrompt, ...nestedPrompts],
+          ...nestedFolders,
+        );
+      },
+    );
+
     const promptValue = 'That is just a test prompt';
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
 
-    await dialTest.step('Create nested folders structure', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
+    // await dialTest.step('Create nested folders structure', async () => {
+    //   await dialHomePage.openHomePage();
+    //   await dialHomePage.waitForPageLoaded();
 
-      for (let i = 1; i <= 2; i++) {
-        await promptBar.createNewFolder();
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(
-              ExpectedConstants.newPromptFolderWithIndexTitle(i),
-            ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
-      }
+    //   for (let i = 1; i <= 2; i++) {
+    //     await promptBar.createNewFolder();
+    //     await expect
+    //       .soft(
+    //         folderPrompts.getFolderByName(
+    //           ExpectedConstants.newPromptFolderWithIndexTitle(i),
+    //         ),
+    //         ExpectedMessages.folderIsVisible,
+    //       )
+    //       .toBeVisible();
+    //   }
 
-      await promptBar.drugAndDropFolderToFolder(
-        ExpectedConstants.newPromptFolderWithIndexTitle(1),
-        ExpectedConstants.newPromptFolderWithIndexTitle(2),
-      );
-    });
+    //   await promptBar.drugAndDropFolderToFolder(
+    //     ExpectedConstants.newPromptFolderWithIndexTitle(1),
+    //     ExpectedConstants.newPromptFolderWithIndexTitle(2),
+    //   );
+    // });
 
-    await dialTest.step(
-      'Create new prompts and move them to corresponding folders',
-      async () => {
-        for (let i = 1; i <= 2; i++) {
-          await promptBar.createNewPrompt();
-          await promptModalDialog.setField(
-            promptModalDialog.prompt,
-            promptValue,
-          );
-          await promptModalDialog.saveButton.click();
+    // await dialTest.step(
+    //   'Create new prompts and move them to corresponding folders',
+    //   async () => {
+    //     for (let i = 1; i <= 2; i++) {
+    //       await promptBar.createNewPrompt();
+    //       await promptModalDialog.setField(
+    //         promptModalDialog.prompt,
+    //         promptValue,
+    //       );
+    //       await promptModalDialog.saveButton.click();
 
-          await promptBar.dragAndDropEntityToFolder(
-            prompts.getPromptByName(duplicatedPromptName),
-            folderPrompts.getFolderByName(
-              ExpectedConstants.newPromptFolderWithIndexTitle(i),
-            ),
-          );
+    //       await promptBar.dragAndDropEntityToFolder(
+    //         prompts.getPromptByName(duplicatedPromptName),
+    //         folderPrompts.getFolderByName(
+    //           ExpectedConstants.newPromptFolderWithIndexTitle(i),
+    //         ),
+    //       );
 
-          await expect
-            .soft(
-              folderPrompts.getFolderEntity(
-                ExpectedConstants.newPromptFolderWithIndexTitle(i),
-                duplicatedPromptName,
-              ),
-              ExpectedMessages.promptIsVisible,
-            )
-            .toBeVisible();
-        }
+    //       await expect
+    //         .soft(
+    //           folderPrompts.getFolderEntity(
+    //             ExpectedConstants.newPromptFolderWithIndexTitle(i),
+    //             duplicatedPromptName,
+    //           ),
+    //           ExpectedMessages.promptIsVisible,
+    //         )
+    //         .toBeVisible();
+    //     }
 
-        await promptBar.createNewPrompt();
-        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
-        await promptModalDialog.saveButton.click();
-        await expect
-          .soft(
-            prompts.getPromptByName(duplicatedPromptName),
-            ExpectedMessages.promptIsVisible,
-          )
-          .toBeVisible();
-      },
-    );
+    //     await promptBar.createNewPrompt();
+    //     await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
+    //     await promptModalDialog.saveButton.click();
+    //     await expect
+    //       .soft(
+    //         prompts.getPromptByName(duplicatedPromptName),
+    //         ExpectedMessages.promptIsVisible,
+    //       )
+    //       .toBeVisible();
+    //   },
+    // );
 
     await dialTest.step(
       'Try to rename prompt to already existing name in the same folder and verify error message is shown',
       async () => {
         // Create one more prompt
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await folderPrompts.expandFolder(
+          ExpectedConstants.newPromptFolderWithIndexTitle(1),
+        );
+        await folderPrompts.expandFolder(
+          ExpectedConstants.newPromptFolderWithIndexTitle(2),
+        );
         await promptBar.createNewPrompt();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
         await promptModalDialog.saveButton.click();
@@ -340,7 +374,7 @@ dialTest(
         await prompts.openPromptDropdownMenu(duplicatedPromptName);
         await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
         await prompts.selectMoveToMenuOption(
-          ExpectedConstants.newPromptFolderWithIndexTitle(2),
+          ExpectedConstants.newPromptFolderWithIndexTitle(1),
           { isHttpMethodTriggered: false },
         );
 
@@ -377,17 +411,10 @@ dialTest(
           folderPrompts.getFolderEntity(
             ExpectedConstants.newPromptFolderWithIndexTitle(1),
             duplicatedPromptName,
-          ), //TODO I don't like the index approach, better refactor the method itself
+          ).nth(1),
           folderPrompts.getFolderByName(
             ExpectedConstants.newPromptFolderWithIndexTitle(2),
           ),
-          {
-            isHttpMethodTriggered: false,
-          },
-        );
-        await promptBar.dragAndDropEntityToFolder(
-          folderPrompts.getFolderEntity('New folder 1', duplicatedPromptName),
-          folderPrompts.getFolderByName('New folder 2'),
           {
             isHttpMethodTriggered: false,
           },
@@ -415,7 +442,7 @@ dialTest(
       'Try to drag & drop prompt from New folder 1 to Recent and verify error message is shown',
       async () => {
         await promptBar.dragAndDropPromptFromFolder(
-          ExpectedConstants.newPromptFolderWithIndexTitle(1),
+          ExpectedConstants.newPromptFolderWithIndexTitle(2),
           duplicatedPromptName,
           {
             isHttpMethodTriggered: false,

@@ -33,8 +33,12 @@ export class PromptData extends FolderData {
     return prompt;
   }
 
-  public prepareNestedFolder(nestedLevel: number) {
-    return super.prepareNestedFolder(nestedLevel, FolderType.Prompt);
+  public prepareNestedFolder(nestedLevel: number, name?: string) {
+    return super.prepareNestedFolder(nestedLevel, FolderType.Prompt, name);
+  }
+
+  public prepareClassicNestedFolder(nestedLevel: number, name?: string) {
+    return super.prepareClassicNestedFolders(nestedLevel, FolderType.Prompt, name);
   }
 
   public prepareDefaultPromptInFolder(name?: string): FolderPrompt {
@@ -79,10 +83,13 @@ export class PromptData extends FolderData {
       .build();
   }
 
-  public preparePromptsForNestedFolders(nestedFolders: FolderInterface[]) {
+  public preparePromptsForNestedFolders(
+    nestedFolders: FolderInterface[],
+    name?: string,
+  ) {
     const nestedPrompts: Prompt[] = [];
     for (const item of nestedFolders) {
-      const nestedPrompt = this.prepareDefaultPrompt();
+      const nestedPrompt = this.prepareDefaultPrompt(name);
       nestedPrompts.push(nestedPrompt);
       nestedPrompt.folderId = item.id;
       nestedPrompt.id = `${nestedPrompt.folderId}/${nestedPrompt.name}`;
