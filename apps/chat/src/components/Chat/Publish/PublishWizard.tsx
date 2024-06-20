@@ -175,7 +175,9 @@ export function PublishModal({
     dispatch(PublicationActions.uploadRules({ path }));
   }, [dispatch, path]);
 
-  const handleFolderChangeForMobile = useCallback((e) => {
+  const handleFolderChangeForMobile = useCallback<
+    React.MouseEventHandler<HTMLSpanElement>
+  >((e) => {
     if (isMobile()) {
       e.stopPropagation();
       setIsChangeFolderModalOpened(true);

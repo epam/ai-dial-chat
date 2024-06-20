@@ -24,6 +24,7 @@ import {
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
+import { isMobile } from '@/src/utils/app/mobile';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -305,8 +306,19 @@ export const PreUploadDialog = ({
     [folderPath, selectedFiles],
   );
 
-  const handleFolderChange = useCallback(() => {
-    setIsChangeFolderModalOpened(true);
+  const handleFolderChangeForMobile = useCallback<
+    React.MouseEventHandler<HTMLSpanElement>
+  >((e) => {
+    if (isMobile()) {
+      e.stopPropagation();
+      setIsChangeFolderModalOpened(true);
+    }
+  }, []);
+
+  const handleFolderChangeForDesktop = useCallback(() => {
+    if (!isMobile()) {
+      setIsChangeFolderModalOpened(true);
+    }
   }, []);
 
   const handleUnselectFile = useCallback(
@@ -395,13 +407,17 @@ export const PreUploadDialog = ({
             </div>
             <button
               className="flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
-              onClick={handleFolderChange}
+              onClick={handleFolderChangeForDesktop}
               data-qa="upload-to"
             >
               <span className="truncate" data-qa="upload-to-path">
                 {constructPath(t('All files'), folderPath)}
               </span>
-              <span className="text-accent-primary" data-qa="change-upload-to">
+              <span
+                className="text-accent-primary"
+                onClick={handleFolderChangeForMobile}
+                data-qa="change-upload-to"
+              >
                 {t('Change')}
               </span>
             </button>
