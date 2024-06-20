@@ -1,4 +1,8 @@
-import { ChatBarSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatBarSelectors,
+  MenuSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { Conversations } from './conversations';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -27,7 +31,7 @@ export class ChatBar extends SideBar {
     ChatBarSelectors.attachments,
   );
   public bottomDotsMenuIcon = this.bottomPanel.getChildElementBySelector(
-    SideBarSelectors.dotsMenu,
+    MenuSelectors.dotsMenu,
   );
 
   getConversations(): Conversations {

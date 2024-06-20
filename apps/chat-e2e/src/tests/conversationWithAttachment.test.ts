@@ -5,6 +5,7 @@ import {
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
+  MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
@@ -621,6 +622,113 @@ dialTest(
             ExpectedMessages.sendMessageButtonEnabled,
           )
           .toBe(ExpectedConstants.attachedFileError(Attachment.textName));
+      },
+    );
+  },
+);
+
+dialTest(
+  `[Attach folder] Folder can not be attached for models that doesn't support it.\n` +
+    `[Attach link] is not available for models that doesn't support it`,
+  async ({
+    dialHomePage,
+    setTestIds,
+    attachFilesModal,
+    sendMessage,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    fileApiHelper,
+    attachmentDropdownMenu,
+    attachedAllFiles,
+    chatMessages,
+  }) => {
+    setTestIds('EPMRTC-3243', 'EPMRTC-3127');
+
+    const randomModelWithoutFolderLinkAttachments =
+      GeneratorUtil.randomArrayElement(
+        modelsWithAttachments.filter(
+          (m) =>
+            m.features?.folderAttachments == false &&
+            m.features.urlAttachments == false,
+        ),
+      );
+    const folderName = GeneratorUtil.randomString(7);
+
+    await dialTest.step('Upload file to folder', async () => {
+      await fileApiHelper.putFile(Attachment.sunImageName, folderName);
+    });
+
+    await dialTest.step(
+      'Create new conversation based on model without folder/link attachments',
+      async () => {
+        const conversation = conversationData.prepareDefaultConversation(
+          randomModelWithoutFolderLinkAttachments,
+        );
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setSelectedConversation(conversation);
+      },
+    );
+
+    await dialTest.step(
+      'Edit conversation request, click on clip icon and verify no "Attach link", "Attach folders" options are available in the menu',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatMessages.openEditMessageMode(1);
+        await chatMessages.getChatMessageClipIcon(1).click();
+        const editMessageAttachMenuOptions =
+          await attachmentDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(
+            editMessageAttachMenuOptions,
+            ExpectedMessages.contextMenuOptionsValid,
+          )
+          .toEqual(
+            expect.not.arrayContaining([
+              MenuOptions.attachFolders,
+              MenuOptions.attachLink,
+            ]),
+          );
+      },
+    );
+
+    await dialTest.step(
+      'Click on request input clip icon and verify no "Attach link", "Attach folders" options are available in the menu',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        const attachMenuOptions =
+          await attachmentDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(attachMenuOptions, ExpectedMessages.contextMenuOptionsValid)
+          .toEqual(
+            expect.not.arrayContaining([
+              MenuOptions.attachFolders,
+              MenuOptions.attachLink,
+            ]),
+          );
+      },
+    );
+
+    await dialTest.step(
+      'Open "Attach files" modal from request input and verify folder cannot be checked, "Attach" button is disabled',
+      async () => {
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await attachedAllFiles.getFolderName(folderName).hoverOver();
+        await expect
+          .soft(
+            attachedAllFiles.getFolderCheckbox(folderName),
+            ExpectedMessages.folderCheckboxIsNotVisible,
+          )
+          .toBeHidden();
+        await expect
+          .soft(
+            attachFilesModal.attachFilesButton.getElementLocator(),
+            ExpectedMessages.buttonIsDisabled,
+          )
+          .toBeDisabled();
       },
     );
   },
