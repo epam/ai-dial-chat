@@ -25,12 +25,14 @@ import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
@@ -39,6 +41,7 @@ import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { Spinner } from '../../Common/Spinner';
 import { PublicationItemsList } from './PublicationItemsList';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
@@ -155,6 +158,9 @@ export function PublishModal({
   const dispatch = useAppDispatch();
 
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  );
 
   const [path, setPath] = useState<string>('');
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
@@ -326,6 +332,15 @@ export function PublishModal({
     ],
   );
 
+  useEffect(() => {
+    if (areSelectedConversationsLoaded && entities.length === 0) {
+      dispatch(
+        UIActions.showErrorToast(t('There is no valid items to publish')),
+      );
+      onClose();
+    }
+  }, [areSelectedConversationsLoaded, dispatch, entities.length, onClose, t]);
+
   return (
     <Modal
       portalId="theme-main"
@@ -339,7 +354,7 @@ export function PublishModal({
       initialFocus={nameInputRef}
     >
       <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
-        <h4 className="truncate px-3 py-4 pr-10 text-base font-semibold md:px-4">
+        <h4 className="truncate px-3 py-4 text-base font-semibold md:pl-4 md:pr-10">
           <span className="w-full text-center">
             <Tooltip
               contentClassName="max-w-[400px] break-words"
@@ -409,15 +424,21 @@ export function PublishModal({
               />
             </section>
           </div>
-          <PublicationItemsList
-            type={type}
-            entity={entity}
-            entities={entities}
-            path={path}
-            files={files}
-            containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
-            publishAction={PublishActions.ADD}
-          />
+          {areSelectedConversationsLoaded ? (
+            <PublicationItemsList
+              type={type}
+              entity={entity}
+              entities={entities}
+              path={path}
+              files={files}
+              containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
+              publishAction={PublishActions.ADD}
+            />
+          ) : (
+            <div className="flex w-full items-center justify-center">
+              <Spinner size={48} dataQa="publication-items-spinner" />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
