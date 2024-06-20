@@ -185,12 +185,16 @@ export class Chat extends BaseElement {
   }
 
   public waitForRequestSent(userRequest: string | undefined) {
-    return userRequest
-      ? this.page.waitForRequest(
-          (request) =>
+    return userRequest !== undefined
+      ? this.page.waitForRequest((request) => {
+          const escapedRequestData = userRequest.includes('"')
+            ? userRequest.replaceAll('"', '\\"')
+            : userRequest;
+          return (
             request.url().includes(API.chatHost) &&
-            request.postData()!.includes(userRequest),
-        )
+            request.postData()!.includes(escapedRequestData)
+          );
+        })
       : this.page.waitForRequest(API.chatHost);
   }
 
