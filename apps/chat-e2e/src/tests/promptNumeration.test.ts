@@ -211,7 +211,13 @@ dialTest(
     errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2984', 'EPMRTC-2987', 'EPMRTC-2988', 'EPMRTC-2989', 'EPMRTC-2990');
+    setTestIds(
+      'EPMRTC-2984',
+      'EPMRTC-2987',
+      'EPMRTC-2988',
+      'EPMRTC-2989',
+      'EPMRTC-2990',
+    );
     const promptValue = 'That is just a test prompt';
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
