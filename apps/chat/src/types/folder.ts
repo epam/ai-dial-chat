@@ -34,3 +34,7 @@ export interface MoveToFolderProps {
   folderId?: string;
   isNewFolder?: boolean;
 }
+
+export interface IFolderChangе {
+  (e: React.MouseEvent<HTMLElement>, handlerType: string): void;
+}

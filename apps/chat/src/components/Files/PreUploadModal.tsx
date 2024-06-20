@@ -27,6 +27,7 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { DialFile } from '@/src/types/files';
+import { IFolderChangе } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -306,17 +307,12 @@ export const PreUploadDialog = ({
     [folderPath, selectedFiles],
   );
 
-  const handleFolderChangeForMobile = useCallback<
-    React.MouseEventHandler<HTMLSpanElement>
-  >((e) => {
-    if (isMobile()) {
-      e.stopPropagation();
-      setIsChangeFolderModalOpened(true);
-    }
-  }, []);
-
-  const handleFolderChangeForDesktop = useCallback(() => {
-    if (!isMobile()) {
+  const handleFolderChangе = useCallback<IFolderChangе>((e, handlerType) => {
+    const isMobileBool = isMobile();
+    if (
+      (isMobileBool && handlerType === 'mobile-handler') ||
+      (!isMobileBool && handlerType === 'desktop-handler')
+    ) {
       setIsChangeFolderModalOpened(true);
     }
   }, []);
@@ -407,7 +403,7 @@ export const PreUploadDialog = ({
             </div>
             <button
               className="flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
-              onClick={handleFolderChangeForDesktop}
+              onClick={(e) => handleFolderChangе(e, 'desktop-handler')}
               data-qa="upload-to"
             >
               <span className="truncate" data-qa="upload-to-path">
@@ -415,7 +411,7 @@ export const PreUploadDialog = ({
               </span>
               <span
                 className="text-accent-primary"
-                onClick={handleFolderChangeForMobile}
+                onClick={(e) => handleFolderChangе(e, 'mobile-handler')}
                 data-qa="change-upload-to"
               >
                 {t('Change')}

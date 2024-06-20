@@ -21,6 +21,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
+import { IFolderChangе } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
@@ -181,17 +182,12 @@ export function PublishModal({
     dispatch(PublicationActions.uploadRules({ path }));
   }, [dispatch, path]);
 
-  const handleFolderChangeForMobile = useCallback<
-    React.MouseEventHandler<HTMLSpanElement>
-  >((e) => {
-    if (isMobile()) {
-      e.stopPropagation();
-      setIsChangeFolderModalOpened(true);
-    }
-  }, []);
-
-  const handleFolderChangeForDesktop = useCallback(() => {
-    if (!isMobile()) {
+  const handleFolderChangе = useCallback<IFolderChangе>((e, handlerType) => {
+    const isMobileBool = isMobile();
+    if (
+      (isMobileBool && handlerType === 'mobile-handler') ||
+      (!isMobileBool && handlerType === 'desktop-handler')
+    ) {
       setIsChangeFolderModalOpened(true);
     }
   }, []);
@@ -390,7 +386,7 @@ export function PublishModal({
                 </label>
                 <button
                   className="input-form button mx-0 flex grow items-center border-primary px-3 py-2"
-                  onClick={handleFolderChangeForDesktop}
+                  onClick={(e) => handleFolderChangе(e, 'desktop-handler')}
                 >
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
                     <Tooltip
@@ -402,7 +398,7 @@ export function PublishModal({
                     </Tooltip>
                     <span
                       className="text-accent-primary"
-                      onClick={handleFolderChangeForMobile}
+                      onClick={(e) => handleFolderChangе(e, 'mobile-handler')}
                     >
                       {t('Change')}
                     </span>
