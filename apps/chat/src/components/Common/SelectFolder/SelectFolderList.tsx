@@ -61,10 +61,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   const isSearching = !!folderProps.searchTerm;
 
   return (
-    <div
-      className="flex min-h-[350px] flex-col overflow-auto"
-      data-qa="upload-folders"
-    >
+    <div className="flex min-h-[350px] flex-col" data-qa="upload-folders">
       <button
         className={classNames(
           'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
@@ -73,17 +70,15 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
             : 'border-transparent',
         )}
         onClick={() => handleFolderSelect(rootFolderId)}
+        data-qa="root-folder"
       >
         <CaretIconComponent isOpen={isAllEntitiesOpened} />
         {t(rootFolderName)}
       </button>
       {isAllEntitiesOpened && (
-        <div className="flex grow flex-col gap-0.5 overflow-auto">
+        <div className="flex grow flex-col gap-0.5 overflow-y-auto">
           {!noFolders ? (
-            <div
-              className="flex flex-col gap-1 overflow-auto"
-              data-qa="all-folders"
-            >
+            <div className="flex flex-col gap-1" data-qa="all-folders">
               {filteredFolders.map((folder) => {
                 if (
                   folder.folderId !== rootFolderId ||

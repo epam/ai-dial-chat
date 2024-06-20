@@ -1,4 +1,4 @@
-import { SideBarSelectors } from '../selectors';
+import { MenuSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -58,7 +58,7 @@ export class SideBarEntities extends BaseElement {
     index?: number,
   ) => {
     return this.getEntityByName(selector, name, index).locator(
-      SideBarSelectors.dotsMenu,
+      MenuSelectors.dotsMenu,
     );
   };
 

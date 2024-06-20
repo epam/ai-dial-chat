@@ -235,7 +235,7 @@ export default function Home({ initialState }: HomeProps) {
                   <Chatbar />
                 )}
 
-                <div className="flex min-w-0 grow flex-col overflow-y-auto">
+                <div className="flex min-w-0 grow flex-col">
                   <AnnouncementsBanner />
                   <Chat />
 
