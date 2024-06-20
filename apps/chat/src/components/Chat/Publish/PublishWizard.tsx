@@ -14,6 +14,7 @@ import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
 import { getRootId } from '@/src/utils/app/id';
+import { isMobile } from '@/src/utils/app/mobile';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { getAttachments } from '@/src/utils/app/share';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -174,8 +175,17 @@ export function PublishModal({
     dispatch(PublicationActions.uploadRules({ path }));
   }, [dispatch, path]);
 
-  const handleFolderChange = useCallback(() => {
-    setIsChangeFolderModalOpened(true);
+  const handleFolderChangeForMobile = useCallback((e) => {
+    if (isMobile()) {
+      e.stopPropagation();
+      setIsChangeFolderModalOpened(true);
+    }
+  }, []);
+
+  const handleFolderChangeForDesktop = useCallback(() => {
+    if (!isMobile()) {
+      setIsChangeFolderModalOpened(true);
+    }
   }, []);
 
   const handleOnChangeFilters = (targetFilter: TargetAudienceFilter) => {
@@ -363,7 +373,7 @@ export function PublishModal({
                 </label>
                 <button
                   className="input-form button mx-0 flex grow items-center border-primary px-3 py-2"
-                  onClick={handleFolderChange}
+                  onClick={handleFolderChangeForDesktop}
                 >
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
                     <Tooltip
@@ -373,7 +383,12 @@ export function PublishModal({
                     >
                       {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
-                    <span className="text-accent-primary">{t('Change')}</span>
+                    <span
+                      className="text-accent-primary"
+                      onClick={handleFolderChangeForMobile}
+                    >
+                      {t('Change')}
+                    </span>
                   </div>
                 </button>
               </div>
