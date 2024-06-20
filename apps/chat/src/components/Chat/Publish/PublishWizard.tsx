@@ -56,6 +56,10 @@ interface PublishModalFiltersProps {
   path: string;
   otherTargetAudienceFilters: TargetAudienceFilter[];
   onChangeFilters: (targetFilter: TargetAudienceFilter) => void;
+  IFolderChange: (
+    e: React.MouseEvent<HTMLElement>,
+    handlerType: string,
+  ) => void;
 }
 
 function PublishModalFilters({
