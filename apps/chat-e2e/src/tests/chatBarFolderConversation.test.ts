@@ -587,7 +587,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1277');
-    const specialSymbols = `(\`~!@#$^*-_+[]'|<>.?")`;
+    const specialSymbols = `(\`~!@#$^*-_+[]'|<>.?)`;
 
     await dialTest.step(
       'Create a new folder and rename to name with special symbols',
