@@ -195,7 +195,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Prompt names can be equal on different levels\n' +
     'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder\n' +
     'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists\n' +
