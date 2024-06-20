@@ -21,16 +21,18 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
+import { TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 
@@ -39,7 +41,7 @@ import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
-import { PublicationItemsList } from './PublicationItemsList';
+import { Spinner } from '../../Common/Spinner';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
 import compact from 'lodash-es/compact';
@@ -155,6 +157,9 @@ export function PublishModal({
   const dispatch = useAppDispatch();
 
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  );
 
   const [path, setPath] = useState<string>('');
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
@@ -327,6 +332,15 @@ export function PublishModal({
     ],
   );
 
+  useEffect(() => {
+    if (areSelectedConversationsLoaded && entities.length === 0) {
+      dispatch(
+        UIActions.showErrorToast(t('There is no valid items to publish')),
+      );
+      onClose();
+    }
+  }, [areSelectedConversationsLoaded, dispatch, entities.length, onClose, t]);
+
   return (
     <Modal
       portalId="theme-main"
@@ -410,15 +424,24 @@ export function PublishModal({
               />
             </section>
           </div>
-          <PublicationItemsList
-            type={type}
-            entity={entity}
-            entities={entities}
-            path={path}
-            files={files}
-            containerClassNames="px-5 py-4"
-            publishAction={PublishActions.ADD}
-          />
+          {areSelectedConversationsLoaded ? (
+            <div className="flex w-full items-center justify-center">
+              <Spinner size={48} dataQa="publication-items-spinner" />
+            </div>
+          ) : (
+            // <PublicationItemsList
+            //   type={type}
+            //   entity={entity}
+            //   entities={entities}
+            //   path={path}
+            //   files={files}
+            //   containerClassNames="px-5 py-4"
+            //   publishAction={PublishActions.ADD}
+            // />
+            <div className="flex w-full items-center justify-center">
+              <Spinner size={48} dataQa="publication-items-spinner" />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 p-4">

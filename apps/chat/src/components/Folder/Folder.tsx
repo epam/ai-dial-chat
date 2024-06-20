@@ -263,6 +263,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         dispatch(
           ConversationsActions.uploadConversationsByIds({
             conversationIds: allChildItems.map((e) => e.id),
+            showLoader: true,
           }),
         );
       }
