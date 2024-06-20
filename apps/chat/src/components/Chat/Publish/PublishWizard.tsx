@@ -21,7 +21,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { TargetAudienceFilter } from '@/src/types/publication';
+import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -42,6 +42,7 @@ import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
+import { PublicationItemsList } from './PublicationItemsList';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
 import compact from 'lodash-es/compact';
@@ -425,19 +426,16 @@ export function PublishModal({
             </section>
           </div>
           {areSelectedConversationsLoaded ? (
-            <div className="flex w-full items-center justify-center">
-              <Spinner size={48} dataQa="publication-items-spinner" />
-            </div>
+            <PublicationItemsList
+              type={type}
+              entity={entity}
+              entities={entities}
+              path={path}
+              files={files}
+              containerClassNames="px-5 py-4"
+              publishAction={PublishActions.ADD}
+            />
           ) : (
-            // <PublicationItemsList
-            //   type={type}
-            //   entity={entity}
-            //   entities={entities}
-            //   path={path}
-            //   files={files}
-            //   containerClassNames="px-5 py-4"
-            //   publishAction={PublishActions.ADD}
-            // />
             <div className="flex w-full items-center justify-center">
               <Spinner size={48} dataQa="publication-items-spinner" />
             </div>
