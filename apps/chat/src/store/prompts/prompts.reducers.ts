@@ -435,7 +435,7 @@ export const promptsSlice = createSlice({
         .map(({ id }) => id);
       state.chosenFolderIds = state.folders
         .filter((folder) => isRootPromptId(folder.folderId))
-        .map(({ id }) => id);
+        .map(({ id }) => `${id}/`);
     },
   },
 });

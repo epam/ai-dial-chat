@@ -757,9 +757,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       <div
         className={classNames(
           'group/button group/folder-item group relative flex h-[30px] cursor-pointer items-center rounded border-l-2 hover:bg-accent-primary-alpha',
-          !withBorderHighlight && 'border-transparent',
+          (canSelectFolders || !withBorderHighlight) && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
-          isHighlighted && withBorderHighlight && 'border-accent-primary',
+          !canSelectFolders &&
+            isHighlighted &&
+            withBorderHighlight &&
+            'border-accent-primary',
           folderClassName,
         )}
         data-qa="folder"

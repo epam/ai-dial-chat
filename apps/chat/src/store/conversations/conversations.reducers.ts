@@ -790,7 +790,7 @@ export const conversationsSlice = createSlice({
         .map(({ id }) => id);
       state.chosenFolderIds = state.folders
         .filter((folder) => isRootConversationsId(folder.folderId))
-        .map(({ id }) => id);
+        .map(({ id }) => `${id}/`);
     },
   },
 });
