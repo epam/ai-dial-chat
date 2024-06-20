@@ -137,27 +137,36 @@ export class SideBarEntities extends BaseElement {
     return backgroundColor[0];
   }
 
-  public async selectMoveToMenuOption(name: string, waitForRequest = true) {
-    return this.selectEntityMenuOption(name, { triggeredHttpMethod: 'DELETE' }, waitForRequest);
+  public async selectMoveToMenuOption(
+    name: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    return this.selectEntityMenuOption(name, {
+      triggeredHttpMethod: 'DELETE',
+      isHttpMethodTriggered,
+    });
   }
-  
+
   public async selectEntityMenuOption(
     option: string,
     {
       triggeredHttpMethod = undefined,
-    }: { triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' } = {},
-    waitForRequest = true
+      isHttpMethodTriggered = true,
+    }: {
+      triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE';
+      isHttpMethodTriggered?: boolean;
+    } = {},
   ) {
     const menu = this.getDropdownMenu();
-  
-    if (isApiStorageType && waitForRequest && triggeredHttpMethod) { 
+
+    if (isApiStorageType && isHttpMethodTriggered && triggeredHttpMethod) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === triggeredHttpMethod,
       );
       await menu.selectMenuOption(option);
       return respPromise;
-    } 
-  
-    await menu.selectMenuOption(option); 
+    }
+
+    await menu.selectMenuOption(option);
   }
 }

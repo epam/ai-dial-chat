@@ -198,7 +198,8 @@ dialTest(
 dialTest.only(
   'Prompt names can be equal on different levels\n' +
     'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder\n' +
-    'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists',
+    'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists\n' +
+    'Error message is shown if you try to drag & drop prompt from the folder to another folder where the prompt with the same name exists',
   async ({
     dialHomePage,
     prompts,
@@ -209,7 +210,7 @@ dialTest.only(
     errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2984', 'EPMRTC-2987', 'EPMRTC-2988');
+    setTestIds('EPMRTC-2984', 'EPMRTC-2987', 'EPMRTC-2988', 'EPMRTC-2989');
     const promptValue = 'That is just a test prompt';
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
@@ -333,7 +334,7 @@ dialTest.only(
         await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
         await prompts.selectMoveToMenuOption(
           ExpectedConstants.newPromptFolderWithIndexTitle(2),
-          false,
+          { isHttpMethodTriggered: false },
         );
 
         // Check for the error message
@@ -359,6 +360,47 @@ dialTest.only(
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
+      'Try to drag and drop prompt to folder with already existing name and verify error message is shown',
+      async () => {
+        await promptBar.dragAndDropEntityToFolder(
+          folderPrompts.getFolderEntity(
+            ExpectedConstants.newPromptFolderWithIndexTitle(1),
+            duplicatedPromptName,
+          ), //TODO I don't like the index approach, better refactor the method itself
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newPromptFolderWithIndexTitle(2),
+          ),
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+        await promptBar.dragAndDropEntityToFolder(
+          folderPrompts.getFolderEntity('New folder 1', duplicatedPromptName),
+          folderPrompts.getFolderByName('New folder 2'),
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+
+        // Check for error message
+        await expect
+          .soft(
+            errorToast.getElementLocator(),
+            ExpectedMessages.errorToastIsShown,
+          )
+          .toBeVisible();
+        errorMessage = await errorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
+          .toBe(
+            ExpectedConstants.duplicatedPromptNameErrorMessage(
+              duplicatedPromptName,
+            ),
+          );
       },
     );
   },
