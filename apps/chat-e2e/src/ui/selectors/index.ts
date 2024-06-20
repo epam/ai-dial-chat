@@ -7,3 +7,4 @@ export * from './iconSelectors';
 export * from './menuSelectors';
 export * from './fileSelectors';
 export * from './editSelectors';
+export * from './folderSelectors';
