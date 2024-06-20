@@ -90,7 +90,7 @@ dialTest(
           )
           .toBeVisible();
 
-        const isFileChecked = await attachedAllFiles.attachedFolderFileCheckBox(
+        const isFileChecked = attachedAllFiles.attachedFolderFileCheckBox(
           ExpectedConstants.newFolderWithIndexTitle(1),
           Attachment.sunImageName,
           2,
@@ -125,9 +125,7 @@ dialTest(
     dialHomePage,
     tooltip,
     setTestIds,
-    setIssueIds,
   }) => {
-    setIssueIds('1508');
     setTestIds('EPMRTC-3022', 'EPMRTC-1615');
     const folderName = GeneratorUtil.randomString(7);
 
@@ -196,7 +194,7 @@ dialTest(
           )
           .toBeVisible();
 
-        const isFileChecked = await attachedAllFiles.attachedFolderFileCheckBox(
+        const isFileChecked = attachedAllFiles.attachedFolderFileCheckBox(
           folderName,
           Attachment.cloudImageName,
         );

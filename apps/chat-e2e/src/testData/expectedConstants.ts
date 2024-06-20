@@ -114,18 +114,18 @@ export const ExpectedConstants = {
     `Prompt with name "${name}" already exists at the root.`,
   duplicatedConversationRootNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists at the root.`,
-  prohibitedNameSymbols: `=,:;{}/%&`,
+  prohibitedNameSymbols: `=,:;{}/%&"`,
   // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
   attachedFileError: (filename: string) =>
     `You've trying to upload files with incorrect type: ${filename}`,
-  allowedSpecialSymbolsInName: 'Test (`~!@#$^*-_+[]\'|<>.?")',
-  winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___.__)",
+  allowedSpecialSymbolsInName: "Test (`~!@#$^*-_+[]'|<>.?)",
+  winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
     `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
   sameFilenamesError: (filename: string) =>
     `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
-  restrictedNameChars: ':;,=/{}%&\\',
+  restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
   endDotFilenameError: (filename: string) =>
@@ -161,6 +161,8 @@ export enum MenuOptions {
   download = 'Download',
   addNewFolder = 'Add new folder',
   upload = 'Upload',
+  attachFolders = 'Attach folders',
+  attachLink = 'Attach link',
 }
 
 export enum FilterMenuOptions {
