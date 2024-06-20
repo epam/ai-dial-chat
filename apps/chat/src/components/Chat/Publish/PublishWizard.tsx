@@ -21,7 +21,6 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
-import { IFolderChangе } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
@@ -56,10 +55,6 @@ interface PublishModalFiltersProps {
   path: string;
   otherTargetAudienceFilters: TargetAudienceFilter[];
   onChangeFilters: (targetFilter: TargetAudienceFilter) => void;
-  IFolderChange: (
-    e: React.MouseEvent<HTMLElement>,
-    handlerType: string,
-  ) => void;
 }
 
 function PublishModalFilters({
@@ -186,15 +181,18 @@ export function PublishModal({
     dispatch(PublicationActions.uploadRules({ path }));
   }, [dispatch, path]);
 
-  const handleFolderChangе = useCallback<IFolderChangе>((e, handlerType) => {
-    const isMobileBool = isMobile();
-    if (
-      (isMobileBool && handlerType === 'mobile-handler') ||
-      (!isMobileBool && handlerType === 'desktop-handler')
-    ) {
-      setIsChangeFolderModalOpened(true);
-    }
-  }, []);
+  const handleFolderChangе = useCallback(
+    (e: React.MouseEvent<HTMLElement>, handlerType: string) => {
+      const isMobileBool = isMobile();
+      if (
+        (isMobileBool && handlerType === 'mobile-handler') ||
+        (!isMobileBool && handlerType === 'desktop-handler')
+      ) {
+        setIsChangeFolderModalOpened(true);
+      }
+    },
+    [],
+  );
 
   const handleOnChangeFilters = (targetFilter: TargetAudienceFilter) => {
     setOtherTargetAudienceFilters((prev) => {

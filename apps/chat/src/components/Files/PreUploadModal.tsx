@@ -27,7 +27,6 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { isMobile } from '@/src/utils/app/mobile';
 
 import { DialFile } from '@/src/types/files';
-import { IFolderChangе } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -311,15 +310,18 @@ export const PreUploadDialog = ({
     [folderPath, selectedFiles],
   );
 
-  const handleFolderChangе = useCallback<IFolderChangе>((e, handlerType) => {
-    const isMobileBool = isMobile();
-    if (
-      (isMobileBool && handlerType === 'mobile-handler') ||
-      (!isMobileBool && handlerType === 'desktop-handler')
-    ) {
-      setIsChangeFolderModalOpened(true);
-    }
-  }, []);
+  const handleFolderChangе = useCallback(
+    (e: React.MouseEvent<HTMLElement>, handlerType: string) => {
+      const isMobileBool = isMobile();
+      if (
+        (isMobileBool && handlerType === 'mobile-handler') ||
+        (!isMobileBool && handlerType === 'desktop-handler')
+      ) {
+        setIsChangeFolderModalOpened(true);
+      }
+    },
+    [],
+  );
 
   const handleUnselectFile = useCallback(
     (unselectedFileIndex: number) => {
