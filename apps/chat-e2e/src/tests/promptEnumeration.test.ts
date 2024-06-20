@@ -199,7 +199,8 @@ dialTest.only(
   'Prompt names can be equal on different levels\n' +
     'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder\n' +
     'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists\n' +
-    'Error message is shown if you try to drag & drop prompt from the folder to another folder where the prompt with the same name exists',
+    'Error message is shown if you try to drag & drop prompt from the folder to another folder where the prompt with the same name exists\n' +
+    'Error message is shown if you try to drag & drop prompt from folder to root where the prompt with the same name exists',
   async ({
     dialHomePage,
     prompts,
@@ -210,7 +211,7 @@ dialTest.only(
     errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2984', 'EPMRTC-2987', 'EPMRTC-2988', 'EPMRTC-2989');
+    setTestIds('EPMRTC-2984', 'EPMRTC-2987', 'EPMRTC-2988', 'EPMRTC-2989', 'EPMRTC-2990');
     const promptValue = 'That is just a test prompt';
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
@@ -398,6 +399,35 @@ dialTest.only(
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
             ExpectedConstants.duplicatedPromptNameErrorMessage(
+              duplicatedPromptName,
+            ),
+          );
+      },
+    );
+
+    await dialTest.step(
+      'Try to drag & drop prompt from New folder 1 to Recent and verify error message is shown',
+      async () => {
+        await promptBar.dragAndDropPromptFromFolder(
+          ExpectedConstants.newPromptFolderWithIndexTitle(1),
+          duplicatedPromptName,
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+
+        // Check for error message
+        await expect
+          .soft(
+            errorToast.getElementLocator(),
+            ExpectedMessages.errorToastIsShown,
+          )
+          .toBeVisible();
+        errorMessage = await errorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
+          .toBe(
+            ExpectedConstants.duplicatedRootPromptNameErrorMessage(
               duplicatedPromptName,
             ),
           );
