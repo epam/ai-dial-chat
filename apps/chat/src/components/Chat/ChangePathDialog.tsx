@@ -71,9 +71,7 @@ export const ChangePathDialog = ({
   const folders = useAppSelector((state) =>
     selectors.selectTemporaryAndFilteredFolders(state, searchQuery),
   );
-  const loadingFolderIds = useAppSelector(
-    ConversationsSelectors.selectLoadingFolderIds,
-  );
+  const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   useEffect(() => {
     if (!isOpen) {
