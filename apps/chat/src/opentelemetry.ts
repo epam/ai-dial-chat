@@ -3,7 +3,7 @@ import pkg from '../../../package.json';
 
 import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
-import { OTLPMetricExporter as OTLPMetricExporterHTTP } from '@opentelemetry/exporter-metrics-otlp-http';
+// import { OTLPMetricExporter as OTLPMetricExporterHTTP } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { OTLPTraceExporter as OTLPTraceExporterGRPC } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
@@ -20,25 +20,20 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
+interface Exporters {
+  spanProcessor: SimpleSpanProcessor | undefined;
+  metricReader: MetricReader | PrometheusExporter | undefined;
+}
+
 // For troubleshooting, set the log level to DiagLogLevel.DEBUG
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
-const defaultMetricExporter = new PrometheusExporter({
-  port: 9464,
-  endpoint: '/metrics',
-});
+// const periodicMetricReaderHTTP = new PeriodicExportingMetricReader({
+//   exporter: metricExporterHTTP,
+// });
 
-const metricExporterGRPC = new OTLPMetricExporter();
-const metricExporterHTTP = new OTLPMetricExporterHTTP();
-const periodicMetricReaderGRPC = new PeriodicExportingMetricReader({
-  exporter: metricExporterGRPC,
-});
-const periodicMetricReaderHTTP = new PeriodicExportingMetricReader({
-  exporter: metricExporterHTTP,
-});
-
-let spanProcessor: SimpleSpanProcessor | undefined;
-let metricReader: MetricReader | PrometheusExporter | undefined;
+// let spanProcessor: SimpleSpanProcessor | undefined;
+// let metricReader: MetricReader | PrometheusExporter | undefined;
 // let traceExporter: SpanExporter | undefined;
 // if (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT) {
 //   traceExporter = new OTLPTraceExporter({
@@ -47,24 +42,25 @@ let metricReader: MetricReader | PrometheusExporter | undefined;
 //   });
 //   spanProcessor = new SimpleSpanProcessor(traceExporter);
 // }
-const traceExporter = new OTLPTraceExporter();
-const traceExporterGRPC = new OTLPTraceExporterGRPC({});
-if (
-  process.env.TELEMETRY_PROTOCOL &&
-  process.env.TELEMETRY_PROTOCOL === 'grpc'
-) {
-  spanProcessor = new SimpleSpanProcessor(traceExporterGRPC);
-  metricReader = periodicMetricReaderGRPC;
-} else if (
-  process.env.TELEMETRY_PROTOCOL &&
-  process.env.TELEMETRY_PROTOCOL === 'http'
-) {
-  spanProcessor = new SimpleSpanProcessor(traceExporter);
-  metricReader = periodicMetricReaderHTTP;
-} else {
-  spanProcessor = new SimpleSpanProcessor(traceExporter);
-  metricReader = defaultMetricExporter;
-}
+
+// if (
+//   process.env.OTEL_METRICS_EXPORTER &&
+//   process.env.TELEMETRY_PROTOCOL === 'otlp'
+// ) {
+//   spanProcessor = new SimpleSpanProcessor(traceExporterGRPC);
+//   metricReader = periodicMetricReaderGRPC;
+// } else {
+//   spanProcessor = new SimpleSpanProcessor(traceExporter);
+//   const defaultMetricExporter = new PrometheusExporter({
+//     port: 9464,
+//     endpoint: '/metrics',
+//   });
+//   metricReader = defaultMetricExporter;
+// }
+
+const { spanProcessor, metricReader } = getExporters(
+  process.env.OTEL_METRICS_EXPORTER,
+);
 
 const sdk = new NodeSDK({
   metricReader: metricReader,
@@ -83,3 +79,27 @@ const sdk = new NodeSDK({
   spanProcessor,
 });
 sdk.start();
+
+function getExporters(metricsExporterType: string | undefined): Exporters {
+  if (metricsExporterType && metricsExporterType === 'otlp') {
+    const metricExporterGRPC = new OTLPMetricExporter();
+    const periodicMetricReaderGRPC = new PeriodicExportingMetricReader({
+      exporter: metricExporterGRPC,
+    });
+    const traceExporterGRPC = new OTLPTraceExporterGRPC({});
+    return {
+      spanProcessor: new SimpleSpanProcessor(traceExporterGRPC),
+      metricReader: periodicMetricReaderGRPC,
+    };
+  } else {
+    const traceExporter = new OTLPTraceExporter();
+    const defaultMetricExporter = new PrometheusExporter({
+      port: 9464,
+      endpoint: '/metrics',
+    });
+    return {
+      spanProcessor: new SimpleSpanProcessor(traceExporter),
+      metricReader: defaultMetricExporter,
+    };
+  }
+}
