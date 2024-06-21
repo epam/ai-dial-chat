@@ -152,7 +152,9 @@ pre:has(div.codeblock) {
   .unpublish-modal,
   .preview-prompt-modal,
   .prompt-modal,
-  .publication-sections {
+  .publication-sections,
+  #chat .entity-selector .model-icon-template,
+  .entity-menu-selector-item {
     --text-primary-bg-dark: var(--text-primary-bg-light);
     --text-secondary-bg-dark: var(--text-secondary-bg-light);
   }

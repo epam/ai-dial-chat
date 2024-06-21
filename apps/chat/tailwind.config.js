@@ -92,6 +92,7 @@ module.exports = {
       borderRadius: {
         DEFAULT: '3px',
         primary: '6px',
+        secondary: '10px',
       },
       opacity: {
         15: '15%',
