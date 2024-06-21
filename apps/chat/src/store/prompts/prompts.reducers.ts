@@ -431,10 +431,15 @@ export const promptsSlice = createSlice({
     // },
     setAllChosenPromptIds: (state) => {
       state.chosenPromptIds = state.prompts
-        .filter((conv) => !isEntityExternal(conv))
+        .filter(
+          (conv) => !isEntityExternal(conv) && isRootPromptId(conv.folderId),
+        )
         .map(({ id }) => id);
       state.chosenFolderIds = state.folders
-        .filter((folder) => isRootPromptId(folder.folderId))
+        .filter(
+          (folder) =>
+            !isEntityExternal(folder) && isRootPromptId(folder.folderId),
+        )
         .map(({ id }) => `${id}/`);
     },
   },

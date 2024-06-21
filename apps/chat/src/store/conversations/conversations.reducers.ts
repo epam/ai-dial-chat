@@ -786,10 +786,16 @@ export const conversationsSlice = createSlice({
     // },
     setAllChosenConversationIds: (state) => {
       state.chosenConversationIds = state.conversations
-        .filter((conv) => !isEntityExternal(conv))
+        .filter(
+          (conv) =>
+            !isEntityExternal(conv) && isRootConversationsId(conv.folderId),
+        )
         .map(({ id }) => id);
       state.chosenFolderIds = state.folders
-        .filter((folder) => isRootConversationsId(folder.folderId))
+        .filter(
+          (folder) =>
+            !isEntityExternal(folder) && isRootConversationsId(folder.folderId),
+        )
         .map(({ id }) => `${id}/`);
     },
   },
