@@ -14,7 +14,6 @@ import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
 import { getRootId } from '@/src/utils/app/id';
-import { isMobile } from '@/src/utils/app/mobile';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { getAttachments } from '@/src/utils/app/share';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -181,18 +180,9 @@ export function PublishModal({
     dispatch(PublicationActions.uploadRules({ path }));
   }, [dispatch, path]);
 
-  const handleFolderChangе = useCallback(
-    (e: React.MouseEvent<HTMLElement>, handlerType: string) => {
-      const isMobileBool = isMobile();
-      if (
-        (isMobileBool && handlerType === 'mobile-handler') ||
-        (!isMobileBool && handlerType === 'desktop-handler')
-      ) {
-        setIsChangeFolderModalOpened(true);
-      }
-    },
-    [],
-  );
+  const handleFolderChange = useCallback(() => {
+    setIsChangeFolderModalOpened(true);
+  }, []);
 
   const handleOnChangeFilters = (targetFilter: TargetAudienceFilter) => {
     setOtherTargetAudienceFilters((prev) => {
@@ -386,10 +376,7 @@ export function PublishModal({
                 <label className="mb-4 flex text-sm" htmlFor="requestPath">
                   {t('Publish to')}
                 </label>
-                <button
-                  className="input-form button mx-0 flex grow items-center border-primary px-3 py-2"
-                  onClick={(e) => handleFolderChangе(e, 'desktop-handler')}
-                >
+                <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
                     <Tooltip
                       tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
@@ -399,8 +386,8 @@ export function PublishModal({
                       {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
                     <span
-                      className="text-accent-primary"
-                      onClick={(e) => handleFolderChangе(e, 'mobile-handler')}
+                      className="cursor-pointer text-accent-primary"
+                      onClick={handleFolderChange}
                     >
                       {t('Change')}
                     </span>

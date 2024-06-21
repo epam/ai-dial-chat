@@ -24,7 +24,6 @@ import {
 } from '@/src/utils/app/file';
 import { getParentAndCurrentFoldersById } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
-import { isMobile } from '@/src/utils/app/mobile';
 
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
@@ -306,18 +305,9 @@ export const PreUploadDialog = ({
     [folderPath, selectedFiles],
   );
 
-  const handleFolderChangе = useCallback(
-    (e: React.MouseEvent<HTMLElement>, handlerType: string) => {
-      const isMobileBool = isMobile();
-      if (
-        (isMobileBool && handlerType === 'mobile-handler') ||
-        (!isMobileBool && handlerType === 'desktop-handler')
-      ) {
-        setIsChangeFolderModalOpened(true);
-      }
-    },
-    [],
-  );
+  const handleFolderChange = useCallback(() => {
+    setIsChangeFolderModalOpened(true);
+  }, []);
 
   const handleUnselectFile = useCallback(
     (unselectedFileIndex: number) => {
@@ -404,16 +394,15 @@ export const PreUploadDialog = ({
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
             <button
-              className="flex grow items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
-              onClick={(e) => handleFolderChangе(e, 'desktop-handler')}
+              className="flex grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
               data-qa="upload-to"
             >
               <span className="truncate" data-qa="upload-to-path">
                 {constructPath(t('All files'), folderPath)}
               </span>
               <span
-                className="text-accent-primary"
-                onClick={(e) => handleFolderChangе(e, 'mobile-handler')}
+                className="cursor-pointer text-accent-primary"
+                onClick={handleFolderChange}
                 data-qa="change-upload-to"
               >
                 {t('Change')}
