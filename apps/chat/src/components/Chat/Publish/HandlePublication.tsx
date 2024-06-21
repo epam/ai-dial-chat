@@ -203,15 +203,15 @@ export function HandlePublication({ publication }: Props) {
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-        <div className="flex w-full items-center justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
+        <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
-            tooltip={getPublicationId(publication.url)}
+            tooltip={publication.name || getPublicationId(publication.url)}
             contentClassName="max-w-[400px] break-all"
-            triggerClassName="truncate text-center w-full"
+            triggerClassName="truncate"
           >
             <h4
               data-qa="app-name"
-              className="truncate whitespace-pre break-all text-center"
+              className="truncate whitespace-pre break-all text-base font-semibold"
             >
               {publication.name || getPublicationId(publication.url)}
             </h4>
@@ -255,9 +255,6 @@ export function HandlePublication({ publication }: Props) {
                       {t('General info')}
                     </label>
                     <div className="my-4 grid w-full grid-cols-3 gap-3 text-xs">
-                      <p className="text-secondary">
-                        <span>{t('Publication id: ')}</span>
-                      </p>
                       <p className="text-secondary">{t('Path: ')}</p>
                       <span className="col-span-2 flex truncate whitespace-pre">
                         <Tooltip
