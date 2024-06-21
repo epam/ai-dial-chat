@@ -23,3 +23,7 @@ export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
 
 export const DEFAULT_CUSTOM_ATTACHMENT_WIDTH = 150;
 export const DEFAULT_CUSTOM_ATTACHMENT_HEIGHT = 150;
+
+export const MIN_TWO_CAL_CHAT_SETTINGS_WIDTH = 510;
+export const CENTRAL_CHAT_MIN_WIDTH = 800;
+export const DESKTOP_BREAKPOINT = 1280;
