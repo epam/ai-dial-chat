@@ -205,11 +205,9 @@ dialTest(
     dialHomePage,
     prompts,
     promptBar,
-    promptData,
     promptDropdownMenu,
     promptModalDialog,
     folderPrompts,
-    dataInjector,
     errorToast,
     setTestIds,
   }) => {
