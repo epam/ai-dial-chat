@@ -2,20 +2,28 @@
 import pkg from '../../../package.json';
 
 import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api';
+import { SeverityNumber } from '@opentelemetry/api-logs';
+import { OTLPLogExporter as OTLPLogExporterHTTP } from '@opentelemetry/exporter-logs-otlp-http';
 // import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 // import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { OTLPMetricExporter as OTLPMetricExporterHTTP } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+import { OTLPTraceExporter as OTLPTraceExporterHTTP } from '@opentelemetry/exporter-trace-otlp-http';
 // import { OTLPTraceExporter as OTLPTraceExporterGRPC } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { Resource } from '@opentelemetry/resources';
+import {
+  BatchLogRecordProcessor, // SimpleLogRecordProcessor,
+  LoggerProvider,
+} from '@opentelemetry/sdk-logs';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
-import { NodeSDK } from '@opentelemetry/sdk-node';
+import { NodeSDK, NodeSDKConfiguration } from '@opentelemetry/sdk-node';
 // import { SpanExporter } from '@opentelemetry/sdk-trace-base';
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
+// import { SimpleLogRecordProcessor } from '@opentelemetry/sdk-logs';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 const grpcInstrumentation = new GrpcInstrumentation();
@@ -31,8 +39,16 @@ const pinoInstrumentation = new PinoInstrumentation();
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
 const metricReader = getMetricExporter(process.env.OTEL_METRICS_EXPORTER);
-const traceExporter = new OTLPTraceExporter();
-const spanProcessor = new SimpleSpanProcessor(traceExporter);
+const defaultTraceExporter = new OTLPTraceExporter();
+const traceExporterHTTP = new OTLPTraceExporterHTTP();
+const defaultSpanProcessor = new SimpleSpanProcessor(defaultTraceExporter);
+const spanProcessorHTTP = new SimpleSpanProcessor(traceExporterHTTP);
+
+const logExporter = new OTLPLogExporterHTTP();
+const logRecordProcessor = new BatchLogRecordProcessor(logExporter);
+const loggerProvider = new LoggerProvider();
+
+loggerProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter));
 
 const sdk = new NodeSDK({
   metricReader: metricReader,
@@ -49,7 +65,9 @@ const sdk = new NodeSDK({
     pinoInstrumentation,
   ],
   // spanProcessor,
-  spanProcessors: [spanProcessor],
+  spanProcessors: [defaultSpanProcessor, spanProcessorHTTP],
+  logRecordProcessor:
+    logRecordProcessor as unknown as NodeSDKConfiguration['logRecordProcessor'],
 });
 sdk.start();
 
@@ -70,6 +88,15 @@ function getMetricExporter(metricsExporterType: string | undefined) {
   return metricReaderHTTP;
 }
 
+const logger = loggerProvider.getLogger('default', '1.0.0');
+
+// Emit a log
+logger.emit({
+  severityNumber: SeverityNumber.INFO,
+  severityText: 'info',
+  body: 'this is a log body',
+  attributes: { 'log.type': 'custom' },
+});
 // const periodicMetricReaderHTTP = new PeriodicExportingMetricReader({
 //   exporter: metricExporterHTTP,
 // });
