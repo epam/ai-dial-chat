@@ -17,7 +17,6 @@ export const PromptModal = {
   promptDescription: '[data-qa="prompt-descr"]',
   promptValue: '[data-qa="prompt-value"]',
   savePrompt: '[data-qa="save-prompt"]',
-  // closePrompt: 'svg.tabler-icon.tabler-icon-x',
   fieldLabel: (label: string) => `label[for="${label}"]`,
 };
 
