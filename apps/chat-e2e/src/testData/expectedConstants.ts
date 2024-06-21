@@ -1,5 +1,6 @@
 import config from '../../config/playwright.config';
 
+import { CopyTableType } from '@/chat/types/chat';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -129,6 +130,8 @@ export const ExpectedConstants = {
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
   allFilesRoot: 'All files',
+  copyTableTooltip: (copyType: CopyTableType) =>
+    `Copy as ${copyType.toUpperCase()}`,
 };
 
 export enum Groups {

@@ -18,15 +18,17 @@ interface CopyIconProps {
   Icon: FC<TablerIconsProps>;
   onClick: () => void;
   copied: boolean;
+  type: CopyTableType;
 }
 
-const CopyIcon = ({ Icon, onClick, copied }: CopyIconProps) => {
+const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
   const IconComponent = copied ? IconCheck : Icon;
 
   return (
     <IconComponent
       className="cursor-pointer text-secondary hover:text-accent-primary"
       size={24}
+      id={type.concat('-icon')}
       onClick={() => {
         if (!copied) {
           onClick();
@@ -147,15 +149,19 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
   );
 
   return (
-    <div className="mt-7 max-w-full overflow-auto">
+    <div className="mt-7 max-w-full overflow-auto" data-qa="table">
       {!isLastMessageStreaming && (
-        <div className="flex max-w-full justify-end bg-layer-3 px-2 py-1">
+        <div
+          className="flex max-w-full justify-end bg-layer-3 px-2 py-1"
+          data-qa="table-controls"
+        >
           <div data-no-context-menu className="flex gap-2">
             <Tooltip placement="top" tooltip={t('Copy as CSV')}>
               <CopyIcon
                 Icon={IconCsv}
                 onClick={copyTableToCSV}
                 copied={CopyTableType.CSV === copiedType}
+                type={CopyTableType.CSV}
               />
             </Tooltip>
             <Tooltip placement="top" tooltip={t('Copy as TXT')}>
@@ -163,6 +169,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 Icon={IconTxt}
                 onClick={copyTableToTXT}
                 copied={CopyTableType.TXT === copiedType}
+                type={CopyTableType.TXT}
               />
             </Tooltip>
             <Tooltip placement="top" tooltip={t('Copy as MD')}>
@@ -170,6 +177,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 Icon={IconMarkdown}
                 onClick={copyTableToMD}
                 copied={CopyTableType.MD === copiedType}
+                type={CopyTableType.MD}
               />
             </Tooltip>
           </div>

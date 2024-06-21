@@ -142,3 +142,11 @@ export const ChatSelectors = {
   messageSpinner: '[data-qa="message-input-spinner"]',
   plotlyContainer: '.plot-container',
 };
+
+export const TableSelectors = {
+  tableContainer: '[data-qa="table"]',
+  tableControls: '[data-qa="table-controls"]',
+  copyAsCsvIcon: '#csv-icon',
+  copyAsTxtIcon: '#txt-icon',
+  copyAsMdIcon: '#md-icon',
+};
