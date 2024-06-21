@@ -371,7 +371,7 @@ export function HandlePublication({ publication }: Props) {
             className="text-accent-primary"
             onClick={handlePublicationReview}
           >
-            {t('Go to a publication review...')}
+            {t('Go to a review...')}
           </button>
           <div>
             <button

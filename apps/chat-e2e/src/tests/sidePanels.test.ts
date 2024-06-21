@@ -1,3 +1,5 @@
+import { CENTRAL_CHAT_MIN_WIDTH } from '@/chat/constants/chat';
+import { SIDEBAR_MIN_WIDTH } from '@/chat/constants/default-ui-settings';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
@@ -18,7 +20,7 @@ dialTest(
       await header.chatPanelToggle.click();
       await expect
         .soft(
-          await chatBar.getElementLocator(),
+          chatBar.getElementLocator(),
           ExpectedMessages.sideBarPanelIsHidden,
         )
         .toBeHidden();
@@ -28,7 +30,7 @@ dialTest(
       await header.promptsPanelToggle.click();
       await expect
         .soft(
-          await promptBar.getElementLocator(),
+          promptBar.getElementLocator(),
           ExpectedMessages.sideBarPanelIsHidden,
         )
         .toBeHidden();
@@ -100,7 +102,7 @@ dialTest(
             ExpectedMessages.sideBarPanelWidthIsValid,
           )
           .toBeCloseTo(
-            appBounding!.width * ExpectedConstants.maxSidePanelWidthPercentage,
+            appBounding!.width - SIDEBAR_MIN_WIDTH - CENTRAL_CHAT_MIN_WIDTH,
             0,
           );
       },
@@ -156,7 +158,7 @@ dialTest(
             ExpectedMessages.sideBarPanelWidthIsValid,
           )
           .toBeCloseTo(
-            appBounding!.width * ExpectedConstants.maxSidePanelWidthPercentage,
+            appBounding!.width - SIDEBAR_MIN_WIDTH - CENTRAL_CHAT_MIN_WIDTH,
             0,
           );
       },
@@ -165,6 +167,7 @@ dialTest(
     await dialTest.step(
       'Hide both panels, open again and verify panels size is stored',
       async () => {
+        maxChatBarBounding = await chatBar.getElementBoundingBox();
         for (let i = 1; i <= 2; i++) {
           await header.chatPanelToggle.click();
           await header.promptsPanelToggle.click();
@@ -221,7 +224,7 @@ dialTest(
             chatBarBounding!.width,
             ExpectedMessages.sideBarPanelWidthIsValid,
           )
-          .toBeCloseTo(ExpectedConstants.minSidePanelWidthPx, 0);
+          .toBeCloseTo(SIDEBAR_MIN_WIDTH, 0);
       },
     );
 
@@ -231,7 +234,7 @@ dialTest(
         await chatBar.bottomDotsMenuIcon.waitForState();
         await expect
           .soft(
-            await chatBar.attachments.getElementLocator(),
+            chatBar.attachments.getElementLocator(),
             ExpectedMessages.iconIsHidden,
           )
           .toBeHidden();
@@ -257,7 +260,7 @@ dialTest(
             promptBarBounding!.width,
             ExpectedMessages.sideBarPanelWidthIsValid,
           )
-          .toBeCloseTo(ExpectedConstants.minSidePanelWidthPx, 0);
+          .toBeCloseTo(SIDEBAR_MIN_WIDTH, 0);
       },
     );
   },
