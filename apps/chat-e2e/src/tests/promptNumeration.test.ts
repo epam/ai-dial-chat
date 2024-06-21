@@ -195,7 +195,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Prompt names can be equal on different levels\n' +
     'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder\n' +
     'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists\n' +
@@ -222,49 +222,117 @@ dialTest(
     );
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
+    const promptValue = 'That is just a test prompt';
+
+    // await dialTest.step(
+    //   'Prepare 2 levels nested folders with prompts inside',
+    //   async () => {
+    //     const nestedFolders = promptData.prepareNestedFolder(1, {
+    //       1: ExpectedConstants.newFolderWithIndexTitle(1),
+    //       2: ExpectedConstants.newFolderWithIndexTitle(2),
+    //     });
+    //     const nestedPrompts = promptData.preparePromptsForNestedFolders(
+    //       nestedFolders,
+    //       {
+    //         1: duplicatedPromptName,
+    //         2: duplicatedPromptName,
+    //       },
+    //     );
+    //     promptData.resetData();
+    //     const singlePrompt =
+    //       promptData.prepareDefaultPrompt(duplicatedPromptName);
+    //     promptData.resetData();
+    //     const folderPromptToRename = promptData.preparePromptInFolder(
+    //       'test',
+    //       undefined,
+    //       ExpectedConstants.newPromptTitle(2),
+    //       nestedFolders[0],
+    //     );
+
+    //     await dataInjector.createPrompts(
+    //       [singlePrompt, ...folderPromptToRename.prompts, ...nestedPrompts],
+    //       ...nestedFolders,
+    //     );
+    //   },
+    // );
+
+    await dialTest.step('Create nested folders structure', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+
+      for (let i = 1; i <= 2; i++) {
+        await promptBar.createNewFolder();
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newPromptFolderWithIndexTitle(i),
+            ),
+            ExpectedMessages.folderIsVisible,
+          )
+          .toBeVisible();
+      }
+
+      await promptBar.drugAndDropFolderToFolder(
+        ExpectedConstants.newPromptFolderWithIndexTitle(2),
+        ExpectedConstants.newPromptFolderWithIndexTitle(1),
+      );
+    });
 
     await dialTest.step(
-      'Prepare 2 levels nested folders with prompts inside',
+      'Create new prompts and move them to corresponding folders',
       async () => {
-        const nestedFolders = promptData.prepareNestedFolder(1, {
-          1: ExpectedConstants.newFolderWithIndexTitle(1),
-          2: ExpectedConstants.newFolderWithIndexTitle(2),
-        });
-        const nestedPrompts = promptData.preparePromptsForNestedFolders(
-          nestedFolders,
-          {
-            1: duplicatedPromptName,
-            2: duplicatedPromptName,
-          },
-        );
-        promptData.resetData();
-        const singlePrompt =
-          promptData.prepareDefaultPrompt(duplicatedPromptName);
-        promptData.resetData();
-        const folderPromptToRename = promptData.preparePromptInFolder(
-          'test',
-          undefined,
-          ExpectedConstants.newPromptTitle(2),
-          nestedFolders[0],
-        );
+        for (let i = 1; i <= 2; i++) {
+          await promptBar.createNewPrompt();
+          await promptModalDialog.setField(
+            promptModalDialog.prompt,
+            promptValue,
+          );
+          await promptModalDialog.saveButton.click();
 
-        await dataInjector.createPrompts(
-          [singlePrompt, ...folderPromptToRename.prompts, ...nestedPrompts],
-          ...nestedFolders,
-        );
+          await promptBar.dragAndDropEntityToFolder(
+            prompts.getPromptByName(duplicatedPromptName),
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newPromptFolderWithIndexTitle(i),
+            ),
+          );
+
+          await expect
+            .soft(
+              folderPrompts.getFolderEntity(
+                ExpectedConstants.newPromptFolderWithIndexTitle(i),
+                duplicatedPromptName,
+              ),
+              ExpectedMessages.promptIsVisible,
+            )
+            .toBeVisible();
+        }
+
+        await promptBar.createNewPrompt();
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
+        await promptModalDialog.saveButton.click();
+        await expect
+          .soft(
+            prompts.getPromptByName(duplicatedPromptName),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
     await dialTest.step(
       'Try to rename prompt to already existing name in the same folder and verify error message is shown',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await folderPrompts.expandFolder(
-          ExpectedConstants.newPromptFolderWithIndexTitle(1),
-        );
-        await folderPrompts.expandFolder(
-          ExpectedConstants.newPromptFolderWithIndexTitle(2),
+        // Create one more prompt
+        await promptBar.createNewPrompt();
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
+        await promptModalDialog.saveButton.click();
+
+        // Move it
+        await promptBar.dragAndDropEntityToFolder(
+          prompts.getPromptByName(ExpectedConstants.newPromptTitle(2)),
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newPromptFolderWithIndexTitle(1),
+          ),
         );
 
         // Try to rename it
