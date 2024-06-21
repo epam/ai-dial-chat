@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
 import Modal from '../../Common/Modal';
+import Tooltip from '../../Common/Tooltip';
 import { PublicationItemsList } from './PublicationItemsList';
 
 interface Props {
@@ -43,7 +44,7 @@ export function UnpublishModal({
     getAttachments(type)(state, entity.id),
   );
 
-  const [publicationName, setPublicationName] = useState('');
+  const [unpublishRequestName, setUnpublishRequestName] = useState('');
 
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
@@ -62,7 +63,7 @@ export function UnpublishModal({
 
       dispatch(
         PublicationActions.deletePublication({
-          name: publicationName.trim(),
+          name: unpublishRequestName.trim(),
           targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
             ...entities.map((entity) => ({ targetUrl: entity.id })),
@@ -76,7 +77,7 @@ export function UnpublishModal({
 
       onClose();
     },
-    [dispatch, entities, entity.id, files, onClose, publicationName],
+    [dispatch, entities, entity.id, files, onClose, unpublishRequestName],
   );
 
   return (
@@ -91,8 +92,8 @@ export function UnpublishModal({
         <div className="px-3 py-4 md:pl-4 md:pr-10">
           <input
             autoFocus
-            onChange={(e) => setPublicationName(e.target.value)}
-            value={publicationName}
+            onChange={(e) => setUnpublishRequestName(e.target.value)}
+            value={unpublishRequestName}
             placeholder={t('Type unpublish request name...') ?? ''}
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
@@ -120,14 +121,19 @@ export function UnpublishModal({
           >
             {t('Cancel')}
           </button>
-          <button
-            className="button button-primary"
-            onClick={handleUnpublish}
-            data-qa="unpublish"
-            disabled={!publicationName.trim().length}
+          <Tooltip
+            hideTooltip={!!unpublishRequestName.trim().length}
+            tooltip={t('Enter a name for the unpublish request')}
           >
-            {t('Unpublish')}
-          </button>
+            <button
+              className="button button-primary"
+              onClick={handleUnpublish}
+              data-qa="unpublish"
+              disabled={!unpublishRequestName.trim().length}
+            >
+              {t('Unpublish')}
+            </button>
+          </Tooltip>
         </div>
       </div>
     </Modal>

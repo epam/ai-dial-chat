@@ -373,9 +373,9 @@ export function HandlePublication({ publication }: Props) {
           >
             {t('Go to a review...')}
           </button>
-          <div>
+          <div className="flex gap-3">
             <button
-              className="button button-secondary mr-3"
+              className="button button-secondary"
               onClick={() =>
                 dispatch(
                   PublicationActions.rejectPublication({
@@ -386,19 +386,24 @@ export function HandlePublication({ publication }: Props) {
             >
               {t('Reject')}
             </button>
-            <button
-              className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-              disabled={!resourcesToReview.every((r) => r.reviewed)}
-              onClick={() =>
-                dispatch(
-                  PublicationActions.approvePublication({
-                    url: publication.url,
-                  }),
-                )
-              }
+            <Tooltip
+              hideTooltip={resourcesToReview.every((r) => r.reviewed)}
+              tooltip={t("It's required to review all resources")}
             >
-              {t('Approve')}
-            </button>
+              <button
+                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                disabled={!resourcesToReview.every((r) => r.reviewed)}
+                onClick={() =>
+                  dispatch(
+                    PublicationActions.approvePublication({
+                      url: publication.url,
+                    }),
+                  )
+                }
+              >
+                {t('Approve')}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

@@ -163,7 +163,7 @@ export function PublishModal({
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
 
-  const [publicationName, setPublicationName] = useState('');
+  const [publishRequestName, setPublishRequestName] = useState('');
   const [path, setPath] = useState('');
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
@@ -201,7 +201,7 @@ export function PublishModal({
       e.stopPropagation();
 
       const trimmedPath = path.trim();
-      const trimmedName = publicationName.trim();
+      const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
@@ -332,7 +332,7 @@ export function PublishModal({
       onClose,
       otherTargetAudienceFilters,
       path,
-      publicationName,
+      publishRequestName,
       rules,
       type,
     ],
@@ -363,8 +363,8 @@ export function PublishModal({
         <div className="px-3 py-4 md:pl-4 md:pr-10">
           <input
             autoFocus
-            onChange={(e) => setPublicationName(e.target.value)}
-            value={publicationName}
+            onChange={(e) => setPublishRequestName(e.target.value)}
+            value={publishRequestName}
             placeholder={t('Type publication request name...') ?? ''}
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
@@ -442,14 +442,19 @@ export function PublishModal({
         </div>
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
-          <button
-            className="button button-primary py-2"
-            onClick={handlePublish}
-            data-qa="publish"
-            disabled={!publicationName.trim().length}
+          <Tooltip
+            hideTooltip={!!publishRequestName.trim().length}
+            tooltip={t('Enter a name for the publish request')}
           >
-            {t('Send request')}
-          </button>
+            <button
+              className="button button-primary py-2"
+              onClick={handlePublish}
+              data-qa="publish"
+              disabled={!publishRequestName.trim().length}
+            >
+              {t('Send request')}
+            </button>
+          </Tooltip>
         </div>
       </div>
       <ChangePathDialog
@@ -464,18 +469,14 @@ export function PublishModal({
         }}
         type={type}
         depth={depth}
-        rootFolderId={
-          type === SharingType.Conversation ||
-          type === SharingType.ConversationFolder
-            ? getRootId({
-                featureType: FeatureType.Chat,
-                bucket: PUBLIC_URL_PREFIX,
-              })
-            : getRootId({
-                featureType: FeatureType.Prompt,
-                bucket: PUBLIC_URL_PREFIX,
-              })
-        }
+        rootFolderId={getRootId({
+          featureType:
+            type === SharingType.Conversation ||
+            type === SharingType.ConversationFolder
+              ? FeatureType.Chat
+              : FeatureType.Prompt,
+          bucket: PUBLIC_URL_PREFIX,
+        })}
       />
     </Modal>
   );
