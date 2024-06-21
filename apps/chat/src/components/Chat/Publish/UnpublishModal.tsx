@@ -93,7 +93,7 @@ export function UnpublishModal({
             autoFocus
             onChange={(e) => setPublicationName(e.target.value)}
             value={publicationName}
-            placeholder={t('Type publication request name...') ?? ''}
+            placeholder={t('Type unpublish request name...') ?? ''}
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
         </div>

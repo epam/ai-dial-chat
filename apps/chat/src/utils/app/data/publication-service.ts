@@ -11,6 +11,8 @@ import {
   PublishedItem,
 } from '@/src/types/publication';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
@@ -137,7 +139,7 @@ export class PublicationService {
       method: 'POST',
       body: JSON.stringify({
         url: `${ApiUtils.encodeApiUrl(
-          path ? constructPath('public', path) : 'public',
+          path ? constructPath(PUBLIC_URL_PREFIX, path) : PUBLIC_URL_PREFIX,
         )}/`,
       }),
     });

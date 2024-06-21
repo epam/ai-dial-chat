@@ -35,6 +35,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
@@ -255,7 +256,7 @@ export function PublishModal({
         dispatch(
           PublicationActions.publish({
             name: trimmedName,
-            targetFolder: constructPath('public', trimmedPath),
+            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
             resources: [
               ...entities.map((item) => ({
                 sourceUrl: item.id,
@@ -311,7 +312,7 @@ export function PublishModal({
                 ),
               })),
             ],
-            targetFolder: constructPath('public', trimmedPath),
+            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
             rules: preparedFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
@@ -466,8 +467,14 @@ export function PublishModal({
         rootFolderId={
           type === SharingType.Conversation ||
           type === SharingType.ConversationFolder
-            ? getRootId({ featureType: FeatureType.Chat, bucket: 'public' })
-            : getRootId({ featureType: FeatureType.Prompt, bucket: 'public' })
+            ? getRootId({
+                featureType: FeatureType.Chat,
+                bucket: PUBLIC_URL_PREFIX,
+              })
+            : getRootId({
+                featureType: FeatureType.Prompt,
+                bucket: PUBLIC_URL_PREFIX,
+              })
         }
       />
     </Modal>
