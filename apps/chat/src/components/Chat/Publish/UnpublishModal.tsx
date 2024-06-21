@@ -86,7 +86,7 @@ export function UnpublishModal({
       onClose={onClose}
     >
       <div className="flex w-full flex-col overflow-y-auto">
-        <h4 className="truncate px-3 py-4 pr-10 text-base font-semibold md:px-4 md:pr-10">
+        <h4 className="truncate py-4 pl-3 pr-10 text-base font-semibold md:pl-4">
           <span className="w-full text-center">
             <Tooltip
               contentClassName="max-w-[400px] break-words"

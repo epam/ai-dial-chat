@@ -35,8 +35,8 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?',
-  deleteFileMessage: 'Are you sure that you want to delete this file',
-  deleteFilesMessage: 'Are you sure that you want to delete these files',
+  deleteFileMessage: 'Are you sure that you want to delete this file?',
+  deleteFilesMessage: 'Are you sure that you want to delete these files?',
   deleteSharedFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?\n' +
     'Deleting will stop sharing and other users will no longer see this folder.',
@@ -80,8 +80,6 @@ export const ExpectedConstants = {
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
   revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
-  maxSidePanelWidthPercentage: 0.45,
-  minSidePanelWidthPx: 260,
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^\\$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,

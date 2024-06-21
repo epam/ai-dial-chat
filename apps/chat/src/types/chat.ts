@@ -136,3 +136,8 @@ export interface PrepareNameOptions {
   replaceWithSpacesForRenaming: boolean;
   trimEndDotsRequired: boolean;
 }
+
+export enum SidebarSide {
+  Left = 'left',
+  Right = 'right',
+}
