@@ -216,7 +216,7 @@ dialTest(
 
         await expect
           .soft(
-            await conversations.getConversationArrowIcon(
+            conversations.getConversationArrowIcon(
               ExpectedConstants.newConversationTitle,
             ),
             ExpectedMessages.sharedEntityIconIsNotVisible,
@@ -400,7 +400,7 @@ dialTest(
         ]) {
           await expect
             .soft(
-              await conversations.getConversationArrowIcon(conversation.name),
+              conversations.getConversationArrowIcon(conversation.name),
               ExpectedMessages.sharedEntityIconIsNotVisible,
             )
             .toBeHidden();
@@ -412,7 +412,7 @@ dialTest(
       'Verify only conversation with updated settings is shared with user',
       async () => {
         const sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeEntities();
+          await additionalUserShareApiHelper.listSharedWithMeConversations();
         expect
           .soft(
             sharedEntities.resources.find(
@@ -526,7 +526,7 @@ dialTest(
         ]) {
           await expect
             .soft(
-              await conversations.getConversationArrowIcon(conversation.name),
+              conversations.getConversationArrowIcon(conversation.name),
               ExpectedMessages.sharedEntityIconIsNotVisible,
             )
             .toBeHidden();
@@ -722,9 +722,7 @@ dialTest(
         for (let i = 0; i < nestedFolders.length; i = i + 2) {
           await expect
             .soft(
-              await folderConversations.getFolderArrowIcon(
-                nestedFolders[i].name,
-              ),
+              folderConversations.getFolderArrowIcon(nestedFolders[i].name),
               ExpectedMessages.sharedFolderIconIsNotVisible,
             )
             .toBeHidden();
@@ -733,7 +731,7 @@ dialTest(
         for (let i = 0; i < nestedFolders.length - 1; i++) {
           await expect
             .soft(
-              await folderConversations.getFolderEntityArrowIcon(
+              folderConversations.getFolderEntityArrowIcon(
                 nestedFolders[i].name,
                 nestedConversations[i].name,
               ),
@@ -933,7 +931,7 @@ dialTest(
       'Verify folder is not shared with another user',
       async () => {
         const sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeEntities();
+          await additionalUserShareApiHelper.listSharedWithMeConversations();
         expect
           .soft(
             sharedEntities.resources.find(
@@ -1054,7 +1052,7 @@ dialTest(
       'Get the list of shared with me conversation by another user and verify there is no shared one',
       async () => {
         const sharedWithAnotherUserConversations =
-          await additionalUserShareApiHelper.listSharedWithMeEntities();
+          await additionalUserShareApiHelper.listSharedWithMeConversations();
         expect
           .soft(
             sharedWithAnotherUserConversations.resources.find(
@@ -1152,13 +1150,13 @@ dialTest(
         });
         await expect
           .soft(
-            await conversations.getConversationByName(conversationName),
+            conversations.getConversationByName(conversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
         await expect
           .soft(
-            await conversations.getConversationArrowIcon(conversationName),
+            conversations.getConversationArrowIcon(conversationName),
             ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeHidden();
@@ -1202,7 +1200,7 @@ dialTest(
       'Delete conversation from shared for one of the user and verify arrow icon is displayed for main user',
       async () => {
         const sharedEntities =
-          await additionalSecondUserShareApiHelper.listSharedWithMeEntities();
+          await additionalSecondUserShareApiHelper.listSharedWithMeConversations();
         await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
           sharedEntities.resources.filter((e) => e.url === conversation.id),
         );
@@ -1222,7 +1220,7 @@ dialTest(
       'Delete conversation from shared for the rest user and verify arrow icon is not displayed for main user',
       async () => {
         const sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeEntities();
+          await additionalUserShareApiHelper.listSharedWithMeConversations();
         await additionalUserShareApiHelper.deleteSharedWithMeEntities(
           sharedEntities.resources.filter((e) => e.url === conversation.id),
         );
@@ -1280,7 +1278,7 @@ dialTest(
       'Delete folder from shared for one of the user and verify arrow icon is displayed for main user',
       async () => {
         const sharedEntities =
-          await additionalSecondUserShareApiHelper.listSharedWithMeEntities();
+          await additionalSecondUserShareApiHelper.listSharedWithMeConversations();
         await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
           sharedEntities.resources.filter(
             (e) => e.name === folderConversation.folders.name,
@@ -1291,7 +1289,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            await folderConversations.getFolderArrowIcon(
+            folderConversations.getFolderArrowIcon(
               folderConversation.folders.name,
             ),
             ExpectedMessages.sharedFolderIconIsVisible,
@@ -1304,7 +1302,7 @@ dialTest(
       'Delete conversation from shared for the rest user and verify arrow icon is not displayed for main user',
       async () => {
         const sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeEntities();
+          await additionalUserShareApiHelper.listSharedWithMeConversations();
         await additionalUserShareApiHelper.deleteSharedWithMeEntities(
           sharedEntities.resources.filter(
             (e) => e.name === folderConversation.folders.name,
@@ -1315,7 +1313,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            await folderConversations.getFolderArrowIcon(
+            folderConversations.getFolderArrowIcon(
               folderConversation.folders.name,
             ),
             ExpectedMessages.sharedFolderIconIsNotVisible,

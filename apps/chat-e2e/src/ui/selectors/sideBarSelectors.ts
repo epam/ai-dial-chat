@@ -37,7 +37,7 @@ export const PromptBarSelectors = {
   newFolder: '[data-qa="create-prompt-folder"]',
   promptFolders: '[data-qa="prompt-folders"]',
   newPromptButton: '[data-qa="new-prompt"]',
-  prompts: '[data-qa="prompts"]',
+  prompts: '[data-qa="prompts-section-container"] >> [data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
   deletePrompts: '[data-qa="delete-prompts"]',
   pinnedChats: () =>
