@@ -7,6 +7,7 @@ import {
   ExpectedMessages,
   Import,
   MenuOptions,
+  MockedChatApiResponseBodies,
   ModelIds,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
@@ -41,12 +42,14 @@ dialTest(
     temperatureSlider,
     recentEntities,
     addons,
+    conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-501', 'EPMRTC-1264');
     let replayConversation: Conversation;
     const replayTemp = 0;
     const replayPrompt = 'replay prompt';
     let firstConversation: Conversation;
+    let replayConversationName: string;
 
     await dialTest.step(
       'Prepare two conversation with different settings',
@@ -98,12 +101,9 @@ dialTest(
     await dialTest.step(
       'Verify new Replay conversation is created and Replay button appears',
       async () => {
+        replayConversationName = `${ExpectedConstants.replayConversation}${replayConversation!.name}`;
         await conversations
-          .getConversationByName(
-            `${ExpectedConstants.replayConversation}${
-              replayConversation!.name
-            }`,
-          )
+          .getConversationByName(replayConversationName)
           .waitFor();
         expect
           .soft(
@@ -111,6 +111,23 @@ dialTest(
             ExpectedMessages.startReplayVisible,
           )
           .toBe(ExpectedConstants.startReplayLabel);
+      },
+    );
+
+    await dialTest.step(
+      'Verify "Share" option is not available in Replay conversation dropdown menu',
+      async () => {
+        await conversations.openConversationDropdownMenu(
+          replayConversationName,
+        );
+        const replayConversationMenuOptions =
+          await conversationDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(
+            replayConversationMenuOptions,
+            ExpectedMessages.contextMenuOptionIsNotAvailable,
+          )
+          .not.toContain(MenuOptions.share);
       },
     );
 
@@ -212,7 +229,7 @@ dialTest(
         for (let i = 0; i < nestedLevels; i = i + 2) {
           await expect
             .soft(
-              await folderConversations.getFolderEntity(
+              folderConversations.getFolderEntity(
                 nestedFolders[i + 1].name,
                 `${ExpectedConstants.replayConversation}${
                   nestedConversations[i + 1].name
@@ -337,7 +354,8 @@ dialTest(
 );
 
 dialTest(
-  'Replay after Stop generating',
+  'Replay after Stop generating.\n' +
+    'Share menu item is not available for the chat in Replay mode',
   async ({
     dialHomePage,
     conversationData,
@@ -347,8 +365,10 @@ dialTest(
     setTestIds,
     tooltip,
     chatMessages,
+    conversations,
+    conversationDropdownMenu,
   }) => {
-    setTestIds('EPMRTC-512');
+    setTestIds('EPMRTC-512', 'EPMRTC-3451');
     let conversation: Conversation;
     let replayConversation: Conversation;
     const userRequest = 'write down 100 adjectives';
@@ -368,19 +388,31 @@ dialTest(
     });
 
     await dialTest.step(
-      'Press Start replay and stop until full response received',
+      'Verify no "Share" option is available in dropdown menu for partially replayed conversation',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
-        await chat.proceedGenerating.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-
+        await conversations.openConversationDropdownMenu(
+          replayConversation.name,
+        );
+        const replayConversationMenuOptions =
+          await conversationDropdownMenu.getAllMenuOptions();
         expect
-          .soft(tooltipContent, ExpectedMessages.proceedReplayIsVisible)
-          .toBe(ExpectedConstants.continueReplayLabel);
+          .soft(
+            replayConversationMenuOptions,
+            ExpectedMessages.contextMenuOptionIsNotAvailable,
+          )
+          .not.toContain(MenuOptions.share);
       },
     );
+
+    await dialTest.step('Verify tooltip for Replay button', async () => {
+      await chat.proceedGenerating.hoverOver();
+      const tooltipContent = await tooltip.getContent();
+      expect
+        .soft(tooltipContent, ExpectedMessages.proceedReplayIsVisible)
+        .toBe(ExpectedConstants.continueReplayLabel);
+    });
 
     await dialTest.step(
       'Proceed generating the answer and verify received content is preserved',
@@ -389,7 +421,10 @@ dialTest(
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
           );
-        await chat.proceedReplaying();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.proceedReplaying(true);
         const preservedPartialContent =
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
@@ -400,6 +435,23 @@ dialTest(
             ExpectedMessages.replayContinuesFromReceivedContent,
           )
           .toBeTruthy();
+      },
+    );
+
+    await dialTest.step(
+      'Verify "Share" option is available in dropdown menu for fully replayed conversation',
+      async () => {
+        await conversations.openConversationDropdownMenu(
+          replayConversation.name,
+        );
+        const replayConversationMenuOptions =
+          await conversationDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(
+            replayConversationMenuOptions,
+            ExpectedMessages.contextMenuOptionIsAvailable,
+          )
+          .toContain(MenuOptions.share);
       },
     );
   },
@@ -709,7 +761,7 @@ dialTest(
 
         await expect
           .soft(
-            await sendMessage.sendMessageButton.getElementLocator(),
+            sendMessage.sendMessageButton.getElementLocator(),
             ExpectedMessages.sendMessageButtonDisabled,
           )
           .toBeHidden();
@@ -727,7 +779,7 @@ dialTest(
 
         await expect
           .soft(
-            await sendMessage.sendMessageButton.getElementLocator(),
+            sendMessage.sendMessageButton.getElementLocator(),
             ExpectedMessages.sendMessageButtonIsNotVisible,
           )
           .toBeHidden();
@@ -754,7 +806,7 @@ dialTest(
 
         await expect
           .soft(
-            await sendMessage.sendMessageButton.getElementLocator(),
+            sendMessage.sendMessageButton.getElementLocator(),
             ExpectedMessages.sendMessageButtonIsNotVisible,
           )
           .toBeHidden();
@@ -942,7 +994,7 @@ dialTest(
         await talkToSelector.waitForState({ state: 'attached' });
         await expect
           .soft(
-            await chat.replay.getElementLocator(),
+            chat.replay.getElementLocator(),
             ExpectedMessages.startReplayNotVisible,
           )
           .toBeHidden();

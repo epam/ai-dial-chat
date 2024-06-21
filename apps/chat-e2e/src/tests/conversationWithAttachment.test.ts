@@ -1,11 +1,11 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  API,
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
@@ -69,7 +69,7 @@ dialTest(
         await talkToSelector.selectModel(randomModelWithAttachment);
         await expect
           .soft(
-            await sendMessage.attachmentMenuTrigger.getElementLocator(),
+            sendMessage.attachmentMenuTrigger.getElementLocator(),
             ExpectedMessages.clipIconIsAvailable,
           )
           .toBeVisible();
@@ -85,7 +85,7 @@ dialTest(
         );
         await expect
           .soft(
-            await attachFilesModal.getElementLocator(),
+            attachFilesModal.getElementLocator(),
             ExpectedMessages.attachFilesModalIsOpened,
           )
           .toBeVisible();
@@ -97,7 +97,7 @@ dialTest(
           .toBe(Attachment.allTypesLabel);
         await expect
           .soft(
-            await attachFilesModal.attachFilesButton.getElementLocator(),
+            attachFilesModal.attachFilesButton.getElementLocator(),
             ExpectedMessages.buttonIsDisabled,
           )
           .toBeDisabled();
@@ -139,7 +139,7 @@ dialTest(
         await sendMessage.send();
         await expect
           .soft(
-            await conversations.getConversationByName(attachedFiles[0]),
+            conversations.getConversationByName(attachedFiles[0]),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -201,7 +201,7 @@ dialTest(
         await chat.sendRequestWithKeyboard(request, false);
         await expect
           .soft(
-            await conversations.getConversationByName(request),
+            conversations.getConversationByName(request),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -275,7 +275,7 @@ dialTest(
 
         await expect
           .soft(
-            await sendMessageInputAttachments.inputAttachmentLoadingIndicator(
+            sendMessageInputAttachments.inputAttachmentLoadingIndicator(
               Attachment.sunImageName,
             ),
             ExpectedMessages.attachmentLoadingIndicatorIsVisible,
@@ -371,11 +371,9 @@ dialTest(
     await dialTest.step(
       'Send request and verify long attachment name is truncated in chat history',
       async () => {
-        await page.route(API.chatHost, async (route) => {
-          await route.fulfill({
-            body: Buffer.from('{"content":"Response"}\u0000{}\u0000'),
-          });
-        });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(request);
         const attachmentNameOverflow = await chatMessages
           .getChatMessageAttachment(1, Attachment.longImageName)
@@ -408,7 +406,7 @@ dialTest(
           .toBeFalsy();
         await expect
           .soft(
-            await chatMessages.getOpenedChatMessageAttachment(1),
+            chatMessages.getOpenedChatMessageAttachment(1),
             ExpectedMessages.attachmentIsExpanded,
           )
           .toBeVisible();
@@ -434,7 +432,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.getOpenedChatMessageAttachment(1),
+            chatMessages.getOpenedChatMessageAttachment(1),
             ExpectedMessages.attachmentIsCollapsed,
           )
           .toBeHidden();
@@ -516,7 +514,7 @@ dialTest(
             .toBe(Colors.textError);
           await expect
             .soft(
-              await sendMessageInputAttachments.inputAttachmentErrorIcon(
+              sendMessageInputAttachments.inputAttachmentErrorIcon(
                 Attachment.sunImageName,
               ),
               ExpectedMessages.attachmentHasErrorIcon,
@@ -544,7 +542,7 @@ dialTest(
           .toBe(Colors.textPrimary);
         await expect
           .soft(
-            await sendMessageInputAttachments.inputAttachmentErrorIcon(
+            sendMessageInputAttachments.inputAttachmentErrorIcon(
               Attachment.sunImageName,
             ),
             ExpectedMessages.attachmentHasErrorIcon,
