@@ -98,7 +98,7 @@ export const ChatbarSettings = () => {
         dataQa: 'select-all',
         Icon: IconSquareCheck,
         onClick: () => {
-          dispatch(ConversationsActions.setAllChosenConversationIds());
+          dispatch(ConversationsActions.setAllChosenConversations());
         },
       },
       {
@@ -106,7 +106,7 @@ export const ChatbarSettings = () => {
         dataQa: 'unselect all',
         Icon: IconSquareOff,
         onClick: () => {
-          dispatch(ConversationsActions.resetChosenConversationIds());
+          dispatch(ConversationsActions.resetChosenConversations());
         },
         display: isSelectMode,
       },
@@ -230,7 +230,7 @@ export const ChatbarSettings = () => {
             if (!isSelectMode) {
               dispatch(ConversationsActions.clearConversations());
             } else {
-              // TODO
+              dispatch(ConversationsActions.deleteChosenConversations());
             }
           }
         }}

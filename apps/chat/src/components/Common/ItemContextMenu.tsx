@@ -117,7 +117,6 @@ export default function ItemContextMenu({
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,
-        disabled: disableAll,
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),

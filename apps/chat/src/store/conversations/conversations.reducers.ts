@@ -777,14 +777,11 @@ export const conversationsSlice = createSlice({
         state.chosenFolderIds = [...state.chosenFolderIds, folderId];
       }
     },
-    resetChosenConversationIds: (state) => {
+    resetChosenConversations: (state) => {
       state.chosenConversationIds = [];
       state.chosenFolderIds = [];
     },
-    // setChosenConversationIds: (state, { payload }: PayloadAction<string[]>) => {
-    //   state.chosenConversationIds = payload;
-    // },
-    setAllChosenConversationIds: (state) => {
+    setAllChosenConversations: (state) => {
       state.chosenConversationIds = state.conversations
         .filter(
           (conv) =>
@@ -797,6 +794,20 @@ export const conversationsSlice = createSlice({
             !isEntityExternal(folder) && isRootConversationsId(folder.folderId),
         )
         .map(({ id }) => `${id}/`);
+    },
+    deleteChosenConversations: (state) => {
+      const deletedConversations = new Set(state.chosenConversationIds);
+      const deletedFolders = new Set(state.chosenFolderIds);
+      state.conversations = state.conversations.filter(
+        (conv) =>
+          !deletedConversations.has(conv.id) &&
+          !state.chosenFolderIds.some((folderId) =>
+            conv.id.startsWith(folderId),
+          ),
+      );
+      state.folders = state.folders.filter(
+        (folder) => !deletedFolders.has(`${folder.id}/`),
+      );
     },
   },
 });

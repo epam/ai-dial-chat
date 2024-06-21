@@ -194,7 +194,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (e: ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
       setIsSelected((value) => !value);
-      onSelectFolder?.(currentFolder.id);
+      onSelectFolder?.(`${currentFolder.id}/`);
       return;
     },
     [currentFolder.id, onSelectFolder],
@@ -657,7 +657,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       }
 
       e.stopPropagation();
-      onSelectFolder(currentFolder.id);
+      onSelectFolder(`${currentFolder.id}/`);
     },
     [currentFolder.id, onSelectFolder],
   );

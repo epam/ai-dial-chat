@@ -172,6 +172,12 @@ const PromptFolderTemplate = ({
   const selectedFolderIds = useAppSelector(
     PromptsSelectors.selectChosenFolderIds,
   );
+  const handleFolderSelect = useCallback(
+    (folderId: string) => {
+      dispatch(PromptsActions.toggleChosenFolder(folderId));
+    },
+    [dispatch],
+  );
 
   return (
     <>
@@ -221,6 +227,7 @@ const PromptFolderTemplate = ({
         additionalItemData={{
           selectedFolderIds,
         }}
+        onSelectFolder={handleFolderSelect}
       />
       {isLast && (
         <BetweenFoldersLine

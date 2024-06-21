@@ -199,17 +199,17 @@ const ChatFolderTemplate = ({
     [dispatch, folder.id, folder.sharedWithMe],
   );
 
-  const handleFolderSelect = useCallback(
-    (folderId: string) => {
-      dispatch(ConversationsActions.toggleChosenFolder(`${folderId}/`));
-    },
-    [dispatch],
-  );
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
   const selectedFolderIds = useAppSelector(
     ConversationsSelectors.selectChosenFolderIds,
+  );
+  const handleFolderSelect = useCallback(
+    (folderId: string) => {
+      dispatch(ConversationsActions.toggleChosenFolder(folderId));
+    },
+    [dispatch],
   );
 
   return (

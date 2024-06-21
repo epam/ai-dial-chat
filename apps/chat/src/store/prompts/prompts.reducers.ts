@@ -422,14 +422,11 @@ export const promptsSlice = createSlice({
         state.chosenFolderIds = [...state.chosenFolderIds, folderId];
       }
     },
-    resetChosenPromptIds: (state) => {
+    resetChosenPrompts: (state) => {
       state.chosenPromptIds = [];
       state.chosenFolderIds = [];
     },
-    // setChosenPromptIds: (state, { payload }: PayloadAction<string[]>) => {
-    //   state.chosenPromptIds = payload;
-    // },
-    setAllChosenPromptIds: (state) => {
+    setAllChosenPrompts: (state) => {
       state.chosenPromptIds = state.prompts
         .filter(
           (conv) => !isEntityExternal(conv) && isRootPromptId(conv.folderId),
@@ -441,6 +438,20 @@ export const promptsSlice = createSlice({
             !isEntityExternal(folder) && isRootPromptId(folder.folderId),
         )
         .map(({ id }) => `${id}/`);
+    },
+    deleteChosenPrompts: (state) => {
+      const deletedPrompts = new Set(state.chosenPromptIds);
+      const deletedFolders = new Set(state.chosenFolderIds);
+      state.prompts = state.prompts.filter(
+        (prompt) =>
+          !deletedPrompts.has(prompt.id) &&
+          !state.chosenFolderIds.some((folderId) =>
+            prompt.id.startsWith(folderId),
+          ),
+      );
+      state.folders = state.folders.filter(
+        (folder) => !deletedFolders.has(`${folder.id}/`),
+      );
     },
   },
 });

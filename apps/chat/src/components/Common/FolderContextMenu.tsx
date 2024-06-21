@@ -95,7 +95,6 @@ export const FolderContextMenu = ({
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,
-        disabled: disableAll,
       },
       {
         name: t('Upload'),

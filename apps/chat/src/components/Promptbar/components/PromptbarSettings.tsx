@@ -49,7 +49,7 @@ export function PromptbarSettings() {
         dataQa: 'select-all',
         Icon: IconSquareCheck,
         onClick: () => {
-          dispatch(PromptsActions.setAllChosenPromptIds());
+          dispatch(PromptsActions.setAllChosenPrompts());
         },
       },
       {
@@ -57,7 +57,7 @@ export function PromptbarSettings() {
         dataQa: 'unselect all',
         Icon: IconSquareOff,
         onClick: () => {
-          dispatch(PromptsActions.resetChosenPromptIds());
+          dispatch(PromptsActions.resetChosenPrompts());
         },
         display: isSelectMode,
       },
@@ -129,7 +129,7 @@ export function PromptbarSettings() {
             if (!isSelectMode) {
               dispatch(PromptsActions.clearPrompts());
             } else {
-              // TODO
+              dispatch(PromptsActions.deleteChosenPrompts());
             }
           }
         }}
