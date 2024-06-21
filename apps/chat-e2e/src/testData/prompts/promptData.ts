@@ -33,12 +33,15 @@ export class PromptData extends FolderData {
     return prompt;
   }
 
-  public prepareNestedFolder(nestedLevel: number, name?: string) {
-    return super.prepareNestedFolder(nestedLevel, FolderType.Prompt, name);
-  }
-
-  public prepareClassicNestedFolder(nestedLevel: number, name?: string) {
-    return super.prepareClassicNestedFolders(nestedLevel, FolderType.Prompt, name);
+  public prepareNestedFolder(
+    nestedLevel: number,
+    folderNames?: Record<number, string>,
+  ) {
+    return super.prepareNestedFolder(
+      nestedLevel,
+      FolderType.Prompt,
+      folderNames,
+    );
   }
 
   public prepareDefaultPromptInFolder(name?: string): FolderPrompt {
@@ -52,9 +55,11 @@ export class PromptData extends FolderData {
   public preparePromptInFolder(
     content: string,
     description?: string,
+    name?: string,
+    promptFolder?: FolderInterface,
   ): FolderPrompt {
-    const prompt = this.preparePrompt(content, description);
-    const folder = this.prepareFolder();
+    const prompt = this.preparePrompt(content, description, name);
+    const folder = promptFolder ?? this.prepareFolder();
     prompt.folderId = folder.id;
     prompt.id = `${folder.id}/${prompt.id}`;
     return { prompts: [prompt], folders: folder };
@@ -73,11 +78,11 @@ export class PromptData extends FolderData {
     return { prompts: prompts, folders: folder };
   }
 
-  public preparePrompt(content: string, description?: string) {
-    const name = GeneratorUtil.randomString(10);
+  public preparePrompt(content: string, description?: string, name?: string) {
+    const promptName = name ?? GeneratorUtil.randomString(10);
     return this.promptBuilder
-      .withId(name)
-      .withName(name)
+      .withId(promptName)
+      .withName(promptName)
       .withDescription(description ?? '')
       .withContent(content)
       .build();
@@ -85,13 +90,15 @@ export class PromptData extends FolderData {
 
   public preparePromptsForNestedFolders(
     nestedFolders: FolderInterface[],
-    name?: string,
+    promptNames?: Record<number, string>,
   ) {
     const nestedPrompts: Prompt[] = [];
-    for (const item of nestedFolders) {
-      const nestedPrompt = this.prepareDefaultPrompt(name);
+    for (let i = 0; i < nestedFolders.length; i++) {
+      const nestedPrompt = this.prepareDefaultPrompt(
+        promptNames ? promptNames[i + 1] : undefined,
+      );
       nestedPrompts.push(nestedPrompt);
-      nestedPrompt.folderId = item.id;
+      nestedPrompt.folderId = nestedFolders[i].id;
       nestedPrompt.id = `${nestedPrompt.folderId}/${nestedPrompt.name}`;
       this.resetData();
     }
