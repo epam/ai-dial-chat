@@ -732,6 +732,15 @@ export const selectCustomAttachmentData = createSelector(
   },
 );
 
+export const selectIsConversationsEmpty = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => {
+      return conv.messages.length === 0;
+    });
+  },
+);
+
 export const selectIsSelectMode = createSelector([rootSelector], (state) => {
   return (
     state.chosenConversationIds.length > 0 || state.chosenFolderIds.length > 0

@@ -698,6 +698,7 @@ export const FileManagerModal = ({
               deletingFileIds.length > 0
                 ? `file${deletingFileIds.length > 1 ? 's' : ''}`
                 : '',
+              '?',
             ].join(''),
           ) || ''
         }
