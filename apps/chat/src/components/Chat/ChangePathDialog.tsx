@@ -71,6 +71,7 @@ export const ChangePathDialog = ({
   const folders = useAppSelector((state) =>
     selectors.selectTemporaryAndFilteredFolders(state, searchQuery),
   );
+  const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   useEffect(() => {
     if (!isOpen) {
@@ -93,7 +94,23 @@ export const ChangePathDialog = ({
         setIsAllFoldersOpened((value) => !value);
         setOpenedFoldersIds([]);
         setSelectedFolderId(folderId);
+
         return;
+      }
+
+      if (
+        type === SharingType.Conversation ||
+        type === SharingType.ConversationFolder
+      ) {
+        dispatch(
+          ConversationsActions.uploadConversationsWithFolders({
+            ids: [folderId],
+          }),
+        );
+      } else {
+        dispatch(
+          PromptsActions.uploadChildPromptsWithFolders({ ids: [folderId] }),
+        );
       }
 
       if (openedFoldersIds.includes(folderId)) {
@@ -108,7 +125,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [folders, openedFoldersIds],
+    [dispatch, folders, openedFoldersIds, type],
   );
 
   const handleFolderSelect = useCallback(
@@ -205,6 +222,7 @@ export const ChangePathDialog = ({
                 ? FeatureType.Chat
                 : FeatureType.Prompt,
             isSidePanelFolder: false,
+            loadingFolderIds,
           }}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}
