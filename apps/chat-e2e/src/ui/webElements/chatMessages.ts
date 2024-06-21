@@ -102,6 +102,26 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getChatMessageCodeBlock(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.codeBlock);
+  }
+
+  public getMessageStage(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex).locator(
+      ChatSelectors.openedStage,
+    );
+  }
+
+  public getMessagePlotlyAttachment(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.plotlyContainer);
+  }
+
+  public getAttachmentLinkIcon(message: string | number) {
+    return this.getChatMessage(message).locator(
+      `${Tags.a}[${Attributes.href}]`,
+    );
+  }
+
   public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
@@ -167,9 +187,7 @@ export class ChatMessages extends BaseElement {
 
   public async getIconAttributesForMessage(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const messageIcon = await this.chatMessages.getNthElement(
-      index ?? messagesCount,
-    );
+    const messageIcon = this.chatMessages.getNthElement(index ?? messagesCount);
     return this.getElementIconHtml(messageIcon);
   }
 
@@ -349,7 +367,7 @@ export class ChatMessages extends BaseElement {
   public async waitForPartialMessageReceived(messagesIndex: number) {
     let isReceived = false;
     while (!isReceived) {
-      const lastMessage = await this.chatMessages.getNthElement(messagesIndex);
+      const lastMessage = this.chatMessages.getNthElement(messagesIndex);
       const lastMessageContent = await lastMessage.innerText();
       if (lastMessageContent.match(/.{2,}/g)) {
         isReceived = true;
@@ -370,17 +388,8 @@ export class ChatMessages extends BaseElement {
     }
   }
 
-  public async isMessageStageReceived(
-    messagesIndex: number,
-    stageIndex: number,
-  ) {
-    return this.messageStage(messagesIndex, stageIndex).isVisible();
-  }
-
   public async isMessageStageOpened(messagesIndex: number, stageIndex: number) {
-    return this.messageStage(messagesIndex, stageIndex)
-      .locator(ChatSelectors.openedStage)
-      .isVisible();
+    return this.getMessageStage(messagesIndex, stageIndex).isVisible();
   }
 
   public async openMessageStage(messagesIndex: number, stageIndex: number) {
@@ -409,12 +418,6 @@ export class ChatMessages extends BaseElement {
 
   public getChatMessageClipIcon(message: string | number) {
     return this.getChatMessage(message).locator(MenuSelectors.menuTrigger);
-  }
-
-  public async isChatMessageCodeVisible(message: number | string) {
-    return this.getChatMessage(message)
-      .locator(ChatSelectors.codeBlock)
-      .isVisible();
   }
 
   public messageEditIcon = (messageLocator: Locator) =>
@@ -463,7 +466,7 @@ export class ChatMessages extends BaseElement {
   }
 
   public async openDeleteMessageDialog(message: string) {
-    const chatMessage = await this.getChatMessage(message);
+    const chatMessage = this.getChatMessage(message);
     await chatMessage.hover();
     await this.messageDeleteIcon(message).click();
   }

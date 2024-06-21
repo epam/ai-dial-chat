@@ -30,7 +30,7 @@ export class DialHomePage extends BasePage {
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
     if (options?.isNewConversationVisible) {
-      const newConversation = await chatBar
+      const newConversation = chatBar
         .getConversations()
         .getConversationByName(ExpectedConstants.newConversationTitle);
       await newConversation.waitFor();
@@ -81,6 +81,15 @@ export class DialHomePage extends BasePage {
       await route.fulfill({
         status: 200,
         body: `{"responseId":"0dea98ff-1e66-4294-8542-457890e5f8c0"}\u0000{"role":"assistant"}\u0000{"custom_content":{"attachments":[{"index":0,"type":"image/jpg","title":"Image","url":"${API.importFilePath(BucketUtil.getBucket(), modelId)}/${imageName}"}]}}\u0000{"content":" "}\u0000{}\u0000`,
+      });
+    });
+  }
+
+  public async mockChatTextResponse(responseBody: string) {
+    await this.page.route(API.chatHost, async (route) => {
+      await route.fulfill({
+        status: 200,
+        body: responseBody,
       });
     });
   }

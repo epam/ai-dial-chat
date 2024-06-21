@@ -141,4 +141,5 @@ export const ChatSelectors = {
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
   attachmentsGroup: '[data-qa="grouped-attachments"]',
   messageSpinner: '[data-qa="message-input-spinner"]',
+  plotlyContainer: '.plot-container',
 };

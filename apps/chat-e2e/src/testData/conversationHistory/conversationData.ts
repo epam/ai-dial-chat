@@ -498,12 +498,80 @@ export class ConversationData extends FolderData {
       .build();
   }
 
+  public prepareConversationWithAttachmentLinkInRequest(
+    model: DialAIEntityModel | string,
+    ...attachmentLink: string[]
+  ) {
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const userAttachments = attachmentLink.map((link) =>
+      this.getAttachmentLinkRequestData(link),
+    );
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'what is company legal name?',
+      custom_content: {
+        attachments: userAttachments,
+      },
+      model: modelToUse,
+      settings: settings,
+    };
+
+    const assistantAttachments = [];
+    for (let i = 0; i < attachmentLink.length; i++) {
+      assistantAttachments.push(
+        this.getAttachmentLinkResponseData(attachmentLink[i], i),
+      );
+    }
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: `The company's legal name is EPAM[1].`,
+      custom_content: {
+        attachments: assistantAttachments,
+      },
+      model: modelToUse,
+      settings: settings,
+    };
+    const name = GeneratorUtil.randomString(10);
+    return this.conversationBuilder
+      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withName(name)
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
   public getAttachmentData(attachmentUrl: string) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     return {
       type: FileApiHelper.getContentTypeForFile(filename)!,
       title: filename,
       url: attachmentUrl,
+    };
+  }
+
+  public getAttachmentLinkRequestData(link: string) {
+    return {
+      type: '*/*',
+      title: link.substring(link.indexOf('.'), link.lastIndexOf('.')),
+      url: link,
+      reference_url: link,
+    };
+  }
+
+  public getAttachmentLinkResponseData(link: string, index: number) {
+    return {
+      index: index,
+      type: 'text/markdown',
+      title: `[${index}] '${link}'`,
+      data: 'line1\n\nline2\n\nline3\n\n\n\n    \n    \n    \n\n\n\n\n\n\n    \n    \n    \nline4',
+      reference_url: link,
     };
   }
 
