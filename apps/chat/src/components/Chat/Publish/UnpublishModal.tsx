@@ -1,4 +1,4 @@
-import { ClipboardEvent, MouseEvent, useCallback } from 'react';
+import { ClipboardEvent, MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -16,7 +16,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
 import Modal from '../../Common/Modal';
-import Tooltip from '../../Common/Tooltip';
 import { PublicationItemsList } from './PublicationItemsList';
 
 interface Props {
@@ -44,6 +43,8 @@ export function UnpublishModal({
     getAttachments(type)(state, entity.id),
   );
 
+  const [publicationName, setPublicationName] = useState('');
+
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -61,6 +62,7 @@ export function UnpublishModal({
 
       dispatch(
         PublicationActions.deletePublication({
+          name: publicationName.trim(),
           targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
             ...entities.map((entity) => ({ targetUrl: entity.id })),
@@ -74,7 +76,7 @@ export function UnpublishModal({
 
       onClose();
     },
-    [dispatch, entities, entity.id, files, onClose],
+    [dispatch, entities, entity.id, files, onClose, publicationName],
   );
 
   return (
@@ -86,21 +88,15 @@ export function UnpublishModal({
       onClose={onClose}
     >
       <div className="flex w-full flex-col overflow-y-auto">
-        <h4 className="truncate px-3 py-4 pr-10 text-base font-semibold md:px-4 md:pr-10">
-          <span className="w-full text-center">
-            <Tooltip
-              contentClassName="max-w-[400px] break-words"
-              tooltip={entity.name.trim()}
-            >
-              <div
-                className="w-full truncate break-words"
-                data-qa="modal-entity-name"
-              >
-                {`${t('Unpublish')}: ${entity.name.trim()}`}
-              </div>
-            </Tooltip>
-          </span>
-        </h4>
+        <div className="px-3 py-4 md:pl-4 md:pr-10">
+          <input
+            autoFocus
+            onChange={(e) => setPublicationName(e.target.value)}
+            value={publicationName}
+            placeholder={t('Type publication request name...') ?? ''}
+            className="w-full bg-transparent text-base font-semibold outline-none"
+          />
+        </div>
         <h5 className="px-3 text-secondary md:px-6">{subtitle}</h5>
         <div className="flex grow flex-col overflow-y-auto">
           <div className="overflow-y-scroll">
@@ -128,7 +124,7 @@ export function UnpublishModal({
             className="button button-primary"
             onClick={handleUnpublish}
             data-qa="unpublish"
-            autoFocus
+            disabled={!publicationName.trim().length}
           >
             {t('Unpublish')}
           </button>

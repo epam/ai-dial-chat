@@ -105,7 +105,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
             )}
             data-qa="folder-name"
           >
-            {getPublicationId(publication.url)}
+            {publication.name || getPublicationId(publication.url)}
           </div>
         </div>
       </div>

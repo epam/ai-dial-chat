@@ -162,7 +162,8 @@ export function PublishModal({
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
 
-  const [path, setPath] = useState<string>('');
+  const [publicationName, setPublicationName] = useState('');
+  const [path, setPath] = useState('');
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
@@ -199,6 +200,7 @@ export function PublishModal({
       e.stopPropagation();
 
       const trimmedPath = path.trim();
+      const trimmedName = publicationName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
@@ -252,7 +254,8 @@ export function PublishModal({
 
         dispatch(
           PublicationActions.publish({
-            targetFolder: trimmedPath,
+            name: trimmedName,
+            targetFolder: constructPath('public', trimmedPath),
             resources: [
               ...entities.map((item) => ({
                 sourceUrl: item.id,
@@ -294,6 +297,7 @@ export function PublishModal({
       } else {
         dispatch(
           PublicationActions.publish({
+            name: trimmedName,
             resources: [
               ...entities.map((item) => ({
                 sourceUrl: item.id,
@@ -307,7 +311,7 @@ export function PublishModal({
                 ),
               })),
             ],
-            targetFolder: trimmedPath,
+            targetFolder: constructPath('public', trimmedPath),
             rules: preparedFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
@@ -327,6 +331,7 @@ export function PublishModal({
       onClose,
       otherTargetAudienceFilters,
       path,
+      publicationName,
       rules,
       type,
     ],
@@ -354,21 +359,15 @@ export function PublishModal({
       initialFocus={nameInputRef}
     >
       <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
-        <h4 className="truncate px-3 py-4 text-base font-semibold md:pl-4 md:pr-10">
-          <span className="w-full text-center">
-            <Tooltip
-              contentClassName="max-w-[400px] break-words"
-              tooltip={entity.name.trim()}
-            >
-              <div
-                className="w-full truncate break-words"
-                data-qa="modal-entity-name"
-              >
-                {`${t('Publication request for')}: ${entity.name.trim()}`}
-              </div>
-            </Tooltip>
-          </span>
-        </h4>
+        <div className="px-3 py-4 md:pl-4 md:pr-10">
+          <input
+            autoFocus
+            onChange={(e) => setPublicationName(e.target.value)}
+            value={publicationName}
+            placeholder={t('Type publication request name...') ?? ''}
+            className="w-full bg-transparent text-base font-semibold outline-none"
+          />
+        </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
@@ -446,7 +445,7 @@ export function PublishModal({
             className="button button-primary py-2"
             onClick={handlePublish}
             data-qa="publish"
-            autoFocus
+            disabled={!publicationName.trim().length}
           >
             {t('Send request')}
           </button>

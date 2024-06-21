@@ -96,13 +96,10 @@ export function HandlePublication({ publication }: Props) {
     if (conversationsToReviewIds.length || reviewedConversationsIds.length) {
       const conversationPaths = uniq(
         [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
-          (p) => {
-            const url = p.reviewUrl;
-
-            return getParentFolderIdsFromEntityId(
-              getFolderIdFromEntityId(url),
-            ).filter((id) => id !== url);
-          },
+          (p) =>
+            getParentFolderIdsFromEntityId(
+              getFolderIdFromEntityId(p.reviewUrl),
+            ).filter((id) => id !== p.reviewUrl),
         ),
       );
 
@@ -216,10 +213,7 @@ export function HandlePublication({ publication }: Props) {
               data-qa="app-name"
               className="truncate whitespace-pre break-all text-center"
             >
-              {publication.resources[0].action !== PublishActions.DELETE
-                ? t('Publication request for: ')
-                : t('Unpublish: ')}
-              {getPublicationId(publication.url)}
+              {publication.name || getPublicationId(publication.url)}
             </h4>
           </Tooltip>
         </div>
@@ -264,9 +258,6 @@ export function HandlePublication({ publication }: Props) {
                       <p className="text-secondary">
                         <span>{t('Publication id: ')}</span>
                       </p>
-                      <span className="col-span-2 truncate">
-                        {getPublicationId(publication.url)}
-                      </span>
                       <p className="text-secondary">{t('Path: ')}</p>
                       <span className="col-span-2 flex truncate whitespace-pre">
                         <Tooltip

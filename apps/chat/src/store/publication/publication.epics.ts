@@ -81,9 +81,11 @@ const publishEpic: AppEpic = (action$) =>
     filter(PublicationActions.publish.match),
     switchMap(({ payload }) => {
       const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
+      const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
       return PublicationService.publish({
-        targetFolder: `${constructPath('public', encodedTargetFolder)}/`,
+        name: payload.name,
+        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
           action: PublishActions.ADD,
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
@@ -328,6 +330,7 @@ const deletePublicationEpic: AppEpic = (action$) =>
       const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
       return PublicationService.deletePublication({
+        name: payload.name,
         targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
           action: PublishActions.DELETE,

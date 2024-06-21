@@ -4,7 +4,7 @@ import { BackendResourceType, FeatureType } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
-  PublicationRequest,
+  PublicationRequestModel,
   PublicationRule,
   PublicationsListModel,
   PublishedByMeItem,
@@ -17,13 +17,11 @@ import { EnumMapper } from '../mappers';
 
 export class PublicationService {
   public static publish(
-    publicationData: PublicationRequest,
+    publicationData: PublicationRequestModel,
   ): Observable<Publication> {
     return ApiUtils.request('api/publication/create', {
       method: 'POST',
-      body: JSON.stringify({
-        ...publicationData,
-      }),
+      body: JSON.stringify(publicationData),
     });
   }
 
@@ -80,6 +78,7 @@ export class PublicationService {
   }
 
   public static deletePublication(data: {
+    name: string;
     targetFolder: string;
     resources: { targetUrl: string }[];
   }): Observable<void> {
