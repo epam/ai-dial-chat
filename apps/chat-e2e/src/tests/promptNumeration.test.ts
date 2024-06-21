@@ -195,7 +195,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Prompt names can be equal on different levels\n' +
     'Error message is shown if you try to rename prompt manually to already existed prompt name when prompts are located in the same folder\n' +
     'Error message is shown if you to use "Move to" prompt to folder where the prompt with the same name exists\n' +
@@ -223,38 +223,6 @@ dialTest.only(
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
     const promptValue = 'That is just a test prompt';
-
-    // await dialTest.step(
-    //   'Prepare 2 levels nested folders with prompts inside',
-    //   async () => {
-    //     const nestedFolders = promptData.prepareNestedFolder(1, {
-    //       1: ExpectedConstants.newFolderWithIndexTitle(1),
-    //       2: ExpectedConstants.newFolderWithIndexTitle(2),
-    //     });
-    //     const nestedPrompts = promptData.preparePromptsForNestedFolders(
-    //       nestedFolders,
-    //       {
-    //         1: duplicatedPromptName,
-    //         2: duplicatedPromptName,
-    //       },
-    //     );
-    //     promptData.resetData();
-    //     const singlePrompt =
-    //       promptData.prepareDefaultPrompt(duplicatedPromptName);
-    //     promptData.resetData();
-    //     const folderPromptToRename = promptData.preparePromptInFolder(
-    //       'test',
-    //       undefined,
-    //       ExpectedConstants.newPromptTitle(2),
-    //       nestedFolders[0],
-    //     );
-
-    //     await dataInjector.createPrompts(
-    //       [singlePrompt, ...folderPromptToRename.prompts, ...nestedPrompts],
-    //       ...nestedFolders,
-    //     );
-    //   },
-    // );
 
     await dialTest.step('Create nested folders structure', async () => {
       await dialHomePage.openHomePage();
