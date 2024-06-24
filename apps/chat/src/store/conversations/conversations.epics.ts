@@ -2668,7 +2668,9 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.setFolders({
             folders: folders.filter((folder) =>
-              chosenFolderIds.some((id) => !folder.id.startsWith(id)),
+              chosenFolderIds.every(
+                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
+              ),
             ),
           }),
         ),

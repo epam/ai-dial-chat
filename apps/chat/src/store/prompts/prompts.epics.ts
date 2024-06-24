@@ -712,6 +712,54 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => PromptsActions.deleteChosenPrompts.match(action)),
+    switchMap(() => {
+      const actions: Observable<AnyAction>[] = [];
+      const chosenPromptIds = PromptsSelectors.selectChosenPromptIds(
+        state$.value,
+      );
+      const chosenFolderIds = PromptsSelectors.selectChosenFolderIds(
+        state$.value,
+      );
+      const promptIds = PromptsSelectors.selectPrompts(state$.value).map(
+        (prompt) => prompt.id,
+      );
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const deletedPromptIds = uniq([
+        ...chosenPromptIds,
+        ...promptIds.filter((id) =>
+          chosenFolderIds.some((folderId) => id.startsWith(folderId)),
+        ),
+      ]);
+
+      if (promptIds.length) {
+        actions.push(
+          of(
+            PromptsActions.deletePrompts({
+              promptIds: deletedPromptIds,
+            }),
+          ),
+        );
+      }
+
+      return concat(
+        of(
+          PromptsActions.setFolders({
+            folders: folders.filter((folder) =>
+              chosenFolderIds.every(
+                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
+              ),
+            ),
+          }),
+        ),
+        of(PromptsActions.resetChosenPrompts()),
+        ...actions,
+      );
+    }),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsWithFoldersRecursiveEpic,
@@ -731,4 +779,5 @@ export const PromptsEpics = combineEpics(
   createNewPromptEpic,
   duplicatePromptEpic,
   uploadPromptEpic,
+  deleteChosenPromptsEpic,
 );

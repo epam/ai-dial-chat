@@ -439,20 +439,7 @@ export const promptsSlice = createSlice({
         )
         .map(({ id }) => `${id}/`);
     },
-    deleteChosenPrompts: (state) => {
-      const deletedPrompts = new Set(state.chosenPromptIds);
-      const deletedFolders = new Set(state.chosenFolderIds);
-      state.prompts = state.prompts.filter(
-        (prompt) =>
-          !deletedPrompts.has(prompt.id) &&
-          !state.chosenFolderIds.some((folderId) =>
-            prompt.id.startsWith(folderId),
-          ),
-      );
-      state.folders = state.folders.filter(
-        (folder) => !deletedFolders.has(`${folder.id}/`),
-      );
-    },
+    deleteChosenPrompts: (state) => state,
   },
 });
 
