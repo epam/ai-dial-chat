@@ -56,7 +56,6 @@ import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
-import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { Prompts } from '@/src/ui/webElements/prompts';
@@ -139,7 +138,6 @@ const dialTest = test.extend<
     tooltip: Tooltip;
     errorPopup: ErrorPopup;
     replayAsIs: ReplayAsIs;
-    playback: Playback;
     playbackControl: PlaybackControl;
     shareModal: ShareModal;
     chatBarSearch: Search;
@@ -456,10 +454,6 @@ const dialTest = test.extend<
   replayAsIs: async ({ page }, use) => {
     const replayAsIs = new ReplayAsIs(page);
     await use(replayAsIs);
-  },
-  playback: async ({ chat }, use) => {
-    const playback = chat.getPlayBack();
-    await use(playback);
   },
   playbackControl: async ({ chat }, use) => {
     const playbackControl = chat.getPlaybackControl();
