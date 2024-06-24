@@ -260,7 +260,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       if (
         featureType === FeatureType.Chat &&
         (!allChildItems.length ||
-          !allChildItems.every((item) => 'messages' in item))
+          !allChildItems.every((item) => (item as Conversation).messages))
       ) {
         dispatch(
           ConversationsActions.uploadConversationsByIds({
