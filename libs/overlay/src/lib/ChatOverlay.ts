@@ -1,3 +1,5 @@
+'use client';
+
 import {
   ChatOverlayOptions,
   DeferredRequest,
@@ -358,7 +360,7 @@ export class ChatOverlay {
    */
   destroy() {
     window.removeEventListener('message', this.process);
-    this.iframeInteraction.fail('Chat Overlay destroyed');
+    this.iframeInteraction.complete();
     this.root.removeChild(this.iframe);
 
     this.root.removeChild(this.loader);
