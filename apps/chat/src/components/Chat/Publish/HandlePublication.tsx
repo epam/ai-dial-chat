@@ -216,7 +216,7 @@ export function HandlePublication({ publication }: Props) {
               data-qa="app-name"
               className="truncate whitespace-pre break-all text-center"
             >
-              {publication.resources[0].action !== PublishActions.DELETE
+              {publication.resources[0]?.action !== PublishActions.DELETE
                 ? t('Publication request for: ')
                 : t('Unpublish: ')}
               {getPublicationId(publication.url)}
@@ -227,7 +227,7 @@ export function HandlePublication({ publication }: Props) {
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 py-4 md:px-5">
-                {publication.resources[0].action !== PublishActions.DELETE ? (
+                {publication.resources[0]?.action !== PublishActions.DELETE ? (
                   <>
                     <label className="flex text-sm" htmlFor="approvePath">
                       {t('Publish to')}
