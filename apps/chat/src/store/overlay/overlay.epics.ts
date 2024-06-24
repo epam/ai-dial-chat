@@ -58,7 +58,7 @@ import {
   overlayAppName,
   validateFeature,
 } from '@epam/ai-dial-shared';
-import isEqual from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
