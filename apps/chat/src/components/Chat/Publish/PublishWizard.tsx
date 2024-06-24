@@ -35,6 +35,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
@@ -162,7 +163,8 @@ export function PublishModal({
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
 
-  const [path, setPath] = useState<string>('');
+  const [publishRequestName, setPublishRequestName] = useState('');
+  const [path, setPath] = useState('');
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
@@ -199,6 +201,7 @@ export function PublishModal({
       e.stopPropagation();
 
       const trimmedPath = path.trim();
+      const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
@@ -252,7 +255,8 @@ export function PublishModal({
 
         dispatch(
           PublicationActions.publish({
-            targetFolder: trimmedPath,
+            name: trimmedName,
+            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
             resources: [
               ...entities.map((item) => ({
                 sourceUrl: item.id,
@@ -294,6 +298,7 @@ export function PublishModal({
       } else {
         dispatch(
           PublicationActions.publish({
+            name: trimmedName,
             resources: [
               ...entities.map((item) => ({
                 sourceUrl: item.id,
@@ -307,7 +312,7 @@ export function PublishModal({
                 ),
               })),
             ],
-            targetFolder: trimmedPath,
+            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
             rules: preparedFilters.map((filter) => ({
               function: filter.filterFunction,
               source: filter.id,
@@ -327,6 +332,7 @@ export function PublishModal({
       onClose,
       otherTargetAudienceFilters,
       path,
+      publishRequestName,
       rules,
       type,
     ],
@@ -354,21 +360,15 @@ export function PublishModal({
       initialFocus={nameInputRef}
     >
       <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
-        <h4 className="truncate py-4 pl-3 pr-10 text-base font-semibold md:pl-4">
-          <span className="w-full text-center">
-            <Tooltip
-              contentClassName="max-w-[400px] break-words"
-              tooltip={entity.name.trim()}
-            >
-              <div
-                className="w-full truncate break-words"
-                data-qa="modal-entity-name"
-              >
-                {`${t('Publication request for')}: ${entity.name.trim()}`}
-              </div>
-            </Tooltip>
-          </span>
-        </h4>
+        <div className="px-3 py-4 md:pl-4 md:pr-10">
+          <input
+            autoFocus
+            onChange={(e) => setPublishRequestName(e.target.value)}
+            value={publishRequestName}
+            placeholder={t('Type publication request name...') ?? ''}
+            className="w-full bg-transparent text-base font-semibold outline-none"
+          />
+        </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
@@ -442,14 +442,19 @@ export function PublishModal({
         </div>
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
-          <button
-            className="button button-primary py-2"
-            onClick={handlePublish}
-            data-qa="publish"
-            autoFocus
+          <Tooltip
+            hideTooltip={!!publishRequestName.trim().length}
+            tooltip={t('Enter a name for the publish request')}
           >
-            {t('Send request')}
-          </button>
+            <button
+              className="button button-primary py-2"
+              onClick={handlePublish}
+              data-qa="publish"
+              disabled={!publishRequestName.trim().length}
+            >
+              {t('Send request')}
+            </button>
+          </Tooltip>
         </div>
       </div>
       <ChangePathDialog
@@ -464,12 +469,14 @@ export function PublishModal({
         }}
         type={type}
         depth={depth}
-        rootFolderId={
-          type === SharingType.Conversation ||
-          type === SharingType.ConversationFolder
-            ? getRootId({ featureType: FeatureType.Chat, bucket: 'public' })
-            : getRootId({ featureType: FeatureType.Prompt, bucket: 'public' })
-        }
+        rootFolderId={getRootId({
+          featureType:
+            type === SharingType.Conversation ||
+            type === SharingType.ConversationFolder
+              ? FeatureType.Chat
+              : FeatureType.Prompt,
+          bucket: PUBLIC_URL_PREFIX,
+        })}
       />
     </Modal>
   );
