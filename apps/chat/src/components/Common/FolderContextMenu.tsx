@@ -91,7 +91,7 @@ export const FolderContextMenu = ({
     () => [
       {
         name: t('Select'),
-        display: !isExternal && !!onSelect,
+        display: !isExternal && !!onSelect && featureType !== FeatureType.File,
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,

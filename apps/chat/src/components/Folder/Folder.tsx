@@ -740,6 +740,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     ) ||
     (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
 
+  const hideContextMenu =
+    (canSelectFolders && featureType !== FeatureType.File) ||
+    readonly ||
+    isRenaming;
+
   return (
     <div
       id="folder"
@@ -925,8 +930,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 truncate text-left group-hover/button:pr-5',
+                'relative max-h-5 flex-1 truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
+                !hideContextMenu && 'group-hover/button:pr-5',
               )}
               data-qa="folder-name"
             >
@@ -961,9 +967,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {currentFolder.name}
               </Tooltip>
             </div>
-            {(onDeleteFolder || onRenameFolder || onAddFolder) &&
-              !readonly &&
-              !isRenaming && (
+            {(onDeleteFolder ||
+              onRenameFolder ||
+              onAddFolder ||
+              onSelectFolder) &&
+              !hideContextMenu && (
                 <div
                   ref={refs.setFloating}
                   {...getFloatingProps()}
