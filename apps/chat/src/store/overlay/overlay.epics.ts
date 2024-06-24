@@ -58,6 +58,7 @@ import {
   overlayAppName,
   validateFeature,
 } from '@epam/ai-dial-shared';
+import isEqual from 'lodash-es';
 
 export const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
@@ -322,20 +323,9 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             OverlayActions.setOverlayOptionsSuccess({ hostDomain, requestId }),
           ),
           of(OverlayActions.signInOptionsSet({ signInOptions })),
-
-          // Send ready to Interact when options set and not needed to login
           iif(
             () => !AuthSelectors.selectIsShouldLogin(state$.value),
-            concat(
-              of(ConversationsActions.initSelectedConversations()),
-              of(
-                OverlayActions.sendPMEvent({
-                  type: OverlayEvents.readyToInteract,
-                  eventParams: { hostDomain },
-                }),
-              ),
-            ),
-
+            of(ConversationsActions.initSelectedConversations()),
             EMPTY,
           ),
         );
@@ -348,34 +338,108 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
 const signInOptionsSet: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(OverlayActions.signInOptionsSet.match),
-    filter(() => AuthSelectors.selectIsShouldLogin(state$.value)),
     tap(({ payload: { signInOptions } }) => {
-      if (signInOptions?.autoSignIn) {
+      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
+
+      if (isShouldLogin && signInOptions?.autoSignIn) {
         signIn(signInOptions?.signInProvider);
       }
     }),
     ignoreElements(),
   );
 
-const setOverlayOptionsSuccessEpic: AppEpic = (action$) =>
+const setOverlayOptionsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(OverlayActions.setOverlayOptionsSuccess.match),
-    map(({ payload: { hostDomain, requestId } }) => {
-      return OverlayActions.sendPMResponse({
-        type: OverlayRequests.setOverlayOptions,
-        requestParams: {
-          requestId,
-          hostDomain,
-        },
-      });
+    filter(() => !!OverlaySelectors.selectOptionsReceived(state$.value)),
+    distinctUntilChanged(),
+    switchMap(({ payload: { hostDomain, requestId } }) => {
+      const actions = [];
+
+      actions.push(
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.setOverlayOptions,
+            requestParams: {
+              requestId,
+              hostDomain,
+            },
+          }),
+        ),
+      );
+
+      actions.push(of(OverlayActions.checkReadyToInteract()));
+
+      return concat(...actions);
+    }),
+  );
+
+const checkReadyToInteract: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(OverlayActions.checkReadyToInteract.match),
+    switchMap(() =>
+      state$.pipe(
+        filter(
+          (state) =>
+            ConversationsSelectors.selectAreSelectedConversationsLoaded(
+              state,
+            ) && !AuthSelectors.selectIsShouldLogin(state),
+        ),
+        switchMap(() =>
+          !OverlaySelectors.selectReadyToInteractSent(state$.value)
+            ? of(OverlayActions.sendReadyToInteract())
+            : EMPTY,
+        ),
+      ),
+    ),
+  );
+
+const sendReadyToInteract: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(OverlayActions.sendReadyToInteract.match),
+    switchMap(() => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.readyToInteract,
+          eventParams: { hostDomain },
+        }),
+      );
+    }),
+  );
+
+const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
+  state$.pipe(
+    filter(
+      (state) =>
+        !!ConversationsSelectors.selectAreSelectedConversationsLoaded(state) &&
+        !AuthSelectors.selectIsShouldLogin(state),
+    ),
+    distinctUntilChanged((prev, state) => {
+      const prevConvIds =
+        ConversationsSelectors.selectSelectedConversationsIds(prev);
+      const currentConvId =
+        ConversationsSelectors.selectSelectedConversationsIds(state);
+
+      return isEqual(prevConvIds, currentConvId);
+    }),
+    switchMap((state) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state);
+
+      return of(
+        OverlayActions.sendPMEvent({
+          type: OverlayEvents.selectedConversationLoaded,
+          eventParams: { hostDomain },
+        }),
+      );
     }),
   );
 
 const notifyHostGPTMessageStatus: AppEpic = (_, state$) =>
   state$.pipe(
-    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
     // we shouldn't proceed if we are not overlay
-    filter((state) => SettingsSelectors.selectIsOverlay(state)),
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
     map((state) =>
       ConversationsSelectors.selectIsConversationsStreaming(state),
     ),
@@ -466,4 +530,7 @@ export const OverlayEpics = combineEpics(
   notifyHostGPTMessageStatus,
   setOverlayOptionsSuccessEpic,
   signInOptionsSet,
+  checkReadyToInteract,
+  sendSelectedConversationLoaded,
+  sendReadyToInteract,
 );
