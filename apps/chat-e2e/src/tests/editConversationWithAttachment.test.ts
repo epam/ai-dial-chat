@@ -94,6 +94,7 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1763', 'EPMRTC-1901');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -117,6 +118,7 @@ dialTest(
       for (const file of allAttachedFiles) {
         await fileApiHelper.putFile(file);
       }
+      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
     });
 
     await dialTest.step(
