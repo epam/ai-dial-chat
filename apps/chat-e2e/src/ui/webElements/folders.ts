@@ -193,7 +193,7 @@ export class Folders extends BaseElement {
   }
 
   public async editFolderName(newName: string) {
-    const folderInput = await this.getEditFolderInput();
+    const folderInput = this.getEditFolderInput();
     await folderInput.editValue(newName);
     return folderInput;
   }

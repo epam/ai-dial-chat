@@ -33,7 +33,7 @@ dialTest(
       'EPMRTC-3237',
       'EPMRTC-3238',
     );
-    const updatedFolderName = "New folder 1    (`~!@#$^*-_+[]'|<>.?)";
+    const updatedFolderName = `New folder 1    ${ExpectedConstants.allowedSpecialChars}`;
 
     await dialTest.step(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',

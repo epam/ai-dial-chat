@@ -437,7 +437,6 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-955', 'EPMRTC-1278');
-    const nameWithSpecialSymbols = "!@$^()_[]'.<>-`~";
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
 
@@ -446,7 +445,7 @@ dialTest(
     await prompts.openPromptDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.updatePromptDetailsWithEnter(
-      nameWithSpecialSymbols,
+      ExpectedConstants.allowedSpecialChars,
       newDescr,
       newValue,
     );
@@ -460,19 +459,19 @@ dialTest(
 
     await expect
       .soft(
-        await prompts.getPromptByName(nameWithSpecialSymbols),
+        await prompts.getPromptByName(ExpectedConstants.allowedSpecialChars),
         ExpectedMessages.promptNotUpdated,
       )
       .toBeVisible();
 
-    await prompts.openPromptDropdownMenu(nameWithSpecialSymbols);
+    await prompts.openPromptDropdownMenu(ExpectedConstants.allowedSpecialChars);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     expect
       .soft(
         await promptModalDialog.getName(),
         ExpectedMessages.promptNameUpdated,
       )
-      .toBe(nameWithSpecialSymbols);
+      .toBe(ExpectedConstants.allowedSpecialChars);
     expect
       .soft(
         await promptModalDialog.getDescription(),

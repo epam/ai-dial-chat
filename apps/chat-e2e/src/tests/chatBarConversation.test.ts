@@ -24,7 +24,10 @@ const request = 'What is epam official name';
 const notMatchingSearchTerm = 'abc';
 const secondSearchTerm = 'epam official';
 const matchingConversationName = `${secondSearchTerm} name`;
-const specialSymbolsName = '_!@$epam official^&()_[]"\'.<>-`~';
+const specialSymbolsName = () => {
+  const allowedCharsLength = ExpectedConstants.allowedSpecialChars.length;
+  return `${ExpectedConstants.allowedSpecialChars.substring(0, allowedCharsLength / 2)}epam official${ExpectedConstants.allowedSpecialChars.substring(allowedCharsLength / 2, allowedCharsLength)}`;
+};
 
 dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
@@ -39,7 +42,7 @@ dialTest(
     'Chat name: restricted special characters are removed from chat name if to name automatically',
   async ({ dialHomePage, conversations, chat, chatMessages, setTestIds }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
-    const messageToSend = `.Hi${ExpectedConstants.prohibitedNameSymbols}...`;
+    const messageToSend = `.Hi${ExpectedConstants.restrictedNameChars}...`;
     const expectedConversationName = '.Hi';
 
     await dialTest.step(
@@ -354,7 +357,6 @@ dialTest(
       'EPMRTC-1276',
     );
     let editInputContainer: EditInput;
-    const specialSymbolsName = `(\`~!@#$^*-_+[]'|<>.?)`;
     const newNameWithEndDot = 'updated folder name.';
 
     await dialTest.step(
@@ -384,7 +386,7 @@ dialTest(
       async () => {
         await editInputContainer.editInput.click();
         await editInputContainer.editValue(
-          ExpectedConstants.prohibitedNameSymbols,
+          ExpectedConstants.restrictedNameChars,
         );
         const inputContent = await editInputContainer.getEditInputValue();
         expect
@@ -418,10 +420,14 @@ dialTest(
           ExpectedConstants.newConversationTitle,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(specialSymbolsName);
+        await conversations.editConversationNameWithTick(
+          ExpectedConstants.allowedSpecialChars,
+        );
         await expect
           .soft(
-            await conversations.getConversationByName(specialSymbolsName),
+            await conversations.getConversationByName(
+              ExpectedConstants.allowedSpecialChars,
+            ),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -432,7 +438,9 @@ dialTest(
       'Send new request to conversation and verify context menu options',
       async () => {
         await chat.sendRequestWithButton('1+2');
-        await conversations.openConversationDropdownMenu(specialSymbolsName);
+        await conversations.openConversationDropdownMenu(
+          ExpectedConstants.allowedSpecialChars,
+        );
         const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
         expect
           .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
@@ -1172,7 +1180,7 @@ dialTest(
           conversationData.prepareModelConversationBasedOnRequests(
             bisonModel,
             [request],
-            specialSymbolsName,
+            specialSymbolsName(),
           );
         thirdConversation.folderId = secondFolder.id;
         thirdConversation.id = `${thirdConversation.folderId}/${thirdConversation.id}`;
@@ -1372,8 +1380,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2958');
-    const updatedRequest = `Chat${ExpectedConstants.prohibitedNameSymbols}name.....`;
-    const expectedConversationName = `Chat${' '.repeat(ExpectedConstants.prohibitedNameSymbols.length)}name`;
+    const updatedRequest = `Chat${ExpectedConstants.restrictedNameChars}name.....`;
+    const expectedConversationName = `Chat${' '.repeat(ExpectedConstants.restrictedNameChars.length)}name`;
     let conversation: Conversation;
 
     await dialTest.step('Prepare new conversation', async () => {

@@ -112,12 +112,13 @@ export const ExpectedConstants = {
     `Prompt with name "${name}" already exists at the root.`,
   duplicatedConversationRootNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists at the root.`,
-  prohibitedNameSymbols: `=,:;{}/%&"`,
   // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
   attachedFileError: (filename: string) =>
     `You've trying to upload files with incorrect type: ${filename}`,
-  allowedSpecialSymbolsInName: "Test (`~!@#$^*-_+[]'|<>.?)",
+  allowedSpecialChars: "(`~!@#$^*-_+[]'|<>.?)",
+  allowedSpecialSymbolsInName: () =>
+    `Test ${ExpectedConstants.allowedSpecialChars}`,
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
     `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
