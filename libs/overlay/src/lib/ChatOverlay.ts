@@ -273,11 +273,7 @@ export class ChatOverlay {
     waitForReady = true,
   ): Promise<unknown> {
     if (waitForReady) {
-      try {
-        await this.iframeInteraction.ready();
-      } catch (error) {
-        console.info(error);
-      }
+      await this.iframeInteraction.ready();
     }
 
     if (!this.iframe.contentWindow) {
