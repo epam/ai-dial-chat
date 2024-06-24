@@ -6,6 +6,7 @@ import {
   API,
   ExpectedConstants,
   ExpectedMessages,
+  MockedChatApiResponseBodies,
   ModelIds,
   Theme,
 } from '@/src/testData';
@@ -118,7 +119,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.regenerate.getElementLocator(),
+            chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();
@@ -159,11 +160,9 @@ dialTest(
     await dialTest.step(
       'Click Regenerate response and validate answer received',
       async () => {
-        await page.route(API.chatHost, async (route) => {
-          await route.fulfill({
-            body: Buffer.from('{"content":"Response"}\u0000{}\u0000'),
-          });
-        });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.regenerateResponse();
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
@@ -210,7 +209,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.getChatMessageTextarea(userRequests[1]),
+            chatMessages.getChatMessageTextarea(userRequests[1]),
             ExpectedMessages.editRequestModeIsClosed,
           )
           .toBeHidden();
@@ -229,7 +228,7 @@ dialTest(
         await chatMessages.fillEditData(userRequests[1], '');
         await expect
           .soft(
-            await chatMessages.saveAndSubmit.getElementLocator(),
+            chatMessages.saveAndSubmit.getElementLocator(),
             ExpectedMessages.saveIsDisabled,
           )
           .toBeDisabled();
@@ -251,7 +250,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.getChatMessage(editData),
+            chatMessages.getChatMessage(editData),
             ExpectedMessages.requestMessageIsEdited,
           )
           .toBeVisible();
@@ -317,7 +316,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.getChatMessage(userRequests[1]),
+            chatMessages.getChatMessage(userRequests[1]),
             ExpectedMessages.messageIsDeleted,
           )
           .toBeHidden();
@@ -417,7 +416,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.regenerate.getElementLocator(),
+            chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();
@@ -495,7 +494,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.regenerate.getElementLocator(),
+            chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();

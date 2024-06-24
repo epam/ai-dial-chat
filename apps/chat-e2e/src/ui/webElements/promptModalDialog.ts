@@ -3,6 +3,7 @@ import { Attributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { ErrorLabelSelectors } from '@/src/ui/selectors';
 import { PromptModal } from '@/src/ui/selectors/dialogSelectors';
+import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
@@ -17,6 +18,7 @@ export class PromptModalDialog extends BaseElement {
   );
   public prompt = this.getChildElementBySelector(PromptModal.promptValue);
   public saveButton = this.getChildElementBySelector(PromptModal.savePrompt);
+  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
   public fieldLabel = (label: string) =>
     this.getChildElementBySelector(PromptModal.fieldLabel(label));
   public getFieldBottomMessage = (field: BaseElement) =>
