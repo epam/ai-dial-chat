@@ -7,6 +7,7 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
   ModelIds,
   Rate,
   Side,
@@ -269,10 +270,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(replayConversation.name);
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
       },
     );
@@ -331,10 +329,7 @@ dialTest(
         }
 
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
 
         const activeChatHeader =
@@ -594,7 +589,6 @@ dialTest(
     dataInjector,
     leftChatHeader,
     rightChatHeader,
-    page,
   }) => {
     setTestIds('EPMRTC-555');
     const request = ['beautiful'];
@@ -631,12 +625,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await page.route(API.chatHost, async (route) => {
-          await route.fulfill({
-            status: 200,
-            body: '{"content":"Response"}\u0000{}\u0000',
-          });
-        });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
 
         for (const side of Object.values(Side)) {
           await chat.regenerateResponseInCompareMode(
@@ -921,7 +912,7 @@ dialTest(
           .toBeFalsy();
         await expect
           .soft(
-            await sendMessage.stopGenerating.getElementLocator(),
+            sendMessage.stopGenerating.getElementLocator(),
             ExpectedMessages.responseLoadingStopped,
           )
           .toBeHidden();
@@ -1231,10 +1222,7 @@ dialTest(
         await compare.waitForState();
         await conversations.selectConversation(firstConversation.name);
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
       },
     );
@@ -1249,7 +1237,7 @@ dialTest(
 
         await expect
           .soft(
-            await leftChatHeader.deleteConversationFromComparison.getElementLocator(),
+            leftChatHeader.deleteConversationFromComparison.getElementLocator(),
             ExpectedMessages.closeChatIconIsNotVisible,
           )
           .toBeHidden();
@@ -1520,10 +1508,7 @@ dialTest(
           .getConversationByName(updatedRequestContent)
           .waitFor({ state: 'hidden' });
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
       },
     );
