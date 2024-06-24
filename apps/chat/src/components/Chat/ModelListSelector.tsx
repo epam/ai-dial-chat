@@ -108,7 +108,7 @@ export const ModelListSelector = ({
           {entities.map((model) => (
             <MenuItem
               key={model.id}
-              className="entity-menu-selector-item border-b border-secondary bg-layer-2 !px-0"
+              className="entity-menu-selector-item max-w-full border-b border-secondary bg-layer-2 !px-0"
               item={
                 <div className="flex size-full items-center gap-2 pl-4 text-primary-bg-light hover:bg-accent-secondary-alpha">
                   <ModelIcon entityId={model.id} entity={model} size={18} />
@@ -121,7 +121,7 @@ export const ModelListSelector = ({
           ))}
           <MenuItem
             key={'see-full-list'}
-            className="bg-layer-2 text-quaternary-bg-light hover:text-pr-primary-700"
+            className="max-w-full bg-layer-2 text-quaternary-bg-light hover:text-pr-primary-700"
             item={t('See full list')}
             onClick={() => setIsModelsDialogOpen(true)}
           />

@@ -28,9 +28,9 @@ export const ChatHeader = ({
     <>
       <div
         className={classNames(
-          'sticky top-0 z-10 flex w-full min-w-0 items-center p-3 md:flex-wrap md:px-0 lg:flex-row',
+          'sticky top-0 z-10 flex w-full min-w-0 items-center p-3 px-3 md:flex-wrap md:px-5 lg:flex-row',
           {
-            'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth,
+            'lg:flex-nowrap': isChatFullWidth,
           },
         )}
         data-qa="chat-header"
