@@ -1,4 +1,4 @@
-import { ClipboardEvent, MouseEvent, useCallback } from 'react';
+import { ClipboardEvent, MouseEvent, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -44,6 +44,8 @@ export function UnpublishModal({
     getAttachments(type)(state, entity.id),
   );
 
+  const [unpublishRequestName, setUnpublishRequestName] = useState('');
+
   const handleClose = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -61,6 +63,7 @@ export function UnpublishModal({
 
       dispatch(
         PublicationActions.deletePublication({
+          name: unpublishRequestName.trim(),
           targetFolder: `${getFolderIdFromEntityId(entity.id).split('/').slice(1).join('/')}/`,
           resources: [
             ...entities.map((entity) => ({ targetUrl: entity.id })),
@@ -74,7 +77,7 @@ export function UnpublishModal({
 
       onClose();
     },
-    [dispatch, entities, entity.id, files, onClose],
+    [dispatch, entities, entity.id, files, onClose, unpublishRequestName],
   );
 
   return (
@@ -86,21 +89,15 @@ export function UnpublishModal({
       onClose={onClose}
     >
       <div className="flex w-full flex-col overflow-y-auto">
-        <h4 className="truncate py-4 pl-3 pr-10 text-base font-semibold md:pl-4">
-          <span className="w-full text-center">
-            <Tooltip
-              contentClassName="max-w-[400px] break-words"
-              tooltip={entity.name.trim()}
-            >
-              <div
-                className="w-full truncate break-words"
-                data-qa="modal-entity-name"
-              >
-                {`${t('Unpublish')}: ${entity.name.trim()}`}
-              </div>
-            </Tooltip>
-          </span>
-        </h4>
+        <div className="px-3 py-4 md:pl-4 md:pr-10">
+          <input
+            autoFocus
+            onChange={(e) => setUnpublishRequestName(e.target.value)}
+            value={unpublishRequestName}
+            placeholder={t('Type unpublish request name...') ?? ''}
+            className="w-full bg-transparent text-base font-semibold outline-none"
+          />
+        </div>
         <h5 className="px-3 text-secondary md:px-6">{subtitle}</h5>
         <div className="flex grow flex-col overflow-y-auto">
           <div className="overflow-y-scroll">
@@ -124,14 +121,19 @@ export function UnpublishModal({
           >
             {t('Cancel')}
           </button>
-          <button
-            className="button button-primary"
-            onClick={handleUnpublish}
-            data-qa="unpublish"
-            autoFocus
+          <Tooltip
+            hideTooltip={!!unpublishRequestName.trim().length}
+            tooltip={t('Enter a name for the unpublish request')}
           >
-            {t('Unpublish')}
-          </button>
+            <button
+              className="button button-primary"
+              onClick={handleUnpublish}
+              data-qa="unpublish"
+              disabled={!unpublishRequestName.trim().length}
+            >
+              {t('Unpublish')}
+            </button>
+          </Tooltip>
         </div>
       </div>
     </Modal>
