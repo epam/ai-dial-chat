@@ -91,11 +91,10 @@ export class BaseConversation extends SideBarEntities {
     return this.getEntityIcon(this.entitySelector, name, index);
   }
 
-  public async isConversationHasPlaybackIcon(name: string, index?: number) {
-    const playBackIcon = this.getConversationByName(name, index).locator(
+  public getConversationPlaybackIcon(name: string, index?: number) {
+    return this.getConversationByName(name, index).locator(
       IconSelectors.playbackIcon,
     );
-    return playBackIcon.isVisible();
   }
 
   public async getConversationBackgroundColor(name: string, index?: number) {
