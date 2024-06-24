@@ -146,7 +146,7 @@ export const ChatSelectors = {
 export const TableSelectors = {
   tableContainer: '[data-qa="table"]',
   tableControls: '[data-qa="table-controls"]',
-  copyAsCsvIcon: '#csv-icon',
-  copyAsTxtIcon: '#txt-icon',
-  copyAsMdIcon: '#md-icon',
+  copyAsCsvIcon: '[data-qa="csv-icon"]',
+  copyAsTxtIcon: '[data-qa="txt-icon"]',
+  copyAsMdIcon: '[data-qa="md-icon"]',
 };
