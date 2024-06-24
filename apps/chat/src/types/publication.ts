@@ -21,7 +21,8 @@ export interface PublicationRule {
   targets: string[];
 }
 
-export interface PublicationRequest {
+export interface PublicationRequestModel {
+  name: string;
   targetFolder: string;
   resources: {
     action: PublishActions;
@@ -45,6 +46,7 @@ export interface PublicationResource {
 }
 
 export interface Publication {
+  name?: string;
   url: string;
   targetFolder?: string;
   publicationStatus: PublicationStatus;
@@ -56,6 +58,7 @@ export interface Publication {
 }
 
 export interface PublicationInfo {
+  name?: string;
   url: string;
   targetFolder?: string;
   status: PublicationStatus;

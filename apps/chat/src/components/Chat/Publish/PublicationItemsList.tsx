@@ -12,6 +12,8 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
   ConversationRow,
@@ -77,7 +79,7 @@ export function PublicationItemsList({
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
                   ApiKeys.Conversations,
-                  'public',
+                  PUBLIC_URL_PREFIX,
                   path,
                   splitEntityId(entity.id).name,
                 ),
@@ -125,7 +127,7 @@ export function PublicationItemsList({
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
                   ApiKeys.Prompts,
-                  'public',
+                  PUBLIC_URL_PREFIX,
                   path,
                   splitEntityId(entity.id).name,
                 ),
