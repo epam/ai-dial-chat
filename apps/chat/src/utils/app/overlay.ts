@@ -21,6 +21,7 @@ export function sendPMResponse(
   type: OverlayRequests,
   requestParams: PostMessageRequestParams,
 ) {
+  if (typeof window === 'undefined') return;
   const { requestId, hostDomain, payload } = requestParams;
   window?.parent.postMessage(
     {
@@ -41,6 +42,8 @@ export function sendPMEvent(
   type: OverlayEvents,
   eventParams: PostMessageEventParams,
 ) {
+  if (typeof window === 'undefined') return;
+
   const { hostDomain, payload } = eventParams;
   window?.parent.postMessage(
     {
