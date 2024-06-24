@@ -1,5 +1,3 @@
-'use client';
-
 import {
   ChatOverlayOptions,
   DeferredRequest,
@@ -275,7 +273,11 @@ export class ChatOverlay {
     waitForReady = true,
   ): Promise<unknown> {
     if (waitForReady) {
-      await this.iframeInteraction.ready();
+      try {
+        await this.iframeInteraction.ready();
+      } catch (error) {
+        console.info(error);
+      }
     }
 
     if (!this.iframe.contentWindow) {
@@ -360,7 +362,7 @@ export class ChatOverlay {
    */
   destroy() {
     window.removeEventListener('message', this.process);
-    this.iframeInteraction.complete();
+    this.iframeInteraction.fail('Chat Overlay destroyed');
     this.root.removeChild(this.iframe);
 
     this.root.removeChild(this.loader);
