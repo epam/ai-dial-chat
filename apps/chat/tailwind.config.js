@@ -11,6 +11,7 @@ const commonBgColors = {
   'layer-7': 'var(--bg-layer-7, #ECEEF4)',
   'layer-8': 'var(--bg-layer-8, #C0DDF2)',
   'layer-9': 'var(--bg-layer-9, #F3E8CE)',
+  'layer-10': 'var(--bg-layer-10, #E9EDF0)',
   blackout: 'var(--bg-blackout, #090F2599)',
   'blackout-1': 'var(--bg-blackout-1, #1844870D)',
   'blackout-2': 'var(--bg-blackout-2, #023465CC)',

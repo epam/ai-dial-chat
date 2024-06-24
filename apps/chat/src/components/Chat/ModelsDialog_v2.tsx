@@ -106,7 +106,7 @@ export const ModelsDialog_V2: FC<ModelsDialogProps> = ({
         />
         <input
           name="titleInput"
-          placeholder={t('Search model or application') || ''}
+          placeholder={t('Search model') || ''}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);
@@ -132,7 +132,7 @@ export const ModelsDialog_V2: FC<ModelsDialogProps> = ({
         )}
         <div className="pt-6">
           <TemperatureSlider
-            label={t('Temperature Slider')}
+            label={t('Temperature')}
             temperature={temperature}
             onChangeTemperature={onChangeTemperature}
           />

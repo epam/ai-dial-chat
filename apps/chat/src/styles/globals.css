@@ -63,11 +63,11 @@ pre:has(div.codeblock) {
   }
 
   .temperature-slider .rc-slider-rail {
-    @apply rounded-full bg-gradient-to-r from-layer-5 to-layer-3;
+    @apply rounded-full bg-layer-10;
   }
 
   .temperature-slider .rc-slider-track {
-    @apply rounded-full bg-transparent;
+    @apply rounded-full bg-gradient-to-r from-layer-5 to-layer-3;
   }
 
   .input-form {
@@ -141,8 +141,10 @@ pre:has(div.codeblock) {
 }
 
 @layer components {
-  #chat .model-icon-template {
-    --text-primary-bg-dark: var(--text-quinary-bg-light);
+  #chat .model-icon-template,
+  #chat .entity-selector .model-icon-template,
+  .entity-menu-selector-item .model-icon-template {
+    --text-primary-bg-dark: #000A32;
   }
 
   .file-manager-modal,
@@ -152,9 +154,7 @@ pre:has(div.codeblock) {
   .unpublish-modal,
   .preview-prompt-modal,
   .prompt-modal,
-  .publication-sections,
-  #chat .entity-selector .model-icon-template,
-  .entity-menu-selector-item {
+  .publication-sections {
     --text-primary-bg-dark: var(--text-primary-bg-light);
     --text-secondary-bg-dark: var(--text-secondary-bg-light);
   }
