@@ -47,8 +47,11 @@ export const ModelListSelector = ({
         ? recentModelsIds.filter((model) => model !== modelId)
         : recentModelsIds;
     const recentEntities = getValidEntitiesFromIds(modelIds, modelsMap);
+    const recentEntitiesModelsOnly = recentEntities.filter(
+      (model) => model?.type === 'model',
+    );
 
-    return take(recentEntities, MAX_ITEMS_IN_MODELS_DROPDOWN);
+    return take(recentEntitiesModelsOnly, MAX_ITEMS_IN_MODELS_DROPDOWN);
   }, [modelId, modelsMap, recentModelsIds]);
 
   const selectedEntity = useMemo(
