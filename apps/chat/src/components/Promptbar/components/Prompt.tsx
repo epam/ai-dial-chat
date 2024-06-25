@@ -120,7 +120,7 @@ export const PromptComponent = ({
   const isChosen = useMemo(
     () =>
       chosenPromptIds.includes(prompt.id) ||
-      chosenFolderIds.some((folderId) => prompt.id.startsWith(`${folderId}/`)),
+      chosenFolderIds.some((folderId) => prompt.id.startsWith(folderId)),
     [chosenPromptIds, chosenFolderIds, prompt.id],
   );
 
@@ -199,12 +199,12 @@ export const PromptComponent = ({
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
-      if (e.dataTransfer && !isExternal) {
+      if (e.dataTransfer && !isExternal && !isSelectMode) {
         e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(MoveType.Prompt, JSON.stringify(prompt));
       }
     },
-    [isExternal],
+    [isExternal, isSelectMode],
   );
 
   const handleOpenEditModal = useCallback(
@@ -369,7 +369,7 @@ export const PromptComponent = ({
             'pr-6 xl:pr-0':
               !isSelectMode && !isDeleting && !isRenaming && isSelected,
           })}
-          draggable={!isExternal && !isNameOrPathInvalid}
+          draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
           <div

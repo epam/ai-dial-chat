@@ -233,9 +233,7 @@ export const ConversationComponent = ({
   const isChosen = useMemo(
     () =>
       chosenConversationIds.includes(conversation.id) ||
-      chosenFolderIds.some((folderId) =>
-        conversation.id.startsWith(`${folderId}/`),
-      ),
+      chosenFolderIds.some((folderId) => conversation.id.startsWith(folderId)),
     [chosenConversationIds, chosenFolderIds, conversation.id],
   );
 
@@ -338,7 +336,7 @@ export const ConversationComponent = ({
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
-      if (e.dataTransfer && !isExternal) {
+      if (e.dataTransfer && !isExternal && !isSelectMode) {
         e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(
           MoveType.Conversation,
@@ -346,7 +344,7 @@ export const ConversationComponent = ({
         );
       }
     },
-    [isExternal],
+    [isExternal, isSelectMode],
   );
 
   const handleDelete = useCallback(() => {
@@ -675,7 +673,7 @@ export const ConversationComponent = ({
             }
           }}
           disabled={messageIsStreaming || (isSelectMode && isExternal)}
-          draggable={!isExternal && !isNameOrPathInvalid}
+          draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
           data-qa={isSelected ? 'selected' : null}

@@ -218,7 +218,7 @@ const ChatFolderTemplate = ({
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Chat}
-        denyDrop={isExternal}
+        denyDrop={isExternal || isSelectMode}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -249,7 +249,7 @@ const ChatFolderTemplate = ({
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Chat}
-          denyDrop={isExternal}
+          denyDrop={isExternal || isSelectMode}
         />
       )}
     </>

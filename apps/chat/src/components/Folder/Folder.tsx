@@ -436,7 +436,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!handleDrop || isExternal) {
+      if (!handleDrop || isExternal || canSelectFolders) {
         return;
       }
 
@@ -545,6 +545,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       allFolders,
       allFoldersWithoutFilters,
       allItemsWithoutFilters,
+      canSelectFolders,
       currentFolder,
       dispatch,
       featureType,
@@ -558,11 +559,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (!isExternal && hasDragEventAnyData(e, featureType)) {
+      if (
+        !canSelectFolders &&
+        !isExternal &&
+        hasDragEventAnyData(e, featureType)
+      ) {
         e.preventDefault();
       }
     },
-    [featureType, isExternal],
+    [canSelectFolders, featureType, isExternal],
   );
 
   const isParentFolder = useCallback(
@@ -783,7 +788,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClickFolder(currentFolder.id);
           }
         }}
-        draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
+        draggable={
+          !!handleDrop &&
+          !isExternal &&
+          !isNameOrPathInvalid &&
+          !canSelectFolders
+        }
         onDragStart={(e) => handleDragStart(e, currentFolder)}
         onDragOver={(e) => {
           if (!isExternal && hasDragEventAnyData(e, featureType)) {

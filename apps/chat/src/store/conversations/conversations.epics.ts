@@ -653,7 +653,11 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
     switchMap(() =>
-      merge(of(ModelsActions.getModels()), of(AddonsActions.getAddons())),
+      merge(
+        of(ModelsActions.getModels()),
+        of(AddonsActions.getAddons()),
+        of(ConversationsActions.resetChosenConversations()),
+      ),
     ),
   );
 

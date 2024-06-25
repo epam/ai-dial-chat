@@ -185,7 +185,7 @@ const PromptFolderTemplate = ({
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Prompt}
-        denyDrop={isExternal}
+        denyDrop={isExternal || isSelectMode}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -234,7 +234,7 @@ const PromptFolderTemplate = ({
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Prompt}
-          denyDrop={isExternal}
+          denyDrop={isExternal || isSelectMode}
         />
       )}
     </>
