@@ -376,10 +376,7 @@ export function PublishModal({
                 <label className="mb-4 flex text-sm" htmlFor="requestPath">
                   {t('Publish to')}
                 </label>
-                <button
-                  className="input-form button mx-0 flex grow items-center border-primary px-3 py-2"
-                  onClick={handleFolderChange}
-                >
+                <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
                     <Tooltip
                       tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
@@ -388,7 +385,12 @@ export function PublishModal({
                     >
                       {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
-                    <span className="text-accent-primary">{t('Change')}</span>
+                    <span
+                      className="cursor-pointer text-accent-primary"
+                      onClick={handleFolderChange}
+                    >
+                      {t('Change')}
+                    </span>
                   </div>
                 </button>
               </div>
