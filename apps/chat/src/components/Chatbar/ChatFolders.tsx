@@ -203,7 +203,7 @@ const ChatFolderTemplate = ({
     ConversationsSelectors.selectIsSelectMode,
   );
   const selectedFolderIds = useAppSelector(
-    ConversationsSelectors.selectChosenFolderIds,
+    ConversationsSelectors.selectAllChosenFolderIds,
   );
   const handleFolderSelect = useCallback(
     (folderId: string) => {

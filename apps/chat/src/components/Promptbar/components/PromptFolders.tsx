@@ -170,7 +170,7 @@ const PromptFolderTemplate = ({
 
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
   const selectedFolderIds = useAppSelector(
-    PromptsSelectors.selectChosenFolderIds,
+    PromptsSelectors.selectAllChosenFolderIds,
   );
   const handleFolderSelect = useCallback(
     (folderId: string) => {

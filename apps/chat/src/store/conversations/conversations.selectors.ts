@@ -757,3 +757,14 @@ export const selectChosenConversationIds = createSelector(
 export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
   return state.chosenFolderIds;
 });
+
+export const selectAllChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter((folderId) =>
+        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
+      );
+  },
+);
