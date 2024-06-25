@@ -3,12 +3,13 @@ import {
   ChatSelectors,
   MessageInputSelectors,
   SideBarSelectors,
+  TableSelectors,
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Rate, Side } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
+import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
@@ -104,6 +105,48 @@ export class ChatMessages extends BaseElement {
 
   public getChatMessageCodeBlock(message: string | number) {
     return this.getChatMessage(message).locator(ChatSelectors.codeBlock);
+  }
+
+  public getChatMessageTable(message: string | number) {
+    return this.getChatMessage(message).locator(TableSelectors.tableContainer);
+  }
+
+  public getChatMessageTableControls(message: string | number) {
+    return this.getChatMessageTable(message).locator(
+      TableSelectors.tableControls,
+    );
+  }
+
+  public getChatMessageTableCopyAsCsvIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.copyAsCsvIcon,
+    );
+  }
+
+  public getChatMessageTableCopyAsTxtIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.copyAsTxtIcon,
+    );
+  }
+
+  public getChatMessageTableCopyAsMdIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.copyAsMdIcon,
+    );
+  }
+
+  public getChatMessageTableHeaderColumns(message: string | number) {
+    return this.getChatMessageTable(message)
+      .locator(Tags.table)
+      .locator(Tags.thead)
+      .locator(Tags.th);
+  }
+
+  public getChatMessageTableRows(message: string | number) {
+    return this.getChatMessageTable(message)
+      .locator(Tags.table)
+      .locator(Tags.tbody)
+      .locator(Tags.td);
   }
 
   public getMessageStage(messagesIndex: number, stageIndex: number) {
@@ -418,6 +461,30 @@ export class ChatMessages extends BaseElement {
 
   public getChatMessageClipIcon(message: string | number) {
     return this.getChatMessage(message).locator(MenuSelectors.menuTrigger);
+  }
+
+  public async getChatMessageTableHeaderColumnsCount(message: string | number) {
+    return this.getChatMessageTableHeaderColumns(message).count();
+  }
+
+  public async getChatMessageTableHeadersBackgroundColor(
+    message: string | number,
+  ) {
+    return this.createElementFromLocator(
+      this.getChatMessageTableHeaderColumns(message).nth(1),
+    ).getComputedStyleProperty(Styles.backgroundColor);
+  }
+
+  public async getChatMessageTableRowsCount(message: string | number) {
+    return this.getChatMessageTableRows(message).count();
+  }
+
+  public async getChatMessageTableRowsBackgroundColor(
+    message: string | number,
+  ) {
+    return this.createElementFromLocator(
+      this.getChatMessageTableRows(message).nth(1),
+    ).getComputedStyleProperty(Styles.backgroundColor);
   }
 
   public messageEditIcon = (messageLocator: Locator) =>
