@@ -538,7 +538,6 @@ export const FileManagerModal = ({
                               highlightedFolders={highlightFolderIds}
                               isInitialRenameEnabled
                               newAddedFolderId={newFolderId}
-                              displayCaretAlways
                               loadingFolderIds={loadingFolderIds}
                               openedFoldersIds={openedFoldersIds}
                               allItems={filteredFiles}
