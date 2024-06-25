@@ -11,6 +11,7 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 
 interface Props {
+  iconSize?: number;
   model: DialAIEntityModel;
   hideMoreInfo?: boolean;
   className?: string;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export const ModelDescription = ({
+  iconSize = 24,
   model,
   hideMoreInfo,
   className,
@@ -32,7 +34,7 @@ export const ModelDescription = ({
         className={classNames('flex items-center gap-2', className)}
         data-qa="entity-info"
       >
-        <ModelIcon entity={model} entityId={model.id} size={24} />
+        <ModelIcon entity={model} entityId={model.id} size={iconSize} />
         <span>{getOpenAIEntityFullName(model)}</span>
       </div>
       {model.description && (
