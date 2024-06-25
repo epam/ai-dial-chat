@@ -127,9 +127,14 @@ export class Folders extends BaseElement {
     );
   }
 
+  public getFolderExpandIcon(name: string, index?: number) {
+    return this.getFolderByName(name, index).locator(
+      `${Tags.span}[class='${Attributes.visible}']`,
+    );
+  }
+
   public async isFolderCaretExpanded(name: string, index?: number) {
-    return this.getFolderByName(name, index)
-      .locator(`${Tags.span}[class='${Attributes.visible}']`)
+    return this.getFolderExpandIcon(name, index)
       .locator(`.${Attributes.rotated}`)
       .isVisible();
   }
@@ -231,11 +236,7 @@ export class Folders extends BaseElement {
       const respPromise = this.page.waitForResponse((resp) =>
         resp.url().includes(API.listingHost),
       );
-      if (await this.getTooltip().isVisible()) {
-        await this.page.mouse.move(0, 0);
-        await this.getTooltip().waitForState({ state: 'hidden' });
-      }
-      await folder.click();
+      await this.getFolderExpandIcon(name, index).click();
       return respPromise;
     }
     await folder.click();
