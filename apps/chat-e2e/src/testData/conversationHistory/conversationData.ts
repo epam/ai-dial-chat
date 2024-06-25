@@ -261,7 +261,8 @@ export class ConversationData extends FolderData {
     return this.conversationBuilder.build();
   }
 
-  public prepareConversationWithCodeContent(
+  public prepareConversationWithTextContent(
+    responseContent: string,
     model?: string | DialAIEntityModel,
   ) {
     const conversation = this.prepareDefaultConversation(model);
@@ -272,19 +273,34 @@ export class ConversationData extends FolderData {
     };
     const userMessage: Message = {
       role: Role.User,
-      content: 'provide an example of interface declaration in Java',
+      content: 'request',
       model: conversation.model,
       settings: messageSettings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
-      content:
-        'Here is an example of an interface declaration in Java:\n\n```java\npublic interface Animal {\n    void eat();\n    void sleep();\n    void makeSound();\n}\n```\n\nIn this example, `Animal` is an interface that declares three methods: `eat()`, `sleep()`, and `makeSound()`. Any class that implements the `Animal` interface will need to provide implementations for these three methods.',
+      content: responseContent,
       model: conversation.model,
       settings: messageSettings,
     };
     conversation.messages = [userMessage, assistantMessage];
     return this.conversationBuilder.build();
+  }
+
+  public prepareConversationWithCodeContent(
+    model?: string | DialAIEntityModel,
+  ) {
+    const responseContent =
+      'Here is an example of an interface declaration in Java:\n\n```java\npublic interface Animal {\n    void eat();\n    void sleep();\n    void makeSound();\n}\n```\n\nIn this example, `Animal` is an interface that declares three methods: `eat()`, `sleep()`, and `makeSound()`. Any class that implements the `Animal` interface will need to provide implementations for these three methods.';
+    return this.prepareConversationWithTextContent(responseContent, model);
+  }
+
+  public prepareConversationWithMdTableContent(
+    model?: string | DialAIEntityModel,
+  ) {
+    const responseContent =
+      '| Country        | Capital    |\n| ------------- |-------------|\n| Canada      | Ottawa |\n| United States      | Washington, D.C. |\n';
+    return this.prepareConversationWithTextContent(responseContent, model);
   }
 
   public prepareAssistantConversation(
