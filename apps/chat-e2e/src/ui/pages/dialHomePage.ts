@@ -35,13 +35,8 @@ export class DialHomePage extends BasePage {
         .getConversationByName(ExpectedConstants.newConversationTitle);
       await newConversation.waitFor();
       await newConversation.waitFor({ state: 'attached' });
-      const conversationSettings = appContainer.getConversationSettings();
-      await conversationSettings
-        .getTalkToSelector()
-        .waitForState({ state: 'attached' });
-      await conversationSettings
-        .getEntitySettings()
-        .waitForState({ state: 'attached' });
+      await chat.getModelInfo().waitForState({ state: 'attached' });
+      await chat.getChatHeader().waitForState({ state: 'attached' });
     }
   }
 
