@@ -206,7 +206,6 @@ export class ChatOverlay {
 
   /**
    * Callback to post message event, contains mapping event to this.requests, mapping event to this.subscriptions
-   * If event.data.type === '@DIAL_OVERLAY/READY' means that DIAL ready to receive message -> this.iframeInteraction.complete()
    * @param event {MessageEvent} post message event
    */
   protected process = (event: MessageEvent<OverlayRequest>): void => {
