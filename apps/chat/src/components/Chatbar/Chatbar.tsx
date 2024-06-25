@@ -152,6 +152,22 @@ export const Chatbar = () => {
     [allConversations, dispatch, t],
   );
 
+  const handleSearchTerm = useCallback(
+    (searchTerm: string) => {
+      dispatch(ConversationsActions.setSearchTerm({ searchTerm }));
+      dispatch(ConversationsActions.resetChosenConversations());
+    },
+    [dispatch],
+  );
+
+  const handleSearchFilters = useCallback(
+    (searchFilters: SearchFilters) => {
+      dispatch(ConversationsActions.setSearchFilters({ searchFilters }));
+      dispatch(ConversationsActions.resetChosenConversations());
+    },
+    [dispatch],
+  );
+
   return (
     <Sidebar<ConversationInfo>
       featureType={FeatureType.Chat}
@@ -164,12 +180,8 @@ export const Chatbar = () => {
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={(searchTerm: string) =>
-        dispatch(ConversationsActions.setSearchTerm({ searchTerm }))
-      }
-      handleSearchFilters={(searchFilters: SearchFilters) =>
-        dispatch(ConversationsActions.setSearchFilters({ searchFilters }))
-      }
+      handleSearchTerm={handleSearchTerm}
+      handleSearchFilters={handleSearchFilters}
       handleDrop={handleDrop}
       footerComponent={<ChatbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}

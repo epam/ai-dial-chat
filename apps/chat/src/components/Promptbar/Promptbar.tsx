@@ -152,6 +152,22 @@ const Promptbar = () => {
     [allPrompts, dispatch, t],
   );
 
+  const handleSearchTerm = useCallback(
+    (searchTerm: string) => {
+      dispatch(PromptsActions.setSearchTerm({ searchTerm }));
+      dispatch(PromptsActions.resetChosenPrompts());
+    },
+    [dispatch],
+  );
+
+  const handleSearchFilters = useCallback(
+    (searchFilters: SearchFilters) => {
+      dispatch(PromptsActions.setSearchFilters({ searchFilters }));
+      dispatch(PromptsActions.resetChosenPrompts());
+    },
+    [dispatch],
+  );
+
   return (
     <Sidebar<PromptInfo>
       featureType={FeatureType.Prompt}
@@ -164,12 +180,8 @@ const Promptbar = () => {
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={(searchTerm: string) =>
-        dispatch(PromptsActions.setSearchTerm({ searchTerm }))
-      }
-      handleSearchFilters={(searchFilters: SearchFilters) =>
-        dispatch(PromptsActions.setSearchFilters({ searchFilters }))
-      }
+      handleSearchTerm={handleSearchTerm}
+      handleSearchFilters={handleSearchFilters}
       handleDrop={handleDrop}
       footerComponent={<PromptbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}
