@@ -94,6 +94,8 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
+    chat,
+    chatHeader,
   }) => {
     setTestIds('EPMRTC-1763', 'EPMRTC-1901');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -126,7 +128,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(randomModelWithAttachment);
+        await chat.applyNewEntity();
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,

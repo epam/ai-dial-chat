@@ -286,9 +286,11 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(bison);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
+        await chat.applyNewEntity();
         replayRequest = await chat.startReplay();
       },
     );
@@ -963,6 +965,7 @@ dialTest(
     localStorageManager,
     dataInjector,
     talkToSelector,
+    chatHeader,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1328');
@@ -990,7 +993,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.waitForState({ state: 'attached' });
         await expect
           .soft(
@@ -1014,6 +1017,7 @@ dialTest(
       'Select any available model and start replaying',
       async () => {
         await talkToSelector.selectModel(gpt35Model);
+        await chat.applyNewEntity();
         const replayRequest = await chat.startReplay();
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)

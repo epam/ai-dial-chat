@@ -254,7 +254,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(bison);
+        await chat.applyNewEntity();
 
         const isSendMessageBtnEnabled =
           await sendMessage.sendMessageButton.isElementEnabled();
@@ -335,6 +337,7 @@ dialTest(
       'Create new conversation and verify previous model is preselected and highlighted',
       async () => {
         await chatBar.createNewConversation();
+        await chatHeader.openConversationSettingsPopup();
         const modelBorderColors = await talkToRecentGroupEntities
           .groupEntity(bison)
           .getAllBorderColors();
@@ -367,6 +370,8 @@ dialTest(
     talkToSelector,
     talkToRecentGroupEntities,
     addons,
+    chatHeader,
+    chat,
   }) => {
     setTestIds('EPMRTC-406');
     await dialHomePage.openHomePage();
@@ -374,6 +379,7 @@ dialTest(
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
+    await chatHeader.openConversationSettingsPopup();
     await talkToSelector.selectModel(randomModel);
     const sysPrompt = 'test prompt';
     const temp = 0;
@@ -384,9 +390,11 @@ dialTest(
       await entitySettings.setSystemPrompt(sysPrompt);
     }
     await temperatureSlider.setTemperature(temp);
+    await chat.applyNewEntity();
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
 
+    await chatHeader.openConversationSettingsPopup();
     await recentEntities.waitForState();
     const modelBorderColors = await talkToRecentGroupEntities
       .groupEntity(randomModel)
@@ -426,15 +434,28 @@ dialTest(
     talkToSelector,
     talkToRecentGroupEntities,
     setTestIds,
+    chatHeader,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-1044');
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await chatHeader.openConversationSettingsPopup();
     await talkToSelector.selectModel(bison);
+    await chat.applyNewEntity();
     await chat.sendRequestWithButton('test message');
     await chatBar.createNewConversation();
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(bison);
+    expect
+      .soft(
+        await chat.getModelInfo().getEntityIcon(),
+        ExpectedMessages.entityIconIsValid,
+      )
+      .toBe(expectedModelIcon);
+
+    await chatHeader.openConversationSettingsPopup();
     const modelBorderColors = await talkToRecentGroupEntities
       .groupEntity(bison)
       .getAllBorderColors();

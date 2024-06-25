@@ -26,6 +26,7 @@ dialTest(
     setTestIds,
     talkToSelector,
     talkToRecentGroupEntities,
+    chatHeader,
   }) => {
     setTestIds('EPMRTC-1046');
     await dialHomePage.openHomePage();
@@ -35,7 +36,7 @@ dialTest(
         (m) => m.id !== defaultModel.id && m.features?.systemPrompt === true,
       ),
     );
-
+    await chatHeader.openConversationSettingsPopup();
     await talkToSelector.selectModel(randomModel);
     await talkToRecentGroupEntities.waitForGroupEntitySelected(randomModel);
     await entitySettings.setSystemPrompt(sysPrompt);

@@ -334,19 +334,20 @@ dialTest(
     chatMessages,
     talkToSelector,
     entitySettings,
+    chatHeader,
   }) => {
     setTestIds('EPMRTC-1085');
     await dialTest.step(
       'Set system prompt for model and send request',
       async () => {
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [gpt4Model.iconUrl],
-        });
+        await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(gpt4Model);
         await entitySettings.setSystemPrompt(promptContent);
+        await chat.applyNewEntity();
         await chat.sendRequestWithButton(requestTerm);
       },
     );

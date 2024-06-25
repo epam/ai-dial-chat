@@ -233,6 +233,8 @@ dialTest.fixme(
     uploadFromDeviceModal,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
+    chatHeader,
+    chat,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -246,7 +248,9 @@ dialTest.fixme(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(randomModelWithAttachment);
+        await chat.applyNewEntity();
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
@@ -309,6 +313,7 @@ dialTest(
     chatMessages,
     page,
     sendMessageInputAttachments,
+    chatHeader,
   }) => {
     setTestIds(
       'EPMRTC-1896',
@@ -333,7 +338,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(randomModelWithAttachment);
+        await chat.applyNewEntity();
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -472,6 +479,8 @@ dialTest(
     attachmentDropdownMenu,
     sendMessageInputAttachments,
     context,
+    chatHeader,
+    chat,
   }) => {
     setTestIds('EPMRTC-1905');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -485,7 +494,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(randomModelWithAttachment);
+        await chat.applyNewEntity();
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
