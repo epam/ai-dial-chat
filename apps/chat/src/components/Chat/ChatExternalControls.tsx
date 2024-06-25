@@ -52,7 +52,7 @@ export default function ChatExternalControls({
 
   return (
     <div className="flex justify-center">
-      <div className="relative flex items-center justify-center">
+      <div className="relative mx-2 mb-2 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
         <button
           className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center gap-3 border-primary bg-layer-2 p-3 hover:bg-layer-4"
           onClick={handleDuplicate}
@@ -65,7 +65,7 @@ export default function ChatExternalControls({
         </button>
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-right-16"
+            className="-top-16 right-4 md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}

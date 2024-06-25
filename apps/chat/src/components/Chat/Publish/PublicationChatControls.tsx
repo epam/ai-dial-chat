@@ -90,7 +90,7 @@ export function PublicationControlsView<
 
   return (
     <div className="flex justify-center">
-      <div className="relative mt-5 flex items-center justify-center gap-3">
+      <div className="relative mx-2 mb-2 mt-5 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
         <button
           className={classNames(
             'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
@@ -150,7 +150,7 @@ export function PublicationControlsView<
         </button>
         {showScrollDownButton && onScrollDownClick && (
           <ScrollDownButton
-            className="-right-16"
+            className="-top-16 right-0 md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}
