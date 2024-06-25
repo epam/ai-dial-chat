@@ -87,9 +87,11 @@ const Sidebar = <T,>({
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== 'undefined' && window.innerWidth,
-  );
+  const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth;
+    }
+  });
 
   const isLeftSidebar = side === SidebarSide.Left;
   const isRightSidebar = side === SidebarSide.Right;
