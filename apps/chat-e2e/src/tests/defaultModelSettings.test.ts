@@ -40,6 +40,8 @@ dialTest(
     iconApiHelper,
     talkToRecentGroupEntities,
     sendMessage,
+    chat,
+    chatHeader,
     setTestIds,
   }) => {
     setTestIds(
@@ -75,7 +77,7 @@ dialTest(
         }
         await expect
           .soft(
-            await sendMessage.attachmentMenuTrigger.getElementLocator(),
+            sendMessage.attachmentMenuTrigger.getElementLocator(),
             ExpectedMessages.clipIconNotAvailable,
           )
           .toBeHidden();
@@ -83,8 +85,29 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify default model is selected by default',
+      'Verify no settings are visible for conversation, default model icon is visible',
       async () => {
+        await expect
+          .soft(
+            chat.getModelInfo().getElementLocator(),
+            ExpectedMessages.conversationModelInfoIsVisible,
+          )
+          .toBeVisible();
+        const expectedModelIcon =
+          await iconApiHelper.getEntityIcon(defaultModel);
+        expect
+          .soft(
+            await chat.getModelInfo().getEntityIcon(),
+            ExpectedMessages.entityIconIsValid,
+          )
+          .toBe(expectedModelIcon);
+      },
+    );
+
+    await dialTest.step(
+      'Open settings and verify default model is selected by default',
+      async () => {
+        await chatHeader.openConversationSettingsPopup();
         await recentEntities.waitForState();
         const modelBorderColors = await talkToRecentGroupEntities
           .groupEntity(defaultModel)

@@ -33,6 +33,7 @@ dialTest(
     chatHeader,
     fileApiHelper,
     attachmentDropdownMenu,
+    chat,
   }) => {
     setTestIds(
       'EPMRTC-1891',
@@ -66,7 +67,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(randomModelWithAttachment);
+        await chat.applyNewEntity();
         await expect
           .soft(
             sendMessage.attachmentMenuTrigger.getElementLocator(),
@@ -185,7 +188,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(randomModelWithAttachment);
+        await chat.applyNewEntity();
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
