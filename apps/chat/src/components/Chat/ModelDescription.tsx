@@ -34,7 +34,12 @@ export const ModelDescription = ({
         className={classNames('flex items-center gap-2', className)}
         data-qa="entity-info"
       >
-        <ModelIcon entity={model} entityId={model.id} size={iconSize} />
+        <ModelIcon
+          entity={model}
+          entityId={model.id}
+          size={iconSize}
+          isCustomTooltip
+        />
         <span>{getOpenAIEntityFullName(model)}</span>
       </div>
       {model.description && (
