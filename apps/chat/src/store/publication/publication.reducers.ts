@@ -36,6 +36,7 @@ export const publicationSlice = createSlice({
     publish: (
       state,
       _action: PayloadAction<{
+        name: string;
         resources: { sourceUrl: string; targetUrl: string }[];
         targetFolder: string;
         rules: PublicationRule[];
@@ -66,6 +67,7 @@ export const publicationSlice = createSlice({
     deletePublication: (
       state,
       _action: PayloadAction<{
+        name: string;
         targetFolder: string;
         resources: { targetUrl: string }[];
       }>,
