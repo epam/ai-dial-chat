@@ -826,19 +826,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted
                     featureType={featureType}
                     containerClassName={
-                      canSelectFolders ? 'group-hover/folder-item:hidden' : ''
+                      !isExternal && canSelectFolders
+                        ? 'group-hover/folder-item:hidden'
+                        : ''
                     }
                   >
                     <IconFolder
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        canSelectFolders && 'group-hover/folder-item:hidden',
+                        !isExternal &&
+                          canSelectFolders &&
+                          'group-hover/folder-item:hidden',
                       )}
                     />
                   </ShareIcon>
                 )}
                 {canSelectFolders &&
+                  !isExternal &&
                   !loadingFolderIds.includes(currentFolder.id) && (
                     <div
                       className={classNames(
@@ -904,19 +909,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted={isContextMenu}
                     featureType={featureType}
                     containerClassName={
-                      canSelectFolders ? 'group-hover/folder-item:hidden' : ''
+                      !isExternal && canSelectFolders
+                        ? 'group-hover/folder-item:hidden'
+                        : ''
                     }
                   >
                     <IconFolder
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        canSelectFolders && 'group-hover/folder-item:hidden',
+                        !isExternal &&
+                          canSelectFolders &&
+                          'group-hover/folder-item:hidden',
                       )}
                     />
                   </ShareIcon>
                 )}
                 {canSelectFolders &&
+                  !isExternal &&
                   !loadingFolderIds.includes(currentFolder.id) && (
                     <div
                       className={classNames(
