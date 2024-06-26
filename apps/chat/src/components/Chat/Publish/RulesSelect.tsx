@@ -1,12 +1,9 @@
 import { IconChevronDown } from '@tabler/icons-react';
 import { MouseEvent, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { PublicationFunctions } from '@/src/types/publication';
-import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
 
@@ -34,8 +31,6 @@ export function RulesSelect({
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { t } = useTranslation(Translation.SideBar);
-
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onChangeFilter(e.currentTarget.value as PublicationFunctions);
     setIsOpen(false);
@@ -59,7 +54,7 @@ export function RulesSelect({
       trigger={
         <div
           data-qa={`filter-selector-${id}`}
-          className="h-full min-h-[31px] w-full bg-layer-3 px-2 py-[6.5px] text-xs"
+          className="size-full min-h-[31px] bg-layer-3 px-2 py-[6.5px] text-xs"
         >
           <div className="flex w-full items-center justify-between gap-2">
             {capitalizeFirstLetters

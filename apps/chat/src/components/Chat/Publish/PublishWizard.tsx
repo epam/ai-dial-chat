@@ -43,8 +43,8 @@ import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
-import { NewTargetAudienceFilterComponent } from './NewTargetAudienceFilterComponent';
 import { PublicationItemsList } from './PublicationItemsList';
+import { NewTargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
@@ -231,17 +231,6 @@ export function PublishModal({
             });
           });
 
-        console.log(preparedFilters);
-        console.log(otherTargetAudienceFilters);
-
-        console.log(
-          preparedFilters.map((filter) => ({
-            function: filter.filterFunction,
-            source: filter.id,
-            targets: filter.filterParams,
-          })),
-        );
-
         dispatch(
           PublicationActions.publish({
             name: trimmedName,
@@ -314,6 +303,7 @@ export function PublishModal({
       onClose();
     },
     [
+      currentFolderRules,
       dispatch,
       entities,
       entity.folderId,
@@ -322,7 +312,6 @@ export function PublishModal({
       otherTargetAudienceFilters,
       path,
       publishRequestName,
-      rules,
       type,
     ],
   );

@@ -7,7 +7,7 @@ import { Translation } from '@/src/types/translation';
 import Modal from '../../Common/Modal';
 import { RuleListItem } from './RuleListItem';
 
-import { isEqual, uniqBy } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 interface Props {
   allRules: [string, PublicationRule[]][];

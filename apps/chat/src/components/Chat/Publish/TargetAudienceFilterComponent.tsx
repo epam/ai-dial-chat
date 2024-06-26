@@ -86,7 +86,13 @@ export function NewTargetAudienceFilterComponent({
       filterFunction: filterFunction as PublicationFunctions,
       filterParams,
     });
-  }, [filterFunction, filterParams, filterRegexParam, onSaveFilter]);
+  }, [
+    filterFunction,
+    filterParams,
+    filterRegexParam,
+    onSaveFilter,
+    selectedTarget,
+  ]);
 
   const handleChangeTarget = useCallback((target: string) => {
     setSelectedTarget(target);

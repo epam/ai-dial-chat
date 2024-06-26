@@ -1,10 +1,8 @@
-import { IconHelpCircle, IconScale } from '@tabler/icons-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { IconScale } from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 
-import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -35,7 +33,6 @@ import {
   PromptPublicationResources,
 } from './PublicationResources';
 import { RuleListItem } from './RuleListItem';
-import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
