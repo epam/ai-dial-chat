@@ -1,4 +1,4 @@
-import { ChatSettingsSelectors } from '../selectors';
+import { ChatSettingsSelectors, IconSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 import { EntitySelector } from './entitySelector';
 
@@ -30,4 +30,8 @@ export class ConversationSettings extends BaseElement {
     }
     return this.entitySettings;
   }
+
+  public cancelButton = this.getChildElementBySelector(
+    IconSelectors.cancelIcon,
+  );
 }

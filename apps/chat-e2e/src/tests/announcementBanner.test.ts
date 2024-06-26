@@ -48,7 +48,7 @@ dialTest(
           .toBe(
             'Welcome to AI Dial! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
           );
-        const bannerIcon = await banner.bannerIcon;
+        const bannerIcon = banner.bannerIcon;
         expect
           .soft(bannerIcon.isVisible(), ExpectedMessages.entityIconIsValid)
           .toBeTruthy();

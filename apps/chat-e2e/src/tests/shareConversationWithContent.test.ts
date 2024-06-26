@@ -620,7 +620,6 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     additionalShareUserChat,
     additionalShareUserChatHeader,
-    additionalShareUserRecentEntities,
     additionalShareUserPlaybackControl,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
@@ -704,8 +703,8 @@ dialSharedWithMeTest(
           .toBeVisible();
         await expect
           .soft(
-            additionalShareUserRecentEntities.playbackButton.getElementLocator(),
-            ExpectedMessages.playbackIconIsSelected,
+            additionalShareUserChat.getModelInfo().getElementLocator(),
+            ExpectedMessages.conversationModelInfoIsVisible,
           )
           .toBeVisible();
         await expect
