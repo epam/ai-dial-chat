@@ -57,7 +57,7 @@ dialTest(
           });
           await expect
             .soft(
-              await conversations.getConversationByName(
+              conversations.getConversationByName(
                 ExpectedConstants.entityWithIndexTitle(conversation.name, i),
               ),
               ExpectedMessages.conversationIsVisible,
@@ -65,7 +65,7 @@ dialTest(
             .toBeVisible();
           expect
             .soft(
-              await chatMessages.chatMessages.getElementsCount(),
+              chatMessages.chatMessages.getElementsCount(),
               ExpectedMessages.messageCountIsCorrect,
             )
             .toBe(conversation.messages.length);
@@ -115,7 +115,7 @@ dialTest(
         });
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               folderConversation.folders.name,
               ExpectedConstants.entityWithIndexTitle(
                 folderConversation.conversations[0].name,

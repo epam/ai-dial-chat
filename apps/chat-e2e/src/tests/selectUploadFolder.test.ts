@@ -324,7 +324,7 @@ dialTest(
         await uploadFromDeviceModal.changeUploadToLocation();
         await expect
           .soft(
-            await selectUploadFolder.getFolderByName(longFolderName, 1),
+            selectUploadFolder.getFolderByName(longFolderName, 1),
             ExpectedMessages.folderIsVisible,
           )
           .toBeVisible();

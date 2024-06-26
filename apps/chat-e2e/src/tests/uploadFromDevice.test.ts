@@ -84,7 +84,7 @@ dialTest(
         await attachFilesModal.uploadFromDeviceButton.click();
         await expect
           .soft(
-            await uploadFromDeviceModal.uploadButton.getElementLocator(),
+            uploadFromDeviceModal.uploadButton.getElementLocator(),
             ExpectedMessages.buttonIsDisabled,
           )
           .toBeDisabled();
@@ -108,7 +108,7 @@ dialTest(
         for (const attachment of attachments) {
           await expect
             .soft(
-              await uploadFromDeviceModal.getUploadedFile(attachment),
+              uploadFromDeviceModal.getUploadedFile(attachment),
               ExpectedMessages.fileIsUploaded,
             )
             .toBeVisible();
@@ -124,7 +124,7 @@ dialTest(
         for (const attachment of attachments) {
           await expect
             .soft(
-              await uploadFromDeviceModal.getUploadedFile(attachment),
+              uploadFromDeviceModal.getUploadedFile(attachment),
               ExpectedMessages.fileIsNotUploaded,
             )
             .toBeHidden();
@@ -234,7 +234,7 @@ dialTest(
         await deleteUploadedFileIcon.click();
         await expect
           .soft(
-            await uploadFromDeviceModal.getUploadedFile(attachments[0]),
+            uploadFromDeviceModal.getUploadedFile(attachments[0]),
             ExpectedMessages.fileIsNotUploaded,
           )
           .toBeHidden();
@@ -247,7 +247,7 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            await attachFilesModal
+            attachFilesModal
               .attachedFileName(attachments[1])
               .getElementLocator(),
             ExpectedMessages.fileIsAttached,
@@ -266,10 +266,10 @@ dialTest(
       'Open again "Upload from device" modal, remove remained file and verify "Upload" button becomes disabled',
       async () => {
         await attachFilesModal.uploadFromDeviceButton.click();
-        await uploadFromDeviceModal.getDeleteUploadedFileIcon(attachments[1]);
+        uploadFromDeviceModal.getDeleteUploadedFileIcon(attachments[1]);
         await expect
           .soft(
-            await uploadFromDeviceModal.uploadButton.getElementLocator(),
+            uploadFromDeviceModal.uploadButton.getElementLocator(),
             ExpectedMessages.buttonIsDisabled,
           )
           .toBeDisabled();
@@ -349,7 +349,7 @@ dialTest(
         for (const attachment of attachments) {
           await expect
             .soft(
-              await uploadFromDeviceModal.getUploadedFile(attachment),
+              uploadFromDeviceModal.getUploadedFile(attachment),
               ExpectedMessages.fileIsUploaded,
             )
             .toBeVisible();
@@ -373,7 +373,7 @@ dialTest(
         for (const attachment of attachments) {
           await expect
             .soft(
-              await sendMessageInputAttachments.inputAttachment(attachment),
+              sendMessageInputAttachments.inputAttachment(attachment),
               ExpectedMessages.fileIsAttached,
             )
             .toBeVisible();
@@ -416,7 +416,7 @@ dialTest(
         for (const attachment of attachments) {
           await expect
             .soft(
-              await attachFilesModal.attachedFile(attachment),
+              attachFilesModal.attachedFile(attachment),
               ExpectedMessages.fileIsUploaded,
             )
             .toBeVisible();
@@ -487,7 +487,7 @@ dialTest(
       async () => {
         await expect
           .soft(
-            await uploadFromDeviceModal.getUploadedFile(
+            uploadFromDeviceModal.getUploadedFile(
               Attachment.dotExtensionImageName.toLowerCase(),
             ),
             ExpectedMessages.fileIsUploaded,
@@ -502,13 +502,13 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            await attachFilesModal.attachedFile(expectedName),
+            attachFilesModal.attachedFile(expectedName),
             ExpectedMessages.fileIsUploaded,
           )
           .toBeVisible();
         await expect
           .soft(
-            await attachFilesModal.attachedFile(
+            attachFilesModal.attachedFile(
               Attachment.dotExtensionImageName.toLowerCase(),
             ),
             ExpectedMessages.fileIsUploaded,
@@ -579,7 +579,7 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            await attachFilesModal.attachedFile(Attachment.cloudImageName),
+            attachFilesModal.attachedFile(Attachment.cloudImageName),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();

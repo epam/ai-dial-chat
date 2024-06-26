@@ -218,7 +218,7 @@ dialTest(
         await uploadFromDeviceModal.getUploadErrorText.getElementContent();
       expect
         .soft(
-          await errorText?.replaceAll('\n', ''),
+          errorText?.replaceAll('\n', ''),
           ExpectedMessages.errorMessageContentIsValid,
         )
         .toBe(

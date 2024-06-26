@@ -93,9 +93,7 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await promptModalDialog.getFieldBottomMessage(
-              promptModalDialog.name,
-            ),
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
             ExpectedMessages.fieldIsHighlightedWithRed,
           )
           .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
@@ -129,9 +127,7 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await promptModalDialog.getFieldBottomMessage(
-              promptModalDialog.name,
-            ),
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
             ExpectedMessages.fieldIsHighlightedWithRed,
           )
           .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
@@ -191,9 +187,7 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await promptModalDialog.getFieldBottomMessage(
-              promptModalDialog.prompt,
-            ),
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
             ExpectedMessages.fieldIsHighlightedWithRed,
           )
           .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
@@ -227,9 +221,7 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await promptModalDialog.getFieldBottomMessage(
-              promptModalDialog.prompt,
-            ),
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.prompt),
             ExpectedMessages.fieldIsHighlightedWithRed,
           )
           .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
@@ -349,14 +341,14 @@ dialTest(
 
     await expect
       .soft(
-        await promptModalDialog.getElementLocator(),
+        promptModalDialog.getElementLocator(),
         ExpectedMessages.promptModalClosed,
       )
       .toBeHidden();
 
     await expect
       .soft(
-        await prompts.getPromptByName(prompt.name),
+        prompts.getPromptByName(prompt.name),
         ExpectedMessages.promptNotUpdated,
       )
       .toBeVisible();
@@ -390,16 +382,13 @@ dialTest(
 
     await expect
       .soft(
-        await promptModalDialog.getElementLocator(),
+        promptModalDialog.getElementLocator(),
         ExpectedMessages.promptModalClosed,
       )
       .toBeHidden();
 
     await expect
-      .soft(
-        await prompts.getPromptByName(newName),
-        ExpectedMessages.promptNotUpdated,
-      )
+      .soft(prompts.getPromptByName(newName), ExpectedMessages.promptNotUpdated)
       .toBeVisible();
 
     await prompts.openPromptDropdownMenu(newName);
@@ -452,14 +441,14 @@ dialTest(
 
     await expect
       .soft(
-        await promptModalDialog.getElementLocator(),
+        promptModalDialog.getElementLocator(),
         ExpectedMessages.promptModalClosed,
       )
       .toBeHidden();
 
     await expect
       .soft(
-        await prompts.getPromptByName(ExpectedConstants.allowedSpecialChars),
+        prompts.getPromptByName(ExpectedConstants.allowedSpecialChars),
         ExpectedMessages.promptNotUpdated,
       )
       .toBeVisible();
@@ -509,7 +498,7 @@ dialTest(
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     await expect
       .soft(
-        await prompts.getPromptByName(prompt.name),
+        prompts.getPromptByName(prompt.name),
         ExpectedMessages.promptDeleted,
       )
       .toBeHidden();
@@ -538,7 +527,7 @@ dialTest(
     await confirmationDialog.cancelDialog();
     await expect
       .soft(
-        await prompts.getPromptByName(prompt.name),
+        prompts.getPromptByName(prompt.name),
         ExpectedMessages.promptNotDeleted,
       )
       .toBeVisible();
@@ -601,14 +590,14 @@ dialTest(
 
     await expect
       .soft(
-        await conversations.getConversationByName(singleConversation.name),
+        conversations.getConversationByName(singleConversation.name),
         ExpectedMessages.conversationNotDeleted,
       )
       .toBeVisible();
 
     await expect
       .soft(
-        await folderPrompts.getFolderByName(
+        folderPrompts.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(1),
         ),
         ExpectedMessages.folderNotDeleted,
@@ -625,7 +614,7 @@ dialTest(
 
     await expect
       .soft(
-        await prompts.getPromptByName(singlePrompt.name),
+        prompts.getPromptByName(singlePrompt.name),
         ExpectedMessages.promptNotDeleted,
       )
       .toBeVisible();
@@ -736,7 +725,7 @@ dialTest(
 
       await expect
         .soft(
-          await folderPrompts.getFolderByName(
+          folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(4),
           ),
           ExpectedMessages.folderDeleted,
@@ -745,7 +734,7 @@ dialTest(
 
       await expect
         .soft(
-          await folderPrompts.getFolderEntity(
+          folderPrompts.getFolderEntity(
             promptInFolder.folders.name,
             promptInFolder.prompts[0].name,
           ),
@@ -755,7 +744,7 @@ dialTest(
 
       await expect
         .soft(
-          await prompts.getPromptByName(singlePrompt.name),
+          prompts.getPromptByName(singlePrompt.name),
           ExpectedMessages.promptDeleted,
         )
         .toBeHidden();
@@ -763,7 +752,7 @@ dialTest(
       for (let i = 1; i <= 3; i++) {
         await expect
           .soft(
-            await folderPrompts.getFolderByName(
+            folderPrompts.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(i),
             ),
             ExpectedMessages.folderDeleted,
@@ -789,7 +778,7 @@ dialTest(
 
     await expect
       .soft(
-        await promptBar.deleteEntitiesButton.getElementLocator(),
+        promptBar.deleteEntitiesButton.getElementLocator(),
         ExpectedMessages.deleteAllPromptsButtonNotVisible,
       )
       .toBeHidden();

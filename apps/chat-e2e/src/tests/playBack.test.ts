@@ -704,7 +704,7 @@ dialTest(
         await chatHeader.leavePlaybackMode.click();
         await expect
           .soft(
-            await playbackControl.getElementLocator(),
+            playbackControl.getElementLocator(),
             ExpectedMessages.playbackControlsHidden,
           )
           .toBeHidden();
@@ -803,7 +803,7 @@ dialTest(
         await sendMessage.waitForMessageInputLoaded();
         await chatMessages.waitForResponseReceived();
 
-        const playedBackResponse = await chatMessages.getChatMessage(
+        const playedBackResponse = chatMessages.getChatMessage(
           conversation.messages[1].content,
         );
         await expect(

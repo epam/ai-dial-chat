@@ -71,7 +71,7 @@ dialTest(
         await chatMessages.openEditMessageMode(1);
         await expect
           .soft(
-            await chatMessages.getChatMessageClipIcon(
+            chatMessages.getChatMessageClipIcon(
               conversation.messages[0]!.content,
             ),
             ExpectedMessages.clipIconNotAvailable,
@@ -148,8 +148,7 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {
-          const isFileChecked =
-            await attachFilesModal.attachedFileCheckBox(file);
+          const isFileChecked = attachFilesModal.attachedFileCheckBox(file);
           await expect
             .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
             .toBeChecked();
@@ -174,7 +173,7 @@ dialTest(
         for (const file of updatedAttachedFiles) {
           await expect
             .soft(
-              await sendMessageInputAttachments.inputAttachment(file),
+              sendMessageInputAttachments.inputAttachment(file),
               ExpectedMessages.fileIsAttached,
             )
             .toBeVisible();
@@ -208,9 +207,7 @@ dialTest(
         await removeAttachmentIcon.click();
         await expect
           .soft(
-            await sendMessageInputAttachments.inputAttachment(
-              initAttachedFiles[0],
-            ),
+            sendMessageInputAttachments.inputAttachment(initAttachedFiles[0]),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
