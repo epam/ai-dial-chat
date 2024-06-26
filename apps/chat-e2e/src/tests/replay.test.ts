@@ -36,13 +36,13 @@ dialTest(
     dataInjector,
     conversations,
     setTestIds,
-    replayAsIs,
     talkToSelector,
     entitySettings,
     temperatureSlider,
-    recentEntities,
+    chatHeader,
     addons,
     conversationDropdownMenu,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-501', 'EPMRTC-1264');
     let replayConversation: Conversation;
@@ -132,28 +132,28 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Replay as is" option is selected',
+      'Verify model icon is displayed, "Start replay" button is visible',
       async () => {
-        const modelBorderColors =
-          await recentEntities.replayAsIsButton.getAllBorderColors();
-        Object.values(modelBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-              .toBe(Colors.controlsBackgroundAccent);
-          });
-        });
-
-        const replayLabel = await replayAsIs.getReplayAsIsLabelText();
+        const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
         expect
-          .soft(replayLabel, ExpectedMessages.replayAsIsLabelIsVisible)
-          .toBe(ExpectedConstants.replayAsIsLabel);
+          .soft(
+            await chat.getModelInfo().getEntityIcon(),
+            ExpectedMessages.entityIconIsValid,
+          )
+          .toBe(expectedModelIcon);
+        await expect
+          .soft(
+            chat.replay.getElementLocator(),
+            ExpectedMessages.startReplayVisible,
+          )
+          .toBeEnabled();
       },
     );
 
     await dialTest.step(
       'Select some model and verify it has the same settings as parent model',
       async () => {
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(gpt35Model);
 
         const newModelSystemPrompt = await entitySettings.getSystemPrompt();

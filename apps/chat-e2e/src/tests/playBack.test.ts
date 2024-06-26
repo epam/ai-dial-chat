@@ -332,7 +332,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click on Back button till the end and verify chat header icon updated, conversation settings displayed and Back button is disabled on bottom controls',
+      'Click on Back button till the end and verify chat header icon updated, model info is displayed and Back button is disabled on bottom controls',
       async () => {
         await chat.playPreviousChatMessage();
         const messagesCount =
@@ -347,8 +347,7 @@ dialTest(
           .toBe(ExpectedConstants.emptyPlaybackMessage);
 
         await chat.playPreviousChatMessage();
-        await recentEntities.waitForState();
-        await chatHeader.waitForState({ state: 'hidden' });
+        await chat.getModelInfo().waitForState();
         playbackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
@@ -356,7 +355,7 @@ dialTest(
           .toBe(conversation.messages[0].content);
 
         await chat.playPreviousChatMessage();
-        await recentEntities.waitForState();
+        await chat.getModelInfo().waitForState();
         playbackMessage =
           await playbackControl.playbackMessage.getElementContent();
         expect
@@ -406,7 +405,6 @@ dialTest(
     chatMessages,
     page,
     chatHeader,
-    talkToSelector,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1420', 'EPMRTC-1421');
@@ -593,7 +591,12 @@ dialTest(
           }
         }
 
-        await talkToSelector.waitForState();
+        await expect
+          .soft(
+            chat.getModelInfo().getElementLocator(),
+            ExpectedMessages.conversationModelInfoIsVisible,
+          )
+          .toBeVisible();
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();
         const isPlaybackPreviousBtnEnabled =
@@ -623,7 +626,7 @@ dialTest(
         expect
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(0);
-        await chatHeader.leavePlaybackMode.waitForState({ state: 'hidden' });
+        await chatHeader.leavePlaybackMode.waitForState();
 
         const isPlaybackPreviousBtnEnabled =
           await playbackControl.playbackPreviousButton.isElementEnabled();

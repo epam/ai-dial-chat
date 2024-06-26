@@ -483,6 +483,7 @@ dialTest(
     talkToModelsGroupEntities,
     talkToAssistantsGroupEntities,
     talkToApplicationGroupEntities,
+    chatHeader,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-408');
@@ -519,6 +520,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.seeFullList();
       },
     );
