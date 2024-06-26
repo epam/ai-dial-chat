@@ -100,7 +100,7 @@ export interface FolderProps<T, P = unknown> {
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
-  onSelectFolder?: (folderId: string) => void;
+  onSelectFolder?: (folderId: string, isSelected: boolean) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder?: (folderId: string) => void;
   featureType: FeatureType;
@@ -193,9 +193,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
-      setIsSelected((value) => !value);
-      onSelectFolder?.(`${currentFolder.id}/`);
-      return;
+      setIsSelected((value) => {
+        onSelectFolder?.(`${currentFolder.id}/`, value);
+        return !value;
+      });
     },
     [currentFolder.id, onSelectFolder],
   );
@@ -662,9 +663,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       }
 
       e.stopPropagation();
-      onSelectFolder(`${currentFolder.id}/`);
+      onSelectFolder(`${currentFolder.id}/`, isSelected);
     },
-    [currentFolder.id, onSelectFolder],
+    [currentFolder.id, isSelected, onSelectFolder],
   );
   const onAdd: MouseEventHandler = useCallback(
     (e) => {

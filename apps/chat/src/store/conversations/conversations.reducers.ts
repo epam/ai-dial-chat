@@ -750,31 +750,134 @@ export const conversationsSlice = createSlice({
         payload.conversations,
       );
     },
-    toggleChosenConversation: (
+    setChosenConversation: (
       state,
-      { payload: conversationId }: PayloadAction<string>,
+      {
+        payload: { conversationId, isChosen },
+      }: PayloadAction<{ conversationId: string; isChosen: boolean }>,
     ) => {
-      if (state.chosenConversationIds.includes(conversationId)) {
-        state.chosenConversationIds = state.chosenConversationIds.filter(
-          (id: string) => id !== conversationId,
+      if (isChosen) {
+        const parentFolderIds = state.chosenFolderIds.filter((folderId) =>
+          conversationId.startsWith(folderId),
         );
+        if (parentFolderIds.length) {
+          state.chosenFolderIds = uniq([
+            ...state.chosenFolderIds.filter(
+              (folderId) => !conversationId.startsWith(folderId),
+            ),
+            ...state.folders
+              .map((folder) => `${folder.id}/`)
+              .filter(
+                (folderId) =>
+                  !conversationId.startsWith(folderId) &&
+                  parentFolderIds.some((parentId) =>
+                    folderId.startsWith(parentId),
+                  ),
+              ),
+          ]);
+          state.chosenConversationIds = uniq([
+            ...state.chosenConversationIds.filter(
+              (convId: string) => convId !== conversationId,
+            ),
+            ...state.conversations
+              .map((conv) => conv.id)
+              .filter(
+                (convId) =>
+                  convId !== conversationId &&
+                  parentFolderIds.some((parentId) =>
+                    convId.startsWith(parentId),
+                  ),
+              ),
+          ]);
+        } else {
+          state.chosenConversationIds = state.chosenConversationIds.filter(
+            (convId: string) => convId !== conversationId,
+          );
+        }
       } else {
-        state.chosenConversationIds = [
+        state.chosenConversationIds = uniq([
           ...state.chosenConversationIds,
           conversationId,
-        ];
+        ]);
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (folderId) =>
+                conversationId.startsWith(folderId) &&
+                !state.conversations.some(
+                  (conv) =>
+                    conv.id.startsWith(folderId) &&
+                    !state.chosenConversationIds.includes(conv.id) &&
+                    !state.chosenFolderIds.some((chosenFolderId) =>
+                      conv.id.startsWith(chosenFolderId),
+                    ),
+                ),
+            ),
+        ]);
       }
     },
-    toggleChosenFolder: (
+    setChosenFolder: (
       state,
-      { payload: folderId }: PayloadAction<string>,
+      {
+        payload: { folderId, isChosen },
+      }: PayloadAction<{ folderId: string; isChosen: boolean }>,
     ) => {
-      if (state.chosenFolderIds.includes(folderId)) {
-        state.chosenFolderIds = state.chosenFolderIds.filter(
-          (id: string) => id !== folderId,
+      if (isChosen) {
+        const parentFolderIds = state.chosenFolderIds.filter(
+          (chosenId) => folderId.startsWith(chosenId) || chosenId !== folderId,
         );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) =>
+              !folderId.startsWith(chosenId) && !chosenId.startsWith(folderId),
+          ),
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                !fid.startsWith(folderId) &&
+                !folderId.startsWith(fid) &&
+                parentFolderIds.some((parentId) => fid.startsWith(parentId)),
+            ),
+        ]);
+        state.chosenConversationIds = uniq([
+          ...state.chosenConversationIds.filter(
+            (convId: string) => !convId.startsWith(folderId),
+          ),
+          ...state.conversations
+            .map((conv) => conv.id)
+            .filter(
+              (convId) =>
+                !convId.startsWith(folderId) &&
+                parentFolderIds.some((parentId) => convId.startsWith(parentId)),
+            ),
+        ]);
       } else {
-        state.chosenFolderIds = [...state.chosenFolderIds, folderId];
+        state.chosenConversationIds = state.chosenConversationIds.filter(
+          (convId: string) => !convId.startsWith(folderId),
+        );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) => !chosenId.startsWith(folderId),
+          ),
+          folderId,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                folderId.startsWith(fid) &&
+                !state.conversations.some(
+                  (conv) =>
+                    conv.id.startsWith(fid) &&
+                    !state.chosenConversationIds.includes(conv.id) &&
+                    !state.chosenFolderIds.some((chosenFolderId) =>
+                      conv.id.startsWith(chosenFolderId),
+                    ),
+                ),
+            ),
+        ]);
       }
     },
     resetChosenConversations: (state) => {

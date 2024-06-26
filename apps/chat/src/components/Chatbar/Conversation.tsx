@@ -79,7 +79,7 @@ export function ConversationView({
   conversation,
   isHighlited,
   isInvalid,
-  isChosen,
+  isChosen = false,
   isSelectMode,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
@@ -92,8 +92,11 @@ export function ConversationView({
   );
 
   const handleToggle = useCallback(() => {
-    ConversationsActions.toggleChosenConversation(conversation.id);
-  }, [conversation]);
+    ConversationsActions.setChosenConversation({
+      conversationId: conversation.id,
+      isChosen,
+    });
+  }, [conversation.id, isChosen]);
 
   return (
     <>
@@ -428,9 +431,14 @@ export const ConversationComponent = ({
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(ConversationsActions.toggleChosenConversation(conversation.id));
+      dispatch(
+        ConversationsActions.setChosenConversation({
+          conversationId: conversation.id,
+          isChosen,
+        }),
+      );
     },
-    [conversation.id, dispatch],
+    [conversation.id, dispatch, isChosen],
   );
 
   useEffect(() => {
@@ -666,9 +674,10 @@ export const ConversationComponent = ({
                   ? ConversationsActions.selectConversations({
                       conversationIds: [conversation.id],
                     })
-                  : ConversationsActions.toggleChosenConversation(
-                      conversation.id,
-                    ),
+                  : ConversationsActions.setChosenConversation({
+                      conversationId: conversation.id,
+                      isChosen,
+                    }),
               );
             }
           }}

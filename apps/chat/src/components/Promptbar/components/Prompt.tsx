@@ -323,7 +323,9 @@ export const PromptComponent = ({
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(PromptsActions.toggleChosenPrompt(prompt.id));
+      dispatch(
+        PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
+      );
     },
     [],
   );
@@ -336,7 +338,7 @@ export const PromptComponent = ({
   }, [isSelectMode]);
 
   const handleToggle = useCallback(() => {
-    PromptsActions.toggleChosenPrompt(prompt.id);
+    PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen });
   }, [prompt.id]);
 
   return (
@@ -354,7 +356,9 @@ export const PromptComponent = ({
           if (isSelectMode && !isExternal) {
             setIsDeleting(false);
             setIsRenaming(false);
-            dispatch(PromptsActions.toggleChosenPrompt(prompt.id));
+            dispatch(
+              PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
+            );
           }
         }}
         style={{

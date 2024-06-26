@@ -173,8 +173,8 @@ const PromptFolderTemplate = ({
     PromptsSelectors.selectAllChosenFolderIds,
   );
   const handleFolderSelect = useCallback(
-    (folderId: string) => {
-      dispatch(PromptsActions.toggleChosenFolder(folderId));
+    (folderId: string, isChosen: boolean) => {
+      dispatch(PromptsActions.setChosenFolder({ folderId, isChosen }));
     },
     [dispatch],
   );

@@ -24,6 +24,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
+import uniq from 'lodash-es/uniq';
+
 export { PromptsSelectors };
 
 const initialState: PromptsState = {
@@ -398,23 +400,76 @@ export const promptsSlice = createSlice({
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
     },
-    toggleChosenPrompt: (
+    setChosenPrompt: (
       state,
-      { payload: conversationId }: PayloadAction<string>,
+      {
+        payload: { promptId, isChosen },
+      }: PayloadAction<{ promptId: string; isChosen: boolean }>,
     ) => {
-      if (state.chosenPromptIds.includes(conversationId)) {
-        state.chosenPromptIds = state.chosenPromptIds.filter(
-          (id: string) => id !== conversationId,
+      if (isChosen) {
+        const parentFolderIds = state.chosenFolderIds.filter((folderId) =>
+          promptId.startsWith(folderId),
         );
+        if (parentFolderIds.length) {
+          state.chosenFolderIds = uniq([
+            ...state.chosenFolderIds.filter(
+              (folderId) => !promptId.startsWith(folderId),
+            ),
+            ...state.folders
+              .map((folder) => `${folder.id}/`)
+              .filter(
+                (folderId) =>
+                  !promptId.startsWith(folderId) &&
+                  parentFolderIds.some((parentId) =>
+                    folderId.startsWith(parentId),
+                  ),
+              ),
+          ]);
+          state.chosenPromptIds = uniq([
+            ...state.chosenPromptIds.filter(
+              (convId: string) => convId !== promptId,
+            ),
+            ...state.prompts
+              .map((prompt) => prompt.id)
+              .filter(
+                (prId) =>
+                  prId !== promptId &&
+                  parentFolderIds.some((parentId) => prId.startsWith(parentId)),
+              ),
+          ]);
+        } else {
+          state.chosenPromptIds = state.chosenPromptIds.filter(
+            (prId: string) => prId !== promptId,
+          );
+        }
       } else {
-        state.chosenPromptIds = [...state.chosenPromptIds, conversationId];
+        state.chosenPromptIds = uniq([...state.chosenPromptIds, promptId]);
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (folderId) =>
+                promptId.startsWith(folderId) &&
+                !state.prompts.some(
+                  (prompt) =>
+                    prompt.id.startsWith(folderId) &&
+                    !state.chosenPromptIds.includes(prompt.id) &&
+                    !state.chosenFolderIds.some((chosenFolderId) =>
+                      prompt.id.startsWith(chosenFolderId),
+                    ),
+                ),
+            ),
+        ]);
       }
     },
-    toggleChosenFolder: (
+    setChosenFolder: (
       state,
-      { payload: folderId }: PayloadAction<string>,
+      {
+        payload: { folderId, isChosen },
+      }: PayloadAction<{ folderId: string; isChosen: boolean }>,
     ) => {
-      if (state.chosenFolderIds.includes(folderId)) {
+      if (isChosen) {
         state.chosenFolderIds = state.chosenFolderIds.filter(
           (id: string) => id !== folderId,
         );
