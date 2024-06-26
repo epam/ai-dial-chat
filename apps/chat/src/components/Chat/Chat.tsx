@@ -615,6 +615,7 @@ export const ChatView = memo(() => {
                                 )}
                               >
                                 <EmptyChatDescription
+                                  conv={conv}
                                   appName={appName}
                                   modelsLoaded={models.length !== 0}
                                 />
