@@ -1,4 +1,4 @@
-import { IconHelpCircle, IconPlus, IconX } from '@tabler/icons-react';
+import { IconPlus, IconX } from '@tabler/icons-react';
 import {
   ClipboardEvent,
   Fragment,
@@ -51,46 +51,6 @@ import flatMapDeep from 'lodash-es/flatMapDeep';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 
-interface PublishModalFiltersProps {
-  path: string;
-  otherTargetAudienceFilters: TargetAudienceFilter[];
-  onSaveFilter: (targetFilter: TargetAudienceFilter) => void;
-  onCloseFilter: () => void;
-}
-
-function PublishModalFilters({
-  path,
-  onSaveFilter,
-  onCloseFilter,
-}: PublishModalFiltersProps) {
-  const { t } = useTranslation(Translation.Chat);
-
-  const isRulesLoading = useAppSelector(
-    PublicationSelectors.selectIsRulesLoading,
-  );
-
-  if (!path) {
-    return (
-      <p className="text-secondary">
-        {t(
-          'This publication will be available to all users in the organization',
-        )}
-      </p>
-    );
-  }
-
-  if (isRulesLoading) {
-    return null; // TODO: loader for rules
-  }
-
-  return (
-    <TargetAudienceFilterComponent
-      onCloseFilter={onCloseFilter}
-      onSaveFilter={onSaveFilter}
-    />
-  );
-}
-
 interface Props {
   entity: ShareEntity;
   entities: ShareEntity[];
@@ -126,6 +86,9 @@ export function PublishModal({
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
   );
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
+  );
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(
       state,
@@ -143,7 +106,9 @@ export function PublishModal({
     rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)];
 
   useEffect(() => {
-    dispatch(PublicationActions.uploadRules({ path }));
+    if (path) {
+      dispatch(PublicationActions.uploadRules({ path }));
+    }
   }, [dispatch, path]);
 
   useEffect(() => {
@@ -374,61 +339,49 @@ export function PublishModal({
               </div>
             </section>
 
-            <section className="flex flex-col px-3 py-4 md:px-5">
+            <section className="flex h-full flex-col px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2">
                 {t('Allow access if all match')}
-
-                {!!(path && rules && rules.length) && (
-                  <Tooltip
-                    placement="top"
-                    tooltip={
-                      <div className="flex max-w-[230px] break-words text-xs">
-                        {t(
-                          'The collection will be published for all users who meet AT LEAST ONE option from every',
-                        )}
-                      </div>
-                    }
-                  >
-                    <IconHelpCircle
-                      size={18}
-                      className="text-secondary hover:text-accent-primary"
-                    />
-                  </Tooltip>
-                )}
               </h2>
-              {notCurrentFolderRules.map(([path, rules]) => (
-                <Fragment key={path}>
-                  <div className="mb-1 text-xs text-secondary">
-                    {path.split('/').pop()}
-                  </div>
-                  <div className="mb-3 flex gap-1 text-xs">
-                    {rules.map((rule) => (
-                      <div
-                        key={rule.source}
-                        className="rounded bg-layer-4 px-3 py-2"
-                      >
-                        <span className="font-semibold">
-                          {startCase(toLower(rule.source))}{' '}
-                        </span>
-                        <span className="font-normal italic">
-                          {toLower(rule.function)}{' '}
-                        </span>
-                        <span className="font-semibold">
-                          {rule.targets.map((target, index) => (
-                            <Fragment key={index}>
-                              {index > 0 && (
-                                <span className="mx-1 italic">{t('or')}</span>
-                              )}
-                              <span className="font-semibold">{target}</span>
-                            </Fragment>
-                          ))}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </Fragment>
-              ))}
-              {path ? (
+              {isRulesLoading ? (
+                <div className="flex size-full items-center justify-center">
+                  <Spinner size={48} dataQa="publication-items-spinner" />
+                </div>
+              ) : (
+                notCurrentFolderRules.map(([path, rules]) => (
+                  <Fragment key={path}>
+                    <div className="mb-1 text-xs text-secondary">
+                      {path.split('/').pop()}
+                    </div>
+                    <div className="mb-3 flex gap-1 text-xs">
+                      {rules.map((rule) => (
+                        <div
+                          key={rule.source}
+                          className="rounded bg-layer-4 px-3 py-2"
+                        >
+                          <span className="font-semibold">
+                            {startCase(toLower(rule.source))}{' '}
+                          </span>
+                          <span className="font-normal italic">
+                            {toLower(rule.function)}{' '}
+                          </span>
+                          <span className="font-semibold">
+                            {rule.targets.map((target, index) => (
+                              <Fragment key={index}>
+                                {index > 0 && (
+                                  <span className="mx-1 italic">{t('or')}</span>
+                                )}
+                                <span className="font-semibold">{target}</span>
+                              </Fragment>
+                            ))}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </Fragment>
+                ))
+              )}
+              {!isRulesLoading && path && (
                 <>
                   <div className="mb-1 text-xs text-secondary">
                     {path.split('/').pop()}
@@ -485,7 +438,8 @@ export function PublishModal({
                     />
                   </div>
                 </>
-              ) : (
+              )}
+              {!path && (
                 <p className="text-secondary">
                   {t(
                     'This publication will be available to all users in the organization',
@@ -494,11 +448,9 @@ export function PublishModal({
               )}
 
               {isRuleSetterOpened && path && (
-                <PublishModalFilters
-                  path={path}
-                  otherTargetAudienceFilters={otherTargetAudienceFilters}
-                  onSaveFilter={handleOnSaveFilter}
+                <TargetAudienceFilterComponent
                   onCloseFilter={() => setIsRuleSetterOpened(false)}
+                  onSaveFilter={handleOnSaveFilter}
                 />
               )}
             </section>
