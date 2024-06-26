@@ -134,12 +134,12 @@ export const prepareEntityName = (
         .split('\n')
         .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
         .filter(Boolean)[0] ?? '';
-
+  console.log(clearName);
   const result =
     clearName.length > MAX_ENTITY_LENGTH
       ? substring(clearName, 0, MAX_ENTITY_LENGTH)
       : clearName;
-
+  console.log(result);
   return !options?.forRenaming || options?.trimEndDotsRequired
     ? trimEndDots(result)
     : result.trim();
