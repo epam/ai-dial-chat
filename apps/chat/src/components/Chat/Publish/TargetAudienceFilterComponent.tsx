@@ -61,13 +61,7 @@ export function TargetAudienceFilterComponent({
   );
 
   const handleSaveFilter = useCallback(() => {
-    if (
-      !onSaveFilter ||
-      selectedTarget === emptySelector ||
-      filterFunction === emptySelector
-    ) {
-      return;
-    }
+    if (!onSaveFilter) return;
 
     if (filterFunction === PublicationFunctions.Regex) {
       onSaveFilter({
@@ -115,6 +109,27 @@ export function TargetAudienceFilterComponent({
     [],
   );
 
+  const isSaveBtnDisabled =
+    selectedTarget === emptySelector || // a target is not selected
+    filterFunction === emptySelector || // a filter function is not selected
+    (!filterParams.length && !filterRegexParam) || // filter params are not selected and regex hasn't filled
+    !!(
+      // regex filled, but the regex filter function isn't selected
+      (
+        filterRegexParam &&
+        filterFunction !== PublicationFunctions.Regex &&
+        !filterParams.length
+      )
+    ) ||
+    !!(
+      // params selected, but the regex filter function isn't selected
+      (
+        filterParams.length &&
+        filterFunction === PublicationFunctions.Regex &&
+        !filterRegexParam
+      )
+    );
+
   return (
     <div
       className="flex flex-col gap-[1px] sm:flex-row"
@@ -155,15 +170,18 @@ export function TargetAudienceFilterComponent({
       )}
       <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
         <div className="flex gap-2">
-          <IconCheck
+          <button
+            data-qa="save-filter"
             onClick={handleSaveFilter}
             className={classNames(
-              filterFunction !== emptySelector
-                ? 'cursor-pointer text-secondary hover:text-accent-primary'
-                : 'cursor-not-allowed text-controls-disable',
+              isSaveBtnDisabled
+                ? 'cursor-not-allowed text-controls-disable'
+                : 'text-secondary hover:text-accent-primary',
             )}
-            size={18}
-          />
+            disabled={isSaveBtnDisabled}
+          >
+            <IconCheck size={18} />
+          </button>
           <IconX
             className="cursor-pointer text-secondary hover:text-accent-primary"
             size={18}

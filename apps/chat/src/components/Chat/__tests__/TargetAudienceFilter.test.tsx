@@ -1,138 +1,173 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { PublicationFunctions } from '@/src/types/publication';
+
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
-describe('TargetAudienceFilterComponent', () => {
-  const testFilter = {
-    id: 'testFilter',
-    name: 'Test filter',
+vi.mock('@/src/store/hooks', async () => {
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useAppSelector: (selector: any) => selector({}),
+    useAppDispatch: () => (action: AnyAction) => action,
   };
+});
 
+vi.mock('@/src/store/settings/settings.reducers', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual: any = await vi.importActual(
+    '@/src/store/settings/settings.reducers',
+  );
+  return {
+    ...actual,
+    SettingsSelectors: {
+      selectPublicationFilters: vi.fn(),
+    },
+  };
+});
+
+describe('TargetAudienceFilterComponent', () => {
+  const targetValues = ['Title', 'Dial Roles', 'Job Title'];
   const filterValues = [
     PublicationFunctions.Contain,
     PublicationFunctions.Equal,
     PublicationFunctions.Regex,
   ];
 
-  const defaultFilterOption = PublicationFunctions.Contain;
+  const defaultFilterOption = 'Select';
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let onChangeFilter: any;
+  let onSaveFilter: any;
 
   beforeEach(() => {
-    onChangeFilter = vi.fn();
-    vi.clearAllMocks();
+    vi.mocked(SettingsSelectors.selectPublicationFilters).mockReturnValue(
+      targetValues,
+    );
+    onSaveFilter = vi.fn();
   });
 
-  it('renders all filter options and placeholder correctly', async () => {
-    render(
-      <TargetAudienceFilterComponent
-        id={testFilter.id}
-        name={testFilter.name}
-        onChangeFilter={onChangeFilter}
-      />,
-    );
-    await userEvent.click(screen.getByText(defaultFilterOption));
+  it('renders all filter and target options and placeholder correctly', async () => {
+    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+
+    for (const option of targetValues) {
+      expect(screen.getByText(option)).toBeInTheDocument();
+    }
+
+    const selectedTargetOption = screen.getByText(targetValues[0]);
+    await userEvent.click(selectedTargetOption);
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of filterValues) {
-      if (option === defaultFilterOption) {
-        expect(screen.getAllByText(option)).toHaveLength(2);
-      } else {
-        expect(screen.getByText(option)).toBeInTheDocument();
-      }
+      expect(screen.getByText(option)).toBeInTheDocument();
     }
+
+    const selectedFilterOption = screen.getByText(filterValues[1]);
+    await userEvent.click(selectedFilterOption);
+
+    expect(screen.queryByText(defaultFilterOption)).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter one or more options...'));
   });
 
-  it('selects an filter option on click', async () => {
-    const selectedVlaue = filterValues[1];
-    render(
-      <TargetAudienceFilterComponent
-        id={testFilter.id}
-        name={testFilter.name}
-        onChangeFilter={onChangeFilter}
-      />,
-    );
-    await userEvent.click(screen.getByText(defaultFilterOption));
+  it('selects an filter and target options on click', async () => {
+    const selectedFilter = filterValues[1];
+    const selectedTarget = targetValues[0];
 
-    const selectedFilterOption = screen.getByText(selectedVlaue);
+    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
 
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedTargetOption = screen.getByText(selectedTarget);
+    await userEvent.click(selectedTargetOption);
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedFilterOption = screen.getByText(selectedFilter);
     await userEvent.click(selectedFilterOption);
 
-    expect(screen.getByText(selectedVlaue)).toBeInTheDocument();
+    expect(screen.getByText(selectedFilter)).toBeInTheDocument();
+    expect(screen.getByText(selectedTarget)).toBeInTheDocument();
   });
 
-  it('fires onChangeFilter method on filter option selection', async () => {
-    const selectedVlaue = filterValues[1];
-    render(
-      <TargetAudienceFilterComponent
-        id={testFilter.id}
-        name={testFilter.name}
-        onChangeFilter={onChangeFilter}
-      />,
-    );
-    await userEvent.click(screen.getByText(defaultFilterOption));
+  it('save button is disabled if no targets chosen', async () => {
+    const selectedFilter = filterValues[0];
+    const selectedTarget = targetValues[0];
 
-    const selectedFilterOption = screen.getByText(selectedVlaue);
+    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
 
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedTargetOption = screen.getByText(selectedTarget);
+    await userEvent.click(selectedTargetOption);
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedFilterOption = screen.getByText(selectedFilter);
     await userEvent.click(selectedFilterOption);
 
-    expect(onChangeFilter).toHaveBeenCalledTimes(1);
-    expect(onChangeFilter).toBeCalledWith({
-      id: testFilter.id,
-      name: testFilter.name,
-      filterFunction: selectedVlaue,
-      filterParams: [],
-    });
+    const iconCheck = screen.getByTestId('save-filter');
+
+    expect(iconCheck).toBeDisabled();
   });
 
-  it('fires onChangeFilter method on "Enter"', async () => {
-    render(
-      <TargetAudienceFilterComponent
-        id={testFilter.id}
-        name={testFilter.name}
-        onChangeFilter={onChangeFilter}
-      />,
-    );
+  it('fires onSaveFilter method if click on check icon with filter params', async () => {
+    const selectedFilter = filterValues[1];
+    const selectedTarget = targetValues[0];
+
+    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedTargetOption = screen.getByText(selectedTarget);
+    await userEvent.click(selectedTargetOption);
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedFilterOption = screen.getByText(selectedFilter);
+    await userEvent.click(selectedFilterOption);
 
     const combobox = screen.getByRole('combobox');
     await userEvent.type(combobox, 'QA{enter}');
-    expect(onChangeFilter).toHaveBeenCalledWith({
-      id: testFilter.id,
-      name: testFilter.name,
-      filterFunction: defaultFilterOption,
-      filterParams: ['QA'],
+    await userEvent.type(combobox, 'Developer{enter}');
+    await userEvent.type(combobox, 'Manager{enter}');
+
+    const iconCheck = screen.getByTestId('save-filter');
+    await userEvent.click(iconCheck);
+
+    expect(onSaveFilter).toHaveBeenCalledWith({
+      id: selectedTarget,
+      name: selectedTarget,
+      filterFunction: selectedFilter,
+      filterParams: ['QA', 'Developer', 'Manager'],
     });
   });
 
-  it.skip('fires onChangeFilter method on changing input when Regex selected', async () => {
-    const selectedVlaue = PublicationFunctions.Regex;
-    const regEx = '/testd?/i';
-    render(
-      <TargetAudienceFilterComponent
-        id={testFilter.id}
-        name={testFilter.name}
-        onChangeFilter={onChangeFilter}
-      />,
-    );
-    await userEvent.click(screen.getByText(defaultFilterOption));
+  it('fires onSaveFilter method if click on check icon with regex value', async () => {
+    const selectedFilter = filterValues[2];
+    const selectedTarget = targetValues[0];
 
-    const selectedFilterOption = screen.getByText(selectedVlaue);
+    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
 
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedTargetOption = screen.getByText(selectedTarget);
+    await userEvent.click(selectedTargetOption);
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedFilterOption = screen.getByText(selectedFilter);
     await userEvent.click(selectedFilterOption);
 
-    const regExInput = screen.getByPlaceholderText(
-      'Enter regular expression...',
-    );
-    await userEvent.type(regExInput, regEx);
-    expect(onChangeFilter).toHaveBeenCalledWith({
-      id: testFilter.id,
-      name: testFilter.name,
-      filterType: PublicationFunctions.Regex,
-      filterParams: [regEx],
+    const input = screen.getByPlaceholderText('Enter regular expression...');
+    await userEvent.type(input, 'Developer.*');
+
+    const iconCheck = screen.getByTestId('save-filter');
+    await userEvent.click(iconCheck);
+
+    expect(onSaveFilter).toHaveBeenCalledWith({
+      id: selectedTarget,
+      name: selectedTarget,
+      filterFunction: selectedFilter,
+      filterParams: ['Developer.*'],
     });
   });
 });

@@ -25,7 +25,7 @@ export function RegexParamInput({
   );
 
   return (
-    <div className="flex h-[31px] w-full flex-wrap bg-layer-3">
+    <div className="relative flex h-[31px] w-full max-w-[205px] bg-layer-3">
       <input
         className="w-full bg-transparent py-1 pl-2 text-xs outline-none placeholder:text-secondary"
         type="text"
