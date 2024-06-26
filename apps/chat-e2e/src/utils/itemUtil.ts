@@ -47,9 +47,12 @@ export class ItemUtil {
 
   public static getEncodedItemId(itemId: string) {
     const separatorIndex = itemId.lastIndexOf(ItemUtil.conversationIdSeparator);
-    const itemName = itemId.substring(
-      separatorIndex + ItemUtil.conversationIdSeparator.length + 1,
-    );
-    return itemId.replace(itemName, encodeURIComponent(itemName));
+    if (separatorIndex !== -1) {
+      const itemName = itemId.substring(
+        separatorIndex + ItemUtil.conversationIdSeparator.length + 1,
+      );
+      return itemId.replace(itemName, encodeURIComponent(itemName));
+    }
+    return itemId;
   }
 }

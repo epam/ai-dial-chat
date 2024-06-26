@@ -65,7 +65,7 @@ dialTest(
             .toBeVisible();
           expect
             .soft(
-              chatMessages.chatMessages.getElementsCount(),
+              await chatMessages.chatMessages.getElementsCount(),
               ExpectedMessages.messageCountIsCorrect,
             )
             .toBe(conversation.messages.length);

@@ -133,6 +133,7 @@ export const ExpectedConstants = {
   allFilesRoot: 'All files',
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
+  charsToEscape: ['\\', '"'],
 };
 
 export enum Groups {
