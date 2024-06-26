@@ -140,11 +140,17 @@ export const prepareEntityName = (
     clearName.length > MAX_ENTITY_LENGTH
       ? substring(clearName, 0, MAX_ENTITY_LENGTH)
       : clearName;
+
+  const newResult =
+    result.length > MAX_ENTITY_LENGTH
+      ? result.substring(0, MAX_ENTITY_LENGTH)
+      : result;
   console.log(result);
+  console.log('newResult', newResult);
   console.log('condition', clearName.length > MAX_ENTITY_LENGTH);
   console.log('MAX_ENTITY_LENGTH', MAX_ENTITY_LENGTH);
   console.log('substring', substring(clearName, 0, MAX_ENTITY_LENGTH));
   return !options?.forRenaming || options?.trimEndDotsRequired
-    ? trimEndDots(result)
-    : result.trim();
+    ? trimEndDots(newResult)
+    : newResult.trim();
 };
