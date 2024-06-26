@@ -1838,7 +1838,7 @@ const hideChatbarEpic: AppEpic = (action$) =>
         ConversationsActions.saveNewConversationSuccess.match(action) ||
         (ConversationsActions.addConversations.match(action) &&
           !action.payload?.suspendHideSidebar),
-          // will be fixed with https://github.com/epam/ai-dial-chat/issues/792
+      // will be fixed with https://github.com/epam/ai-dial-chat/issues/792
     ),
     switchMap(() =>
       isSmallScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
