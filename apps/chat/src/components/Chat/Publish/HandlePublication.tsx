@@ -1,8 +1,10 @@
-import { IconHelpCircle } from '@tabler/icons-react';
-import { useEffect, useMemo } from 'react';
+import { IconHelpCircle, IconScale } from '@tabler/icons-react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 
+import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -26,11 +28,13 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import Tooltip from '../../Common/Tooltip';
+import { CompareRulesModal } from './CompareRulesModal';
 import {
   ConversationPublicationResources,
   FilePublicationResources,
   PromptPublicationResources,
 } from './PublicationResources';
+import { RuleListItem } from './RuleListItem';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
 import startCase from 'lodash-es/startCase';
@@ -46,14 +50,37 @@ export function HandlePublication({ publication }: Props) {
 
   const { t } = useTranslation(Translation.Chat);
 
+  const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
+
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
       state,
       publication.url,
     ),
   );
+  const rules = useAppSelector((state) =>
+    PublicationSelectors.selectRulesByPath(
+      state,
+      publication.targetFolder ?? '',
+    ),
+  );
 
-  const filters = useMemo(
+  useEffect(() => {
+    if (publication.targetFolder) {
+      dispatch(
+        PublicationActions.uploadRules({
+          path: publication.targetFolder?.split('/').slice(1).join('/'),
+        }),
+      );
+    }
+  }, [dispatch, publication.targetFolder]);
+
+  const filteredRules = !publication.rules
+    ? Object.entries(rules)
+    : Object.entries(rules).filter(
+        ([path]) => path !== publication.targetFolder,
+      );
+  const newRules = useMemo(
     () =>
       publication.rules?.map((rule) => ({
         id: rule.source,
@@ -200,8 +227,6 @@ export function HandlePublication({ publication }: Props) {
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
 
-  console.log(publication);
-
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
@@ -287,55 +312,42 @@ export function HandlePublication({ publication }: Props) {
                 )}
               </div>
               <section className="px-3 py-4 md:px-5">
-                <h2 className="my-4 flex items-center gap-2 text-sm">
-                  {t('Target Audience Filters')}
-
-                  {!!filters.length && (
-                    <Tooltip
-                      placement="top"
-                      tooltip={
-                        <div className="flex max-w-[230px] break-words text-xs">
-                          {t(
-                            'The collection will be published for all users who meet AT LEAST ONE option from every',
-                          )}
-                        </div>
-                      }
-                    >
-                      <IconHelpCircle
-                        size={18}
-                        className="text-secondary hover:text-accent-primary"
-                      />
-                    </Tooltip>
-                  )}
-                </h2>
-                {filters.length ? (
-                  filters.map((v) => (
-                    <CollapsibleSection
-                      name={v.name}
-                      dataQa={`filter-${v.id}`}
-                      key={`filter-${v.id}-${v.function}-${v.targets.join(',')}`}
-                      openByDefault={false}
-                      className="!pl-0"
-                    >
-                      <TargetAudienceFilterComponent
-                        readonly
-                        initialSelectedFilter={{
-                          filterFunction: v.function,
-                          filterParams: v.targets,
-                          id: v.id,
-                          name: v.name,
-                        }}
-                        name={v.name}
-                        id={v.id}
-                      />
-                    </CollapsibleSection>
-                  ))
-                ) : (
-                  <h2 className="mt-4 flex items-center gap-4 text-sm text-secondary">
-                    {t(
-                      'This publication will be available to all users in the organization',
+                <h2 className="mb-4 flex items-center gap-2 text-sm">
+                  <div className="flex w-full justify-between">
+                    <p>{t('Allow access if all match')}</p>
+                    {publication.rules && (
+                      <Tooltip
+                        placement="top"
+                        tooltip={
+                          <div className="flex max-w-[230px] break-words text-xs">
+                            {t('Compare filters')}
+                          </div>
+                        }
+                      >
+                        <IconScale
+                          onClick={() => setIsCompareModalOpened(true)}
+                          size={18}
+                          className="cursor-pointer text-secondary hover:text-accent-primary"
+                        />
+                      </Tooltip>
                     )}
-                  </h2>
+                  </div>
+                </h2>
+                {filteredRules
+                  .filter(([_, rules]) => rules.length)
+                  .map(([path, rules]) => (
+                    <RuleListItem key={path} path={path} rules={rules} />
+                  ))}
+
+                {!!publication.rules?.length && !!publication.targetFolder && (
+                  <RuleListItem
+                    path={publication.targetFolder}
+                    rules={newRules.map((rule) => ({
+                      function: rule.function,
+                      targets: rule.targets,
+                      source: rule.id,
+                    }))}
+                  />
                 )}
               </section>
             </div>
@@ -409,6 +421,19 @@ export function HandlePublication({ publication }: Props) {
           </div>
         </div>
       </div>
+      {isCompareModalOpened && publication.targetFolder && (
+        <CompareRulesModal
+          allRules={filteredRules}
+          newRulesToCompare={newRules.map((rule) => ({
+            function: rule.function,
+            targets: rule.targets,
+            source: rule.id,
+          }))}
+          oldRulesToCompare={rules[publication.targetFolder]}
+          onClose={() => setIsCompareModalOpened(false)}
+          newRulesPath={publication.targetFolder}
+        />
+      )}
     </div>
   );
 }

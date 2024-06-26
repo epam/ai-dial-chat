@@ -65,9 +65,6 @@ function PublishModalFilters({
 }: PublishModalFiltersProps) {
   const { t } = useTranslation(Translation.Chat);
 
-  const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
-  );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
   );
@@ -116,9 +113,6 @@ export function PublishModal({
   const dispatch = useAppDispatch();
 
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
-  );
 
   const [publishRequestName, setPublishRequestName] = useState('');
   const [path, setPath] = useState('');
@@ -129,6 +123,9 @@ export function PublishModal({
     TargetAudienceFilter[]
   >([]);
 
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  );
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(
       state,
@@ -188,11 +185,11 @@ export function PublishModal({
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
       const preparedFilters = currentFolderRules
-        ? currentFolderRules.map((rule) => ({
-            filterFunction: rule.function,
-            filterParams: rule.targets,
-            id: rule.source,
-            name: rule.source,
+        ? otherTargetAudienceFilters.map((rule) => ({
+            filterFunction: rule.filterFunction,
+            filterParams: rule.filterParams,
+            id: rule.id,
+            name: rule.name,
           }))
         : notEmptyFilters;
       const folderRegExp = new RegExp(
@@ -233,6 +230,17 @@ export function PublishModal({
               };
             });
           });
+
+        console.log(preparedFilters);
+        console.log(otherTargetAudienceFilters);
+
+        console.log(
+          preparedFilters.map((filter) => ({
+            function: filter.filterFunction,
+            source: filter.id,
+            targets: filter.filterParams,
+          })),
+        );
 
         dispatch(
           PublicationActions.publish({
@@ -420,7 +428,7 @@ export function PublishModal({
                           {rule.targets.map((target, index) => (
                             <Fragment key={index}>
                               {index > 0 && (
-                                <span className="mx-1 italic">or</span>
+                                <span className="mx-1 italic">{t('or')}</span>
                               )}
                               <span className="font-semibold">{target}</span>
                             </Fragment>
@@ -450,7 +458,7 @@ export function PublishModal({
                             {item.filterParams.map((param, index) => (
                               <Fragment key={index}>
                                 {index > 0 && (
-                                  <span className="mx-1 italic">or</span>
+                                  <span className="mx-1 italic">{t('or')}</span>
                                 )}
                                 <span className="font-semibold">{param}</span>
                               </Fragment>

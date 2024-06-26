@@ -59,7 +59,7 @@ export function RulesSelect({
       trigger={
         <div
           data-qa={`filter-selector-${id}`}
-          className="min-h-[31px] w-full bg-layer-3 px-2 py-[6.5px] text-xs"
+          className="h-full min-h-[31px] w-full bg-layer-3 px-2 py-[6.5px] text-xs"
         >
           <div className="flex w-full items-center justify-between gap-2">
             {capitalizeFirstLetters
@@ -86,7 +86,7 @@ export function RulesSelect({
             item={
               capitalizeFirstLetters
                 ? startCase(toLower(filterType))
-                : selectedFilter
+                : filterType
             }
             value={filterType}
             onClick={onChangeHandler}
