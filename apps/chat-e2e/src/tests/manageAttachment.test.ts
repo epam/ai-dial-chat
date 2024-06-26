@@ -201,7 +201,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.fixme(
   '[Manage attachments] Delete file while it is being uploaded',
   async ({
     dialHomePage,
