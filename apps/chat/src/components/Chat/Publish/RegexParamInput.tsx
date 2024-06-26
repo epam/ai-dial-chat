@@ -7,13 +7,11 @@ import { Translation } from '@/src/types/translation';
 interface RegexParamInputProps {
   regEx: string;
   onRegExChange: (regExp: string) => void;
-  readonly?: boolean;
 }
 
 export function RegexParamInput({
   regEx,
   onRegExChange,
-  readonly,
 }: RegexParamInputProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -25,13 +23,12 @@ export function RegexParamInput({
   );
 
   return (
-    <div className="relative flex h-[31px] w-full max-w-[205px] bg-layer-3">
+    <div className="relative col-span-5 flex h-[31px] w-full max-w-full bg-layer-3 md:max-w-[205px]">
       <input
         className="w-full bg-transparent py-1 pl-2 text-xs outline-none placeholder:text-secondary"
         type="text"
         placeholder={t('Enter regular expression...') || ''}
         value={regEx}
-        disabled={readonly}
         onChange={handleRegExChange}
       />
     </div>

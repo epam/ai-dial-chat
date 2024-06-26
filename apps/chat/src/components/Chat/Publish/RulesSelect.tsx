@@ -16,7 +16,6 @@ interface FilterTypeProps {
   selectedFilter: string;
   capitalizeFirstLetters?: boolean;
   onChangeFilter: (filterType: PublicationFunctions) => void;
-  readonly?: boolean;
   className?: string;
 }
 
@@ -26,7 +25,6 @@ export function RulesSelect({
   selectedFilter,
   capitalizeFirstLetters,
   onChangeFilter,
-  readonly,
   className,
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,16 +33,6 @@ export function RulesSelect({
     onChangeFilter(e.currentTarget.value as PublicationFunctions);
     setIsOpen(false);
   };
-
-  if (readonly) {
-    return (
-      <span className="flex h-[34px] max-w-[350px] items-center px-3">
-        {capitalizeFirstLetters
-          ? startCase(toLower(selectedFilter))
-          : selectedFilter}
-      </span>
-    );
-  }
 
   return (
     <Menu

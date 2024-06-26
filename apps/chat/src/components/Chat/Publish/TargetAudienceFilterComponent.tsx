@@ -23,9 +23,7 @@ import { RulesSelect } from './RulesSelect';
 const emptySelector = translate('Select');
 
 interface Props {
-  initialSelectedFilter?: TargetAudienceFilter;
   onSaveFilter?: (filter: TargetAudienceFilter) => void;
-  readonly?: boolean;
   onCloseFilter?: () => void;
 }
 
@@ -38,22 +36,16 @@ const filterFunctionValues = [
 ];
 
 export function TargetAudienceFilterComponent({
-  initialSelectedFilter,
   onSaveFilter,
-  readonly = false,
   onCloseFilter,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
 
   const [filterFunction, setFilterFunction] = useState<
     PublicationFunctions | typeof emptySelector
-  >(initialSelectedFilter?.filterFunction ?? emptySelector);
+  >(emptySelector);
   const [filterParams, setFilterParams] = useState<string[]>([]);
-  const [filterRegexParam, setFilterRegexParam] = useState<string>(
-    (initialSelectedFilter?.filterFunction === PublicationFunctions.Regex &&
-      initialSelectedFilter.filterParams[0]) ||
-      '',
-  );
+  const [filterRegexParam, setFilterRegexParam] = useState<string>('');
   const [selectedTarget, setSelectedTarget] = useState(emptySelector);
 
   const publicationFilters = useAppSelector(
@@ -132,12 +124,11 @@ export function TargetAudienceFilterComponent({
 
   return (
     <div
-      className="flex flex-col gap-[1px] sm:flex-row"
+      className="grid grid-cols-5 gap-[1px] md:flex md:flex-row"
       data-qa="publish-audience-filter-selectors"
     >
       <RulesSelect
-        className="max-w-[145px] font-semibold"
-        readonly={readonly}
+        className="-order-3 col-span-2 max-w-full font-semibold md:order-1 md:max-w-[145px]"
         filters={publicationFilters}
         selectedFilter={selectedTarget}
         capitalizeFirstLetters
@@ -145,8 +136,7 @@ export function TargetAudienceFilterComponent({
         id="targets"
       />
       <RulesSelect
-        className="max-w-[100px] italic"
-        readonly={readonly}
+        className="-order-2 col-span-2 max-w-full italic md:order-2 md:max-w-[100px]"
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
@@ -154,13 +144,11 @@ export function TargetAudienceFilterComponent({
       />
       {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
-          readonly={readonly}
           regEx={filterRegexParam}
           onRegExChange={handleChangeFilterRegexParam}
         />
       ) : (
         <MultipleComboBox
-          readonly={readonly}
           initialSelectedItems={filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
@@ -168,7 +156,7 @@ export function TargetAudienceFilterComponent({
           placeholder={t('Enter one or more options...') as string}
         />
       )}
-      <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
+      <div className="-order-1 col-span-1 flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px] md:order-4">
         <div className="flex gap-2">
           <button
             data-qa="save-filter"

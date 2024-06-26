@@ -433,7 +433,7 @@ export function PublishModal({
                   <div className="mb-1 text-xs text-secondary">
                     {path.split('/').pop()}
                   </div>
-                  <div className="mb-2 flex min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary p-1">
+                  <div className="relative mb-2 flex min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
                     {otherTargetAudienceFilters.map((item) => (
                       <div className="flex items-center gap-1" key={item.id}>
                         <div className="flex h-[31px] items-center justify-center rounded bg-accent-primary-alpha text-xs">
@@ -472,11 +472,17 @@ export function PublishModal({
                     {!isRuleSetterOpened && (
                       <button
                         onClick={() => setIsRuleSetterOpened(true)}
-                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                        className="flex h-full max-h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
                       >
                         <IconPlus stroke="1" size={18} />
                       </button>
                     )}
+                    <IconX
+                      size={18}
+                      stroke="2"
+                      onClick={() => setOtherTargetAudienceFilters([])}
+                      className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
+                    />
                   </div>
                 </>
               ) : (
