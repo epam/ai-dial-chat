@@ -1185,7 +1185,6 @@ dialTest(
     dataInjector,
     chat,
     chatHeader,
-    replayAsIs,
     confirmationDialog,
     setTestIds,
   }) => {
@@ -1221,11 +1220,12 @@ dialTest(
         expect
           .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)
           .toBeTruthy();
-
-        const replayLabel = await replayAsIs.getReplayAsIsLabelText();
-        expect
-          .soft(replayLabel, ExpectedMessages.replayAsIsLabelIsVisible)
-          .toBe(ExpectedConstants.replayAsIsLabel);
+        await expect
+          .soft(
+            chat.getModelInfo().getElementLocator(),
+            ExpectedMessages.conversationModelInfoIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
