@@ -200,6 +200,8 @@ export function HandlePublication({ publication }: Props) {
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
 
+  console.log(publication);
+
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">

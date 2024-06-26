@@ -1,6 +1,7 @@
-import { IconHelpCircle } from '@tabler/icons-react';
+import { IconHelpCircle, IconPlus, IconX } from '@tabler/icons-react';
 import {
   ClipboardEvent,
+  Fragment,
   MouseEvent,
   useCallback,
   useEffect,
@@ -9,6 +10,7 @@ import {
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 
 import classNames from 'classnames';
 
@@ -31,20 +33,18 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
+import { NewTargetAudienceFilterComponent } from './NewTargetAudienceFilterComponent';
 import { PublicationItemsList } from './PublicationItemsList';
-import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
 
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
@@ -54,13 +54,14 @@ import toLower from 'lodash-es/toLower';
 interface PublishModalFiltersProps {
   path: string;
   otherTargetAudienceFilters: TargetAudienceFilter[];
-  onChangeFilters: (targetFilter: TargetAudienceFilter) => void;
+  onSaveFilter: (targetFilter: TargetAudienceFilter) => void;
+  onCloseFilter: () => void;
 }
 
 function PublishModalFilters({
   path,
-  otherTargetAudienceFilters,
-  onChangeFilters,
+  onSaveFilter,
+  onCloseFilter,
 }: PublishModalFiltersProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -70,11 +71,8 @@ function PublishModalFilters({
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
   );
-  const publicationFilters = useAppSelector(
-    SettingsSelectors.selectPublicationFilters,
-  );
 
-  if (!path || (rules && !rules.length)) {
+  if (!path) {
     return (
       <p className="text-secondary">
         {t(
@@ -88,53 +86,12 @@ function PublishModalFilters({
     return null; // TODO: loader for rules
   }
 
-  if (rules) {
-    return rules.map((rule, idx) => (
-      <CollapsibleSection
-        name={startCase(toLower(rule.source))}
-        dataQa={`filter-${rule.source}`}
-        key={`filter-${idx}`}
-        openByDefault
-        className="!pl-0"
-      >
-        <TargetAudienceFilterComponent
-          readonly
-          name={rule.source}
-          initialSelectedFilter={{
-            filterFunction: rule.function,
-            filterParams: rule.targets,
-            id: rule.source,
-            name: rule.source,
-          }}
-          id={rule.source}
-          onChangeFilter={onChangeFilters}
-        />
-      </CollapsibleSection>
-    ));
-  }
-
-  return publicationFilters.map((filter, idx) => {
-    const initialSelectedFilter = otherTargetAudienceFilters.find(
-      ({ id }) => id === filter,
-    );
-
-    return (
-      <CollapsibleSection
-        name={startCase(toLower(filter))}
-        dataQa={`filter-${filter}`}
-        key={`filter-${idx}`}
-        openByDefault={false}
-        className="!pl-0"
-      >
-        <TargetAudienceFilterComponent
-          name={startCase(toLower(filter))}
-          id={filter}
-          initialSelectedFilter={initialSelectedFilter}
-          onChangeFilter={onChangeFilters}
-        />
-      </CollapsibleSection>
-    );
-  });
+  return (
+    <NewTargetAudienceFilterComponent
+      onCloseFilter={onCloseFilter}
+      onSaveFilter={onSaveFilter}
+    />
+  );
 }
 
 interface Props {
@@ -165,6 +122,7 @@ export function PublishModal({
 
   const [publishRequestName, setPublishRequestName] = useState('');
   const [path, setPath] = useState('');
+  const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
@@ -172,28 +130,51 @@ export function PublishModal({
   >([]);
 
   const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
+    PublicationSelectors.selectRulesByPath(
+      state,
+      constructPath(CLIENT_PUBLIC_FILES_PATH, path),
+    ),
   );
   const files = useAppSelector((state) =>
     getAttachments(type)(state, entity.id),
   );
 
+  const notCurrentFolderRules = Object.entries(rules).filter(
+    ([rulePath]) => constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+  );
+  const currentFolderRules =
+    rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)];
+
   useEffect(() => {
     dispatch(PublicationActions.uploadRules({ path }));
   }, [dispatch, path]);
+
+  useEffect(() => {
+    if (currentFolderRules) {
+      setOtherTargetAudienceFilters(
+        currentFolderRules.map((rule) => ({
+          id: rule.source,
+          filterFunction: rule.function,
+          filterParams: rule.targets,
+          name: rule.source,
+        })),
+      );
+    }
+  }, [currentFolderRules]);
 
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
   }, []);
 
-  const handleOnChangeFilters = (targetFilter: TargetAudienceFilter) => {
-    setOtherTargetAudienceFilters((prev) => {
-      const filters = prev
-        .filter(({ id }) => id !== targetFilter.id)
-        .concat(targetFilter);
-      return filters;
-    });
-  };
+  const handleOnSaveFilter = useCallback(
+    (targetFilter: TargetAudienceFilter) => {
+      setOtherTargetAudienceFilters((prev) =>
+        prev.filter(({ id }) => id !== targetFilter.id).concat(targetFilter),
+      );
+      setIsRuleSetterOpened(false);
+    },
+    [],
+  );
 
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
@@ -206,8 +187,8 @@ export function PublishModal({
         (filter) =>
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
-      const preparedFilters = rules
-        ? rules.map((rule) => ({
+      const preparedFilters = currentFolderRules
+        ? currentFolderRules.map((rule) => ({
             filterFunction: rule.function,
             filterParams: rule.targets,
             id: rule.source,
@@ -398,7 +379,7 @@ export function PublishModal({
 
             <section className="flex flex-col px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2">
-                {t('Target Audience Filters')}
+                {t('Allow access if all match')}
 
                 {!!(path && rules && rules.length) && (
                   <Tooltip
@@ -413,17 +394,110 @@ export function PublishModal({
                   >
                     <IconHelpCircle
                       size={18}
-                      className="text-secondary  hover:text-accent-primary"
+                      className="text-secondary hover:text-accent-primary"
                     />
                   </Tooltip>
                 )}
               </h2>
+              {notCurrentFolderRules.map(([path, rules]) => (
+                <Fragment key={path}>
+                  <div className="mb-1 text-xs text-secondary">
+                    {path.split('/').pop()}
+                  </div>
+                  <div className="mb-3 flex gap-1 text-xs">
+                    {rules.map((rule) => (
+                      <div
+                        key={rule.source}
+                        className="rounded bg-layer-4 px-3 py-2"
+                      >
+                        <span className="font-semibold">
+                          {startCase(toLower(rule.source))}{' '}
+                        </span>
+                        <span className="font-normal italic">
+                          {toLower(rule.function)}{' '}
+                        </span>
+                        <span className="font-semibold">
+                          {rule.targets.map((target, index) => (
+                            <Fragment key={index}>
+                              {index > 0 && (
+                                <span className="mx-1 italic">or</span>
+                              )}
+                              <span className="font-semibold">{target}</span>
+                            </Fragment>
+                          ))}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Fragment>
+              ))}
+              {path ? (
+                <>
+                  <div className="mb-1 text-xs text-secondary">
+                    {path.split('/').pop()}
+                  </div>
+                  <div className="mb-2 flex min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary p-1">
+                    {otherTargetAudienceFilters.map((item) => (
+                      <div className="flex items-center gap-1" key={item.id}>
+                        <div className="flex h-[31px] items-center justify-center rounded bg-accent-primary-alpha text-xs">
+                          <div className="px-3 py-2">
+                            <span className="font-semibold">
+                              {startCase(toLower(item.id))}{' '}
+                            </span>
+                            <span className="font-normal italic">
+                              {toLower(item.filterFunction)}{' '}
+                            </span>
+                            {item.filterParams.map((param, index) => (
+                              <Fragment key={index}>
+                                {index > 0 && (
+                                  <span className="mx-1 italic">or</span>
+                                )}
+                                <span className="font-semibold">{param}</span>
+                              </Fragment>
+                            ))}
+                          </div>
+                          <IconX
+                            size={18}
+                            stroke="1"
+                            onClick={() =>
+                              setOtherTargetAudienceFilters((prev) =>
+                                prev.filter(({ id }) => id !== item.id),
+                              )
+                            }
+                            className="mr-3 cursor-pointer text-secondary"
+                          />
+                        </div>
+                        <span className="text-xs italic text-secondary">
+                          or
+                        </span>
+                      </div>
+                    ))}
+                    {!isRuleSetterOpened && (
+                      <button
+                        onClick={() => setIsRuleSetterOpened(true)}
+                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                      >
+                        <IconPlus stroke="1" size={18} />
+                      </button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="text-secondary">
+                  {t(
+                    'This publication will be available to all users in the organization',
+                  )}
+                </p>
+              )}
 
-              <PublishModalFilters
-                path={path}
-                otherTargetAudienceFilters={otherTargetAudienceFilters}
-                onChangeFilters={handleOnChangeFilters}
-              />
+              {isRuleSetterOpened && path && (
+                <PublishModalFilters
+                  path={path}
+                  otherTargetAudienceFilters={otherTargetAudienceFilters}
+                  onSaveFilter={handleOnSaveFilter}
+                  onCloseFilter={() => setIsRuleSetterOpened(false)}
+                />
+              )}
             </section>
           </div>
           {areSelectedConversationsLoaded ? (

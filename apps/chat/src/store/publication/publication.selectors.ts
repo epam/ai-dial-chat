@@ -56,7 +56,13 @@ export const selectResourcesToReviewByPublicationUrl = createSelector(
 
 export const selectRulesByPath = createSelector(
   [rootSelector, (_state, path: string) => path],
-  (state, path) => state.rules[path] as PublicationRule[] | undefined,
+  (state, path) => {
+    return Object.fromEntries(
+      Object.entries(state.rules).filter(
+        ([key]) => path.startsWith(key) && key.split('/').length !== 1,
+      ),
+    );
+  },
 );
 
 export const selectIsRulesLoading = createSelector(

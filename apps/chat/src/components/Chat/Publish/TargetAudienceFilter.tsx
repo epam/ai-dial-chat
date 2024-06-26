@@ -9,8 +9,8 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
-import { FilterFunctionSelect } from './FilterFunctionSelect';
 import { RegexParamInput } from './RegexParamInput';
+import { RulesSelect } from './RulesSelect';
 
 interface Props {
   id: string;
@@ -95,11 +95,11 @@ export function TargetAudienceFilterComponent({
       className="flex flex-col gap-1 sm:flex-row"
       data-qa={`publish-audience-filter-${id}`}
     >
-      <FilterFunctionSelect
+      <RulesSelect
         readonly={readonly}
-        filterFunctions={filterFunctionValues}
-        selectedFilterFunction={filterFunction}
-        onChangeFilterFunction={handleChangeFilterFunction}
+        filters={filterFunctionValues}
+        selectedFilter={filterFunction}
+        onChangeFilter={handleChangeFilterFunction}
         id={id}
       />
       {filterFunction === PublicationFunctions.Regex ? (
