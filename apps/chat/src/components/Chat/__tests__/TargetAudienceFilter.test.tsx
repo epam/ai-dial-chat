@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { PublicationFunctions } from '@/src/types/publication';
 
-import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilter';
+import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
 
 describe('TargetAudienceFilterComponent', () => {
   const testFilter = {

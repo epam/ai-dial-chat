@@ -44,7 +44,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
 import { PublicationItemsList } from './PublicationItemsList';
-import { NewTargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
+import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
@@ -84,7 +84,7 @@ function PublishModalFilters({
   }
 
   return (
-    <NewTargetAudienceFilterComponent
+    <TargetAudienceFilterComponent
       onCloseFilter={onCloseFilter}
       onSaveFilter={onSaveFilter}
     />

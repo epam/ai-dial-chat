@@ -37,7 +37,7 @@ const filterFunctionValues = [
   PublicationFunctions.Regex,
 ];
 
-export function NewTargetAudienceFilterComponent({
+export function TargetAudienceFilterComponent({
   initialSelectedFilter,
   onSaveFilter,
   readonly = false,
