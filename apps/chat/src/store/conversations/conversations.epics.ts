@@ -1835,8 +1835,7 @@ const hideChatbarEpic: AppEpic = (action$) =>
         ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.createNewReplayConversation.match(action) ||
-        ConversationsActions.saveNewConversationSuccess.match(action) ||
-        ConversationsActions.addConversations.match(action),
+        ConversationsActions.saveNewConversationSuccess.match(action),
     ),
     switchMap(() =>
       isSmallScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
