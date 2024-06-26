@@ -137,8 +137,6 @@ export class PublicationService {
   public static getRules(
     path: string,
   ): Observable<Record<string, PublicationRule[]>> {
-    console.log('upload');
-    console.log(path ? constructPath('public', path) : 'public');
     return ApiUtils.request('api/publication/rulesList', {
       method: 'POST',
       body: JSON.stringify({

@@ -18,7 +18,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { PublicationService } from '@/src/utils/app/data/publication-service';
-import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
@@ -67,8 +66,6 @@ import {
   PublicationSelectors,
 } from './publication.reducers';
 
-import entries from 'lodash-es/entries';
-import maxBy from 'lodash-es/maxBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>

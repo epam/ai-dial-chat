@@ -3,7 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { FeatureType } from '@/src/types/common';
-import { PublicationResource, PublicationRule } from '@/src/types/publication';
+import { PublicationResource } from '@/src/types/publication';
 
 import { RootState } from '../index';
 import { PublicationState } from './publication.reducers';
