@@ -1,20 +1,27 @@
 import classNames from 'classnames';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { Conversation } from '@/src/types/chat';
+
 import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { Spinner } from '../Common/Spinner';
 import { ModelDescription } from './ModelDescription';
 
 interface Props {
+  conv: Conversation;
   modelsLoaded: boolean;
   appName: string;
 }
 
-export const EmptyChatDescription = ({ modelsLoaded, appName }: Props) => {
-  const model = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsModels,
-  )[0];
+export const EmptyChatDescription = ({
+  conv,
+  modelsLoaded,
+  appName,
+}: Props) => {
+  const model = useAppSelector((state) =>
+    ModelsSelectors.selectModel(state, conv.model.id),
+  );
   const Tag = model ? 'div' : 'h4';
   const showAppName = !model;
 
