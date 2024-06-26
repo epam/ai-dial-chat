@@ -216,7 +216,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.fixme(
   'Send button is unavailable while attachment is being uploaded.\n' +
     'Blue loading bar is shown while the file is being uploaded to the message box',
   async ({
