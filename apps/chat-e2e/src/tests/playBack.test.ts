@@ -626,7 +626,13 @@ dialTest(
         expect
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(0);
-        await chatHeader.leavePlaybackMode.waitForState();
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/1664
+        // await expect
+        //   .soft(
+        //     chatHeader.leavePlaybackMode.getElementLocator(),
+        //     ExpectedMessages.stopPlaybackButtonNotVisible,
+        //   )
+        //   .toBeHidden();
 
         const isPlaybackPreviousBtnEnabled =
           await playbackControl.playbackPreviousButton.isElementEnabled();

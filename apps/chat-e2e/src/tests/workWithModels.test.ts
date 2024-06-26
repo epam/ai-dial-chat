@@ -601,14 +601,16 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await entitySettings.setSystemPrompt('/');
         await entitySettings
           .getPromptList()
-          .selectPrompt(prompt.name, { triggeredHttpMethod: 'PUT' });
+          .selectPrompt(prompt.name, { triggeredHttpMethod: 'GET' });
         const actualPrompt = await entitySettings.getSystemPrompt();
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)
           .toBe(prompt.content);
+        await chat.applyNewEntity();
       },
     );
 

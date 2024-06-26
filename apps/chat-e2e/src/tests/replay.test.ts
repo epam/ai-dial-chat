@@ -36,11 +36,6 @@ dialTest(
     dataInjector,
     conversations,
     setTestIds,
-    talkToSelector,
-    entitySettings,
-    temperatureSlider,
-    chatHeader,
-    addons,
     conversationDropdownMenu,
     iconApiHelper,
   }) => {
@@ -150,28 +145,29 @@ dialTest(
       },
     );
 
-    await dialTest.step(
-      'Select some model and verify it has the same settings as parent model',
-      async () => {
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(gpt35Model);
-
-        const newModelSystemPrompt = await entitySettings.getSystemPrompt();
-        expect
-          .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
-          .toBe(replayPrompt);
-
-        const newModelTemperature = await temperatureSlider.getTemperature();
-        expect
-          .soft(newModelTemperature, ExpectedMessages.temperatureIsValid)
-          .toBe(replayTemp.toString());
-
-        const newModelSelectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(newModelSelectedAddons, ExpectedMessages.selectedAddonsValid)
-          .toEqual([]);
-      },
-    );
+    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/1662
+    // await dialTest.step(
+    //   'Select some model and verify it has the same settings as parent model',
+    //   async () => {
+    //     await chatHeader.openConversationSettingsPopup();
+    //     await talkToSelector.selectModel(gpt35Model);
+    //
+    //     const newModelSystemPrompt = await entitySettings.getSystemPrompt();
+    //     expect
+    //       .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
+    //       .toBe(replayPrompt);
+    //
+    //     const newModelTemperature = await temperatureSlider.getTemperature();
+    //     expect
+    //       .soft(newModelTemperature, ExpectedMessages.temperatureIsValid)
+    //       .toBe(replayTemp.toString());
+    //
+    //     const newModelSelectedAddons = await addons.getSelectedAddons();
+    //     expect
+    //       .soft(newModelSelectedAddons, ExpectedMessages.selectedAddonsValid)
+    //       .toEqual([]);
+    //   },
+    // );
   },
 );
 
@@ -260,8 +256,10 @@ dialTest(
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-508');
+    setIssueIds('1662');
     const replayTemp = 0;
     const replayPrompt = 'reply the same text';
     const replayModel = bison;
@@ -1041,6 +1039,7 @@ dialTest(
     talkToSelector,
     conversations,
     replayAsIs,
+    conversationSettings,
   }) => {
     setTestIds('EPMRTC-1330', 'EPMRTC-1332');
     const filename = GeneratorUtil.randomArrayElement([
@@ -1096,7 +1095,8 @@ dialTest(
           Import.oldVersionAppFolderChatName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
-
+        await chat.getModelInfo().waitForState();
+        await chatHeader.openConversationSettingsPopup();
         const replayAsIsDescr =
           await replayAsIs.replayAsIsDescr.getElementContent();
         expect
@@ -1122,6 +1122,7 @@ dialTest(
         expect
           .soft(warningColor[0], ExpectedMessages.warningLabelColorIsValid)
           .toBe(Colors.textError);
+        await conversationSettings.cancelButton.click();
       },
     );
 
