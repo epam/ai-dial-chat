@@ -32,21 +32,15 @@ interface Props {
 
 export function CompareRulesModal({
   allRules,
-  newRulesToCompare,
-  oldRulesToCompare,
+  newRulesToCompare = [],
+  oldRulesToCompare = [],
   newRulesPath,
   onClose,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
-  const createdRules = getRulesDifference(
-    newRulesToCompare || [],
-    oldRulesToCompare || [],
-  );
-  const deletedRules = getRulesDifference(
-    oldRulesToCompare || [],
-    newRulesToCompare || [],
-  );
+  const createdRules = getRulesDifference(newRulesToCompare, oldRulesToCompare);
+  const deletedRules = getRulesDifference(oldRulesToCompare, newRulesToCompare);
 
   return (
     <Modal
