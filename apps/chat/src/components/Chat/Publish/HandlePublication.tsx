@@ -44,13 +44,13 @@ import toLower from 'lodash-es/toLower';
 import uniq from 'lodash-es/uniq';
 
 interface FilterComponentProps {
-  filteredRules: [string, PublicationRule[]][];
+  filteredRuleEntries: [string, PublicationRule[]][];
   newRules: PublicationRule[];
   publication: Publication;
 }
 
 function FiltersComponent({
-  filteredRules,
+  filteredRuleEntries,
   newRules,
   publication,
 }: FilterComponentProps) {
@@ -70,14 +70,14 @@ function FiltersComponent({
 
   return (
     <>
-      {!filteredRules.length && !publication.rules?.length && (
+      {!filteredRuleEntries.length && !publication.rules?.length && (
         <p className="text-sm text-secondary">
           {t(
             'This publication will be available to all users in the organization',
           )}
         </p>
       )}
-      {filteredRules
+      {filteredRuleEntries
         .filter(([_, rules]) => rules.length)
         .map(([path, rules]) => (
           <RuleListItem key={path} path={path} rules={rules} />
@@ -124,7 +124,7 @@ export function HandlePublication({ publication }: Props) {
     }
   }, [dispatch, publication.targetFolder]);
 
-  const filteredRules = !publication.rules
+  const filteredRuleEntries = !publication.rules
     ? Object.entries(rules)
     : Object.entries(rules).filter(
         ([path]) => path !== publication.targetFolder,
@@ -386,7 +386,7 @@ export function HandlePublication({ publication }: Props) {
                   </div>
                 </h2>
                 <FiltersComponent
-                  filteredRules={filteredRules}
+                  filteredRuleEntries={filteredRuleEntries}
                   newRules={newRules.map((rule) => ({
                     source: rule.id,
                     targets: rule.targets,
@@ -468,7 +468,7 @@ export function HandlePublication({ publication }: Props) {
       </div>
       {isCompareModalOpened && publication.targetFolder && (
         <CompareRulesModal
-          allRules={filteredRules}
+          allRuleEntries={filteredRuleEntries}
           newRulesToCompare={newRules.map((rule) => ({
             function: rule.function,
             targets: rule.targets,

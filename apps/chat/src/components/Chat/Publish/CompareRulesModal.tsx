@@ -23,7 +23,7 @@ const getRulesDifference = (
   );
 
 interface Props {
-  allRules: [string, PublicationRule[]][];
+  allRuleEntries: [string, PublicationRule[]][];
   newRulesToCompare?: PublicationRule[];
   oldRulesToCompare?: PublicationRule[];
   newRulesPath: string;
@@ -31,7 +31,7 @@ interface Props {
 }
 
 export function CompareRulesModal({
-  allRules,
+  allRuleEntries,
   newRulesToCompare = [],
   oldRulesToCompare = [],
   newRulesPath,
@@ -57,14 +57,14 @@ export function CompareRulesModal({
         <p className="mb-3 pr-6 text-sm">{t('Current Access Settings')}</p>
         <div className="pl-6">
           <div>
-            {allRules.map(([path, rules]) => (
+            {allRuleEntries.map(([path, rules]) => (
               <RuleListItem key={path} path={path} rules={rules} />
             ))}
           </div>
         </div>
         <div className="pr-6">
           <div>
-            {allRules.map(([path, rules]) => (
+            {allRuleEntries.map(([path, rules]) => (
               <RuleListItem key={path} path={path} rules={rules} />
             ))}
           </div>
@@ -77,11 +77,7 @@ export function CompareRulesModal({
               ruleSourcesToApplyClassNames={deletedRules.map((r) => r.source)}
               ruleClassNames="bg-error text-error"
               path={newRulesPath}
-              rules={oldRulesToCompare.map((rule) => ({
-                function: rule.function,
-                targets: rule.targets,
-                source: rule.source,
-              }))}
+              rules={oldRulesToCompare}
             />
           )}
         </div>
@@ -91,11 +87,7 @@ export function CompareRulesModal({
               ruleSourcesToApplyClassNames={createdRules.map((r) => r.source)}
               ruleClassNames="bg-accent-secondary-alpha text-accent-secondary"
               path={newRulesPath}
-              rules={newRulesToCompare.map((rule) => ({
-                function: rule.function,
-                targets: rule.targets,
-                source: rule.source,
-              }))}
+              rules={newRulesToCompare}
             />
           )}
         </div>
