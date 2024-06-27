@@ -194,11 +194,11 @@ export const ChatMessageContent = ({
       .map(
         (id) => canAttachFolders && folders.find((folder) => folder.id === id),
       )
+      .filter(Boolean)
       .map((folder) => ({
         ...folder,
         contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
-      }))
-      .filter(Boolean) as DialFile[];
+      })) as DialFile[];
 
     return mappedUserEditableAttachments
       .filter(({ id }) => newEditableAttachmentsIds.includes(id))
