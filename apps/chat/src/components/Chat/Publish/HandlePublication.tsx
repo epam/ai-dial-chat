@@ -12,7 +12,11 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
-import { Publication, PublishActions } from '@/src/types/publication';
+import {
+  Publication,
+  PublicationRule,
+  PublishActions,
+} from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -25,6 +29,7 @@ import {
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import CollapsibleSection from '../../Common/CollapsibleSection';
+import { Spinner } from '../../Common/Spinner';
 import Tooltip from '../../Common/Tooltip';
 import { CompareRulesModal } from './CompareRulesModal';
 import {
@@ -37,6 +42,60 @@ import { RuleListItem } from './RuleListItem';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 import uniq from 'lodash-es/uniq';
+
+interface FilterComponentProps {
+  filteredRules: [string, PublicationRule[]][];
+  newRules: PublicationRule[];
+  publication: Publication;
+}
+
+function FiltersComponent({
+  filteredRules,
+  newRules,
+  publication,
+}: FilterComponentProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
+  );
+
+  if (isRulesLoading) {
+    return (
+      <div className="flex size-full items-center justify-center">
+        <Spinner size={48} />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {!filteredRules.length && !publication.rules?.length && (
+        <p className="text-sm text-secondary">
+          {t(
+            'This publication will be available to all users in the organization',
+          )}
+        </p>
+      )}
+      {filteredRules
+        .filter(([_, rules]) => rules.length)
+        .map(([path, rules]) => (
+          <RuleListItem key={path} path={path} rules={rules} />
+        ))}
+
+      {!!publication.rules?.length && !!publication.targetFolder && (
+        <RuleListItem
+          path={publication.targetFolder}
+          rules={newRules.map((rule) => ({
+            function: rule.function,
+            targets: rule.targets,
+            source: rule.source,
+          }))}
+        />
+      )}
+    </>
+  );
+}
 
 interface Props {
   publication: Publication;
@@ -312,40 +371,36 @@ export function HandlePublication({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p>{t('Allow access if all match')}</p>
-                    {publication.rules && (
-                      <Tooltip
-                        placement="top"
-                        tooltip={
-                          <div className="flex max-w-[230px] break-words text-xs">
-                            {t('Compare filters')}
-                          </div>
-                        }
-                      >
-                        <IconScale
-                          onClick={() => setIsCompareModalOpened(true)}
-                          size={18}
-                          className="cursor-pointer text-secondary hover:text-accent-primary"
-                        />
-                      </Tooltip>
-                    )}
+                    {publication.rules &&
+                      (publication.rules.length ||
+                        (publication.targetFolder &&
+                          rules[publication.targetFolder])) && (
+                        <Tooltip
+                          placement="top"
+                          tooltip={
+                            <div className="flex max-w-[230px] break-words text-xs">
+                              {t('Compare filters')}
+                            </div>
+                          }
+                        >
+                          <IconScale
+                            onClick={() => setIsCompareModalOpened(true)}
+                            size={18}
+                            className="cursor-pointer text-secondary hover:text-accent-primary"
+                          />
+                        </Tooltip>
+                      )}
                   </div>
                 </h2>
-                {filteredRules
-                  .filter(([_, rules]) => rules.length)
-                  .map(([path, rules]) => (
-                    <RuleListItem key={path} path={path} rules={rules} />
-                  ))}
-
-                {!!publication.rules?.length && !!publication.targetFolder && (
-                  <RuleListItem
-                    path={publication.targetFolder}
-                    rules={newRules.map((rule) => ({
-                      function: rule.function,
-                      targets: rule.targets,
-                      source: rule.id,
-                    }))}
-                  />
-                )}
+                <FiltersComponent
+                  filteredRules={filteredRules}
+                  newRules={newRules.map((rule) => ({
+                    source: rule.id,
+                    targets: rule.targets,
+                    function: rule.function,
+                  }))}
+                  publication={publication}
+                />
               </section>
             </div>
             <div className="overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">

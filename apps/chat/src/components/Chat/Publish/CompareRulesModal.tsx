@@ -9,10 +9,23 @@ import { RuleListItem } from './RuleListItem';
 
 import isEqual from 'lodash-es/isEqual';
 
+const getRulesDifference = (
+  firstRules: PublicationRule[],
+  secondRules: PublicationRule[],
+) =>
+  firstRules.filter(
+    (rule) =>
+      !secondRules.some((r) => r.source === rule.source) ||
+      !isEqual(
+        secondRules.find((r) => rule.source === r.source)?.targets,
+        rule.targets,
+      ),
+  );
+
 interface Props {
   allRules: [string, PublicationRule[]][];
-  newRulesToCompare: PublicationRule[];
-  oldRulesToCompare: PublicationRule[];
+  newRulesToCompare?: PublicationRule[];
+  oldRulesToCompare?: PublicationRule[];
   newRulesPath: string;
   onClose: () => void;
 }
@@ -26,21 +39,13 @@ export function CompareRulesModal({
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
-  const createdRules = newRulesToCompare.filter(
-    (rule) =>
-      !oldRulesToCompare.some((r) => r.source === rule.source) ||
-      !isEqual(
-        oldRulesToCompare.find((r) => rule.source === r.source)?.targets,
-        rule.targets,
-      ),
+  const createdRules = getRulesDifference(
+    newRulesToCompare || [],
+    oldRulesToCompare || [],
   );
-  const deletedRules = oldRulesToCompare.filter(
-    (rule) =>
-      !newRulesToCompare.some((r) => r.source === rule.source) ||
-      !isEqual(
-        newRulesToCompare.find((r) => rule.source === r.source)?.targets,
-        rule.targets,
-      ),
+  const deletedRules = getRulesDifference(
+    oldRulesToCompare || [],
+    newRulesToCompare || [],
   );
 
   return (
