@@ -71,7 +71,7 @@ export function CompareRulesModal({
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-x-5 bg-layer-2 p-3 px-6">
+      <div className="mx-3 grid grid-cols-2 gap-x-5 bg-layer-2 p-3">
         <div>
           {oldRulesToCompare && (
             <RuleListItem
