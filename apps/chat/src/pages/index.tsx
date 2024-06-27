@@ -352,6 +352,9 @@ export const getServerSideProps: GetServerSideProps = async ({
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
+    popularPromptsPaths:
+      process.env.POPULAR_PROMPTS_PATHS &&
+      JSON.parse(process.env.POPULAR_PROMPTS_PATHS),
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

@@ -29,6 +29,7 @@ export interface SettingsState {
   themesHostDefined: boolean;
   isolatedModelId?: string;
   customRenderers?: CustomVisualizer[];
+  popularPromptsPaths?: Record<string, string>;
 }
 
 const initialState: SettingsState = {
@@ -46,6 +47,7 @@ const initialState: SettingsState = {
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],
+  popularPromptsPaths: {},
 };
 
 export const settingsSlice = createSlice({
@@ -270,6 +272,9 @@ const selectPublicationFilters = createSelector([rootSelector], (state) => {
 const selectOverlayConversationId = createSelector([rootSelector], (state) => {
   return state.overlayConversationId;
 });
+const selectPopularPromptsPaths = createSelector([rootSelector], (state) => {
+  return state.popularPromptsPaths;
+});
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -295,4 +300,5 @@ export const SettingsSelectors = {
   selectIsCustomAttachmentType,
   selectPublicationFilters,
   selectOverlayConversationId,
+  selectPopularPromptsPaths,
 };

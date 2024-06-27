@@ -38,6 +38,8 @@ import {
   DEFAULT_CONVERSATION_NAME,
 } from '@/src/constants/default-ui-settings';
 
+import { ChatMessagesEmpty } from '@/src/components/Chat/ChatMessagesEmpty';
+
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -599,6 +601,17 @@ export const ChatView = memo(() => {
                     className="h-full overflow-x-hidden"
                     data-qa="scrollable-area"
                   >
+                    {selectedConversations.map(
+                      (conv) =>
+                        conv.messages.length === 0 && (
+                          <div
+                            key={conv.id}
+                            className="flex size-full flex-col justify-center gap-10"
+                          >
+                            <ChatMessagesEmpty conversation={conv} />
+                          </div>
+                        ),
+                    )}
                     <div ref={chatMessagesRef}>
                       {mergedMessages?.length > 0 && (
                         <div className="flex flex-col" data-qa="chat-messages">
