@@ -319,7 +319,7 @@ export const PromptComponent = ({
     <>
       <div
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:pr-9',
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
