@@ -2,7 +2,7 @@ import { TFunction } from 'next-i18next';
 
 import { Attachment, Conversation } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
-import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
+import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
@@ -206,13 +206,13 @@ export const getDialFilesFromAttachments = (
 
 export const getDialFoldersFromAttachments = (
   attachments: Attachment[] | undefined,
-): FileFolderInterface[] => {
+): FileFolderAttachment[] => {
   if (!attachments) {
     return [];
   }
 
   return attachments
-    .map((attachment): FileFolderInterface | null => {
+    .map((attachment): FileFolderAttachment | null => {
       if (
         !attachment.url ||
         isAttachmentLink(attachment.url) ||
@@ -232,7 +232,7 @@ export const getDialFoldersFromAttachments = (
         absolutePath,
       };
     })
-    .filter(Boolean) as FileFolderInterface[];
+    .filter(Boolean) as FileFolderAttachment[];
 };
 
 export const getDialLinksFromAttachments = (

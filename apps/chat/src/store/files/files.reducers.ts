@@ -17,7 +17,6 @@ import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { RootState } from '../index';
 
@@ -240,15 +239,14 @@ export const filesSlice = createSlice({
       );
 
       const newAddedFolderId = constructPath(payload.parentId, folderName);
-      state.folders.push({
-        ...addGeneratedFolderId({
+      state.folders.push(
+        addGeneratedFolderId({
           name: folderName,
           type: FolderType.File,
           folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
         }),
-        contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
-      });
+      );
       state.newAddedFolderId = newAddedFolderId;
     },
     renameFolder: (

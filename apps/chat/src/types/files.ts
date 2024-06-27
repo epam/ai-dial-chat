@@ -39,6 +39,9 @@ export type DialFile = Omit<
 export type FileFolderInterface = FolderInterface & {
   absolutePath?: string;
   relativePath?: string;
+};
+
+export type FileFolderAttachment = FileFolderInterface & {
   contentType: typeof FOLDER_ATTACHMENT_CONTENT_TYPE;
 };
 
