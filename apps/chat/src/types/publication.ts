@@ -48,7 +48,7 @@ export interface PublicationResource {
 export interface Publication {
   name?: string;
   url: string;
-  targetFolder?: string;
+  targetFolder: string;
   publicationStatus: PublicationStatus;
   uploadStatus?: UploadStatus;
   createdAt: number;
@@ -60,7 +60,7 @@ export interface Publication {
 export interface PublicationInfo {
   name?: string;
   url: string;
-  targetFolder?: string;
+  targetFolder: string;
   status: PublicationStatus;
   createdAt: number;
   resourceTypes: BackendResourceType[];

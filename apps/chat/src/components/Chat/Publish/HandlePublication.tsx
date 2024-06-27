@@ -28,6 +28,8 @@ import {
 } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+
 import CollapsibleSection from '../../Common/CollapsibleSection';
 import { Spinner } from '../../Common/Spinner';
 import Tooltip from '../../Common/Tooltip';
@@ -115,10 +117,10 @@ export function HandlePublication({ publication }: Props) {
   );
 
   useEffect(() => {
-    if (publication.targetFolder) {
+    if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
-          path: publication.targetFolder?.split('/').slice(1).join('/'),
+          path: publication.targetFolder.split('/').slice(1).join('/'),
         }),
       );
     }
@@ -337,14 +339,14 @@ export function HandlePublication({ publication }: Props) {
                       <p className="text-secondary">{t('Path: ')}</p>
                       <span className="col-span-2 flex truncate whitespace-pre">
                         <Tooltip
-                          tooltip={publication.targetFolder?.replace(
+                          tooltip={publication.targetFolder.replace(
                             /^[^/]+/,
                             'Organization',
                           )}
                           contentClassName="max-w-[400px] break-all"
                           triggerClassName="truncate whitespace-pre"
                         >
-                          {publication.targetFolder?.replace(
+                          {publication.targetFolder.replace(
                             /^[^/]+/,
                             'Organization',
                           )}
