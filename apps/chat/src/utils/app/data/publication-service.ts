@@ -106,7 +106,7 @@ export class PublicationService {
         'api',
         'publication',
         EnumMapper.getApiKeyByFeatureType(featureType),
-        'public',
+        PUBLIC_URL_PREFIX,
         ApiUtils.encodeApiUrl(parentPath),
       )}${resultQuery ? `?${resultQuery}` : ''}`);
   }
