@@ -36,9 +36,9 @@ export const PopularPrompt = ({
     onClick={() => onPromptClick(prompt.id)}
     data-qa="popular-prompt"
   >
-    <div className="mt-2 flex size-full flex-col items-start">
-      <IconBulb className="text-secondary-bg-dark" size={18} />
-      <p className="overflow-hidden overflow-ellipsis py-2 text-left text-xs">
+    <div className="mt-5 flex size-full flex-col items-start">
+      <IconBulb className="text-secondary-bg-dark" size={24} />
+      <p className="overflow-hidden overflow-ellipsis pt-1 text-left text-xs">
         {prompt.name}
       </p>
     </div>
@@ -73,7 +73,7 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
     [dispatch],
   );
 
-  if (!promptsPath) return null;
+  if (!promptsPath || !popularPrompts.length) return null;
 
   return (
     <div className="flex flex-col gap-5 px-3">
