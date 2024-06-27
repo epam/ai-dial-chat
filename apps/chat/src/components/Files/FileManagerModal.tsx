@@ -405,7 +405,7 @@ export const FileManagerModal = ({
         );
       });
     },
-    [dispatch],
+    [canAttachFiles, dispatch],
   );
 
   const handleDeleteMultipleFiles = useCallback(() => {
