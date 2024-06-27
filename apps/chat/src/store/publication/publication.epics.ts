@@ -18,7 +18,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { PublicationService } from '@/src/utils/app/data/publication-service';
-import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
@@ -67,8 +66,6 @@ import {
   PublicationSelectors,
 } from './publication.reducers';
 
-import entries from 'lodash-es/entries';
-import maxBy from 'lodash-es/maxBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -202,6 +199,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
                         name: parsedApiKey.name,
+                        publicationInfo: {
+                          action: r.action,
+                        },
                       };
                     }),
                   }),
@@ -244,6 +244,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         ...parsedApiKey,
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        publicationInfo: {
+                          action: r.action,
+                        },
                       };
                     }),
                   }),
@@ -285,6 +288,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       contentLength: 0,
                       contentType: '',
                       isPublicationFile: true,
+                      publicationInfo: {
+                        action: r.action,
+                      },
                     })),
                   }),
                 ),
@@ -809,17 +815,6 @@ const uploadRulesEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       PublicationService.getRules(payload.path).pipe(
         switchMap(({ rules }) => {
-          const currentRulePath = `${constructPath(PUBLIC_URL_PREFIX, payload.path)}/`;
-
-          if (!rules[currentRulePath] && payload.path) {
-            const longestEntry = maxBy(entries(rules), ([key]) => key.length);
-
-            if (longestEntry) {
-              // value [1] is the rule
-              rules[currentRulePath] = longestEntry[1];
-            }
-          }
-
           return of(
             PublicationActions.uploadRulesSuccess({
               ruleRecords: rules,

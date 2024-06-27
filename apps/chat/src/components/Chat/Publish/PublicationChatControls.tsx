@@ -144,7 +144,7 @@ export function PublicationControlsView<
               );
             }
           }}
-          className="button button-primary flex items-center"
+          className="button button-primary flex max-h-[38px] items-center"
         >
           {t('Back to publication request')}
         </button>
