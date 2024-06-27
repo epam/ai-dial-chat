@@ -35,7 +35,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     const json = (await response.json()) as { bucket: string };
-
+    //TODO remove next line. This is for the testing only
+    logger.info('Test log');
     return res.status(200).send(json);
   } catch (error) {
     logger.error(error);

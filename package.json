@@ -65,6 +65,7 @@
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
     "pino": "^8.15.1",
+    "pino-opentelemetry-transport": "^1.0.0",
     "pino-pretty": "^10.2.0",
     "plotly.js": "^2.30.0",
     "rc-slider": "^10.2.1",
