@@ -318,6 +318,7 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         conversations: ConversationInfo[];
+        suspendHideSidebar?: boolean;
       }>,
     ) => {
       state.conversations = combineEntities(
