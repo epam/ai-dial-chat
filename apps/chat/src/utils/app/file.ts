@@ -226,6 +226,7 @@ export const getDialFoldersFromAttachments = (
       return {
         id: attachment.url,
         type: FolderType.File,
+        contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
         name,
         folderId: absolutePath,
         absolutePath,

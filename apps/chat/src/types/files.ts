@@ -5,6 +5,8 @@ import {
   ShareEntity,
 } from '@/src/types/common';
 
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '../constants/folders';
+
 import { FolderInterface } from './folder';
 
 export type ImageMIMEType = 'image/jpeg' | 'image/png' | string;
@@ -37,6 +39,7 @@ export type DialFile = Omit<
 export type FileFolderInterface = FolderInterface & {
   absolutePath?: string;
   relativePath?: string;
+  contentType: typeof FOLDER_ATTACHMENT_CONTENT_TYPE;
 };
 
 export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
