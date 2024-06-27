@@ -84,14 +84,7 @@ function FiltersComponent({
         ))}
 
       {!!publication.rules?.length && !!publication.targetFolder && (
-        <RuleListItem
-          path={publication.targetFolder}
-          rules={newRules.map((rule) => ({
-            function: rule.function,
-            targets: rule.targets,
-            source: rule.source,
-          }))}
-        />
+        <RuleListItem path={publication.targetFolder} rules={newRules} />
       )}
     </>
   );
