@@ -12,7 +12,7 @@ import merge from 'lodash-es/merge';
 import trimEnd from 'lodash-es/trimEnd';
 import uniq from 'lodash-es/uniq';
 import values from 'lodash-es/values';
-import { length, substring } from 'stringz';
+import { substring } from 'stringz';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -136,10 +136,15 @@ export const prepareEntityName = (
         .filter(Boolean)[0] ?? '';
   const result =
     clearName.length > MAX_ENTITY_LENGTH
-      ? substring(clearName, 0, 160)
+      ? substring(clearName, 0, MAX_ENTITY_LENGTH)
       : clearName;
-  console.log(result);
+
+  const additionalCuttedResult =
+    result.length > MAX_ENTITY_LENGTH
+      ? result.substring(0, MAX_ENTITY_LENGTH)
+      : result;
+
   return !options?.forRenaming || options?.trimEndDotsRequired
-    ? trimEndDots(result)
-    : result.trim();
+    ? trimEndDots(additionalCuttedResult)
+    : additionalCuttedResult.trim();
 };
