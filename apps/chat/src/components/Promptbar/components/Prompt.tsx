@@ -323,6 +323,7 @@ export const PromptComponent = ({
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
+          isSelected ? 'hover:pr-3' : 'hover:pr-9',
         )}
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -332,7 +333,7 @@ export const PromptComponent = ({
       >
         <div
           className={classNames('flex size-full items-center gap-2', {
-            'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
+            'pr-6': !isDeleting && !isRenaming && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, prompt)}
