@@ -53,6 +53,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import {
@@ -273,6 +274,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       ...getFolderFromId(path, FolderType.File),
                       status: UploadStatus.LOADED,
                       isPublicationFolder: true,
+                      contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
                     })),
                   }),
                 ),
