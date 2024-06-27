@@ -58,7 +58,6 @@ export function TargetAudienceFilterComponent({
     if (filterFunction === PublicationFunctions.Regex) {
       onSaveFilter({
         id: selectedTarget,
-        name: selectedTarget,
         filterFunction,
         filterParams: [filterRegexParam],
       });
@@ -68,7 +67,6 @@ export function TargetAudienceFilterComponent({
 
     onSaveFilter({
       id: selectedTarget,
-      name: selectedTarget,
       filterFunction: filterFunction as PublicationFunctions,
       filterParams,
     });

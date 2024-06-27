@@ -118,7 +118,6 @@ export function PublishModal({
           id: rule.source,
           filterFunction: rule.function,
           filterParams: rule.targets,
-          name: rule.source,
         })),
       );
     }
@@ -154,7 +153,6 @@ export function PublishModal({
             filterFunction: rule.filterFunction,
             filterParams: rule.filterParams,
             id: rule.id,
-            name: rule.name,
           }))
         : notEmptyFilters;
       const folderRegExp = new RegExp(

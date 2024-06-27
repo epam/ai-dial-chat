@@ -102,7 +102,6 @@ export interface PublishedList {
 
 export interface TargetAudienceFilterItem {
   id: string;
-  name: string;
 }
 
 export interface TargetAudienceFilter extends TargetAudienceFilterItem {

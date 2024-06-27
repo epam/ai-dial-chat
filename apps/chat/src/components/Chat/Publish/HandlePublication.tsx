@@ -41,8 +41,6 @@ import {
 } from './PublicationResources';
 import { RuleListItem } from './RuleListItem';
 
-import startCase from 'lodash-es/startCase';
-import toLower from 'lodash-es/toLower';
 import uniq from 'lodash-es/uniq';
 
 interface FilterComponentProps {
@@ -128,11 +126,10 @@ export function HandlePublication({ publication }: Props) {
     : Object.entries(rules).filter(
         ([path]) => path !== publication.targetFolder,
       );
-  const newRules = useMemo(
+  const newRules: PublicationRule[] = useMemo(
     () =>
       publication.rules?.map((rule) => ({
-        id: rule.source,
-        name: startCase(toLower(rule.source)),
+        source: rule.source,
         function: rule.function,
         targets: rule.targets,
       })) || [],
@@ -386,11 +383,7 @@ export function HandlePublication({ publication }: Props) {
                 </h2>
                 <FiltersComponent
                   filteredRuleEntries={filteredRuleEntries}
-                  newRules={newRules.map((rule) => ({
-                    source: rule.id,
-                    targets: rule.targets,
-                    function: rule.function,
-                  }))}
+                  newRules={newRules}
                   publication={publication}
                 />
               </section>
@@ -468,11 +461,7 @@ export function HandlePublication({ publication }: Props) {
       {isCompareModalOpened && publication.targetFolder && (
         <CompareRulesModal
           allRuleEntries={filteredRuleEntries}
-          newRulesToCompare={newRules.map((rule) => ({
-            function: rule.function,
-            targets: rule.targets,
-            source: rule.id,
-          }))}
+          newRulesToCompare={newRules}
           oldRulesToCompare={rules[publication.targetFolder]}
           onClose={() => setIsCompareModalOpened(false)}
           newRulesPath={publication.targetFolder}
