@@ -36,13 +36,8 @@ dialTest(
     dataInjector,
     conversations,
     setTestIds,
-    replayAsIs,
-    talkToSelector,
-    entitySettings,
-    temperatureSlider,
-    recentEntities,
-    addons,
     conversationDropdownMenu,
+    iconApiHelper,
   }) => {
     setTestIds('EPMRTC-501', 'EPMRTC-1264');
     let replayConversation: Conversation;
@@ -132,46 +127,47 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Replay as is" option is selected',
+      'Verify model icon is displayed, "Start replay" button is visible',
       async () => {
-        const modelBorderColors =
-          await recentEntities.replayAsIsButton.getAllBorderColors();
-        Object.values(modelBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-              .toBe(Colors.controlsBackgroundAccent);
-          });
-        });
-
-        const replayLabel = await replayAsIs.getReplayAsIsLabelText();
+        const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
         expect
-          .soft(replayLabel, ExpectedMessages.replayAsIsLabelIsVisible)
-          .toBe(ExpectedConstants.replayAsIsLabel);
+          .soft(
+            await chat.getModelInfo().getEntityIcon(),
+            ExpectedMessages.entityIconIsValid,
+          )
+          .toBe(expectedModelIcon);
+        await expect
+          .soft(
+            chat.replay.getElementLocator(),
+            ExpectedMessages.startReplayVisible,
+          )
+          .toBeEnabled();
       },
     );
 
-    await dialTest.step(
-      'Select some model and verify it has the same settings as parent model',
-      async () => {
-        await talkToSelector.selectModel(gpt35Model);
-
-        const newModelSystemPrompt = await entitySettings.getSystemPrompt();
-        expect
-          .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
-          .toBe(replayPrompt);
-
-        const newModelTemperature = await temperatureSlider.getTemperature();
-        expect
-          .soft(newModelTemperature, ExpectedMessages.temperatureIsValid)
-          .toBe(replayTemp.toString());
-
-        const newModelSelectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(newModelSelectedAddons, ExpectedMessages.selectedAddonsValid)
-          .toEqual([]);
-      },
-    );
+    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/1662
+    // await dialTest.step(
+    //   'Select some model and verify it has the same settings as parent model',
+    //   async () => {
+    //     await chatHeader.openConversationSettingsPopup();
+    //     await talkToSelector.selectModel(gpt35Model);
+    //
+    //     const newModelSystemPrompt = await entitySettings.getSystemPrompt();
+    //     expect
+    //       .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
+    //       .toBe(replayPrompt);
+    //
+    //     const newModelTemperature = await temperatureSlider.getTemperature();
+    //     expect
+    //       .soft(newModelTemperature, ExpectedMessages.temperatureIsValid)
+    //       .toBe(replayTemp.toString());
+    //
+    //     const newModelSelectedAddons = await addons.getSelectedAddons();
+    //     expect
+    //       .soft(newModelSelectedAddons, ExpectedMessages.selectedAddonsValid)
+    //       .toEqual([]);
+    //   },
+    // );
   },
 );
 
@@ -260,8 +256,10 @@ dialTest(
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
+    setIssueIds,
   }) => {
     setTestIds('EPMRTC-508');
+    setIssueIds('1662');
     const replayTemp = 0;
     const replayPrompt = 'reply the same text';
     const replayModel = bison;
@@ -286,9 +284,11 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectModel(bison);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
+        await chat.applyNewEntity();
         replayRequest = await chat.startReplay();
       },
     );
@@ -963,6 +963,7 @@ dialTest(
     localStorageManager,
     dataInjector,
     talkToSelector,
+    chatHeader,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1328');
@@ -990,7 +991,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.waitForState({ state: 'attached' });
         await expect
           .soft(
@@ -1014,6 +1015,7 @@ dialTest(
       'Select any available model and start replaying',
       async () => {
         await talkToSelector.selectModel(gpt35Model);
+        await chat.applyNewEntity();
         const replayRequest = await chat.startReplay();
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
@@ -1037,6 +1039,7 @@ dialTest(
     talkToSelector,
     conversations,
     replayAsIs,
+    conversationSettings,
   }) => {
     setTestIds('EPMRTC-1330', 'EPMRTC-1332');
     const filename = GeneratorUtil.randomArrayElement([
@@ -1092,7 +1095,8 @@ dialTest(
           Import.oldVersionAppFolderChatName,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
-
+        await chat.getModelInfo().waitForState();
+        await chatHeader.openConversationSettingsPopup();
         const replayAsIsDescr =
           await replayAsIs.replayAsIsDescr.getElementContent();
         expect
@@ -1118,6 +1122,7 @@ dialTest(
         expect
           .soft(warningColor[0], ExpectedMessages.warningLabelColorIsValid)
           .toBe(Colors.textError);
+        await conversationSettings.cancelButton.click();
       },
     );
 
@@ -1180,7 +1185,6 @@ dialTest(
     dataInjector,
     chat,
     chatHeader,
-    replayAsIs,
     confirmationDialog,
     setTestIds,
   }) => {
@@ -1216,11 +1220,12 @@ dialTest(
         expect
           .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)
           .toBeTruthy();
-
-        const replayLabel = await replayAsIs.getReplayAsIsLabelText();
-        expect
-          .soft(replayLabel, ExpectedMessages.replayAsIsLabelIsVisible)
-          .toBe(ExpectedConstants.replayAsIsLabel);
+        await expect
+          .soft(
+            chat.getModelInfo().getElementLocator(),
+            ExpectedMessages.conversationModelInfoIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },

@@ -174,7 +174,7 @@ dialTest(
     localStorageManager,
     dataInjector,
     chatHeader,
-    conversationSettings,
+    chat,
     confirmationDialog,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
@@ -205,15 +205,15 @@ dialTest(
     );
 
     await dialTest.step(
-      'Clear conversation messages using header button and verify messages deleted, setting are shown',
+      'Clear conversation messages using header button and verify messages deleted, no settings are shown',
       async () => {
         await chatHeader.clearConversation.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
 
         await expect
           .soft(
-            await conversationSettings.getElementLocator(),
-            ExpectedMessages.conversationSettingsVisible,
+            chat.getModelInfo().getElementLocator(),
+            ExpectedMessages.conversationModelInfoIsVisible,
           )
           .toBeVisible();
       },

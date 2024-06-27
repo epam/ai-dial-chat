@@ -142,7 +142,7 @@ export enum ExpectedMessages {
   requestMessageIsEdited = 'Request message is edited',
   messageIsDeleted = 'Message is deleted from conversation',
   chatHeaderTitleTruncated = 'Chat header title is truncated',
-  conversationSettingsVisible = 'Conversation Settings screen is visible',
+  conversationModelInfoIsVisible = 'Conversation model info screen is visible',
   replayAsIsLabelIsVisible = 'Replay As Is label is visible',
   replayAsOptionNotVisible = 'Replay As Is option is not visible',
   entitiesIconsCountIsValid = 'Entities icons number is valid',

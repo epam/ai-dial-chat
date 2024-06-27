@@ -19,6 +19,8 @@ dialTest(
     talkToAssistantsGroupEntities,
     talkToApplicationGroupEntities,
     setTestIds,
+    chatHeader,
+    chat,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1036', 'EPMRTC-1038', 'EPMRTC-378');
@@ -35,6 +37,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await chatHeader.openConversationSettingsPopup();
         await talkToSelector.seeFullList();
       },
     );
@@ -119,6 +122,7 @@ dialTest(
           ModelsUtil.getLatestModels(),
         );
         await talkToSelector.selectModel(randomEntity);
+        await chat.applyNewEntity();
 
         const conversationIcon = await conversations.getConversationIcon(
           ExpectedConstants.newConversationTitle,

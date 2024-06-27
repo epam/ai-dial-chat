@@ -19,7 +19,6 @@ dialTest(
     dialHomePage,
     promptBar,
     prompts,
-    conversationSettings,
     promptModalDialog,
     setTestIds,
   }) => {
@@ -33,7 +32,6 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await conversationSettings.waitForState();
         await promptBar.hoverOverNewEntity();
         const newPromptCursor = await promptBar.getNewEntityCursor();
         expect
@@ -93,19 +91,17 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await promptModalDialog.getFieldBottomMessage(
-              promptModalDialog.name,
-            ),
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
             ExpectedMessages.fieldIsHighlightedWithRed,
           )
           .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
 
-        expect
+        await expect
           .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
+            promptModalDialog.saveButton.getElementLocator(),
             ExpectedMessages.buttonIsDisabled,
           )
-          .toBeFalsy();
+          .toBeDisabled();
       },
     );
 
@@ -129,9 +125,7 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await promptModalDialog.getFieldBottomMessage(
-              promptModalDialog.name,
-            ),
+            promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
             ExpectedMessages.fieldIsHighlightedWithRed,
           )
           .toHaveText(ExpectedConstants.requiredFieldErrorMessage);
@@ -142,12 +136,12 @@ dialTest(
             ExpectedMessages.promptNameUpdated,
           )
           .toBe('');
-        expect
+        await expect
           .soft(
-            await promptModalDialog.saveButton.isElementEnabled(),
+            promptModalDialog.saveButton.getElementLocator(),
             ExpectedMessages.buttonIsDisabled,
           )
-          .toBeFalsy();
+          .toBeDisabled();
       },
     );
 

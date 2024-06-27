@@ -502,7 +502,6 @@ dialTest(
     conversations,
     chat,
     iconApiHelper,
-    conversationSettings,
     chatLoader,
   }) => {
     setTestIds('EPMRTC-906', 'EPMRTC-779');
@@ -616,7 +615,7 @@ dialTest(
           ExpectedConstants.newConversationTitle,
           isApiStorageType ? 1 : 2,
         );
-        await conversationSettings.waitForState();
+        await chat.getModelInfo().waitForState();
         await chat.sendRequestWithButton('1+1=', false);
         const todayConversations = await conversations.getTodayConversations();
         expect

@@ -15,7 +15,6 @@ const overlayOptions: Omit<ChatOverlayOptions, 'hostDomain'> = {
     Feature.TopClearConversation,
     Feature.TopChatInfo,
     Feature.TopChatModelSettings,
-    Feature.EmptyChatSettings,
     Feature.Header,
     Feature.Footer,
     Feature.RequestApiKey,

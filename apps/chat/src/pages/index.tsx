@@ -261,7 +261,6 @@ export default function Home({ initialState }: HomeProps) {
 const hiddenFeaturesForIsolatedView = new Set([
   Feature.ConversationsSection,
   Feature.PromptsSection,
-  Feature.EmptyChatSettings,
   Feature.TopChatModelSettings,
 ]);
 

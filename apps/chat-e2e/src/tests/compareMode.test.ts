@@ -29,7 +29,14 @@ dialTest.beforeAll(async () => {
 
 dialTest(
   'Compare mode button creates two new chats and opens them in compare mode',
-  async ({ dialHomePage, setTestIds, chatBar, conversations, compare }) => {
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    conversations,
+    compare,
+    chat,
+  }) => {
     setTestIds('EPMRTC-537');
     await dialTest.step(
       'Click on compare button on bottom of chat bar and verify compare mode is opened for new two chats',
@@ -40,7 +47,7 @@ dialTest(
         });
         await chatBar.openCompareMode();
         await compare.waitForState();
-        const chatsCount = await compare.getConversationsCount();
+        const chatsCount = await chat.getModelInfo().getElementsCount();
         expect.soft(chatsCount, ExpectedMessages.compareModeOpened).toBe(2);
 
         const todayConversations = await conversations.getTodayConversations();

@@ -48,7 +48,7 @@ import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
 import { ChatSettings } from './ChatSettings';
-import { ChatSettingsEmpty } from './ChatSettingsEmpty';
+import { EmptyChatDescription } from './EmptyChatDescription';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
@@ -366,37 +366,6 @@ export const ChatView = memo(() => {
     [addonsMap, modelsMap],
   );
 
-  const handleSelectModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      const newAiEntity = modelsMap[modelId];
-      if (!newAiEntity) {
-        return;
-      }
-
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            ...applySelectedModel(conversation, modelId),
-          },
-        }),
-      );
-    },
-    [applySelectedModel, dispatch, modelsMap],
-  );
-
-  const handleSelectAssistantSubModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { assistantModelId: modelId },
-        }),
-      );
-    },
-    [dispatch],
-  );
-
   useEffect(() => {
     if (!selectedConversationsIds.some((id) => prevSelectedIds.includes(id))) {
       setAutoScroll();
@@ -406,73 +375,6 @@ export const ChatView = memo(() => {
       setPrevSelectedIds(selectedConversationsIds);
     }
   }, [prevSelectedIds, selectedConversationsIds]);
-
-  const handleOnChangeAddon = useCallback(
-    (conversation: Conversation, addonId: string) => {
-      const isAddonInConversation = conversation.selectedAddons.some(
-        (id) => id === addonId,
-      );
-      if (isAddonInConversation) {
-        const filteredAddons = conversation.selectedAddons.filter(
-          (id) => id !== addonId,
-        );
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: { selectedAddons: filteredAddons },
-          }),
-        );
-      } else {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: {
-              selectedAddons: conversation.selectedAddons.concat(addonId),
-            },
-          }),
-        );
-      }
-    },
-    [dispatch],
-  );
-
-  const handleOnApplyAddons = useCallback(
-    (conversation: Conversation, addonIds: string[]) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            selectedAddons: addonIds.filter((addonId) => addonsMap[addonId]),
-          },
-        }),
-      );
-    },
-    [addonsMap, dispatch],
-  );
-
-  const handleChangePrompt = useCallback(
-    (conversation: Conversation, prompt: string) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { prompt },
-        }),
-      );
-    },
-    [dispatch],
-  );
-
-  const handleChangeTemperature = useCallback(
-    (conversation: Conversation, temperature: number) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { temperature },
-        }),
-      );
-    },
-    [dispatch],
-  );
 
   const handleDeleteMessage = useCallback(
     (index: number, conv: Conversation) => {
@@ -633,53 +535,51 @@ export const ChatView = memo(() => {
                             : 'w-full',
                         )}
                       >
-                        {conv.messages.length !== 0 &&
-                          enabledFeatures.has(Feature.TopSettings) && (
-                            <div className="z-10 flex flex-col">
-                              <ChatHeader
-                                conversation={conv}
-                                isCompareMode={isCompareMode}
-                                isShowChatInfo={enabledFeatures.has(
-                                  Feature.TopChatInfo,
-                                )}
-                                isShowClearConversation={
-                                  enabledFeatures.has(
-                                    Feature.TopClearConversation,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isExternal
+                        {enabledFeatures.has(Feature.TopSettings) && (
+                          <div className="z-10 flex flex-col">
+                            <ChatHeader
+                              conversation={conv}
+                              isCompareMode={isCompareMode}
+                              isShowChatInfo={enabledFeatures.has(
+                                Feature.TopChatInfo,
+                              )}
+                              isShowClearConversation={
+                                enabledFeatures.has(
+                                  Feature.TopClearConversation,
+                                ) &&
+                                !isPlayback &&
+                                !isExternal &&
+                                conv.messages.length !== 0
+                              }
+                              isShowModelSelect={
+                                enabledFeatures.has(
+                                  Feature.TopChatModelSettings,
+                                ) &&
+                                !isPlayback &&
+                                !isExternal
+                              }
+                              isShowSettings={isShowChatSettings}
+                              setShowSettings={(isShow) => {
+                                if (isShow) {
+                                  dispatch(ModelsActions.getModels());
+                                  dispatch(AddonsActions.getAddons());
                                 }
-                                isShowModelSelect={
-                                  enabledFeatures.has(
-                                    Feature.TopChatModelSettings,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isExternal
-                                }
-                                isShowSettings={isShowChatSettings}
-                                setShowSettings={(isShow) => {
-                                  if (isShow) {
-                                    dispatch(ModelsActions.getModels());
-                                    dispatch(AddonsActions.getAddons());
-                                  }
-                                  setIsShowChatSettings(isShow);
-                                }}
-                                selectedConversationIds={
-                                  selectedConversationsIds
-                                }
-                                onClearConversation={() =>
-                                  handleClearConversation(conv)
-                                }
-                                onUnselectConversation={(id) => {
-                                  dispatch(
-                                    ConversationsActions.unselectConversations({
-                                      conversationIds: [id],
-                                    }),
-                                  );
-                                }}
-                              />
-                            </div>
-                          )}
+                                setIsShowChatSettings(isShow);
+                              }}
+                              selectedConversationIds={selectedConversationsIds}
+                              onClearConversation={() =>
+                                handleClearConversation(conv)
+                              }
+                              onUnselectConversation={(id) => {
+                                dispatch(
+                                  ConversationsActions.unselectConversations({
+                                    conversationIds: [id],
+                                  }),
+                                );
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -700,57 +600,30 @@ export const ChatView = memo(() => {
                     className="h-full overflow-x-hidden"
                     data-qa="scrollable-area"
                   >
-                    <div className="flex max-h-full w-full">
-                      {selectedConversations.map(
-                        (conv) =>
-                          conv.messages.length === 0 && (
-                            <div
-                              key={conv.id}
-                              className={classNames(
-                                'flex h-full flex-col justify-between',
-                                selectedConversations.length > 1
-                                  ? 'w-[50%]'
-                                  : 'w-full',
-                              )}
-                            >
+                    {!mergedMessages?.length && (
+                      <div className="flex size-full">
+                        {selectedConversations.map(
+                          (conv) =>
+                            conv.messages.length === 0 && (
                               <div
-                                className="shrink-0"
-                                style={{
-                                  height: `calc(100% - ${inputHeight}px)`,
-                                }}
+                                key={conv.id}
+                                className={classNames(
+                                  'flex h-full flex-col justify-between',
+                                  selectedConversations.length > 1
+                                    ? 'w-[50%]'
+                                    : 'w-full',
+                                )}
                               >
-                                <ChatSettingsEmpty
-                                  conversation={conv}
-                                  isModels={models.length !== 0}
-                                  prompts={prompts}
-                                  isShowSettings={enabledFeatures.has(
-                                    Feature.EmptyChatSettings,
-                                  )}
-                                  onSelectModel={(modelId: string) =>
-                                    handleSelectModel(conv, modelId)
-                                  }
-                                  onSelectAssistantSubModel={(
-                                    modelId: string,
-                                  ) =>
-                                    handleSelectAssistantSubModel(conv, modelId)
-                                  }
-                                  onChangeAddon={(addonId: string) =>
-                                    handleOnChangeAddon(conv, addonId)
-                                  }
-                                  onChangePrompt={(prompt) =>
-                                    handleChangePrompt(conv, prompt)
-                                  }
-                                  onChangeTemperature={(temperature) =>
-                                    handleChangeTemperature(conv, temperature)
-                                  }
+                                <EmptyChatDescription
+                                  conv={conv}
                                   appName={appName}
-                                  onApplyAddons={handleOnApplyAddons}
+                                  modelsLoaded={models.length !== 0}
                                 />
                               </div>
-                            </div>
-                          ),
-                      )}
-                    </div>
+                            ),
+                        )}
+                      </div>
+                    )}
                     <div ref={chatMessagesRef}>
                       {mergedMessages?.length > 0 && (
                         <div className="flex flex-col" data-qa="chat-messages">

@@ -31,6 +31,7 @@ export class Chat extends BaseElement {
   private chatMessages!: ChatMessages;
   private compare!: Compare;
   private playbackControl!: PlaybackControl;
+  private modelInfo!: MoreInfo;
   private isolatedView!: MoreInfo;
   public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
@@ -92,6 +93,13 @@ export class Chat extends BaseElement {
       this.playbackControl = new PlaybackControl(this.page);
     }
     return this.playbackControl;
+  }
+
+  getModelInfo(): MoreInfo {
+    if (!this.modelInfo) {
+      this.modelInfo = new MoreInfo(this.page, this.rootLocator);
+    }
+    return this.modelInfo;
   }
 
   getIsolatedView(): MoreInfo {

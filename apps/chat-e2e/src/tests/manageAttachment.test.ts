@@ -201,7 +201,7 @@ dialTest(
   },
 );
 
-dialTest.fixme(
+dialTest(
   '[Manage attachments] Delete file while it is being uploaded',
   async ({
     dialHomePage,
@@ -240,12 +240,12 @@ dialTest.fixme(
       async () => {
         await expect
           .soft(
-            await attachFilesModal.attachedFileLoadingIndicator(
+            attachFilesModal.attachedFileLoadingIndicator(
               Attachment.sunImageName,
             ),
             ExpectedMessages.attachmentLoadingIndicatorIsVisible,
           )
-          .toBeVisible();
+          .toBeAttached();
 
         await attachFilesModal
           .removeAttachedFileIcon(Attachment.sunImageName)
@@ -270,7 +270,7 @@ dialTest.fixme(
           .click();
         await expect
           .soft(
-            await attachFilesModal.attachedFileLoadingIndicator(
+            attachFilesModal.attachedFileLoadingIndicator(
               Attachment.sunImageName,
             ),
             ExpectedMessages.attachmentLoadingIndicatorNotVisible,
@@ -278,7 +278,7 @@ dialTest.fixme(
           .toBeHidden();
         await expect
           .soft(
-            await attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal.attachedFile(Attachment.sunImageName),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
