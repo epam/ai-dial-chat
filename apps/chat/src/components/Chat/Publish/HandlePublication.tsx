@@ -110,10 +110,7 @@ export function HandlePublication({ publication }: Props) {
     ),
   );
   const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(
-      state,
-      publication.targetFolder ?? '',
-    ),
+    PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
 
   useEffect(() => {
