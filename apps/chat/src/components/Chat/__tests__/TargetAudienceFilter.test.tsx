@@ -137,7 +137,6 @@ describe('TargetAudienceFilterComponent', () => {
 
     expect(onSaveFilter).toHaveBeenCalledWith({
       id: selectedTarget,
-      name: selectedTarget,
       filterFunction: selectedFilter,
       filterParams: ['QA', 'Developer', 'Manager'],
     });
@@ -165,7 +164,6 @@ describe('TargetAudienceFilterComponent', () => {
 
     expect(onSaveFilter).toHaveBeenCalledWith({
       id: selectedTarget,
-      name: selectedTarget,
       filterFunction: selectedFilter,
       filterParams: ['Developer.*'],
     });
