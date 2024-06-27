@@ -791,14 +791,14 @@ dialTest(
       async () => {
         await dialHomePage.throttleAPIResponse('**/*');
         await chat.playNextChatMessage(false);
-        await playbackControl.playbackNextButton.waitForState({
-          state: 'hidden',
-        });
-
-        const isResponseLoading = await chatMessages.isResponseLoading();
-        expect
-          .soft(isResponseLoading, ExpectedMessages.responseIsLoading)
-          .toBeTruthy();
+        await expect(
+          chatMessages.loadingCursor.getElementLocator(),
+          ExpectedMessages.playbackNextMessageIsScrollable,
+        ).toBeVisible();
+        await expect(
+          playbackControl.playbackNextButton.getElementLocator(),
+          ExpectedMessages.playbackNextMessageIsScrollable,
+        ).toBeDisabled();
 
         await sendMessage.waitForMessageInputLoaded();
         await chatMessages.waitForResponseReceived();
