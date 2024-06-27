@@ -57,6 +57,7 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
+import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -291,6 +292,32 @@ export const deletePromptEpic: AppEpic = (action$) =>
             UIActions.showErrorToast(
               translate(
                 `An error occurred while deleting the prompt "${payload.prompt.name}"`,
+              ),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
+export const uploadPopularPromptsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadPopularPrompts.match),
+    switchMap(({ payload }) => {
+      return PromptService.getPrompts(payload.promptsPath).pipe(
+        switchMap((prompts) =>
+          of(
+            PromptsActions.setPopularPrompts({
+              popularPrompts: sortBy(prompts, ['name']),
+            }),
+          ),
+        ),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                `An error occurred while uploading popular prompts with path "${payload.promptsPath}"`,
               ),
             ),
           );
@@ -731,4 +758,5 @@ export const PromptsEpics = combineEpics(
   createNewPromptEpic,
   duplicatePromptEpic,
   uploadPromptEpic,
+  uploadPopularPromptsEpic,
 );

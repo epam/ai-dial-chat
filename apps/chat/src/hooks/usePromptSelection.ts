@@ -37,7 +37,7 @@ export const usePromptSelection = (
   onChangePrompt?: (prompt: string) => void,
 ) => {
   const { getTokensLength } = useTokenizer(tokenizer);
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const prompts = useAppSelector(PromptsSelectors.selectPromptsWithPopular);
 
   const dispatch = useDispatch();
 

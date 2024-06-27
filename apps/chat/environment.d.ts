@@ -1,3 +1,5 @@
+import { Prompt } from '@/src/types/prompt';
+
 export {};
 
 declare global {
@@ -90,6 +92,7 @@ declare global {
       AUTH_OKTA_CLIENT_SECRET?: string;
       AUTH_OKTA_ISSUER?: string;
       AUTH_OKTA_SCOPE?: string;
+      POPULAR_PROMPTS_PATHS?: string;
     }
   }
 }

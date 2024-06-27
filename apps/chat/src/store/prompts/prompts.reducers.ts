@@ -39,6 +39,7 @@ const initialState: PromptsState = {
   loadingFolderIds: [],
   isNewPromptCreating: false,
   isPromptContentCopying: false,
+  popularPrompts: [],
 };
 
 export const promptsSlice = createSlice({
@@ -358,6 +359,12 @@ export const promptsSlice = createSlice({
             ? { ...payload.prompt, ...prompt }
             : prompt,
         );
+
+        state.popularPrompts = state.popularPrompts.map((prompt) =>
+          prompt.id === payload.prompt?.id
+            ? { ...payload.prompt, ...prompt }
+            : prompt,
+        );
       }
     },
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
@@ -396,6 +403,16 @@ export const promptsSlice = createSlice({
         })),
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
+    },
+    uploadPopularPrompts: (
+      state,
+      _action: PayloadAction<{ promptsPath: string }>,
+    ) => state,
+    setPopularPrompts: (
+      state,
+      { payload }: PayloadAction<{ popularPrompts: PromptInfo[] }>,
+    ) => {
+      state.popularPrompts = payload.popularPrompts;
     },
   },
 });

@@ -35,6 +35,13 @@ export const selectPrompts = createSelector([rootSelector], (state) => {
   return state.prompts;
 });
 
+export const selectPromptsWithPopular = createSelector(
+  [rootSelector],
+  (state) => {
+    return [...state.prompts, ...state.popularPrompts];
+  },
+);
+
 export const selectFilteredPrompts = createSelector(
   [
     selectPrompts,
@@ -185,14 +192,20 @@ export const selectSelectedPromptId = createSelector(
   },
 );
 
+export const selectPopularPrompts = createSelector([rootSelector], (state) => {
+  return state.popularPrompts;
+});
+
 export const selectSelectedPrompt = createSelector(
-  [selectPrompts, selectSelectedPromptId],
-  (prompts, { selectedPromptId }): Prompt | undefined => {
+  [selectPrompts, selectSelectedPromptId, selectPopularPrompts],
+  (prompts, { selectedPromptId }, popularPrompts): Prompt | undefined => {
     if (!selectedPromptId) {
       return undefined;
     }
 
-    return prompts.find((prompt) => prompt.id === selectedPromptId) as Prompt;
+    return [...prompts, ...popularPrompts].find(
+      (prompt) => prompt.id === selectedPromptId,
+    ) as Prompt;
   },
 );
 

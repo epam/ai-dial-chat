@@ -67,3 +67,4 @@ export const MODEL_ICON_SIZE_DEFAULT = {
 export const HEADER_TITLE_TEXT = 'PR GPT';
 
 export const CHINA_TIME_ZONE_OFFSET = 8;
+export const NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY = 4;
