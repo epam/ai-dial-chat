@@ -872,6 +872,7 @@ export const conversationsSlice = createSlice({
                 !state.conversations.some(
                   (conv) =>
                     conv.id.startsWith(fid) &&
+                    !conv.id.startsWith(folderId) &&
                     !state.chosenConversationIds.includes(conv.id) &&
                     !state.chosenFolderIds.some((chosenFolderId) =>
                       conv.id.startsWith(chosenFolderId),

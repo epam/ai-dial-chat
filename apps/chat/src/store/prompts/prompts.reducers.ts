@@ -470,11 +470,60 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{ folderId: string; isChosen: boolean }>,
     ) => {
       if (isChosen) {
-        state.chosenFolderIds = state.chosenFolderIds.filter(
-          (id: string) => id !== folderId,
+        const parentFolderIds = state.chosenFolderIds.filter(
+          (chosenId) => folderId.startsWith(chosenId) || chosenId !== folderId,
         );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) =>
+              !folderId.startsWith(chosenId) && !chosenId.startsWith(folderId),
+          ),
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                !fid.startsWith(folderId) &&
+                !folderId.startsWith(fid) &&
+                parentFolderIds.some((parentId) => fid.startsWith(parentId)),
+            ),
+        ]);
+        state.chosenPromptIds = uniq([
+          ...state.chosenPromptIds.filter(
+            (convId: string) => !convId.startsWith(folderId),
+          ),
+          ...state.prompts
+            .map((prompt) => prompt.id)
+            .filter(
+              (convId) =>
+                !convId.startsWith(folderId) &&
+                parentFolderIds.some((parentId) => convId.startsWith(parentId)),
+            ),
+        ]);
       } else {
-        state.chosenFolderIds = [...state.chosenFolderIds, folderId];
+        state.chosenPromptIds = state.chosenPromptIds.filter(
+          (convId: string) => !convId.startsWith(folderId),
+        );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) => !chosenId.startsWith(folderId),
+          ),
+          folderId,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                folderId.startsWith(fid) &&
+                !state.prompts.some(
+                  (prompt) =>
+                    prompt.id.startsWith(fid) &&
+                    !prompt.id.startsWith(folderId) &&
+                    !state.chosenPromptIds.includes(prompt.id) &&
+                    !state.chosenFolderIds.some((chosenFolderId) =>
+                      prompt.id.startsWith(chosenFolderId),
+                    ),
+                ),
+            ),
+        ]);
       }
     },
     resetChosenPrompts: (state) => {
