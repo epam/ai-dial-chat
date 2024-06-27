@@ -164,6 +164,7 @@ export enum MenuOptions {
   upload = 'Upload',
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
+  select = 'Select',
 }
 
 export enum FilterMenuOptions {

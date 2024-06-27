@@ -312,6 +312,7 @@ dialTest(
     expect
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
+        MenuOptions.select,
         MenuOptions.edit,
         MenuOptions.duplicate,
         MenuOptions.export,

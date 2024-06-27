@@ -6,7 +6,7 @@ import {
 import { Conversations } from './conversations';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { API } from '@/src/testData';
+import { API, MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
@@ -93,9 +93,10 @@ export class ChatBar extends SideBar {
   }
 
   public async openCompareMode() {
+    await this.bottomDotsMenuIcon.click();
     const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
     const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.compareButton.click();
+    await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
     await modelsResponsePromise;
     await addonsResponsePromise;
   }
