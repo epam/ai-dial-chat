@@ -40,7 +40,7 @@ export class PromptBar extends SideBar {
     promptName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folderPrompt = await this.getFolderPrompts().getFolderEntity(
+    const folderPrompt = this.getFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
