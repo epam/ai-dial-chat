@@ -3,20 +3,30 @@ name: Promote Docker Image
 on:
   workflow_dispatch:
     inputs:
+      src_env:
+        description: 'Source registry'
+        required: true
+        default: 'Dev'
+        type: choice
+        options:
+          - Dev
+          - Uat
+          - Prod
       src_tag:
         description: 'Source tag'
         required: true
-      src_env:
-        description: 'Source registry (Dev/Uat/Prod)'
+      dst_env:
+        description: 'Destination registry'
         required: true
-        default: 'Dev'
+        default: 'Uat'
+        type: choice
+        options:
+          - Dev
+          - Uat
+          - Prod
       dst_tag:
         description: 'Destination tag'
         required: true
-      dst_env:
-        description: 'Destination registry (Dev/Uat/Prod)'
-        required: true
-        default: 'Uat'
 
 env:
   IMAGE_NAME: dial/ai-dial-chat

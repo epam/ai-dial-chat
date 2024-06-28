@@ -6,9 +6,14 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to push image to (Dev/Uat/Prod)'
+        description: 'Environment to push image to'
         required: true
         default: 'Dev'
+        type: choice
+        options:
+          - Dev
+          - Uat
+          - Prod
 
 env:
   IMAGE_NAME: dial/ai-dial-chat
