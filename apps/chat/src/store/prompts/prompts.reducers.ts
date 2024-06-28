@@ -7,6 +7,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
+import { doesPromptOrConversationContainSearchTerm } from '@/src/utils/app/search';
 import {
   isEntityExternal,
   isEntityOrParentsExternal,
@@ -531,17 +532,30 @@ export const promptsSlice = createSlice({
       state.chosenFolderIds = [];
     },
     setAllChosenPrompts: (state) => {
-      state.chosenPromptIds = state.prompts
-        .filter(
-          (conv) => !isEntityExternal(conv) && isRootPromptId(conv.folderId),
-        )
-        .map(({ id }) => id);
-      state.chosenFolderIds = state.folders
-        .filter(
-          (folder) =>
-            !isEntityExternal(folder) && isRootPromptId(folder.folderId),
-        )
-        .map(({ id }) => `${id}/`);
+      if (state.searchTerm) {
+        state.chosenPromptIds = state.prompts
+          .filter(
+            (prompt) =>
+              !isEntityExternal(prompt) &&
+              doesPromptOrConversationContainSearchTerm(
+                prompt,
+                state.searchTerm,
+              ),
+          )
+          .map(({ id }) => id);
+      } else {
+        state.chosenPromptIds = state.prompts
+          .filter(
+            (conv) => !isEntityExternal(conv) && isRootPromptId(conv.folderId),
+          )
+          .map(({ id }) => id);
+        state.chosenFolderIds = state.folders
+          .filter(
+            (folder) =>
+              !isEntityExternal(folder) && isRootPromptId(folder.folderId),
+          )
+          .map(({ id }) => `${id}/`);
+      }
     },
     deleteChosenPrompts: (state) => state,
   },

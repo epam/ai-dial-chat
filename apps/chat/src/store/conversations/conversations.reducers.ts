@@ -12,6 +12,7 @@ import {
   getConversationRootId,
   isRootConversationsId,
 } from '@/src/utils/app/id';
+import { doesPromptOrConversationContainSearchTerm } from '@/src/utils/app/search';
 import {
   isEntityExternal,
   isEntityOrParentsExternal,
@@ -887,18 +888,29 @@ export const conversationsSlice = createSlice({
       state.chosenFolderIds = [];
     },
     setAllChosenConversations: (state) => {
-      state.chosenConversationIds = state.conversations
-        .filter(
-          (conv) =>
-            !isEntityExternal(conv) && isRootConversationsId(conv.folderId),
-        )
-        .map(({ id }) => id);
-      state.chosenFolderIds = state.folders
-        .filter(
-          (folder) =>
-            !isEntityExternal(folder) && isRootConversationsId(folder.folderId),
-        )
-        .map(({ id }) => `${id}/`);
+      if (state.searchTerm) {
+        state.chosenConversationIds = state.conversations
+          .filter(
+            (conv) =>
+              !isEntityExternal(conv) &&
+              doesPromptOrConversationContainSearchTerm(conv, state.searchTerm),
+          )
+          .map(({ id }) => id);
+      } else {
+        state.chosenConversationIds = state.conversations
+          .filter(
+            (conv) =>
+              !isEntityExternal(conv) && isRootConversationsId(conv.folderId),
+          )
+          .map(({ id }) => id);
+        state.chosenFolderIds = state.folders
+          .filter(
+            (folder) =>
+              !isEntityExternal(folder) &&
+              isRootConversationsId(folder.folderId),
+          )
+          .map(({ id }) => `${id}/`);
+      }
     },
     deleteChosenConversations: (state) => state,
   },
