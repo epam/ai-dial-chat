@@ -44,4 +44,15 @@ export class ItemUtil {
       ? conversationBucket
       : `${conversationBucket}/${conversation.folderId}`;
   }
+
+  public static getEncodedItemId(itemId: string) {
+    const separatorIndex = itemId.lastIndexOf(ItemUtil.conversationIdSeparator);
+    if (separatorIndex !== -1) {
+      const itemName = itemId.substring(
+        separatorIndex + ItemUtil.conversationIdSeparator.length + 1,
+      );
+      return itemId.replace(itemName, encodeURIComponent(itemName));
+    }
+    return itemId;
+  }
 }

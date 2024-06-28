@@ -266,6 +266,7 @@ export enum ExpectedMessages {
   fileIsUploaded = 'File is uploaded',
   fileIsNotUploaded = 'File is not uploaded',
   filesCountIsValid = 'Files count is valid',
+  fileExtensionIsValid = 'File extension is valid',
   elementAttributeValueIsValid = 'Element attribute value is valid',
   uploadedFilesAreaIsScrollable = 'Uploaded files area is scrollable vertically',
   fieldIsInFocus = 'Field is in focus',

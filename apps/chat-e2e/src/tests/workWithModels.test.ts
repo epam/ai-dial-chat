@@ -128,7 +128,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Type any prompt, hit Enter button and and verify nothing happended, Send button is not shown',
+      'Type any prompt, hit Enter button and and verify nothing happened, Send button is not shown',
       async () => {
         await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {

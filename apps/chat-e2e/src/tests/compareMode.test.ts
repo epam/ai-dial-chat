@@ -714,6 +714,10 @@ dialTest(
           firstConversation,
           secondConversation,
         );
+        await localStorageManager.setRecentModelsIds(
+          firstUpdatedRandomModel,
+          secondUpdatedRandomModel,
+        );
       },
     );
 
