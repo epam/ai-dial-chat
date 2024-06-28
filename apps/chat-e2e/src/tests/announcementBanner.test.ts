@@ -48,7 +48,7 @@ dialTest(
           .toBe(
             'Welcome to AI Dial! Unified AI Access for Enterprises. Secure, scalable and customizable enterprise-grade AI ecosystem that seamlessly integrates with your data and workflows, tailored to achieve your unique business objectives.',
           );
-        const bannerIcon = await banner.bannerIcon;
+        const bannerIcon = banner.bannerIcon;
         expect
           .soft(bannerIcon.isVisible(), ExpectedMessages.entityIconIsValid)
           .toBeTruthy();
@@ -125,10 +125,7 @@ dialTest(
         await dialHomePage.bringPageToFront();
         await banner.closeButton.click();
         await expect
-          .soft(
-            await banner.getElementLocator(),
-            ExpectedMessages.bannerIsClosed,
-          )
+          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
       },
     );
@@ -139,10 +136,7 @@ dialTest(
         await dialHomePage.reloadPage();
         await chatMessages.waitForState({ state: 'attached' });
         await expect
-          .soft(
-            await banner.getElementLocator(),
-            ExpectedMessages.bannerIsClosed,
-          )
+          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
       },
     );
@@ -156,10 +150,7 @@ dialTest(
         await loginPage.ssoSignInButton.click();
         await chatMessages.waitForState({ state: 'attached' });
         await expect
-          .soft(
-            await banner.getElementLocator(),
-            ExpectedMessages.bannerIsClosed,
-          )
+          .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
       },
     );
