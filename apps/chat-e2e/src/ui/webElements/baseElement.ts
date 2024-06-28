@@ -204,7 +204,7 @@ export class BaseElement {
     const allIcons: EntityIcon[] = [];
     const elementsCount = await elements.getElementsCount();
     for (let i = 1; i <= elementsCount; i++) {
-      const element = await elements.getNthElement(i);
+      const element = elements.getNthElement(i);
       const elementIconName = iconNameSelector
         ? await element.locator(iconNameSelector).textContent()
         : await element.textContent();

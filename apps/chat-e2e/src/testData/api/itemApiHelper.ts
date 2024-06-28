@@ -83,7 +83,7 @@ export class ItemApiHelper extends BaseApiHelper {
   }
 
   public async createItem(item: Prompt | Conversation) {
-    const url = `api/${item.id}`;
+    const url = `api/${ItemUtil.getEncodedItemId(item.id)}`;
     const response = await this.request.put(url, {
       data: item,
     });

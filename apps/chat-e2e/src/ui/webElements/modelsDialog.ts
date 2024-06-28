@@ -2,6 +2,7 @@ import { ErrorLabelSelectors, ModelDialog } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Groups } from '@/src/testData';
+import { GroupEntity } from '@/src/ui/webElements/groupEntity';
 import { TalkToGroup } from '@/src/ui/webElements/talkToGroup';
 import { Page } from '@playwright/test';
 
@@ -10,41 +11,38 @@ export class ModelsDialog extends BaseElement {
     super(page, ModelDialog.modelDialog);
   }
 
-  public talkToModels!: TalkToGroup;
-  public talkToAssistants!: TalkToGroup;
-  public talkToApplications!: TalkToGroup;
+  public talkToModelEntities!: GroupEntity;
+  public talkToAssistantEntities!: GroupEntity;
+  public talkToApplicationEntities!: GroupEntity;
 
-  getTalkToModels(): TalkToGroup {
-    if (!this.talkToModels) {
-      this.talkToModels = new TalkToGroup(
+  getTalkToModelEntities(): GroupEntity {
+    if (!this.talkToModelEntities) {
+      this.talkToModelEntities = new TalkToGroup(
         this.page,
         this.rootLocator,
-        Groups.models,
-      );
+      ).getGroupEntity(Groups.models);
     }
-    return this.talkToModels;
+    return this.talkToModelEntities;
   }
 
-  getTalkToAssistants(): TalkToGroup {
-    if (!this.talkToAssistants) {
-      this.talkToAssistants = new TalkToGroup(
+  getTalkToAssistantEntities(): GroupEntity {
+    if (!this.talkToAssistantEntities) {
+      this.talkToAssistantEntities = new TalkToGroup(
         this.page,
         this.rootLocator,
-        Groups.assistants,
-      );
+      ).getGroupEntity(Groups.assistants);
     }
-    return this.talkToAssistants;
+    return this.talkToAssistantEntities;
   }
 
-  getTalkToApplications(): TalkToGroup {
-    if (!this.talkToApplications) {
-      this.talkToApplications = new TalkToGroup(
+  getTalkToApplicationEntities(): GroupEntity {
+    if (!this.talkToApplicationEntities) {
+      this.talkToApplicationEntities = new TalkToGroup(
         this.page,
         this.rootLocator,
-        Groups.applications,
-      );
+      ).getGroupEntity(Groups.applications);
     }
-    return this.talkToApplications;
+    return this.talkToApplicationEntities;
   }
 
   public searchInput = this.getChildElementBySelector(ModelDialog.searchInput);

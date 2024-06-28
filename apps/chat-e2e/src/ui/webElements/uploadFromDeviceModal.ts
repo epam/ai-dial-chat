@@ -1,6 +1,6 @@
 import { BaseElement } from './baseElement';
 
-import { Attachment } from '@/src/testData';
+import { Attachment, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
   ErrorLabelSelectors,
@@ -63,8 +63,7 @@ export class UploadFromDeviceModal extends BaseElement {
     const dotIndex = filename.lastIndexOf('.');
     let filenameValue =
       dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
-    const charsToEscape = ['\\', '"'];
-    charsToEscape.forEach((char) => {
+    ExpectedConstants.charsToEscape.forEach((char) => {
       if (filename.includes(char)) {
         filenameValue = filenameValue.replaceAll(char, `\\${char}`);
       }

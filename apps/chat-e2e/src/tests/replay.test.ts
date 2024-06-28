@@ -276,6 +276,7 @@ dialTest(
         replayConversation,
       ]);
       await localStorageManager.setSelectedConversation(replayConversation);
+      await localStorageManager.setRecentModelsIds(bison);
     });
 
     let replayRequest: ChatBody;
@@ -1037,16 +1038,21 @@ dialTest(
     talkToSelector,
     conversations,
     replayAsIs,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1330', 'EPMRTC-1332');
     const filename = GeneratorUtil.randomArrayElement([
       Import.v14AppImportedFilename,
       Import.v19AppImportedFilename,
     ]);
+    const newModels = [ModelIds.CHAT_BISON, ModelIds.GPT_4];
 
     await dialTest.step(
       'Import conversation from old app version and send two new messages based on Titan and gpt-4 models',
       async () => {
+        await localStorageManager.setRecentModelsIds(
+          ...newModels.map((m) => ModelsUtil.getModel(m)!),
+        );
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
@@ -1072,7 +1078,6 @@ dialTest(
           { isHttpMethodTriggered: true },
         );
 
-        const newModels = [ModelIds.CHAT_BISON, ModelIds.GPT_4];
         for (let i = 1; i <= newModels.length; i++) {
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
