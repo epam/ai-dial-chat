@@ -272,7 +272,7 @@ export const FileManagerModal = ({
               .slice(0, -2)
               .map((fid) => `${fid}/`);
             if (
-              selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
+              selectedFolderIds.some((fid) => parentFolderIds.includes(fid)) // selected now
             ) {
               setSelectedFilesIds((oldFileIds) =>
                 !canAttachFiles
@@ -288,11 +288,14 @@ export const FileManagerModal = ({
                     ),
               );
               setSelectedFolderIds((oldFolderIds) => {
+                const parentSelectedFolderIds = selectedFolderIds.filter(
+                  (fid) => parentFolderIds.includes(fid),
+                );
                 return oldFolderIds
                   .concat(
                     folders
                       .filter((folder) =>
-                        parentFolderIds.some((parentId) =>
+                        parentSelectedFolderIds.some((parentId) =>
                           folder.id.startsWith(parentId),
                         ),
                       )
