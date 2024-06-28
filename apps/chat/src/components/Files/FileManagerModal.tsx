@@ -103,7 +103,7 @@ export const FileManagerModal = ({
     useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilesIds, setSelectedFilesIds] = useState(
-    canAttachFiles
+    canAttachFiles || forceShowSelectCheckBox
       ? initialSelectedFilesIds.filter((id) => !isFolderId(id))
       : [],
   );
@@ -388,7 +388,7 @@ export const FileManagerModal = ({
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
       folderPath: string | undefined,
     ) => {
-      if (canAttachFiles) {
+      if (canAttachFiles || forceShowSelectCheckBox) {
         setSelectedFilesIds((oldValues) =>
           oldValues.concat(selectedFiles.map((f) => f.id)),
         );
@@ -405,7 +405,7 @@ export const FileManagerModal = ({
         );
       });
     },
-    [canAttachFiles, dispatch],
+    [canAttachFiles, dispatch, forceShowSelectCheckBox],
   );
 
   const handleDeleteMultipleFiles = useCallback(() => {
