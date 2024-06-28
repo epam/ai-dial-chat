@@ -327,7 +327,7 @@ export const PromptComponent = ({
         PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
       );
     },
-    [],
+    [dispatch, isChosen, prompt.id],
   );
 
   useEffect(() => {
@@ -339,7 +339,7 @@ export const PromptComponent = ({
 
   const handleToggle = useCallback(() => {
     PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen });
-  }, [prompt.id]);
+  }, [isChosen, prompt.id]);
 
   return (
     <>
