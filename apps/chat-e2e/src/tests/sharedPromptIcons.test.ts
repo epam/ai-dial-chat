@@ -46,7 +46,7 @@ dialTest.skip(
         await shareModal.closeButton.click();
         await expect
           .soft(
-            await prompts.getPromptArrowIcon(prompt.name),
+            prompts.getPromptArrowIcon(prompt.name),
             ExpectedMessages.promptIsNotShared,
           )
           .toBeHidden();
@@ -62,14 +62,14 @@ dialTest.skip(
         await promptBar.draggableArea.click({ force: true });
         await expect
           .soft(
-            await shareModal.getElementLocator(),
+            shareModal.getElementLocator(),
             ExpectedMessages.modalWindowIsClosed,
           )
           .toBeHidden();
 
         await expect
           .soft(
-            await prompts.getPromptArrowIcon(prompt.name),
+            prompts.getPromptArrowIcon(prompt.name),
             ExpectedMessages.promptIsNotShared,
           )
           .toBeHidden();
