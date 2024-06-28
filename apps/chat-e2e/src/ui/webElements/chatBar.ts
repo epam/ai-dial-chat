@@ -143,8 +143,7 @@ export class ChatBar extends SideBar {
     folderName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folder =
-      await this.getFolderConversations().getFolderByName(folderName);
+    const folder = this.getFolderConversations().getFolderByName(folderName);
     await this.dragFolderToRoot(folder, { isHttpMethodTriggered });
   }
 }

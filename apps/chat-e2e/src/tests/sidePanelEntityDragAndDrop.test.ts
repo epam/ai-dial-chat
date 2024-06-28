@@ -280,7 +280,7 @@ dialTest(
 
     await expect
       .soft(
-        await prompts.getPromptByName(promptInFolder.prompts[0].name),
+        prompts.getPromptByName(promptInFolder.prompts[0].name),
         ExpectedMessages.promptIsVisible,
       )
       .toBeVisible();
@@ -349,7 +349,7 @@ dialTest(
         }
         await expect
           .soft(
-            await folderPrompts.getFolderEntity(
+            folderPrompts.getFolderEntity(
               ExpectedConstants.newFolderWithIndexTitle(1),
               prompt.name,
             ),
@@ -403,7 +403,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderPrompts.getFolderEntity(
+            folderPrompts.getFolderEntity(
               promptInFolder.folders.name,
               prompt.name,
             ),

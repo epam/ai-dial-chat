@@ -67,7 +67,7 @@ dialTest(
 
         await expect
           .soft(
-            await folderConversations.getFolderByName(expectedFolderName),
+            folderConversations.getFolderByName(expectedFolderName),
             ExpectedMessages.newFolderCreated,
           )
           .toBeVisible();
@@ -75,7 +75,7 @@ dialTest(
         await folderConversations.expandFolder(expectedFolderName);
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               expectedFolderName,
               conversation.name,
             ),
@@ -99,7 +99,7 @@ dialTest(
         await chatBar.createNewFolder();
         await expect
           .soft(
-            await folderConversations.getFolderByName(incrementedFolderName),
+            folderConversations.getFolderByName(incrementedFolderName),
             ExpectedMessages.newFolderCreated,
           )
           .toBeVisible();
@@ -118,7 +118,7 @@ dialTest(
         await chatBar.createNewFolder();
         await expect
           .soft(
-            await folderConversations.getFolderByName(incrementedFolderName),
+            folderConversations.getFolderByName(incrementedFolderName),
             ExpectedMessages.newFolderCreated,
           )
           .toBeVisible();
@@ -177,7 +177,7 @@ dialTest(
         for (const nestedConversation of nestedConversations) {
           await expect
             .soft(
-              await folderConversations.getFolderEntity(
+              folderConversations.getFolderEntity(
                 expectedDuplicatedFolderName,
                 nestedConversation.name,
               ),
