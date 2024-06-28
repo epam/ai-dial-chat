@@ -24,7 +24,10 @@ const request = 'What is epam official name';
 const notMatchingSearchTerm = 'abc';
 const secondSearchTerm = 'epam official';
 const matchingConversationName = `${secondSearchTerm} name`;
-const specialSymbolsName = '_!@$epam official^&()_[]"\'.<>-`~';
+const specialSymbolsName = () => {
+  const allowedCharsLength = ExpectedConstants.allowedSpecialChars.length;
+  return `${ExpectedConstants.allowedSpecialChars.substring(0, allowedCharsLength / 2)}epam official${ExpectedConstants.allowedSpecialChars.substring(allowedCharsLength / 2, allowedCharsLength)}`;
+};
 
 dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
@@ -39,7 +42,7 @@ dialTest(
     'Chat name: restricted special characters are removed from chat name if to name automatically',
   async ({ dialHomePage, conversations, chat, chatMessages, setTestIds }) => {
     setTestIds('EPMRTC-583', 'EPMRTC-776', 'EPMRTC-2894', 'EPMRTC-2957');
-    const messageToSend = `.Hi${ExpectedConstants.prohibitedNameSymbols}...`;
+    const messageToSend = `.Hi${ExpectedConstants.restrictedNameChars}...`;
     const expectedConversationName = '.Hi';
 
     await dialTest.step(
@@ -164,7 +167,7 @@ dialTest(
         await conversations.getEditInputActions().clickCancelButton();
         await expect
           .soft(
-            await conversations.getConversationByName(newName),
+            conversations.getConversationByName(newName),
             ExpectedMessages.conversationNameNotUpdated,
           )
           .toBeHidden();
@@ -208,7 +211,7 @@ dialTest(
     await conversations.editConversationNameWithTick(newName);
     await expect
       .soft(
-        await conversations.getConversationByName(newName),
+        conversations.getConversationByName(newName),
         ExpectedMessages.conversationNameUpdated,
       )
       .toBeVisible();
@@ -223,7 +226,7 @@ dialTest(
     await chat.sendRequestWithButton('one more test message');
     await expect
       .soft(
-        await conversations.getConversationByName(newName),
+        conversations.getConversationByName(newName),
         ExpectedMessages.conversationNameUpdated,
       )
       .toBeVisible();
@@ -269,7 +272,7 @@ dialTest(
     await conversations.editConversationNameWithEnter(newNameWithMiddleSpaces);
     await expect
       .soft(
-        await conversations.getConversationByName(newNameWithMiddleSpaces),
+        conversations.getConversationByName(newNameWithMiddleSpaces),
         ExpectedMessages.conversationNameUpdated,
       )
       .toBeVisible();
@@ -354,7 +357,6 @@ dialTest(
       'EPMRTC-1276',
     );
     let editInputContainer: EditInput;
-    const specialSymbolsName = `(\`~!@#$^*-_+[]'|<>.?)`;
     const newNameWithEndDot = 'updated folder name.';
 
     await dialTest.step(
@@ -384,7 +386,7 @@ dialTest(
       async () => {
         await editInputContainer.editInput.click();
         await editInputContainer.editValue(
-          ExpectedConstants.prohibitedNameSymbols,
+          ExpectedConstants.restrictedNameChars,
         );
         const inputContent = await editInputContainer.getEditInputValue();
         expect
@@ -418,10 +420,14 @@ dialTest(
           ExpectedConstants.newConversationTitle,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(specialSymbolsName);
+        await conversations.editConversationNameWithTick(
+          ExpectedConstants.allowedSpecialChars,
+        );
         await expect
           .soft(
-            await conversations.getConversationByName(specialSymbolsName),
+            conversations.getConversationByName(
+              ExpectedConstants.allowedSpecialChars,
+            ),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -432,7 +438,9 @@ dialTest(
       'Send new request to conversation and verify context menu options',
       async () => {
         await chat.sendRequestWithButton('1+2');
-        await conversations.openConversationDropdownMenu(specialSymbolsName);
+        await conversations.openConversationDropdownMenu(
+          ExpectedConstants.allowedSpecialChars,
+        );
         const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
         expect
           .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
@@ -483,7 +491,7 @@ dialTest(
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     await expect
       .soft(
-        await folderConversations.getFolderEntity(
+        folderConversations.getFolderEntity(
           conversationInFolder.folders.name,
           conversationInFolder.conversations[0].name,
         ),
@@ -517,7 +525,7 @@ dialTest(
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     await expect
       .soft(
-        await conversations.getConversationByName(conversation.name),
+        conversations.getConversationByName(conversation.name),
         ExpectedMessages.conversationIsNotVisible,
       )
       .toBeHidden();
@@ -718,8 +726,7 @@ dialTest(
         await conversations.openConversationDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
 
-        const moveToFolder =
-          await conversationDropdownMenu.getMenuOption(folderName);
+        const moveToFolder = conversationDropdownMenu.getMenuOption(folderName);
         await moveToFolder.waitForState();
         const moveToFolderOverflow =
           await moveToFolder.getComputedStyleProperty(Styles.text_overflow);
@@ -794,7 +801,7 @@ dialTest(
 
     await expect
       .soft(
-        await folderConversations.getFolderByName(
+        folderConversations.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(1),
         ),
         ExpectedMessages.folderNotDeleted,
@@ -803,7 +810,7 @@ dialTest(
 
     await expect
       .soft(
-        await conversations.getConversationByName(singleConversation.name),
+        conversations.getConversationByName(singleConversation.name),
         ExpectedMessages.conversationNotDeleted,
       )
       .toBeVisible();
@@ -896,7 +903,7 @@ dialTest(
 
       await expect
         .soft(
-          await folderConversations.getFolderByName(
+          folderConversations.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(4),
           ),
           ExpectedMessages.folderDeleted,
@@ -906,7 +913,7 @@ dialTest(
       for (let i = 1; i <= 3; i++) {
         await expect
           .soft(
-            await folderConversations.getFolderByName(
+            folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(i),
             ),
             ExpectedMessages.folderDeleted,
@@ -916,7 +923,7 @@ dialTest(
 
       await expect
         .soft(
-          await conversations.getConversationByName(singleConversation.name),
+          conversations.getConversationByName(singleConversation.name),
           ExpectedMessages.conversationDeleted,
         )
         .toBeHidden();
@@ -936,7 +943,7 @@ dialTest(
         .soft(isFolderPromptVisible, ExpectedMessages.promptNotDeleted)
         .toBeTruthy();
 
-      const promptFolder = await folderPrompts.getFolderByName(
+      const promptFolder = folderPrompts.getFolderByName(
         ExpectedConstants.newFolderWithIndexTitle(1),
       );
       i === 1
@@ -949,7 +956,7 @@ dialTest(
 
       await expect
         .soft(
-          await prompts.getPromptByName(singlePrompt.name),
+          prompts.getPromptByName(singlePrompt.name),
           ExpectedMessages.promptNotDeleted,
         )
         .toBeVisible();
@@ -1172,7 +1179,7 @@ dialTest(
           conversationData.prepareModelConversationBasedOnRequests(
             bisonModel,
             [request],
-            specialSymbolsName,
+            specialSymbolsName(),
           );
         thirdConversation.folderId = secondFolder.id;
         thirdConversation.id = `${thirdConversation.folderId}/${thirdConversation.id}`;
@@ -1239,7 +1246,7 @@ dialTest(
 
         await expect
           .soft(
-            await folderConversations.getFolderByName(
+            folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(1),
             ),
             ExpectedMessages.folderIsNotVisible,
@@ -1285,7 +1292,7 @@ dialTest(
         );
         await expect
           .soft(
-            await conversations.getConversationByName(updatedConversationName),
+            conversations.getConversationByName(updatedConversationName),
             ExpectedMessages.conversationNameUpdated,
           )
           .toBeVisible();
@@ -1306,15 +1313,16 @@ dialTest(
   },
 );
 
-const longRequest =
-  'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+//TODO: enable when https://github.com/epam/ai-dial-chat/issues/1658 fixed
+// const longRequest =
+//   'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
     'how are you',
   ],
   ['first\nsecond\nthird', 'first'],
-  [longRequest, longRequest.substring(0, 160)],
+  // [longRequest, longRequest.substring(0, 160)],
 ]);
 for (const [request, expectedConversationName] of testRequestMap.entries()) {
   dialTest(
@@ -1341,15 +1349,18 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
           });
           await sendMessage.send(request);
 
-          await expect
+          const actualConversationName = await conversations
+            .getConversationName(expectedConversationName)
+            .getElementInnerContent();
+          expect
             .soft(
-              conversations.getConversationByName(expectedConversationName),
+              actualConversationName,
               ExpectedMessages.conversationNameUpdated,
             )
-            .toBeVisible();
+            .toBe(expectedConversationName);
           await expect
             .soft(
-              await chatMessages.getChatMessage(1),
+              chatMessages.getChatMessage(1),
               ExpectedMessages.messageContentIsValid,
             )
             .toHaveText(request);
@@ -1372,8 +1383,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2958');
-    const updatedRequest = `Chat${ExpectedConstants.prohibitedNameSymbols}name.....`;
-    const expectedConversationName = `Chat${' '.repeat(ExpectedConstants.prohibitedNameSymbols.length)}name`;
+    const updatedRequest = `Chat${ExpectedConstants.restrictedNameChars}name.....`;
+    const expectedConversationName = `Chat${' '.repeat(ExpectedConstants.restrictedNameChars.length)}name`;
     let conversation: Conversation;
 
     await dialTest.step('Prepare new conversation', async () => {
@@ -1394,7 +1405,7 @@ dialTest(
         );
         await expect
           .soft(
-            await chatMessages.getChatMessage(1),
+            chatMessages.getChatMessage(1),
             ExpectedMessages.messageContentIsValid,
           )
           .toHaveText(updatedRequest);

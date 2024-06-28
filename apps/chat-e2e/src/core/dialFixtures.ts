@@ -323,21 +323,17 @@ const dialTest = test.extend<
     await use(talkToRecentGroupEntities);
   },
   talkToModelsGroupEntities: async ({ modelsDialog }, use) => {
-    const talkToModelsGroupEntities = modelsDialog
-      .getTalkToModels()
-      .getGroupEntity();
+    const talkToModelsGroupEntities = modelsDialog.getTalkToModelEntities();
     await use(talkToModelsGroupEntities);
   },
   talkToAssistantsGroupEntities: async ({ modelsDialog }, use) => {
-    const talkToAssistantsGroupEntities = modelsDialog
-      .getTalkToAssistants()
-      .getGroupEntity();
+    const talkToAssistantsGroupEntities =
+      modelsDialog.getTalkToAssistantEntities();
     await use(talkToAssistantsGroupEntities);
   },
   talkToApplicationGroupEntities: async ({ modelsDialog }, use) => {
-    const talkToModelsGroupEntities = modelsDialog
-      .getTalkToApplications()
-      .getGroupEntity();
+    const talkToModelsGroupEntities =
+      modelsDialog.getTalkToApplicationEntities();
     await use(talkToModelsGroupEntities);
   },
   entitySettings: async ({ conversationSettings }, use) => {
