@@ -172,6 +172,9 @@ const PromptFolderTemplate = ({
   const selectedFolderIds = useAppSelector(
     PromptsSelectors.selectAllChosenFolderIds,
   );
+  const partialSelectedFolderIds = useAppSelector(
+    PromptsSelectors.selectPartialChosenFolderIds,
+  );
   const handleFolderSelect = useCallback(
     (folderId: string, isChosen: boolean) => {
       dispatch(PromptsActions.setChosenFolder({ folderId, isChosen }));
@@ -226,6 +229,7 @@ const PromptFolderTemplate = ({
         canSelectFolders={isSelectMode}
         additionalItemData={{
           selectedFolderIds,
+          partialSelectedFolderIds,
         }}
         onSelectFolder={handleFolderSelect}
       />

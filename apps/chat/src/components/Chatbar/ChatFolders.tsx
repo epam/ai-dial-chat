@@ -205,6 +205,9 @@ const ChatFolderTemplate = ({
   const selectedFolderIds = useAppSelector(
     ConversationsSelectors.selectAllChosenFolderIds,
   );
+  const partialSelectedFolderIds = useAppSelector(
+    ConversationsSelectors.selectPartialChosenFolderIds,
+  );
   const handleFolderSelect = useCallback(
     (folderId: string, isChosen: boolean) => {
       dispatch(ConversationsActions.setChosenFolder({ folderId, isChosen }));
@@ -242,6 +245,7 @@ const ChatFolderTemplate = ({
         canSelectFolders={isSelectMode}
         additionalItemData={{
           selectedFolderIds,
+          partialSelectedFolderIds,
         }}
       />
       {isLast && (

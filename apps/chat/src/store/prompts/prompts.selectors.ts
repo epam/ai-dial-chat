@@ -417,3 +417,23 @@ export const selectAllChosenFolderIds = createSelector(
       );
   },
 );
+
+export const selectPartialChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) &&
+          (state.chosenFolderIds.some((chosenId) =>
+            chosenId.startsWith(folderId),
+          ) ||
+            state.chosenPromptIds.some((promptId) =>
+              promptId.startsWith(folderId),
+            )),
+      );
+  },
+);

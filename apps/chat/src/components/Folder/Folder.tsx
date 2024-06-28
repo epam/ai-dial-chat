@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCheck, IconFolder, IconX } from '@tabler/icons-react';
+import { IconCheck, IconFolder, IconMinus, IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   DragEvent,
@@ -189,6 +189,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const [isSelected, setIsSelected] = useState(false);
+  const [isPartialSelected, setIsPartialSelected] = useState(false);
+  const checkboxRef = useRef<HTMLInputElement>(null);
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -202,15 +204,30 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   );
 
   useEffect(() => {
-    setIsSelected(() => {
-      const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-      return parentFolderIds.some((id) =>
+    const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
+    setIsSelected(
+      parentFolderIds.some((id) =>
         ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
           `${id}/`,
         ),
-      );
-    });
+      ),
+    );
   }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
+
+  useEffect(() => {
+    const currentId = `${currentFolder.id}/`;
+    setIsPartialSelected(
+      (
+        (additionalItemData?.partialSelectedFolderIds as string[]) || []
+      ).includes(currentId),
+    );
+  }, [additionalItemData?.partialSelectedFolderIds, currentFolder.id]);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = isPartialSelected && !isSelected;
+    }
+  }, [isPartialSelected, isSelected]);
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -903,7 +920,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               <Spinner className="mr-1" />
             ) : (
               <>
-                {!isSelected && (
+                {!isSelected && !isPartialSelected && (
                   <ShareIcon
                     {...currentFolder}
                     isHighlighted={isContextMenu}
@@ -931,7 +948,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     <div
                       className={classNames(
                         'relative mr-1 size-[18px] group-hover/folder-item:flex',
-                        isSelected ? 'flex' : 'hidden',
+                        isSelected || isPartialSelected ? 'flex' : 'hidden',
                       )}
                       data-item-checkbox
                     >
@@ -940,10 +957,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         type="checkbox"
                         checked={isSelected}
                         onChange={handleToggleFolder}
+                        ref={checkboxRef}
                       />
                       <IconCheck
                         size={18}
                         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                      />
+                      <IconMinus
+                        size={18}
+                        className="pointer-events-none invisible absolute text-accent-primary peer-indeterminate:visible"
                       />
                     </div>
                   )}
@@ -978,9 +1000,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       : 'text-secondary'),
                   isNameOrPathInvalid
                     ? 'text-secondary'
-                    : (highlightedFolders?.includes(currentFolder.id) &&
-                          featureType) ||
-                        isSelected
+                    : highlightedFolders?.includes(currentFolder.id) &&
+                        featureType &&
+                        !canSelectFolders
                       ? 'text-accent-primary'
                       : 'text-primary',
                 )}
