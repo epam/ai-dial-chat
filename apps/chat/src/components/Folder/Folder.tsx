@@ -217,11 +217,16 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   useEffect(() => {
     const currentId = `${currentFolder.id}/`;
     setIsPartialSelected(
-      (
-        (additionalItemData?.partialSelectedFolderIds as string[]) || []
-      ).includes(currentId),
+      !isSelected &&
+        (
+          (additionalItemData?.partialSelectedFolderIds as string[]) || []
+        ).includes(currentId),
     );
-  }, [additionalItemData?.partialSelectedFolderIds, currentFolder.id]);
+  }, [
+    additionalItemData?.partialSelectedFolderIds,
+    currentFolder.id,
+    isSelected,
+  ]);
 
   useEffect(() => {
     if (checkboxRef.current) {
@@ -959,14 +964,18 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         onChange={handleToggleFolder}
                         ref={checkboxRef}
                       />
-                      <IconCheck
-                        size={18}
-                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-                      />
-                      <IconMinus
-                        size={18}
-                        className="pointer-events-none invisible absolute text-accent-primary peer-indeterminate:visible"
-                      />
+                      {isSelected && (
+                        <IconCheck
+                          size={18}
+                          className="pointer-events-none absolute text-accent-primary"
+                        />
+                      )}
+                      {isPartialSelected && (
+                        <IconMinus
+                          size={18}
+                          className="pointer-events-none absolute text-accent-primary"
+                        />
+                      )}
                     </div>
                   )}
               </>
