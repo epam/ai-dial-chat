@@ -38,6 +38,7 @@ dialTest(
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIds(randomModel);
       },
     );
 

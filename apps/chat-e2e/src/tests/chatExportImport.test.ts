@@ -110,7 +110,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               conversationInFolder.folders.name,
               conversationInFolder.conversations[0].name,
             ),
@@ -134,7 +134,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               conversationInFolder.folders.name,
               conversationInFolder.conversations[0].name,
             ),
@@ -208,7 +208,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderByName(
+            folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(1),
             ),
             ExpectedMessages.folderExpanded,
@@ -216,9 +216,7 @@ dialTest(
           .toBeVisible();
         await expect
           .soft(
-            await conversations.getConversationByName(
-              conversationOutsideFolder.name,
-            ),
+            conversations.getConversationByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -226,7 +224,7 @@ dialTest(
         for (let i = 0; i <= levelsCount; i++) {
           await expect
             .soft(
-              await folderConversations.getFolderEntity(
+              folderConversations.getFolderEntity(
                 nestedFolders[i].name,
                 nestedConversations[i].name,
               ),
@@ -355,9 +353,7 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await conversations.getConversationByName(
-              conversationOutsideFolder.name,
-            ),
+            conversations.getConversationByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();

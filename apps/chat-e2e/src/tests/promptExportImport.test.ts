@@ -328,7 +328,7 @@ dialTest(
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await expect
           .soft(
-            await prompts.getPromptByName(promptOutsideFolder.name),
+            prompts.getPromptByName(promptOutsideFolder.name),
             ExpectedMessages.noPromptsImported,
           )
           .toBeHidden();
@@ -338,7 +338,7 @@ dialTest(
         );
         await expect
           .soft(
-            await prompts.getPromptByName(promptOutsideFolder.name),
+            prompts.getPromptByName(promptOutsideFolder.name),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -417,7 +417,7 @@ dialTest(
         await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
         await expect
           .soft(
-            await folderPrompts.getFolderEntity(
+            folderPrompts.getFolderEntity(
               promptsInsideFolder.folders.name,
               importedFolderPrompt.name,
             ),
@@ -428,7 +428,7 @@ dialTest(
         for (const existingPrompts of promptsInsideFolder.prompts) {
           await expect
             .soft(
-              await folderPrompts.getFolderEntity(
+              folderPrompts.getFolderEntity(
                 promptsInsideFolder.folders.name,
                 existingPrompts.name,
               ),
