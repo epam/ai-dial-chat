@@ -51,6 +51,7 @@ interface Props {
   customUploadButtonLabel?: string;
   onClose: (result: boolean | string[]) => void;
   forceShowSelectCheckBox?: boolean;
+  forceHideSelectFolders?: boolean;
   showTooltip?: boolean;
 }
 
@@ -64,6 +65,7 @@ export const FileManagerModal = ({
   customUploadButtonLabel,
   maximumAttachmentsAmount = 0,
   forceShowSelectCheckBox,
+  forceHideSelectFolders,
   onClose,
   showTooltip,
 }: Props) => {
@@ -86,9 +88,9 @@ export const FileManagerModal = ({
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
   );
-  const canAttachFolders = useAppSelector(
-    ConversationsSelectors.selectCanAttachFolders,
-  );
+  const canAttachFolders =
+    useAppSelector(ConversationsSelectors.selectCanAttachFolders) &&
+    !forceHideSelectFolders;
   const allowedTypesArray = useMemo(
     () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
     [allowedTypes, canAttachFiles, canAttachFolders],
@@ -270,7 +272,7 @@ export const FileManagerModal = ({
               .slice(0, -2)
               .map((fid) => `${fid}/`);
             if (
-              selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
+              selectedFolderIds.some((fid) => parentFolderIds.includes(fid)) // selected now
             ) {
               setSelectedFilesIds((oldFileIds) =>
                 !canAttachFiles
@@ -286,11 +288,14 @@ export const FileManagerModal = ({
                     ),
               );
               setSelectedFolderIds((oldFolderIds) => {
+                const parentSelectedFolderIds = selectedFolderIds.filter(
+                  (fid) => parentFolderIds.includes(fid),
+                );
                 return oldFolderIds
                   .concat(
                     folders
                       .filter((folder) =>
-                        parentFolderIds.some((parentId) =>
+                        parentSelectedFolderIds.some((parentId) =>
                           folder.id.startsWith(parentId),
                         ),
                       )
