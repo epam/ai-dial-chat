@@ -65,7 +65,7 @@ export default function ChatExternalControls({
         </button>
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-16 right-4 md:-top-20"
+            className="-top-16 right-0 md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}
