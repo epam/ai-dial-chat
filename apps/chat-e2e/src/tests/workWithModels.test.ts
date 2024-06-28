@@ -1,3 +1,4 @@
+import { SIDEBAR_MIN_WIDTH } from '@/chat/constants/default-ui-settings';
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
@@ -526,31 +527,36 @@ dialTest(
     setTestIds,
     chatMessages,
     sendMessage,
+    localStorageManager,
     chatBar,
   }) => {
     setTestIds('EPMRTC-1533', 'EPMRTC-538');
     await dialTest.step(
       'Send request, verify Compare button is disabled while generating the response and stop generation immediately',
       async () => {
+        const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
+        await localStorageManager.setChatbarWidth(width.toFixed());
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await dialHomePage.throttleAPIResponse(API.chatHost, 1500);
         await chat.sendRequestWithButton(request, false);
-
-        const isCompareButtonEnabled =
-          await chatBar.compareButton.isElementEnabled();
-        expect
+        await expect
           .soft(
-            isCompareButtonEnabled,
+            chatBar.compareButton.getElementLocator(),
             ExpectedMessages.compareButtonIsDisabled,
           )
-          .toBeFalsy();
+          .toBeDisabled();
 
         await chatMessages.waitForPartialMessageReceived(2);
-        await sendMessage.stopGenerating.click();
-        await sendMessage.stopGenerating.waitForState({ state: 'hidden' });
+        // eslint-disable-next-line playwright/no-force-option
+        await sendMessage.stopGenerating.click({ force: true });
+        await expect
+          .soft(
+            sendMessage.stopGenerating.getElementLocator(),
+            ExpectedMessages.stopGeneratingIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
 
@@ -560,11 +566,12 @@ dialTest(
         await sendMessage.messageInput.fillInInput(
           GeneratorUtil.randomString(10),
         );
-        const isSendButtonEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonEnabled)
-          .toBeTruthy();
+        await expect
+          .soft(
+            sendMessage.sendMessageButton.getElementLocator(),
+            ExpectedMessages.sendMessageButtonEnabled,
+          )
+          .toBeEnabled();
       },
     );
   },
