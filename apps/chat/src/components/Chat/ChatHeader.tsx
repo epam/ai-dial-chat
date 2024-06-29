@@ -304,11 +304,11 @@ export const ChatHeader = ({
       </div>
       <ConfirmDialog
         isOpen={isClearConversationModalOpen}
-        heading={t('Confirm clearing all messages in the conversation')}
+        heading={t('Confirm deleting all messages in the conversation')}
         description={
           t('Are you sure that you want to delete all messages?') || ''
         }
-        confirmLabel={t('Clear')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           setIsClearConversationModalOpen(false);
