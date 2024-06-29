@@ -409,10 +409,10 @@ export class ChatMessages extends BaseElement {
 
   public async waitForPartialMessageReceived(messagesIndex: number) {
     let isReceived = false;
+    const lastMessage = this.chatMessages.getNthElement(messagesIndex);
     while (!isReceived) {
-      const lastMessage = this.chatMessages.getNthElement(messagesIndex);
       const lastMessageContent = await lastMessage.innerText();
-      if (lastMessageContent.match(/.{2,}/g)) {
+      if (lastMessageContent.match(/.{2,}/)) {
         isReceived = true;
       }
     }

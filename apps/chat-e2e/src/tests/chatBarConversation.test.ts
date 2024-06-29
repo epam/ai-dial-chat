@@ -325,6 +325,7 @@ dialTest(
     expect
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual([
+        MenuOptions.select,
         MenuOptions.rename,
         MenuOptions.compare,
         MenuOptions.moveTo,
@@ -445,6 +446,7 @@ dialTest(
         expect
           .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
           .toEqual([
+            MenuOptions.select,
             MenuOptions.rename,
             MenuOptions.compare,
             MenuOptions.duplicate,
