@@ -1,16 +1,20 @@
 import { ChangeEvent, useCallback } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
+import { Translation } from '@/src/types/translation';
+
 interface RegexParamInputProps {
   regEx: string;
   onRegExChange: (regExp: string) => void;
-  readonly?: boolean;
 }
 
 export function RegexParamInput({
   regEx,
   onRegExChange,
-  readonly,
 }: RegexParamInputProps) {
+  const { t } = useTranslation(Translation.Chat);
+
   const handleRegExChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       onRegExChange(e.target.value);
@@ -19,13 +23,12 @@ export function RegexParamInput({
   );
 
   return (
-    <div className="flex w-full flex-wrap rounded border border-primary p-1 focus-within:border-accent-primary">
+    <div className="relative col-span-5 flex h-[31px] w-full max-w-full bg-layer-3 md:max-w-[205px]">
       <input
-        className="w-full bg-transparent py-1 pl-2 outline-none placeholder:text-secondary"
+        className="w-full bg-transparent py-1 pl-2 text-xs outline-none placeholder:text-secondary"
         type="text"
-        placeholder={'Enter regular expression...'}
+        placeholder={t('Enter regular expression...') || ''}
         value={regEx}
-        disabled={readonly}
         onChange={handleRegExChange}
       />
     </div>

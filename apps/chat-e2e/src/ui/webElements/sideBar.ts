@@ -56,8 +56,8 @@ export class SideBar extends BaseElement {
   );
 
   public foldersSeparator = this.getChildElementBySelector(
-    `${SideBarSelectors.pinnedEntities} ~ * ${SideBarSelectors.folderSeparator}`,
-  );
+    SideBarSelectors.pinnedEntities,
+  ).getChildElementBySelector(SideBarSelectors.folderSeparator);
 
   public async hoverOverNewEntity() {
     await this.newEntityButton.waitForState();
