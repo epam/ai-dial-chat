@@ -25,8 +25,6 @@ declare global {
       E2E_HOST?: string;
       E2E_USERNAME?: string;
       E2E_PASSWORD?: string;
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT?: string;
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT?: string;
       TMS_URL?: string;
       ISSUE_URL?: string;
       THEMES_CONFIG_HOST?: string;
