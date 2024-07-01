@@ -15,6 +15,7 @@ interface CollapsibleSectionProps {
   onToggle?: (isOpen: boolean) => void;
   className?: string;
   showOnHoverOnly?: boolean;
+  togglerClassName?: string;
 }
 
 export default function CollapsibleSection({
@@ -28,6 +29,7 @@ export default function CollapsibleSection({
   onToggle,
   className,
   showOnHoverOnly,
+  togglerClassName,
 }: CollapsibleSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
   const handleClick = useCallback(() => {
@@ -46,6 +48,7 @@ export default function CollapsibleSection({
           isHighlighted
             ? 'text-accent-primary'
             : '[&:not(:hover)]:text-secondary',
+          togglerClassName,
         )}
         onClick={handleClick}
         data-qa={dataQa}
