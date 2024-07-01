@@ -11,11 +11,7 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
-import {
-  Publication,
-  PublicationRule,
-  PublishActions,
-} from '@/src/types/publication';
+import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -288,9 +284,6 @@ export function HandlePublication({ publication }: Props) {
               data-qa="app-name"
               className="truncate whitespace-pre break-all text-base font-semibold"
             >
-              {publication.resources[0]?.action !== PublishActions.DELETE
-                ? t('Publication request for: ')
-                : t('Unpublish: ')}
               {publication.name || getPublicationId(publication.url)}
             </h4>
           </Tooltip>
@@ -299,65 +292,31 @@ export function HandlePublication({ publication }: Props) {
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 py-4 md:px-5">
-                {publication.resources[0]?.action !== PublishActions.DELETE ? (
-                  <>
-                    <label className="flex text-sm" htmlFor="approvePath">
-                      {t('Publish to')}
-                    </label>
-                    <button
-                      className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
-                      disabled
-                    >
-                      <Tooltip
-                        contentClassName="max-w-[400px] break-all"
-                        triggerClassName="truncate whitespace-pre"
-                        tooltip={
-                          <div className="flex break-words">{publishToUrl}</div>
-                        }
-                      >
-                        <span className="w-full">{publishToUrl}</span>
-                      </Tooltip>
-                    </button>
-                    <div className="my-4">
-                      <p className="text-xs text-secondary">
-                        {t('Request creation date: ')}
-                      </p>
-                      <p className="mt-1 text-sm">
-                        {new Date(publication.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label className="flex text-sm" htmlFor="approvePath">
-                      {t('General info')}
-                    </label>
-                    <div className="my-4 grid w-full grid-cols-3 gap-3 text-xs">
-                      <p className="text-secondary">{t('Path: ')}</p>
-                      <span className="col-span-2 flex truncate whitespace-pre">
-                        <Tooltip
-                          tooltip={publication.targetFolder.replace(
-                            /^[^/]+/,
-                            'Organization',
-                          )}
-                          contentClassName="max-w-[400px] break-all"
-                          triggerClassName="truncate whitespace-pre"
-                        >
-                          {publication.targetFolder.replace(
-                            /^[^/]+/,
-                            'Organization',
-                          )}
-                        </Tooltip>
-                      </span>
-                      <p className="text-secondary">
-                        {t('Publication date: ')}
-                      </p>
-                      <span className="col-span-2">
-                        {new Date(publication.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                  </>
-                )}
+                <label className="flex text-sm" htmlFor="approvePath">
+                  {t('Publish to')}
+                </label>
+                <button
+                  className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
+                  disabled
+                >
+                  <Tooltip
+                    contentClassName="max-w-[400px] break-all"
+                    triggerClassName="truncate whitespace-pre"
+                    tooltip={
+                      <div className="flex break-words">{publishToUrl}</div>
+                    }
+                  >
+                    <span className="w-full">{publishToUrl}</span>
+                  </Tooltip>
+                </button>
+                <div className="my-4">
+                  <p className="text-xs text-secondary">
+                    {t('Request creation date: ')}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    {new Date(publication.createdAt).toLocaleString()}
+                  </p>
+                </div>
               </div>
               <section className="px-3 py-4 md:px-5">
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
@@ -399,6 +358,11 @@ export function HandlePublication({ publication }: Props) {
                       name={sectionName}
                       openByDefault
                       dataQa={dataQa}
+                      sectionTooltip={
+                        <p>
+                          Publish, <span className="text-error">Unpublish</span>
+                        </p>
+                      }
                     >
                       <Component
                         resources={publication.resources}
