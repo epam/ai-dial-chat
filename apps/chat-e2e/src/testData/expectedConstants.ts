@@ -134,6 +134,7 @@ export const ExpectedConstants = {
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],
+  maxEntityNameLength: 160,
 };
 
 export enum Groups {
