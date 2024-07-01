@@ -52,7 +52,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         dataQa="root-folder"
         isHighlighted={rootFolderId === selectedFolderId}
         togglerClassName={classNames(
-          'mb-0.5 flex items-center gap-1 rounded border-l-2 py-1 text-xs text-secondary',
+          'mb-0.5 w-full rounded border-l-2 text-secondary',
           selectedFolderId === rootFolderId
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
