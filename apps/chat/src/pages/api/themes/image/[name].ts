@@ -23,17 +23,8 @@ const getImage = async (
   name: string,
 ) => {
   const imageUrl = getImageUrl(cachedTheme, name);
-  if (!imageUrl) {
-    if (name === 'default-model') {
-      return res.redirect(
-        307,
-        `//${req.headers.host}/images/icons/message-square-lines-alt.svg`,
-      );
-    }
-    return res.status(404).send('Image not found');
-  }
 
-  let finalUrl = imageUrl;
+  let finalUrl = imageUrl || name;
   if (!isAbsoluteUrl(finalUrl)) {
     finalUrl = `${process.env.THEMES_CONFIG_HOST}/${finalUrl}`;
   }
@@ -41,7 +32,13 @@ const getImage = async (
   const contentType = response.headers.get('content-type');
 
   if (!response.ok) {
-    throw new Error(response.statusText, { cause: { res: response } });
+    if (name === 'default-model' || name === 'default-addon') {
+      return res.redirect(
+        307,
+        `//${req.headers.host}/images/icons/message-square-lines-alt.svg`,
+      );
+    }
+    return res.status(404).send('Image not found');
   }
 
   return res
@@ -56,9 +53,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(500).send(errorsMessages.customThemesConfigNotProvided);
     }
 
-    const { name } = req.query as { name: string };
+    const name = req.query.name;
 
-    if (!name) {
+    if (!name || Array.isArray(name)) {
       return res
         .status(500)
         .send('Name parameter not provided for theme image');
