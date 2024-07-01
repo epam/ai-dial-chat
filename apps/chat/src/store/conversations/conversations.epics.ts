@@ -653,7 +653,11 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
     switchMap(() =>
-      merge(of(ModelsActions.getModels()), of(AddonsActions.getAddons())),
+      merge(
+        of(ModelsActions.getModels()),
+        of(AddonsActions.getAddons()),
+        of(ConversationsActions.resetChosenConversations()),
+      ),
     ),
   );
 
@@ -2634,6 +2638,55 @@ const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.deleteChosenConversations.match(action),
+    ),
+    switchMap(() => {
+      const actions: Observable<AnyAction>[] = [];
+      const chosenConversationIds =
+        ConversationsSelectors.selectChosenConversationIds(state$.value);
+      const chosenFolderIds = ConversationsSelectors.selectChosenFolderIds(
+        state$.value,
+      );
+      const conversationIds = ConversationsSelectors.selectConversations(
+        state$.value,
+      ).map((conv) => conv.id);
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const deletedConversationIds = uniq([
+        ...chosenConversationIds,
+        ...conversationIds.filter((id) =>
+          chosenFolderIds.some((folderId) => id.startsWith(folderId)),
+        ),
+      ]);
+
+      if (conversationIds.length) {
+        actions.push(
+          of(
+            ConversationsActions.deleteConversations({
+              conversationIds: deletedConversationIds,
+            }),
+          ),
+        );
+      }
+
+      return concat(
+        of(
+          ConversationsActions.setFolders({
+            folders: folders.filter((folder) =>
+              chosenFolderIds.every(
+                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
+              ),
+            ),
+          }),
+        ),
+        of(ConversationsActions.resetChosenConversations()),
+        ...actions,
+      );
+    }),
+  );
+
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
@@ -2693,4 +2746,6 @@ export const ConversationsEpics = combineEpics(
   cleanupIsolatedConversationEpic,
 
   getCustomAttachmentDataEpic,
+
+  deleteChosenConversationsEpic,
 );
