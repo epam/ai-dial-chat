@@ -821,7 +821,11 @@ export const ChatView = memo(() => {
                     </div>
                   </div>
                   {!isPlayback && notAllowedType ? (
-                    <NotAllowedModel type={notAllowedType} />
+                    <NotAllowedModel
+                      showScrollDownButton={showScrollDownButton}
+                      onScrollDownClick={handleScrollDown}
+                      type={notAllowedType}
+                    />
                   ) : (
                     <>
                       {isExternal && selectedConversations.length === 1 && (

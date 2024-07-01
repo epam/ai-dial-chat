@@ -9,7 +9,7 @@ import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API, ScrollState, Side } from '@/src/testData';
+import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
@@ -178,12 +178,14 @@ export class Chat extends BaseElement {
   public waitForRequestSent(userRequest: string | undefined) {
     return userRequest !== undefined
       ? this.page.waitForRequest((request) => {
-          const escapedRequestData = userRequest.includes('"')
-            ? userRequest.replaceAll('"', '\\"')
-            : userRequest;
+          ExpectedConstants.charsToEscape.forEach((char) => {
+            if (userRequest?.includes(char)) {
+              userRequest = userRequest.replaceAll(char, `\\${char}`);
+            }
+          });
           return (
             request.url().includes(API.chatHost) &&
-            request.postData()!.includes(escapedRequestData)
+            request.postData()!.includes(userRequest!)
           );
         })
       : this.page.waitForRequest(API.chatHost);

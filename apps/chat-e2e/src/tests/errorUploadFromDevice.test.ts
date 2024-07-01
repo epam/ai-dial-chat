@@ -6,7 +6,6 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { Attributes, Colors, Styles } from '@/src/ui/domData';
-import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -218,7 +217,7 @@ dialTest(
         await uploadFromDeviceModal.getUploadErrorText.getElementContent();
       expect
         .soft(
-          await errorText?.replaceAll('\n', ''),
+          errorText?.replaceAll('\n', ''),
           ExpectedMessages.errorMessageContentIsValid,
         )
         .toBe(
@@ -236,16 +235,16 @@ dialTest(
 );
 
 dialTest(
-  '[Upload from device] Error appears if to upload a file with a dot at the name without extension',
+  '[Upload from device] Error appears if to upload a file with a dot at the name without extension.\n' +
+    '[Upload from device] A file without extension is uploaded successfully',
   async ({
     dialHomePage,
     setTestIds,
     attachFilesModal,
     chatBar,
     uploadFromDeviceModal,
-    page,
   }) => {
-    setTestIds('EPMRTC-3216');
+    setTestIds('EPMRTC-3216', 'EPMRTC-3113');
     const dot = '.';
 
     await dialTest.step(
@@ -272,7 +271,6 @@ dialTest(
         await uploadFromDeviceModal
           .getUploadedFilenameInput(Attachment.fileWithoutExtension)
           .click();
-        await page.keyboard.press(keys.end);
         await uploadFromDeviceModal.typeInUploadedFilename(
           Attachment.fileWithoutExtension,
           dot,
@@ -294,6 +292,39 @@ dialTest(
               Attachment.fileWithoutExtension + dot,
             ),
           );
+      },
+    );
+
+    await dialTest.step(
+      'Remove end dot and verify file is successfully uploaded',
+      async () => {
+        await uploadFromDeviceModal
+          .getDeleteUploadedFileIcon(Attachment.fileWithoutExtension)
+          .click();
+        await uploadFromDeviceModal.addMoreFilesToUpload(
+          Attachment.fileWithoutExtension,
+        );
+        const uploadedFileExtension = await uploadFromDeviceModal
+          .getUploadedFileExtension(Attachment.fileWithoutExtension)
+          .getElementInnerContent();
+        expect
+          .soft(uploadedFileExtension, ExpectedMessages.fileExtensionIsValid)
+          .toBe('');
+
+        await uploadFromDeviceModal.uploadFiles();
+        await expect
+          .soft(
+            attachFilesModal.attachedFile(Attachment.fileWithoutExtension),
+            ExpectedMessages.fileIsAttached,
+          )
+          .toBeVisible();
+
+        const isFileChecked = attachFilesModal.attachedFileCheckBox(
+          Attachment.fileWithoutExtension,
+        );
+        await expect
+          .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
+          .toBeChecked();
       },
     );
   },

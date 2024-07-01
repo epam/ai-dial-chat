@@ -147,7 +147,7 @@ dialSharedWithMeTest(
 
         await expect
           .soft(
-            await additionalShareUserConversations.getConversationByName(
+            additionalShareUserConversations.getConversationByName(
               conversationName,
             ),
             ExpectedMessages.newConversationCreated,
@@ -295,7 +295,7 @@ dialSharedWithMeTest(
 
         await expect
           .soft(
-            await additionalShareUserChat.duplicate.getElementLocator(),
+            additionalShareUserChat.duplicate.getElementLocator(),
             ExpectedMessages.duplicateButtonIsNotVisible,
           )
           .toBeHidden();
@@ -340,7 +340,7 @@ dialSharedWithMeTest(
 
         await expect
           .soft(
-            await additionalShareUserChat.duplicate.getElementLocator(),
+            additionalShareUserChat.duplicate.getElementLocator(),
             ExpectedMessages.duplicateButtonIsNotVisible,
           )
           .toBeHidden();
