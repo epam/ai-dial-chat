@@ -45,19 +45,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
     [selectedFolderId],
   );
 
-  const filteredFolders = useMemo(
-    () =>
-      folderProps.searchTerm
-        ? folderProps.allFolders.filter((folder) =>
-            folder.name
-              .toLowerCase()
-              .includes(folderProps.searchTerm.toLowerCase()),
-          )
-        : folderProps.allFolders,
-    [folderProps.allFolders, folderProps.searchTerm],
-  );
-
-  const noFolders = !filteredFolders.length;
+  const noFolders = !folderProps.allFolders.length;
   const isSearching = !!folderProps.searchTerm;
 
   return (
@@ -79,7 +67,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         <div className="flex grow flex-col gap-0.5 overflow-y-auto">
           {!noFolders ? (
             <div className="flex flex-col gap-1" data-qa="all-folders">
-              {filteredFolders.map((folder) => {
+              {folderProps.allFolders.map((folder) => {
                 if (
                   folder.folderId !== rootFolderId ||
                   (initiallySelectedFolderId &&

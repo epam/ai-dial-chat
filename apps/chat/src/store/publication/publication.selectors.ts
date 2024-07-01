@@ -36,22 +36,30 @@ export const selectFilteredPublicationResources = createSelector(
 
 export const selectSelectedPublication = createSelector(
   [rootSelector],
-  (state) => state.selectedPublication,
+  (state) => {
+    return state.selectedPublication;
+  },
 );
 
 export const selectResourceToReview = createSelector(
   [rootSelector],
-  (state) => state.resourcesToReview,
+  (state) => {
+    return state.resourcesToReview;
+  },
 );
 
 export const selectResourceToReviewByReviewUrl = createSelector(
   [rootSelector, (_state, id: string) => id],
-  (state, id) => state.resourcesToReview.find((r) => r.reviewUrl === id),
+  (state, id) => {
+    return state.resourcesToReview.find((r) => r.reviewUrl === id);
+  },
 );
 
 export const selectResourcesToReviewByPublicationUrl = createSelector(
   [rootSelector, (_state, id: string) => id],
-  (state, id) => state.resourcesToReview.filter((r) => r.publicationUrl === id),
+  (state, id) => {
+    return state.resourcesToReview.filter((r) => r.publicationUrl === id);
+  },
 );
 
 export const selectRulesByPath = createSelector(
@@ -65,7 +73,13 @@ export const selectRulesByPath = createSelector(
   },
 );
 
-export const selectIsRulesLoading = createSelector(
-  [rootSelector],
-  (state) => state.isRulesLoading,
+export const selectIsRulesLoading = createSelector([rootSelector], (state) => {
+  return state.isRulesLoading;
+});
+
+export const selectIsAllItemsUploaded = createSelector(
+  [rootSelector, (_state, featureType: FeatureType) => featureType],
+  (state, featureType) => {
+    return state.allPublishedWithMeItemsUploaded[featureType];
+  },
 );

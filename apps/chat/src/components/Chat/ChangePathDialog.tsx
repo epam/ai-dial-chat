@@ -21,6 +21,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
@@ -60,6 +61,7 @@ export const ChangePathDialog = ({
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     rootFolderId,
   );
+
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const { selectors, actions } =
@@ -69,9 +71,21 @@ export const ChangePathDialog = ({
 
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
   const folders = useAppSelector((state) =>
-    selectors.selectTemporaryAndFilteredFolders(state, searchQuery),
+    selectors.selectTemporaryAndPublishedFolders(state, searchQuery),
   );
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
+
+  useEffect(() => {
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType:
+          type === SharingType.Conversation ||
+          type === SharingType.ConversationFolder
+            ? FeatureType.Chat
+            : FeatureType.Prompt,
+      }),
+    );
+  }, [dispatch, type]);
 
   useEffect(() => {
     if (!isOpen) {
