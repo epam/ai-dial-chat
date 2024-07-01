@@ -71,19 +71,14 @@ export const conversationsSlice = createSlice({
       state.conversationsLoaded = true;
       state.initFoldersAndConversations = true;
     },
-    setConversationUpdating: (state) => {
-      state.isConversationUpdating = true;
-    },
     getSelectedConversations: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     saveConversationSuccess: (state) => {
-      state.isConversationUpdating = false;
       if (state.isMessageSending) {
         state.isMessageSending = false;
       }
     },
     saveConversationFail: (state, { payload }: PayloadAction<Conversation>) => {
-      state.isConversationUpdating = false;
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.id) {
           return {
