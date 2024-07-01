@@ -44,6 +44,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
 import { PublicationItemsList } from './PublicationItemsList';
+import { RuleListItem } from './RuleListItem';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
 import compact from 'lodash-es/compact';
@@ -347,36 +348,7 @@ export function PublishModal({
                 </div>
               ) : (
                 notCurrentFolderRules.map(([path, rules]) => (
-                  <Fragment key={path}>
-                    <div className="mb-1 text-xs text-secondary">
-                      {path.split('/').pop()}
-                    </div>
-                    <div className="mb-3 flex gap-1 text-xs">
-                      {rules.map((rule) => (
-                        <div
-                          key={rule.source}
-                          className="rounded bg-layer-4 px-3 py-2"
-                        >
-                          <span className="font-semibold">
-                            {startCase(toLower(rule.source))}{' '}
-                          </span>
-                          <span className="font-normal italic">
-                            {toLower(rule.function)}{' '}
-                          </span>
-                          <span className="font-semibold">
-                            {rule.targets.map((target, index) => (
-                              <Fragment key={index}>
-                                {index > 0 && (
-                                  <span className="mx-1 italic">{t('or')}</span>
-                                )}
-                                <span className="font-semibold">{target}</span>
-                              </Fragment>
-                            ))}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </Fragment>
+                  <RuleListItem key={path} path={path} rules={rules} />
                 ))
               )}
               {!isRulesLoading && path && (
@@ -387,21 +359,21 @@ export function PublishModal({
                   <div className="relative mb-2 flex min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
                     {otherTargetAudienceFilters.map((item) => (
                       <div className="flex items-center gap-1" key={item.id}>
-                        <div className="flex h-[31px] items-center justify-center rounded bg-accent-primary-alpha text-xs">
-                          <div className="px-3 py-2">
+                        <div className="flex min-h-[31px] items-center justify-center rounded bg-accent-primary-alpha text-xs">
+                          <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
                             <span className="font-semibold">
-                              {startCase(toLower(item.id))}{' '}
+                              {startCase(toLower(item.id))}
                             </span>
-                            <span className="font-normal italic">
-                              {toLower(item.filterFunction)}{' '}
+                            <span className="italic">
+                              {toLower(item.filterFunction)}
                             </span>
                             {item.filterParams.map((param, index) => (
-                              <Fragment key={index}>
+                              <div className="flex gap-1" key={index}>
                                 {index > 0 && (
-                                  <span className="mx-1 italic">{t('or')}</span>
+                                  <span className="italic">{t('or')}</span>
                                 )}
                                 <span className="font-semibold">{param}</span>
-                              </Fragment>
+                              </div>
                             ))}
                           </div>
                           <IconX
@@ -412,11 +384,11 @@ export function PublishModal({
                                 prev.filter(({ id }) => id !== item.id),
                               )
                             }
-                            className="mr-3 cursor-pointer text-secondary"
+                            className="mr-3 shrink-0 cursor-pointer text-secondary"
                           />
                         </div>
                         <span className="text-xs italic text-secondary">
-                          or
+                          {t('or')}
                         </span>
                       </div>
                     ))}

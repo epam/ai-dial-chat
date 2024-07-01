@@ -1,4 +1,3 @@
-import { IconScale } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -271,6 +270,10 @@ export function HandlePublication({ publication }: Props) {
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
+  const areRulesChanged =
+    publication.rules &&
+    (publication.rules.length ||
+      (publication.targetFolder && rules[publication.targetFolder]));
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -360,25 +363,16 @@ export function HandlePublication({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p>{t('Allow access if all match')}</p>
-                    {publication.rules &&
-                      (publication.rules.length ||
-                        (publication.targetFolder &&
-                          rules[publication.targetFolder])) && (
-                        <Tooltip
-                          placement="top"
-                          tooltip={
-                            <div className="flex max-w-[230px] break-words text-xs">
-                              {t('Compare filters')}
-                            </div>
-                          }
-                        >
-                          <IconScale
-                            onClick={() => setIsCompareModalOpened(true)}
-                            size={18}
-                            className="cursor-pointer text-secondary hover:text-accent-primary"
-                          />
-                        </Tooltip>
-                      )}
+                    {areRulesChanged ? (
+                      <span
+                        onClick={() => setIsCompareModalOpened(true)}
+                        className="cursor-pointer text-accent-primary"
+                      >
+                        {t('See changes')}
+                      </span>
+                    ) : (
+                      <span className="text-secondary">{t('No changes')}</span>
+                    )}
                   </div>
                 </h2>
                 <FiltersComponent
