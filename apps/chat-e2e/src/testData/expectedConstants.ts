@@ -134,6 +134,7 @@ export const ExpectedConstants = {
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],
+  maxEntityNameLength: 160,
 };
 
 export enum Groups {
@@ -198,7 +199,8 @@ export const API = {
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
-  defaultIconHost: '/api/themes/image?name=default-model',
+  themeUrl: 'api/themes/image',
+  defaultIconHost: () => `/${API.themeUrl}/default-model`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,

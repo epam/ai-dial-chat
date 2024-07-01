@@ -201,6 +201,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
                         name: parsedApiKey.name,
+                        publicationInfo: {
+                          action: r.action,
+                        },
                       };
                     }),
                   }),
@@ -243,6 +246,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         ...parsedApiKey,
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        publicationInfo: {
+                          action: r.action,
+                        },
                       };
                     }),
                   }),
@@ -284,6 +290,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       contentLength: 0,
                       contentType: '',
                       isPublicationFile: true,
+                      publicationInfo: {
+                        action: r.action,
+                      },
                     })),
                   }),
                 ),

@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
 import { ThemesConfig } from '@/src/types/themes';
@@ -48,7 +49,7 @@ function generateUrlsCssVariables(
     }
     let compiledValue = value;
     if (!isAbsoluteUrl(value)) {
-      compiledValue = `${process.env.THEMES_CONFIG_HOST}/${value}`;
+      compiledValue = getThemeIconUrl(value);
     }
     cssContent += `--${cssEscape(variable)}: url('${compiledValue}');\n`;
   });
