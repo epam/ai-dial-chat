@@ -814,7 +814,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadRules.match),
     switchMap(({ payload }) =>
       PublicationService.getRules(payload.path).pipe(
-        switchMap(({ rules }) => {
+        switchMap((rules) => {
           return of(
             PublicationActions.uploadRulesSuccess({
               ruleRecords: rules,

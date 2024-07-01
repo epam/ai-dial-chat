@@ -69,7 +69,6 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
-  readonly?: boolean;
 }
 
 export function MultipleComboBox<T>({
@@ -84,7 +83,6 @@ export function MultipleComboBox<T>({
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
-  readonly,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -209,7 +207,10 @@ export function MultipleComboBox<T>({
   }, [isOpen, update, refs.floating, refs.reference]);
 
   return (
-    <div className="relative w-full" data-qa="multiple-combobox">
+    <div
+      className="relative col-span-5 w-full md:order-3 md:max-w-[205px]"
+      data-qa="multiple-combobox"
+    >
       <div className="flex w-full flex-col gap-1">
         {label && (
           <label htmlFor="option-input" {...getLabelProps()}>
@@ -224,10 +225,7 @@ export function MultipleComboBox<T>({
             }
             inputRef.current.focus();
           }}
-          className={classNames(
-            'relative flex w-full flex-wrap gap-1 rounded border border-primary p-1',
-            !readonly && 'focus-within:border-accent-primary',
-          )}
+          className="relative flex min-h-[31px] w-full flex-wrap gap-1 bg-layer-3 p-1"
         >
           {selectedItems &&
             selectedItems.map((selectedItemForRender, index) => {
@@ -237,10 +235,9 @@ export function MultipleComboBox<T>({
                     selectedItemForRender,
                   )}-${index}`}
                   tooltip={getItemLabel(selectedItemForRender)}
-                  triggerClassName="truncate text-center"
                 >
                   <span
-                    className="flex items-center gap-2 rounded bg-accent-primary-alpha px-3 py-1.5"
+                    className="flex h-[23px] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,
@@ -265,9 +262,7 @@ export function MultipleComboBox<T>({
                         removeSelectedItem(selectedItemForRender);
                       }}
                     >
-                      {!readonly && (
-                        <IconX size={14} className="text-secondary" />
-                      )}
+                      <IconX size={14} className="text-secondary" />
                     </span>
                   </span>
                 </Tooltip>
@@ -278,9 +273,8 @@ export function MultipleComboBox<T>({
             disabled={disabled}
             placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
-              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent py-1 outline-none placeholder:text-secondary',
+              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-xs outline-none placeholder:text-secondary',
               selectedItems.length ? 'pl-1' : 'pl-2',
-              readonly && 'hidden',
             )}
             {...getInputProps({
               ...getDropdownProps({
