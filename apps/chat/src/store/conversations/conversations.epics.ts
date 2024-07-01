@@ -319,6 +319,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
     map(({ payload }) => ({
+      modelId: payload.modelId,
       names: payload.names,
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
@@ -330,12 +331,14 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         names,
+        modelId,
         lastConversation,
         conversations,
         shouldUploadConversationsForCompare,
       }) =>
         forkJoin({
           names: of(names),
+          modelId: of(modelId),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
               ? ConversationService.getConversation(lastConversation).pipe(
@@ -361,7 +364,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             : of(conversations),
         }),
     ),
-    switchMap(({ names, conversations }) => {
+    switchMap(({ names, modelId, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
         map((state) => {
@@ -391,7 +394,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 model: {
                   //PGPT-81: Set GPT3.5 turbo as the default selected model
                   //Changing recentModels and rearranging it impacts other parts of the code, which is why it is set directly
-                  id: model?.id || process.env.DEFAULT_MODEL || ModelId.GPT_35,
+                  id: modelId || model?.id || ModelId.GPT_35,
                 },
                 prompt: DEFAULT_SYSTEM_PROMPT,
                 temperature: DEFAULT_TEMPERATURE,

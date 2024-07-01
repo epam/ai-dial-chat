@@ -280,7 +280,7 @@ export const MenuComponent = forwardRef<
               >
                 <div
                   className={classNames(
-                    'rounded-secondary z-50 overflow-auto bg-layer-0 text-primary-bg-dark shadow focus-visible:outline-none',
+                    'rounded-secondary z-50 overflow-auto bg-layer-2 text-primary-bg-light shadow focus-visible:outline-none',
                     listClassName,
                   )}
                   data-qa="dropdown-menu"

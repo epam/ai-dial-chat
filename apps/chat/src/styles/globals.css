@@ -163,14 +163,11 @@ pre:has(div.codeblock) {
     --text-accent-primary: var(--text-quinary-bg-light);
   }
 
-  .sidebar-left,
-  .context-menu-chat {
-    --bg-accent-primary: var(--bg-accent-secondary, #37babc);
-  }
-
-  .sidebar-right,
-  .context-menu-prompt {
-    --bg-accent-primary: var(--bg-accent-secondary, #a972ff);
+  .additional-description {
+    ul {
+      list-style-type: disc;
+      margin-left: 16px;
+    }
   }
 
   .sidebar-right .menu-trigger,

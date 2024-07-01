@@ -31,6 +31,7 @@ const commonBorderColors = {
   secondary: 'var(--stroke-secondary, #E9EDF0)',
   tertiary: 'var(--stroke-tertiary, #082A5E)',
   quaternary: 'var(--stroke-quaternary, #FFFFFF)',
+  quinary: 'var(--bg-layer-3, #023465)',
   error: 'var(--stroke-accent-primary, #FFD440)',
   hover: 'var(--stroke-hover, #7092B8)',
   'accent-primary': 'var(--stroke-accent-primary, #FF9166)',
@@ -81,6 +82,10 @@ module.exports = {
     gradientColorStops: commonBgColors,
     /////////
     extend: {
+      backgroundImage: {
+        'conic-gradient':
+          'conic-gradient( #FFE280 , #D8E5F8, #8FB1E3, #FFE280)',
+      },
       animation: {
         'spin-steps': 'spin 0.75s steps(8, end) infinite',
       },
@@ -101,6 +106,7 @@ module.exports = {
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--bg-blackout, #090D13B3)',
         primary: '0 5px 10px 0 var(--bg-blackout-1, #1844870D)',
+        secondary: '0 10px 15px 0 var(--bg-blackout-1, #1844870D)',
       },
       fontFamily: {
         DEFAULT: ['var(--theme-font, var(--font-inter))'],

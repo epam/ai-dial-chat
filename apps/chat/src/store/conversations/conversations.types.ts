@@ -33,4 +33,5 @@ export interface ConversationsState {
   customAttachmentDataLoading: boolean;
   initFoldersAndConversations: boolean;
   talkTo?: string;
+  isExploreAllApplicationsSelected?: boolean;
 }

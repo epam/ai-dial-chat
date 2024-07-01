@@ -355,6 +355,10 @@ export const getServerSideProps: GetServerSideProps = async ({
     popularPromptsPaths:
       process.env.POPULAR_PROMPTS_PATHS &&
       JSON.parse(process.env.POPULAR_PROMPTS_PATHS),
+    favoriteAppsIds:
+      (process.env.FAVORITE_APPS_IDS &&
+        process.env.FAVORITE_APPS_IDS.split(',')) ||
+      [],
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
