@@ -53,7 +53,7 @@ export function PublicationItemsList({
   return (
     <div
       className={classNames(
-        'flex w-full flex-col gap-[2px] md:max-w-[550px]',
+        'flex w-full flex-col gap-[2px] overflow-y-visible md:max-w-[550px]',
         containerClassNames,
       )}
     >
