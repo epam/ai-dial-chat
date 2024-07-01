@@ -53,9 +53,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       return res.status(500).send(errorsMessages.customThemesConfigNotProvided);
     }
 
-    const { name } = req.query as { name: string };
+    const name = req.query.name;
 
-    if (!name) {
+    if (!name || Array.isArray(name)) {
       return res
         .status(500)
         .send('Name parameter not provided for theme image');
