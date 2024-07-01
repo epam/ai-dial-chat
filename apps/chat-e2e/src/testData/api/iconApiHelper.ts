@@ -5,14 +5,18 @@ import { Tags } from '@/src/ui/domData';
 
 export class IconApiHelper extends BaseApiHelper {
   public async getDefaultEntityIcon() {
-    const response = await this.request.get(API.defaultIconHost);
+    const response = await this.request.get(API.defaultIconHost());
     return this.formatIconResponse(response.text());
   }
 
   public async getEntityIcon(entity: DialAIEntityModel) {
     let icon;
-    if (entity.iconUrl && entity.iconUrl.includes(Tags.svg)) {
-      const response = await this.request.get(entity.iconUrl);
+    const iconUrl = entity.iconUrl;
+    if (iconUrl && iconUrl.includes(Tags.svg)) {
+      const url = this.isAbsoluteUrl(iconUrl)
+        ? iconUrl
+        : `${API.themeUrl}/${encodeURIComponent(iconUrl)}`;
+      const response = await this.request.get(url);
       icon = await this.formatIconResponse(response.text());
     } else {
       icon = await this.getDefaultEntityIcon();
@@ -30,4 +34,18 @@ export class IconApiHelper extends BaseApiHelper {
         .replaceAll(/><\/path>$/g, Tags.closingTag),
     );
   }
+
+  private isAbsoluteUrl = (url: string): boolean => {
+    const urlLower = url.toLowerCase();
+    return [
+      'data:',
+      '//',
+      'http://',
+      'https://',
+      'file://',
+      'ftp://',
+      'mailto:',
+      'telnet://',
+    ].some((prefix) => urlLower.startsWith(prefix));
+  };
 }
