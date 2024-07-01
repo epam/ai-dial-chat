@@ -239,7 +239,8 @@ dialTest(
     'Long Chat name is cut in chat header. Named manually.\n' +
     'Tooltip shows full long chat name in chat header. Named manually.\n' +
     'Long chat name is cut in chat header. Named automatically by the system.\n' +
-    'Tooltip shows full long chat name in chat header. Named automatically by the system',
+    'Tooltip shows full long chat name in chat header. Named automatically by the system.\n' +
+    'Rename chat or chat folder with 161 symbol with dot in the end',
   async ({
     dialHomePage,
     conversations,
@@ -251,6 +252,7 @@ dialTest(
     tooltip,
     setTestIds,
     errorPopup,
+    errorToast,
   }) => {
     setTestIds(
       'EPMRTC-585',
@@ -259,8 +261,13 @@ dialTest(
       'EPMRTC-822',
       'EPMRTC-818',
       'EPMRTC-820',
+      'EPMRTC-3188',
     );
-    const newNameWithMiddleSpaces = `${GeneratorUtil.randomString(30)}   ${GeneratorUtil.randomString(30)}`;
+    const newLongNameWithMiddleSpacesEndDot = `${GeneratorUtil.randomString(80)}${' '.repeat(3)}${GeneratorUtil.randomString(77)}.`;
+    const expectedName = newLongNameWithMiddleSpacesEndDot.substring(
+      0,
+      ExpectedConstants.maxEntityNameLength,
+    );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);
@@ -269,13 +276,22 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await conversations.openConversationDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithEnter(newNameWithMiddleSpaces);
+    await conversations.editConversationNameWithEnter(
+      newLongNameWithMiddleSpacesEndDot,
+    );
+
     await expect
       .soft(
-        conversations.getConversationByName(newNameWithMiddleSpaces),
-        ExpectedMessages.conversationNameUpdated,
+        errorToast.getElementLocator(),
+        ExpectedMessages.noErrorToastIsShown,
       )
-      .toBeVisible();
+      .toBeHidden();
+    const actualName = await conversations
+      .getConversationName(expectedName)
+      .getElementInnerContent();
+    expect
+      .soft(actualName, ExpectedMessages.conversationNameUpdated)
+      .toBe(expectedName);
 
     const isChatHeaderTitleTruncated =
       await chatHeader.chatTitle.isElementWidthTruncated();
@@ -293,7 +309,7 @@ dialTest(
         tooltipChatHeaderTitle,
         ExpectedMessages.headerTitleCorrespondRequest,
       )
-      .toBe(newNameWithMiddleSpaces);
+      .toBe(expectedName);
 
     const isTooltipChatHeaderTitleTruncated =
       await tooltip.isElementWidthTruncated();
@@ -1315,16 +1331,18 @@ dialTest(
   },
 );
 
-//TODO: enable when https://github.com/epam/ai-dial-chat/issues/1658 fixed
-// const longRequest =
-//   'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+const longRequest =
+  'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
     'how are you',
   ],
   ['first\nsecond\nthird', 'first'],
-  // [longRequest, longRequest.substring(0, 160)],
+  [
+    longRequest,
+    longRequest.substring(0, ExpectedConstants.maxEntityNameLength),
+  ],
 ]);
 for (const [request, expectedConversationName] of testRequestMap.entries()) {
   dialTest(
