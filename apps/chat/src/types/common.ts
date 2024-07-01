@@ -1,3 +1,4 @@
+import { PublishActions } from './publication';
 import { ShareInterface } from './share';
 
 export enum EntityType {
@@ -24,11 +25,17 @@ export enum BackendResourceType {
   CONVERSATION = 'CONVERSATION',
 }
 
+export interface EntityPublicationInfo {
+  action: PublishActions;
+  // TODO: add version
+}
+
 export interface Entity {
   id: string;
   name: string;
   folderId: string;
   status?: UploadStatus;
+  publicationInfo?: EntityPublicationInfo;
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
