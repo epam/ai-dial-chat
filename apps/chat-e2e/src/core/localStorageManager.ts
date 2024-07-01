@@ -36,6 +36,10 @@ export class LocalStorageManager {
     window.localStorage.setItem('recentModelsIds', modelIds);
   };
 
+  setChatbarWidthKey = () => (width: string) => {
+    window.localStorage.setItem('chatbarWidth', width);
+  };
+
   async setConversationHistory(...conversation: Conversation[]) {
     await this.page.addInitScript(
       this.setConversationHistoryKey(),
@@ -108,5 +112,9 @@ export class LocalStorageManager {
       this.setRecentModelsIdsKey(),
       JSON.stringify(models.map((m) => m.id)),
     );
+  }
+
+  async setChatbarWidth(width: string) {
+    await this.page.addInitScript(this.setChatbarWidthKey(), width);
   }
 }

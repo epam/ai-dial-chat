@@ -125,7 +125,7 @@ export enum ExpectedMessages {
   requestCustomContentIsValid = 'Request custom content is valid in API request',
   regenerateNotAvailable = 'Regenerate button is not available',
   regenerateIsAvailable = 'Regenerate button is available',
-  stopGeneratingAvailable = 'Stop generating button is available',
+  stopGeneratingIsNotVisible = 'Stop generating button is not visible',
   iconSizeIsValid = 'Icon size is valid',
   chatBarConversationIconIsDefault = 'Chat bar conversation icon is default',
   chatBarConversationIconIsPlayback = 'Chat bar conversation icon is Playback',

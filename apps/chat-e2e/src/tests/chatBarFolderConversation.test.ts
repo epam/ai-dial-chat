@@ -42,7 +42,7 @@ dialTest(
     const actualMenuOptions = await folderDropdownMenu.getAllMenuOptions();
     expect
       .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([MenuOptions.rename, MenuOptions.delete]);
+      .toEqual([MenuOptions.select, MenuOptions.rename, MenuOptions.delete]);
   },
 );
 
