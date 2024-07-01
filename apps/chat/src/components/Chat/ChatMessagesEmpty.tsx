@@ -17,7 +17,7 @@ import { PopularPrompts } from '@/src/components/Chat/PopularPrompts';
 import SecondaryLogo from '@/public/images/icons/secondary-logo.svg';
 import { DallSquareIcon } from '@/src/icons';
 
-export const ApplicationNoMessages = ({
+export const ApplicationMessagesEmpty = ({
   application,
   t,
 }: {
@@ -88,7 +88,7 @@ export const ChatMessagesEmpty = ({
   return (
     <>
       {model?.type === EntityType.Application && (
-        <ApplicationNoMessages application={model} t={t} />
+        <ApplicationMessagesEmpty application={model} t={t} />
       )}
 
       {model?.type === EntityType.Model && (

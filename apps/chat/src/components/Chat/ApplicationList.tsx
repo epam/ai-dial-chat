@@ -151,16 +151,3 @@ export const ApplicationList = ({
     </div>
   );
 };
-
-// <ul>
-//   <li>
-//     Answer accuracy is only guaranteed in <strong>English</strong>.
-//   </li>
-//   <li>
-//     The chatbot works with a simple Q&A mode meaning it does not consider
-//     previous questions as context for next questions answers. Please try to
-//     rephrase your question if you consider the answer is not relevant or
-//     precise.
-//   </li>
-//   <li>Do not use abbreviations or symbols in your queries.</li>
-// </ul>;
