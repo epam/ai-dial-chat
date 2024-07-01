@@ -1,4 +1,4 @@
-import { SideBarSelectors } from '../selectors';
+import { MenuSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -58,7 +58,7 @@ export class SideBarEntities extends BaseElement {
     index?: number,
   ) => {
     return this.getEntityByName(selector, name, index).locator(
-      SideBarSelectors.dotsMenu,
+      MenuSelectors.dotsMenu,
     );
   };
 
@@ -137,24 +137,36 @@ export class SideBarEntities extends BaseElement {
     return backgroundColor[0];
   }
 
-  public async selectMoveToMenuOption(name: string) {
-    return this.selectEntityMenuOption(name, { triggeredHttpMethod: 'DELETE' });
+  public async selectMoveToMenuOption(
+    name: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    return this.selectEntityMenuOption(name, {
+      triggeredHttpMethod: 'DELETE',
+      isHttpMethodTriggered,
+    });
   }
 
   public async selectEntityMenuOption(
     option: string,
     {
       triggeredHttpMethod = undefined,
-    }: { triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' } = {},
+      isHttpMethodTriggered = true,
+    }: {
+      triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE';
+      isHttpMethodTriggered?: boolean;
+    } = {},
   ) {
     const menu = this.getDropdownMenu();
-    if (isApiStorageType) {
+
+    if (isApiStorageType && isHttpMethodTriggered && triggeredHttpMethod) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === triggeredHttpMethod,
       );
       await menu.selectMenuOption(option);
       return respPromise;
     }
+
     await menu.selectMenuOption(option);
   }
 }

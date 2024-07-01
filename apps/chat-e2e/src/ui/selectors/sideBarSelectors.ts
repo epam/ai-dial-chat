@@ -2,10 +2,6 @@ export const SideBarSelectors = {
   chatBar: '[data-qa="chatbar"]',
   promptBar: '[data-qa="promptbar"]',
   newEntity: '[data-qa="new-entity"]',
-  folder: '[data-qa="folder"]',
-  folderGroup: '#folder',
-  folderName: '[data-qa="folder-name"]',
-  dotsMenu: '[aria-haspopup="menu"]',
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',
@@ -41,8 +37,10 @@ export const PromptBarSelectors = {
   newFolder: '[data-qa="create-prompt-folder"]',
   promptFolders: '[data-qa="prompt-folders"]',
   newPromptButton: '[data-qa="new-prompt"]',
-  prompts: '[data-qa="prompts"]',
+  prompts: '[data-qa="prompts-section-container"] >> [data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
   deletePrompts: '[data-qa="delete-prompts"]',
+  pinnedChats: () =>
+    `${PromptBarSelectors.promptFolders} > [data-qa="pinned-prompts-container"]`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
 };

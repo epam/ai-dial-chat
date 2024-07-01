@@ -1,3 +1,4 @@
+import { SIDEBAR_MIN_WIDTH } from '@/chat/constants/default-ui-settings';
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
@@ -6,6 +7,7 @@ import {
   API,
   ExpectedConstants,
   ExpectedMessages,
+  MockedChatApiResponseBodies,
   ModelIds,
   Theme,
 } from '@/src/testData';
@@ -118,7 +120,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.regenerate.getElementLocator(),
+            chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();
@@ -126,7 +128,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Type any prompt, hit Enter button and and verify nothing happended, Send button is not shown',
+      'Type any prompt, hit Enter button and and verify nothing happened, Send button is not shown',
       async () => {
         await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {
@@ -159,11 +161,9 @@ dialTest(
     await dialTest.step(
       'Click Regenerate response and validate answer received',
       async () => {
-        await page.route(API.chatHost, async (route) => {
-          await route.fulfill({
-            body: Buffer.from('{"content":"Response"}\u0000{}\u0000'),
-          });
-        });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.regenerateResponse();
         const generatedContent = await chatMessages.getLastMessageContent();
         expect
@@ -210,7 +210,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.getChatMessageTextarea(userRequests[1]),
+            chatMessages.getChatMessageTextarea(userRequests[1]),
             ExpectedMessages.editRequestModeIsClosed,
           )
           .toBeHidden();
@@ -229,7 +229,7 @@ dialTest(
         await chatMessages.fillEditData(userRequests[1], '');
         await expect
           .soft(
-            await chatMessages.saveAndSubmit.getElementLocator(),
+            chatMessages.saveAndSubmit.getElementLocator(),
             ExpectedMessages.saveIsDisabled,
           )
           .toBeDisabled();
@@ -251,7 +251,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.getChatMessage(editData),
+            chatMessages.getChatMessage(editData),
             ExpectedMessages.requestMessageIsEdited,
           )
           .toBeVisible();
@@ -317,7 +317,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.getChatMessage(userRequests[1]),
+            chatMessages.getChatMessage(userRequests[1]),
             ExpectedMessages.messageIsDeleted,
           )
           .toBeHidden();
@@ -417,7 +417,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.regenerate.getElementLocator(),
+            chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();
@@ -495,7 +495,7 @@ dialTest(
 
         await expect
           .soft(
-            await chatMessages.regenerate.getElementLocator(),
+            chatMessages.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();
@@ -527,31 +527,36 @@ dialTest(
     setTestIds,
     chatMessages,
     sendMessage,
+    localStorageManager,
     chatBar,
   }) => {
     setTestIds('EPMRTC-1533', 'EPMRTC-538');
     await dialTest.step(
       'Send request, verify Compare button is disabled while generating the response and stop generation immediately',
       async () => {
+        const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
+        await localStorageManager.setChatbarWidth(width.toFixed());
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await dialHomePage.throttleAPIResponse(API.chatHost, 1500);
         await chat.sendRequestWithButton(request, false);
-
-        const isCompareButtonEnabled =
-          await chatBar.compareButton.isElementEnabled();
-        expect
+        await expect
           .soft(
-            isCompareButtonEnabled,
+            chatBar.compareButton.getElementLocator(),
             ExpectedMessages.compareButtonIsDisabled,
           )
-          .toBeFalsy();
+          .toBeDisabled();
 
         await chatMessages.waitForPartialMessageReceived(2);
-        await sendMessage.stopGenerating.click();
-        await sendMessage.stopGenerating.waitForState({ state: 'hidden' });
+        // eslint-disable-next-line playwright/no-force-option
+        await sendMessage.stopGenerating.click({ force: true });
+        await expect
+          .soft(
+            sendMessage.stopGenerating.getElementLocator(),
+            ExpectedMessages.stopGeneratingIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
 
@@ -561,11 +566,12 @@ dialTest(
         await sendMessage.messageInput.fillInInput(
           GeneratorUtil.randomString(10),
         );
-        const isSendButtonEnabled =
-          await sendMessage.sendMessageButton.isElementEnabled();
-        expect
-          .soft(isSendButtonEnabled, ExpectedMessages.sendMessageButtonEnabled)
-          .toBeTruthy();
+        await expect
+          .soft(
+            sendMessage.sendMessageButton.getElementLocator(),
+            ExpectedMessages.sendMessageButtonEnabled,
+          )
+          .toBeEnabled();
       },
     );
   },

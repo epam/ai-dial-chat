@@ -3,12 +3,13 @@ import {
   ChatSelectors,
   MessageInputSelectors,
   SideBarSelectors,
+  TableSelectors,
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Rate, Side } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
+import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
 import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
@@ -102,6 +103,68 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getChatMessageCodeBlock(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.codeBlock);
+  }
+
+  public getChatMessageTable(message: string | number) {
+    return this.getChatMessage(message).locator(TableSelectors.tableContainer);
+  }
+
+  public getChatMessageTableControls(message: string | number) {
+    return this.getChatMessageTable(message).locator(
+      TableSelectors.tableControls,
+    );
+  }
+
+  public getChatMessageTableCopyAsCsvIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.copyAsCsvIcon,
+    );
+  }
+
+  public getChatMessageTableCopyAsTxtIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.copyAsTxtIcon,
+    );
+  }
+
+  public getChatMessageTableCopyAsMdIcon(message: string | number) {
+    return this.getChatMessageTableControls(message).locator(
+      TableSelectors.copyAsMdIcon,
+    );
+  }
+
+  public getChatMessageTableHeaderColumns(message: string | number) {
+    return this.getChatMessageTable(message)
+      .locator(Tags.table)
+      .locator(Tags.thead)
+      .locator(Tags.th);
+  }
+
+  public getChatMessageTableRows(message: string | number) {
+    return this.getChatMessageTable(message)
+      .locator(Tags.table)
+      .locator(Tags.tbody)
+      .locator(Tags.td);
+  }
+
+  public getMessageStage(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex).locator(
+      ChatSelectors.openedStage,
+    );
+  }
+
+  public getMessagePlotlyAttachment(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.plotlyContainer);
+  }
+
+  public getAttachmentLinkIcon(message: string | number) {
+    return this.getChatMessage(message).locator(
+      `${Tags.a}[${Attributes.href}]`,
+    );
+  }
+
   public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
@@ -167,9 +230,7 @@ export class ChatMessages extends BaseElement {
 
   public async getIconAttributesForMessage(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    const messageIcon = await this.chatMessages.getNthElement(
-      index ?? messagesCount,
-    );
+    const messageIcon = this.chatMessages.getNthElement(index ?? messagesCount);
     return this.getElementIconHtml(messageIcon);
   }
 
@@ -348,10 +409,10 @@ export class ChatMessages extends BaseElement {
 
   public async waitForPartialMessageReceived(messagesIndex: number) {
     let isReceived = false;
+    const lastMessage = this.chatMessages.getNthElement(messagesIndex);
     while (!isReceived) {
-      const lastMessage = await this.chatMessages.getNthElement(messagesIndex);
       const lastMessageContent = await lastMessage.innerText();
-      if (lastMessageContent.match(/.{2,}/g)) {
+      if (lastMessageContent.match(/.{2,}/)) {
         isReceived = true;
       }
     }
@@ -370,17 +431,8 @@ export class ChatMessages extends BaseElement {
     }
   }
 
-  public async isMessageStageReceived(
-    messagesIndex: number,
-    stageIndex: number,
-  ) {
-    return this.messageStage(messagesIndex, stageIndex).isVisible();
-  }
-
   public async isMessageStageOpened(messagesIndex: number, stageIndex: number) {
-    return this.messageStage(messagesIndex, stageIndex)
-      .locator(ChatSelectors.openedStage)
-      .isVisible();
+    return this.getMessageStage(messagesIndex, stageIndex).isVisible();
   }
 
   public async openMessageStage(messagesIndex: number, stageIndex: number) {
@@ -411,10 +463,28 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(MenuSelectors.menuTrigger);
   }
 
-  public async isChatMessageCodeVisible(message: number | string) {
-    return this.getChatMessage(message)
-      .locator(ChatSelectors.codeBlock)
-      .isVisible();
+  public async getChatMessageTableHeaderColumnsCount(message: string | number) {
+    return this.getChatMessageTableHeaderColumns(message).count();
+  }
+
+  public async getChatMessageTableHeadersBackgroundColor(
+    message: string | number,
+  ) {
+    return this.createElementFromLocator(
+      this.getChatMessageTableHeaderColumns(message).nth(1),
+    ).getComputedStyleProperty(Styles.backgroundColor);
+  }
+
+  public async getChatMessageTableRowsCount(message: string | number) {
+    return this.getChatMessageTableRows(message).count();
+  }
+
+  public async getChatMessageTableRowsBackgroundColor(
+    message: string | number,
+  ) {
+    return this.createElementFromLocator(
+      this.getChatMessageTableRows(message).nth(1),
+    ).getComputedStyleProperty(Styles.backgroundColor);
   }
 
   public messageEditIcon = (messageLocator: Locator) =>
@@ -463,7 +533,7 @@ export class ChatMessages extends BaseElement {
   }
 
   public async openDeleteMessageDialog(message: string) {
-    const chatMessage = await this.getChatMessage(message);
+    const chatMessage = this.getChatMessage(message);
     await chatMessage.hover();
     await this.messageDeleteIcon(message).click();
   }

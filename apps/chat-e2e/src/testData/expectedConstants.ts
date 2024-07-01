@@ -1,5 +1,6 @@
 import config from '../../config/playwright.config';
 
+import { CopyTableType } from '@/chat/types/chat';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -11,6 +12,8 @@ export const ExpectedConstants = {
   promptPlaceholder: (variable: string) => `Enter a value for ${variable}...`,
   newFolderTitle: 'New folder',
   newFolderWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newFolderTitle} ${index}`,
+  newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
   emptyString: '',
   defaultTemperature: '1',
@@ -33,8 +36,8 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?',
-  deleteFileMessage: 'Are you sure that you want to delete this file',
-  deleteFilesMessage: 'Are you sure that you want to delete these files',
+  deleteFileMessage: 'Are you sure that you want to delete this file?',
+  deleteFilesMessage: 'Are you sure that you want to delete these files?',
   deleteSharedFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?\n' +
     'Deleting will stop sharing and other users will no longer see this folder.',
@@ -78,8 +81,6 @@ export const ExpectedConstants = {
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
   revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
-  maxSidePanelWidthPercentage: 0.45,
-  minSidePanelWidthPx: 260,
   attachments: 'Attachments',
   responseContentPattern: /(?<="content":")[^"^\\$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
@@ -106,24 +107,33 @@ export const ExpectedConstants = {
     `Folder with name "${name}" already exists at the root.`,
   duplicatedConversationNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists in this folder.`,
+  duplicatedPromptNameErrorMessage: (name: string) =>
+    `Prompt with name "${name}" already exists in this folder.`,
+  duplicatedRootPromptNameErrorMessage: (name: string) =>
+    `Prompt with name "${name}" already exists at the root.`,
   duplicatedConversationRootNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists at the root.`,
-  prohibitedNameSymbols: `=,:;{}/%&`,
   // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
   attachedFileError: (filename: string) =>
     `You've trying to upload files with incorrect type: ${filename}`,
-  allowedSpecialSymbolsInName: 'Test (`~!@#$^*-_+[]\'|<>.?")',
-  winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___.__)",
+  allowedSpecialChars: "(`~!@#$^*-_+[]'|<>.?)",
+  allowedSpecialSymbolsInName: () =>
+    `Test ${ExpectedConstants.allowedSpecialChars}`,
+  winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
     `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
   sameFilenamesError: (filename: string) =>
     `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
-  restrictedNameChars: ':;,=/{}%&\\',
+  restrictedNameChars: ':;,=/{}%&\\"',
   notAllowedFilenameError: (filename: string) =>
     `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
   endDotFilenameError: (filename: string) =>
     `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
+  allFilesRoot: 'All files',
+  copyTableTooltip: (copyType: CopyTableType) =>
+    `Copy as ${copyType.toUpperCase()}`,
+  charsToEscape: ['\\', '"'],
 };
 
 export enum Groups {
@@ -153,6 +163,10 @@ export enum MenuOptions {
   attachments = 'Attachments',
   download = 'Download',
   addNewFolder = 'Add new folder',
+  upload = 'Upload',
+  attachFolders = 'Attach folders',
+  attachLink = 'Attach link',
+  select = 'Select',
 }
 
 export enum FilterMenuOptions {
@@ -197,7 +211,7 @@ export const API = {
     `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
-  shareWithMeListing: '/api/share/listing',
+  shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
 };
 
@@ -237,6 +251,7 @@ export const Attachment = {
   restrictedSemicolonCharFilename: 'restricted;char.jpg',
   restrictedEqualCharFilename: 'restricted=char.jpg',
   fileWithoutExtension: 'withoutExtension',
+  plotlyName: 'plotly.json',
 };
 
 export enum Side {
@@ -252,7 +267,6 @@ export enum ModelIds {
   GPT_3_5_TURBO_16K = 'gpt-35-turbo-16k',
   GPT_3_5_TURBO_0125 = 'gpt-35-turbo-0125',
   GPT_4 = 'gpt-4',
-  GPT_4_0314 = 'gpt-4-0314',
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
   GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',
@@ -324,3 +338,8 @@ export enum ScrollState {
   middle = 'middle',
   bottom = 'bottom',
 }
+
+export const MockedChatApiResponseBodies = {
+  simpleTextBody: '{"content":"Response"}\u0000{}\u0000',
+  listTextBody: `{"content":"1"}\u0000{"content":"."}\u0000{"content":" Italy"}\u0000{"content":"\\n"}\u0000{"content":"2"}\u0000{"content":"."}\u0000{"content":" Greece"}\u0000{"content":"\\n"}\u0000{"content":"3"}\u0000{"content":"."}\u0000{"content":" Switzerland"}\u0000{"content":"\\n"}\u0000{"content":"4"}\u0000{"content":"."}\u0000{"content":" Australia"}\u0000{"content":"\\n"}\u0000{"content":"5"}\u0000{"content":"."}\u0000{"content":" New"}\u0000{"content":" Zealand"}\u0000{"content":"\\n"}\u0000{"content":"6"}\u0000{"content":"."}\u0000{"content":" Mal"}\u0000{"content":"dives"}\u0000{"content":"\\n"}\u0000{"content":"7"}\u0000{"content":"."}\u0000{"content":" Canada"}\u0000{"content":"\\n"}\u0000{"content":"8"}\u0000{"content":"."}\u0000{"content":" Norway"}\u0000{"content":"\\n"}\u0000{"content":"9"}\u0000{"content":"."}\u0000{"content":" France"}\u0000{"content":"\\n"}\u0000{"content":"10"}\u0000{"content":"."}\u0000{"content":" Spain"}\u0000{"content":"\\n"}\u0000{"content":"11"}\u0000{"content":"."}\u0000{"content":" Iceland"}\u0000{"content":"\\n"}\u0000{"content":"12"}\u0000{"content":"."}\u0000{"content":" Scotland"}\u0000{"content":"\\n"}\u0000{"content":"13"}\u0000{"content":"."}\u0000{"content":" Ireland"}\u0000{"content":"\\n"}\u0000{"content":"14"}\u0000{"content":"."}\u0000{"content":" Japan"}\u0000{"content":"\\n"}\u0000{"content":"15"}\u0000{"content":"."}\u0000{"content":" Thailand"}\u0000{"content":"\\n"}\u0000{"content":"16"}\u0000{"content":"."}\u0000{"content":" Croatia"}\u0000{"content":"\\n"}\u0000{"content":"17"}\u0000{"content":"."}\u0000{"content":" Austria"}\u0000{"content":"\\n"}\u0000{"content":"18"}\u0000{"content":"."}\u0000{"content":" Sweden"}\u0000{"content":"\\n"}\u0000{"content":"19"}\u0000{"content":"."}\u0000{"content":" South"}\u0000{"content":" Africa"}\u0000{"content":"\\n"}\u0000{"content":"20"}\u0000{"content":"."}\u0000{"content":" Brazil"}\u0000{"content":"\\n"}\u0000{"content":"21"}\u0000{"content":"."}\u0000{"content":" United"}\u0000{"content":" States"}\u0000{"content":"\\n"}\u0000{"content":"22"}\u0000{"content":"."}\u0000{"content":" India"}\u0000{"content":"\\n"}\u0000{"content":"23"}\u0000{"content":"."}\u0000{"content":" Costa"}\u0000{"content":" Rica"}\u0000{"content":"\\n"}\u0000{"content":"24"}\u0000{"content":"."}\u0000{"content":" Turkey"}\u0000{"content":"\\n"}\u0000{"content":"25"}\u0000{"content":"."}\u0000{"content":" Morocco"}\u0000{"content":"\\n"}\u0000{"content":"26"}\u0000{"content":"."}\u0000{"content":" Argentina"}\u0000{"content":"\\n"}\u0000{"content":"27"}\u0000{"content":"."}\u0000{"content":" Portugal"}\u0000{"content":"\\n"}\u0000{"content":"28"}\u0000{"content":"."}\u0000{"content":" Vietnam"}\u0000{"content":"\\n"}\u0000{"content":"29"}\u0000{"content":"."}\u0000{"content":" Fiji"}\u0000{"content":"\\n"}\u0000{"content":"30"}\u0000{"content":"."}\u0000{"content":" China"}\u0000{"content":"\\n"}\u0000{"content":"31"}\u0000{"content":"."}\u0000{"content":" Indonesia"}\u0000{"content":"\\n"}\u0000{"content":"32"}\u0000{"content":"."}\u0000{"content":" Mexico"}\u0000{"content":"\\n"}\u0000{"content":"33"}\u0000{"content":"."}\u0000{"content":" Peru"}\u0000{"content":"\\n"}\u0000{"content":"34"}\u0000{"content":"."}\u0000{"content":" Chile"}\u0000{"content":"\\n"}\u0000{"content":"35"}\u0000{"content":"."}\u0000{"content":" Netherlands"}\u0000{"content":"\\n"}\u0000{"content":"36"}\u0000{"content":"."}\u0000{"content":" Belize"}\u0000{"content":"\\n"}\u0000{"content":"37"}\u0000{"content":"."}\u0000{"content":" Sey"}\u0000{"content":"ch"}\u0000{"content":"elles"}\u0000{"content":"\\n"}\u0000{"content":"38"}\u0000{"content":"."}\u0000{"content":" Philippines"}\u0000{"content":"\\n"}\u0000{"content":"39"}\u0000{"content":"."}\u0000{"content":" Denmark"}\u0000{"content":"\\n"}\u0000{"content":"40"}\u0000{"content":"."}\u0000{"content":" Hungary"}\u0000{"content":"\\n"}\u0000{"content":"41"}\u0000{"content":"."}\u0000{"content":" Czech"}\u0000{"content":" Republic"}\u0000{"content":"\\n"}\u0000{"content":"42"}\u0000{"content":"."}\u0000{"content":" Mal"}\u0000{"content":"awi"}\u0000{"content":"\\n"}\u0000{"content":"43"}\u0000{"content":"."}\u0000{"content":" Kenya"}\u0000{"content":"\\n"}\u0000{"content":"44"}\u0000{"content":"."}\u0000{"content":" Jordan"}\u0000{"content":"\\n"}\u0000{"content":"45"}\u0000{"content":"."}\u0000{"content":" Tanzania"}\u0000{"content":"\\n"}\u0000{"content":"46"}\u0000{"content":"."}\u0000{"content":" South"}\u0000{"content":" Korea"}\u0000{"content":"\\n"}\u0000{"content":"47"}\u0000{"content":"."}\u0000{"content":" Sri"}\u0000{"content":" Lanka"}\u0000{"content":"\\n"}\u0000{"content":"48"}\u0000{"content":"."}\u0000{"content":" Cambodia"}\u0000{"content":"\\n"}\u0000{"content":"49"}\u0000{"content":"."}\u0000{"content":" Israel"}\u0000{"content":"\\n"}\u0000{"content":"50"}\u0000{"content":"."}\u0000{"content":" Latvia"}\u0000{}\u0000`,
+};

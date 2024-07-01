@@ -168,13 +168,27 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const selectedFolderIds = useAppSelector(
+    PromptsSelectors.selectAllChosenFolderIds,
+  );
+  const partialSelectedFolderIds = useAppSelector(
+    PromptsSelectors.selectPartialChosenFolderIds,
+  );
+  const handleFolderSelect = useCallback(
+    (folderId: string, isChosen: boolean) => {
+      dispatch(PromptsActions.setChosenFolder({ folderId, isChosen }));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Prompt}
-        denyDrop={isExternal}
+        denyDrop={isExternal || isSelectMode}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -212,13 +226,19 @@ const PromptFolderTemplate = ({
         }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
+        canSelectFolders={isSelectMode}
+        additionalItemData={{
+          selectedFolderIds,
+          partialSelectedFolderIds,
+        }}
+        onSelectFolder={handleFolderSelect}
       />
       {isLast && (
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Prompt}
-          denyDrop={isExternal}
+          denyDrop={isExternal || isSelectMode}
         />
       )}
     </>
@@ -251,9 +271,8 @@ export const PromptSection = ({
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
-  const { selectedPromptId, isSelectedPublicationResource } = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
-  );
+  const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
+    useAppSelector(PromptsSelectors.selectSelectedPromptId);
 
   const { handleToggle, isExpanded } = useSectionToggle(
     name,
@@ -264,7 +283,7 @@ export const PromptSection = ({
 
   useEffect(() => {
     const shouldBeHighlighted =
-      !isSelectedPublicationResource &&
+      !isSelectedPromptApproveRequiredResource &&
       (rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
         (!!displayRootFiles &&
           rootPrompts.some(({ id }) => selectedPromptId === id)));
@@ -278,7 +297,7 @@ export const PromptSection = ({
     selectedPromptId,
     selectedFoldersIds,
     rootPrompts,
-    isSelectedPublicationResource,
+    isSelectedPromptApproveRequiredResource,
   ]);
 
   if (
@@ -305,7 +324,7 @@ export const PromptSection = ({
             isLast={index === arr.length - 1}
             filters={{ searchFilter: filters.searchFilter }}
             includeEmpty={showEmptyFolders}
-            allowHighlight={!isSelectedPublicationResource}
+            allowHighlight={!isSelectedPromptApproveRequiredResource}
           />
         ))}
       </div>

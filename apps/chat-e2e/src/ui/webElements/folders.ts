@@ -1,13 +1,19 @@
-import { ChatBarSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatBarSelectors,
+  MenuSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { FolderSelectors } from '@/src/ui/selectors/folderSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
+import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Locator, Page } from '@playwright/test';
 
 export class Folders extends BaseElement {
@@ -30,7 +36,7 @@ export class Folders extends BaseElement {
       this.editFolderInput = new EditInput(
         this.page,
         this.getElementLocator(),
-        SideBarSelectors.folder,
+        FolderSelectors.folder,
       );
     }
     return this.editFolderInput;
@@ -56,7 +62,7 @@ export class Folders extends BaseElement {
       this.editFolderInputActions = new EditInputActions(
         this.page,
         this.getElementLocator(),
-        SideBarSelectors.folder,
+        FolderSelectors.folder,
       );
     }
     return this.editFolderInputActions;
@@ -84,13 +90,22 @@ export class Folders extends BaseElement {
     return this.dropdownMenu;
   }
 
+  private tooltip!: Tooltip;
+
+  getTooltip(): Tooltip {
+    if (!this.tooltip) {
+      this.tooltip = new Tooltip(this.page);
+    }
+    return this.tooltip;
+  }
+
   public folderDotsMenu = (name: string, index?: number) => {
-    return this.getFolderByName(name, index).locator(SideBarSelectors.dotsMenu);
+    return this.getFolderByName(name, index).locator(MenuSelectors.dotsMenu);
   };
 
   public getFolderByName(name: string, index?: number) {
     return this.getChildElementBySelector(
-      SideBarSelectors.folder,
+      FolderSelectors.folder,
     ).getElementLocatorByText(name, index);
   }
 
@@ -102,13 +117,24 @@ export class Folders extends BaseElement {
 
   public getFolderName(name: string, index?: number) {
     return this.createElementFromLocator(
-      this.getFolderByName(name, index).locator(SideBarSelectors.folderName),
+      this.getFolderByName(name, index).locator(FolderSelectors.folderName),
+    );
+  }
+
+  public getFolderCheckbox(name: string, index?: number) {
+    return this.getFolderByName(name, index).locator(
+      FolderSelectors.folderCheckbox,
+    );
+  }
+
+  public getFolderExpandIcon(name: string, index?: number) {
+    return this.getFolderByName(name, index).locator(
+      `${Tags.span}[class='${Attributes.visible}']`,
     );
   }
 
   public async isFolderCaretExpanded(name: string, index?: number) {
-    return this.getFolderByName(name, index)
-      .locator(`${Tags.span}[class='${Attributes.visible}']`)
+    return this.getFolderExpandIcon(name, index)
       .locator(`.${Attributes.rotated}`)
       .isVisible();
   }
@@ -116,14 +142,14 @@ export class Folders extends BaseElement {
   public foldersGroup = (parentFolderName: string) => {
     return this.createElementFromLocator(
       this.getChildElementBySelector(
-        SideBarSelectors.folderGroup,
+        FolderSelectors.folderGroup,
       ).getElementLocatorByText(parentFolderName),
     );
   };
 
   public async waitForFolderGroupIsHighlighted(parentFolderName: string) {
     await this.getChildElementBySelector(
-      `${SideBarSelectors.folderGroup}.${ExpectedConstants.backgroundAccentAttribute}`,
+      `${FolderSelectors.folderGroup}.${ExpectedConstants.backgroundAccentAttribute}`,
     )
       .getElementLocatorByText(parentFolderName)
       .waitFor({ state: 'attached' });
@@ -131,7 +157,7 @@ export class Folders extends BaseElement {
 
   public async getFoldersCount() {
     return this.getChildElementBySelector(
-      SideBarSelectors.folder,
+      FolderSelectors.folder,
     ).getElementsCount();
   }
 
@@ -172,14 +198,14 @@ export class Folders extends BaseElement {
   }
 
   public async editFolderName(newName: string) {
-    const folderInput = await this.getEditFolderInput();
+    const folderInput = this.getEditFolderInput();
     await folderInput.editValue(newName);
     return folderInput;
   }
 
   public getFolderInEditMode(name: string) {
     const folderInEditModeLocator = this.getChildElementBySelector(
-      SideBarSelectors.folder,
+      FolderSelectors.folder,
     )
       .getElementLocator()
       .filter({
@@ -210,7 +236,7 @@ export class Folders extends BaseElement {
       const respPromise = this.page.waitForResponse((resp) =>
         resp.url().includes(API.listingHost),
       );
-      await folder.click();
+      await this.getFolderExpandIcon(name, index).click();
       return respPromise;
     }
     await folder.click();
@@ -230,7 +256,7 @@ export class Folders extends BaseElement {
   ) {
     return this.getFolderByName(parentName, parentIndex)
       .locator('~*')
-      .locator(SideBarSelectors.folder)
+      .locator(FolderSelectors.folder)
       .filter({ hasText: childName });
   }
 
@@ -252,7 +278,7 @@ export class Folders extends BaseElement {
 
   public folderEntityDotsMenu = (folderName: string, entityName: string) => {
     return this.getFolderEntity(folderName, entityName).locator(
-      SideBarSelectors.dotsMenu,
+      MenuSelectors.dotsMenu,
     );
   };
 
@@ -290,7 +316,7 @@ export class Folders extends BaseElement {
     folderName: string,
     entityName: string,
   ) {
-    const folderEntity = await this.getFolderEntity(folderName, entityName);
+    const folderEntity = this.getFolderEntity(folderName, entityName);
     await folderEntity.waitFor({
       state: 'attached',
     });
@@ -313,5 +339,17 @@ export class Folders extends BaseElement {
     return this.getFolderEntity(folderName, entityName, index).locator(
       SideBarSelectors.arrowAdditionalIcon,
     );
+  }
+
+  public async getFolderEntityArrowIconColor(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntityArrowIcon(folderName, entityName, index),
+    )
+      .getChildElementBySelector(Tags.svg)
+      .getComputedStyleProperty(Styles.color);
   }
 }

@@ -28,6 +28,7 @@ interface OverlayState {
 
   systemPrompt: string | null;
 
+  readyToInteractSent: boolean;
   optionsReceived?: boolean;
 }
 
@@ -35,6 +36,7 @@ const initialState: OverlayState = {
   hostDomain: '*',
 
   systemPrompt: null,
+  readyToInteractSent: false,
 };
 
 export const overlaySlice = createSlice({
@@ -85,6 +87,10 @@ export const overlaySlice = createSlice({
         requestParams: PostMessageRequestParams;
       }>,
     ) => state,
+    checkReadyToInteract: (state) => state,
+    sendReadyToInteract: (state) => {
+      state.readyToInteractSent = true;
+    },
   },
 });
 
@@ -102,10 +108,15 @@ const selectOptionsReceived = createSelector([rootSelector], (state) => {
   return state.optionsReceived;
 });
 
+const selectReadyToInteractSent = createSelector([rootSelector], (state) => {
+  return state.readyToInteractSent;
+});
+
 export const OverlaySelectors = {
   selectHostDomain,
   selectOverlaySystemPrompt,
   selectOptionsReceived,
+  selectReadyToInteractSent,
 };
 
 export const OverlayActions = overlaySlice.actions;

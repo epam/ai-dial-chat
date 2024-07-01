@@ -3,6 +3,7 @@ import {
   IconDots,
   IconFolderPlus,
   IconPencilMinus,
+  IconSquareCheck,
   IconTrashX,
   IconUpload,
   IconUserShare,
@@ -49,6 +50,7 @@ interface FolderContextMenuProps {
   onUnpublish?: MouseEventHandler<unknown>;
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
+  onSelect?: MouseEventHandler<unknown>;
 }
 
 export const FolderContextMenu = ({
@@ -67,6 +69,7 @@ export const FolderContextMenu = ({
   isOpen,
   isEmpty,
   isSidePanelFolder,
+  onSelect,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -86,6 +89,13 @@ export const FolderContextMenu = ({
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Select'),
+        display: !isExternal && !!onSelect && featureType !== FeatureType.File,
+        dataQa: 'select',
+        Icon: IconSquareCheck,
+        onClick: onSelect,
+      },
       {
         name: t('Upload'),
         display: !!onUpload && !isExternal,
@@ -188,9 +198,10 @@ export const FolderContextMenu = ({
     ],
     [
       t,
-      onUpload,
       isExternal,
+      onSelect,
       disableAll,
+      onUpload,
       onRename,
       folder.temporary,
       folder.isShared,

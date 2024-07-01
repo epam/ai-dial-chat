@@ -3,6 +3,8 @@ import {
   IconFileArrowRight,
   IconPaperclip,
   IconScale,
+  IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -57,6 +59,9 @@ export const ChatbarSettings = () => {
   const isMyItemsExist = useAppSelector(
     ConversationsSelectors.selectDoesAnyMyItemExist,
   );
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -84,8 +89,27 @@ export const ChatbarSettings = () => {
     [dispatch],
   );
 
+  const deleteTerm = isSelectMode ? 'selected' : 'all';
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Select all'),
+        dataQa: 'select-all',
+        Icon: IconSquareCheck,
+        onClick: () => {
+          dispatch(ConversationsActions.setAllChosenConversations());
+        },
+      },
+      {
+        name: t('Unselect all'),
+        dataQa: 'unselect all',
+        Icon: IconSquareOff,
+        onClick: () => {
+          dispatch(ConversationsActions.resetChosenConversations());
+        },
+        display: isSelectMode,
+      },
       {
         name: t('Create new folder'),
         dataQa: 'create-folder',
@@ -97,6 +121,7 @@ export const ChatbarSettings = () => {
             }),
           );
         },
+        display: !isSelectMode,
       },
       {
         name: t('Import conversations'),
@@ -113,19 +138,20 @@ export const ChatbarSettings = () => {
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
+        display: !isSelectMode,
       },
       {
         name: t('Export conversations without attachments'),
         dataQa: 'export',
         className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
-        display: isMyItemsExist,
+        display: isMyItemsExist && !isSelectMode,
         onClick: () => {
           dispatch(ImportExportActions.exportConversations());
         },
       },
       {
-        name: t('Delete all conversations'),
+        name: t(`Delete ${deleteTerm} conversations`),
         display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
@@ -141,10 +167,12 @@ export const ChatbarSettings = () => {
         onClick: () => {
           handleToggleCompare();
         },
+        display: !isSelectMode,
       },
       {
         name: t('Attachments'),
-        display: enabledFeatures.has(Feature.AttachmentsManager),
+        display:
+          enabledFeatures.has(Feature.AttachmentsManager) && !isSelectMode,
         dataQa: 'attachments',
         Icon: IconPaperclip,
         disabled: isStreaming,
@@ -155,7 +183,9 @@ export const ChatbarSettings = () => {
     ],
     [
       t,
+      isSelectMode,
       isMyItemsExist,
+      deleteTerm,
       isStreaming,
       isActiveNewConversationRequest,
       enabledFeatures,
@@ -180,21 +210,29 @@ export const ChatbarSettings = () => {
           }}
           headerLabel={t('Manage attachments')}
           forceShowSelectCheckBox
+          forceHideSelectFolders
+          showTooltip
         />
       )}
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t('Confirm clearing all conversations')}
+        heading={t(`Confirm deleting ${deleteTerm} conversations`)}
         description={
-          t('Are you sure that you want to delete all conversations?') || ''
+          t(
+            `Are you sure that you want to delete ${deleteTerm} conversations?`,
+          ) || ''
         }
-        confirmLabel={t('Clear')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {
-            dispatch(ConversationsActions.clearConversations());
+            if (!isSelectMode) {
+              dispatch(ConversationsActions.clearConversations());
+            } else {
+              dispatch(ConversationsActions.deleteChosenConversations());
+            }
           }
         }}
       />

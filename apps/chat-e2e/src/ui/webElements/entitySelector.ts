@@ -60,7 +60,7 @@ export class EntitySelector extends BaseElement {
     } else {
       const talkToGroup = this.getTalkToGroup(group);
       await this.seeFullList();
-      await talkToGroup.getGroupEntity().selectGroupEntity(entity);
+      await talkToGroup.selectGroupEntity(entity);
     }
   }
 
@@ -68,11 +68,11 @@ export class EntitySelector extends BaseElement {
     const dialog = this.getModelsDialog();
     switch (group) {
       case Groups.models:
-        return dialog.getTalkToModels();
+        return dialog.getTalkToModelEntities();
       case Groups.assistants:
-        return dialog.getTalkToAssistants();
+        return dialog.getTalkToAssistantEntities();
       case Groups.applications:
-        return dialog.getTalkToApplications();
+        return dialog.getTalkToApplicationEntities();
     }
   }
 }

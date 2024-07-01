@@ -67,11 +67,12 @@ const PromptActionsBlock = () => {
   return (
     <div className="flex px-2 py-1">
       <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed"
+        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
         onClick={() => {
           dispatch(PromptsActions.setIsNewPromptCreating(true));
           dispatch(PromptsActions.resetSearch());
           dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true }));
+          dispatch(PromptsActions.resetChosenPrompts());
         }}
         disabled={isNewPromptCreating}
         data-qa="new-entity"
@@ -151,6 +152,22 @@ const Promptbar = () => {
     [allPrompts, dispatch, t],
   );
 
+  const handleSearchTerm = useCallback(
+    (searchTerm: string) => {
+      dispatch(PromptsActions.setSearchTerm({ searchTerm }));
+      dispatch(PromptsActions.resetChosenPrompts());
+    },
+    [dispatch],
+  );
+
+  const handleSearchFilters = useCallback(
+    (searchFilters: SearchFilters) => {
+      dispatch(PromptsActions.setSearchFilters({ searchFilters }));
+      dispatch(PromptsActions.resetChosenPrompts());
+    },
+    [dispatch],
+  );
+
   return (
     <Sidebar<PromptInfo>
       featureType={FeatureType.Prompt}
@@ -163,12 +180,8 @@ const Promptbar = () => {
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={(searchTerm: string) =>
-        dispatch(PromptsActions.setSearchTerm({ searchTerm }))
-      }
-      handleSearchFilters={(searchFilters: SearchFilters) =>
-        dispatch(PromptsActions.setSearchFilters({ searchFilters }))
-      }
+      handleSearchTerm={handleSearchTerm}
+      handleSearchFilters={handleSearchFilters}
       handleDrop={handleDrop}
       footerComponent={<PromptbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}

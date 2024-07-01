@@ -1,5 +1,5 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCheck, IconFolder, IconX } from '@tabler/icons-react';
+import { IconCheck, IconFolder, IconMinus, IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   DragEvent,
@@ -48,7 +48,7 @@ import {
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -75,7 +75,6 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
-import { FileItemEventIds } from '../Files/FileItem';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -101,6 +100,7 @@ export interface FolderProps<T, P = unknown> {
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
+  onSelectFolder?: (folderId: string, isSelected: boolean) => void;
   onAddFolder?: (parentFolderId: string) => void;
   onClickFolder?: (folderId: string) => void;
   featureType: FeatureType;
@@ -116,7 +116,8 @@ export interface FolderProps<T, P = unknown> {
   skipFolderRenameValidation?: boolean;
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
-  canAttachFolders?: boolean;
+  canSelectFolders?: boolean;
+  showTooltip?: boolean;
   isSidePanelFolder?: boolean;
 }
 
@@ -139,6 +140,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   handleDrop,
   onRenameFolder,
   onDeleteFolder,
+  onSelectFolder,
   onClickFolder,
   onAddFolder,
   onFileUpload,
@@ -152,7 +154,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   skipFolderRenameValidation = false,
   noCaretIcon = false,
   itemComponentClassNames,
-  canAttachFolders = false,
+  canSelectFolders = false,
+  showTooltip,
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
@@ -186,27 +189,50 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const [isSelected, setIsSelected] = useState(false);
+  const [isPartialSelected, setIsPartialSelected] = useState(false);
+  const checkboxRef = useRef<HTMLInputElement>(null);
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
-      setIsSelected((value) => !value);
-      onItemEvent?.(FileItemEventIds.ToggleFolder, `${currentFolder.id}/`);
-      return;
+      setIsSelected((value) => {
+        onSelectFolder?.(`${currentFolder.id}/`, value);
+        return !value;
+      });
     },
-    [currentFolder.id, onItemEvent],
+    [currentFolder.id, onSelectFolder],
   );
 
   useEffect(() => {
-    setIsSelected(() => {
-      const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-      return parentFolderIds.some((id) =>
+    const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
+    setIsSelected(
+      parentFolderIds.some((id) =>
         ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
           `${id}/`,
         ),
-      );
-    });
+      ),
+    );
   }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
+
+  useEffect(() => {
+    const currentId = `${currentFolder.id}/`;
+    setIsPartialSelected(
+      !isSelected &&
+        (
+          (additionalItemData?.partialSelectedFolderIds as string[]) || []
+        ).includes(currentId),
+    );
+  }, [
+    additionalItemData?.partialSelectedFolderIds,
+    currentFolder.id,
+    isSelected,
+  ]);
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = isPartialSelected && !isSelected;
+    }
+  }, [isPartialSelected, isSelected]);
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -244,8 +270,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   }, []);
 
   const allChildItems = useMemo(() => {
+    const folderPath = `${currentFolder.id}/`;
     return sortByName(
-      allItems?.filter((item) => item.id.startsWith(currentFolder.id)) || [],
+      allItems?.filter((item) => item.id.startsWith(folderPath)) || [],
     );
   }, [allItems, currentFolder.id]);
 
@@ -256,11 +283,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       if (
         featureType === FeatureType.Chat &&
         (!allChildItems.length ||
-          !allChildItems.every((item) => 'messages' in item))
+          !allChildItems.every((item) => (item as Conversation).messages))
       ) {
         dispatch(
           ConversationsActions.uploadConversationsByIds({
             conversationIds: allChildItems.map((e) => e.id),
+            showLoader: true,
           }),
         );
       }
@@ -431,7 +459,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const dropHandler = useCallback(
     (e: DragEvent) => {
-      if (!handleDrop || isExternal) {
+      if (!handleDrop || isExternal || canSelectFolders) {
         return;
       }
 
@@ -540,6 +568,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       allFolders,
       allFoldersWithoutFilters,
       allItemsWithoutFilters,
+      canSelectFolders,
       currentFolder,
       dispatch,
       featureType,
@@ -553,11 +582,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const allowDrop = useCallback(
     (e: DragEvent) => {
-      if (!isExternal && hasDragEventAnyData(e, featureType)) {
+      if (
+        !canSelectFolders &&
+        !isExternal &&
+        hasDragEventAnyData(e, featureType)
+      ) {
         e.preventDefault();
       }
     },
-    [featureType, isExternal],
+    [canSelectFolders, featureType, isExternal],
   );
 
   const isParentFolder = useCallback(
@@ -645,6 +678,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [onDeleteFolder],
   );
+  const onSelect: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onSelectFolder) {
+        return;
+      }
+
+      e.stopPropagation();
+      onSelectFolder(`${currentFolder.id}/`, isSelected);
+    },
+    [currentFolder.id, isSelected, onSelectFolder],
+  );
   const onAdd: MouseEventHandler = useCallback(
     (e) => {
       if (!onAddFolder) {
@@ -724,6 +768,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     ) ||
     (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
 
+  const hideContextMenu =
+    (canSelectFolders && featureType !== FeatureType.File) ||
+    readonly ||
+    isRenaming;
+
   return (
     <div
       id="folder"
@@ -742,9 +791,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       <div
         className={classNames(
           'group/button group/folder-item group relative flex h-[30px] cursor-pointer items-center rounded border-l-2 hover:bg-accent-primary-alpha',
-          !withBorderHighlight && 'border-transparent',
+          (canSelectFolders || !withBorderHighlight) && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
-          isHighlighted && withBorderHighlight && 'border-accent-primary',
+          !canSelectFolders &&
+            isHighlighted &&
+            withBorderHighlight &&
+            'border-accent-primary',
           folderClassName,
         )}
         data-qa="folder"
@@ -759,7 +811,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClickFolder(currentFolder.id);
           }
         }}
-        draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
+        draggable={
+          !!handleDrop &&
+          !isExternal &&
+          !isNameOrPathInvalid &&
+          !canSelectFolders
+        }
         onDragStart={(e) => handleDragStart(e, currentFolder)}
         onDragOver={(e) => {
           if (!isExternal && hasDragEventAnyData(e, featureType)) {
@@ -791,19 +848,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted
                     featureType={featureType}
                     containerClassName={
-                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                      !isExternal && canSelectFolders
+                        ? 'group-hover/folder-item:hidden'
+                        : ''
                     }
                   >
                     <IconFolder
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        canAttachFolders && 'group-hover/folder-item:hidden',
+                        !isExternal &&
+                          canSelectFolders &&
+                          'group-hover/folder-item:hidden',
                       )}
                     />
                   </ShareIcon>
                 )}
-                {canAttachFolders &&
+                {canSelectFolders &&
+                  !isExternal &&
                   !loadingFolderIds.includes(currentFolder.id) && (
                     <div
                       className={classNames(
@@ -863,30 +925,35 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               <Spinner className="mr-1" />
             ) : (
               <>
-                {!isSelected && (
+                {!isSelected && !isPartialSelected && (
                   <ShareIcon
                     {...currentFolder}
                     isHighlighted={isContextMenu}
                     featureType={featureType}
                     containerClassName={
-                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                      !isExternal && canSelectFolders
+                        ? 'group-hover/folder-item:hidden'
+                        : ''
                     }
                   >
                     <IconFolder
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        canAttachFolders && 'group-hover/folder-item:hidden',
+                        !isExternal &&
+                          canSelectFolders &&
+                          'group-hover/folder-item:hidden',
                       )}
                     />
                   </ShareIcon>
                 )}
-                {canAttachFolders &&
+                {canSelectFolders &&
+                  !isExternal &&
                   !loadingFolderIds.includes(currentFolder.id) && (
                     <div
                       className={classNames(
                         'relative mr-1 size-[18px] group-hover/folder-item:flex',
-                        isSelected ? 'flex' : 'hidden',
+                        isSelected || isPartialSelected ? 'flex' : 'hidden',
                       )}
                       data-item-checkbox
                     >
@@ -895,25 +962,35 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         type="checkbox"
                         checked={isSelected}
                         onChange={handleToggleFolder}
+                        ref={checkboxRef}
                       />
-                      <IconCheck
-                        size={18}
-                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-                      />
+                      {isSelected && (
+                        <IconCheck
+                          size={18}
+                          className="pointer-events-none absolute text-accent-primary"
+                        />
+                      )}
+                      {isPartialSelected && (
+                        <IconMinus
+                          size={18}
+                          className="pointer-events-none absolute text-accent-primary"
+                        />
+                      )}
                     </div>
                   )}
               </>
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 truncate text-left group-hover/button:pr-5',
+                'relative max-h-5 flex-1 truncate text-left',
                 isNameOrPathInvalid && 'text-secondary',
+                !hideContextMenu && 'group-hover/button:pr-5',
               )}
               data-qa="folder-name"
             >
               <Tooltip
                 tooltip={
-                  featureType === 'file' && !isNameOrPathInvalid
+                  showTooltip && !isNameOrPathInvalid
                     ? currentFolder.name
                     : t(
                         getEntityNameError(
@@ -932,9 +1009,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       : 'text-secondary'),
                   isNameOrPathInvalid
                     ? 'text-secondary'
-                    : (highlightedFolders?.includes(currentFolder.id) &&
-                          featureType) ||
-                        isSelected
+                    : highlightedFolders?.includes(currentFolder.id) &&
+                        featureType &&
+                        !canSelectFolders
                       ? 'text-accent-primary'
                       : 'text-primary',
                 )}
@@ -942,9 +1019,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {currentFolder.name}
               </Tooltip>
             </div>
-            {(onDeleteFolder || onRenameFolder || onAddFolder) &&
-              !readonly &&
-              !isRenaming && (
+            {(onDeleteFolder ||
+              onRenameFolder ||
+              onAddFolder ||
+              onSelectFolder) &&
+              !hideContextMenu && (
                 <div
                   ref={refs.setFloating}
                   {...getFloatingProps()}
@@ -981,6 +1060,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
                     isSidePanelFolder={isSidePanelFolder}
+                    onSelect={onSelectFolder && onSelect}
                   />
                 </div>
               )}
@@ -1061,8 +1141,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
-                    canAttachFolders={canAttachFolders}
+                    canSelectFolders={canSelectFolders}
+                    showTooltip={showTooltip}
                     isSidePanelFolder={isSidePanelFolder}
+                    onSelectFolder={onSelectFolder}
                   />
                 </Fragment>
               );
@@ -1107,8 +1189,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           entity={currentFolder}
           entities={
             featureType === FeatureType.Chat
-              ? (allChildItems as ConversationInfo[]).filter(
-                  (item) => !item.isReplay,
+              ? (
+                  allChildItems as (Partial<Conversation> & ConversationInfo)[]
+                ).filter(
+                  (item) =>
+                    item.isPlayback ||
+                    (!item.isReplay && item.messages?.length),
                 )
               : allChildItems
           }

@@ -731,3 +731,60 @@ export const selectCustomAttachmentData = createSelector(
       : undefined;
   },
 );
+
+export const selectIsConversationsEmpty = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => {
+      return conv.messages.length === 0;
+    });
+  },
+);
+
+export const selectIsSelectMode = createSelector([rootSelector], (state) => {
+  return (
+    state.chosenConversationIds.length > 0 || state.chosenFolderIds.length > 0
+  );
+});
+
+export const selectChosenConversationIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.chosenConversationIds;
+  },
+);
+
+export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
+  return state.chosenFolderIds;
+});
+
+export const selectAllChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter((folderId) =>
+        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
+      );
+  },
+);
+
+export const selectPartialChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) &&
+          (state.chosenFolderIds.some((chosenId) =>
+            chosenId.startsWith(folderId),
+          ) ||
+            state.chosenConversationIds.some((convId) =>
+              convId.startsWith(folderId),
+            )),
+      );
+  },
+);

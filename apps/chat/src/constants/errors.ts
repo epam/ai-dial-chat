@@ -16,7 +16,7 @@ export const errorsMessages = {
   localStorageQuotaExceeded:
     'Conversation storage capacity exceeded. Please clean up some conversations (prefer ones with media attachments) and try again.',
   timeoutError:
-    'Server is taking to long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.',
+    'Server is taking too long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.',
   customThemesConfigNotProvided:
     'The custom config host url not provided. Please recheck application settings',
   errorDuringEntityRequest: (entityType: string) =>

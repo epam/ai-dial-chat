@@ -96,13 +96,10 @@ export function HandlePublication({ publication }: Props) {
     if (conversationsToReviewIds.length || reviewedConversationsIds.length) {
       const conversationPaths = uniq(
         [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
-          (p) => {
-            const url = p.reviewUrl;
-
-            return getParentFolderIdsFromEntityId(
-              getFolderIdFromEntityId(url),
-            ).filter((id) => id !== url);
-          },
+          (p) =>
+            getParentFolderIdsFromEntityId(
+              getFolderIdFromEntityId(p.reviewUrl),
+            ).filter((id) => id !== p.reviewUrl),
         ),
       );
 
@@ -163,7 +160,7 @@ export function HandlePublication({ publication }: Props) {
           promptId: promptsToReviewIds.length
             ? promptsToReviewIds[0].reviewUrl
             : reviewedPromptsIds[0].reviewUrl,
-          isPublicationResource: true,
+          isApproveRequiredResource: true,
         }),
       );
       dispatch(
@@ -181,18 +178,21 @@ export function HandlePublication({ publication }: Props) {
       sectionName: t('Conversations'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
+      showTooltip: true,
     },
     {
       featureType: FeatureType.Prompt,
       sectionName: t('Prompts'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
+      showTooltip: true,
     },
     {
       featureType: FeatureType.File,
       sectionName: t('Files'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
+      showTooltip: true,
     },
   ];
 
@@ -201,24 +201,30 @@ export function HandlePublication({ publication }: Props) {
     : '';
 
   return (
-    <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
+    <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-        <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
-          <h4
-            data-qa="app-name"
-            className="w-full whitespace-pre text-center text-base font-semibold"
+        <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
+          <Tooltip
+            tooltip={publication.name || getPublicationId(publication.url)}
+            contentClassName="max-w-[400px] break-all"
+            triggerClassName="truncate"
           >
-            {publication.resources[0].action !== PublishActions.DELETE
-              ? t('Publication request for: ')
-              : t('Unpublish: ')}
-            {getPublicationId(publication.url)}
-          </h4>
+            <h4
+              data-qa="app-name"
+              className="truncate whitespace-pre break-all text-base font-semibold"
+            >
+              {publication.resources[0]?.action !== PublishActions.DELETE
+                ? t('Publication request for: ')
+                : t('Unpublish: ')}
+              {publication.name || getPublicationId(publication.url)}
+            </h4>
+          </Tooltip>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
-            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 py-4">
-              <div className="px-5">
-                {publication.resources[0].action !== PublishActions.DELETE ? (
+            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
+              <div className="px-3 py-4 md:px-5">
+                {publication.resources[0]?.action !== PublishActions.DELETE ? (
                   <>
                     <label className="flex text-sm" htmlFor="approvePath">
                       {t('Publish to')}
@@ -228,12 +234,10 @@ export function HandlePublication({ publication }: Props) {
                       disabled
                     >
                       <Tooltip
-                        placement="top"
-                        triggerClassName="w-full truncate text-start"
+                        contentClassName="max-w-[400px] break-all"
+                        triggerClassName="truncate whitespace-pre"
                         tooltip={
-                          <div className="flex break-words text-xs">
-                            {publishToUrl}
-                          </div>
+                          <div className="flex break-words">{publishToUrl}</div>
                         }
                       >
                         <span className="w-full">{publishToUrl}</span>
@@ -254,18 +258,21 @@ export function HandlePublication({ publication }: Props) {
                       {t('General info')}
                     </label>
                     <div className="my-4 grid w-full grid-cols-3 gap-3 text-xs">
-                      <p className="text-secondary">
-                        <span>{t('Publication id: ')}</span>
-                      </p>
-                      <span className="col-span-2 truncate">
-                        {getPublicationId(publication.url)}
-                      </span>
                       <p className="text-secondary">{t('Path: ')}</p>
-                      <span className="col-span-2">
-                        {publication.targetFolder?.replace(
-                          /^[^/]+/,
-                          'Organization',
-                        )}
+                      <span className="col-span-2 flex truncate whitespace-pre">
+                        <Tooltip
+                          tooltip={publication.targetFolder?.replace(
+                            /^[^/]+/,
+                            'Organization',
+                          )}
+                          contentClassName="max-w-[400px] break-all"
+                          triggerClassName="truncate whitespace-pre"
+                        >
+                          {publication.targetFolder?.replace(
+                            /^[^/]+/,
+                            'Organization',
+                          )}
+                        </Tooltip>
                       </span>
                       <p className="text-secondary">
                         {t('Publication date: ')}
@@ -277,7 +284,7 @@ export function HandlePublication({ publication }: Props) {
                   </>
                 )}
               </div>
-              <section className="px-5">
+              <section className="px-3 py-4 md:px-5">
                 <h2 className="my-4 flex items-center gap-2 text-sm">
                   {t('Target Audience Filters')}
 
@@ -322,7 +329,7 @@ export function HandlePublication({ publication }: Props) {
                     </CollapsibleSection>
                   ))
                 ) : (
-                  <h2 className="mt-4 flex items-center gap-4 text-sm">
+                  <h2 className="mt-4 flex items-center gap-4 text-sm text-secondary">
                     {t(
                       'This publication will be available to all users in the organization',
                     )}
@@ -330,9 +337,15 @@ export function HandlePublication({ publication }: Props) {
                 )}
               </section>
             </div>
-            <div className="overflow-y-auto bg-layer-2 px-5 py-4">
+            <div className="overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">
               {sections.map(
-                ({ dataQa, sectionName, Component, featureType }) =>
+                ({
+                  dataQa,
+                  sectionName,
+                  Component,
+                  featureType,
+                  showTooltip,
+                }) =>
                   publication.resourceTypes.includes(
                     EnumMapper.getBackendResourceTypeByFeatureType(featureType),
                   ) && (
@@ -345,6 +358,7 @@ export function HandlePublication({ publication }: Props) {
                       <Component
                         resources={publication.resources}
                         forViewOnly
+                        showTooltip={showTooltip}
                       />
                     </CollapsibleSection>
                   ),
@@ -352,16 +366,16 @@ export function HandlePublication({ publication }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 p-4">
+        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 px-3 py-4 md:px-4">
           <button
             className="text-accent-primary"
             onClick={handlePublicationReview}
           >
-            {t('Go to a publication review...')}
+            {t('Go to a review...')}
           </button>
-          <div>
+          <div className="flex gap-3">
             <button
-              className="button button-secondary mr-3"
+              className="button button-secondary"
               onClick={() =>
                 dispatch(
                   PublicationActions.rejectPublication({
@@ -372,19 +386,24 @@ export function HandlePublication({ publication }: Props) {
             >
               {t('Reject')}
             </button>
-            <button
-              className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-              disabled={!resourcesToReview.every((r) => r.reviewed)}
-              onClick={() =>
-                dispatch(
-                  PublicationActions.approvePublication({
-                    url: publication.url,
-                  }),
-                )
-              }
+            <Tooltip
+              hideTooltip={resourcesToReview.every((r) => r.reviewed)}
+              tooltip={t("It's required to review all resources")}
             >
-              {t('Approve')}
-            </button>
+              <button
+                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                disabled={!resourcesToReview.every((r) => r.reviewed)}
+                onClick={() =>
+                  dispatch(
+                    PublicationActions.approvePublication({
+                      url: publication.url,
+                    }),
+                  )
+                }
+              >
+                {t('Approve')}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

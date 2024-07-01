@@ -179,7 +179,8 @@ export const selectSelectedPromptId = createSelector(
   (state) => {
     return {
       selectedPromptId: state.selectedPromptId,
-      isSelectedPublicationResource: state.isSelectedPromptPublicationResource,
+      isSelectedPromptApproveRequiredResource:
+        state.isSelectedPromptApproveRequiredResource,
     };
   },
 );
@@ -391,5 +392,48 @@ export const selectPublicationFolders = createSelector(
   [rootSelector],
   (state: PromptsState) => {
     return state.folders.filter((f) => f.isPublicationFolder);
+  },
+);
+
+export const selectIsSelectMode = createSelector([rootSelector], (state) => {
+  return state.chosenPromptIds.length > 0 || state.chosenFolderIds.length > 0;
+});
+
+export const selectChosenPromptIds = createSelector([rootSelector], (state) => {
+  return state.chosenPromptIds;
+});
+
+export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
+  return state.chosenFolderIds;
+});
+
+export const selectAllChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter((folderId) =>
+        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
+      );
+  },
+);
+
+export const selectPartialChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) &&
+          (state.chosenFolderIds.some((chosenId) =>
+            chosenId.startsWith(folderId),
+          ) ||
+            state.chosenPromptIds.some((promptId) =>
+              promptId.startsWith(folderId),
+            )),
+      );
   },
 );

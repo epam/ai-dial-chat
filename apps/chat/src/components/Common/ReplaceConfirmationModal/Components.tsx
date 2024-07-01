@@ -160,11 +160,9 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
       <Tooltip
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate text-center w-full"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {conversation.name}
-        </div>
+        {conversation.name}
       </Tooltip>
     </FeatureContainer>
   );
@@ -204,7 +202,9 @@ interface PromptViewProps {
 const PromptView = ({ item: prompt }: PromptViewProps) => {
   return (
     <FeatureContainer>
-      <IconBulb size={18} className="text-secondary" />
+      <span className="flex shrink-0">
+        <IconBulb size={18} className="text-secondary" />
+      </span>
       <Tooltip
         tooltip={prompt.name}
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
@@ -250,15 +250,15 @@ interface FileViewProps {
 const FileView = ({ item: file }: FileViewProps) => {
   return (
     <FeatureContainer>
-      <IconFile size={18} className="text-secondary" />
+      <div className="flex shrink-0">
+        <IconFile size={18} className="text-secondary" />
+      </div>
       <Tooltip
         tooltip={file.name}
-        contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate text-center w-full"
+        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        triggerClassName="truncate whitespace-pre"
       >
-        <div className="truncate whitespace-pre break-all text-left">
-          {file.name}
-        </div>
+        {file.name}
       </Tooltip>
     </FeatureContainer>
   );

@@ -36,7 +36,7 @@ export const SelectFolder = ({
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
-        <div className="flex justify-between px-6 pt-4">
+        <div className="flex justify-between px-3 pt-4 md:px-6">
           <h2 id={headingId} className="text-base font-semibold">
             {t(title)}
           </h2>

@@ -261,7 +261,8 @@ export class ConversationData extends FolderData {
     return this.conversationBuilder.build();
   }
 
-  public prepareConversationWithCodeContent(
+  public prepareConversationWithTextContent(
+    responseContent: string,
     model?: string | DialAIEntityModel,
   ) {
     const conversation = this.prepareDefaultConversation(model);
@@ -272,19 +273,34 @@ export class ConversationData extends FolderData {
     };
     const userMessage: Message = {
       role: Role.User,
-      content: 'provide an example of interface declaration in Java',
+      content: 'request',
       model: conversation.model,
       settings: messageSettings,
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
-      content:
-        'Here is an example of an interface declaration in Java:\n\n```java\npublic interface Animal {\n    void eat();\n    void sleep();\n    void makeSound();\n}\n```\n\nIn this example, `Animal` is an interface that declares three methods: `eat()`, `sleep()`, and `makeSound()`. Any class that implements the `Animal` interface will need to provide implementations for these three methods.',
+      content: responseContent,
       model: conversation.model,
       settings: messageSettings,
     };
     conversation.messages = [userMessage, assistantMessage];
     return this.conversationBuilder.build();
+  }
+
+  public prepareConversationWithCodeContent(
+    model?: string | DialAIEntityModel,
+  ) {
+    const responseContent =
+      'Here is an example of an interface declaration in Java:\n\n```java\npublic interface Animal {\n    void eat();\n    void sleep();\n    void makeSound();\n}\n```\n\nIn this example, `Animal` is an interface that declares three methods: `eat()`, `sleep()`, and `makeSound()`. Any class that implements the `Animal` interface will need to provide implementations for these three methods.';
+    return this.prepareConversationWithTextContent(responseContent, model);
+  }
+
+  public prepareConversationWithMdTableContent(
+    model?: string | DialAIEntityModel,
+  ) {
+    const responseContent =
+      '| Country        | Capital    |\n| ------------- |-------------|\n| Canada      | Ottawa |\n| United States      | Washington, D.C. |\n';
+    return this.prepareConversationWithTextContent(responseContent, model);
   }
 
   public prepareAssistantConversation(
@@ -498,12 +514,80 @@ export class ConversationData extends FolderData {
       .build();
   }
 
+  public prepareConversationWithAttachmentLinkInRequest(
+    model: DialAIEntityModel | string,
+    ...attachmentLink: string[]
+  ) {
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const userAttachments = attachmentLink.map((link) =>
+      this.getAttachmentLinkRequestData(link),
+    );
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'what is company legal name?',
+      custom_content: {
+        attachments: userAttachments,
+      },
+      model: modelToUse,
+      settings: settings,
+    };
+
+    const assistantAttachments = [];
+    for (let i = 0; i < attachmentLink.length; i++) {
+      assistantAttachments.push(
+        this.getAttachmentLinkResponseData(attachmentLink[i], i),
+      );
+    }
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: `The company's legal name is EPAM[1].`,
+      custom_content: {
+        attachments: assistantAttachments,
+      },
+      model: modelToUse,
+      settings: settings,
+    };
+    const name = GeneratorUtil.randomString(10);
+    return this.conversationBuilder
+      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withName(name)
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
   public getAttachmentData(attachmentUrl: string) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     return {
       type: FileApiHelper.getContentTypeForFile(filename)!,
       title: filename,
       url: attachmentUrl,
+    };
+  }
+
+  public getAttachmentLinkRequestData(link: string) {
+    return {
+      type: '*/*',
+      title: link.substring(link.indexOf('.'), link.lastIndexOf('.')),
+      url: link,
+      reference_url: link,
+    };
+  }
+
+  public getAttachmentLinkResponseData(link: string, index: number) {
+    return {
+      index: index,
+      type: 'text/markdown',
+      title: `[${index}] '${link}'`,
+      data: 'line1\n\nline2\n\nline3\n\n\n\n    \n    \n    \n\n\n\n\n\n\n    \n    \n    \nline4',
+      reference_url: link,
     };
   }
 

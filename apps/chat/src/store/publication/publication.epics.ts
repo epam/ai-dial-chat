@@ -27,6 +27,8 @@ import {
   splitEntityId,
 } from '@/src/utils/app/folders';
 import {
+  getConversationRootId,
+  getPromptRootId,
   getRootId,
   isConversationId,
   isFileId,
@@ -51,6 +53,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import {
   ConversationsActions,
@@ -79,9 +82,11 @@ const publishEpic: AppEpic = (action$) =>
     filter(PublicationActions.publish.match),
     switchMap(({ payload }) => {
       const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
+      const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
       return PublicationService.publish({
-        targetFolder: `${constructPath('public', encodedTargetFolder)}/`,
+        name: payload.name,
+        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
           action: PublishActions.ADD,
           sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
@@ -326,6 +331,7 @@ const deletePublicationEpic: AppEpic = (action$) =>
       const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
       return PublicationService.deletePublication({
+        name: payload.name,
         targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
           action: PublishActions.DELETE,
@@ -363,7 +369,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
           const pathsToUpload = selectedIds.filter((id) =>
             id.startsWith(
-              `${getRootId({ featureType: FeatureType.Chat, bucket: 'public' })}/`,
+              `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
             ),
           );
 
@@ -542,16 +548,36 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             const allConversations = ConversationsSelectors.selectConversations(
               state$.value,
             );
+            const allFolders = ConversationsSelectors.selectFolders(
+              state$.value,
+            );
             const conversationsToRemove = conversationResourcesToUnpublish.map(
               (r) => r.reviewUrl,
+            );
+            const filteredConversations = allConversations.filter(
+              (c) => !conversationsToRemove.includes(c.id),
+            );
+            const filteredFolders = allFolders.filter(
+              (f) =>
+                f.status !== UploadStatus.LOADED ||
+                !f.id.startsWith(getConversationRootId(PUBLIC_URL_PREFIX)) ||
+                (filteredConversations.some((c) =>
+                  c.id.startsWith(`${f.id}/`),
+                ) &&
+                  f.id.startsWith(getConversationRootId(PUBLIC_URL_PREFIX))),
             );
 
             actions.push(
               of(
                 ConversationsActions.setConversations({
-                  conversations: allConversations.filter(
-                    (c) => !conversationsToRemove.includes(c.id),
-                  ),
+                  conversations: filteredConversations,
+                }),
+              ),
+            );
+            actions.push(
+              of(
+                ConversationsActions.setFolders({
+                  folders: filteredFolders,
                 }),
               ),
             );
@@ -617,13 +643,29 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             const promptsToRemove = promptResourcesToUnpublish.map(
               (r) => r.reviewUrl,
             );
+            const allFolders = PromptsSelectors.selectFolders(state$.value);
+            const filteredPrompts = allPrompts.filter(
+              (p) => !promptsToRemove.includes(p.id),
+            );
+            const filteredFolders = allFolders.filter(
+              (f) =>
+                f.status !== UploadStatus.LOADED ||
+                !f.id.startsWith(getPromptRootId(PUBLIC_URL_PREFIX)) ||
+                (filteredPrompts.some((c) => c.id.startsWith(`${f.id}/`)) &&
+                  f.id.startsWith(getPromptRootId(PUBLIC_URL_PREFIX))),
+            );
 
             actions.push(
               of(
                 PromptsActions.setPrompts({
-                  prompts: allPrompts.filter(
-                    (p) => !promptsToRemove.includes(p.id),
-                  ),
+                  prompts: filteredPrompts,
+                }),
+              ),
+            );
+            actions.push(
+              of(
+                ConversationsActions.setFolders({
+                  folders: filteredFolders,
                 }),
               ),
             );
@@ -767,7 +809,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       PublicationService.getRules(payload.path).pipe(
         switchMap(({ rules }) => {
-          const currentRulePath = `${constructPath('public', payload.path)}/`;
+          const currentRulePath = `${constructPath(PUBLIC_URL_PREFIX, payload.path)}/`;
 
           if (!rules[currentRulePath] && payload.path) {
             const longestEntry = maxBy(entries(rules), ([key]) => key.length);

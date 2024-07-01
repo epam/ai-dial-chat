@@ -9,12 +9,11 @@ import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API, ScrollState, Side } from '@/src/testData';
+import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
-import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { Page } from '@playwright/test';
 
@@ -31,7 +30,6 @@ export class Chat extends BaseElement {
   private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
   private compare!: Compare;
-  private playBack!: Playback;
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
   public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
@@ -87,13 +85,6 @@ export class Chat extends BaseElement {
       this.compare = new Compare(this.page);
     }
     return this.compare;
-  }
-
-  getPlayBack(): Playback {
-    if (!this.playBack) {
-      this.playBack = new Playback(this.page);
-    }
-    return this.playBack;
   }
 
   getPlaybackControl(): PlaybackControl {
@@ -185,12 +176,18 @@ export class Chat extends BaseElement {
   }
 
   public waitForRequestSent(userRequest: string | undefined) {
-    return userRequest
-      ? this.page.waitForRequest(
-          (request) =>
+    return userRequest !== undefined
+      ? this.page.waitForRequest((request) => {
+          ExpectedConstants.charsToEscape.forEach((char) => {
+            if (userRequest?.includes(char)) {
+              userRequest = userRequest.replaceAll(char, `\\${char}`);
+            }
+          });
+          return (
             request.url().includes(API.chatHost) &&
-            request.postData()!.includes(userRequest),
-        )
+            request.postData()!.includes(userRequest!)
+          );
+        })
       : this.page.waitForRequest(API.chatHost);
   }
 

@@ -76,11 +76,14 @@ export const UploadFromDeviceModalSelectors = {
   deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
   fileExtension: '[data-qa="file-extension"]',
   uploadedFiles: '[data-qa="uploaded-files"]',
+  uploadTo: '[data-qa="upload-to"]',
+  uploadToPath: '[data-qa="upload-to-path"]',
   changeUploadTo: '[data-qa="change-upload-to"]',
 };
 
 export const AttachFilesModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
+  allFilesContainer: '[data-qa="all-files"]',
   attachedFile: '[data-qa="attached-file"]',
   attachedFileName: '[data-qa="attached-file-name"]',
   attachedFileIcon: '[data-qa="attached-file-icon"]',
@@ -88,6 +91,7 @@ export const AttachFilesModalSelectors = {
   uploadFromDeviceButton: '[data-qa="upload-from-device"]',
   deleteFilesButton: '[data-qa="delete-files"]',
   downloadFilesButton: '[data-qa="download-files"]',
+  newFolderButton: '[data-qa="new-folder"]',
 };
 
 export const FilesModalSelectors = {
@@ -100,4 +104,5 @@ export const SelectFolderModalSelectors = {
   selectFolderButton: '[data-qa="select-folder"]',
   uploadFolders: '[data-qa="upload-folders"]',
   allFolders: '[data-qa="all-folders"]',
+  uploadRootFolder: '[data-qa="root-folder"]',
 };

@@ -140,4 +140,13 @@ export const ChatSelectors = {
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
   attachmentsGroup: '[data-qa="grouped-attachments"]',
   messageSpinner: '[data-qa="message-input-spinner"]',
+  plotlyContainer: '.plot-container',
+};
+
+export const TableSelectors = {
+  tableContainer: '[data-qa="table"]',
+  tableControls: '[data-qa="table-controls"]',
+  copyAsCsvIcon: '[data-qa="csv-icon"]',
+  copyAsTxtIcon: '[data-qa="txt-icon"]',
+  copyAsMdIcon: '[data-qa="md-icon"]',
 };
