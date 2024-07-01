@@ -122,9 +122,9 @@ export const ModelListSelector = ({
               key={model.id}
               className="entity-menu-selector-item max-w-full border-b border-secondary bg-layer-2 hover:bg-accent-secondary-alpha"
               item={
-                <div className="flex size-full items-center gap-2 pl-4 text-primary-bg-light">
+                <div className="flex size-full items-center gap-2 pl-1 text-primary-bg-light">
                   {model.id === ModelId.DALL ? (
-                    <div className="ml-[-4px]">
+                    <div className="ml-[-3px]">
                       <DallIcon />
                     </div>
                   ) : (
