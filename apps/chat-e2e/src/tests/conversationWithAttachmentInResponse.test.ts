@@ -33,6 +33,9 @@ dialTest(
     const stableDiffusionPath = API.modelFilePath(ModelIds.STABLE_DIFFUSION);
     const stableDiffusionPathSegments = stableDiffusionPath.split('/');
     const requestContent = 'request';
+    const stableDiffusionModel = ModelsUtil.getModel(
+      ModelIds.STABLE_DIFFUSION,
+    )!;
 
     await dialTest.step(
       'Create conversation with attachment in response for "Google Imagen" model',
@@ -50,6 +53,7 @@ dialTest(
         await localStorageManager.setSelectedConversation(
           googleImagenConversation,
         );
+        await localStorageManager.setRecentModelsIds(stableDiffusionModel);
       },
     );
 
@@ -120,9 +124,7 @@ dialTest(
       'Change conversation model to Stable diffusion, generate one more picture and verify it is visible on "Manage attachments" modal under new model folder',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(
-          ModelsUtil.getModel(ModelIds.STABLE_DIFFUSION)!,
-        );
+        await talkToSelector.selectModel(stableDiffusionModel);
         await chat.applyNewEntity();
 
         await dialHomePage.mockChatImageResponse(

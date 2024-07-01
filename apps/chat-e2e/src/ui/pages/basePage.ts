@@ -132,7 +132,7 @@ export class BasePage {
   }
 
   async acceptBrowserDialog(message: string) {
-    await this.page.once('dialog', (dialog) => dialog.accept(message));
+    this.page.once('dialog', (dialog) => dialog.accept(message));
   }
 
   async downloadData<T>(
