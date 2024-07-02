@@ -172,7 +172,7 @@ const FavoriteApplicationActionButton = ({
           disabled: false,
         },
         {
-          name: t('Add to sidebar'),
+          name: t('Pin to the sidebar'),
           display: !isFavorite,
           dataQa: 'add-to-sidebar',
           Icon: PinIcon,
@@ -227,7 +227,7 @@ const FavoriteApplicationActionButton = ({
         triggerIconClassName="pr-4 h-full flex items-center hover:cursor-pointer invisible group-hover:visible"
         isOpen={isMenuOpened}
         onOpenChange={(isOpen) => {
-          setIsMenuOpened(true);
+          setIsMenuOpened(isOpen);
           setIsSelected(isOpen);
         }}
       />
