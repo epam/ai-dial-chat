@@ -20,14 +20,21 @@ export class Compare extends BaseElement {
 
   getLeftConversationSettings(): ConversationSettings {
     if (!this.leftConversationSettings) {
-      this.leftConversationSettings = new ConversationSettings(this.page);
+      this.leftConversationSettings = new ConversationSettings(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.leftConversationSettings;
   }
 
   getRightConversationSettings(): ConversationSettings {
     if (!this.rightConversationSettings) {
-      this.rightConversationSettings = new ConversationSettings(this.page, 2);
+      this.rightConversationSettings = new ConversationSettings(
+        this.page,
+        this.rootLocator,
+        2,
+      );
     }
     return this.rightConversationSettings;
   }
@@ -48,14 +55,14 @@ export class Compare extends BaseElement {
 
   getRightChatHeader(): ChatHeader {
     if (!this.rightChatHeader) {
-      this.rightChatHeader = new ChatHeader(this.page, 2);
+      this.rightChatHeader = new ChatHeader(this.page, this.rootLocator, 2);
     }
     return this.rightChatHeader;
   }
 
   getLeftChatHeader(): ChatHeader {
     if (!this.leftChatHeader) {
-      this.leftChatHeader = new ChatHeader(this.page);
+      this.leftChatHeader = new ChatHeader(this.page, this.rootLocator);
     }
     return this.leftChatHeader;
   }

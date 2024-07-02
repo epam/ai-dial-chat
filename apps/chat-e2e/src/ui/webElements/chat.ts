@@ -54,14 +54,17 @@ export class Chat extends BaseElement {
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
-      this.chatHeader = new ChatHeader(this.page);
+      this.chatHeader = new ChatHeader(this.page, this.rootLocator);
     }
     return this.chatHeader;
   }
 
   getConversationSettings(): ConversationSettings {
     if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
+      this.conversationSettings = new ConversationSettings(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.conversationSettings;
   }

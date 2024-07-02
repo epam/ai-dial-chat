@@ -37,10 +37,7 @@
       "executor": "nx:run-commands",
       "configurations": {
         "development": {
-          "commands": [
-            "nx run chat-e2e:e2e:chat",
-            "nx run chat-e2e:e2e:overlay"
-          ],
+          "commands": ["nx run chat-e2e:e2e:overlay"],
           "parallel": false
         },
         "production": {

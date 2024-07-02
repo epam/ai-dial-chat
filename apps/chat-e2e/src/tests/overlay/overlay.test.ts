@@ -1,3 +1,4 @@
+import { ExpectedMessages } from '@/src/testData';
 import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { OverlayHomePage } from '@/src/ui/pages/overlayHomePage';
@@ -24,11 +25,54 @@ test('Overlay test', async ({ page }) => {
   const overlayHomePage = new OverlayHomePage(page);
   const overlayContainer = overlayHomePage.getOverlayContainer();
   const overlayChat = overlayContainer.getChat();
+  const overlayHeader = overlayContainer.getHeader();
 
-  await expect.soft(overlayChat.getElementLocator()).toBeVisible();
   await expect
-    .soft(overlayContainer.getBanner().getElementLocator())
+    .soft(
+      overlayContainer.getConversationSettings().getElementLocator(),
+      ExpectedMessages.conversationSettingsVisible,
+    )
+    .toBeVisible();
+  await expect
+    .soft(
+      overlayHeader.chatPanelToggle.getElementLocator(),
+      ExpectedMessages.sideBarPanelIsHidden,
+    )
+    .toBeVisible();
+  await expect
+    .soft(
+      overlayHeader.promptsPanelToggle.getElementLocator(),
+      ExpectedMessages.sideBarPanelIsHidden,
+    )
     .toBeVisible();
 
-  await overlayChat.sendRequestWithButton('1+2');
+  const userRequest = '1+2';
+  await overlayChat.sendRequestWithButton(userRequest);
+
+  const overlayChatHeader = overlayChat.getChatHeader();
+  await expect
+    .soft(
+      overlayChatHeader.clearConversation.getElementLocator(),
+      ExpectedMessages.headerCleanConversationIconVisible,
+    )
+    .toBeVisible();
+  await expect
+    .soft(
+      overlayChatHeader.openConversationSettings.getElementLocator(),
+      ExpectedMessages.conversationSettingsVisible,
+    )
+    .toBeVisible();
+
+  const overlayChatTitle =
+    await overlayChatHeader.chatTitle.getElementInnerContent();
+  expect
+    .soft(overlayChatTitle, ExpectedMessages.headerTitleCorrespondRequest)
+    .toContain(userRequest);
+
+  await expect
+    .soft(
+      overlayChatHeader.chatModelIcon.getElementLocator(),
+      ExpectedMessages.entityIconIsValid,
+    )
+    .toBeVisible();
 });

@@ -9,6 +9,7 @@ config.retries = 0;
 config.timeout = 300000;
 config.use!.video = 'on';
 config.use!.trace = 'on';
+config.use!.navigationTimeout = 100000;
 
 config.webServer = [
   {

@@ -28,7 +28,7 @@ export class AppContainer extends BaseElement {
 
   getHeader(): Header {
     if (!this.header) {
-      this.header = new Header(this.page);
+      this.header = new Header(this.page, this.rootLocator);
     }
     return this.header;
   }
@@ -63,7 +63,10 @@ export class AppContainer extends BaseElement {
 
   getConversationSettings(): ConversationSettings {
     if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
+      this.conversationSettings = new ConversationSettings(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.conversationSettings;
   }
