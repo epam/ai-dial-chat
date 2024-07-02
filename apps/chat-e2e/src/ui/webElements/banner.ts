@@ -1,11 +1,11 @@
 import { Tags } from '@/src/ui/domData';
 import { HeaderSelectors, IconSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class Banner extends BaseElement {
-  constructor(page: Page) {
-    super(page, HeaderSelectors.banner);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, HeaderSelectors.banner, parentLocator);
   }
 
   public bannerMessage = this.getChildElementBySelector(Tags.span);

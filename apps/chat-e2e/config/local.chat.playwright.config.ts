@@ -1,4 +1,4 @@
-import config from './playwright.config';
+import config from './chat.playwright.config';
 
 import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
@@ -22,7 +22,7 @@ config.use!.video = 'on';
 config.use!.trace = 'on';
 (config.reporter as ReporterDescription[]).push([
   'html',
-  { outputFolder: `../${ResultFolder.htmlReport}`, open: 'never' },
+  { outputFolder: `../${ResultFolder.chatHtmlReport}`, open: 'never' },
 ]);
 
 /* Run local dev server before starting the tests */

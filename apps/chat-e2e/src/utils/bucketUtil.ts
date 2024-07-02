@@ -1,4 +1,4 @@
-import config from '@/config/playwright.config';
+import config from '@/config/chat.playwright.config';
 
 export class BucketUtil {
   public static getBucket(index?: number) {

@@ -1,0 +1,42 @@
+import config from './overlay.playwright.config';
+
+import { ResultFolder } from '@/src/testData';
+import { workspaceRoot } from '@nx/devkit';
+import { ReporterDescription } from '@playwright/test';
+
+/**
+ * Config used for overlay local run
+ */
+config.retries = 0;
+config.timeout = 300000;
+config.use!.video = 'on';
+config.use!.trace = 'on';
+config.use!.navigationTimeout = 100000;
+(config.reporter as ReporterDescription[]).push([
+  'html',
+  { outputFolder: `../${ResultFolder.overlayHtmlReport}`, open: 'never' },
+]);
+
+config.webServer = [
+  {
+    cwd: workspaceRoot,
+    command: 'npx nx serve chat',
+    url: 'http://localhost:3000',
+    timeout: 180000,
+    reuseExistingServer: true,
+    env: {
+      IS_IFRAME: 'true',
+      ALLOWED_IFRAME_ORIGINS: '*',
+      NEXTAUTH_URL: 'http://localhost:3000',
+    },
+  },
+  {
+    cwd: workspaceRoot,
+    command: 'npx nx serve:sandbox overlay-sandbox',
+    url: 'http://localhost:4200',
+    timeout: 180000,
+    reuseExistingServer: true,
+  },
+];
+
+export default config;

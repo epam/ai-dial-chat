@@ -1,4 +1,4 @@
-import config from '../../config/playwright.config';
+import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import path from 'path';
@@ -294,6 +294,7 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
   ANTHROPIC_CLAUDE_V3_SONNET = 'anthropic.claude-v3-sonnet',
+  ANTHROPIC_CLAUDE_V3_5_SONNET = 'anthropic.claude-v3-5-sonnet',
   ANTHROPIC_CLAUDE_V3_HAIKU = 'anthropic.claude-v3-haiku',
   ANTHROPIC_CLAUDE_V3_OPUS = 'anthropic.claude-v3-opus',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
@@ -330,8 +331,10 @@ export enum Theme {
 }
 
 export enum ResultFolder {
-  allureReport = 'allure-results',
-  htmlReport = 'html-report',
+  allureChatReport = 'allure-chat-results',
+  allureOverlayReport = 'allure-overlay-results',
+  chatHtmlReport = 'chat-html-report',
+  overlayHtmlReport = 'overlay-html-report',
   testResults = 'test-results',
 }
 
