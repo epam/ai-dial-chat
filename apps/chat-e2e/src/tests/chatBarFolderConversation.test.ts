@@ -230,18 +230,24 @@ dialTest(
 
 dialTest(
   'Rename chat folder when chats are inside using check button\n' +
-    'Long Folder name is cut',
+    'Long Folder name is cut.\n' +
+    'Rename chat folder with 161 symbols with dot in the end',
   async ({
     dialHomePage,
     conversationData,
     folderConversations,
     dataInjector,
     folderDropdownMenu,
+    errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-573', 'EPMRTC-574');
+    setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
     const folderName = GeneratorUtil.randomString(70);
-    const newConversationName = 'updated folder name';
+    const newFolderNameToSet = `${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength)}.`;
+    const expectedNewFolderName = newFolderNameToSet.substring(
+      0,
+      ExpectedConstants.maxEntityNameLength,
+    );
 
     await dialTest.step(
       'Prepare folder with long name and conversation inside folder',
@@ -301,13 +307,21 @@ dialTest(
     await dialTest.step(
       'Edit folder name using tick button and verify it is renamed',
       async () => {
-        await folderConversations.editFolderNameWithTick(newConversationName);
+        await folderConversations.editFolderNameWithTick(newFolderNameToSet);
         await expect
           .soft(
-            folderConversations.getFolderByName(newConversationName),
+            errorToast.getElementLocator(),
+            ExpectedMessages.noErrorToastIsShown,
+          )
+          .toBeHidden();
+        expect
+          .soft(
+            await folderConversations
+              .getFolderName(expectedNewFolderName)
+              .getElementInnerContent(),
             ExpectedMessages.folderNameUpdated,
           )
-          .toBeVisible();
+          .toBe(expectedNewFolderName);
       },
     );
   },
