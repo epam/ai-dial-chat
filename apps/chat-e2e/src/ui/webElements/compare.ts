@@ -20,10 +20,7 @@ export class Compare extends BaseElement {
 
   getLeftConversationSettings(): ConversationSettings {
     if (!this.leftConversationSettings) {
-      this.leftConversationSettings = new ConversationSettings(
-        this.page,
-        this.rootLocator,
-      );
+      this.leftConversationSettings = new ConversationSettings(this.page);
     }
     return this.leftConversationSettings;
   }
@@ -32,7 +29,7 @@ export class Compare extends BaseElement {
     if (!this.rightConversationSettings) {
       this.rightConversationSettings = new ConversationSettings(
         this.page,
-        this.rootLocator,
+        undefined,
         2,
       );
     }

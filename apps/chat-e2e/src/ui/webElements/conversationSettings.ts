@@ -6,7 +6,7 @@ import { EntitySettings } from '@/src/ui/webElements/entitySettings';
 import { Locator, Page } from '@playwright/test';
 
 export class ConversationSettings extends BaseElement {
-  constructor(page: Page, parentLocator: Locator, index?: number) {
+  constructor(page: Page, parentLocator?: Locator, index?: number) {
     const elementLocator = new BaseElement(
       page,
       ChatSettingsSelectors.conversationSettingsSelector,
