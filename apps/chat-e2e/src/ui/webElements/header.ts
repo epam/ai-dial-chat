@@ -1,11 +1,11 @@
 import { HeaderSelectors } from '@/src/ui/selectors';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class Header extends BaseElement {
-  constructor(page: Page) {
-    super(page, HeaderSelectors.headerContainer);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, HeaderSelectors.headerContainer, parentLocator);
   }
 
   private accountSettings!: AccountSettings;
