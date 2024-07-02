@@ -24,7 +24,7 @@ config.webServer = {
   cwd: workspaceRoot,
   command: 'npx nx serve:sandbox:production overlay-sandbox',
   url: 'http://localhost:4200',
-  timeout: 180000,
+  timeout: 300000,
   reuseExistingServer: true,
   stdout: 'pipe',
   stderr: 'pipe',
