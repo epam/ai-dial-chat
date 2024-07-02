@@ -50,10 +50,10 @@ export const modelsSlice = createSlice({
       { payload }: PayloadAction<{ appsIds: string[]; isFavorite: boolean }>,
     ) => {
       state.favoriteApplicationsIds = payload.isFavorite
-        ? state.favoriteApplicationsIds.filter((id) =>
+        ? [...state.favoriteApplicationsIds, ...payload.appsIds]
+        : state.favoriteApplicationsIds.filter((id) =>
             payload.appsIds.some((appsId) => id !== appsId),
-          )
-        : [...state.favoriteApplicationsIds, ...payload.appsIds];
+          );
     },
     getModelsSuccess: (
       state,

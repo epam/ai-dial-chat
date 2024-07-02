@@ -8,12 +8,9 @@ import { getApplicationIcon } from '@/src/utils/app/applications';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { modelCursorSign } from '@/src/constants/chat';
-
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
-import { PinIcon, RagIcon } from '@/src/icons';
-import { HRBuddyIcon } from '@/src/icons/HRBuddyIcon';
+import { PinIcon } from '@/src/icons';
 import { NewConversationIcon } from '@/src/icons/NewConversationIcon';
 import { UnpinIcon } from '@/src/icons/UnpinIcon';
 
@@ -22,14 +19,14 @@ interface Props {
   onCreateNewConversation: (modelId: string) => void;
   onUpdateFavoriteApp: (modelId: string, isFavorite: boolean) => void;
   t: TFunction;
-  isFavoriteApp?: boolean;
+  isFavoriteApp: boolean;
 }
 
 export const ApplicationsActionsList = ({
   model,
   onCreateNewConversation,
   onUpdateFavoriteApp,
-  isFavoriteApp = false,
+  isFavoriteApp,
   t,
 }: Props) => {
   const AppIcon = getApplicationIcon(model.id);
@@ -76,10 +73,12 @@ export const ApplicationsActionsList = ({
                 )}
               >
                 {isFavoriteApp ? <UnpinIcon /> : <PinIcon />}
-                {isFavoriteApp ? t('Remove from sidebar') : t('Add to sidebar')}
+                {isFavoriteApp
+                  ? t('Remove from sidebar')
+                  : t('Pin to the sidebar')}
               </div>
             }
-            onClick={() => onUpdateFavoriteApp(model.id, isFavoriteApp)}
+            onClick={() => onUpdateFavoriteApp(model.id, !isFavoriteApp)}
           />
         </Menu>
       </div>

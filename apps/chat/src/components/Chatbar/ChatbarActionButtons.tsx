@@ -128,10 +128,8 @@ export const AllApplicationsActionButton = () => {
 
 const FavoriteApplicationActionButton = ({
   app,
-  isFavorite,
 }: {
   app: DialAIEntityModel;
-  isFavorite: boolean;
 }) => {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
@@ -153,12 +151,12 @@ const FavoriteApplicationActionButton = ({
     dispatch(
       ModelsActions.updateFavoriteApplicationsIds({
         appsIds: [app.id],
-        isFavorite,
+        isFavorite: false,
       }),
     );
     setIsMenuOpened(false);
     setIsSelected(false);
-  }, [dispatch, app, isFavorite]);
+  }, [dispatch, app]);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () =>
@@ -172,28 +170,16 @@ const FavoriteApplicationActionButton = ({
           disabled: false,
         },
         {
-          name: t('Add to sidebar'),
-          display: !isFavorite,
-          dataQa: 'add-to-sidebar',
-          Icon: PinIcon,
-          onClick: onUpdateFavoriteApp,
-          disabled: false,
-        },
-        {
           name: t('Remove from sidebar'),
-          display: isFavorite,
+          display: true,
           dataQa: 'remove-from-sidebar',
           Icon: UnpinIcon,
           onClick: onUpdateFavoriteApp,
           disabled: false,
         },
       ] as DisplayMenuItemProps[],
-    [isFavorite, onCreateNewConversation, onUpdateFavoriteApp],
+    [onCreateNewConversation, onUpdateFavoriteApp],
   );
-
-  if (!isFavorite) {
-    return null;
-  }
 
   return (
     <div
@@ -227,7 +213,7 @@ const FavoriteApplicationActionButton = ({
         triggerIconClassName="pr-4 h-full flex items-center hover:cursor-pointer invisible group-hover:visible"
         isOpen={isMenuOpened}
         onOpenChange={(isOpen) => {
-          setIsMenuOpened(true);
+          setIsMenuOpened(isOpen);
           setIsSelected(isOpen);
         }}
       />
@@ -236,21 +222,20 @@ const FavoriteApplicationActionButton = ({
 };
 
 export const ChatbarActionButtons = () => {
-  const allApplications = useAppSelector(ModelsSelectors.selectAppsOnly);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const favoriteAppIds = useAppSelector(
     ModelsSelectors.selectFavoriteApplicationsIds,
   );
+  const favoriteApps = favoriteAppIds.map(
+    (id) => modelsMap[id],
+  ) as DialAIEntityModel[];
 
   return (
     <>
       <NewConversationActionButton />
       <AllApplicationsActionButton />
-      {allApplications.map((app) => (
-        <FavoriteApplicationActionButton
-          key={app.id}
-          app={app}
-          isFavorite={favoriteAppIds.includes(app.id)}
-        />
+      {favoriteApps.map((app) => (
+        <FavoriteApplicationActionButton key={app.id} app={app} />
       ))}
     </>
   );

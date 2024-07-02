@@ -14,3 +14,4 @@ export * from './FavoriteIcon';
 export * from './PinIcon';
 export * from './UnpinIcon';
 export * from './NewConversationIcon';
+export * from './InfoIcon';

@@ -12,6 +12,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { FAQ_URL } from '@/src/constants/header';
+
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -19,7 +21,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserDesktopIcon from '../../../../public/images/icons/user-desktop.svg';
 
-import { TourGuideIcon } from '@/src/icons';
+import { InfoIcon, TourGuideIcon } from '@/src/icons';
 
 export const UserDesktop = () => {
   const { t } = useTranslation(Translation.Header);
@@ -91,11 +93,10 @@ export const UserDesktop = () => {
         }
       >
         <MenuItem
-          className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
               <IconSettings size={18} />
-              <span className="ml-3">{t('Settings')}</span>
+              <span className="ml-3 font-medium">{t('Settings')}</span>
             </div>
           }
           onClick={() => {
@@ -103,9 +104,19 @@ export const UserDesktop = () => {
           }}
         />
         <MenuItem
-          className="hover:bg-accent-primary-alpha"
           item={
-            <div className="flex gap-3">
+            <div className="flex">
+              <InfoIcon />
+              <span className="ml-3 font-medium">{t('FAQ')}</span>
+            </div>
+          }
+          onClick={() => {
+            window.open(FAQ_URL, '_blank', 'noopener,noreferrer');
+          }}
+        />
+        <MenuItem
+          item={
+            <div className="flex gap-3 font-medium">
               <LogOutIcon width={18} height={18} />
               <span>{session ? t('Log out') : t('Login')}</span>
             </div>

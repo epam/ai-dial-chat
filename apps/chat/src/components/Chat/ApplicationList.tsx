@@ -50,7 +50,7 @@ export const Application = ({
       <div
         onClick={() => onAppClick(application.id)}
         className={classNames(
-          'rounded-secondary shadow-secondary relative flex min-h-[190px] min-w-[calc(100%-20px)] flex-col items-center border border-secondary bg-layer-2 hover:cursor-pointer hover:border-tertiary md:w-[420px]',
+          'relative flex min-h-[190px] min-w-[calc(100%-20px)] flex-col items-center rounded-secondary border border-secondary bg-layer-2 shadow-secondary hover:cursor-pointer hover:border-tertiary md:w-[420px]',
           isOpened ? 'h-full' : 'h-[190px]',
         )}
       >
@@ -108,7 +108,7 @@ export const Application = ({
             color={isFavorite ? '#FFD440' : 'var(--bg-layer-2)'}
             onClick={(e) => {
               stopBubbling(e);
-              onFavoriteClick(application.id, isFavorite);
+              onFavoriteClick(application.id, !isFavorite);
             }}
           />
         </Tooltip>
