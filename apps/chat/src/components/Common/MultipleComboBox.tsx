@@ -305,7 +305,7 @@ export function MultipleComboBox<T>({
             ? displayedItems.map((item, index) => (
                 <li
                   className={classNames(
-                    'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
+                    'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
                     highlightedIndex === index && 'bg-accent-primary-alpha',
                     selectedItem === item && 'bg-accent-primary-alpha',
                   )}
