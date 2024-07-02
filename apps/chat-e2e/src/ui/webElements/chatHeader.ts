@@ -3,13 +3,14 @@ import { BaseElement } from './baseElement';
 
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ChatHeader extends BaseElement {
-  constructor(page: Page, index?: number) {
+  constructor(page: Page, parentLocator: Locator, index?: number) {
     const elementLocator = new BaseElement(
       page,
       ChatHeaderSelectors.chatHeader,
+      parentLocator,
     ).getNthElement(index ?? 1);
     super(page, '', elementLocator);
   }
