@@ -331,7 +331,7 @@ export enum Theme {
 
 export enum ResultFolder {
   allureChatReport = 'allure-chat-results',
-  allureOverlayReport = 'allure-results',
+  allureOverlayReport = 'allure-overlay-results',
   htmlReport = 'html-report',
   testResults = 'test-results',
 }
