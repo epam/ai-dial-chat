@@ -32,7 +32,8 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V21, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_SONNET, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_HAIKU, isSysPromptAllowed: true },
-  { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_OPUS, isSysPromptAllowed: true },
+  //TODO: enable when model is available for all configured endpoints
+  // { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_OPUS, isSysPromptAllowed: true },
   {
     modelId: ModelIds.ANTHROPIC_CLAUDE_INSTANT_V1,
     isSysPromptAllowed: true,
