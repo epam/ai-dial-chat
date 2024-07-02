@@ -10,11 +10,15 @@ When run tests on CI, `E2E_USERNAME` and `E2E_PASSWORD` CI variable should be se
 
 ## Run tests locally
 
-Run `nx e2e chat-e2e` to execute the tests locally.
+Run `nx e2e chat-e2e` to execute chat and overlay sandbox tests locally.
 Installation of default browsers may be required, when run for the 1st time.
 
 Local version of application is automatically started before execution the tests on `http://localhost:3000`.
-Config file used for local run is `local.playwright.config.ts`.
+Config file used for local run is `local.chat.playwright.config.ts`.
+
+Overlay sandbox is launched on `http://localhost:4200` and use `local.overlay.playwright.config.ts` config for tests.
+
+To run only chat e2e tests use `nx run chat-e2e:e2e:chat`, for overlay sandbox tests `nx run chat-e2e:e2e:overlay`.
 
 After tests execution finished, 2 kind of reports are generated: html, allure.
 
@@ -22,7 +26,7 @@ Before generating Allure report, install it on your local machine following the 
 
 To open html report, run the command `npx playwright show-report apps\chat-e2e\html-report`.
 
-Allure report is opened in default browser using `allure serve apps/chat-e2e/allure-results`.
+Allure report is opened in default browser using `allure serve apps/chat-e2e/allure-chat-results`.
 
 Every test inside local report contains video recording and trace attached.
 
@@ -43,7 +47,7 @@ Image version should correspond Playwright version.
 
 ## Run tests on CI
 
-Config file used for CI pipeline: `playwright.config.ts`.
+Config files used for CI pipeline: `chat.playwright.config.ts` and `overlay.playwright.config.ts`
 
 `nx e2e chat-e2e --configuration=production` command is used to trigger tests on CI.
 
