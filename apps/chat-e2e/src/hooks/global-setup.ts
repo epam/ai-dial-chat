@@ -15,7 +15,14 @@ export const ExecutionResults = {
     __dirname,
     `../../${ResultFolder.allureOverlayReport}`,
   ),
-  htmlReportPath: path.resolve(__dirname, `../../${ResultFolder.htmlReport}`),
+  chatHtmlReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.chatHtmlReport}`,
+  ),
+  overlayHtmlReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.overlayHtmlReport}`,
+  ),
   testResultsPath: path.resolve(__dirname, `../../${ResultFolder.testResults}`),
 };
 

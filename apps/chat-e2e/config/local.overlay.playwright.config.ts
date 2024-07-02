@@ -1,6 +1,8 @@
 import config from './overlay.playwright.config';
 
+import { ResultFolder } from '@/src/testData';
 import { workspaceRoot } from '@nx/devkit';
+import { ReporterDescription } from '@playwright/test';
 
 /**
  * Config used for overlay local run
@@ -10,6 +12,10 @@ config.timeout = 300000;
 config.use!.video = 'on';
 config.use!.trace = 'on';
 config.use!.navigationTimeout = 100000;
+(config.reporter as ReporterDescription[]).push([
+  'html',
+  { outputFolder: `../${ResultFolder.overlayHtmlReport}`, open: 'never' },
+]);
 
 config.webServer = [
   {

@@ -5,7 +5,7 @@ import { OverlayHomePage } from '@/src/ui/pages/overlayHomePage';
 import { OverlayLoginPage } from '@/src/ui/pages/overlayLoginPage';
 import test, { expect } from '@playwright/test';
 
-const usernames = process.env.E2E_USERNAME!.split(',');
+const usernames = process.env.E2E_OVERLAY_USERNAME!.split(',');
 
 test('Overlay test', async ({ page }) => {
   const overlayLoginPage = new OverlayLoginPage(page);
