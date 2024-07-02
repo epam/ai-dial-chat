@@ -147,8 +147,11 @@ export const selectFilteredFolders = createSelector(
 export const selectLastConversation = createSelector(
   [selectConversations],
   (conversations): ConversationInfo | undefined => {
-    if (!conversations.length) return undefined;
-    return sortByDateAndName([...conversations])[0];
+    const ownConversations = conversations.filter(
+      (conv) => !isEntityExternal(conv),
+    );
+    if (!ownConversations.length) return undefined;
+    return sortByDateAndName(ownConversations)[0];
   },
 );
 export const selectConversation = createSelector(
