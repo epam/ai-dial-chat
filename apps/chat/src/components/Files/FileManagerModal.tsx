@@ -580,7 +580,7 @@ export const FileManagerModal = ({
           <button
             onClick={handleStartUploadFiles}
             className={classNames(
-              'button',
+              'button button-medium',
               customButtonLabel ? 'button-secondary' : 'button-primary',
             )}
             data-qa="upload-from-device"
@@ -590,7 +590,7 @@ export const FileManagerModal = ({
           {customButtonLabel && (
             <button
               onClick={handleAttachFiles}
-              className="button button-primary disabled:cursor-not-allowed"
+              className="button button-primary button-medium disabled:cursor-not-allowed"
               disabled={
                 selectedFilesIds.length === 0 && selectedFolderIds.length === 0
               }

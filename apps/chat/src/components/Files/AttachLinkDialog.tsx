@@ -111,7 +111,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="button button-primary"
+            className="button button-primary button-medium"
             disabled={!isValid}
           >
             {t('Attach')}

@@ -422,7 +422,7 @@ export function PublishModal({
 
         <div className="flex justify-end gap-3 p-4">
           <button
-            className="button button-primary py-2"
+            className="button button-primary button-medium py-2"
             onClick={handlePublish}
             data-qa="publish"
             autoFocus

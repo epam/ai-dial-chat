@@ -572,7 +572,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       </div>
 
       <div className="flex justify-end">
-        <button type="submit" className="button button-primary">
+        <button type="submit" className="button button-primary button-medium">
           {t('Send request')}
         </button>
       </div>

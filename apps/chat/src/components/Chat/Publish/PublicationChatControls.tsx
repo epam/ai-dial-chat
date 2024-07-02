@@ -139,7 +139,7 @@ export function PublicationControlsView<
               );
             }
           }}
-          className="button button-primary flex items-center"
+          className="button button-primary button-medium flex items-center"
         >
           {t('Back to publication request')}
         </button>

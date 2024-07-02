@@ -197,7 +197,7 @@ export const TooltipContent = forwardRef<
         }}
         {...context.getFloatingProps(props)}
         className={classNames(
-          'z-50 whitespace-pre-wrap rounded border border-primary bg-layer-0 p-2 text-left',
+          'bg-pr-primary-800 border-pr-primary-800 z-50 gap-2.5 whitespace-pre-wrap rounded-primary border p-[12px_15px_12px_15px] text-left',
           context.getFloatingProps(props).className as string,
         )}
         data-qa="tooltip"
@@ -208,7 +208,7 @@ export const TooltipContent = forwardRef<
           context={context.context}
           fill="currentColor"
           strokeWidth={1}
-          className="stroke-primary text-[var(--bg-layer-0,_#000000)]"
+          className="text-pr-primary-800"
         />
       </div>
     </FloatingPortal>

@@ -386,7 +386,7 @@ export function HandlePublication({ publication }: Props) {
           </button>
           <div>
             <button
-              className="button button-secondary mr-3"
+              className="button button-secondary button-medium mr-3"
               onClick={() =>
                 dispatch(
                   PublicationActions.rejectPublication({
@@ -398,7 +398,7 @@ export function HandlePublication({ publication }: Props) {
               {t('Reject')}
             </button>
             <button
-              className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              className="button button-primary button-medium disabled:cursor-not-allowed disabled:text-controls-disable"
               disabled={!resourcesToReview.every((r) => r.reviewed)}
               onClick={() =>
                 dispatch(

@@ -461,7 +461,7 @@ export const PreUploadDialog = ({
         </label>
 
         <button
-          className="button button-primary disabled:cursor-not-allowed"
+          className="button button-primary button-medium disabled:cursor-not-allowed"
           onClick={handleUpload}
           disabled={selectedFiles.length === 0}
           data-qa="upload"

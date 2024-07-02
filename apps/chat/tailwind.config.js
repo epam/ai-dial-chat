@@ -1,4 +1,20 @@
 // Default color palette is black when no themes presented
+const commonPRColors = {
+  'pr-primary-500': 'var(--pr-primary-500, #184487)',
+  'pr-primary-550': 'var(--pr-primary-550, #023465)',
+  'pr-primary-700': 'var(--pr-primary-700, #082A5E)',
+  'pr-primary-800': 'var(--pr-primary-800, #002957)',
+  'pr-primary-500-alpha': 'var(--pr-primary-500-alpha, #18448766)',
+
+  'pr-secondary-500': 'var(--pr-secondary-500, #6296E2)',
+  'pr-secondary-700': 'var(--pr-secondary-500, #336BBD)',
+  'pr-secondary-500-alpha': 'var(--pr-secondary-500, #6296E266)',
+
+  'pr-grey-white': 'var(--pr-grey-white, #FFFFFF)',
+  'pr-grey-100': 'var(--pr-grey-100, #F4F8FB)',
+  'pr-grey-300': 'var(--pr-grey-300, #C9CED8)',
+};
+
 const commonBgColors = {
   transparent: 'transparent',
   'layer-0': 'var(--bg-layer-0, #000A32)',
@@ -48,17 +64,25 @@ module.exports = {
   theme: {
     backgroundColor: {
       ...commonBgColors,
+      ...commonPRColors,
       'controls-accent': 'var(--controls-bg-accent, #7FA5D0)',
       'controls-permanent': 'var(--controls-text-permanent, #FFFFFF)',
       'controls-accent-hover': 'var(--controls-bg-accent-hover, #7092B8)',
       'controls-disable': 'var(--controls-bg-disable, #333942)',
     },
-    borderColor: commonBorderColors,
+    borderColor: {
+      ...commonBorderColors,
+      ...commonPRColors,
+    },
     stroke: {
       ...commonBorderColors,
+      ...commonPRColors,
       'controls-disable': 'var(--controls-bg-disable, #333942)',
     },
-    divideColor: commonBorderColors,
+    divideColor: {
+      ...commonBorderColors,
+      ...commonPRColors,
+    },
     textColor: {
       transparent: 'transparent',
       'primary-bg-dark': 'var(--text-primary-bg-dark, #FFFFFF)',
@@ -78,6 +102,7 @@ module.exports = {
       'temperature-secondary': 'var(--text-temperature-secondary, #426E9C)',
       'temperature-tertiary': 'var(--text-temperature-tertiary, #043667)',
       'pr-primary-700': 'var(--text-pr-primary-700, #023465)',
+      ...commonPRColors,
     },
     gradientColorStops: commonBgColors,
     /////////

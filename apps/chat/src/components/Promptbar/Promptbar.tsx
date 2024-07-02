@@ -69,7 +69,7 @@ const PromptActionsBlock = () => {
   return (
     <div className="flex">
       <button
-        className="mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 transition-colors duration-200 hover:bg-accent-quaternary disabled:cursor-not-allowed"
+        className="bg-pr-secondary-500 hover:bg-pr-secondary-700 mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl px-3 py-2 transition-colors duration-200 disabled:cursor-not-allowed"
         onClick={() => {
           dispatch(PromptsActions.setIsNewPromptCreating(true));
           dispatch(PromptsActions.resetSearch());
