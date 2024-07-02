@@ -1,3 +1,5 @@
+import { IconPlus } from '@tabler/icons-react';
+
 import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
@@ -12,7 +14,6 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import CirclePlusIcon from '../../../public/images/icons/circle-plus.svg';
 import Tooltip from '../Common/Tooltip';
 
 interface Props {
@@ -33,7 +34,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
   return (
     <Tooltip isTriggerClickable tooltip={t('New conversation')}>
       <div
-        className="flex h-full items-center justify-center border-r border-tertiary px-3 md:hidden"
+        className="flex h-full items-center justify-center border-r border-tertiary px-3 md:px-5 xl:hidden"
         onClick={() => {
           if (!isConversationsLoaded || isActiveNewConversationRequest) return;
           dispatch(
@@ -46,11 +47,12 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
         {!isConversationsLoaded || isActiveNewConversationRequest ? (
           <Spinner size={iconSize} className="cursor-pointer text-secondary" />
         ) : (
-          <CirclePlusIcon
-            className="cursor-pointer text-secondary"
-            width={iconSize}
-            height={iconSize}
-          />
+          <div className="flex items-center justify-center rounded bg-accent-secondary-alpha p-[3px]">
+            <IconPlus
+              className="cursor-pointer text-accent-secondary"
+              size={iconSize}
+            />
+          </div>
         )}
       </div>
     </Tooltip>
