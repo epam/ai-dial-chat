@@ -3,13 +3,14 @@ import { BaseElement } from './baseElement';
 import { EntitySelector } from './entitySelector';
 
 import { EntitySettings } from '@/src/ui/webElements/entitySettings';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ConversationSettings extends BaseElement {
-  constructor(page: Page, index?: number) {
+  constructor(page: Page, parentLocator?: Locator, index?: number) {
     const elementLocator = new BaseElement(
       page,
       ChatSettingsSelectors.conversationSettingsSelector,
+      parentLocator,
     ).getNthElement(index ?? 1);
     super(page, '', elementLocator);
   }

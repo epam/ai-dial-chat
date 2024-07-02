@@ -3,17 +3,52 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "chat-e2e/src",
   "targets": {
-    "e2e": {
+    "e2e:chat": {
       "cache": false,
       "executor": "@nx/playwright:playwright",
       "outputs": ["{workspaceRoot}/dist/.playwright/chat-e2e"],
       "defaultConfiguration": "development",
       "configurations": {
         "development": {
-          "config": "apps/chat-e2e/config/local.playwright.config.ts"
+          "config": "apps/chat-e2e/config/local.chat.playwright.config.ts"
         },
         "production": {
-          "config": "apps/chat-e2e/config/playwright.config.ts"
+          "config": "apps/chat-e2e/config/chat.playwright.config.ts"
+        }
+      }
+    },
+    "e2e:overlay": {
+      "cache": false,
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{workspaceRoot}/dist/.playwright/overlay-e2e"],
+      "defaultConfiguration": "development",
+      "configurations": {
+        "development": {
+          "config": "apps/chat-e2e/config/local.overlay.playwright.config.ts"
+        },
+        "production": {
+          "config": "apps/chat-e2e/config/overlay.playwright.config.ts"
+        }
+      }
+    },
+    "e2e": {
+      "cache": false,
+      "defaultConfiguration": "development",
+      "executor": "nx:run-commands",
+      "configurations": {
+        "development": {
+          "commands": [
+            "nx run chat-e2e:e2e:chat",
+            "nx run chat-e2e:e2e:overlay"
+          ],
+          "parallel": false
+        },
+        "production": {
+          "commands": [
+            "nx run chat-e2e:e2e:chat --configuration=production",
+            "nx run chat-e2e:e2e:overlay --configuration=production --output-style=static"
+          ],
+          "parallel": false
         }
       }
     },
