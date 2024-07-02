@@ -106,14 +106,14 @@ export function UnpublishModal({
           </div>
           <div className="flex justify-end gap-3 px-6 pt-4">
             <button
-              className="button button-secondary"
+              className="button button-ghost button-medium"
               onClick={handleClose}
               data-qa="cancel"
             >
               {t('Cancel')}
             </button>
             <button
-              className="button button-primary"
+              className="button button-primary button-medium"
               onClick={handleUnpublish}
               data-qa="unpublish"
               autoFocus

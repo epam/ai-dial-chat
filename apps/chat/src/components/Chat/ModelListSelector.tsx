@@ -13,11 +13,14 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
+import { ModelId } from '@/src/constants/chat';
+
 import { ModelsDialog_V2 } from '@/src/components/Chat/ModelsDialog_v2';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 
+import { DallIcon } from '@/src/icons';
 import { find, take } from 'lodash';
 
 interface Props {
@@ -94,11 +97,17 @@ export const ModelListSelector = ({
           trigger={
             <div className="flex w-full cursor-pointer items-center justify-between pl-4 pr-2">
               <div className="flex gap-2">
-                <ModelIcon
-                  entityId={selectedEntity?.id || ''}
-                  entity={selectedEntity}
-                  size={18}
-                />
+                {selectedEntity?.id === ModelId.DALL ? (
+                  <div className="ml-[-3px]">
+                    <DallIcon />
+                  </div>
+                ) : (
+                  <ModelIcon
+                    entityId={selectedEntity?.id || ''}
+                    entity={selectedEntity}
+                    size={18}
+                  />
+                )}
                 <span>{selectedEntity?.name}</span>
               </div>
               <IconCaretDownFilled
@@ -111,10 +120,16 @@ export const ModelListSelector = ({
           {entities.map((model) => (
             <MenuItem
               key={model.id}
-              className="entity-menu-selector-item max-w-full border-b border-secondary bg-layer-2 !px-0"
+              className="entity-menu-selector-item max-w-full border-b border-secondary bg-layer-2 hover:bg-accent-secondary-alpha"
               item={
-                <div className="flex size-full items-center gap-2 pl-4 text-primary-bg-light hover:bg-accent-secondary-alpha">
-                  <ModelIcon entityId={model.id} entity={model} size={18} />
+                <div className="flex size-full items-center gap-2 pl-1 text-primary-bg-light">
+                  {model.id === ModelId.DALL ? (
+                    <div className="ml-[-3px]">
+                      <DallIcon />
+                    </div>
+                  ) : (
+                    <ModelIcon entityId={model.id} entity={model} size={18} />
+                  )}
                   <span>{t(model.name)}</span>
                 </div>
               }

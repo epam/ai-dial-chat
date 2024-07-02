@@ -325,7 +325,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             >
               <button
                 type="submit"
-                className="button button-primary"
+                className="button button-primary button-medium"
                 data-qa="save-prompt"
                 onClick={(e) => handleSubmit(e, selectedPrompt)}
                 disabled={saveDisabled}

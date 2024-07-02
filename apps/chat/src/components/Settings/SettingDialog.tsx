@@ -166,8 +166,6 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             labelText={t('Full width chat')}
             labelClassName="basis-1/3 md:basis-1/4 font-medium"
             handleSwitch={onChangeHandlerFullWidth}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
           />
         )}
       </div>
@@ -176,7 +174,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         <button
           type="button"
           ref={saveBtnRef}
-          className="button button-primary"
+          className="button button-primary button-medium"
           onClick={handleSave}
         >
           {t('Save')}

@@ -16,66 +16,13 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { TourGuideId } from '@/src/constants/share';
+import { ChatbarActionButtons } from '@/src/components/Chatbar/ChatbarActionButtons';
 
-import { Spinner } from '@/src/components/Common/Spinner';
-
-import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
 import { Conversations } from './Conversations';
-
-import { Feature } from '@epam/ai-dial-shared';
-
-const ChatActionsBlock = () => {
-  const { t } = useTranslation(Translation.SideBar);
-  const dispatch = useAppDispatch();
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
-  const isNewConversationDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
-  );
-  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
-
-  if (isNewConversationDisabled) {
-    return null;
-  }
-
-  return (
-    <div className="flex">
-      <button
-        className="mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl bg-accent-primary px-3 py-2 leading-3 transition-colors duration-200 hover:bg-accent-quaternary disabled:cursor-not-allowed"
-        onClick={() => {
-          talkTo && dispatch(ConversationsActions.setTalkTo(''));
-          dispatch(
-            ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
-            }),
-          );
-          dispatch(ConversationsActions.resetSearch());
-        }}
-        disabled={messageIsStreaming || isActiveNewConversationRequest}
-        data-qa="new-entity"
-        id={TourGuideId.newConversation}
-      >
-        {isActiveNewConversationRequest ? (
-          <Spinner size={18} className={'text-primary-bg-dark'} />
-        ) : (
-          <PlusIcon width={18} height={18} />
-        )}
-        {t('New conversation')}
-      </button>
-    </div>
-  );
-};
 
 export const Chatbar = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -159,7 +106,7 @@ export const Chatbar = () => {
     <Sidebar<ConversationInfo>
       featureType={FeatureType.Chat}
       side="left"
-      actionButtons={<ChatActionsBlock />}
+      actionButtons={<ChatbarActionButtons />}
       isOpen={showChatbar}
       itemComponent={<Conversations conversations={filteredConversations} />}
       folderComponent={<ChatFolders />}

@@ -160,7 +160,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
         <EmptyRequiredInputMessage />
       </div>
       <div className="flex  justify-end">
-        <button type="submit" className="button button-primary">
+        <button type="submit" className="button button-primary button-medium">
           {t('Report an issue')}
         </button>
       </div>

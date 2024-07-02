@@ -93,7 +93,18 @@ pre:has(div.codeblock) {
 
 @layer components {
   .button {
-    @apply rounded-primary border border-transparent px-3 py-2.5 outline-none;
+    @apply border border-transparent outline-none font-medium;
+    border-radius: 20px;
+  }
+
+  .button.button-medium {
+    padding: 6px 16px;
+    gap: 10px;
+  }
+
+  .button.button-small {
+    padding: 5px 12px;
+    gap: 4px;
   }
 
   .button:disabled {
@@ -105,28 +116,39 @@ pre:has(div.codeblock) {
     @apply border-hover;
   }
 
-  .button.button-primary {
-    @apply text-controls-permanent;
-  }
-
-  .button.button-primary:disabled {
-    @apply text-controls-permanent;
+  .button.button-primary,
+  .button.button-secondary,
+  .button.button-primary:disabled,
+  .button.button-secondary:disabled {
+    @apply text-pr-grey-white;
   }
 
   .button.button-primary:not(:disabled) {
-    @apply bg-layer-4 hover:bg-layer-3;
+    @apply bg-pr-primary-500 hover:bg-pr-primary-700;
   }
 
-  .button.button-secondary {
-    @apply border-primary text-controls-permanent;
+  .button.button-primary:disabled {
+    @apply bg-pr-primary-500-alpha;
   }
 
   .button.button-secondary:not(:disabled) {
-    @apply bg-controls-accent hover:bg-layer-3;
+    @apply bg-pr-secondary-500 hover:bg-pr-secondary-700;
   }
 
   .button.button-secondary:disabled {
-    @apply text-controls-disable;
+    @apply bg-pr-secondary-500-alpha;
+  }
+
+  .button.button-ghost {
+    @apply bg-transparent;
+  }
+
+  .button.button-ghost:not(:disabled) {
+    @apply border-pr-secondary-500 hover:border-pr-secondary-700 text-pr-secondary-500 hover:text-pr-secondary-700;
+  }
+
+  .button.button-ghost:disabled {
+    @apply border-pr-secondary-500-alpha;
   }
 
   .button.button-chat {
@@ -163,14 +185,9 @@ pre:has(div.codeblock) {
     --text-accent-primary: var(--text-quinary-bg-light);
   }
 
-  .sidebar-left,
-  .context-menu-chat {
-    --bg-accent-primary: var(--bg-accent-secondary, #37babc);
-  }
-
-  .sidebar-right,
-  .context-menu-prompt {
-    --bg-accent-primary: var(--bg-accent-secondary, #a972ff);
+  .additional-description ul {
+    list-style-type: disc;
+    margin-left: 16px;
   }
 
   .sidebar-right .menu-trigger,

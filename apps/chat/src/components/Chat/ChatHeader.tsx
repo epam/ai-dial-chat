@@ -1,12 +1,16 @@
-import { useMemo } from 'react';
+import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { ApplicationsActionsList } from '@/src/components/Chat/ApplicationsActions';
 import { ModelListSelector } from '@/src/components/Chat/ModelListSelector';
 
 interface Props {
@@ -14,15 +18,27 @@ interface Props {
   onChangeTemperature: (temperature: number) => void;
   onSelectModel: (modelId: string) => void;
   onSelectAssistantSubModel?: (modelId: string) => void;
+  onCreateNewConversation: (modelId: string) => void;
+  onUpdateFavoriteApp: (modelId: string, isFavorite: boolean) => void;
 }
 
 export const ChatHeader = ({
   conversation,
   onChangeTemperature,
   onSelectModel,
+  onCreateNewConversation,
+  onUpdateFavoriteApp,
 }: Props) => {
+  const { t } = useTranslation(Translation.Chat);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const modelId = useMemo(() => conversation.model.id, [conversation]);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const favoriteAppIds = useAppSelector(
+    ModelsSelectors.selectFavoriteApplicationsIds,
+  );
+  const modelId = conversation.model.id;
+  const model = modelsMap[modelId];
+
+  if (!model) return null;
 
   return (
     <>
@@ -35,15 +51,31 @@ export const ChatHeader = ({
         )}
         data-qa="chat-header"
       >
-        <div className="flex size-full items-center md:max-w-[180px] ">
-          <ModelListSelector
-            modelId={modelId}
-            onModelSelect={(modelId: string) => {
-              onSelectModel(modelId);
-            }}
-            temperature={conversation.temperature}
-            onChangeTemperature={onChangeTemperature}
-          />
+        <div
+          className={classNames(
+            'flex size-full items-center',
+            model.type === EntityType.Model && 'md:max-w-[180px]',
+            model.type === EntityType.Application && 'md:max-w-[200px]',
+          )}
+        >
+          {model.type === EntityType.Application ? (
+            <ApplicationsActionsList
+              model={model}
+              onCreateNewConversation={onCreateNewConversation}
+              onUpdateFavoriteApp={onUpdateFavoriteApp}
+              isFavoriteApp={favoriteAppIds.includes(model.id)}
+              t={t}
+            />
+          ) : (
+            <ModelListSelector
+              modelId={modelId}
+              onModelSelect={(modelId: string) => {
+                onSelectModel(modelId);
+              }}
+              temperature={conversation.temperature}
+              onChangeTemperature={onChangeTemperature}
+            />
+          )}
         </div>
       </div>
     </>

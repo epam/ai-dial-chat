@@ -133,7 +133,7 @@ export const PreviewPromptModal = ({
                   )}
                 </div>
                 <button
-                  className="button button-secondary"
+                  className="button button-secondary button-medium"
                   data-qa="save-prompt"
                   onClick={onDuplicate}
                 >

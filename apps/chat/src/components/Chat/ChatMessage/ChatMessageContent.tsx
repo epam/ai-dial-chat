@@ -507,7 +507,7 @@ export const ChatMessageContent = ({
                   </div>
                   <div className="relative flex gap-3">
                     <button
-                      className="button button-secondary"
+                      className="button button-secondary button-medium"
                       onClick={() => {
                         setMessageContent(message.content);
                         setNewEditableAttachmentsIds(
@@ -520,7 +520,7 @@ export const ChatMessageContent = ({
                       {t('Cancel')}
                     </button>
                     <button
-                      className="button button-primary"
+                      className="button button-primary button-medium"
                       onClick={handleEditMessage}
                       disabled={isSubmitAllowed}
                       data-qa="save-and-submit"

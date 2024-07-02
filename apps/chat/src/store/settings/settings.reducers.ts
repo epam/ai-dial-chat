@@ -30,6 +30,7 @@ export interface SettingsState {
   isolatedModelId?: string;
   customRenderers?: CustomVisualizer[];
   popularPromptsPaths?: Record<string, string>;
+  favoriteAppsIds?: string[];
 }
 
 const initialState: SettingsState = {
@@ -48,6 +49,7 @@ const initialState: SettingsState = {
   themesHostDefined: false,
   customRenderers: [],
   popularPromptsPaths: {},
+  favoriteAppsIds: [],
 };
 
 export const settingsSlice = createSlice({
@@ -275,6 +277,9 @@ const selectOverlayConversationId = createSelector([rootSelector], (state) => {
 const selectPopularPromptsPaths = createSelector([rootSelector], (state) => {
   return state.popularPromptsPaths;
 });
+const selectFavoriteAppsIds = createSelector([rootSelector], (state) => {
+  return state.favoriteAppsIds;
+});
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -301,4 +306,5 @@ export const SettingsSelectors = {
   selectPublicationFilters,
   selectOverlayConversationId,
   selectPopularPromptsPaths,
+  selectFavoriteAppsIds,
 };

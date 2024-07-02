@@ -38,6 +38,8 @@ export enum ModelId {
   GPT_35 = 'gpt-35-turbo',
   GPT_4_vision = 'gpt-4-vision',
   DALL = 'dall-e-3',
+  HR_BUDDY = 'hr-buddy',
+  RAG = 'rag',
 }
 
 export const MODEL_ICON_SIZE = {
@@ -48,6 +50,8 @@ export const MODEL_ICON_SIZE = {
     [ModelId.GPT_35]: 33.7,
     [ModelId.GPT_4_vision]: 33.5,
     [ModelId.DALL]: 27,
+    [ModelId.HR_BUDDY]: 24,
+    [ModelId.RAG]: 30,
   },
   small: {
     [ModelId.GPT_4]: 18,
@@ -56,6 +60,8 @@ export const MODEL_ICON_SIZE = {
     [ModelId.GPT_35]: 25.28,
     [ModelId.GPT_4_vision]: 25.13,
     [ModelId.DALL]: 20.25,
+    [ModelId.HR_BUDDY]: 19,
+    [ModelId.RAG]: 22.5,
   },
 };
 

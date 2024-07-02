@@ -160,7 +160,7 @@ export const ChatSettings = ({
           />
           <div className="flex w-full items-center justify-end overflow-hidden bg-layer-2 px-3 py-4 md:px-5">
             <button
-              className="button button-primary"
+              className="button button-primary button-medium"
               data-qa="apply-changes"
               onClick={handleOnApplySettings}
             >

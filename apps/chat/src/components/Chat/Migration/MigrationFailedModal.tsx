@@ -396,7 +396,7 @@ export const MigrationFailedWindow = ({
             <div className="mt-3 flex w-full justify-end">
               {!!failedMigratedPrompts.length && (
                 <button
-                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
+                  className="button button-secondary button-medium mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
                   data-qa="skip-migration"
                   onClick={handleBackupPrompts}
                 >
@@ -416,7 +416,7 @@ export const MigrationFailedWindow = ({
               )}
               {!!failedMigratedConversations.length && (
                 <button
-                  className="button button-secondary mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
+                  className="button button-secondary button-medium mr-3 flex h-[38px] min-w-[73px] items-center capitalize md:normal-case"
                   data-qa="skip-migration"
                   onClick={handleBackupChats}
                 >
@@ -435,7 +435,7 @@ export const MigrationFailedWindow = ({
                 </button>
               )}
               <button
-                className="button button-primary mr-3 flex h-[38px] items-center"
+                className="button button-primary button-medium mr-3 flex h-[38px] items-center"
                 data-qa="skip-migration"
                 onClick={retryMigration}
                 disabled={!isNextButtonEnabled}

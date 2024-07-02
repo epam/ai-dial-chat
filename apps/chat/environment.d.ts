@@ -93,6 +93,7 @@ declare global {
       AUTH_OKTA_ISSUER?: string;
       AUTH_OKTA_SCOPE?: string;
       POPULAR_PROMPTS_PATHS?: string;
+      FAVORITE_APPS_IDS?: string;
     }
   }
 }

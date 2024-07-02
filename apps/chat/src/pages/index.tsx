@@ -215,7 +215,7 @@ export default function Home({ initialState }: HomeProps) {
         <div className="grid size-full min-h-[100px] place-items-center bg-layer-1 text-sm text-primary-bg-dark">
           <button
             onClick={handleOverlayAuth}
-            className="button button-secondary"
+            className="button button-secondary button-medium"
             disabled={authStatus === 'loading'}
           >
             {t('Login')}
@@ -355,6 +355,10 @@ export const getServerSideProps: GetServerSideProps = async ({
     popularPromptsPaths:
       process.env.POPULAR_PROMPTS_PATHS &&
       JSON.parse(process.env.POPULAR_PROMPTS_PATHS),
+    favoriteAppsIds:
+      (process.env.FAVORITE_APPS_IDS &&
+        process.env.FAVORITE_APPS_IDS.split(',')) ||
+      [],
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

@@ -20,6 +20,7 @@ export enum UIStorageKeys {
   SelectedPublicationId = 'selectedPublicationId',
   RecentModelsIds = 'recentModelsIds',
   RecentAddonsIds = 'recentAddonsIds',
+  FavoriteAppsIds = 'favoriteAppsIds',
   Settings = 'settings',
   ShowChatbar = 'showChatbar',
   ShowPromptbar = 'showPromptbar',

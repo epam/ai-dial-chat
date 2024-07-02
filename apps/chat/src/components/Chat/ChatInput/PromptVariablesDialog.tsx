@@ -185,7 +185,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         <div className="mt-1 flex justify-end">
           <button
             type="submit"
-            className="button button-primary"
+            className="button button-primary button-medium"
             data-qa="submit-variable"
           >
             {t('Submit')}
