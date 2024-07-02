@@ -124,19 +124,19 @@ pre:has(div.codeblock) {
   }
 
   .button.button-primary:not(:disabled) {
-    @apply bg-pr-primary-500 hover:bg-pr-primary-700;
+    @apply bg-pr-primary-550 hover:bg-pr-primary-650;
   }
 
   .button.button-primary:disabled {
-    @apply bg-pr-primary-500-alpha;
+    @apply bg-pr-primary-550-alpha;
   }
 
   .button.button-secondary:not(:disabled) {
-    @apply bg-pr-secondary-500 hover:bg-pr-secondary-700;
+    @apply bg-pr-secondary-550 hover:bg-pr-secondary-650;
   }
 
   .button.button-secondary:disabled {
-    @apply bg-pr-secondary-500-alpha;
+    @apply bg-pr-secondary-550-alpha;
   }
 
   .button.button-ghost {
@@ -144,11 +144,11 @@ pre:has(div.codeblock) {
   }
 
   .button.button-ghost:not(:disabled) {
-    @apply border-pr-secondary-500 hover:border-pr-secondary-700 text-pr-secondary-500 hover:text-pr-secondary-700;
+    @apply border-pr-secondary-550 hover:border-pr-secondary-650 text-pr-secondary-550 hover:text-pr-secondary-650;
   }
 
   .button.button-ghost:disabled {
-    @apply border-pr-secondary-500-alpha;
+    @apply border-pr-secondary-550-alpha;
   }
 
   .button.button-chat {

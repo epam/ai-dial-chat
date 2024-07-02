@@ -2,17 +2,24 @@
 const commonPRColors = {
   'pr-primary-500': 'var(--pr-primary-500, #184487)',
   'pr-primary-550': 'var(--pr-primary-550, #023465)',
+  'pr-primary-650': 'var(--pr-primary-650, #02274D)',
   'pr-primary-700': 'var(--pr-primary-700, #082A5E)',
   'pr-primary-800': 'var(--pr-primary-800, #002957)',
   'pr-primary-500-alpha': 'var(--pr-primary-500-alpha, #18448766)',
+  'pr-primary-550-alpha': 'var(--pr-primary-550-alpha, #02346566)',
 
   'pr-secondary-500': 'var(--pr-secondary-500, #6296E2)',
+  'pr-secondary-550': 'var(--pr-secondary-550, #7FA5D0)',
+  'pr-secondary-650': 'var(--pr-secondary-650, #5B8CC4)',
   'pr-secondary-700': 'var(--pr-secondary-500, #336BBD)',
   'pr-secondary-500-alpha': 'var(--pr-secondary-500, #6296E266)',
+  'pr-secondary-550-alpha': 'var(--pr-secondary-550, #7FA5D066)',
 
   'pr-grey-white': 'var(--pr-grey-white, #FFFFFF)',
   'pr-grey-100': 'var(--pr-grey-100, #F4F8FB)',
   'pr-grey-300': 'var(--pr-grey-300, #C9CED8)',
+
+  'pr-tertiary-500': 'var(--pr-tertiary-500, #FFD440)',
 };
 
 const commonBgColors = {
