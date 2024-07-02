@@ -41,14 +41,14 @@
             "nx run chat-e2e:e2e:chat",
             "nx run chat-e2e:e2e:overlay"
           ],
-          "parallel": true
+          "parallel": false
         },
         "production": {
           "commands": [
             "nx run chat-e2e:e2e:chat --configuration=production",
             "nx run chat-e2e:e2e:overlay --configuration=production --output-style=static"
           ],
-          "parallel": true
+          "parallel": false
         }
       }
     },
