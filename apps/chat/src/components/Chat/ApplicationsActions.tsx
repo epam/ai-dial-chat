@@ -19,14 +19,14 @@ interface Props {
   onCreateNewConversation: (modelId: string) => void;
   onUpdateFavoriteApp: (modelId: string, isFavorite: boolean) => void;
   t: TFunction;
-  isFavoriteApp?: boolean;
+  isFavoriteApp: boolean;
 }
 
 export const ApplicationsActionsList = ({
   model,
   onCreateNewConversation,
   onUpdateFavoriteApp,
-  isFavoriteApp = false,
+  isFavoriteApp,
   t,
 }: Props) => {
   const AppIcon = getApplicationIcon(model.id);
@@ -78,7 +78,7 @@ export const ApplicationsActionsList = ({
                   : t('Pin to the sidebar')}
               </div>
             }
-            onClick={() => onUpdateFavoriteApp(model.id, isFavoriteApp)}
+            onClick={() => onUpdateFavoriteApp(model.id, !isFavoriteApp)}
           />
         </Menu>
       </div>
