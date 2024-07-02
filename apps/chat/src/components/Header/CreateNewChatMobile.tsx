@@ -33,7 +33,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
 
   return (
     <Tooltip isTriggerClickable tooltip={t('New conversation')}>
-      <div
+      <button
         className="flex h-full items-center justify-center border-r border-tertiary px-3 md:px-5 xl:hidden"
         onClick={() => {
           if (!isConversationsLoaded || isActiveNewConversationRequest) return;
@@ -54,7 +54,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
             />
           </div>
         )}
-      </div>
+      </button>
     </Tooltip>
   );
 };
