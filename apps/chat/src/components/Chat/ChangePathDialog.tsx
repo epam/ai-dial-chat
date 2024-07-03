@@ -10,7 +10,6 @@ import {
   getPathToFolderById,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
