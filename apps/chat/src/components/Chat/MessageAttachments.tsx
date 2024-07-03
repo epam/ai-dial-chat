@@ -7,6 +7,13 @@ import classNames from 'classnames';
 import { Attachment } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
+import { ModelId } from '@/src/constants/chat';
+
+import { ImageAttachmentRenderer } from '@/src/components/Chat/ImageAttachmentRenderer';
+
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
 
@@ -17,6 +24,9 @@ interface Props {
 
 export const MessageAttachments = ({ attachments, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
   const isUnderSection = useMemo(() => {
     return !!attachments && attachments.length > 3;
   }, [attachments]);
@@ -25,6 +35,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
 
   if (!attachments?.length) {
     return null;
+  }
+
+  if (selectedConversations[0].model.id === ModelId.DALL) {
+    return <ImageAttachmentRenderer attachments={attachments} />;
   }
 
   return isUnderSection && !isInner ? (
