@@ -145,10 +145,10 @@ export const selectFilteredFolders = createSelector(
 );
 
 export const selectLastConversation = createSelector(
-  [selectConversations],
-  (conversations): ConversationInfo | undefined => {
-    const ownConversations = conversations.filter(
-      (conv) => !isEntityExternal(conv),
+  [rootSelector],
+  (state): ConversationInfo | undefined => {
+    const ownConversations = state.conversations.filter(
+      (conv) => !isEntityOrParentsExternal(state, conv, FeatureType.Chat),
     );
     if (!ownConversations.length) return undefined;
     return sortByDateAndName(ownConversations)[0];
