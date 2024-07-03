@@ -34,7 +34,6 @@ import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import {
   AllApplicationsIcon,
   NewConversationIcon,
-  PinIcon,
   UnpinIcon,
 } from '@/src/icons';
 import { Feature } from '@epam/ai-dial-shared';
@@ -107,7 +106,7 @@ export const AllApplicationsActionButton = () => {
     <div className="flex">
       <button
         className={classNames(
-          'flex shrink-0 grow cursor-pointer select-none items-center justify-start gap-2  border-l-4 px-5 py-2 leading-3 hover:bg-accent-primary-alpha',
+          'flex min-h-[50px] shrink-0 grow cursor-pointer select-none items-center justify-start gap-2  border-l-4 px-5 py-2 leading-3 hover:bg-accent-primary-alpha',
           isExploreAllConversationsSelected
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-quinary',
@@ -192,7 +191,7 @@ const FavoriteApplicationActionButton = ({
     >
       <button
         className={classNames(
-          'group flex size-full cursor-pointer select-none items-center gap-2 border-l-4  py-2 pl-4 pr-2 leading-3',
+          'group flex size-full min-h-[45px] cursor-pointer select-none items-center gap-2 border-l-4  py-2 pl-4 pr-2 leading-3',
           isSelected ? 'border-l-accent-primary' : 'border-l-quinary',
         )}
         onClick={() => {

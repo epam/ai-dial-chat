@@ -96,7 +96,7 @@ export const ModelListSelector = ({
           className="flex w-full items-center"
           trigger={
             <div className="flex w-full cursor-pointer items-center justify-between pl-4 pr-2">
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 {selectedEntity?.id === ModelId.DALL ? (
                   <div className="ml-[-3px]">
                     <DallIcon />
