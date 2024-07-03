@@ -36,7 +36,7 @@ import {
 } from './PublicationResources';
 import { RuleListItem } from './RuleListItem';
 
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
 interface FilterComponentProps {
