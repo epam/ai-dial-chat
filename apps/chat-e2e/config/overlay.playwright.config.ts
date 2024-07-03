@@ -18,6 +18,7 @@ config.reporter = [
     },
   ],
 ];
+config.use!.baseURL = 'http://localhost:4200';
 config.use!.navigationTimeout = 60000;
 config.use!.actionTimeout = 60000;
 
