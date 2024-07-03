@@ -78,6 +78,7 @@ export default function ContextMenu({
   onOpenChange,
   isLoading,
   placement,
+  listClassNames,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -104,10 +105,7 @@ export default function ContextMenu({
     <Menu
       placement={placement}
       className={triggerIconClassName}
-      listClassName={classNames(
-        featureType === FeatureType.Chat && 'context-menu-chat',
-        featureType === FeatureType.Prompt && 'context-menu-prompt',
-      )}
+      listClassName={listClassNames}
       disabled={disabled}
       type="contextMenu"
       onOpenChange={onOpenChange}

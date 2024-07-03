@@ -51,13 +51,7 @@ export const ChatHeader = ({
         )}
         data-qa="chat-header"
       >
-        <div
-          className={classNames(
-            'flex size-full items-center',
-            model.type === EntityType.Model && 'md:max-w-[180px]',
-            model.type === EntityType.Application && 'md:max-w-[200px]',
-          )}
-        >
+        <div className={classNames('flex items-center md:min-w-[180px]')}>
           {model.type === EntityType.Application ? (
             <ApplicationsActionsList
               model={model}

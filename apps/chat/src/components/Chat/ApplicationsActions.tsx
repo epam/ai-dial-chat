@@ -35,9 +35,11 @@ export const ApplicationsActionsList = ({
     <div className="entity-selector w-full">
       <div className="h-10 rounded-full border border-secondary bg-layer-2 shadow-primary hover:cursor-pointer hover:border-tertiary">
         <Menu
+          type="contextMenu"
+          listClassName="min-w-[200px]"
           className="flex w-full items-center"
           trigger={
-            <div className="flex w-full cursor-pointer items-center justify-between pl-4 pr-2">
+            <div className="flex w-full cursor-pointer items-center justify-between px-2">
               <div className="flex items-center gap-2 font-medium">
                 <AppIcon />
                 <span>
@@ -55,7 +57,7 @@ export const ApplicationsActionsList = ({
             key={'create-new-conversation'}
             className="max-w-full bg-layer-2 hover:bg-accent-secondary-alpha"
             item={
-              <div className="flex items-center justify-start gap-2">
+              <div className="flex items-center justify-start gap-3">
                 <NewConversationIcon />
                 {t('New Conversation')}
               </div>
@@ -69,7 +71,7 @@ export const ApplicationsActionsList = ({
               <div
                 className={classNames(
                   'flex items-center justify-start',
-                  isFavoriteApp ? 'ml-[-2px] gap-1.5' : 'gap-2',
+                  isFavoriteApp ? 'ml-[-2px] gap-2.5' : 'gap-3',
                 )}
               >
                 {isFavoriteApp ? <UnpinIcon /> : <PinIcon />}

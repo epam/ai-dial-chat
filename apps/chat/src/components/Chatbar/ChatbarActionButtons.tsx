@@ -59,7 +59,7 @@ export const NewConversationActionButton = () => {
   return (
     <div className="flex">
       <button
-        className="bg-pr-secondary-550 hover:bg-pr-secondary-650 disabled:bg-pr-secondary-550-alpha mx-5 my-2 flex shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-2xl px-3 py-2 leading-3 transition-colors duration-200 disabled:cursor-not-allowed"
+        className="bg-pr-secondary-550 hover:bg-pr-secondary-650 disabled:bg-pr-secondary-550-alpha mx-5 my-2 flex min-h-[40px] shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-3xl px-3 py-2 font-medium leading-3 transition-colors duration-200 disabled:cursor-not-allowed"
         onClick={() => {
           talkTo && dispatch(ConversationsActions.setTalkTo(''));
           dispatch(
@@ -209,6 +209,7 @@ const FavoriteApplicationActionButton = ({
       </button>
       <ContextMenu
         menuItems={menuItems}
+        listClassNames="min-w-[200px]"
         TriggerIcon={IconDots}
         triggerIconSize={18}
         triggerIconClassName="pr-4 h-full flex items-center hover:cursor-pointer invisible group-hover:visible"

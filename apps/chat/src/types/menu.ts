@@ -49,4 +49,5 @@ export interface ContextMenuProps extends MenuProps {
   TriggerCustomRenderer?: JSX.Element;
   isLoading?: boolean;
   placement?: Placement;
+  listClassNames?: string;
 }
