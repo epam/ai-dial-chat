@@ -887,6 +887,9 @@ export function Chat() {
   const isInitFoldersAndConversations = useAppSelector(
     ConversationsSelectors.selectIsInitFoldersAndConversations,
   );
+  const isExploreAllConversationsSelected = useAppSelector(
+    ConversationsSelectors.selectIsExploreAllConversationsSelected,
+  );
 
   const currentConversation = conversations.find(
     (chat) => chat?.id === currentChatId?.[0],
@@ -957,6 +960,7 @@ export function Chat() {
   }
 
   if (
+    !isExploreAllConversationsSelected &&
     !areSelectedConversationsLoaded &&
     (!selectedConversations.length ||
       selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))

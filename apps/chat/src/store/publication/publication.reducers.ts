@@ -49,7 +49,7 @@ export const publicationSlice = createSlice({
     ) => {
       state.publications = payload.publications.map((publication, index) => ({
         ...publication,
-        displayName: `Approve request ${index}`,
+        displayName: `Approve request ${index + 1}`,
       }));
     },
     uploadPublicationsFail: (state) => state,
