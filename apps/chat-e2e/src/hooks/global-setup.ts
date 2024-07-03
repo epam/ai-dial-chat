@@ -1,5 +1,6 @@
 import { ResultFolder } from '@/src/testData';
 import { FileUtil } from '@/src/utils';
+import type { FullConfig } from '@playwright/test';
 import path from 'path';
 
 export const isApiStorageType =
@@ -8,15 +9,28 @@ export const isApiStorageType =
 export const ExecutionResults = {
   allureReportPath: path.resolve(
     __dirname,
-    `../../${ResultFolder.allureReport}`,
+    `../../${ResultFolder.allureChatReport}`,
   ),
-  htmlReportPath: path.resolve(__dirname, `../../${ResultFolder.htmlReport}`),
+  allureOverlayReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.allureOverlayReport}`,
+  ),
+  chatHtmlReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.chatHtmlReport}`,
+  ),
+  overlayHtmlReportPath: path.resolve(
+    __dirname,
+    `../../${ResultFolder.overlayHtmlReport}`,
+  ),
   testResultsPath: path.resolve(__dirname, `../../${ResultFolder.testResults}`),
 };
 
-async function globalSetup() {
-  for (const path of Object.values(ExecutionResults)) {
-    FileUtil.deleteFolder(path);
+async function globalSetup(config: FullConfig) {
+  if (config.projects[0].name === 'auth') {
+    for (const path of Object.values(ExecutionResults)) {
+      FileUtil.deleteFolder(path);
+    }
   }
 }
 

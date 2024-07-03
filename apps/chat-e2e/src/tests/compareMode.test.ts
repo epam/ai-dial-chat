@@ -287,6 +287,7 @@ dialTest(
     localStorageManager,
     dataInjector,
     compare,
+    chatHeader,
     rightChatHeader,
     leftChatHeader,
   }) => {
@@ -332,8 +333,7 @@ dialTest(
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
 
-        const activeChatHeader =
-          await leftChatHeader.chatTitle.getElementContent();
+        const activeChatHeader = await chatHeader.chatTitle.getElementContent();
         expect
           .soft(activeChatHeader, ExpectedMessages.headerTitleIsValid)
           .toBe(activeChat);
