@@ -1,4 +1,4 @@
-import config from '../../config/playwright.config';
+import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import path from 'path';
@@ -331,8 +331,10 @@ export enum Theme {
 }
 
 export enum ResultFolder {
-  allureReport = 'allure-results',
-  htmlReport = 'html-report',
+  allureChatReport = 'allure-chat-results',
+  allureOverlayReport = 'allure-overlay-results',
+  chatHtmlReport = 'chat-html-report',
+  overlayHtmlReport = 'overlay-html-report',
   testResults = 'test-results',
 }
 

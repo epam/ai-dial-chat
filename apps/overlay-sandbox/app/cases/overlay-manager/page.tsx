@@ -9,7 +9,7 @@ import { useEffect, useRef } from 'react';
 
 const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
   id: 'test',
-  domain: 'http://localhost:3000',
+  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
   theme: 'light',
   modelId: 'gpt-4',
   enabledFeatures: [
