@@ -68,7 +68,7 @@ export function TargetAudienceFilterComponent({
     onSaveFilter({
       id: selectedTarget,
       filterFunction: filterFunction as PublicationFunctions,
-      filterParams,
+      filterParams: filterParams.map((param) => param.trim()),
     });
   }, [
     filterFunction,

@@ -234,7 +234,7 @@ export function MultipleComboBox<T>({
                   key={`selected-item-${getItemLabel(
                     selectedItemForRender,
                   )}-${index}`}
-                  tooltip={getItemLabel(selectedItemForRender)}
+                  tooltip={getItemLabel(selectedItemForRender).trim()}
                 >
                   <span
                     className="flex h-[23px] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
