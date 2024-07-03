@@ -34,6 +34,10 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
@@ -82,6 +86,9 @@ export const PromptComponent = ({
   );
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
   const isApproveRequiredResource =
     !!additionalItemData?.isApproveRequiredResource;
   const isSelected =
@@ -305,14 +312,16 @@ export const PromptComponent = ({
   );
 
   const onPromptClick = () => {
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
-    dispatch(PromptsActions.setIsPromptContentCopying(true));
+    if (selectedConversationsIds.length) {
+      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(PromptsActions.setIsPromptContentCopying(true));
 
-    dispatch(
-      PromptsActions.uploadPrompt({
-        promptId: prompt.id,
-      }),
-    );
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: prompt.id,
+        }),
+      );
+    }
   };
 
   return (

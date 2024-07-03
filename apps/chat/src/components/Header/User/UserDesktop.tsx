@@ -68,8 +68,8 @@ export const UserDesktop = () => {
       </div>
 
       <Menu
-        shouldApplySize={false}
         className="w-full"
+        listClassName="!w-[180px]"
         trigger={
           <div
             className="flex h-full min-w-[120px] items-center justify-end gap-2 pl-5 pr-3 hover:cursor-pointer hover:text-accent-primary"
