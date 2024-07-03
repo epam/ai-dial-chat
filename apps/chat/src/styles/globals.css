@@ -93,8 +93,9 @@ pre:has(div.codeblock) {
 
 @layer components {
   .button {
-    @apply border border-transparent outline-none font-medium;
+    @apply outline-none font-medium;
     border-radius: 20px;
+    line-height: 17px;
   }
 
   .button.button-medium {
@@ -140,7 +141,15 @@ pre:has(div.codeblock) {
   }
 
   .button.button-ghost {
-    @apply bg-transparent;
+    @apply border;
+  }
+
+  .button.button-medium.button-ghost {
+    padding: 5px 15px;
+  }
+
+  .button.button-small.button-ghost {
+    padding: 4px 11px;
   }
 
   .button.button-ghost:not(:disabled) {
