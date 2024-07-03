@@ -6,7 +6,6 @@ import classNames from 'classnames';
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { getPublicationId } from '@/src/utils/app/publications';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
@@ -83,6 +82,14 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
       ? ConversationPublicationResources
       : PromptPublicationResources;
 
+  // TODO Remove this code when publication display name feature will be done
+  const publications = useAppSelector((state) =>
+    PublicationSelectors.selectPublications(state),
+  );
+  const publicationDisplayName = publications.filter(
+    (item) => item.url === publication.url,
+  )[0].displayName;
+
   return (
     <div className="flex flex-col gap-1">
       <div
@@ -109,7 +116,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
             )}
             data-qa="folder-name"
           >
-            {getPublicationId(publication.url)}
+            {publicationDisplayName}
           </div>
         </div>
       </div>

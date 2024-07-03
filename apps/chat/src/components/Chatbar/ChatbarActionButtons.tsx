@@ -20,6 +20,7 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -113,6 +114,7 @@ export const AllApplicationsActionButton = () => {
         )}
         onClick={() => {
           dispatch(ConversationsActions.clearSelectedConversationsIds());
+          dispatch(PublicationActions.clearSelectedPublication());
           dispatch(
             ConversationsActions.setIsExploreAllApplicationsSelected(true),
           );

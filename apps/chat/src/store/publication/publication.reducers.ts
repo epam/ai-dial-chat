@@ -47,7 +47,10 @@ export const publicationSlice = createSlice({
       state,
       { payload }: PayloadAction<{ publications: PublicationInfo[] }>,
     ) => {
-      state.publications = payload.publications;
+      state.publications = payload.publications.map((publication, index) => ({
+        ...publication,
+        displayName: `Approve request ${index}`,
+      }));
     },
     uploadPublicationsFail: (state) => state,
     uploadPublication: (state, _action: PayloadAction<{ url: string }>) =>
@@ -103,6 +106,9 @@ export const publicationSlice = createSlice({
       { payload }: PayloadAction<{ publication: Publication }>,
     ) => {
       state.selectedPublication = payload.publication;
+    },
+    clearSelectedPublication: (state) => {
+      state.selectedPublication = null;
     },
     setPublicationsToReview: (
       state,
