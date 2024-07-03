@@ -57,7 +57,7 @@ const Addon = ({
     >
       <div className="flex items-center gap-2">
         <ModelIcon entity={addon} entityId={addon.id} size={24} />
-        <span className="whitespace-pre text-left" data-qa="addon-name">
+        <span className="whitespace-pre-wrap text-left" data-qa="addon-name">
           {addon.name}
         </span>
       </div>
