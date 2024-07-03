@@ -53,15 +53,6 @@ export const selectConversations = createSelector(
   (state) => state.conversations,
 );
 
-export const selectNotExternalConversations = createSelector(
-  [(state: RootState) => state, selectConversations],
-  (state, conversations) =>
-    conversations.filter(
-      (conversation) =>
-        !isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-    ),
-);
-
 export const selectPublishedOrSharedByMeConversations = createSelector(
   [selectConversations],
   (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
