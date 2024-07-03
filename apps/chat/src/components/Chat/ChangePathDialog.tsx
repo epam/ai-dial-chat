@@ -183,7 +183,7 @@ export const ChangePathDialog = ({
       );
 
       setSelectedFolderId(
-        constructPath(parentFolderId || getConversationRootId(), folderName),
+        constructPath(parentFolderId || rootFolderId, folderName),
       );
 
       dispatch(
