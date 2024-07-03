@@ -1,5 +1,4 @@
 import { Prompt } from '@/chat/types/prompt';
-import { ImportPromtsResponse } from '@/chat/utils/app/import-export';
 import { FolderPrompt } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { ItemUtil } from '@/src/utils';
@@ -25,7 +24,7 @@ export class ImportPrompt {
       importedPrompt.id = ItemUtil.getApiPromptId(importedPrompt);
     }
 
-    const folderPromptToImport: ImportPromtsResponse = {
+    const folderPromptToImport = {
       prompts: [importedPrompt],
       folders: importedFolder ? [importedFolder.folders] : [],
       isError: false,
