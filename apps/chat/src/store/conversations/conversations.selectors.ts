@@ -61,6 +61,15 @@ export const selectExternalConversations = createSelector(
     ),
 );
 
+export const selectNotExternalConversations = createSelector(
+  [(state: RootState) => state, selectConversations],
+  (state, conversations) =>
+    conversations.filter(
+      (conversation) =>
+        !isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+    ),
+);
+
 export const selectPublishedOrSharedByMeConversations = createSelector(
   [selectConversations],
   (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
@@ -92,7 +101,7 @@ export const selectFilteredConversations = createSelector(
 export const selectFolders = createSelector(
   [rootSelector],
   (state: ConversationsState) => {
-    return state.folders;
+    return state.folders || [];
   },
 );
 
@@ -145,11 +154,8 @@ export const selectFilteredFolders = createSelector(
 );
 
 export const selectLastConversation = createSelector(
-  [rootSelector],
-  (state): ConversationInfo | undefined => {
-    const ownConversations = state.conversations.filter(
-      (conv) => !isEntityOrParentsExternal(state, conv, FeatureType.Chat),
-    );
+  [selectNotExternalConversations],
+  (ownConversations): ConversationInfo | undefined => {
     if (!ownConversations.length) return undefined;
     return sortByDateAndName(ownConversations)[0];
   },
