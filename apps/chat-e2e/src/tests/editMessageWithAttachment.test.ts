@@ -61,7 +61,7 @@ dialTest(
         await page.keyboard.press(keys.delete);
         await expect
           .soft(
-            await chatMessages.saveAndSubmit.getElementLocator(),
+            chatMessages.saveAndSubmit.getElementLocator(),
             ExpectedMessages.buttonIsDisabled,
           )
           .toBeDisabled();
@@ -83,7 +83,7 @@ dialTest(
         await uploadFromDeviceModal.uploadButton.click();
         await expect
           .soft(
-            await chatMessages.saveAndSubmit.getElementLocator(),
+            chatMessages.saveAndSubmit.getElementLocator(),
             ExpectedMessages.buttonIsDisabled,
           )
           .toBeDisabled();
@@ -96,7 +96,7 @@ dialTest(
         await page.unrouteAll();
         await expect
           .soft(
-            await chatMessages.saveAndSubmit.getElementLocator(),
+            chatMessages.saveAndSubmit.getElementLocator(),
             ExpectedMessages.buttonIsEnabled,
           )
           .toBeEnabled();
@@ -168,7 +168,7 @@ dialTest(
         await chatMessages.openEditMessageMode(1);
         await expect
           .soft(
-            await editMessageInputAttachments
+            editMessageInputAttachments
               .inputAttachmentName(Attachment.specialSymbolsName)
               .getElementLocator(),
             ExpectedMessages.attachmentNameIsFullyVisible,
@@ -197,7 +197,7 @@ dialTest(
         await removeAttachmentIcon.click();
         await expect
           .soft(
-            await editMessageInputAttachments.inputAttachment(
+            editMessageInputAttachments.inputAttachment(
               Attachment.specialSymbolsName,
             ),
             ExpectedMessages.fileIsNotAttached,
@@ -294,7 +294,7 @@ dialTest(
         for (const file of updatedAttachedFiles) {
           await expect
             .soft(
-              await editMessageInputAttachments.inputAttachment(file),
+              editMessageInputAttachments.inputAttachment(file),
               ExpectedMessages.fileIsAttached,
             )
             .toBeVisible();
@@ -386,7 +386,7 @@ dialTest(
         for (const file of allAttachedFiles.slice(0, 3)) {
           await expect
             .soft(
-              await chatMessages
+              chatMessages
                 .getChatMessageAttachment(1, file)
                 .getElementLocator(),
               ExpectedMessages.fileIsAttached,
@@ -424,7 +424,7 @@ dialTest(
         for (const file of allAttachedFiles) {
           await expect
             .soft(
-              await chatMessages
+              chatMessages
                 .getChatMessageAttachment(1, file)
                 .getElementLocator(),
               ExpectedMessages.attachmentIsVisible,
@@ -441,7 +441,7 @@ dialTest(
         for (const file of allAttachedFiles) {
           await expect
             .soft(
-              await chatMessages
+              chatMessages
                 .getChatMessageAttachment(1, file)
                 .getElementLocator(),
               ExpectedMessages.attachmentIsHidden,

@@ -212,7 +212,7 @@ dialTest(
 
         await expect
           .soft(
-            await conversationSettings.getElementLocator(),
+            conversationSettings.getElementLocator(),
             ExpectedMessages.conversationSettingsVisible,
           )
           .toBeVisible();

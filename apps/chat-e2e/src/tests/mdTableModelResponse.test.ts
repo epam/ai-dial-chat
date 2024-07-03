@@ -217,7 +217,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.sendRequestWithButton(
-          'Create md table with all countries, its capitals and population',
+          'Create md table with european countries, its capitals and population',
           false,
         );
         await chatMessages

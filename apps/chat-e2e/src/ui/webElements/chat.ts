@@ -9,20 +9,20 @@ import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API, ScrollState, Side } from '@/src/testData';
+import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export const PROMPT_APPLY_DELAY = 500;
 export const SCROLL_MOVING_DELAY = 100;
 
 export class Chat extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chat);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.chat, parentLocator);
   }
 
   private chatHeader!: ChatHeader;
@@ -54,14 +54,17 @@ export class Chat extends BaseElement {
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
-      this.chatHeader = new ChatHeader(this.page);
+      this.chatHeader = new ChatHeader(this.page, this.rootLocator);
     }
     return this.chatHeader;
   }
 
   getConversationSettings(): ConversationSettings {
     if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
+      this.conversationSettings = new ConversationSettings(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.conversationSettings;
   }
@@ -178,12 +181,14 @@ export class Chat extends BaseElement {
   public waitForRequestSent(userRequest: string | undefined) {
     return userRequest !== undefined
       ? this.page.waitForRequest((request) => {
-          const escapedRequestData = userRequest.includes('"')
-            ? userRequest.replaceAll('"', '\\"')
-            : userRequest;
+          ExpectedConstants.charsToEscape.forEach((char) => {
+            if (userRequest?.includes(char)) {
+              userRequest = userRequest.replaceAll(char, `\\${char}`);
+            }
+          });
           return (
             request.url().includes(API.chatHost) &&
-            request.postData()!.includes(escapedRequestData)
+            request.postData()!.includes(userRequest!)
           );
         })
       : this.page.waitForRequest(API.chatHost);

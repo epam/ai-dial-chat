@@ -2,6 +2,7 @@ import { Rate } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 
 export const appContainer = '#theme-main';
+export const overlayFrame = '[name="overlay"]';
 
 export const SendMessageSelectors = {
   message: '[data-qa="message"]',

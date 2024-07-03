@@ -47,7 +47,8 @@ pnpm-lock.yaml
 
 # e2e
 /apps/chat-e2e/test-results/
-/apps/chat-e2e/allure-results/
+/apps/chat-e2e/allure-chat-results/
+/apps/chat-e2e/allure-overlay-results/
 /apps/chat-e2e/auth/
 /apps/chat-e2e/html-report/
 /apps/chat-e2e/src/testData/export/

@@ -32,7 +32,7 @@ dialTest(
           const request = await prompts.duplicatePrompt();
           await expect
             .soft(
-              await prompts.getPromptByName(
+              prompts.getPromptByName(
                 ExpectedConstants.entityWithIndexTitle(prompt.name, i),
               ),
               ExpectedMessages.promptIsVisible,
@@ -87,7 +87,7 @@ dialTest(
         const request = await prompts.duplicatePrompt();
         await expect
           .soft(
-            await folderPrompts.getFolderEntity(
+            folderPrompts.getFolderEntity(
               folderPrompt.folders.name,
               ExpectedConstants.entityWithIndexTitle(
                 folderPrompt.prompts[0].name,
