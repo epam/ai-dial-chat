@@ -31,11 +31,7 @@ export const doesEntityContainSearchItem = <
     return true;
   }
 
-  if ('contentType' in item) {
-    // DialFile
-    return doesEntityContainSearchTerm(item, searchTerm);
-  } else if ('name' in item) {
-    // Conversation or Prompt
+  if ((item as DialFile).contentType || (item as ShareEntity).name) {
     return doesEntityContainSearchTerm(item, searchTerm);
   }
 
