@@ -68,6 +68,7 @@ export const UserDesktop = () => {
       </div>
 
       <Menu
+        shouldApplySize={false}
         className="w-full"
         trigger={
           <div
