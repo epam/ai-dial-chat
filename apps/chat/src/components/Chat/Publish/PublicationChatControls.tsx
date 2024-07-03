@@ -92,9 +92,9 @@ export function PublicationControlsView<
     <div className="flex justify-center">
       <div
         className={classNames(
-          'relative mt-5 flex items-center justify-center gap-3',
+          'relative flex items-center justify-center gap-3',
           showScrollDownButton &&
-            'mx-2 mb-2 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl',
+            'mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl',
         )}
       >
         <button

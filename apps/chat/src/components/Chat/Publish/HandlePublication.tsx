@@ -36,6 +36,7 @@ import {
 } from './PublicationResources';
 import { RuleListItem } from './RuleListItem';
 
+import { isEqual } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
 
 interface FilterComponentProps {
@@ -266,10 +267,6 @@ export function HandlePublication({ publication }: Props) {
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
-  const areRulesChanged =
-    publication.rules &&
-    (publication.rules.length ||
-      (publication.targetFolder && rules[publication.targetFolder]));
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -322,7 +319,10 @@ export function HandlePublication({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p>{t('Allow access if all match')}</p>
-                    {areRulesChanged ? (
+                    {isEqual(
+                      publication.rules,
+                      rules[publication.targetFolder],
+                    ) ? (
                       <span
                         onClick={() => setIsCompareModalOpened(true)}
                         className="cursor-pointer text-accent-primary"
