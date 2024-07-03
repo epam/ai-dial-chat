@@ -75,6 +75,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
         conversationIds: [],
       }),
     );
+    dispatch(ConversationsActions.setIsExploreAllApplicationsSelected(false));
   }, [dispatch, publication]);
 
   const ResourcesComponent =
