@@ -833,6 +833,7 @@ export const ChatView = memo(() => {
                           showScrollDownButton={showScrollDownButton}
                           entity={selectedConversations[0]}
                           onScrollDownClick={handleScrollDown}
+                          controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
                         />
                       )}
 
