@@ -231,7 +231,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
           <div className="flex flex-col gap-2 overflow-y-auto">
             <div className="mb-4">
               <label
-                className="mb-1 flex text-xs text-primary-bg-light"
+                className="mb-1 flex font-medium text-primary-bg-light"
                 htmlFor="promptName"
               >
                 {t('Name')}
@@ -266,7 +266,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
 
             <div className="mb-4">
               <label
-                className="mb-1 flex text-xs text-primary-bg-light"
+                className="mb-1 flex font-medium text-primary-bg-light"
                 htmlFor="description"
               >
                 {t('Description')}
@@ -288,7 +288,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             </div>
             <div className="mb-5">
               <label
-                className="mb-1 flex text-xs text-primary-bg-light"
+                className="mb-1 flex font-medium text-primary-bg-light"
                 htmlFor="content"
               >
                 {t('Prompt')}

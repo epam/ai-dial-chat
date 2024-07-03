@@ -155,7 +155,7 @@ export const PromptVariablesDialog: FC<Props> = ({
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
-            <div className="mb-1 flex text-xs text-primary-bg-light">
+            <div className="mb-1 flex font-medium text-primary-bg-light">
               <span>
                 {variable.key}
                 <span className="inline text-quinary-bg-light">*</span>
