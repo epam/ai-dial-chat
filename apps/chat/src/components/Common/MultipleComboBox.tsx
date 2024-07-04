@@ -235,6 +235,7 @@ export function MultipleComboBox<T>({
                     selectedItemForRender,
                   )}-${index}`}
                   tooltip={getItemLabel(selectedItemForRender).trim()}
+                  contentClassName="text-xs"
                 >
                   <span
                     className="flex h-[23px] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
