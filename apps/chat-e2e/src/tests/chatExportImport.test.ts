@@ -191,7 +191,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(() =>
           chatBar.exportButton.click(),
         );
@@ -199,7 +198,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete all conversations and folders, re-import again and verify they are displayed',
+      'Delete all conversations and folders, re-import again and verify that all entities except empty folders are displayed',
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -211,9 +210,9 @@ dialTest(
             folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(1),
             ),
-            ExpectedMessages.folderExpanded,
+            ExpectedMessages.folderIsNotVisible,
           )
-          .toBeVisible();
+          .toBeHidden();
         await expect
           .soft(
             conversations.getConversationByName(conversationOutsideFolder.name),

@@ -21,7 +21,9 @@ import { PublicationService } from '@/src/utils/app/data/publication-service';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
+  getFoldersFromIds,
   getParentFolderIdsFromEntityId,
+  getParentFolderIdsFromFolderId,
   getRootFolderIdFromEntityId,
   splitEntityId,
 } from '@/src/utils/app/folders';
@@ -521,7 +523,7 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadPublishedWithMeItemsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publishedConversationsUploadFailed),
+        translate(errorsMessages.publishedItemsUploadFailed),
       ),
     ),
   );
@@ -837,23 +839,146 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadAllPublishedWithMeItems.match),
+    switchMap(({ payload }) => {
+      const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
+        state$.value,
+        payload.featureType,
+      );
+
+      if (isAllItemsUploaded) {
+        return EMPTY;
+      }
+
+      return PublicationService.getPublishedWithMeItems(
+        '',
+        payload.featureType,
+        {
+          recursive: true,
+        },
+      ).pipe(
+        switchMap((publications) => {
+          if (!publications.items) {
+            return EMPTY;
+          }
+
+          const actions: Observable<AnyAction>[] = [];
+
+          const paths = uniq(
+            publications.items.flatMap((c) =>
+              getParentFolderIdsFromFolderId(getFolderIdFromEntityId(c.url)),
+            ),
+          ).map((path) => ApiUtils.decodeApiUrl(path));
+          const items = publications.items.map((item) => {
+            const id = ApiUtils.decodeApiUrl(item.url);
+            const parsedApiKey = parseConversationApiKey(
+              splitEntityId(id).name,
+            );
+            const folderId = getFolderIdFromEntityId(id);
+
+            return {
+              ...parsedApiKey,
+              id,
+              folderId: folderId,
+              publishedWithMe: isRootId(folderId),
+            };
+          });
+          const folders = getFoldersFromIds(
+            paths,
+            payload.featureType === FeatureType.Chat
+              ? FolderType.Chat
+              : FolderType.Prompt,
+            UploadStatus.LOADED,
+          ).map((folder) => ({
+            ...folder,
+            publishedWithMe: isRootId(getFolderIdFromEntityId(folder.id)),
+          }));
+
+          if (payload.featureType === FeatureType.Chat) {
+            actions.push(
+              of(
+                ConversationsActions.uploadChildConversationsWithFoldersSuccess(
+                  {
+                    parentIds: paths,
+                    folders,
+                    conversations: items,
+                  },
+                ),
+              ),
+            );
+          } else if (payload.featureType === FeatureType.Prompt) {
+            actions.push(
+              of(
+                PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                  parentIds: paths,
+                  folders,
+                  prompts: items,
+                }),
+              ),
+            );
+          }
+
+          return concat(
+            ...actions,
+            of(
+              PublicationActions.uploadAllPublishedWithMeItemsSuccess({
+                featureType: payload.featureType,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.uploadAllPublishedWithMeItemsFail());
+        }),
+      );
+    }),
+  );
+
+const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadAllPublishedWithMeItemsFail.match),
+    map(() =>
+      UIActions.showErrorToast(
+        translate(errorsMessages.publishedItemsUploadFailed),
+      ),
+    ),
+  );
+
 export const PublicationEpics = combineEpics(
+  // init
   initEpic,
+
+  // create
   publishEpic,
   publishFailEpic,
+
+  // upload publications
   uploadPublicationsEpic,
   uploadPublicationsFailEpic,
   uploadPublicationEpic,
   uploadPublicationFailEpic,
+
+  // delete publications
   deletePublicationEpic,
   deletePublicationFailEpic,
+
+  // upload published resources
   uploadPublishedWithMeItemsEpic,
   uploadPublishedWithMeItemsFailEpic,
+  uploadAllPublishedWithMeItemsEpic,
+  uploadAllPublishedWithMeItemsFailEpic,
+
+  // handle publications
   approvePublicationEpic,
   approvePublicationFailEpic,
   rejectPublicationEpic,
   rejectPublicationFailEpic,
   resolvePublicationSuccessEpic,
+
+  // upload rules
   uploadRulesEpic,
   uploadRulesFailEpic,
 );
