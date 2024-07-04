@@ -19,6 +19,8 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
   return prompt as Prompt;
 };
 
+export const PROMPT_VARIABLE_REGEX = /{{([^|]+?)(\|.*?)?}}/g;
+
 /**
  * Parses a string for variables in the {{variable}} format and extracts them.
  * @param content The string to be parsed.
@@ -27,13 +29,12 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
 export const parseVariablesFromContent = (
   content?: string,
 ): TemplateParameter[] => {
-  const regex = /{{([^|]+?)(\|.*?)?}}/g;
   const foundVariables = [];
   let match;
 
   if (!content) return [];
 
-  while ((match = regex.exec(content)) !== null) {
+  while ((match = PROMPT_VARIABLE_REGEX.exec(content)) !== null) {
     foundVariables.push({
       name: match[1],
       defaultValue: match[2]?.slice(1) ?? '',

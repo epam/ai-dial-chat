@@ -15,7 +15,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { parseVariablesFromContent } from '@/src/utils/app/prompts';
+import {
+  PROMPT_VARIABLE_REGEX,
+  parseVariablesFromContent,
+} from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
@@ -74,9 +77,12 @@ export const PromptVariablesDialog: FC<Props> = ({
       }
       const content = prompt.content as string;
 
-      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
-        return updatedVariables.find((v) => v.key === variable)?.value ?? '';
-      });
+      const newContent = content.replace(
+        PROMPT_VARIABLE_REGEX,
+        (_, variable) => {
+          return updatedVariables.find((v) => v.key === variable)?.value ?? '';
+        },
+      );
 
       onSubmit(newContent);
       onClose();
