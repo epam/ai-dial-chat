@@ -68,7 +68,7 @@ export function TargetAudienceFilterComponent({
     onSaveFilter({
       id: selectedTarget,
       filterFunction: filterFunction as PublicationFunctions,
-      filterParams,
+      filterParams: filterParams.map((param) => param.trim()),
     });
   }, [
     filterFunction,
@@ -122,7 +122,7 @@ export function TargetAudienceFilterComponent({
 
   return (
     <div
-      className="grid grid-cols-5 gap-[1px] md:flex md:flex-row"
+      className="grid grid-cols-5 gap-[1px] md:flex"
       data-qa="publish-audience-filter-selectors"
     >
       <RulesSelect
