@@ -69,7 +69,7 @@ export function PublishModal({
   depth,
   entities,
 }: Props) {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Chat);  
 
   const dispatch = useAppDispatch();
 

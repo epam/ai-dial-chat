@@ -56,4 +56,8 @@ export const errorsMessages = {
   publicationRejectFailed: 'Publication rejecting failed.',
   publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
   rulesUploadingFailed: 'Rules uploading failed.',
+  createFailed:
+    'Failed to create application. Please check your input and try again.',
+  listFailed:
+    'Failed to fetch applications list. Please check your connection and try again.',
 };

@@ -1,6 +1,7 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
+  IconLayoutGridAdd,
   IconSquareCheck,
   IconSquareOff,
   IconTrashX,
@@ -16,6 +17,7 @@ import { PromptsHistory } from '@/src/types/import-export';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { create, list } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
@@ -105,6 +107,28 @@ export function PromptbarSettings() {
         Icon: IconTrashX,
         onClick: () => {
           setIsClearModalOpen(true);
+        },
+      },
+      {
+        display: isMyItemsExist,
+        name: t('Add application'),
+        dataQa: 'add-application',
+        Icon: IconLayoutGridAdd,
+        onClick: () => {
+          const applicationData = {
+            endpoint: 'http://application1/v1/completions',
+            display_name: 'My Custom Application',
+            display_version: '1.0',
+            icon_url: 'http://application1/icon.svg',
+            description: 'My Custom Application Description',
+            features: {
+              rate_endpoint: 'http://application1/rate',
+              configuration_endpoint: 'http://application1/configuration',
+            },
+          };
+
+          dispatch(create(applicationData));
+          // dispatch(list());
         },
       },
     ],

@@ -35,6 +35,8 @@ import { ShareEpics } from './share/share.epics';
 import { shareSlice } from './share/share.reducers';
 import UIEpics from './ui/ui.epics';
 import { uiSlice } from './ui/ui.reducers';
+import { ApplicationEpics } from './application/application.epics';
+import { applicationSlice } from './application/application.reducers';
 
 export const rootEpic = combineEpics(
   ModelsEpics,
@@ -50,6 +52,7 @@ export const rootEpic = combineEpics(
   ServiceEpics,
   MigrationEpics,
   PublicationEpics,
+  ApplicationEpics,
 );
 
 const reducer = {
@@ -67,6 +70,7 @@ const reducer = {
   service: serviceSlice.reducer,
   migration: migrationSlice.reducer,
   publication: publicationSlice.reducer,
+  application: applicationSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
