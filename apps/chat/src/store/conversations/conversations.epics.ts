@@ -372,6 +372,11 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             const models = ModelsSelectors.selectModels(state);
             return models.filter((i) => i?.id === isolatedModelId);
           }
+          if (lastConversation?.model.id) {
+            const lastModelId = lastConversation.model.id;
+            const models = ModelsSelectors.selectModels(state);
+            return models.filter((i) => i?.id === lastModelId);
+          }
           return ModelsSelectors.selectRecentModels(state);
         }),
         filter((models) => models && models.length > 0),

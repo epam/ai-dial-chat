@@ -338,7 +338,7 @@ export function PublishModal({
               </div>
             </section>
 
-            <section className="flex h-full flex-col px-3 py-4 md:px-5">
+            <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2">
                 {t('Allow access if all match')}
               </h2>
@@ -352,14 +352,14 @@ export function PublishModal({
                 ))
               )}
               {!isRulesLoading && path && (
-                <>
+                <div>
                   <div className="mb-1 text-xs text-secondary">
                     {path.split('/').pop()}
                   </div>
-                  <div className="relative mb-2 flex min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
+                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
                     {otherTargetAudienceFilters.map((item) => (
                       <div className="flex items-center gap-1" key={item.id}>
-                        <div className="flex min-h-[31px] items-center justify-center rounded bg-accent-primary-alpha text-xs">
+                        <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
                           <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
                             <span className="font-semibold">
                               {startCase(toLower(item.id))}
@@ -368,12 +368,12 @@ export function PublishModal({
                               {toLower(item.filterFunction)}
                             </span>
                             {item.filterParams.map((param, index) => (
-                              <div className="flex gap-1" key={index}>
+                              <Fragment key={index}>
                                 {index > 0 && (
                                   <span className="italic">{t('or')}</span>
                                 )}
                                 <span className="font-semibold">{param}</span>
-                              </div>
+                              </Fragment>
                             ))}
                           </div>
                           <IconX
@@ -395,7 +395,7 @@ export function PublishModal({
                     {!isRuleSetterOpened && (
                       <button
                         onClick={() => setIsRuleSetterOpened(true)}
-                        className="flex h-full max-h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
                       >
                         <IconPlus stroke="1" size={18} />
                       </button>
@@ -407,7 +407,7 @@ export function PublishModal({
                       className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
                     />
                   </div>
-                </>
+                </div>
               )}
               {!path && (
                 <p className="text-secondary">

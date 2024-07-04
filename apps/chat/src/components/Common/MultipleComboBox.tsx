@@ -234,7 +234,8 @@ export function MultipleComboBox<T>({
                   key={`selected-item-${getItemLabel(
                     selectedItemForRender,
                   )}-${index}`}
-                  tooltip={getItemLabel(selectedItemForRender)}
+                  tooltip={getItemLabel(selectedItemForRender).trim()}
+                  contentClassName="text-xs"
                 >
                   <span
                     className="flex h-[23px] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
@@ -305,7 +306,7 @@ export function MultipleComboBox<T>({
             ? displayedItems.map((item, index) => (
                 <li
                   className={classNames(
-                    'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
+                    'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
                     highlightedIndex === index && 'bg-accent-primary-alpha',
                     selectedItem === item && 'bg-accent-primary-alpha',
                   )}

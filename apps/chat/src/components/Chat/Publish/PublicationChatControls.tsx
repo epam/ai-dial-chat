@@ -25,8 +25,8 @@ import { ScrollDownButton } from '../../Common/ScrollDownButton';
 interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
   showScrollDownButton?: boolean;
-  wrapperClassName?: string;
   onScrollDownClick?: () => void;
+  controlsClassNames?: string;
 }
 
 export function PublicationControlsView<
@@ -36,6 +36,7 @@ export function PublicationControlsView<
   resourceToReview,
   showScrollDownButton,
   onScrollDownClick,
+  controlsClassNames,
 }: Props<T> & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -89,72 +90,75 @@ export function PublicationControlsView<
   }, [entity, resourceToReview, dispatch]);
 
   return (
-    <div className="flex justify-center">
-      <div className="relative mx-2 mb-2 mt-5 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
-        <button
-          className={classNames(
-            'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
-            publicationIdx !== 0 && 'hover:bg-layer-4',
-          )}
-          data-qa="prev-chat-review-button"
-          disabled={publicationIdx === 0}
-          onClick={() => toggleResource(-1)}
-        >
-          <span>
-            <IconPlayerPlay className="rotate-180" height={18} width={18} />
-          </span>
-        </button>
-        <button
-          className={classNames(
-            'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
-            resourcesToReview.length - 1 && 'hover:bg-layer-4',
-          )}
-          data-qa="next-chat-review-button"
-          disabled={publicationIdx === resourcesToReview.length - 1}
-          onClick={() => toggleResource(1)}
-        >
-          <span>
-            <IconPlayerPlay height={18} width={18} />
-          </span>
-        </button>
-        <button
-          onClick={() => {
-            if (isConversationId(resourceToReview.reviewUrl)) {
-              dispatch(
-                ConversationsActions.selectConversations({
-                  conversationIds: [],
-                }),
-              );
-              dispatch(
-                PublicationActions.uploadPublication({
-                  url: resourceToReview.publicationUrl,
-                }),
-              );
-            } else {
-              dispatch(
-                PromptsActions.setSelectedPrompt({
-                  promptId: undefined,
-                }),
-              );
-              dispatch(
-                PromptsActions.setIsEditModalOpen({
-                  isOpen: false,
-                  isPreview: false,
-                }),
-              );
-            }
-          }}
-          className="button button-primary flex max-h-[38px] items-center"
-        >
-          {t('Back to publication request')}
-        </button>
-        {showScrollDownButton && onScrollDownClick && (
-          <ScrollDownButton
-            className="-top-16 right-0 md:-top-20"
-            onScrollDownClick={onScrollDownClick}
-          />
+    <div
+      className={classNames(
+        'relative flex items-center justify-center gap-3',
+        controlsClassNames,
+      )}
+    >
+      <button
+        className={classNames(
+          'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
+          publicationIdx !== 0 && 'hover:bg-layer-4',
         )}
-      </div>
+        data-qa="prev-chat-review-button"
+        disabled={publicationIdx === 0}
+        onClick={() => toggleResource(-1)}
+      >
+        <span>
+          <IconPlayerPlay className="rotate-180" height={18} width={18} />
+        </span>
+      </button>
+      <button
+        className={classNames(
+          'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
+          resourcesToReview.length - 1 && 'hover:bg-layer-4',
+        )}
+        data-qa="next-chat-review-button"
+        disabled={publicationIdx === resourcesToReview.length - 1}
+        onClick={() => toggleResource(1)}
+      >
+        <span>
+          <IconPlayerPlay height={18} width={18} />
+        </span>
+      </button>
+      <button
+        onClick={() => {
+          if (isConversationId(resourceToReview.reviewUrl)) {
+            dispatch(
+              ConversationsActions.selectConversations({
+                conversationIds: [],
+              }),
+            );
+            dispatch(
+              PublicationActions.uploadPublication({
+                url: resourceToReview.publicationUrl,
+              }),
+            );
+          } else {
+            dispatch(
+              PromptsActions.setSelectedPrompt({
+                promptId: undefined,
+              }),
+            );
+            dispatch(
+              PromptsActions.setIsEditModalOpen({
+                isOpen: false,
+                isPreview: false,
+              }),
+            );
+          }
+        }}
+        className="button button-primary flex max-h-[38px] items-center"
+      >
+        {t('Back to publication request')}
+      </button>
+      {showScrollDownButton && onScrollDownClick && (
+        <ScrollDownButton
+          className="-top-16 right-0 md:-top-20"
+          onScrollDownClick={onScrollDownClick}
+        />
+      )}
     </div>
   );
 }

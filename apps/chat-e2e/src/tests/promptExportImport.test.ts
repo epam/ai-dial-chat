@@ -89,7 +89,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete all prompts and folders, re-import again and verify they are displayed',
+      'Delete all prompts and folders, re-import again and verify that all entities except empty folders are displayed',
       async () => {
         await promptBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -102,9 +102,14 @@ dialTest(
         await folderPrompts
           .getFolderByName(promptsInsideFolder.folders.name)
           .waitFor();
-        await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .waitFor();
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderIsNotVisible,
+          )
+          .toBeHidden();
 
         await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
 

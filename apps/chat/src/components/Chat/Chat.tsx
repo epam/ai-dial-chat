@@ -40,6 +40,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
+import { FooterMessage } from '../Common/FooterMessage';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -833,6 +834,7 @@ export const ChatView = memo(() => {
                           showScrollDownButton={showScrollDownButton}
                           entity={selectedConversations[0]}
                           onScrollDownClick={handleScrollDown}
+                          controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
                         />
                       )}
 
@@ -955,7 +957,14 @@ export function Chat() {
   );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
-    return <HandlePublication publication={selectedPublication} />;
+    return (
+      <>
+        <HandlePublication publication={selectedPublication} />
+        <div className="p-5">
+          <FooterMessage />
+        </div>
+      </>
+    );
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {

@@ -23,7 +23,7 @@ export function RegexParamInput({
   );
 
   return (
-    <div className="relative col-span-5 flex h-[31px] w-full max-w-full bg-layer-3 md:max-w-[205px]">
+    <div className="relative col-span-5 flex h-[31px] w-full max-w-full bg-layer-3 md:order-3 md:max-w-[205px]">
       <input
         className="w-full bg-transparent py-1 pl-2 text-xs outline-none placeholder:text-secondary"
         type="text"
