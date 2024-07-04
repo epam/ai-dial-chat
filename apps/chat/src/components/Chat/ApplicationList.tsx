@@ -133,11 +133,11 @@ export const ApplicationList = ({
   );
 
   return (
-    <div className="flex size-full flex-col items-center justify-center gap-10">
-      <h3 className="py-10 font-weave text-3xl font-bold text-pr-primary-700">
+    <div className="flex size-full flex-col items-center py-14">
+      <h3 className="font-weave text-3xl font-bold text-pr-primary-700">
         {t('Applications')}
       </h3>
-      <div className="flex flex-wrap justify-center gap-10 px-4 pb-20 md:px-0">
+      <div className="flex flex-wrap justify-center gap-10 px-4 py-14 md:px-2">
         {allApplications.map((app) => (
           <Application
             onAppClick={onCreateNewConversation}

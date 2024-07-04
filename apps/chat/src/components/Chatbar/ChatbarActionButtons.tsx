@@ -191,7 +191,7 @@ const FavoriteApplicationActionButton = ({
     >
       <button
         className={classNames(
-          'group flex size-full min-h-[45px] cursor-pointer select-none items-center gap-2 border-l-4  py-2 pl-4 pr-2 leading-3',
+          'group flex size-full min-h-[50px] cursor-pointer select-none items-center gap-2 border-l-4  py-2 pl-4 pr-2 leading-3',
           isSelected ? 'border-l-accent-primary' : 'border-l-quinary',
         )}
         onClick={() => {
