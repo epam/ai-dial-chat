@@ -20,7 +20,7 @@ dialTest(
     await promptBar.createNewFolder();
     await expect
       .soft(
-        await folderPrompts.getFolderByName(
+        folderPrompts.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(1),
         ),
         ExpectedMessages.newFolderCreated,
@@ -104,7 +104,7 @@ dialTest(
     await folderPrompts.editFolderNameWithEnter(newName);
     await expect
       .soft(
-        await folderPrompts.getFolderByName(newName),
+        folderPrompts.getFolderByName(newName),
         ExpectedMessages.folderNameUpdated,
       )
       .toBeVisible();
@@ -113,7 +113,7 @@ dialTest(
       if (i !== randomFolderIndex) {
         await expect
           .soft(
-            await folderPrompts.getFolderByName(
+            folderPrompts.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(i),
             ),
             ExpectedMessages.folderNameNotUpdated,
@@ -146,7 +146,7 @@ dialTest(
     await folderPrompts.getEditFolderInputActions().clickCancelButton();
     await expect
       .soft(
-        await folderPrompts.getFolderByName(
+        folderPrompts.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(1),
         ),
         ExpectedMessages.folderNameNotUpdated,
@@ -180,7 +180,7 @@ dialTest(
     await folderPrompts.editFolderNameWithTick(newName);
     await expect
       .soft(
-        await folderPrompts.getFolderByName(newName),
+        folderPrompts.getFolderByName(newName),
         ExpectedMessages.folderNameUpdated,
       )
       .toBeVisible();
@@ -211,7 +211,7 @@ dialTest(
     await folderPrompts.expandFolder(ExpectedConstants.newFolderTitle);
     await expect
       .soft(
-        await folderPrompts.getFolderEntity(
+        folderPrompts.getFolderEntity(
           ExpectedConstants.newFolderWithIndexTitle(1),
           prompt.name,
         ),
@@ -285,14 +285,14 @@ dialTest(
     await confirmationDialog.confirm();
     await expect
       .soft(
-        await folderPrompts.getFolderByName(promptInFolder.folders.name),
+        folderPrompts.getFolderByName(promptInFolder.folders.name),
         ExpectedMessages.folderDeleted,
       )
       .toBeHidden();
 
     await expect
       .soft(
-        await prompts.getPromptByName(promptInFolder.prompts[0].name),
+        prompts.getPromptByName(promptInFolder.prompts[0].name),
         ExpectedMessages.promptIsVisible,
       )
       .toBeHidden();
@@ -342,7 +342,7 @@ dialTest(
     await confirmationDialog.cancelDialog();
     await expect
       .soft(
-        await folderPrompts.getFolderByName(
+        folderPrompts.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(1),
         ),
         ExpectedMessages.folderNotDeleted,
@@ -357,7 +357,7 @@ dialTest(
     for (let i = 1; i <= 3; i++) {
       await expect
         .soft(
-          await folderPrompts.getFolderByName(
+          folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(i),
           ),
           ExpectedMessages.folderDeleted,
@@ -396,7 +396,7 @@ dialTest(
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     await expect
       .soft(
-        await folderPrompts.getFolderEntity(
+        folderPrompts.getFolderEntity(
           promptInFolder.folders.name,
           promptInFolder.prompts[0].name,
         ),
@@ -456,13 +456,13 @@ dialTest(
         for (let i = levelToDelete; i <= levelsCount; i++) {
           await expect
             .soft(
-              await folderPrompts.getFolderByName(nestedFolders[i].name),
+              folderPrompts.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderDeleted,
             )
             .toBeHidden();
           await expect
             .soft(
-              await prompts.getPromptByName(nestedPrompts[i].name),
+              prompts.getPromptByName(nestedPrompts[i].name),
               ExpectedMessages.promptDeleted,
             )
             .toBeHidden();
@@ -471,13 +471,13 @@ dialTest(
         for (let i = 0; i <= levelsCount - levelToDelete; i++) {
           await expect
             .soft(
-              await folderPrompts.getFolderByName(nestedFolders[i].name),
+              folderPrompts.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderNotDeleted,
             )
             .toBeVisible();
           await expect
             .soft(
-              await folderPrompts.getFolderEntity(
+              folderPrompts.getFolderEntity(
                 nestedFolders[i].name,
                 nestedPrompts[i].name,
               ),

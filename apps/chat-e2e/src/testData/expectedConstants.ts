@@ -1,4 +1,4 @@
-import config from '../../config/playwright.config';
+import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
 import path from 'path';
@@ -113,12 +113,13 @@ export const ExpectedConstants = {
     `Prompt with name "${name}" already exists at the root.`,
   duplicatedConversationRootNameErrorMessage: (name: string) =>
     `Conversation with name "${name}" already exists at the root.`,
-  prohibitedNameSymbols: `=,:;{}/%&"`,
   // eslint-disable-next-line no-irregular-whitespace
   controlChars: `\b\t\f`,
   attachedFileError: (filename: string) =>
     `You've trying to upload files with incorrect type: ${filename}`,
-  allowedSpecialSymbolsInName: "Test (`~!@#$^*-_+[]'|<>.?)",
+  allowedSpecialChars: "(`~!@#$^*-_+[]'|<>.?)",
+  allowedSpecialSymbolsInName: () =>
+    `Test ${ExpectedConstants.allowedSpecialChars}`,
   winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___._)",
   duplicatedFilenameError: (filename: string) =>
     `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
@@ -132,6 +133,8 @@ export const ExpectedConstants = {
   allFilesRoot: 'All files',
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
+  charsToEscape: ['\\', '"'],
+  maxEntityNameLength: 160,
 };
 
 export enum Groups {
@@ -164,6 +167,7 @@ export enum MenuOptions {
   upload = 'Upload',
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
+  select = 'Select',
 }
 
 export enum FilterMenuOptions {
@@ -195,7 +199,8 @@ export const API = {
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
-  defaultIconHost: '/api/themes/image?name=default-model',
+  themeUrl: 'api/themes/image',
+  defaultIconHost: () => `/${API.themeUrl}/default-model`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
@@ -289,6 +294,7 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
   ANTHROPIC_CLAUDE_V3_SONNET = 'anthropic.claude-v3-sonnet',
+  ANTHROPIC_CLAUDE_V3_5_SONNET = 'anthropic.claude-v3-5-sonnet',
   ANTHROPIC_CLAUDE_V3_HAIKU = 'anthropic.claude-v3-haiku',
   ANTHROPIC_CLAUDE_V3_OPUS = 'anthropic.claude-v3-opus',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
@@ -325,8 +331,10 @@ export enum Theme {
 }
 
 export enum ResultFolder {
-  allureReport = 'allure-results',
-  htmlReport = 'html-report',
+  allureChatReport = 'allure-chat-results',
+  allureOverlayReport = 'allure-overlay-results',
+  chatHtmlReport = 'chat-html-report',
+  overlayHtmlReport = 'overlay-html-report',
   testResults = 'test-results',
 }
 

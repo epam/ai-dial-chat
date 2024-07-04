@@ -33,6 +33,7 @@ dialTest(
     chatHeader,
     fileApiHelper,
     attachmentDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-1891',
@@ -57,6 +58,7 @@ dialTest(
       for (const file of attachedFiles) {
         await fileApiHelper.putFile(file);
       }
+      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
     });
 
     await dialTest.step(
@@ -167,6 +169,7 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     chat,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1640');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -176,6 +179,7 @@ dialTest(
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
+      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
     });
 
     await dialTest.step(
@@ -216,7 +220,7 @@ dialTest(
   },
 );
 
-dialTest.fixme(
+dialTest(
   'Send button is unavailable while attachment is being uploaded.\n' +
     'Blue loading bar is shown while the file is being uploaded to the message box',
   async ({
@@ -228,6 +232,7 @@ dialTest.fixme(
     uploadFromDeviceModal,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -237,6 +242,7 @@ dialTest.fixme(
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device',
       async () => {
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
@@ -280,7 +286,7 @@ dialTest.fixme(
             ),
             ExpectedMessages.attachmentLoadingIndicatorIsVisible,
           )
-          .toBeVisible();
+          .toBeAttached();
       },
     );
   },
@@ -304,6 +310,7 @@ dialTest(
     chatMessages,
     page,
     sendMessageInputAttachments,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-1896',
@@ -319,6 +326,7 @@ dialTest(
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
+      await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
     });
 
     await dialTest.step(
@@ -467,6 +475,7 @@ dialTest(
     attachmentDropdownMenu,
     sendMessageInputAttachments,
     context,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1905');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -476,6 +485,7 @@ dialTest(
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',
       async () => {
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,

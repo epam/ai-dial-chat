@@ -1,6 +1,7 @@
-import { IconHelpCircle } from '@tabler/icons-react';
+import { IconPlus, IconX } from '@tabler/icons-react';
 import {
   ClipboardEvent,
+  Fragment,
   MouseEvent,
   useCallback,
   useEffect,
@@ -9,6 +10,7 @@ import {
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 
 import classNames from 'classnames';
 
@@ -31,111 +33,24 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
-import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
 import { PublicationItemsList } from './PublicationItemsList';
-import { TargetAudienceFilterComponent } from './TargetAudienceFilter';
+import { RuleListItem } from './RuleListItem';
+import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
-
-interface PublishModalFiltersProps {
-  path: string;
-  otherTargetAudienceFilters: TargetAudienceFilter[];
-  onChangeFilters: (targetFilter: TargetAudienceFilter) => void;
-}
-
-function PublishModalFilters({
-  path,
-  otherTargetAudienceFilters,
-  onChangeFilters,
-}: PublishModalFiltersProps) {
-  const { t } = useTranslation(Translation.Chat);
-
-  const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
-  );
-  const isRulesLoading = useAppSelector(
-    PublicationSelectors.selectIsRulesLoading,
-  );
-  const publicationFilters = useAppSelector(
-    SettingsSelectors.selectPublicationFilters,
-  );
-
-  if (!path || (rules && !rules.length)) {
-    return (
-      <p className="text-secondary">
-        {t(
-          'This publication will be available to all users in the organization',
-        )}
-      </p>
-    );
-  }
-
-  if (isRulesLoading) {
-    return null; // TODO: loader for rules
-  }
-
-  if (rules) {
-    return rules.map((rule, idx) => (
-      <CollapsibleSection
-        name={startCase(toLower(rule.source))}
-        dataQa={`filter-${rule.source}`}
-        key={`filter-${idx}`}
-        openByDefault
-        className="!pl-0"
-      >
-        <TargetAudienceFilterComponent
-          readonly
-          name={rule.source}
-          initialSelectedFilter={{
-            filterFunction: rule.function,
-            filterParams: rule.targets,
-            id: rule.source,
-            name: rule.source,
-          }}
-          id={rule.source}
-          onChangeFilter={onChangeFilters}
-        />
-      </CollapsibleSection>
-    ));
-  }
-
-  return publicationFilters.map((filter, idx) => {
-    const initialSelectedFilter = otherTargetAudienceFilters.find(
-      ({ id }) => id === filter,
-    );
-
-    return (
-      <CollapsibleSection
-        name={startCase(toLower(filter))}
-        dataQa={`filter-${filter}`}
-        key={`filter-${idx}`}
-        openByDefault={false}
-        className="!pl-0"
-      >
-        <TargetAudienceFilterComponent
-          name={startCase(toLower(filter))}
-          id={filter}
-          initialSelectedFilter={initialSelectedFilter}
-          onChangeFilter={onChangeFilters}
-        />
-      </CollapsibleSection>
-    );
-  });
-}
 
 interface Props {
   entity: ShareEntity;
@@ -159,41 +74,69 @@ export function PublishModal({
   const dispatch = useAppDispatch();
 
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
-  );
 
   const [publishRequestName, setPublishRequestName] = useState('');
   const [path, setPath] = useState('');
+  const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
 
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  );
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
+  );
   const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(state, `public/${path}/`),
+    PublicationSelectors.selectRulesByPath(
+      state,
+      constructPath(CLIENT_PUBLIC_FILES_PATH, path),
+    ),
   );
   const files = useAppSelector((state) =>
     getAttachments(type)(state, entity.id),
   );
 
+  const notCurrentFolderRules = Object.entries(rules).filter(
+    ([rulePath]) => constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+  );
+  const currentFolderRules =
+    rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)];
+
   useEffect(() => {
-    dispatch(PublicationActions.uploadRules({ path }));
+    if (path) {
+      dispatch(PublicationActions.uploadRules({ path }));
+    }
   }, [dispatch, path]);
+
+  useEffect(() => {
+    if (currentFolderRules) {
+      setOtherTargetAudienceFilters(
+        currentFolderRules.map((rule) => ({
+          id: rule.source,
+          filterFunction: rule.function,
+          filterParams: rule.targets,
+        })),
+      );
+    }
+  }, [currentFolderRules]);
 
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
   }, []);
 
-  const handleOnChangeFilters = (targetFilter: TargetAudienceFilter) => {
-    setOtherTargetAudienceFilters((prev) => {
-      const filters = prev
-        .filter(({ id }) => id !== targetFilter.id)
-        .concat(targetFilter);
-      return filters;
-    });
-  };
+  const handleOnSaveFilter = useCallback(
+    (targetFilter: TargetAudienceFilter) => {
+      setOtherTargetAudienceFilters((prev) =>
+        prev.filter(({ id }) => id !== targetFilter.id).concat(targetFilter),
+      );
+      setIsRuleSetterOpened(false);
+    },
+    [],
+  );
 
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
@@ -206,12 +149,11 @@ export function PublishModal({
         (filter) =>
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
-      const preparedFilters = rules
-        ? rules.map((rule) => ({
-            filterFunction: rule.function,
-            filterParams: rule.targets,
-            id: rule.source,
-            name: rule.source,
+      const preparedFilters = currentFolderRules
+        ? otherTargetAudienceFilters.map((rule) => ({
+            filterFunction: rule.filterFunction,
+            filterParams: rule.filterParams,
+            id: rule.id,
           }))
         : notEmptyFilters;
       const folderRegExp = new RegExp(
@@ -325,6 +267,7 @@ export function PublishModal({
       onClose();
     },
     [
+      currentFolderRules,
       dispatch,
       entities,
       entity.folderId,
@@ -333,7 +276,6 @@ export function PublishModal({
       otherTargetAudienceFilters,
       path,
       publishRequestName,
-      rules,
       type,
     ],
   );
@@ -396,34 +338,91 @@ export function PublishModal({
               </div>
             </section>
 
-            <section className="flex flex-col px-3 py-4 md:px-5">
+            <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2">
-                {t('Target Audience Filters')}
-
-                {!!(path && rules && rules.length) && (
-                  <Tooltip
-                    placement="top"
-                    tooltip={
-                      <div className="flex max-w-[230px] break-words text-xs">
-                        {t(
-                          'The collection will be published for all users who meet AT LEAST ONE option from every',
-                        )}
-                      </div>
-                    }
-                  >
-                    <IconHelpCircle
-                      size={18}
-                      className="text-secondary  hover:text-accent-primary"
-                    />
-                  </Tooltip>
-                )}
+                {t('Allow access if all match')}
               </h2>
+              {isRulesLoading ? (
+                <div className="flex size-full items-center justify-center">
+                  <Spinner size={48} dataQa="publication-items-spinner" />
+                </div>
+              ) : (
+                notCurrentFolderRules.map(([path, rules]) => (
+                  <RuleListItem key={path} path={path} rules={rules} />
+                ))
+              )}
+              {!isRulesLoading && path && (
+                <div>
+                  <div className="mb-1 text-xs text-secondary">
+                    {path.split('/').pop()}
+                  </div>
+                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
+                    {otherTargetAudienceFilters.map((item) => (
+                      <div className="flex items-center gap-1" key={item.id}>
+                        <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
+                          <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
+                            <span className="font-semibold">
+                              {startCase(toLower(item.id))}
+                            </span>
+                            <span className="italic">
+                              {toLower(item.filterFunction)}
+                            </span>
+                            {item.filterParams.map((param, index) => (
+                              <Fragment key={index}>
+                                {index > 0 && (
+                                  <span className="italic">{t('or')}</span>
+                                )}
+                                <span className="font-semibold">{param}</span>
+                              </Fragment>
+                            ))}
+                          </div>
+                          <IconX
+                            size={18}
+                            stroke="1"
+                            onClick={() =>
+                              setOtherTargetAudienceFilters((prev) =>
+                                prev.filter(({ id }) => id !== item.id),
+                              )
+                            }
+                            className="mr-3 shrink-0 cursor-pointer text-secondary"
+                          />
+                        </div>
+                        <span className="text-xs italic text-secondary">
+                          {t('or')}
+                        </span>
+                      </div>
+                    ))}
+                    {!isRuleSetterOpened && (
+                      <button
+                        onClick={() => setIsRuleSetterOpened(true)}
+                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                      >
+                        <IconPlus stroke="1" size={18} />
+                      </button>
+                    )}
+                    <IconX
+                      size={18}
+                      stroke="2"
+                      onClick={() => setOtherTargetAudienceFilters([])}
+                      className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
+                    />
+                  </div>
+                </div>
+              )}
+              {!path && (
+                <p className="text-secondary">
+                  {t(
+                    'This publication will be available to all users in the organization',
+                  )}
+                </p>
+              )}
 
-              <PublishModalFilters
-                path={path}
-                otherTargetAudienceFilters={otherTargetAudienceFilters}
-                onChangeFilters={handleOnChangeFilters}
-              />
+              {isRuleSetterOpened && path && (
+                <TargetAudienceFilterComponent
+                  onCloseFilter={() => setIsRuleSetterOpened(false)}
+                  onSaveFilter={handleOnSaveFilter}
+                />
+              )}
             </section>
           </div>
           {areSelectedConversationsLoaded ? (
@@ -433,7 +432,7 @@ export function PublishModal({
               entities={entities}
               path={path}
               files={files}
-              containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
+              containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={PublishActions.ADD}
             />
           ) : (

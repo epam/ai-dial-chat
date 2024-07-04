@@ -110,7 +110,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               conversationInFolder.folders.name,
               conversationInFolder.conversations[0].name,
             ),
@@ -134,7 +134,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               conversationInFolder.folders.name,
               conversationInFolder.conversations[0].name,
             ),
@@ -191,7 +191,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(() =>
           chatBar.exportButton.click(),
         );
@@ -199,7 +198,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete all conversations and folders, re-import again and verify they are displayed',
+      'Delete all conversations and folders, re-import again and verify that all entities except empty folders are displayed',
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -208,17 +207,15 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderByName(
+            folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(1),
             ),
-            ExpectedMessages.folderExpanded,
+            ExpectedMessages.folderIsNotVisible,
           )
-          .toBeVisible();
+          .toBeHidden();
         await expect
           .soft(
-            await conversations.getConversationByName(
-              conversationOutsideFolder.name,
-            ),
+            conversations.getConversationByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -226,7 +223,7 @@ dialTest(
         for (let i = 0; i <= levelsCount; i++) {
           await expect
             .soft(
-              await folderConversations.getFolderEntity(
+              folderConversations.getFolderEntity(
                 nestedFolders[i].name,
                 nestedConversations[i].name,
               ),
@@ -355,9 +352,7 @@ dialTest(
           .waitFor();
         await expect
           .soft(
-            await conversations.getConversationByName(
-              conversationOutsideFolder.name,
-            ),
+            conversations.getConversationByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();

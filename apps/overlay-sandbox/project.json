@@ -5,16 +5,13 @@
   "projectType": "application",
   "targets": {
     "build": {
+      "defaultConfiguration": "production",
       "executor": "@nx/next:build",
       "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/overlay-sandbox"
       },
       "configurations": {
-        "development": {
-          "outputPath": "apps/overlay-sandbox"
-        },
         "production": {}
       }
     },
@@ -30,20 +27,17 @@
     },
     "serve:sandbox": {
       "executor": "@nx/next:server",
-      "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "overlay-sandbox:build",
+        "buildTarget": "overlay-sandbox:build:development",
         "dev": true
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "overlay-sandbox:build:development",
-          "dev": true
-        },
-        "production": {
-          "buildTarget": "overlay-sandbox:build:production",
-          "dev": false
-        }
+      }
+    },
+    "serve:sandbox:production": {
+      "executor": "@nx/next:server",
+      "dependsOn": ["overlay-sandbox:build"],
+      "options": {
+        "dev": false,
+        "buildTarget": "overlay-sandbox:build:production"
       }
     },
     "serve-chat": {

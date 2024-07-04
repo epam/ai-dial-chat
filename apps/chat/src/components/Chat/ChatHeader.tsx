@@ -15,6 +15,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -118,6 +119,8 @@ export const ChatHeader = ({
               'truncate text-center',
               isChatFullWidth &&
                 'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
+              conversation.publicationInfo?.action === PublishActions.DELETE &&
+                'text-error',
             )}
           >
             <span
@@ -301,11 +304,11 @@ export const ChatHeader = ({
       </div>
       <ConfirmDialog
         isOpen={isClearConversationModalOpen}
-        heading={t('Confirm clearing all messages in the conversation')}
+        heading={t('Confirm deleting all messages in the conversation')}
         description={
           t('Are you sure that you want to delete all messages?') || ''
         }
-        confirmLabel={t('Clear')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           setIsClearConversationModalOpen(false);

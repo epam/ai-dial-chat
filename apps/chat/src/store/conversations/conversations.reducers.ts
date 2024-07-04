@@ -8,8 +8,15 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import {
+  getConversationRootId,
+  isRootConversationsId,
+} from '@/src/utils/app/id';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import {
@@ -54,6 +61,8 @@ const initialState: ConversationsState = {
   isMessageSending: false,
   loadedCustomAttachmentsData: [],
   customAttachmentDataLoading: false,
+  chosenConversationIds: [],
+  chosenFolderIds: [],
 };
 
 export const conversationsSlice = createSlice({
@@ -310,6 +319,7 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         conversations: ConversationInfo[];
+        suspendHideSidebar?: boolean;
       }>,
     ) => {
       state.conversations = combineEntities(
@@ -744,6 +754,167 @@ export const conversationsSlice = createSlice({
         payload.conversations,
       );
     },
+    setChosenConversation: (
+      state,
+      {
+        payload: { conversationId, isChosen },
+      }: PayloadAction<{ conversationId: string; isChosen: boolean }>,
+    ) => {
+      if (isChosen) {
+        const parentFolderIds = state.chosenFolderIds.filter((folderId) =>
+          conversationId.startsWith(folderId),
+        );
+        if (parentFolderIds.length) {
+          state.chosenFolderIds = uniq([
+            ...state.chosenFolderIds.filter(
+              (folderId) => !conversationId.startsWith(folderId),
+            ),
+            ...state.folders
+              .map((folder) => `${folder.id}/`)
+              .filter(
+                (folderId) =>
+                  !conversationId.startsWith(folderId) &&
+                  parentFolderIds.some((parentId) =>
+                    folderId.startsWith(parentId),
+                  ),
+              ),
+          ]);
+          state.chosenConversationIds = uniq([
+            ...state.chosenConversationIds.filter(
+              (convId: string) => convId !== conversationId,
+            ),
+            ...state.conversations
+              .map((conv) => conv.id)
+              .filter(
+                (convId) =>
+                  convId !== conversationId &&
+                  parentFolderIds.some((parentId) =>
+                    convId.startsWith(parentId),
+                  ),
+              ),
+          ]);
+        } else {
+          state.chosenConversationIds = state.chosenConversationIds.filter(
+            (convId: string) => convId !== conversationId,
+          );
+        }
+      } else {
+        state.chosenConversationIds = uniq([
+          ...state.chosenConversationIds,
+          conversationId,
+        ]);
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (folderId) =>
+                conversationId.startsWith(folderId) &&
+                !state.conversations.some(
+                  (conv) =>
+                    conv.id.startsWith(folderId) &&
+                    !state.chosenConversationIds.includes(conv.id) &&
+                    !state.chosenFolderIds.some((chosenFolderId) =>
+                      conv.id.startsWith(chosenFolderId),
+                    ),
+                ),
+            ),
+        ]);
+      }
+    },
+    setChosenFolder: (
+      state,
+      {
+        payload: { folderId, isChosen },
+      }: PayloadAction<{ folderId: string; isChosen: boolean }>,
+    ) => {
+      if (isChosen) {
+        const parentFolderIds = state.chosenFolderIds.filter(
+          (chosenId) => folderId.startsWith(chosenId) || chosenId !== folderId,
+        );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) =>
+              !folderId.startsWith(chosenId) && !chosenId.startsWith(folderId),
+          ),
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                !fid.startsWith(folderId) &&
+                !folderId.startsWith(fid) &&
+                parentFolderIds.some((parentId) => fid.startsWith(parentId)),
+            ),
+        ]);
+        state.chosenConversationIds = uniq([
+          ...state.chosenConversationIds.filter(
+            (convId: string) => !convId.startsWith(folderId),
+          ),
+          ...state.conversations
+            .map((conv) => conv.id)
+            .filter(
+              (convId) =>
+                !convId.startsWith(folderId) &&
+                parentFolderIds.some((parentId) => convId.startsWith(parentId)),
+            ),
+        ]);
+      } else {
+        state.chosenConversationIds = state.chosenConversationIds.filter(
+          (convId: string) => !convId.startsWith(folderId),
+        );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) => !chosenId.startsWith(folderId),
+          ),
+          folderId,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                folderId.startsWith(fid) &&
+                !state.conversations.some(
+                  (conv) =>
+                    conv.id.startsWith(fid) &&
+                    !conv.id.startsWith(folderId) &&
+                    !state.chosenConversationIds.includes(conv.id) &&
+                    !state.chosenFolderIds.some((chosenFolderId) =>
+                      conv.id.startsWith(chosenFolderId),
+                    ),
+                ),
+            ),
+        ]);
+      }
+    },
+    resetChosenConversations: (state) => {
+      state.chosenConversationIds = [];
+      state.chosenFolderIds = [];
+    },
+    setAllChosenConversations: (state) => {
+      if (state.searchTerm) {
+        state.chosenConversationIds = state.conversations
+          .filter(
+            (conv) =>
+              !isEntityExternal(conv) &&
+              doesEntityContainSearchTerm(conv, state.searchTerm),
+          )
+          .map(({ id }) => id);
+      } else {
+        state.chosenConversationIds = state.conversations
+          .filter(
+            (conv) =>
+              !isEntityExternal(conv) && isRootConversationsId(conv.folderId),
+          )
+          .map(({ id }) => id);
+        state.chosenFolderIds = state.folders
+          .filter(
+            (folder) =>
+              !isEntityExternal(folder) &&
+              isRootConversationsId(folder.folderId),
+          )
+          .map(({ id }) => `${id}/`);
+      }
+    },
+    deleteChosenConversations: (state) => state,
   },
 });
 

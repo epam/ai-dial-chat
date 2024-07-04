@@ -18,11 +18,12 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import { PublicationService } from '@/src/utils/app/data/publication-service';
-import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
+  getFoldersFromIds,
   getParentFolderIdsFromEntityId,
+  getParentFolderIdsFromFolderId,
   getRootFolderIdFromEntityId,
   splitEntityId,
 } from '@/src/utils/app/folders';
@@ -67,8 +68,6 @@ import {
   PublicationSelectors,
 } from './publication.reducers';
 
-import entries from 'lodash-es/entries';
-import maxBy from 'lodash-es/maxBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -202,6 +201,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
                         name: parsedApiKey.name,
+                        publicationInfo: {
+                          action: r.action,
+                        },
                       };
                     }),
                   }),
@@ -244,6 +246,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         ...parsedApiKey,
                         id: r.reviewUrl,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        publicationInfo: {
+                          action: r.action,
+                        },
                       };
                     }),
                   }),
@@ -285,6 +290,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       contentLength: 0,
                       contentType: '',
                       isPublicationFile: true,
+                      publicationInfo: {
+                        action: r.action,
+                      },
                     })),
                   }),
                 ),
@@ -515,7 +523,7 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadPublishedWithMeItemsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publishedConversationsUploadFailed),
+        translate(errorsMessages.publishedItemsUploadFailed),
       ),
     ),
   );
@@ -808,18 +816,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadRules.match),
     switchMap(({ payload }) =>
       PublicationService.getRules(payload.path).pipe(
-        switchMap(({ rules }) => {
-          const currentRulePath = `${constructPath(PUBLIC_URL_PREFIX, payload.path)}/`;
-
-          if (!rules[currentRulePath] && payload.path) {
-            const longestEntry = maxBy(entries(rules), ([key]) => key.length);
-
-            if (longestEntry) {
-              // value [1] is the rule
-              rules[currentRulePath] = longestEntry[1];
-            }
-          }
-
+        switchMap((rules) => {
           return of(
             PublicationActions.uploadRulesSuccess({
               ruleRecords: rules,
@@ -842,23 +839,146 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadAllPublishedWithMeItems.match),
+    switchMap(({ payload }) => {
+      const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
+        state$.value,
+        payload.featureType,
+      );
+
+      if (isAllItemsUploaded) {
+        return EMPTY;
+      }
+
+      return PublicationService.getPublishedWithMeItems(
+        '',
+        payload.featureType,
+        {
+          recursive: true,
+        },
+      ).pipe(
+        switchMap((publications) => {
+          if (!publications.items) {
+            return EMPTY;
+          }
+
+          const actions: Observable<AnyAction>[] = [];
+
+          const paths = uniq(
+            publications.items.flatMap((c) =>
+              getParentFolderIdsFromFolderId(getFolderIdFromEntityId(c.url)),
+            ),
+          ).map((path) => ApiUtils.decodeApiUrl(path));
+          const items = publications.items.map((item) => {
+            const id = ApiUtils.decodeApiUrl(item.url);
+            const parsedApiKey = parseConversationApiKey(
+              splitEntityId(id).name,
+            );
+            const folderId = getFolderIdFromEntityId(id);
+
+            return {
+              ...parsedApiKey,
+              id,
+              folderId: folderId,
+              publishedWithMe: isRootId(folderId),
+            };
+          });
+          const folders = getFoldersFromIds(
+            paths,
+            payload.featureType === FeatureType.Chat
+              ? FolderType.Chat
+              : FolderType.Prompt,
+            UploadStatus.LOADED,
+          ).map((folder) => ({
+            ...folder,
+            publishedWithMe: isRootId(getFolderIdFromEntityId(folder.id)),
+          }));
+
+          if (payload.featureType === FeatureType.Chat) {
+            actions.push(
+              of(
+                ConversationsActions.uploadChildConversationsWithFoldersSuccess(
+                  {
+                    parentIds: paths,
+                    folders,
+                    conversations: items,
+                  },
+                ),
+              ),
+            );
+          } else if (payload.featureType === FeatureType.Prompt) {
+            actions.push(
+              of(
+                PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                  parentIds: paths,
+                  folders,
+                  prompts: items,
+                }),
+              ),
+            );
+          }
+
+          return concat(
+            ...actions,
+            of(
+              PublicationActions.uploadAllPublishedWithMeItemsSuccess({
+                featureType: payload.featureType,
+              }),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(PublicationActions.uploadAllPublishedWithMeItemsFail());
+        }),
+      );
+    }),
+  );
+
+const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PublicationActions.uploadAllPublishedWithMeItemsFail.match),
+    map(() =>
+      UIActions.showErrorToast(
+        translate(errorsMessages.publishedItemsUploadFailed),
+      ),
+    ),
+  );
+
 export const PublicationEpics = combineEpics(
+  // init
   initEpic,
+
+  // create
   publishEpic,
   publishFailEpic,
+
+  // upload publications
   uploadPublicationsEpic,
   uploadPublicationsFailEpic,
   uploadPublicationEpic,
   uploadPublicationFailEpic,
+
+  // delete publications
   deletePublicationEpic,
   deletePublicationFailEpic,
+
+  // upload published resources
   uploadPublishedWithMeItemsEpic,
   uploadPublishedWithMeItemsFailEpic,
+  uploadAllPublishedWithMeItemsEpic,
+  uploadAllPublishedWithMeItemsFailEpic,
+
+  // handle publications
   approvePublicationEpic,
   approvePublicationFailEpic,
   rejectPublicationEpic,
   rejectPublicationFailEpic,
   resolvePublicationSuccessEpic,
+
+  // upload rules
   uploadRulesEpic,
   uploadRulesFailEpic,
 );

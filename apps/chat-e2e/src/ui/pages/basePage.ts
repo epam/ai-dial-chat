@@ -1,4 +1,4 @@
-import config from '../../../config/playwright.config';
+import config from '../../../config/chat.playwright.config';
 
 import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
@@ -132,7 +132,7 @@ export class BasePage {
   }
 
   async acceptBrowserDialog(message: string) {
-    await this.page.once('dialog', (dialog) => dialog.accept(message));
+    this.page.once('dialog', (dialog) => dialog.accept(message));
   }
 
   async downloadData<T>(

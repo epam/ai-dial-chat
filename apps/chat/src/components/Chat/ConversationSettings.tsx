@@ -58,7 +58,6 @@ interface Props {
   onChangeAddon: (addonsId: string) => void;
   onClose?: () => void;
   debounceSystemPromptChanges?: boolean;
-  isEmptySettings?: boolean;
 }
 
 export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
@@ -113,7 +112,6 @@ export const ConversationSettings = ({
   onChangeAddon,
   onApplyAddons,
   debounceSystemPromptChanges = false,
-  isEmptySettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -141,9 +139,6 @@ export const ConversationSettings = ({
   const isPlayback = conversation.playback?.isPlayback;
 
   useEffect(() => {
-    if (!isEmptySettings) {
-      return;
-    }
     if (!settingsRef.current) {
       return;
     }
@@ -164,17 +159,17 @@ export const ConversationSettings = ({
     return function cleanup() {
       resizeObserver.disconnect();
     };
-  }, [settingsWidth, isEmptySettings, settingsRef, dispatch]);
+  }, [settingsWidth, settingsRef, dispatch]);
 
   return (
     <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
       <div
         ref={settingsRef}
         className={classNames(
-          'relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1',
+          'relative size-full gap-[1px] overflow-auto',
           settingsWidth &&
-            settingsWidth <= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
-            'lg:grid-cols-1',
+            settingsWidth >= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
+            'md:grid md:grid-cols-2 md:grid-rows-1',
         )}
         data-qa="conversation-settings"
       >

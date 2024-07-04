@@ -2,6 +2,7 @@ import {
   DragEvent,
   ReactNode,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -86,6 +87,12 @@ const Sidebar = <T,>({
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
+  const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth;
+    }
+  });
+
   const isLeftSidebar = side === SidebarSide.Left;
   const isRightSidebar = side === SidebarSide.Right;
 
@@ -111,9 +118,9 @@ const Sidebar = <T,>({
   );
 
   const maxWidth = useMemo(() => {
-    if (typeof window === 'undefined') return;
-    return window.innerWidth - SIDEBAR_MIN_WIDTH - CENTRAL_CHAT_MIN_WIDTH;
-  }, []);
+    if (!windowWidth) return;
+    return windowWidth - SIDEBAR_MIN_WIDTH - CENTRAL_CHAT_MIN_WIDTH;
+  }, [windowWidth]);
 
   const SIDEBAR_HEIGHT = 'auto';
 
@@ -154,8 +161,7 @@ const Sidebar = <T,>({
   }, []);
 
   const onResize: ResizeCallback = useCallback(() => {
-    const windowWidth = window.innerWidth;
-    if (windowWidth < DESKTOP_BREAKPOINT) return;
+    if (!windowWidth || windowWidth < DESKTOP_BREAKPOINT) return;
 
     const sidebarCurrentWidth =
       sideBarElementRef.current?.resizable?.getClientRects()[0].width;
@@ -183,7 +189,14 @@ const Sidebar = <T,>({
     ) {
       dispatch(UIActions.setChatbarWidth(maxOppositeSidebarWidth));
     }
-  }, [dispatch, isLeftSidebar, isRightSidebar, chatbarWidth, promptbarWidth]);
+  }, [
+    dispatch,
+    isLeftSidebar,
+    isRightSidebar,
+    chatbarWidth,
+    promptbarWidth,
+    windowWidth,
+  ]);
 
   const onResizeStop = useCallback(() => {
     setIsResizing(false);
@@ -251,6 +264,14 @@ const Sidebar = <T,>({
     SIDEBAR_WIDTH,
     maxWidth,
   ]);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex max-w-[95%] border-tertiary md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
