@@ -432,7 +432,7 @@ export function PublishModal({
               entities={entities}
               path={path}
               files={files}
-              containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
+              containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={PublishActions.ADD}
             />
           ) : (
