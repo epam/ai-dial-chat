@@ -61,7 +61,6 @@ export const ChangePathDialog = ({
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
     rootFolderId,
   );
-
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const { selectors, actions } =

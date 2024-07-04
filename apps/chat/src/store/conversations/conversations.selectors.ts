@@ -16,6 +16,7 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
+  sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -567,11 +568,11 @@ export const selectTemporaryAndPublishedFolders = createSelector(
       getChildAndCurrentFoldersById(folder.id, allFolders),
     );
     const filteredFolders = [
-      ...allPublishedFolders,
+      ...sortByName(allPublishedFolders),
       ...temporaryFolders,
     ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
 
-    return getParentAndChildFolders(allFolders, filteredFolders);
+    return getParentAndChildFolders(sortByName(allFolders), filteredFolders);
   },
 );
 
