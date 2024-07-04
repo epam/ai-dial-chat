@@ -40,6 +40,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
+import { FooterMessage } from '../Common/FooterMessage';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -956,7 +957,14 @@ export function Chat() {
   );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
-    return <HandlePublication publication={selectedPublication} />;
+    return (
+      <>
+        <HandlePublication publication={selectedPublication} />
+        <div className="p-5">
+          <FooterMessage />
+        </div>
+      </>
+    );
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {
