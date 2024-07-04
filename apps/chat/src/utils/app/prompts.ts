@@ -27,14 +27,17 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
 export const parseVariablesFromContent = (
   content?: string,
 ): TemplateParameter[] => {
-  const regex = /{{([^|]+)(|.+)?}}/g;
+  const regex = /{{([^|]+?)(\|.*?)?}}/g;
   const foundVariables = [];
   let match;
 
   if (!content) return [];
 
   while ((match = regex.exec(content)) !== null) {
-    foundVariables.push({ name: match[1], defaultValue: match[2] ?? '' });
+    foundVariables.push({
+      name: match[1],
+      defaultValue: match[2]?.slice(1) ?? '',
+    });
   }
 
   return foundVariables;
