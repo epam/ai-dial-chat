@@ -42,7 +42,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     { key: string; value: string }[]
   >(
     variables
-      .map((variable) => ({ key: variable, value: '' }))
+      .map((variable) => ({ key: variable.name, value: variable.defaultValue }))
       .filter(
         (item, index, array) =>
           array.findIndex((t) => t.key === item.key) === index,
