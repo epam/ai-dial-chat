@@ -12,7 +12,7 @@ import {
   getConversationRootId,
   isRootConversationsId,
 } from '@/src/utils/app/id';
-import { doesPromptOrConversationContainSearchTerm } from '@/src/utils/app/search';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import {
   isEntityExternal,
   isEntityOrParentsExternal,
@@ -893,7 +893,7 @@ export const conversationsSlice = createSlice({
           .filter(
             (conv) =>
               !isEntityExternal(conv) &&
-              doesPromptOrConversationContainSearchTerm(conv, state.searchTerm),
+              doesEntityContainSearchTerm(conv, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {
