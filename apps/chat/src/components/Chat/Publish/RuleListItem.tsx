@@ -32,7 +32,7 @@ export function RuleListItem({
           <div key={rule.source} className="flex max-w-full items-center">
             <div
               className={classNames(
-                'flex flex-wrap gap-1 rounded px-3 py-2',
+                'flex flex-wrap gap-x-1 rounded px-3 py-2',
                 ruleSourcesToApplyClassNames?.some(
                   (source) => source === rule.source,
                 )
@@ -49,7 +49,7 @@ export function RuleListItem({
               {rule.targets.map((target, index) => (
                 <Fragment key={index}>
                   {index > 0 && <span className="italic">{t('or')}</span>}
-                  <span className="font-semibold">{target}</span>
+                  <span className="break-all font-semibold">{target}</span>
                 </Fragment>
               ))}
             </div>

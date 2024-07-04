@@ -319,9 +319,9 @@ export function HandlePublication({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p>{t('Allow access if all match')}</p>
-                    {isEqual(
-                      publication.rules,
-                      rules[publication.targetFolder],
+                    {!isEqual(
+                      publication.rules || [],
+                      rules[publication.targetFolder] || [],
                     ) ? (
                       <span
                         onClick={() => setIsCompareModalOpened(true)}

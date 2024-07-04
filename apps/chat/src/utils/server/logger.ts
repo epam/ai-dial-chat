@@ -1,13 +1,22 @@
 import pino from 'pino';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+import transport from 'pino-opentelemetry-transport';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import pretty from 'pino-pretty';
 
 export const logger = pino({
   transport: {
-    target: 'pino-pretty',
+    target: 'pino-opentelemetry-transport',
     options: {
-      colorize: true,
-      messageFormat: '{msg} [trace_id={trace_id}, span_id={span_id}]',
+      logRecordProcessorOptions: [
+        { recordProcessorType: 'batch', exporterOptions: { protocol: 'http' } },
+        {
+          recordProcessorType: 'simple',
+          exporterOptions: {
+            protocol: 'console',
+          },
+        },
+      ],
     },
   },
 });
