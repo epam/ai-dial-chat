@@ -7,7 +7,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
-import { doesPromptOrConversationContainSearchTerm } from '@/src/utils/app/search';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import {
   isEntityExternal,
   isEntityOrParentsExternal,
@@ -537,10 +537,7 @@ export const promptsSlice = createSlice({
           .filter(
             (prompt) =>
               !isEntityExternal(prompt) &&
-              doesPromptOrConversationContainSearchTerm(
-                prompt,
-                state.searchTerm,
-              ),
+              doesEntityContainSearchTerm(prompt, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {

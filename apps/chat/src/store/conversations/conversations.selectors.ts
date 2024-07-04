@@ -8,6 +8,7 @@ import {
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
+  getChildAndCurrentFoldersById,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
@@ -15,12 +16,13 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
+  sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
-  doesPromptOrConversationContainSearchTerm,
+  doesEntityContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
 import {
@@ -79,10 +81,7 @@ export const selectFilteredConversations = createSelector(
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
-          doesPromptOrConversationContainSearchTerm(
-            conversation,
-            searchTerm,
-          )) &&
+          doesEntityContainSearchTerm(conversation, searchTerm)) &&
         (filters.searchFilter?.(conversation) ?? true) &&
         (ignoreSectionFilter ||
           (filters.sectionFilter?.(conversation) ?? true)),
@@ -277,7 +276,7 @@ export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
-      doesPromptOrConversationContainSearchTerm(conversation, searchTerm),
+      doesEntityContainSearchTerm(conversation, searchTerm),
     ),
 );
 
@@ -557,22 +556,23 @@ export const selectPublishedWithMeFolders = createSelector(
   },
 );
 
-export const selectTemporaryAndFilteredFolders = createSelector(
+export const selectTemporaryAndPublishedFolders = createSelector(
   [
     selectFolders,
     selectPublishedWithMeFolders,
     selectTemporaryFolders,
     (_state, searchTerm?: string) => searchTerm,
   ],
-  (allFolders, filteredFolders, temporaryFolders, searchTerm = '') => {
-    const filtered = [...filteredFolders, ...temporaryFolders].filter(
-      (folder) => folder.name.includes(searchTerm.toLowerCase()),
+  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
+    const allPublishedFolders = publishedFolders.flatMap((folder) =>
+      getChildAndCurrentFoldersById(folder.id, allFolders),
     );
+    const filteredFolders = [
+      ...sortByName(allPublishedFolders),
+      ...temporaryFolders,
+    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
 
-    return getParentAndChildFolders(
-      [...allFolders, ...temporaryFolders],
-      filtered,
-    );
+    return getParentAndChildFolders(sortByName(allFolders), filteredFolders);
   },
 );
 

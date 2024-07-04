@@ -18,6 +18,7 @@ interface CollapsibleSectionProps {
   onToggle?: (isOpen: boolean) => void;
   className?: string;
   showOnHoverOnly?: boolean;
+  togglerClassName?: string;
   sectionTooltip?: ReactNode;
 }
 
@@ -32,6 +33,7 @@ export default function CollapsibleSection({
   onToggle,
   className,
   showOnHoverOnly,
+  togglerClassName,
   sectionTooltip,
 }: CollapsibleSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
@@ -50,10 +52,11 @@ export default function CollapsibleSection({
           onClick={handleClick}
           data-qa={dataQa}
           className={classNames(
-            'flex cursor-pointer items-center gap-1 whitespace-pre text-xs',
+            'flex cursor-pointer items-center gap-1 whitespace-pre py-1 text-xs',
             isHighlighted
               ? 'text-accent-primary'
               : '[&:not(:hover)]:text-secondary',
+            togglerClassName,
           )}
         >
           <CaretIconComponent
