@@ -3,7 +3,6 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
 import {
   LatestExportFormat,
   Operation,
@@ -152,7 +151,6 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{
         itemsToUpload: Conversation[];
-        folders?: FolderInterface[];
       }>,
     ) => {
       state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
@@ -169,7 +167,6 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{
         itemsToUpload: Prompt[];
-        folders?: FolderInterface[];
       }>,
     ) => {
       state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
