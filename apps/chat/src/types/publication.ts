@@ -61,7 +61,6 @@ export interface PublicationInfo {
   status: PublicationStatus;
   createdAt: number;
   resourceTypes: BackendResourceType[];
-  displayName?: string;
 }
 
 export interface PublicationsListModel {

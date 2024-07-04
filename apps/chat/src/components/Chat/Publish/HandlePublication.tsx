@@ -203,14 +203,6 @@ export function HandlePublication({ publication }: Props) {
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
 
-  // TODO Remove this code when publication display name feature will be done
-  const publications = useAppSelector((state) =>
-    PublicationSelectors.selectPublications(state),
-  );
-  const publicationDisplayName = publications.filter(
-    (item) => item.url === publication.url,
-  )[0].displayName;
-
   return (
     <div className="flex size-full flex-col items-center p-0 text-primary-bg-light md:px-5 md:pt-5">
       <div className="flex size-full flex-col items-center gap-[1px] rounded-primary 2xl:max-w-[1000px]">
@@ -220,9 +212,8 @@ export function HandlePublication({ publication }: Props) {
             className="w-full whitespace-pre text-center text-base font-semibold"
           >
             {publication.resources[0].action !== PublishActions.DELETE
-              ? t('Publication request for: ')
-              : t('Unpublish: ')}
-            {publicationDisplayName}
+              ? t('Publication request')
+              : t('Unpublish')}
           </h4>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden bg-layer-1 [&:first-child]:rounded-t-primary">

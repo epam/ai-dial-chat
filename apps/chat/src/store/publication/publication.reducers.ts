@@ -47,10 +47,7 @@ export const publicationSlice = createSlice({
       state,
       { payload }: PayloadAction<{ publications: PublicationInfo[] }>,
     ) => {
-      state.publications = payload.publications.map((publication, index) => ({
-        ...publication,
-        displayName: `Approve request ${index + 1}`,
-      }));
+      state.publications = payload.publications;
     },
     uploadPublicationsFail: (state) => state,
     uploadPublication: (state, _action: PayloadAction<{ url: string }>) =>

@@ -33,9 +33,14 @@ import some from 'lodash-es/some';
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
   featureType: FeatureType;
+  index: number;
 }
 
-const PublicationItem = ({ publication, featureType }: PublicationProps) => {
+const PublicationItem = ({
+  publication,
+  featureType,
+  index,
+}: PublicationProps) => {
   const dispatch = useAppDispatch();
 
   const selectedPublication = useAppSelector(
@@ -83,14 +88,6 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
       ? ConversationPublicationResources
       : PromptPublicationResources;
 
-  // TODO Remove this code when publication display name feature will be done
-  const publications = useAppSelector((state) =>
-    PublicationSelectors.selectPublications(state),
-  );
-  const publicationDisplayName = publications.filter(
-    (item) => item.url === publication.url,
-  )[0].displayName;
-
   return (
     <div className="flex flex-col gap-1">
       <div
@@ -117,7 +114,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
             )}
             data-qa="folder-name"
           >
-            {publicationDisplayName}
+            {`Approve request ${index + 1}`}
           </div>
         </div>
       </div>
@@ -192,11 +189,12 @@ export const ApproveRequiredSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
-      {publicationItems.map((p) => (
+      {publicationItems.map((p, index) => (
         <PublicationItem
           featureType={featureType}
           key={p.url}
           publication={p}
+          index={index}
         />
       ))}
     </CollapsibleSection>
