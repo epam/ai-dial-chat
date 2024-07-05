@@ -7,11 +7,7 @@ on:
         description: 'Source registry'
         required: true
         default: 'Dev'
-        type: choice
-        options:
-          - Dev
-          - Uat
-          - Prod
+        type: environment
       src_tag:
         description: 'Source tag'
         required: true
@@ -19,11 +15,7 @@ on:
         description: 'Destination registry'
         required: true
         default: 'Uat'
-        type: choice
-        options:
-          - Dev
-          - Uat
-          - Prod
+        type: environment
       dst_tag:
         description: 'Destination tag'
         required: true

@@ -9,11 +9,7 @@ on:
         description: 'Environment to push image to'
         required: true
         default: 'Dev'
-        type: choice
-        options:
-          - Dev
-          - Uat
-          - Prod
+        type: environment
 
 env:
   IMAGE_NAME: dial/ai-dial-chat
