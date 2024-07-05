@@ -49,8 +49,10 @@ export const PromptVariablesDialog: FC<Props> = ({
       ),
   );
   const [submitted, setSubmitted] = useState(false);
+  const [isScrollable, setIsScrollable] = useState(false);
 
   const modalRef = useRef<HTMLFormElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const inputsRefs = useRef<HTMLTextAreaElement[] | null[]>([]);
   const { t } = useTranslation(Translation.Settings);
 
@@ -97,6 +99,14 @@ export const PromptVariablesDialog: FC<Props> = ({
   );
 
   useEffect(() => {
+    if (contentRef.current) {
+      const contentHeight = contentRef.current.scrollHeight;
+      const maxHeight = window.innerHeight - 200;
+      setIsScrollable(contentHeight > maxHeight);
+    }
+  }, [updatedVariables]);
+
+  useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
@@ -113,7 +123,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   const inputClassName = classNames(
     'input-form',
     'peer',
-    'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary ',
+    'placeholder:text-pr-grey-400 m-0 rounded-primary border-secondary bg-layer-2 shadow-primary focus-within:border-accent-quaternary hover:border-accent-quaternary ',
     {
       'input-invalid': submitted,
       submitted: submitted,
@@ -122,76 +132,97 @@ export const PromptVariablesDialog: FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex max-h-full items-center justify-center overflow-hidden bg-blackout p-3 md:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-blackout p-3 md:p-5"
       onKeyDown={handleKeyDown}
     >
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block max-h-full w-full overflow-y-auto rounded-[10px] bg-layer-1 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="relative inline-block w-full rounded-secondary bg-layer-1 text-left transition-all xl:w-[570px] 2xl:max-w-[800px]"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
       >
-        <div
-          className="mb-4 whitespace-pre text-base font-bold"
-          data-qa="variable-prompt-name"
-        >
-          {prompt.name}
-        </div>
-
-        {prompt.description && (
-          <div className="mb-5 italic" data-qa="variable-prompt-descr">
-            {prompt.description}
-          </div>
-        )}
-
-        <button
-          className="absolute right-2 top-2 rounded text-quaternary-bg-light hover:text-primary-bg-light"
-          onClick={onClose}
-        >
-          <IconX size={24} />
-        </button>
-
-        {updatedVariables.map((variable, index) => (
-          <div className="mb-4" key={variable.key}>
-            <div className="mb-1 flex font-medium text-primary-bg-light">
-              <span>
-                {variable.key}
-                <span className="inline text-quinary-bg-light">*</span>
-              </span>
+        <div className="text-pr-grey-white bg-pr-primary-550 flex h-[80px] items-center justify-between rounded-t-secondary py-4 pl-8 pr-4 font-medium">
+          <div className="flex flex-col items-start justify-center gap-1 overflow-hidden">
+            <div
+              className="w-full truncate text-xl"
+              data-qa="variable-prompt-name"
+            >
+              {prompt.name}
             </div>
 
-            <textarea
-              ref={(el) => (inputsRefs.current[index] = el)}
-              className={inputClassName}
-              style={{ resize: 'none' }}
-              required
-              title=""
-              placeholder={
-                t('Enter a value for {{key}}...', {
-                  key: variable.key,
-                }) as string
-              }
-              value={variable.value}
-              onBlur={onBlur}
-              onChange={(e) => {
-                handleChange(index, e);
-              }}
-              rows={3}
-            />
-            <EmptyRequiredInputMessage text="Please fill out all variables" />
+            {prompt.description && (
+              <div
+                className="w-full truncate text-xs"
+                data-qa="variable-prompt-descr"
+              >
+                {prompt.description}
+              </div>
+            )}
           </div>
-        ))}
 
-        <div className="mt-1 flex justify-end">
           <button
-            type="submit"
-            className="button button-primary button-medium"
-            data-qa="submit-variable"
+            onClick={onClose}
+            className="hover:text-pr-tertiary-500 self-start"
           >
-            {t('Submit')}
+            <IconX height={20} width={20} />
           </button>
+        </div>
+        <div
+          ref={contentRef}
+          className={classNames(
+            'px-8 py-4',
+            isScrollable && 'max-h-[calc(100vh-200px)] overflow-y-auto',
+          )}
+        >
+          {updatedVariables.map((variable, index) => (
+            <div className="mb-1" key={variable.key}>
+              <div className="mb-1 flex text-xs font-medium text-primary-bg-light">
+                <span>
+                  {variable.key}
+                  <span className="text-pr-alert-500 inline">*</span>
+                </span>
+              </div>
+
+              <textarea
+                ref={(el) => (inputsRefs.current[index] = el)}
+                className={inputClassName}
+                style={{ resize: 'none' }}
+                required
+                title=""
+                placeholder={
+                  t('Enter a value for {{key}}...', {
+                    key: variable.key,
+                  }) as string
+                }
+                value={variable.value}
+                onBlur={onBlur}
+                onChange={(e) => {
+                  handleChange(index, e);
+                }}
+                rows={3}
+              />
+              <EmptyRequiredInputMessage text="Please fill out all variables" />
+            </div>
+          ))}
+
+          <div className="mt-1 flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="button button-ghost button-medium"
+              data-qa="cancel-variable"
+            >
+              {t('Cancel')}
+            </button>
+            <button
+              type="submit"
+              className="button button-primary button-medium"
+              data-qa="submit-variable"
+            >
+              {t('Submit')}
+            </button>
+          </div>
         </div>
       </form>
     </div>
