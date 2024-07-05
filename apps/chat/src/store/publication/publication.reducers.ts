@@ -23,6 +23,7 @@ export interface PublicationState {
     [FeatureType.Prompt]: boolean;
     [FeatureType.File]: boolean;
   };
+  selectedItemsToPublish: string[];
 }
 
 const initialState: PublicationState = {
@@ -36,6 +37,7 @@ const initialState: PublicationState = {
     [FeatureType.Prompt]: false,
     [FeatureType.File]: false,
   },
+  selectedItemsToPublish: [],
 };
 
 export const publicationSlice = createSlice({
@@ -173,6 +175,12 @@ export const publicationSlice = createSlice({
     },
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
+    },
+    addSelectedItemsToPublish: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.selectedItemsToPublish = payload.ids;
     },
   },
 });

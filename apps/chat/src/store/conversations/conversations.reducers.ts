@@ -63,6 +63,7 @@ const initialState: ConversationsState = {
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
   chosenFolderIds: [],
+  isSelectMode: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -886,10 +887,12 @@ export const conversationsSlice = createSlice({
       }
     },
     resetChosenConversations: (state) => {
+      state.isSelectMode = false;
       state.chosenConversationIds = [];
       state.chosenFolderIds = [];
     },
     setAllChosenConversations: (state) => {
+      state.isSelectMode = true;
       if (state.searchTerm) {
         state.chosenConversationIds = state.conversations
           .filter(

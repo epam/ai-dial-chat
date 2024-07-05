@@ -864,28 +864,26 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     />
                   </ShareIcon>
                 )}
-                {canSelectFolders &&
-                  !isExternal &&
-                  !loadingFolderIds.includes(currentFolder.id) && (
-                    <div
-                      className={classNames(
-                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
-                        isSelected ? 'flex' : 'hidden',
-                      )}
-                      data-item-checkbox
-                    >
-                      <input
-                        className="checkbox peer size-[18px] bg-layer-3"
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={handleToggleFolder}
-                      />
-                      <IconCheck
-                        size={18}
-                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-                      />
-                    </div>
-                  )}
+                {canSelectFolders && (
+                  <div
+                    className={classNames(
+                      'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                      isSelected ? 'flex' : 'hidden',
+                    )}
+                    data-item-checkbox
+                  >
+                    <input
+                      className="checkbox peer size-[18px] bg-layer-3"
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={handleToggleFolder}
+                    />
+                    <IconCheck
+                      size={18}
+                      className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                    />
+                  </div>
+                )}
               </>
             )}
 
@@ -947,37 +945,35 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     />
                   </ShareIcon>
                 )}
-                {canSelectFolders &&
-                  !isExternal &&
-                  !loadingFolderIds.includes(currentFolder.id) && (
-                    <div
-                      className={classNames(
-                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
-                        isSelected || isPartialSelected ? 'flex' : 'hidden',
-                      )}
-                      data-item-checkbox
-                    >
-                      <input
-                        className="checkbox peer size-[18px] bg-layer-3"
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={handleToggleFolder}
-                        ref={checkboxRef}
+                {canSelectFolders && (
+                  <div
+                    className={classNames(
+                      'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                      isSelected || isPartialSelected ? 'flex' : 'hidden',
+                    )}
+                    data-item-checkbox
+                  >
+                    <input
+                      className="checkbox peer size-[18px] bg-layer-3"
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={handleToggleFolder}
+                      ref={checkboxRef}
+                    />
+                    {isSelected && (
+                      <IconCheck
+                        size={18}
+                        className="pointer-events-none absolute text-accent-primary"
                       />
-                      {isSelected && (
-                        <IconCheck
-                          size={18}
-                          className="pointer-events-none absolute text-accent-primary"
-                        />
-                      )}
-                      {isPartialSelected && (
-                        <IconMinus
-                          size={18}
-                          className="pointer-events-none absolute text-accent-primary"
-                        />
-                      )}
-                    </div>
-                  )}
+                    )}
+                    {isPartialSelected && (
+                      <IconMinus
+                        size={18}
+                        className="pointer-events-none absolute text-accent-primary"
+                      />
+                    )}
+                  </div>
+                )}
               </>
             )}
             <div

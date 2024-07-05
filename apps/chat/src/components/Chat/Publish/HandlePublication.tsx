@@ -398,7 +398,7 @@ export function HandlePublication({ publication }: Props) {
                     >
                       <Component
                         resources={publication.resources}
-                        forViewOnly
+                        readonly
                         showTooltip={showTooltip}
                       />
                     </CollapsibleSection>

@@ -83,3 +83,10 @@ export const selectIsAllItemsUploaded = createSelector(
     return state.allPublishedWithMeItemsUploaded[featureType];
   },
 );
+
+export const selectSelectedItemsToPublish = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.selectedItemsToPublish;
+  },
+);

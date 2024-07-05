@@ -68,7 +68,7 @@ export function PublicationItemsList({
         >
           {type === SharingType.Conversation ? (
             <ConversationRow
-              itemComponentClassNames="cursor-pointer"
+              itemComponentClassNames="cursor-pointer group/conversation-item"
               item={entity as ConversationInfo}
               level={0}
             />
@@ -86,7 +86,7 @@ export function PublicationItemsList({
                 ),
                 reviewUrl: entity.id,
               }))}
-              forViewOnly
+              readonly
               showTooltip
             />
           )}
@@ -103,7 +103,7 @@ export function PublicationItemsList({
           <FilePublicationResources
             uploadedFiles={files}
             resources={[]}
-            forViewOnly
+            readonly
             showTooltip
           />
         </CollapsibleSection>
@@ -136,7 +136,7 @@ export function PublicationItemsList({
                 ),
                 reviewUrl: entity.id,
               }))}
-              forViewOnly
+              readonly
               showTooltip
             />
           )}

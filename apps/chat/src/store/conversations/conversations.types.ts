@@ -32,4 +32,5 @@ export interface ConversationsState {
   customAttachmentDataLoading: boolean;
   chosenConversationIds: string[];
   chosenFolderIds: string[];
+  isSelectMode: boolean;
 }

@@ -1,4 +1,4 @@
-import { IconBulb, IconFile } from '@tabler/icons-react';
+import { IconBulb, IconCheck, IconFile } from '@tabler/icons-react';
 import {
   ReactElement,
   ReactNode,
@@ -22,7 +22,11 @@ import { Prompt } from '@/src/types/prompt';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
@@ -127,6 +131,7 @@ export const EntityRow = ({
 
 interface FeatureContainerProps {
   children: ReactNode | ReactNode[];
+  selectorGroup?: string;
 }
 const FeatureContainer = ({ children }: FeatureContainerProps) => (
   <span className="flex w-2/3 flex-row items-center gap-2">{children}</span>
@@ -139,25 +144,73 @@ interface ConversationViewProps {
 const ConversationView = ({ item: conversation }: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  const dispatch = useAppDispatch();
+
+  const chosenConversationIds = useAppSelector(
+    ConversationsSelectors.selectChosenConversationIds,
+  );
+  const chosenFolderIds = useAppSelector(
+    ConversationsSelectors.selectChosenFolderIds,
+  );
+  const isChosen = useMemo(
+    () =>
+      chosenConversationIds.includes(conversation.id) ||
+      chosenFolderIds.some((folderId) => conversation.id.startsWith(folderId)),
+    [chosenConversationIds, chosenFolderIds, conversation.id],
+  );
+
+  const handleToggle = useCallback(() => {
+    dispatch(
+      ConversationsActions.setChosenConversation({
+        conversationId: conversation.id,
+        isChosen,
+      }),
+    );
+  }, [conversation.id, dispatch, isChosen]);
+
   return (
     <FeatureContainer>
-      {conversation.isReplay && (
-        <span className="flex shrink-0">
-          <ReplayAsIsIcon size={18} />
-        </span>
-      )}
-      {conversation.isPlayback && (
-        <span className="flex shrink-0">
-          <PlaybackIcon size={18} />
-        </span>
-      )}
-      {!conversation.isReplay && !conversation.isPlayback && (
-        <ModelIcon
-          size={18}
-          entityId={conversation.model.id}
-          entity={modelsMap[conversation.model.id]}
+      <div
+        className={classNames(
+          'relative size-[18px] shrink-0 group-hover/conversation-item:flex',
+          !isChosen ? 'hidden' : 'flex',
+        )}
+      >
+        <input
+          className="checkbox peer size-[18px] bg-layer-3"
+          type="checkbox"
+          checked={isChosen}
+          onChange={handleToggle}
         />
-      )}
+        <IconCheck
+          size={18}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
+      </div>
+      <div
+        className={classNames(
+          'group-hover/conversation-item:hidden',
+          isChosen && 'hidden',
+        )}
+      >
+        {conversation.isReplay && (
+          <span className="flex shrink-0">
+            <ReplayAsIsIcon size={18} />
+          </span>
+        )}
+        {conversation.isPlayback && (
+          <span className="flex shrink-0">
+            <PlaybackIcon size={18} />
+          </span>
+        )}
+        {!conversation.isReplay && !conversation.isPlayback && (
+          <ModelIcon
+            size={18}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
+          />
+        )}
+      </div>
       <Tooltip
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"

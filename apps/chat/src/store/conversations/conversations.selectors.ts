@@ -746,9 +746,7 @@ export const selectIsConversationsEmpty = createSelector(
 );
 
 export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return (
-    state.chosenConversationIds.length > 0 || state.chosenFolderIds.length > 0
-  );
+  return state.isSelectMode;
 });
 
 export const selectChosenConversationIds = createSelector(

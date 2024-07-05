@@ -31,7 +31,7 @@ import Folder from '../../Folder/Folder';
 
 interface PublicationResources {
   resources: PublicationResource[];
-  forViewOnly?: boolean;
+  readonly?: boolean;
   rootFolder?: ShareEntity;
   showTooltip?: boolean;
   isOpen?: boolean;
@@ -40,7 +40,7 @@ interface PublicationResources {
 
 export const PromptPublicationResources = ({
   resources,
-  forViewOnly,
+  readonly,
   rootFolder,
   showTooltip,
   isOpen = true,
@@ -70,8 +70,8 @@ export const PromptPublicationResources = ({
         return (
           <Folder
             readonly
-            noCaretIcon={!!forViewOnly}
-            level={forViewOnly ? 0 : 1}
+            noCaretIcon={!!readonly}
+            level={readonly ? 0 : 1}
             key={f.id}
             currentFolder={f}
             allFolders={allFolders.filter((f) =>
@@ -79,14 +79,14 @@ export const PromptPublicationResources = ({
                 item.id.startsWith(`${f.id}/`),
               ),
             )}
-            searchTerm={forViewOnly ? '' : searchTerm}
+            searchTerm={readonly ? '' : searchTerm}
             openedFoldersIds={
-              forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
+              readonly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={folderItemsToDisplay}
-            itemComponent={forViewOnly ? PromptsRow : PromptComponent}
+            itemComponent={readonly ? PromptsRow : PromptComponent}
             onClickFolder={(folderId: string) => {
-              if (forViewOnly) return;
+              if (readonly) return;
               dispatch(PromptsActions.toggleFolder({ id: folderId }));
 
               if (f.status !== UploadStatus.LOADED) {
@@ -100,21 +100,20 @@ export const PromptPublicationResources = ({
             }}
             featureType={FeatureType.Prompt}
             highlightedFolders={
-              !isSelectedPromptApproveRequiredResource || forViewOnly
+              !isSelectedPromptApproveRequiredResource || readonly
                 ? undefined
                 : highlightedFolders
             }
-            folderClassName={classNames(forViewOnly && 'h-[38px]')}
-            itemComponentClassNames={classNames(
-              forViewOnly && 'cursor-pointer',
-            )}
+            folderClassName={classNames(readonly && 'h-[38px]')}
+            itemComponentClassNames={classNames(readonly && 'cursor-pointer ')}
             additionalItemData={additionalItemData}
             showTooltip={showTooltip}
+            canSelectFolders
           />
         );
       })}
       {itemsToDisplay.map((p) =>
-        forViewOnly ? (
+        readonly ? (
           <PromptsRow
             itemComponentClassNames="cursor-pointer"
             key={p.id}
@@ -136,7 +135,7 @@ export const PromptPublicationResources = ({
 
 export const ConversationPublicationResources = ({
   resources,
-  forViewOnly,
+  readonly,
   rootFolder,
   showTooltip,
   isOpen = true,
@@ -165,8 +164,8 @@ export const ConversationPublicationResources = ({
         return (
           <Folder
             readonly
-            noCaretIcon={!!forViewOnly}
-            level={forViewOnly ? 0 : 1}
+            noCaretIcon={!!readonly}
+            level={readonly ? 0 : 1}
             key={f.id}
             currentFolder={f}
             allFolders={allFolders.filter((f) =>
@@ -174,16 +173,14 @@ export const ConversationPublicationResources = ({
                 item.id.startsWith(`${f.id}/`),
               ),
             )}
-            searchTerm={forViewOnly ? '' : searchTerm}
+            searchTerm={readonly ? '' : searchTerm}
             openedFoldersIds={
-              forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
+              readonly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={folderItemsToDisplay}
-            itemComponent={
-              forViewOnly ? ConversationRow : ConversationComponent
-            }
+            itemComponent={readonly ? ConversationRow : ConversationComponent}
             onClickFolder={(folderId: string) => {
-              if (forViewOnly) return;
+              if (readonly) return;
               dispatch(ConversationsActions.toggleFolder({ id: folderId }));
 
               if (f.status !== UploadStatus.LOADED) {
@@ -196,20 +193,21 @@ export const ConversationPublicationResources = ({
               }
             }}
             featureType={FeatureType.Chat}
-            highlightedFolders={forViewOnly ? undefined : highlightedFolders}
-            folderClassName={classNames(forViewOnly && 'h-[38px]')}
+            highlightedFolders={readonly ? undefined : highlightedFolders}
+            folderClassName={classNames(readonly && 'h-[38px]')}
             itemComponentClassNames={classNames(
-              forViewOnly && 'cursor-pointer',
+              readonly && 'group/conversation-item cursor-pointer',
             )}
             additionalItemData={additionalItemData}
             showTooltip={showTooltip}
+            canSelectFolders
           />
         );
       })}
       {itemsToDisplay.map((c) =>
-        forViewOnly ? (
+        readonly ? (
           <ConversationRow
-            itemComponentClassNames="cursor-pointer"
+            itemComponentClassNames="cursor-pointer group/conversation-item"
             key={c.id}
             item={c}
             level={0}
@@ -229,7 +227,7 @@ export const ConversationPublicationResources = ({
 
 export const FilePublicationResources = ({
   resources,
-  forViewOnly,
+  readonly,
   // TODO: get rid of uploaded files in https://github.com/epam/ai-dial-chat/issues/1502
   uploadedFiles,
   isOpen = true,
@@ -252,9 +250,9 @@ export const FilePublicationResources = ({
         return (
           <Folder
             readonly
-            noCaretIcon={!!forViewOnly}
+            noCaretIcon={!!readonly}
             displayCaretAlways
-            level={forViewOnly ? 0 : 1}
+            level={readonly ? 0 : 1}
             key={f.id}
             currentFolder={f}
             allFolders={allFolders.filter((f) =>
@@ -264,25 +262,24 @@ export const FilePublicationResources = ({
             )}
             searchTerm={''}
             openedFoldersIds={
-              forViewOnly ? allFolders.map((f) => f.id) : openedFoldersIds
+              readonly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={folderItemsToDisplay}
-            itemComponent={forViewOnly ? FilesRow : FileItem}
+            itemComponent={readonly ? FilesRow : FileItem}
             onClickFolder={(folderId: string) => {
-              if (forViewOnly) return;
+              if (readonly) return;
               dispatch(FilesActions.getFolders({ id: folderId }));
             }}
             featureType={FeatureType.File}
-            folderClassName={classNames(forViewOnly && 'h-[38px]')}
-            itemComponentClassNames={classNames(
-              forViewOnly && 'cursor-pointer',
-            )}
+            folderClassName={classNames(readonly && 'h-[38px]')}
+            itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
             showTooltip={showTooltip}
+            canSelectFolders
           />
         );
       })}
       {(uploadedFiles ?? itemsToDisplay).map((f) =>
-        forViewOnly ? (
+        readonly ? (
           <FilesRow
             itemComponentClassNames="cursor-pointer"
             key={f.id}
