@@ -195,7 +195,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="prompt-modal overflow-hidden inline-block bg-layer-1 rounded-secondary shadow-secondary transition-all xl:h-[600px] xl:w-[570px] 2xl:w-[800px]"
+      containerClassName="prompt-modal overflow-hidden inline-block size-full bg-layer-1 rounded-secondary shadow-secondary transition-all xl:h-[600px] xl:w-[570px] 2xl:w-[800px]"
       dataQa="prompt-modal"
       hideClose
       state={
@@ -222,7 +222,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               <IconX height={20} width={20} />
             </button>
           </div>
-          <div className="px-8 pt-4">
+          <div className="max-h-[calc(100%-80px)] overflow-y-auto px-8 py-4">
             <div className="mb-1">
               <label
                 className="mb-1 flex font-medium text-primary-bg-light"
@@ -310,53 +310,53 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               />
               <EmptyRequiredInputMessage />
             </div>
-          </div>
-          <div className="mt-1 flex justify-end gap-3 px-8 pt-2">
-            <button
-              className="button button-ghost button-medium"
-              data-qa="cancel-prompt"
-              onClick={onClose}
-            >
-              {t('Cancel')}
-            </button>
-            <Tooltip
-              isTriggerClickable
-              tooltip={t('Please fill in all required fields')}
-              hideTooltip={!saveDisabled}
-            >
+            <div className="mt-4 flex justify-end gap-3">
               <button
-                type="submit"
-                className="button button-primary button-medium"
-                data-qa="save-prompt"
-                onClick={(e) => handleSubmit(e, selectedPrompt)}
-                disabled={saveDisabled}
+                className="button button-ghost button-medium"
+                data-qa="cancel-prompt"
+                onClick={onClose}
               >
-                {t('Save')}
+                {t('Cancel')}
               </button>
-            </Tooltip>
-          </div>
-          <ConfirmDialog
-            isOpen={isConfirmDialog}
-            heading={t('Confirm renaming prompt')}
-            confirmLabel={t('Rename')}
-            cancelLabel={t('Cancel')}
-            description={
-              t(
-                'Renaming will stop sharing and other users will no longer see this prompt.',
-              ) || ''
-            }
-            onClose={(result) => {
-              setIsConfirmDialog(false);
-              if (result) {
-                updatePrompt({
-                  ...selectedPrompt,
-                  isShared: false,
-                });
-                setSubmitted(false);
-                onClose();
+              <Tooltip
+                isTriggerClickable
+                tooltip={t('Please fill in all required fields')}
+                hideTooltip={!saveDisabled}
+              >
+                <button
+                  type="submit"
+                  className="button button-primary button-medium"
+                  data-qa="save-prompt"
+                  onClick={(e) => handleSubmit(e, selectedPrompt)}
+                  disabled={saveDisabled}
+                >
+                  {t('Save')}
+                </button>
+              </Tooltip>
+            </div>
+            <ConfirmDialog
+              isOpen={isConfirmDialog}
+              heading={t('Confirm renaming prompt')}
+              confirmLabel={t('Rename')}
+              cancelLabel={t('Cancel')}
+              description={
+                t(
+                  'Renaming will stop sharing and other users will no longer see this prompt.',
+                ) || ''
               }
-            }}
-          />
+              onClose={(result) => {
+                setIsConfirmDialog(false);
+                if (result) {
+                  updatePrompt({
+                    ...selectedPrompt,
+                    isShared: false,
+                  });
+                  setSubmitted(false);
+                  onClose();
+                }
+              }}
+            />
+          </div>
         </>
       ) : (
         <NotFoundEntity entity={t('Prompt')} />

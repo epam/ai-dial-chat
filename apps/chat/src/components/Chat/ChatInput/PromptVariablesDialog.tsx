@@ -21,6 +21,8 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import Tooltip from '@/src/components/Common/Tooltip';
+
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 
 interface Props {
@@ -138,7 +140,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block w-full rounded-secondary bg-layer-1 text-left transition-all xl:w-[570px] 2xl:max-w-[800px]"
+        className="relative inline-block w-full rounded-secondary bg-layer-1 text-left transition-all xl:w-[570px] 2xl:w-[800px]"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
@@ -153,12 +155,14 @@ export const PromptVariablesDialog: FC<Props> = ({
             </div>
 
             {prompt.description && (
-              <div
-                className="w-full truncate text-xs"
-                data-qa="variable-prompt-descr"
-              >
-                {prompt.description}
-              </div>
+              <Tooltip tooltip={prompt.description} triggerClassName="w-full">
+                <div
+                  className="w-full truncate text-xs"
+                  data-qa="variable-prompt-descr"
+                >
+                  {prompt.description}
+                </div>
+              </Tooltip>
             )}
           </div>
 

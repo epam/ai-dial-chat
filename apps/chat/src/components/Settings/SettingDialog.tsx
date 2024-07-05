@@ -137,9 +137,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         {t('Settings')}
         <button
           onClick={handleClose}
-          className="text-primary-bg-dark hover:text-accent-primary"
+          className="self-start text-primary-bg-dark hover:text-accent-primary"
         >
-          <IconX height={24} width={24} />
+          <IconX height={20} width={20} />
         </button>
       </div>
 
