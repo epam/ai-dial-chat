@@ -19,8 +19,11 @@ const commonPRColors = {
   'pr-grey-100': 'var(--pr-grey-100, #F4F8FB)',
   'pr-grey-200': 'var(--pr-grey-200, #E9EDF0)',
   'pr-grey-300': 'var(--pr-grey-300, #C9CED8)',
+  'pr-grey-400': 'var(--pr-grey-400, #9AA5B8)',
 
   'pr-tertiary-500': 'var(--pr-tertiary-500, #FFD440)',
+
+  'pr-alert-500': 'var(--pr-alert-500, #D14343)',
 };
 
 const commonBgColors = {
