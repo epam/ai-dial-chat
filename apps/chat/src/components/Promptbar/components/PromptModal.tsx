@@ -52,6 +52,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
   );
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const isNewPromptCreating = useAppSelector(
+    PromptsSelectors.selectIsNewPromptCreating,
+  );
 
   const { t } = useTranslation(Translation.PromptBar);
   const [name, setName] = useState<string>('');
@@ -214,7 +217,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       {selectedPrompt ? (
         <>
           <div className="text-pr-grey-white bg-pr-primary-550 flex h-[80px] items-center justify-between py-4 pl-8 pr-4 text-xl font-medium">
-            {t('New Prompt')}
+            {isNewPromptCreating ? t('New Prompt') : selectedPrompt.name}
             <button
               onClick={onClose}
               className="hover:text-pr-tertiary-500 self-start"
