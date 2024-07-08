@@ -40,7 +40,6 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { FooterMessage } from '../Common/FooterMessage';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -48,6 +47,7 @@ import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
+import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
@@ -960,9 +960,7 @@ export function Chat() {
     return (
       <>
         <HandlePublication publication={selectedPublication} />
-        <div className="p-5">
-          <FooterMessage />
-        </div>
+        <ChatInputFooter />
       </>
     );
   }
