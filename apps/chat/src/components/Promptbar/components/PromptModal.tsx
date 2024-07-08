@@ -232,7 +232,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 htmlFor="promptName"
               >
                 {t('Name')}
-                <span className="inline text-quinary-bg-light">*</span>
+                <span className="text-pr-alert-500 inline">*</span>
               </label>
               <input
                 ref={nameInputRef}
@@ -289,7 +289,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 htmlFor="content"
               >
                 {t('Prompt')}
-                <span className="inline text-quinary-bg-light">*</span>
+                <span className="text-pr-alert-500 inline">*</span>
               </label>
               <textarea
                 ref={contentInputRef}
