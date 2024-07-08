@@ -25,7 +25,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
     <div
       {...tooltipProps}
       //With the new theme design, styles will be updated with theme variables
-      className="h-[165px] w-[320px] rounded-md bg-layer-3 text-xs text-[#BAD9FF]"
+      className="bg-pr-primary-550 max-h-[165px] w-[320px] rounded-primary text-xs text-[#BAD9FF]"
     >
       <div className="flex items-center justify-between p-[10px_15px_0]">
         <div>{step.title}</div>
@@ -34,16 +34,16 @@ const Tooltip: FC<TooltipRenderProps> = ({
         </button>
       </div>
 
-      <div className="p-4">{step.content}</div>
-      <div className="relative bottom-[-16px] flex h-[35px] w-[320px] items-center justify-between rounded-b-md bg-gradient-to-r from-layer-8 to-layer-9 px-4 text-pr-primary-700">
+      <div className="text-pr-grey-white p-4">{step.content}</div>
+      <div className="flex h-[39px] w-full items-center justify-between rounded-b-md bg-gradient-to-r from-layer-8 to-layer-9 px-4 text-pr-primary-700">
         {index > 1 ? (
           <button
-            className="flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3 text-primary-bg-dark"
+            className="button button-primary button-small"
             id={TooltipId.back}
             {...backProps}
           >
-            <ArrowLeftIcon />
-            <div className="ml-[5px]">{t('Back')} </div>
+            <ArrowLeftIcon width={3.5} height={6} />
+            <div>{t('Back')} </div>
           </button>
         ) : (
           <button id={TooltipId.close} {...closeProps}>
@@ -56,10 +56,10 @@ const Tooltip: FC<TooltipRenderProps> = ({
           <button
             id={TooltipId.next}
             {...primaryProps}
-            className="flex h-[25px] w-[55px] items-center justify-center rounded-full bg-layer-3 text-primary-bg-dark"
+            className="button button-primary button-small"
           >
-            <div className="mr-[5px]"> {t('Next')} </div>
-            <ArrowRightIcon />
+            <div> {t('Next')} </div>
+            <ArrowRightIcon width={3.5} height={6} />
           </button>
         )}
       </div>

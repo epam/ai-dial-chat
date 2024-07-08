@@ -24,18 +24,18 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
     >
       <div className="flex w-full justify-end">
         <button onClick={closeProps.onClick}>
-          <CloseIcon color="#023465" />
+          <CloseIcon color="text-pr-primary-550" />
         </button>
       </div>
 
       <div className="my-[30px] flex items-center justify-center">
         <LogoIcon />
-        <div className="ml-[10px] font-weave text-[30px] font-bold text-[#000A32]">
+        <div className="ml-[10px] font-weave text-[30px] font-bold text-primary-bg-light">
           PR GPT
         </div>
       </div>
 
-      <div className="px-[40px] text-[18px] font-medium leading-6">
+      <div className="px-10 text-[18px] font-medium leading-6">
         {step.title}
       </div>
 

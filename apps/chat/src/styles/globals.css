@@ -94,18 +94,23 @@ pre:has(div.codeblock) {
 @layer components {
   .button {
     @apply outline-none font-medium;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     border-radius: 20px;
-    line-height: 17px;
   }
 
   .button.button-medium {
     padding: 6px 16px;
     gap: 10px;
+    line-height: 17px;
   }
 
   .button.button-small {
     padding: 5px 12px;
     gap: 4px;
+    font-size: 10px;
+    line-height: 12px;
   }
 
   .button:disabled {
