@@ -301,7 +301,7 @@ export const MessageAttachment = ({
           ? 'col-span-1 col-start-1 rounded-primary sm:col-span-2 md:col-span-3'
           : 'rounded-full hover:bg-accent-secondary-alpha',
         !isInner && 'border border-secondary',
-        isShowImageImmediate && !isExpanded && 'max-w-[300px]',
+        isShowImageImmediate && !isExpanded && 'max-w-[180px]',
       )}
     >
       <div className="flex items-center gap-3 px-2">
