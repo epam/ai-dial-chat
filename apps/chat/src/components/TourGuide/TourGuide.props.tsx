@@ -91,12 +91,12 @@ export const DEFAULT_STEPS = [
   },
 ];
 
-export const SETTINGS_STEP = {
-  target: `#${TourGuideId.settings}`,
-  title: 'Conversation Settings',
+export const APPLICATION_ACTIONS_STEP = {
+  target: `#${TourGuideId.applicationActions}`,
+  title: 'Applications',
   content:
-    'Pernod Ricard GPT provides several models to generate text, images and even ask questions to documents. You can chose gpt-35-turbo as a default, robust and fast text generation model.',
-  placement: 'top',
+    'Pernod Ricard GPT hosts different custom applications ! By clicking here you may start a new conversation, pin or take out the application from the left side bar.',
+  placement: 'right',
 };
 
 const disableBodyScroll = () => (document.body.style.overflow = 'hidden');

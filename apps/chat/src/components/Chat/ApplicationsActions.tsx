@@ -8,6 +8,8 @@ import { getApplicationIcon } from '@/src/utils/app/applications';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
+import { TourGuideId } from '@/src/constants/share';
+
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import { PinIcon } from '@/src/icons';
@@ -32,7 +34,7 @@ export const ApplicationsActionsList = ({
   const AppIcon = getApplicationIcon(model.id);
 
   return (
-    <div className="entity-selector w-full">
+    <div id={TourGuideId.applicationActions} className="entity-selector w-full">
       <div className="h-10 rounded-full border border-secondary bg-layer-2 shadow-primary hover:cursor-pointer hover:border-tertiary">
         <Menu
           type="contextMenu"
