@@ -8,22 +8,16 @@ import { Attachment } from '@/src/types/chat';
 import { stopBubbling } from '@/src/constants/chat';
 
 interface Props {
-  attachments: Attachment[];
+  attachment: Attachment;
 }
 
-export const ImageAttachmentRenderer = ({ attachments }: Props) => {
-  const attachmentsWithImage = useMemo(() => {
-    return attachments.filter(
-      (attachment) =>
-        attachment.type === 'image/jpeg' || attachment.type === 'image/png',
-    );
-  }, [attachments]);
+export const ImageAttachmentRenderer = ({ attachment }: Props) => {
   const mappedAttachmentUrl = useMemo(
-    () => getMappedAttachmentUrl(attachmentsWithImage[0].url),
-    [attachmentsWithImage[0].url],
+    () => getMappedAttachmentUrl(attachment?.url),
+    [attachment.url],
   );
 
-  return attachmentsWithImage.length ? (
+  return (
     <div className="relative h-[300px] w-[300px] overflow-hidden rounded-secondary shadow-primary">
       <img
         src={mappedAttachmentUrl}
@@ -31,7 +25,7 @@ export const ImageAttachmentRenderer = ({ attachments }: Props) => {
         alt="Attachment image"
       />
       <a
-        download={attachmentsWithImage[0].title}
+        download={attachment?.title}
         href={mappedAttachmentUrl}
         onClick={stopBubbling}
         className="text-pr-grey-white hover:text-pr-tertiary-500 absolute right-3 top-3"
@@ -39,5 +33,5 @@ export const ImageAttachmentRenderer = ({ attachments }: Props) => {
         <IconDownload size={20} />
       </a>
     </div>
-  ) : null;
+  );
 };

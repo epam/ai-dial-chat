@@ -12,8 +12,6 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { ModelId } from '@/src/constants/chat';
 
-import { ImageAttachmentRenderer } from '@/src/components/Chat/ImageAttachmentRenderer';
-
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
 
@@ -33,12 +31,11 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
 
   const [isSectionOpened, setIsSectionOpened] = useState(false);
 
+  const isShowImageImmediate =
+    selectedConversations[0].model.id === ModelId.DALL;
+
   if (!attachments?.length) {
     return null;
-  }
-
-  if (selectedConversations[0].model.id === ModelId.DALL) {
-    return <ImageAttachmentRenderer attachments={attachments} />;
   }
 
   return isUnderSection && !isInner ? (
@@ -74,12 +71,18 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
       )}
     </div>
   ) : (
-    <div className="grid max-w-full grid-cols-1 gap-1 sm:grid-cols-2 md:grid-cols-3">
+    <div
+      className={classNames(
+        'grid max-w-full grid-cols-1 gap-1',
+        !isShowImageImmediate && 'sm:grid-cols-2 md:grid-cols-3',
+      )}
+    >
       {attachments?.map((attachment) => (
         <MessageAttachment
           key={attachment.url || attachment.title}
           attachment={attachment}
           isInner={isInner}
+          isShowImageImmediate={isShowImageImmediate}
         />
       ))}
     </div>
