@@ -105,7 +105,6 @@ const ModelGroup = ({
         }
       }}
       data-qa="group-entity"
-      id={TourGuideId.modelSelection}
     >
       {disabled && <DisableOverlay />}
       <div className="flex min-h-[48px] items-center gap-3 border-secondary ">

@@ -103,7 +103,7 @@ export const AllApplicationsActionButton = () => {
   }, [dispatch, selectedConversationsIds]);
 
   return (
-    <div className="flex">
+    <div className="flex" id={TourGuideId.exploreAllApplications}>
       <button
         className={classNames(
           'flex min-h-[50px] shrink-0 grow cursor-pointer select-none items-center justify-start gap-2  border-l-4 px-5 py-2 leading-3 hover:bg-accent-primary-alpha',

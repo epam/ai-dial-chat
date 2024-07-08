@@ -17,6 +17,8 @@ import {
   DialAIEntityModel,
 } from '@/src/types/models';
 
+import { ModelId } from '@/src/constants/chat';
+
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
@@ -237,3 +239,6 @@ export const groupModelsAndSaveOrder = (
 
   return result;
 };
+
+export const isApplicationModelType = (modelId: string): boolean =>
+  modelId === ModelId.HR_BUDDY || modelId === ModelId.RAG;

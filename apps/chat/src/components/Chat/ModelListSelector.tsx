@@ -14,6 +14,7 @@ import {
 } from '@/src/store/models/models.reducers';
 
 import { ModelId } from '@/src/constants/chat';
+import { TourGuideId } from '@/src/constants/share';
 
 import { ModelsDialog_V2 } from '@/src/components/Chat/ModelsDialog_v2';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -90,7 +91,11 @@ export const ModelListSelector = ({
   );
 
   return (
-    <div className="entity-selector w-full" data-qa="entity-selector">
+    <div
+      className="entity-selector w-full"
+      data-qa="entity-selector"
+      id={TourGuideId.modelSelection}
+    >
       <div className="h-[40px] rounded-full border border-secondary bg-layer-2 shadow-primary hover:cursor-pointer hover:border-tertiary">
         <Menu
           className="flex w-full items-center"
