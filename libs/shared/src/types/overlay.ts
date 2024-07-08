@@ -20,6 +20,7 @@ export interface ChatOverlayOptions {
   loaderInnerHTML?: string;
 
   signInOptions?: OverlaySignInOptions;
+  signInInSameWindow?: boolean;
 }
 
 interface OverlaySignInOptions {
