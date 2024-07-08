@@ -229,12 +229,9 @@ export function TargetAudienceFilterComponent({
   }
 
   return (
-    <div
-      className="grid grid-cols-5 gap-[1px] md:flex"
-      data-qa="publish-audience-filter-selectors"
-    >
+    <div className="flex gap-[1px]" data-qa="publish-audience-filter-selectors">
       <RulesSelect
-        menuClassName="-order-3 col-span-2 max-w-full font-semibold md:order-1 md:max-w-[145px]"
+        menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
         selectedFilter={selectedTarget}
         capitalizeFirstLetters
@@ -243,7 +240,7 @@ export function TargetAudienceFilterComponent({
       />
       <RulesSelect
         menuClassName={classNames(
-          '-order-2 col-span-2 max-w-full italic md:order-2',
+          'max-w-full italic',
           !isTrueOrFalseFilterSelected && 'md:max-w-[100px]',
         )}
         filters={filterFunctionValues}
@@ -266,7 +263,7 @@ export function TargetAudienceFilterComponent({
             placeholder={t('Enter one or more options...') as string}
           />
         ))}
-      <div className="-order-1 col-span-1 flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px] md:order-4">
+      <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
         <div className="flex gap-2">
           <button
             data-qa="save-filter"

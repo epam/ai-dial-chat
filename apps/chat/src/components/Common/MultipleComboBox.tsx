@@ -210,10 +210,7 @@ export function MultipleComboBox<T>({
 
   return (
     <div
-      className={classNames(
-        'relative col-span-5 w-full md:order-3 md:max-w-[205px]',
-        className,
-      )}
+      className={classNames('relative w-full md:max-w-[205px]', className)}
       data-qa="multiple-combobox"
     >
       <div className="flex w-full flex-col gap-1">

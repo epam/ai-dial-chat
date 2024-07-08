@@ -29,7 +29,7 @@ export function RegexParamInput({
   return (
     <div
       className={classNames(
-        'relative col-span-5 flex h-[31px] w-full max-w-full bg-layer-3 md:order-3 md:max-w-[205px]',
+        'relative flex h-[31px] w-full max-w-full bg-layer-3 md:max-w-[205px]',
         className,
       )}
     >
