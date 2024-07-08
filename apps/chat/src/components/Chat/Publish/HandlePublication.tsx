@@ -43,18 +43,16 @@ interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
   newRules: PublicationRule[];
   publication: Publication;
+  isRulesLoading: boolean;
 }
 
 function FiltersComponent({
   filteredRuleEntries,
   newRules,
   publication,
+  isRulesLoading,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
-
-  const isRulesLoading = useAppSelector(
-    PublicationSelectors.selectIsRulesLoading,
-  );
 
   if (isRulesLoading) {
     return (
@@ -105,6 +103,9 @@ export function HandlePublication({ publication }: Props) {
   );
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
+  );
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
   );
 
   useEffect(() => {
@@ -319,22 +320,27 @@ export function HandlePublication({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p>{t('Allow access if all match')}</p>
-                    {!isEqual(
-                      publication.rules || [],
-                      rules[publication.targetFolder] || [],
-                    ) ? (
-                      <span
-                        onClick={() => setIsCompareModalOpened(true)}
-                        className="cursor-pointer text-accent-primary"
-                      >
-                        {t('See changes')}
-                      </span>
-                    ) : (
-                      <span className="text-secondary">{t('No changes')}</span>
-                    )}
+                    {!isRulesLoading &&
+                      (publication.rules &&
+                      !isEqual(
+                        publication.rules,
+                        rules[publication.targetFolder] || [],
+                      ) ? (
+                        <span
+                          onClick={() => setIsCompareModalOpened(true)}
+                          className="cursor-pointer text-accent-primary"
+                        >
+                          {t('See changes')}
+                        </span>
+                      ) : (
+                        <span className="text-secondary">
+                          {t('No changes')}
+                        </span>
+                      ))}
                   </div>
                 </h2>
                 <FiltersComponent
+                  isRulesLoading={isRulesLoading}
                   filteredRuleEntries={filteredRuleEntries}
                   newRules={newRules}
                   publication={publication}
