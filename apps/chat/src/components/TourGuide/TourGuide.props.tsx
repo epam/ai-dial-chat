@@ -71,14 +71,14 @@ export const DEFAULT_STEPS = [
     target: `#${TourGuideId.promptBank}`,
     title: 'Prompt bank',
     content:
-      'This is your prompt bank, you will find a specific tour guide to help you understand how to use them or even create some, tailored to your needs.',
+      'This is your prompt bank. Soon, you will have a dedicated tour guide to help you understand how to use them or even create some, tailored to your needs. You can simply click on a prompt to launch it immediately.',
     placement: 'left',
   },
   {
     target: `#${TourGuideId.newPrompt}`,
     title: 'Create a new prompt',
     content:
-      'This is your prompt bank, where you can create prompts that will be stored in separate folders for easy access. You can simply click on a prompt to launch it immediately.',
+      'This is where you can create your own new prompts ! Store them in dedicated folders to keep your prompt bank well organized!',
     placement: 'left',
   },
   {
@@ -95,7 +95,7 @@ export const APPLICATION_ACTIONS_STEP = {
   target: `#${TourGuideId.applicationActions}`,
   title: 'Applications',
   content:
-    'Pernod Ricard GPT hosts different custom applications ! By clicking here you may start a new conversation, pin or take out the application from the left side bar.',
+    'This is where you will find all of the custom applications hosted on PR GPT. Feel free to browse throughand try them!',
   placement: 'right',
 };
 
