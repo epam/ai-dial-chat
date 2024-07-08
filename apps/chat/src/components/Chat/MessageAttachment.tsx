@@ -23,6 +23,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { PLOTLY_CONTENT_TYPE, stopBubbling } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
+import { ImageAttachmentRenderer } from '@/src/components/Chat/ImageAttachmentRenderer';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
@@ -185,6 +186,7 @@ const ChartAttachmentUrlRenderer = ({
 interface Props {
   attachment: Attachment;
   isInner?: boolean;
+  isShowImageImmediate?: boolean;
 }
 
 interface AttachmentUrlRendererComponentProps {
@@ -226,7 +228,11 @@ const AttachmentUrlRendererComponent = ({
   );
 };
 
-export const MessageAttachment = ({ attachment, isInner }: Props) => {
+export const MessageAttachment = ({
+  attachment,
+  isInner,
+  isShowImageImmediate,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
   const [wasOpened, setWasOpened] = useState(false);
@@ -279,6 +285,13 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     [attachment.reference_url],
   );
 
+  if (
+    (attachment.type === 'image/png' || attachment.type === 'image/jpeg') &&
+    isShowImageImmediate
+  ) {
+    return <ImageAttachmentRenderer attachment={attachment} />;
+  }
+
   return (
     <div
       data-no-context-menu
@@ -288,6 +301,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           ? 'col-span-1 col-start-1 rounded-primary sm:col-span-2 md:col-span-3'
           : 'rounded-full hover:bg-accent-secondary-alpha',
         !isInner && 'border border-secondary',
+        isShowImageImmediate && !isExpanded && 'max-w-[300px]',
       )}
     >
       <div className="flex items-center gap-3 px-2">
@@ -308,10 +322,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               </a>
             </Tooltip>
           ) : (
-            <Icon
-              size={18}
-              className="shrink-0 text-primary-bg-light"
-            />
+            <Icon size={18} className="shrink-0 text-primary-bg-light" />
           )}
         </div>
         <button

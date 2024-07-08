@@ -7,6 +7,11 @@ import classNames from 'classnames';
 import { Attachment } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
+import { ModelId } from '@/src/constants/chat';
+
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
 
@@ -17,11 +22,17 @@ interface Props {
 
 export const MessageAttachments = ({ attachments, isInner }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
   const isUnderSection = useMemo(() => {
     return !!attachments && attachments.length > 3;
   }, [attachments]);
 
   const [isSectionOpened, setIsSectionOpened] = useState(false);
+
+  const isShowImageImmediate =
+    selectedConversations[0].model.id === ModelId.DALL;
 
   if (!attachments?.length) {
     return null;
@@ -60,12 +71,18 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
       )}
     </div>
   ) : (
-    <div className="grid max-w-full grid-cols-1 gap-1 sm:grid-cols-2 md:grid-cols-3">
+    <div
+      className={classNames(
+        'grid max-w-full grid-cols-1 gap-1',
+        !isShowImageImmediate && 'sm:grid-cols-2 md:grid-cols-3',
+      )}
+    >
       {attachments?.map((attachment) => (
         <MessageAttachment
           key={attachment.url || attachment.title}
           attachment={attachment}
           isInner={isInner}
+          isShowImageImmediate={isShowImageImmediate}
         />
       ))}
     </div>
