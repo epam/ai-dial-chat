@@ -69,6 +69,7 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
+  className?: string;
 }
 
 export function MultipleComboBox<T>({
@@ -83,6 +84,7 @@ export function MultipleComboBox<T>({
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
+  className,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -208,7 +210,10 @@ export function MultipleComboBox<T>({
 
   return (
     <div
-      className="relative col-span-5 w-full md:order-3 md:max-w-[205px]"
+      className={classNames(
+        'relative col-span-5 w-full md:order-3 md:max-w-[205px]',
+        className,
+      )}
       data-qa="multiple-combobox"
     >
       <div className="flex w-full flex-col gap-1">

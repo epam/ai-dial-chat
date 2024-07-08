@@ -44,16 +44,24 @@ describe('TargetAudienceFilterComponent', () => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let onSaveFilter: any;
+  let onCLoseFilter: any;
 
   beforeEach(() => {
     vi.mocked(SettingsSelectors.selectPublicationFilters).mockReturnValue(
       targetValues,
     );
     onSaveFilter = vi.fn();
+    onCLoseFilter = vi.fn();
   });
 
   it('renders all filter and target options and placeholder correctly', async () => {
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
+
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of targetValues) {
@@ -80,7 +88,12 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilter = filterValues[1];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);
@@ -98,7 +111,12 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilter = filterValues[0];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);
@@ -117,7 +135,12 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilter = filterValues[1];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);
@@ -146,7 +169,12 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilter = filterValues[2];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);

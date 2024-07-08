@@ -324,37 +324,35 @@ export const MenuItem = forwardRef<
   const isActive = item.index === menu.activeIndex;
 
   return (
-    <div>
-      <button
-        {...props}
-        ref={useMergeRefs([item.ref, forwardedRef])}
-        type="button"
-        role="menuitem"
-        className={classNames(
-          menuItemClassNames,
-          'h-[34px] w-full px-3',
-          disabled && '!cursor-not-allowed',
-          className,
-        )}
-        tabIndex={isActive ? 0 : -1}
-        disabled={disabled}
-        {...menu.getItemProps({
-          onClick(event: MouseEvent<HTMLButtonElement>) {
-            props.onClick?.(event);
-            tree?.events.emit('click');
-          },
-          onFocus(event: FocusEvent<HTMLButtonElement>) {
-            props.onFocus?.(event);
-            menu.setHasFocusInside(true);
-          },
-        })}
-      >
-        {ItemComponent}
-        {!ItemComponent && label && (
-          <span className="inline-block truncate">{label}</span>
-        )}
-      </button>
-    </div>
+    <button
+      {...props}
+      ref={useMergeRefs([item.ref, forwardedRef])}
+      type="button"
+      role="menuitem"
+      className={classNames(
+        menuItemClassNames,
+        'h-[34px] w-full px-3',
+        disabled && '!cursor-not-allowed',
+        className,
+      )}
+      tabIndex={isActive ? 0 : -1}
+      disabled={disabled}
+      {...menu.getItemProps({
+        onClick(event: MouseEvent<HTMLButtonElement>) {
+          props.onClick?.(event);
+          tree?.events.emit('click');
+        },
+        onFocus(event: FocusEvent<HTMLButtonElement>) {
+          props.onFocus?.(event);
+          menu.setHasFocusInside(true);
+        },
+      })}
+    >
+      {ItemComponent}
+      {!ItemComponent && label && (
+        <span className="inline-block truncate">{label}</span>
+      )}
+    </button>
   );
 });
 
