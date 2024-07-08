@@ -358,10 +358,12 @@ export function HandlePublication({ publication }: Props) {
                       name={sectionName}
                       openByDefault
                       dataQa={dataQa}
+                      togglerClassName="!text-sm !text-primary"
                       sectionTooltip={
-                        <p>
-                          Publish, <span className="text-error">Unpublish</span>
-                        </p>
+                        <>
+                          {t('Publish')},
+                          <span className="text-error"> {t('Unpublish')}</span>
+                        </>
                       }
                     >
                       <Component
