@@ -15,3 +15,4 @@ export * from './PinIcon';
 export * from './UnpinIcon';
 export * from './NewConversationIcon';
 export * from './InfoIcon';
+export * from './PromptIcon';

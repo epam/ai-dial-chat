@@ -1,5 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
+import {
+  IconCaretDownFilled,
+  IconDownload,
+  IconFile,
+  IconFolder,
+} from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
@@ -28,11 +33,11 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
+import { PromptIcon } from '@/src/icons/PromptIcon';
 import { sanitize } from 'isomorphic-dompurify';
 
 const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
@@ -269,7 +274,7 @@ export const MessageAttachment = ({
   }, [wasOpened]);
 
   const isFolder = attachment.type === FOLDER_ATTACHMENT_CONTENT_TYPE;
-  const Icon = isFolder ? IconFolder : IconFile;
+  const Icon = isFolder ? IconFolder : attachment.type ? IconFile : PromptIcon;
 
   const isOpenable =
     attachment.data ||
@@ -342,7 +347,7 @@ export const MessageAttachment = ({
         >
           <span
             className={classNames(
-              'shrink truncate whitespace-pre text-left text-sm text-primary-bg-light',
+              'shrink truncate whitespace-pre text-left text-sm font-medium text-primary-bg-light',
               isExpanded || isFolder || mappedAttachmentReferenceUrl
                 ? 'max-w-full'
                 : 'max-w-[calc(100%-20px)]',
@@ -363,13 +368,12 @@ export const MessageAttachment = ({
                   <IconDownload size={18} />
                 </a>
               )}
-              <ChevronDown
-                height={18}
-                width={18}
+              <IconCaretDownFilled
                 className={classNames(
-                  'shrink-0 text-primary-bg-light transition',
+                  'shrink-0 text-quaternary-bg-light transition',
                   isOpened && 'rotate-180',
                 )}
+                size={12}
               />
             </div>
           ) : (
