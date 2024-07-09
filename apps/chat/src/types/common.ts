@@ -26,7 +26,8 @@ export enum BackendResourceType {
 }
 
 export interface EntityPublicationInfo {
-  action: PublishActions;
+  action?: PublishActions;
+  isDeleted?: boolean;
   // TODO: add version
 }
 
