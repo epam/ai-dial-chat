@@ -60,6 +60,7 @@ export function PublicationItemsList({
       {(type === SharingType.Conversation ||
         type === SharingType.ConversationFolder) && (
         <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
           name={t('Conversations')}
           openByDefault
           className={classNames('!pl-0', collapsibleSectionClassNames)}
@@ -93,6 +94,7 @@ export function PublicationItemsList({
       )}
       {!!files.length && (
         <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
           name={t('Files')}
           openByDefault
           dataQa="files-to-send-request"
@@ -108,6 +110,7 @@ export function PublicationItemsList({
       )}
       {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
         <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
           name={t('Prompts')}
           openByDefault
           dataQa="prompts-to-send-request"
