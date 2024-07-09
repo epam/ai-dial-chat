@@ -88,7 +88,10 @@ export class BasePage {
         const body = await resolvedResp.text();
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
-        const apiHost = host.replaceAll(baseURL!, '');
+        const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
+        const apiHost = host
+          .replaceAll(baseURL!, '')
+          .replaceAll(overlayDomain!, '');
         responseBodies.set(apiHost, body);
       }
     }

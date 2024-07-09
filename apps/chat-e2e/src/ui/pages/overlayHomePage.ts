@@ -1,5 +1,6 @@
 import { BasePage } from '@/src/ui/pages/basePage';
-import { AppContainer } from '@/src/ui/webElements';
+import { OverlaySelectors } from '@/src/ui/selectors/overlaySelectors';
+import { AppContainer, BaseElement } from '@/src/ui/webElements';
 import { OverlayContainer } from '@/src/ui/webElements/overlayContainer';
 
 export class OverlayHomePage extends BasePage {
@@ -11,4 +12,9 @@ export class OverlayHomePage extends BasePage {
     }
     return this.overlayContainer;
   }
+
+  public overlayChatIcon = new BaseElement(
+    this.page,
+    OverlaySelectors.overlayChatIcon,
+  );
 }

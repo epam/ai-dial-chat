@@ -28,6 +28,7 @@ config.webServer = [
       IS_IFRAME: 'true',
       ALLOWED_IFRAME_ORIGINS: '*',
       NEXTAUTH_URL: 'http://localhost:3000',
+      ENABLED_FEATURES: 'top-settings,top-chat-info,top-clear-conversation',
     },
   },
   {

@@ -11,9 +11,11 @@ dialTest(
     additionalSecondUserItemApiHelper,
   }) => {
     await additionalUserItemApiHelper.deleteAllData(
+      false,
       BucketUtil.getAdditionalShareUserBucket(),
     );
     await additionalSecondUserItemApiHelper.deleteAllData(
+      false,
       BucketUtil.getAdditionalSecondShareUserBucket(),
     );
 
