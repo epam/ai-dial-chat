@@ -144,7 +144,7 @@ export const ModelListSelector = ({
           ))}
           <MenuItem
             key={'see-full-list'}
-            className="max-w-full bg-layer-2 text-secondary-bg-dark hover:text-pr-primary-700"
+            className="text-pr-secondary-550 hover:text-pr-secondary-650 hover:bg-pr-grey-white max-w-full bg-layer-2 hover:underline"
             item={t('See full list...')}
             onClick={() => setIsModelsDialogOpen(true)}
           />
