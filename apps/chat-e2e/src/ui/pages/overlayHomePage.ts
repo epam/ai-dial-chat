@@ -1,12 +1,13 @@
+import { Attributes, Tags } from '@/src/ui/domData';
 import { BasePage } from '@/src/ui/pages/basePage';
 import { OverlaySelectors } from '@/src/ui/selectors/overlaySelectors';
-import { AppContainer, BaseElement } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
 import { OverlayContainer } from '@/src/ui/webElements/overlayContainer';
 
 export class OverlayHomePage extends BasePage {
   private overlayContainer!: OverlayContainer;
 
-  getOverlayContainer(): AppContainer {
+  getOverlayContainer(): OverlayContainer {
     if (!this.overlayContainer) {
       this.overlayContainer = new OverlayContainer(this.page);
     }
@@ -17,4 +18,12 @@ export class OverlayHomePage extends BasePage {
     this.page,
     OverlaySelectors.overlayChatIcon,
   );
+
+  public async getTheme() {
+    return new BaseElement(
+      this.page,
+      '',
+      this.page.frameLocator(OverlaySelectors.overlayFrame).locator(Tags.html),
+    ).getAttribute(Attributes.class);
+  }
 }

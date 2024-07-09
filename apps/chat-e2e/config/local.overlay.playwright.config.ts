@@ -37,6 +37,9 @@ config.webServer = [
     url: 'http://localhost:4200',
     timeout: 180000,
     reuseExistingServer: true,
+    env: {
+      NEXT_PUBLIC_OVERLAY_HOST: 'http://localhost:3000',
+    },
   },
 ];
 

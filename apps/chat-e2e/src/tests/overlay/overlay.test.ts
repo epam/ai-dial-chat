@@ -35,6 +35,11 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
         )
         .toBeVisible();
 
+      const overlayTheme = await overlayHomePage.getTheme();
+      expect
+        .soft(overlayTheme, ExpectedMessages.applicationThemeIsValid)
+        .toContain('light');
+
       const userRequest = '1+2';
       await overlayChat.sendRequestWithButton(userRequest);
       //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/1742
