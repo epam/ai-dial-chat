@@ -394,7 +394,7 @@ export const MessageAttachment = ({
       </div>
       {isOpenable && isOpened && (
         <div
-          className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
+          className="relative h-auto w-full overflow-hidden p-3 text-sm duration-200"
           ref={anchorRef}
         >
           {attachment.data && (
