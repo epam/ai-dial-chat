@@ -304,7 +304,10 @@ export const selectTemporaryAndPublishedFolders = createSelector(
       ...temporaryFolders,
     ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
 
-    return getParentAndChildFolders(sortByName(allFolders), filteredFolders);
+    return getParentAndChildFolders(
+      sortByName([...allFolders, ...temporaryFolders]),
+      filteredFolders,
+    );
   },
 );
 
