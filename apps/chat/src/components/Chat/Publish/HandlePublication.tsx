@@ -44,18 +44,16 @@ interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
   newRules: PublicationRule[];
   publication: Publication;
+  isRulesLoading: boolean;
 }
 
 function FiltersComponent({
   filteredRuleEntries,
   newRules,
   publication,
+  isRulesLoading,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
-
-  const isRulesLoading = useAppSelector(
-    PublicationSelectors.selectIsRulesLoading,
-  );
 
   if (isRulesLoading) {
     return (
@@ -109,6 +107,9 @@ export function HandlePublication({ publication }: Props) {
   );
   const deletedEntities = useAppSelector(
     PublicationSelectors.selectDeletedEntities,
+  );
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
   );
 
   useEffect(() => {
@@ -294,7 +295,7 @@ export function HandlePublication({ publication }: Props) {
           </Tooltip>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
-          <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
+          <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 py-4 md:px-5">
                 <label className="flex text-sm" htmlFor="approvePath">
@@ -327,22 +328,27 @@ export function HandlePublication({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p>{t('Allow access if all match')}</p>
-                    {!isEqual(
-                      publication.rules || [],
-                      rules[publication.targetFolder] || [],
-                    ) ? (
-                      <span
-                        onClick={() => setIsCompareModalOpened(true)}
-                        className="cursor-pointer text-accent-primary"
-                      >
-                        {t('See changes')}
-                      </span>
-                    ) : (
-                      <span className="text-secondary">{t('No changes')}</span>
-                    )}
+                    {!isRulesLoading &&
+                      (publication.rules &&
+                      !isEqual(
+                        publication.rules,
+                        rules[publication.targetFolder] || [],
+                      ) ? (
+                        <span
+                          onClick={() => setIsCompareModalOpened(true)}
+                          className="cursor-pointer text-accent-primary"
+                        >
+                          {t('See changes')}
+                        </span>
+                      ) : (
+                        <span className="text-secondary">
+                          {t('No changes')}
+                        </span>
+                      ))}
                   </div>
                 </h2>
                 <FiltersComponent
+                  isRulesLoading={isRulesLoading}
                   filteredRuleEntries={filteredRuleEntries}
                   newRules={newRules}
                   publication={publication}
@@ -366,10 +372,12 @@ export function HandlePublication({ publication }: Props) {
                       name={sectionName}
                       openByDefault
                       dataQa={dataQa}
+                      togglerClassName="!text-sm !text-primary"
                       sectionTooltip={
-                        <p>
-                          Publish, <span className="text-error">Unpublish</span>
-                        </p>
+                        <>
+                          {t('Publish')},
+                          <span className="text-error"> {t('Unpublish')}</span>
+                        </>
                       }
                     >
                       <Component
