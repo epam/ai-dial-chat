@@ -304,7 +304,7 @@ export const MessageAttachment = ({
         isShowImageImmediate && !isExpanded && 'max-w-[180px]',
       )}
     >
-      <div className="flex items-center gap-3 px-2">
+      <div className="flex items-center gap-2 px-2">
         <div className="flex items-center">
           {mappedAttachmentReferenceUrl ? (
             <Tooltip tooltip="Open link">
@@ -345,7 +345,7 @@ export const MessageAttachment = ({
               'shrink truncate whitespace-pre text-left text-sm text-primary-bg-light',
               isExpanded || isFolder || mappedAttachmentReferenceUrl
                 ? 'max-w-full'
-                : 'max-w-[calc(100%-30px)]',
+                : 'max-w-[calc(100%-20px)]',
             )}
             title={attachment.title || attachment.url || t('Attachment') || ''}
           >
