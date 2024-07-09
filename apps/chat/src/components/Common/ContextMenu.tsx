@@ -3,7 +3,6 @@ import { Fragment, useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { FeatureType } from '@/src/types/common';
 import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -25,7 +24,7 @@ function ContextMenuItemRenderer({
   const item = (
     <div
       className={classNames(
-        'flex w-full items-center gap-3 truncate break-words',
+        'border-b-pr-grey-200 flex w-full items-center gap-3 truncate break-words',
         !!childMenuItems && !disabled && 'text-primary-bg-light',
         !!childMenuItems && className,
       )}

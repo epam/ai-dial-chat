@@ -241,7 +241,9 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           isNested && menuItemClassNames,
-          isNested ? 'h-[34px] w-full px-3' : 'h-full px-0',
+          isNested
+            ? 'hover:bg-pr-grey-100 border-b-pr-grey-200  h-[40px] w-full border-b px-3'
+            : 'h-full px-0',
           className,
         )}
         {...getReferenceProps(

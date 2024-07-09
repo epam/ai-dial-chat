@@ -34,10 +34,7 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
@@ -406,7 +403,7 @@ export const PromptComponent = ({
               }
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
-              onView={(e) => handleOpenEditModal(e, true)}
+              onView={undefined}
               isOpen={isContextMenu}
             />
           </div>
