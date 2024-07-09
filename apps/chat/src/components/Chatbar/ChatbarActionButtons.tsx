@@ -136,7 +136,7 @@ const FavoriteApplicationActionButton = ({
   const dispatch = useAppDispatch();
   const [isMenuOpened, setIsMenuOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
-  const AppIcon = getApplicationIcon(app.id);
+  const AppIcon = getApplicationIcon(app?.id);
   const onCreateNewConversation = useCallback(() => {
     dispatch(
       ConversationsActions.createNewConversations({
@@ -181,6 +181,8 @@ const FavoriteApplicationActionButton = ({
       ] as DisplayMenuItemProps[],
     [onCreateNewConversation, onUpdateFavoriteApp],
   );
+
+  if (!app) return null;
 
   return (
     <div

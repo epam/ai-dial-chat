@@ -86,7 +86,7 @@ export const Application = ({
               </EntityMarkdownDescription>
             </div>
             <button
-              className="self-end pt-2 font-semibold text-secondary-bg-dark hover:text-pr-primary-700"
+              className="text-pr-secondary-550 hover:text-pr-secondary-650 self-end pt-2 font-semibold"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
