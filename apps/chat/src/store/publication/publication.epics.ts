@@ -71,7 +71,6 @@ import {
   PublicationSelectors,
 } from './publication.reducers';
 
-import { flatMap } from 'lodash';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -169,7 +168,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                   return getEntitiesMethod(path, true);
                 }),
                 toArray(),
-                map((data) => flatMap(data)),
+                map((data) => data.flatMap((data) => data)),
               ),
             });
           }
