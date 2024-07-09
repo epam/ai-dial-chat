@@ -333,7 +333,7 @@ export const MenuItem = forwardRef<
       role="menuitem"
       className={classNames(
         menuItemClassNames,
-        'hover:bg-pr-grey-100 border-b-pr-grey-200 h-[40px] w-full border-b px-3 last:border-b-0',
+        'hover:bg-pr-grey-100 border-b-pr-grey-200 h-[40px] w-full min-w-[140px] border-b px-3 last:border-b-0',
         disabled && '!cursor-not-allowed',
         className,
       )}
