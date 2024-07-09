@@ -190,12 +190,9 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               const uploadedUnpublishEntitiesIds =
                 uploadedUnpublishEntities.map((e) => e.id);
 
-              const conversationUnpublishEntities =
-                publication.resources.filter(
-                  (r) =>
-                    isConversationId(r.reviewUrl) &&
-                    r.action === PublishActions.DELETE,
-                );
+              const conversationUnpublishEntities = unpublishResources.filter(
+                (r) => isConversationId(r.reviewUrl),
+              );
               const conversationPaths = uniq(
                 conversationUnpublishEntities.flatMap((resource) =>
                   getParentFolderIdsFromEntityId(
@@ -243,9 +240,8 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                 );
               }
 
-              const promptUnpublishEntities = publication.resources.filter(
-                (r) =>
-                  isPromptId(r.reviewUrl) && r.action === PublishActions.DELETE,
+              const promptUnpublishEntities = unpublishResources.filter((r) =>
+                isPromptId(r.reviewUrl),
               );
               const promptPaths = uniq(
                 promptUnpublishEntities.flatMap((resource) =>
