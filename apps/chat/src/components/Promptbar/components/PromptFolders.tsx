@@ -357,14 +357,14 @@ export function PromptFolders() {
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared with me'),
+          name: t('Shared by users'),
           filters: SharedWithMeFilters,
           ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
         },
         {
-          name: t('Pinned prompts'),
+          name: t('Recent folders'),
           filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
           dataQa: 'pinned-prompts',

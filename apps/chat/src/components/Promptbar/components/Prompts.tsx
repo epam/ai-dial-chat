@@ -16,7 +16,7 @@ interface Props {
   prompts: PromptInfo[];
 }
 
-const RECENT_SECTION_NAME = translate('Recent');
+const RECENT_SECTION_NAME = translate('Recent prompts');
 
 export const Prompts: FC<Props> = ({ prompts }) => {
   const { handleToggle, isExpanded } = useSectionToggle(
