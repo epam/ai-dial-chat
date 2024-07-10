@@ -383,7 +383,7 @@ export function HandlePublication({ publication }: Props) {
           >
             {t('Go to a publication review...')}
           </button>
-          <div>
+          <div className="flex">
             <button
               className="button button-ghost button-medium mr-3"
               onClick={() =>
