@@ -29,6 +29,7 @@ export interface SettingsState {
   themesHostDefined: boolean;
   isolatedModelId?: string;
   customRenderers?: CustomVisualizer[];
+  isSignInInSameWindow?: boolean;
 }
 
 const initialState: SettingsState = {
@@ -130,6 +131,9 @@ export const settingsSlice = createSlice({
     },
     setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
       state.overlayConversationId = payload;
+    },
+    setIsSignInInSameWindow: (state, { payload }: PayloadAction<boolean>) => {
+      state.isSignInInSameWindow = payload;
     },
   },
 });
@@ -271,6 +275,10 @@ const selectOverlayConversationId = createSelector([rootSelector], (state) => {
   return state.overlayConversationId;
 });
 
+const selectIsSignInInSameWindow = createSelector([rootSelector], (state) => {
+  return state.isSignInInSameWindow;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -295,4 +303,5 @@ export const SettingsSelectors = {
   selectIsCustomAttachmentType,
   selectPublicationFilters,
   selectOverlayConversationId,
+  selectIsSignInInSameWindow,
 };

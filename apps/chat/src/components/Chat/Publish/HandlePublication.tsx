@@ -154,7 +154,7 @@ export function HandlePublication({ publication }: Props) {
     );
   }, [dispatch, publication.resources, publication.url]);
 
-  const handlePublicationReview = () => {
+  const handlePublicationReview = useCallback(() => {
     const conversationsToReviewIds = resourcesToReview.filter(
       (r) =>
         !r.reviewed &&
@@ -166,33 +166,6 @@ export function HandlePublication({ publication }: Props) {
         r.publicationUrl === publication.url && isConversationId(r.reviewUrl),
     );
 
-    if (conversationsToReviewIds.length || reviewedConversationsIds.length) {
-      const conversationPaths = uniq(
-        [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
-          (p) =>
-            getParentFolderIdsFromEntityId(
-              getFolderIdFromEntityId(p.reviewUrl),
-            ).filter((id) => id !== p.reviewUrl),
-        ),
-      );
-
-      dispatch(
-        UIActions.setOpenedFoldersIds({
-          openedFolderIds: conversationPaths,
-          featureType: FeatureType.Chat,
-        }),
-      );
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: [
-            conversationsToReviewIds.length
-              ? conversationsToReviewIds[0].reviewUrl
-              : reviewedConversationsIds[0].reviewUrl,
-          ],
-        }),
-      );
-    }
-
     const promptsToReviewIds = resourcesToReview.filter(
       (r) =>
         !r.reviewed &&
@@ -203,24 +176,59 @@ export function HandlePublication({ publication }: Props) {
       (r) => r.publicationUrl === publication.url && isPromptId(r.reviewUrl),
     );
 
-    if (promptsToReviewIds.length || reviewedPromptsIds.length) {
+    const expandFolders = () => {
+      const conversationPaths = uniq(
+        [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
+          (p) =>
+            getParentFolderIdsFromEntityId(
+              getFolderIdFromEntityId(p.reviewUrl),
+            ).filter((id) => id !== p.reviewUrl),
+        ),
+      );
+
+      if (conversationPaths.length) {
+        dispatch(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: conversationPaths,
+            featureType: FeatureType.Chat,
+          }),
+        );
+      }
+
       const promptPaths = uniq(
-        [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) => {
-          const url = p.reviewUrl;
-
-          return getParentFolderIdsFromEntityId(
-            getFolderIdFromEntityId(url),
-          ).filter((id) => id !== url);
-        }),
+        [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) =>
+          getParentFolderIdsFromEntityId(
+            getFolderIdFromEntityId(p.reviewUrl),
+          ).filter((id) => id !== p.reviewUrl),
+        ),
       );
 
-      dispatch(UIActions.setShowPromptbar(true));
+      if (promptPaths.length) {
+        dispatch(UIActions.setShowPromptbar(true));
+        dispatch(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: promptPaths,
+            featureType: FeatureType.Prompt,
+          }),
+        );
+      }
+    };
+
+    const startConversationsReview = () => {
+      expandFolders();
       dispatch(
-        UIActions.setOpenedFoldersIds({
-          openedFolderIds: promptPaths,
-          featureType: FeatureType.Prompt,
+        ConversationsActions.selectConversations({
+          conversationIds: [
+            conversationsToReviewIds.length
+              ? conversationsToReviewIds[0].reviewUrl
+              : reviewedConversationsIds[0].reviewUrl,
+          ],
         }),
       );
+    };
+
+    const startPromptsReview = () => {
+      expandFolders();
       dispatch(
         PromptsActions.uploadPrompt({
           promptId: promptsToReviewIds.length
@@ -242,8 +250,24 @@ export function HandlePublication({ publication }: Props) {
           isPreview: true,
         }),
       );
+    };
+
+    if (conversationsToReviewIds.length) {
+      startConversationsReview();
+      return;
     }
-  };
+
+    if (promptsToReviewIds.length) {
+      startPromptsReview();
+      return;
+    }
+
+    if (reviewedConversationsIds.length) {
+      startConversationsReview();
+    } else {
+      startPromptsReview();
+    }
+  }, [dispatch, publication.url, resourcesToReview]);
 
   const sections = [
     {
@@ -416,11 +440,13 @@ export function HandlePublication({ publication }: Props) {
             </div>
           ) : (
             <button
-              className="text-accent-primary"
-              onClick={handlePublicationReview}
-            >
-              {t('Go to a review...')}
-            </button>
+            className="text-accent-primary"
+            onClick={handlePublicationReview}
+          >
+            {resourcesToReview.some((r) => r.reviewed)
+              ? t('Continue review...')
+              : t('Go to a review...')}
+          </button>
           )}
           <div className="flex gap-3">
             <button
