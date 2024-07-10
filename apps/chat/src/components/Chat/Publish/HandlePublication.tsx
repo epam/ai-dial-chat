@@ -1,5 +1,5 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -440,13 +440,13 @@ export function HandlePublication({ publication }: Props) {
             </div>
           ) : (
             <button
-            className="text-accent-primary"
-            onClick={handlePublicationReview}
-          >
-            {resourcesToReview.some((r) => r.reviewed)
-              ? t('Continue review...')
-              : t('Go to a review...')}
-          </button>
+              className="text-accent-primary"
+              onClick={handlePublicationReview}
+            >
+              {resourcesToReview.some((r) => r.reviewed)
+                ? t('Continue review...')
+                : t('Go to a review...')}
+            </button>
           )}
           <div className="flex gap-3">
             <button
