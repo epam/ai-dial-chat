@@ -160,13 +160,11 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               unpublishResources: of(unpublishResources),
               publication: of(publication),
               uploadedUnpublishEntities: from(rootFolderPaths).pipe(
-                mergeMap((path) => {
-                  const getEntitiesMethod = isConversationId(path)
-                    ? ConversationService.getConversations
-                    : PromptService.getPrompts;
-
-                  return getEntitiesMethod(path, true);
-                }),
+                mergeMap((path) =>
+                  isConversationId(path)
+                    ? ConversationService.getConversations(path, true)
+                    : PromptService.getPrompts(path, true),
+                ),
                 toArray(),
                 map((data) => data.flatMap((data) => data)),
               ),
@@ -182,9 +180,6 @@ const uploadPublicationEpic: AppEpic = (action$) =>
         switchMap(
           ({ publication, uploadedUnpublishEntities, unpublishResources }) => {
             const actions: Observable<AnyAction>[] = [];
-            const promptResources = publication.resources.filter((r) =>
-              isPromptId(r.targetUrl),
-            );
 
             if (unpublishResources.length) {
               const uploadedUnpublishEntitiesIds =
@@ -288,6 +283,10 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               }
             }
 
+            const promptResources = publication.resources.filter((r) =>
+              isPromptId(r.targetUrl),
+            );
+
             if (promptResources.length) {
               const promptPaths = uniq(
                 promptResources.flatMap((resource) =>
@@ -333,6 +332,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
             const conversationResources = publication.resources.filter((r) =>
               isConversationId(r.targetUrl),
             );
+
             if (conversationResources.length) {
               const conversationPaths = uniq(
                 conversationResources.flatMap((resource) =>
