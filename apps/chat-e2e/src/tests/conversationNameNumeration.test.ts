@@ -564,7 +564,7 @@ dialTest(
     setTestIds('EPMRTC-2932');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
-    const nestedFolderLevel = 1;
+    const nestedFolderLevel = 2;
     const duplicatedConversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(
@@ -598,7 +598,7 @@ dialTest(
             nestedConversations[0].name,
           ),
           folderConversations.getFolderByName(
-            nestedFolders[nestedFolderLevel].name,
+            nestedFolders[nestedFolderLevel - 1].name,
           ),
         );
         await expect
