@@ -98,6 +98,9 @@ export default function Home({ initialState }: HomeProps) {
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
+  const isSignInInSameWindow = useAppSelector(
+    SettingsSelectors.selectIsSignInInSameWindow,
+  );
 
   const isReplaceModalOpened = useAppSelector(
     ImportExportSelectors.selectIsShowReplaceDialog,
@@ -151,6 +154,7 @@ export default function Home({ initialState }: HomeProps) {
       (async () => {
         const authWindowLocation = new AuthWindowLocationLike(
           `api/auth/signin`,
+          isSignInInSameWindow,
         );
 
         await authWindowLocation.ready; // ready after redirects
