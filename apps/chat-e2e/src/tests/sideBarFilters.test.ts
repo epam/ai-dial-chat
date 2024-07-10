@@ -37,7 +37,7 @@ dialTest.skip(
     await dialTest.step(
       'Prepare nested folders and single shared and not shared conversations',
       async () => {
-        nestedFolders = conversationData.prepareNestedFolder(3);
+        nestedFolders = conversationData.prepareNestedFolder(4);
         conversationData.resetData();
         nestedSharedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
@@ -231,7 +231,7 @@ dialTest.skip(
     await dialTest.step(
       'Prepare nested folders and single shared and not shared prompts',
       async () => {
-        nestedFolders = promptData.prepareNestedFolder(3);
+        nestedFolders = promptData.prepareNestedFolder(4);
         promptData.resetData();
         nestedSharedPrompts =
           promptData.preparePromptsForNestedFolders(nestedFolders);

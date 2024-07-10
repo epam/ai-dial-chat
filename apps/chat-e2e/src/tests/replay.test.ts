@@ -188,7 +188,7 @@ dialTest(
     setTestIds('EPMRTC-503');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
-    const nestedLevels = 3;
+    const nestedLevels = 4;
 
     await dialTest.step(
       'Prepare 3 levels folders hierarchy with chats inside',
@@ -213,7 +213,7 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        for (let i = 0; i < nestedLevels; i = i + 2) {
+        for (let i = 0; i < nestedLevels - 1; i = i + 2) {
           await folderConversations.openFolderEntityDropdownMenu(
             nestedFolders[i + 1].name,
             nestedConversations[i + 1].name,
@@ -226,7 +226,7 @@ dialTest(
     await dialTest.step(
       'Verify new Replay conversations are created inside 1st and 3rd level folders',
       async () => {
-        for (let i = 0; i < nestedLevels; i = i + 2) {
+        for (let i = 0; i < nestedLevels - 1; i = i + 2) {
           await expect
             .soft(
               folderConversations.getFolderEntity(
