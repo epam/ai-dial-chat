@@ -163,7 +163,7 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
         contentClassName="max-w-[400px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
-          conversation.publicationInfo?.isDeleted && 'text-secondary',
+          conversation.publicationInfo?.isNotExist && 'text-secondary',
           conversation.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
@@ -216,7 +216,7 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
-          prompt.publicationInfo?.isDeleted && 'text-secondary',
+          prompt.publicationInfo?.isNotExist && 'text-secondary',
           prompt.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
@@ -269,7 +269,7 @@ const FileView = ({ item: file }: FileViewProps) => {
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
-          file.publicationInfo?.isDeleted &&
+          file.publicationInfo?.isNotExist &&
             'bg-controls-disable text-secondary',
           file.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',

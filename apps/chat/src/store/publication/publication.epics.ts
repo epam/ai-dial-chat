@@ -213,7 +213,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                               folderId: getFolderIdFromEntityId(r.reviewUrl),
                               publicationInfo: {
                                 action: r.action,
-                                isDeleted:
+                                isNotExist:
                                   !uploadedUnpublishEntitiesIds.includes(
                                     r.reviewUrl,
                                   ),
@@ -262,9 +262,10 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                             name: parsedApiKey.name,
                             publicationInfo: {
                               action: r.action,
-                              isDeleted: !uploadedUnpublishEntitiesIds.includes(
-                                r.reviewUrl,
-                              ),
+                              isNotExist:
+                                !uploadedUnpublishEntitiesIds.includes(
+                                  r.reviewUrl,
+                                ),
                             },
                           };
                         }),

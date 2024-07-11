@@ -105,8 +105,8 @@ export function HandlePublication({ publication }: Props) {
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
-  const deletedEntities = useAppSelector(
-    PublicationSelectors.selectDeletedEntities,
+  const nonExistentEntities = useAppSelector(
+    PublicationSelectors.selectNonExistentEntities,
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -296,9 +296,8 @@ export function HandlePublication({ publication }: Props) {
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
-
-  const invalidEntities = deletedEntities.filter((entity) =>
-    publication.resources.map((r) => r.reviewUrl).includes(entity.id),
+  const invalidEntities = nonExistentEntities.filter((entity) =>
+    publication.resources.some((r) => r.reviewUrl === entity.id),
   );
 
   return (

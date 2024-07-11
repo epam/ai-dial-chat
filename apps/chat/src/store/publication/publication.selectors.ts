@@ -86,11 +86,11 @@ export const selectIsAllItemsUploaded = createSelector(
   },
 );
 
-export const selectDeletedEntities = createSelector(
+export const selectNonExistentEntities = createSelector(
   [selectConversations, selectPrompts],
   (conversations, prompts) => {
     return [...conversations, ...prompts].filter(
-      (entity) => entity.publicationInfo?.isDeleted,
+      (entity) => entity.publicationInfo?.isNotExist,
     );
   },
 );
