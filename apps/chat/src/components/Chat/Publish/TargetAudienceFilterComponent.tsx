@@ -40,7 +40,7 @@ const getPreparedFilterParams = (
     filterRegexParam: string;
   },
 ) => {
-  switch (filterFunction.type) {
+  switch (filterFunction) {
     case PublicationFunctions.Regex:
       return [filterRegexParam];
     case PublicationFunctions.True:
