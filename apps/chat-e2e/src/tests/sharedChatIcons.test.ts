@@ -666,21 +666,22 @@ dialTest(
     );
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
+    const nestedLevel = 3;
 
     await dialTest.step(
       'Prepare conversations inside nested folders, share middle level folder and low level conversation',
       async () => {
-        nestedFolders = conversationData.prepareNestedFolder(2);
+        nestedFolders = conversationData.prepareNestedFolder(nestedLevel);
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
         await dataInjector.createConversations(nestedConversations);
         await localStorageManager.setSelectedConversation(
-          nestedConversations[2],
+          nestedConversations[nestedLevel - 1],
         );
 
         const shareFolderByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink(
-            [nestedConversations[1]],
+            [nestedConversations[nestedLevel - 2]],
             true,
           );
         await additionalUserShareApiHelper.acceptInvite(
@@ -688,7 +689,7 @@ dialTest(
         );
         const shareConversationByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([
-            nestedConversations[2],
+            nestedConversations[nestedLevel - 1],
           ]);
         await additionalUserShareApiHelper.acceptInvite(
           shareConversationByLinkResponse,
@@ -705,15 +706,17 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            folderConversations.getFolderArrowIcon(nestedFolders[1].name),
+            folderConversations.getFolderArrowIcon(
+              nestedFolders[nestedLevel - 2].name,
+            ),
             ExpectedMessages.sharedFolderIconIsVisible,
           )
           .toBeVisible();
         await expect
           .soft(
             folderConversations.getFolderEntityArrowIcon(
-              nestedFolders[2].name,
-              nestedConversations[2].name,
+              nestedFolders[nestedLevel - 1].name,
+              nestedConversations[nestedLevel - 1].name,
             ),
             ExpectedMessages.sharedEntityIconIsVisible,
           )
@@ -746,7 +749,9 @@ dialTest(
       'Rename shared folder and verify no arrow icon is displayed for it',
       async () => {
         const newFolderName = GeneratorUtil.randomString(7);
-        await folderConversations.openFolderDropdownMenu(nestedFolders[1].name);
+        await folderConversations.openFolderDropdownMenu(
+          nestedFolders[nestedLevel - 2].name,
+        );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderConversations.editFolderNameWithEnter(newFolderName);
 

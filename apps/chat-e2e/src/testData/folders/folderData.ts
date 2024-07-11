@@ -33,7 +33,7 @@ export class FolderData {
     );
     this.resetFolderData();
     const foldersHierarchy = [rootFolder];
-    for (let i = 1; i <= nestedLevel; i++) {
+    for (let i = 1; i < nestedLevel; i++) {
       const nestedFolderName =
         folderNames !== undefined
           ? folderNames[i + 1]
