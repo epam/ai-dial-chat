@@ -40,18 +40,15 @@ const getPreparedFilterParams = (
     filterRegexParam: string;
   },
 ) => {
-  if (filterFunction === PublicationFunctions.Regex) {
-    return [filterRegexParam];
+  switch (filterFunction.type) {
+    case PublicationFunctions.Regex:
+      return [filterRegexParam];
+    case PublicationFunctions.True:
+    case PublicationFunctions.False:
+      return [];
+    default:
+      return filterParams.map((param) => param.trim());
   }
-
-  if (
-    filterFunction === PublicationFunctions.False ||
-    filterFunction === PublicationFunctions.True
-  ) {
-    return [];
-  }
-
-  return filterParams.map((param) => param.trim());
 };
 
 const getItemLabel = (item: string) => item;
