@@ -21,6 +21,8 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 
 interface Props {
@@ -42,7 +44,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     { key: string; value: string }[]
   >(
     variables
-      .map((variable) => ({ key: variable, value: '' }))
+      .map((variable) => ({ key: variable.name, value: variable.defaultValue }))
       .filter(
         (item, index, array) =>
           array.findIndex((t) => t.key === item.key) === index,
@@ -74,9 +76,12 @@ export const PromptVariablesDialog: FC<Props> = ({
       }
       const content = prompt.content as string;
 
-      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
-        return updatedVariables.find((v) => v.key === variable)?.value ?? '';
-      });
+      const newContent = content.replace(
+        PROMPT_VARIABLE_REGEX,
+        (_, variable) => {
+          return updatedVariables.find((v) => v.key === variable)?.value ?? '';
+        },
+      );
 
       onSubmit(newContent);
       onClose();
