@@ -40,6 +40,10 @@ export class BaseConversation extends SideBarEntities {
     );
   }
 
+  public getConversationDotsMenu(name: string, index?: number) {
+    return this.entityDotsMenu(this.entitySelector, name, index);
+  }
+
   public async openConversationDropdownMenu(name: string, index?: number) {
     await this.openEntityDropdownMenu(this.entitySelector, name, index);
   }

@@ -14,4 +14,5 @@ export enum Attributes {
   rotated = 'rotate-90',
   download = 'download',
   href = 'href',
+  dataQA = 'data-qa',
 }

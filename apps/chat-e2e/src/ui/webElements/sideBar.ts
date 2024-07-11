@@ -41,6 +41,12 @@ export class SideBar extends BaseElement {
   public deleteEntitiesButton = this.getChildElementBySelector(
     SideBarSelectors.deleteEntities,
   );
+  public selectAllButton = this.getChildElementBySelector(
+    SideBarSelectors.selectAll,
+  );
+  public unselectAllButton = this.getChildElementBySelector(
+    SideBarSelectors.unselectAll,
+  );
 
   public draggableArea = this.getChildElementBySelector(
     SideBarSelectors.draggableArea,

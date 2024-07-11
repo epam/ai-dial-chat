@@ -122,9 +122,26 @@ export class Folders extends BaseElement {
   }
 
   public getFolderCheckbox(name: string, index?: number) {
-    return this.getFolderByName(name, index).locator(
-      FolderSelectors.folderCheckbox,
-    );
+    return this.getFolderByName(name, index).getByRole('checkbox');
+  }
+
+  public async getFolderCheckboxState(name: string, index?: number) {
+    return this.getFolderCheckbox(name, index).getAttribute(Attributes.dataQA);
+  }
+
+  public async getFolderCheckboxBorderColors(
+    folderName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderCheckbox(folderName, index),
+    ).getAllBorderColors();
+  }
+
+  public async getFolderCheckboxColor(folderName: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getFolderCheckbox(folderName, index),
+    ).getComputedStyleProperty(Styles.color);
   }
 
   public getFolderExpandIcon(name: string, index?: number) {
@@ -331,6 +348,16 @@ export class Folders extends BaseElement {
     );
   }
 
+  public async getFolderEntityBackgroundColor(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntity(folderName, entityName, index),
+    ).getComputedStyleProperty(Styles.backgroundColor);
+  }
+
   public getFolderEntityArrowIcon(
     folderName: string,
     entityName: string,
@@ -351,5 +378,47 @@ export class Folders extends BaseElement {
     )
       .getChildElementBySelector(Tags.svg)
       .getComputedStyleProperty(Styles.color);
+  }
+
+  public getFolderEntityCheckbox(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.getFolderEntity(folderName, entityName, index).getByRole(
+      'checkbox',
+    );
+  }
+
+  public async getFolderEntityCheckboxState(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.getFolderEntityCheckbox(
+      folderName,
+      entityName,
+      index,
+    ).getAttribute(Attributes.dataQA);
+  }
+
+  public async getFolderEntityCheckboxColor(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntityCheckbox(folderName, entityName, index),
+    ).getComputedStyleProperty(Styles.color);
+  }
+
+  public async getFolderEntityCheckboxBorderColors(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntityCheckbox(folderName, entityName, index),
+    ).getAllBorderColors();
   }
 }

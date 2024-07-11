@@ -5,6 +5,8 @@ export const SideBarSelectors = {
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',
+  selectAll: '[data-qa="select-all"]',
+  unselectAll: '[data-qa="unselect-all"]',
   draggableArea: '[data-qa="draggable-area"]',
   chronology: '[data-qa="chronology"]',
   newFolder: '[data-qa="create-folder"]',
@@ -31,6 +33,7 @@ export const ChatBarSelectors = {
     `${ChatBarSelectors.chatFolders} > [data-qa="pinned-chats-container"]`,
   sharedWithMeChats: () =>
     `${ChatBarSelectors.chatFolders} > [data-qa="shared-with-me-container"]`,
+  checkedEntity: 'input[data-qa="checked"]',
 };
 
 export const PromptBarSelectors = {
