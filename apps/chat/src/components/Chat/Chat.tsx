@@ -402,6 +402,7 @@ export const ChatView = memo(() => {
           names: [DEFAULT_CONVERSATION_NAME],
         }),
       );
+      talkTo && dispatch(ConversationsActions.setTalkTo(''));
     },
     [dispatch],
   );
@@ -946,7 +947,6 @@ export function Chat() {
     if (isConversationUpdatedFromQueryParams && !talkTo) {
       const { pathname } = router;
 
-      dispatch(ConversationsActions.updateConversationFromQueryParams(false));
       router.push(pathname, undefined, { shallow: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

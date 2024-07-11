@@ -95,6 +95,7 @@ export const AllApplicationsActionButton = () => {
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
 
   useEffect(() => {
     if (selectedConversationsIds.length) {
@@ -117,6 +118,7 @@ export const AllApplicationsActionButton = () => {
           dispatch(
             ConversationsActions.setIsExploreAllApplicationsSelected(true),
           );
+          talkTo && dispatch(ConversationsActions.setTalkTo(''));
         }}
         data-qa="all-applications"
       >
@@ -134,6 +136,7 @@ const FavoriteApplicationActionButton = ({
 }) => {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
   const [isMenuOpened, setIsMenuOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const AppIcon = getApplicationIcon(app?.id);
@@ -144,6 +147,7 @@ const FavoriteApplicationActionButton = ({
         modelId: app.id,
       }),
     );
+    talkTo && dispatch(ConversationsActions.setTalkTo(''));
     setIsMenuOpened(false);
     setIsSelected(false);
   }, [dispatch, app]);
@@ -203,6 +207,7 @@ const FavoriteApplicationActionButton = ({
               modelId: app.id,
             }),
           );
+          talkTo && dispatch(ConversationsActions.setTalkTo(''));
         }}
         data-qa="all-applications"
       >
