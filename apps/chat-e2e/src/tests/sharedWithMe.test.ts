@@ -20,7 +20,7 @@ import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
-const nestedLevel = 3;
+const nestedLevel = 4;
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
@@ -356,8 +356,8 @@ dialSharedWithMeTest(
           .toBeHidden();
 
         await additionalShareUserSharedFolderConversations.openFolderEntityDropdownMenu(
-          nestedFolders[nestedLevel].name,
-          nestedConversations[nestedLevel].name,
+          nestedFolders[nestedLevel - 1].name,
+          nestedConversations[nestedLevel - 1].name,
         );
         const nestedConversationMenuOptions =
           await additionalShareUserSharedWithMeConversationDropdownMenu.getAllMenuOptions();
@@ -395,7 +395,7 @@ dialSharedWithMeTest(
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });
-        for (let i = 0; i <= nestedLevel; i++) {
+        for (let i = 0; i < nestedLevel; i++) {
           await expect
             .soft(
               additionalShareUserSharedFolderConversations.getFolderEntity(
@@ -414,7 +414,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.reloadPage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        for (let i = 0; i <= nestedLevel; i++) {
+        for (let i = 0; i < nestedLevel; i++) {
           await expect
             .soft(
               additionalShareUserSharedFolderConversations.getFolderEntity(
@@ -466,7 +466,7 @@ dialSharedWithMeTest(
           ...nestedFolders,
         );
         shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
-          [nestedConversations[nestedLevel - 1]],
+          [nestedConversations[nestedLevel - 2]],
           true,
         );
       },
@@ -476,7 +476,7 @@ dialSharedWithMeTest(
       'Open share link by another user and verify the structure below shared folder is displayed under Shared with section',
       async () => {
         await additionalShareUserLocalStorageManager.setSelectedConversation(
-          nestedConversations[nestedLevel],
+          nestedConversations[nestedLevel - 1],
         );
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
@@ -485,7 +485,7 @@ dialSharedWithMeTest(
           ),
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        for (let i = nestedLevel - 1; i <= nestedLevel; i++) {
+        for (let i = nestedLevel - 2; i < nestedLevel; i++) {
           await expect
             .soft(
               additionalShareUserSharedFolderConversations.getFolderEntity(
@@ -496,7 +496,7 @@ dialSharedWithMeTest(
             )
             .toBeVisible();
         }
-        for (let i = 0; i < nestedLevel - 1; i++) {
+        for (let i = 0; i < nestedLevel - 2; i++) {
           await expect
             .soft(
               additionalShareUserSharedFolderConversations.getFolderEntity(
@@ -514,13 +514,13 @@ dialSharedWithMeTest(
       'Rename shared folder and verify it is not displayed under Shared with section',
       async () => {
         await localStorageManager.setSelectedConversation(
-          nestedConversations[nestedLevel],
+          nestedConversations[nestedLevel - 1],
         );
         const updatedFolderName = GeneratorUtil.randomString(7);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderConversations.openFolderDropdownMenu(
-          nestedFolders[nestedLevel - 1].name,
+          nestedFolders[nestedLevel - 2].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
 
@@ -537,7 +537,7 @@ dialSharedWithMeTest(
             sharedEntities.resources.find(
               (e) =>
                 e.name === updatedFolderName ||
-                e.name === nestedConversations[nestedLevel - 1].name,
+                e.name === nestedConversations[nestedLevel - 2].name,
             ),
             ExpectedMessages.folderIsNotShared,
           )
@@ -1158,15 +1158,16 @@ dialSharedWithMeTest(
     let nestedFolders: FolderInterface[];
     let nestedConversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
+    const nestedFolder = 2;
 
     await dialSharedWithMeTest.step(
       'Prepare conversation inside nested folder structure and share the root folder',
       async () => {
-        nestedFolders = conversationData.prepareNestedFolder(1);
+        nestedFolders = conversationData.prepareNestedFolder(nestedFolder);
         conversationData.resetData();
         nestedConversation = conversationData.prepareDefaultConversation();
-        nestedConversation.folderId = nestedFolders[1].id;
-        nestedConversation.id = `${nestedFolders[1].id}/${nestedConversation.id}`;
+        nestedConversation.folderId = nestedFolders[nestedFolder - 1].id;
+        nestedConversation.id = `${nestedFolders[nestedFolder - 1].id}/${nestedConversation.id}`;
 
         await dataInjector.createConversations(
           [nestedConversation],
@@ -1175,7 +1176,7 @@ dialSharedWithMeTest(
         shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
           [nestedConversation],
           true,
-          nestedFolders[0].name,
+          nestedFolders[nestedFolder - 2].name,
         );
       },
     );

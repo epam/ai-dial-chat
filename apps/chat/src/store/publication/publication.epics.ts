@@ -4,19 +4,22 @@ import {
   catchError,
   concat,
   filter,
+  forkJoin,
   from,
   iif,
   map,
-  mergeAll,
   mergeMap,
   of,
   switchMap,
+  toArray,
 } from 'rxjs';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
+import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import {
   getFolderFromId,
@@ -142,10 +145,6 @@ const uploadPublicationEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       PublicationService.getPublication(payload.url).pipe(
         switchMap((publication) => {
-          const actions: Observable<AnyAction>[] = [];
-          const promptResources = publication.resources.filter((r) =>
-            isPromptId(r.targetUrl),
-          );
           const unpublishResources = publication.resources.filter(
             (r) => r.action === PublishActions.DELETE,
           );
@@ -157,162 +156,291 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               ),
             );
 
-            actions.push(
-              from(
-                rootFolderPaths.map((path) => {
-                  const actionCreator = isConversationId(path)
-                    ? ConversationsActions.uploadConversationsWithFoldersRecursive
-                    : PromptsActions.uploadPromptsWithFoldersRecursive;
-
-                  return of(actionCreator({ noLoader: true, path }));
-                }),
-              ).pipe(mergeAll()),
-            );
+            return forkJoin({
+              unpublishResources: of(unpublishResources),
+              publication: of(publication),
+              uploadedUnpublishEntities: from(rootFolderPaths).pipe(
+                mergeMap((path) =>
+                  isConversationId(path)
+                    ? ConversationService.getConversations(path, true)
+                    : PromptService.getPrompts(path, true),
+                ),
+                toArray(),
+                map((data) => data.flatMap((data) => data)),
+              ),
+            });
           }
 
-          if (promptResources.length) {
-            const promptPaths = uniq(
-              promptResources.flatMap((resource) =>
-                getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(resource.reviewUrl),
-                ).filter((id) => id !== resource.reviewUrl),
-              ),
-            );
-
-            actions.push(
-              concat(
-                of(
-                  PromptsActions.addFolders({
-                    folders: promptPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Prompt),
-                      status: UploadStatus.LOADED,
-                      isPublicationFolder: true,
-                    })),
-                  }),
-                ),
-                of(
-                  PromptsActions.addPrompts({
-                    prompts: promptResources.map((r) => {
-                      const parsedApiKey = parsePromptApiKey(
-                        splitEntityId(r.targetUrl).name,
-                      );
-
-                      return {
-                        id: r.reviewUrl,
-                        folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        name: parsedApiKey.name,
-                        publicationInfo: {
-                          action: r.action,
-                        },
-                      };
-                    }),
-                  }),
-                ),
-              ),
-            );
-          }
-
-          const conversationResources = publication.resources.filter((r) =>
-            isConversationId(r.targetUrl),
-          );
-          if (conversationResources.length) {
-            const conversationPaths = uniq(
-              conversationResources.flatMap((resource) =>
-                getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(resource.reviewUrl),
-                ).filter((id) => id !== resource.reviewUrl),
-              ),
-            );
-
-            actions.push(
-              concat(
-                of(
-                  ConversationsActions.addFolders({
-                    folders: conversationPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Chat),
-                      status: UploadStatus.LOADED,
-                      isPublicationFolder: true,
-                    })),
-                  }),
-                ),
-                of(
-                  ConversationsActions.addConversations({
-                    conversations: conversationResources.map((r) => {
-                      const parsedApiKey = parseConversationApiKey(
-                        splitEntityId(r.targetUrl).name,
-                      );
-
-                      return {
-                        ...parsedApiKey,
-                        id: r.reviewUrl,
-                        folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        publicationInfo: {
-                          action: r.action,
-                        },
-                      };
-                    }),
-                  }),
-                ),
-              ),
-            );
-          }
-
-          const fileResources = publication.resources.filter((r) =>
-            isFileId(r.targetUrl),
-          );
-
-          if (fileResources.length) {
-            const filePaths = uniq(
-              fileResources.flatMap((resource) =>
-                getParentFolderIdsFromEntityId(
-                  getFolderIdFromEntityId(resource.reviewUrl),
-                ).filter((id) => id !== resource.reviewUrl),
-              ),
-            );
-
-            actions.push(
-              concat(
-                of(
-                  FilesActions.getFoldersSuccess({
-                    folders: filePaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.File),
-                      status: UploadStatus.LOADED,
-                      isPublicationFolder: true,
-                    })),
-                  }),
-                ),
-                of(
-                  FilesActions.getFilesSuccess({
-                    files: fileResources.map((r) => ({
-                      id: r.reviewUrl,
-                      folderId: getFolderIdFromEntityId(r.reviewUrl),
-                      name: splitEntityId(r.targetUrl).name,
-                      contentLength: 0,
-                      contentType: '',
-                      isPublicationFile: true,
-                      publicationInfo: {
-                        action: r.action,
-                      },
-                    })),
-                  }),
-                ),
-              ),
-            );
-          }
-
-          return concat(
-            of(
-              PublicationActions.uploadPublicationSuccess({
-                publication: {
-                  ...publication,
-                  uploadStatus: UploadStatus.LOADED,
-                },
-              }),
-            ),
-            of(PublicationActions.selectPublication({ publication })),
-            ...actions,
-          );
+          return forkJoin({
+            publication: of(publication),
+            uploadedUnpublishEntities: of([]),
+            unpublishResources: of([]),
+          });
         }),
+        switchMap(
+          ({ publication, uploadedUnpublishEntities, unpublishResources }) => {
+            const actions: Observable<AnyAction>[] = [];
+
+            if (unpublishResources.length) {
+              const uploadedUnpublishEntitiesIds =
+                uploadedUnpublishEntities.map((e) => e.id);
+
+              const conversationUnpublishEntities = unpublishResources.filter(
+                (r) => isConversationId(r.reviewUrl),
+              );
+              const conversationPaths = uniq(
+                conversationUnpublishEntities.flatMap((resource) =>
+                  getParentFolderIdsFromEntityId(
+                    getFolderIdFromEntityId(resource.reviewUrl),
+                  ).filter((id) => id !== resource.reviewUrl),
+                ),
+              );
+
+              if (conversationUnpublishEntities.length) {
+                actions.push(
+                  concat(
+                    of(
+                      ConversationsActions.addConversations({
+                        conversations: conversationUnpublishEntities.map(
+                          (r) => {
+                            const parsedApiKey = parseConversationApiKey(
+                              splitEntityId(r.targetUrl).name,
+                            );
+
+                            return {
+                              ...parsedApiKey,
+                              id: r.reviewUrl,
+                              folderId: getFolderIdFromEntityId(r.reviewUrl),
+                              publicationInfo: {
+                                action: r.action,
+                                isNotExist:
+                                  !uploadedUnpublishEntitiesIds.includes(
+                                    r.reviewUrl,
+                                  ),
+                              },
+                            };
+                          },
+                        ),
+                      }),
+                    ),
+                    of(
+                      ConversationsActions.addFolders({
+                        folders: conversationPaths.map((path) => ({
+                          ...getFolderFromId(path, FolderType.Chat),
+                          status: UploadStatus.LOADED,
+                        })),
+                      }),
+                    ),
+                  ),
+                );
+              }
+
+              const promptUnpublishEntities = unpublishResources.filter((r) =>
+                isPromptId(r.reviewUrl),
+              );
+              const promptPaths = uniq(
+                promptUnpublishEntities.flatMap((resource) =>
+                  getParentFolderIdsFromEntityId(
+                    getFolderIdFromEntityId(resource.reviewUrl),
+                  ).filter((id) => id !== resource.reviewUrl),
+                ),
+              );
+
+              if (promptUnpublishEntities.length) {
+                actions.push(
+                  concat(
+                    of(
+                      PromptsActions.addPrompts({
+                        prompts: promptUnpublishEntities.map((r) => {
+                          const parsedApiKey = parsePromptApiKey(
+                            splitEntityId(r.targetUrl).name,
+                          );
+
+                          return {
+                            id: r.reviewUrl,
+                            folderId: getFolderIdFromEntityId(r.reviewUrl),
+                            name: parsedApiKey.name,
+                            publicationInfo: {
+                              action: r.action,
+                              isNotExist:
+                                !uploadedUnpublishEntitiesIds.includes(
+                                  r.reviewUrl,
+                                ),
+                            },
+                          };
+                        }),
+                      }),
+                    ),
+                    of(
+                      PromptsActions.addFolders({
+                        folders: promptPaths.map((path) => ({
+                          ...getFolderFromId(path, FolderType.Prompt),
+                          status: UploadStatus.LOADED,
+                        })),
+                      }),
+                    ),
+                  ),
+                );
+              }
+            }
+
+            const promptResources = publication.resources.filter((r) =>
+              isPromptId(r.targetUrl),
+            );
+
+            if (promptResources.length) {
+              const promptPaths = uniq(
+                promptResources.flatMap((resource) =>
+                  getParentFolderIdsFromEntityId(
+                    getFolderIdFromEntityId(resource.reviewUrl),
+                  ).filter((id) => id !== resource.reviewUrl),
+                ),
+              );
+
+              actions.push(
+                concat(
+                  of(
+                    PromptsActions.addFolders({
+                      folders: promptPaths.map((path) => ({
+                        ...getFolderFromId(path, FolderType.Prompt),
+                        status: UploadStatus.LOADED,
+                        isPublicationFolder: true,
+                      })),
+                    }),
+                  ),
+                  of(
+                    PromptsActions.addPrompts({
+                      prompts: promptResources.map((r) => {
+                        const parsedApiKey = parsePromptApiKey(
+                          splitEntityId(r.targetUrl).name,
+                        );
+
+                        return {
+                          id: r.reviewUrl,
+                          folderId: getFolderIdFromEntityId(r.reviewUrl),
+                          name: parsedApiKey.name,
+                          publicationInfo: {
+                            action: r.action,
+                          },
+                        };
+                      }),
+                    }),
+                  ),
+                ),
+              );
+            }
+
+            const conversationResources = publication.resources.filter((r) =>
+              isConversationId(r.targetUrl),
+            );
+
+            if (conversationResources.length) {
+              const conversationPaths = uniq(
+                conversationResources.flatMap((resource) =>
+                  getParentFolderIdsFromEntityId(
+                    getFolderIdFromEntityId(resource.reviewUrl),
+                  ).filter((id) => id !== resource.reviewUrl),
+                ),
+              );
+
+              actions.push(
+                concat(
+                  of(
+                    ConversationsActions.addFolders({
+                      folders: conversationPaths.map((path) => ({
+                        ...getFolderFromId(path, FolderType.Chat),
+                        status: UploadStatus.LOADED,
+                        isPublicationFolder: true,
+                      })),
+                    }),
+                  ),
+                  of(
+                    ConversationsActions.addConversations({
+                      conversations: conversationResources.map((r) => {
+                        const parsedApiKey = parseConversationApiKey(
+                          splitEntityId(r.targetUrl).name,
+                        );
+
+                        return {
+                          ...parsedApiKey,
+                          id: r.reviewUrl,
+                          folderId: getFolderIdFromEntityId(r.reviewUrl),
+                          publicationInfo: {
+                            action: r.action,
+                          },
+                        };
+                      }),
+                    }),
+                  ),
+                ),
+              );
+            }
+
+            const fileResources = publication.resources.filter((r) =>
+              isFileId(r.targetUrl),
+            );
+
+            if (fileResources.length) {
+              const filePaths = uniq(
+                fileResources.flatMap((resource) =>
+                  getParentFolderIdsFromEntityId(
+                    getFolderIdFromEntityId(resource.reviewUrl),
+                  ).filter((id) => id !== resource.reviewUrl),
+                ),
+              );
+
+              actions.push(
+                concat(
+                  of(
+                    FilesActions.getFoldersSuccess({
+                      folders: filePaths.map((path) => ({
+                        ...getFolderFromId(path, FolderType.File),
+                        status: UploadStatus.LOADED,
+                        isPublicationFolder: true,
+                      })),
+                    }),
+                  ),
+                  of(
+                    FilesActions.getFilesSuccess({
+                      files: fileResources.map((r) => ({
+                        id: r.reviewUrl,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        name: splitEntityId(r.targetUrl).name,
+                        contentLength: 0,
+                        contentType: '',
+                        isPublicationFile: true,
+                        publicationInfo: {
+                          action: r.action,
+                        },
+                      })),
+                    }),
+                  ),
+                ),
+              );
+            }
+
+            return concat(
+              of(
+                PublicationActions.uploadPublicationSuccess({
+                  publication: {
+                    ...publication,
+                    resources: publication.resources,
+                    uploadStatus: UploadStatus.LOADED,
+                  },
+                }),
+              ),
+              of(
+                PublicationActions.selectPublication({
+                  publication: {
+                    ...publication,
+                    resources: publication.resources,
+                  },
+                }),
+              ),
+              ...actions,
+            );
+          },
+        ),
         catchError((err) => {
           console.error(err);
           return of(PublicationActions.uploadPublicationFail());
