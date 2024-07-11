@@ -21,7 +21,7 @@ const updatedExportedPrompts: UploadDownloadData[] = [];
 const newName = 'test prompt';
 const newDescr = 'test description';
 const newValue = 'what is {{A}}';
-const levelsCount = 3;
+const levelsCount = 4;
 
 dialTest(
   'Export and import prompt structure with all prompts.\n' +
@@ -595,8 +595,8 @@ dialTest(
         await folderPrompts.expandFolder(nestedFolder.name);
       }
       await folderPrompts.openFolderEntityDropdownMenu(
-        nestedFolders[levelsCount].name,
-        nestedPrompts[levelsCount].name,
+        nestedFolders[levelsCount - 1].name,
+        nestedPrompts[levelsCount - 1].name,
       );
       exportedData = await dialHomePage.downloadData(() =>
         promptDropdownMenu.selectMenuOption(MenuOptions.export),
@@ -618,15 +618,15 @@ dialTest(
 
         await folderPrompts
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
+            nestedPrompts[levelsCount - 1].name,
           )
           .waitFor();
 
         expect
           .soft(
             await folderPrompts.getFolderEntitiesCount(
-              nestedFolders[levelsCount].name,
+              nestedFolders[levelsCount - 1].name,
             ),
             ExpectedMessages.promptsCountIsValid,
           )
@@ -636,28 +636,6 @@ dialTest(
 
     await dialTest.step(
       'Delete last folder with its prompt, re-import exported file again and verify last nested folder with its prompt imported',
-      async () => {
-        await folderPrompts.openFolderDropdownMenu(
-          nestedFolders[levelsCount].name,
-        );
-        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-
-        await dialHomePage.importFile(exportedData, () =>
-          promptBar.importButton.click(),
-        );
-
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
-          )
-          .waitFor();
-      },
-    );
-
-    await dialTest.step(
-      'Delete 2nd level folder with its nested content, re-import exported file and verify 2nd/3rd level folders with 3rd level prompt are imported',
       async () => {
         await folderPrompts.openFolderDropdownMenu(
           nestedFolders[levelsCount - 1].name,
@@ -671,19 +649,41 @@ dialTest(
 
         await folderPrompts
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
+            nestedPrompts[levelsCount - 1].name,
+          )
+          .waitFor();
+      },
+    );
+
+    await dialTest.step(
+      'Delete 2nd level folder with its nested content, re-import exported file and verify 2nd/3rd level folders with 3rd level prompt are imported',
+      async () => {
+        await folderPrompts.openFolderDropdownMenu(
+          nestedFolders[levelsCount - 2].name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
+        await dialHomePage.importFile(exportedData, () =>
+          promptBar.importButton.click(),
+        );
+
+        await folderPrompts
+          .getFolderEntity(
+            nestedFolders[levelsCount - 1].name,
+            nestedPrompts[levelsCount - 1].name,
           )
           .waitFor();
 
         await folderPrompts
-          .getFolderByName(nestedFolders[levelsCount - 1].name)
+          .getFolderByName(nestedFolders[levelsCount - 2].name)
           .waitFor();
 
         expect
           .soft(
             await folderPrompts.getFolderEntitiesCount(
-              nestedFolders[levelsCount].name,
+              nestedFolders[levelsCount - 1].name,
             ),
             ExpectedMessages.promptsCountIsValid,
           )
@@ -768,9 +768,9 @@ dialTest(
             await folderPrompts.getFoldersCount(),
             ExpectedMessages.foldersCountIsValid,
           )
-          .toBe(levelsCount + 1);
+          .toBe(levelsCount);
 
-        for (let i = 0; i < levelsCount; i++) {
+        for (let i = 0; i < levelsCount - 1; i++) {
           expect
             .soft(
               await folderPrompts.isFolderEntityVisible(
@@ -828,7 +828,7 @@ dialTest(
       async () => {
         nestedFolders = promptData.prepareNestedFolder(levelsCount);
         thirdLevelFolderPrompt = promptData.prepareDefaultPrompt();
-        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].id;
+        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount - 1].id;
         thirdLevelFolderPrompt.id = `${thirdLevelFolderPrompt.folderId}/${thirdLevelFolderPrompt.name}`;
 
         await dataInjector.createPrompts(
@@ -845,7 +845,7 @@ dialTest(
         await folderPrompts.expandFolder(nestedFolder.name);
       }
       await folderPrompts.openFolderEntityDropdownMenu(
-        nestedFolders[levelsCount].name,
+        nestedFolders[levelsCount - 1].name,
         thirdLevelFolderPrompt.name,
       );
       exportedData = await dialHomePage.downloadData(() =>
@@ -857,7 +857,7 @@ dialTest(
       'Move 3rd level folder on the 1st level folder and import exported prompt',
       async () => {
         await promptBar.drugAndDropFolderToFolder(
-          nestedFolders[levelsCount].name,
+          nestedFolders[levelsCount - 1].name,
           nestedFolders[0].name,
           { isHttpMethodTriggered: true },
         );
@@ -871,13 +871,13 @@ dialTest(
       'Verify imported prompt is in 3rd level folder on the 1st level',
       async () => {
         await folderPrompts.expandFolder(
-          nestedFolders[levelsCount].name,
+          nestedFolders[levelsCount - 1].name,
           { isHttpMethodTriggered: false },
           2,
         );
         await folderPrompts
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
             thirdLevelFolderPrompt.name,
             2,
           )
@@ -886,7 +886,7 @@ dialTest(
         const foldersCount = await folderPrompts.getFoldersCount();
         expect
           .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 2);
+          .toBe(levelsCount + 1);
       },
     );
   },

@@ -1,5 +1,7 @@
 import { PartialBy } from '@/src/types/common';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
+
+import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -24,15 +26,19 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
  * @param content The string to be parsed.
  * @returns An array of found variables.
  */
-export const parseVariablesFromContent = (content?: string) => {
-  const regex = /{{(.*?)}}/g;
+export const parseVariablesFromContent = (
+  content?: string,
+): TemplateParameter[] => {
   const foundVariables = [];
   let match;
 
   if (!content) return [];
 
-  while ((match = regex.exec(content)) !== null) {
-    foundVariables.push(match[1]);
+  while ((match = PROMPT_VARIABLE_REGEX.exec(content)) !== null) {
+    foundVariables.push({
+      name: match[1],
+      defaultValue: match[2]?.slice(1) ?? '',
+    });
   }
 
   return foundVariables;

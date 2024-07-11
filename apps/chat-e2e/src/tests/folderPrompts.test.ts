@@ -419,7 +419,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1384');
-    const levelsCount = 3;
+    const levelsCount = 4;
     const levelToDelete = 2;
     let nestedFolders: FolderInterface[];
     const nestedPrompts: Prompt[] = [];
@@ -428,7 +428,7 @@ dialTest(
       'Prepare nested folders with prompts inside each one',
       async () => {
         nestedFolders = promptData.prepareNestedFolder(levelsCount);
-        for (let i = 0; i <= levelsCount; i++) {
+        for (let i = 0; i < levelsCount; i++) {
           const nestedPrompt = promptData.prepareDefaultPrompt();
           nestedPrompts.push(nestedPrompt);
           nestedPrompt.folderId = nestedFolders[i].id;
@@ -453,7 +453,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-        for (let i = levelToDelete; i <= levelsCount; i++) {
+        for (let i = levelToDelete; i < levelsCount; i++) {
           await expect
             .soft(
               folderPrompts.getFolderByName(nestedFolders[i].name),
@@ -468,7 +468,7 @@ dialTest(
             .toBeHidden();
         }
 
-        for (let i = 0; i <= levelsCount - levelToDelete; i++) {
+        for (let i = 0; i < levelsCount - levelToDelete; i++) {
           await expect
             .soft(
               folderPrompts.getFolderByName(nestedFolders[i].name),
