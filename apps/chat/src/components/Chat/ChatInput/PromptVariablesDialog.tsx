@@ -15,14 +15,13 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  PROMPT_VARIABLE_REGEX,
-  parseVariablesFromContent,
-} from '@/src/utils/app/prompts';
+import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
+
+import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 

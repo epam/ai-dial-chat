@@ -1,6 +1,8 @@
 import { PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
+import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+
 import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
@@ -18,8 +20,6 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
   }
   return prompt as Prompt;
 };
-
-export const PROMPT_VARIABLE_REGEX = /{{([^|]+?)(\|.*?)?}}/g;
 
 /**
  * Parses a string for variables in the {{variable}} format and extracts them.
