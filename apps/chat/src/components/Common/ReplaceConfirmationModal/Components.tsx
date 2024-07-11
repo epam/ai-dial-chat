@@ -22,11 +22,7 @@ import { Prompt } from '@/src/types/prompt';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
@@ -131,7 +127,6 @@ export const EntityRow = ({
 
 interface FeatureContainerProps {
   children: ReactNode | ReactNode[];
-  selectorGroup?: string;
 }
 const FeatureContainer = ({ children }: FeatureContainerProps) => (
   <span className="flex w-2/3 flex-row items-center gap-2">{children}</span>
@@ -139,58 +134,44 @@ const FeatureContainer = ({ children }: FeatureContainerProps) => (
 
 interface ConversationViewProps {
   item: ConversationInfo;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
 }
 
-const ConversationView = ({ item: conversation }: ConversationViewProps) => {
+const ConversationView = ({
+  item: conversation,
+  onSelect,
+  isChosen,
+}: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
-  const dispatch = useAppDispatch();
-
-  const chosenConversationIds = useAppSelector(
-    ConversationsSelectors.selectChosenConversationIds,
-  );
-  const chosenFolderIds = useAppSelector(
-    ConversationsSelectors.selectChosenFolderIds,
-  );
-  const isChosen = useMemo(
-    () =>
-      chosenConversationIds.includes(conversation.id) ||
-      chosenFolderIds.some((folderId) => conversation.id.startsWith(folderId)),
-    [chosenConversationIds, chosenFolderIds, conversation.id],
-  );
-
-  const handleToggle = useCallback(() => {
-    dispatch(
-      ConversationsActions.setChosenConversation({
-        conversationId: conversation.id,
-        isChosen,
-      }),
-    );
-  }, [conversation.id, dispatch, isChosen]);
 
   return (
     <FeatureContainer>
+      {onSelect && (
+        <div
+          className={classNames(
+            'relative size-[18px] shrink-0 group-hover/conversation-item:flex',
+            !isChosen ? 'hidden' : 'flex',
+          )}
+        >
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([conversation.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
       <div
         className={classNames(
-          'relative size-[18px] shrink-0 group-hover/conversation-item:flex',
-          !isChosen ? 'hidden' : 'flex',
-        )}
-      >
-        <input
-          className="checkbox peer size-[18px] bg-layer-3"
-          type="checkbox"
-          checked={isChosen}
-          onChange={handleToggle}
-        />
-        <IconCheck
-          size={18}
-          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-        />
-      </div>
-      <div
-        className={classNames(
-          'group-hover/conversation-item:hidden',
-          isChosen && 'hidden',
+          onSelect && 'group-hover/conversation-item:hidden',
+          onSelect && isChosen && 'hidden',
         )}
       >
         {conversation.isReplay && (
@@ -239,6 +220,8 @@ export const ConversationRow = ({
   additionalItemData,
   onEvent,
   itemComponentClassNames,
+  onSelect,
+  isChosen,
 }: ConversationRowProps) => {
   return (
     <EntityRow
@@ -248,7 +231,11 @@ export const ConversationRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <ConversationView item={conversation} />
+      <ConversationView
+        isChosen={isChosen}
+        onSelect={onSelect}
+        item={conversation}
+      />
     </EntityRow>
   );
 };

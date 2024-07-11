@@ -1,3 +1,5 @@
+import { useCallback, useEffect } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
@@ -11,6 +13,12 @@ import { DialFile } from '@/src/types/files';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
+
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
@@ -50,6 +58,29 @@ export function PublicationItemsList({
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
+  const dispatch = useAppDispatch();
+
+  const chosenItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
+
+  useEffect(() => {
+    return () => {
+      dispatch(PublicationActions.resetItemsToPublish());
+    };
+  }, [dispatch]);
+
+  const handleSelect = useCallback(
+    (ids: string[]) => {
+      dispatch(
+        PublicationActions.selectItemsToPublish({
+          ids,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   return (
     <div
       className={classNames(
@@ -68,12 +99,14 @@ export function PublicationItemsList({
         >
           {type === SharingType.Conversation ? (
             <ConversationRow
+              onSelect={handleSelect}
               itemComponentClassNames="cursor-pointer group/conversation-item"
               item={entity as ConversationInfo}
               level={0}
             />
           ) : (
             <ConversationPublicationResources
+              onSelect={handleSelect}
               rootFolder={entity}
               resources={entities.map((entity) => ({
                 action: publishAction,
@@ -87,6 +120,16 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               readonly
+              additionalItemData={{
+                partialSelectedFolderIds: [
+                  !entities
+                    .map((e) => e.id)
+                    .filter((id) => id.startsWith(`${entity.id}/`))
+                    .every((id) => chosenItemsIds.includes(id))
+                    ? `${entity.id}/`
+                    : '',
+                ],
+              }}
               showTooltip
             />
           )}

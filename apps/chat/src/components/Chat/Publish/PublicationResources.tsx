@@ -16,6 +16,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { PromptComponent } from '../../Promptbar/components/Prompt';
@@ -36,6 +37,7 @@ interface PublicationResources {
   showTooltip?: boolean;
   isOpen?: boolean;
   additionalItemData?: Record<string, unknown>;
+  onSelect?: (ids: string[]) => void;
 }
 
 export const PromptPublicationResources = ({
@@ -140,6 +142,7 @@ export const ConversationPublicationResources = ({
   showTooltip,
   isOpen = true,
   additionalItemData,
+  onSelect,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -153,6 +156,9 @@ export const ConversationPublicationResources = ({
   const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
+  );
+  const chosenItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
   );
 
   const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
@@ -177,8 +183,26 @@ export const ConversationPublicationResources = ({
             openedFoldersIds={
               readonly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
+            onSelectFolder={(folderId) =>
+              onSelect &&
+              onSelect(
+                conversations
+                  .filter((c) => c.id.startsWith(folderId))
+                  .map((c) => c.id),
+              )
+            }
             allItems={folderItemsToDisplay}
-            itemComponent={readonly ? ConversationRow : ConversationComponent}
+            itemComponent={(props) => {
+              return readonly ? (
+                <ConversationRow
+                  {...props}
+                  onSelect={onSelect}
+                  isChosen={chosenItemsIds.some((id) => id === props.item.id)}
+                />
+              ) : (
+                <ConversationComponent {...props} />
+              );
+            }}
             onClickFolder={(folderId: string) => {
               if (readonly) return;
               dispatch(ConversationsActions.toggleFolder({ id: folderId }));
@@ -211,6 +235,7 @@ export const ConversationPublicationResources = ({
             key={c.id}
             item={c}
             level={0}
+            onSelect={onSelect}
           />
         ) : (
           <ConversationComponent

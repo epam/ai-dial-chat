@@ -10,6 +10,9 @@ import {
 
 import * as PublicationSelectors from './publication.selectors';
 
+import difference from 'lodash-es/difference';
+import union from 'lodash-es/union';
+
 export { PublicationSelectors };
 
 export interface PublicationState {
@@ -176,11 +179,17 @@ export const publicationSlice = createSlice({
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
     },
-    addSelectedItemsToPublish: (
+    selectItemsToPublish: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
-      state.selectedItemsToPublish = payload.ids;
+      state.selectedItemsToPublish = union(
+        difference(state.selectedItemsToPublish, payload.ids),
+        difference(payload.ids, state.selectedItemsToPublish),
+      );
+    },
+    resetItemsToPublish: (state) => {
+      state.selectedItemsToPublish = [];
     },
   },
 });
