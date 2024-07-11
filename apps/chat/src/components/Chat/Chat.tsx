@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { isApplicationModelType } from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
@@ -905,15 +906,22 @@ export function Chat() {
 
     if (modelIds?.length > 0 && talkto) {
       const modelId =
-        talkto === DocumentId.queryParam ? DocumentId.modelId : talkto;
+        talkto === DocumentId.queryParam
+          ? DocumentId.modelId
+          : (talkto as string);
 
       if (
         currentConversation?.id !== modelId &&
         areSelectedConversationsLoaded &&
         isInitFoldersAndConversations &&
         !isConversationUpdatedFromQueryParams &&
-        modelIds?.includes(modelId as string)
+        modelIds?.includes(modelId)
       ) {
+        if (!isApplicationModelType(modelId)) {
+          dispatch(
+            ModelsActions.updateRecentModels({ modelId, rearrange: true }),
+          );
+        }
         dispatch(ConversationsActions.updateConversationFromQueryParams(true));
         dispatch(
           selectedConversations[0].messages.length ||

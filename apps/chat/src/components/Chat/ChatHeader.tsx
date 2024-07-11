@@ -6,6 +6,7 @@ import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -35,10 +36,11 @@ export const ChatHeader = ({
   const favoriteAppIds = useAppSelector(
     ModelsSelectors.selectFavoriteApplicationsIds,
   );
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
   const modelId = conversation.model.id;
   const model = modelsMap[modelId];
 
-  if (!model) return null;
+  if (!model || (talkTo && talkTo !== model.id)) return null;
 
   return (
     <>
