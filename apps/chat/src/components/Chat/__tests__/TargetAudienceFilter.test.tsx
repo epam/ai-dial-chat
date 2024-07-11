@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
@@ -13,14 +14,12 @@ import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/Tar
 
 vi.mock('@/src/store/hooks', async () => {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useAppSelector: (selector: any) => selector({}),
     useAppDispatch: () => (action: AnyAction) => action,
   };
 });
 
 vi.mock('@/src/store/settings/settings.reducers', async () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const actual: any = await vi.importActual(
     '@/src/store/settings/settings.reducers',
   );
@@ -38,22 +37,31 @@ describe('TargetAudienceFilterComponent', () => {
     PublicationFunctions.Contain,
     PublicationFunctions.Equal,
     PublicationFunctions.Regex,
+    PublicationFunctions.True,
+    PublicationFunctions.False,
   ];
 
   const defaultFilterOption = 'Select';
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let onSaveFilter: any;
+  let onCLoseFilter: any;
 
   beforeEach(() => {
     vi.mocked(SettingsSelectors.selectPublicationFilters).mockReturnValue(
       targetValues,
     );
     onSaveFilter = vi.fn();
+    onCLoseFilter = vi.fn();
   });
 
   it('renders all filter and target options and placeholder correctly', async () => {
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
+
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
 
     for (const option of targetValues) {
@@ -80,7 +88,12 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilter = filterValues[1];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);
@@ -98,7 +111,12 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilter = filterValues[0];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);
@@ -117,7 +135,12 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilter = filterValues[1];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);
@@ -142,11 +165,45 @@ describe('TargetAudienceFilterComponent', () => {
     });
   });
 
+  it('fires onSaveFilter method with empty filterParams if click on check icon with TRUE filter param', async () => {
+    const selectedFilter = filterValues[3];
+    const selectedTarget = targetValues[0];
+
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedTargetOption = screen.getByText(selectedTarget);
+    await userEvent.click(selectedTargetOption);
+
+    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    const selectedFilterOption = screen.getByText(selectedFilter);
+    await userEvent.click(selectedFilterOption);
+
+    const iconCheck = screen.getByTestId('save-filter');
+    await userEvent.click(iconCheck);
+
+    expect(onSaveFilter).toHaveBeenCalledWith({
+      id: selectedTarget,
+      filterFunction: selectedFilter,
+      filterParams: [],
+    });
+  });
+
   it('fires onSaveFilter method if click on check icon with regex value', async () => {
     const selectedFilter = filterValues[2];
     const selectedTarget = targetValues[0];
 
-    render(<TargetAudienceFilterComponent onSaveFilter={onSaveFilter} />);
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
 
     await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
     const selectedTargetOption = screen.getByText(selectedTarget);
