@@ -180,7 +180,7 @@ pre:has(div.codeblock) {
   #chat .model-icon-template,
   #chat .entity-selector .model-icon-template,
   .entity-menu-selector-item .model-icon-template {
-    --text-primary-bg-dark: #000A32;
+    --text-primary-bg-dark: var(--text-primary-bg-light);
   }
 
   .file-manager-modal,
