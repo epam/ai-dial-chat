@@ -2,10 +2,12 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 
+import { selectFolders as selectConversationFolders } from '../conversations//conversations.selectors';
 import { RootState } from '../index';
+import { selectFolders as selectPromptFolders } from '../prompts/prompts.selectors';
 import { PublicationState } from './publication.reducers';
 
 const rootSelector = (state: RootState): PublicationState => state.publication;
@@ -88,5 +90,55 @@ export const selectSelectedItemsToPublish = createSelector(
   [rootSelector],
   (state) => {
     return state.selectedItemsToPublish;
+  },
+);
+
+export const selectPartialChosenFolderIds = createSelector(
+  [
+    selectSelectedItemsToPublish,
+    selectConversationFolders,
+    selectPromptFolders,
+  ],
+  (selectedItemsToPublish, conversationFolders, promptFolders) => {
+    return [...conversationFolders, ...promptFolders]
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !selectedItemsToPublish.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) &&
+          (selectedItemsToPublish.some((chosenId) =>
+            chosenId.startsWith(folderId),
+          ) ||
+            selectedItemsToPublish.some((entityId) =>
+              entityId.startsWith(folderId),
+            )),
+      );
+  },
+);
+
+export const selectChosenFolderIds = createSelector(
+  [
+    selectSelectedItemsToPublish,
+    selectConversationFolders,
+    selectPromptFolders,
+    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
+  ],
+  (
+    selectedItemsToPublish,
+    conversationFolders,
+    promptFolders,
+    itemsShouldBeChosen,
+  ) => {
+    return [...conversationFolders, ...promptFolders]
+      .map((folder) => `${folder.id}/`)
+      .filter((folderId) =>
+        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
+      )
+      .filter((folderId) =>
+        itemsShouldBeChosen
+          .filter((item) => item.id.startsWith(folderId))
+          .every((item) => selectedItemsToPublish.includes(item.id)),
+      );
   },
 );

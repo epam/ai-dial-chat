@@ -60,8 +60,11 @@ export function PublicationItemsList({
 
   const dispatch = useAppDispatch();
 
-  const chosenItemsIds = useAppSelector(
-    PublicationSelectors.selectSelectedItemsToPublish,
+  const partialSelectedFolderIds = useAppSelector(
+    PublicationSelectors.selectPartialChosenFolderIds,
+  );
+  const selectedFolderIds = useAppSelector((state) =>
+    PublicationSelectors.selectChosenFolderIds(state, entities),
   );
 
   useEffect(() => {
@@ -121,14 +124,8 @@ export function PublicationItemsList({
               }))}
               readonly
               additionalItemData={{
-                partialSelectedFolderIds: [
-                  !entities
-                    .map((e) => e.id)
-                    .filter((id) => id.startsWith(`${entity.id}/`))
-                    .every((id) => chosenItemsIds.includes(id))
-                    ? `${entity.id}/`
-                    : '',
-                ],
+                partialSelectedFolderIds,
+                selectedFolderIds,
               }}
               showTooltip
             />

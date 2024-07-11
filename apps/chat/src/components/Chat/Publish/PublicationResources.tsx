@@ -183,14 +183,36 @@ export const ConversationPublicationResources = ({
             openedFoldersIds={
               readonly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
-            onSelectFolder={(folderId) =>
-              onSelect &&
+            onSelectFolder={(folderId) => {
+              if (!onSelect) return;
+
+              const filterConversations = ({
+                isUnselectAllAction,
+              }: {
+                isUnselectAllAction: boolean;
+              }) => {
+                const folderIdParts = folderId.split('/');
+
+                return conversations
+                  .filter(
+                    (c) =>
+                      c.id.startsWith(folderId) &&
+                      c.id.split('/').length >= folderIdParts.length &&
+                      (isUnselectAllAction
+                        ? chosenItemsIds.includes(c.id)
+                        : !chosenItemsIds.includes(c.id)),
+                  )
+                  .map((c) => c.id);
+              };
+
               onSelect(
-                conversations
-                  .filter((c) => c.id.startsWith(folderId))
-                  .map((c) => c.id),
-              )
-            }
+                filterConversations({
+                  isUnselectAllAction: (
+                    additionalItemData?.partialSelectedFolderIds as string
+                  ).includes(folderId),
+                }),
+              );
+            }}
             allItems={folderItemsToDisplay}
             itemComponent={(props) => {
               return readonly ? (
