@@ -1,3 +1,4 @@
+import { IconExclamationCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -103,6 +104,9 @@ export function HandlePublication({ publication }: Props) {
   );
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
+  );
+  const nonExistentEntities = useAppSelector(
+    PublicationSelectors.selectNonExistentEntities,
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -292,6 +296,9 @@ export function HandlePublication({ publication }: Props) {
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
+  const invalidEntities = nonExistentEntities.filter((entity) =>
+    publication.resources.some((r) => r.reviewUrl === entity.id),
+  );
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -407,15 +414,39 @@ export function HandlePublication({ publication }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 px-3 py-4 md:px-4">
-          <button
-            className="text-accent-primary"
-            onClick={handlePublicationReview}
-          >
-            {resourcesToReview.some((r) => r.reviewed)
-              ? t('Continue review...')
-              : t('Go to a review...')}
-          </button>
+        <div className="flex w-full items-center justify-between gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4">
+          {invalidEntities.length ? (
+            <div className="flex items-center gap-3">
+              <IconExclamationCircle
+                size={24}
+                className="shrink-0 text-error"
+                stroke="1.5"
+              />
+              <p className="text-sm text-error">
+                {invalidEntities.map((e, idx) => (
+                  <span key={e.id} className="italic">
+                    &quot;
+                    {e.name.substring(0, 50) === e.name
+                      ? e.name
+                      : `${e.name.substring(0, 50)}...`}
+                    &quot;{idx === invalidEntities.length - 1 ? ' ' : ', '}
+                  </span>
+                ))}
+                {t(
+                  "have already been unpublished. You can't approve this request.",
+                )}
+              </p>
+            </div>
+          ) : (
+            <button
+              className="text-accent-primary"
+              onClick={handlePublicationReview}
+            >
+              {resourcesToReview.some((r) => r.reviewed)
+                ? t('Continue review...')
+                : t('Go to a review...')}
+            </button>
+          )}
           <div className="flex gap-3">
             <button
               className="button button-secondary"
@@ -431,11 +462,20 @@ export function HandlePublication({ publication }: Props) {
             </button>
             <Tooltip
               hideTooltip={resourcesToReview.every((r) => r.reviewed)}
-              tooltip={t("It's required to review all resources")}
+              tooltip={
+                invalidEntities.length
+                  ? t(
+                      "Request can't be approved as some conversations are unpublished",
+                    )
+                  : t("It's required to review all resources")
+              }
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={!resourcesToReview.every((r) => r.reviewed)}
+                disabled={
+                  !resourcesToReview.every((r) => r.reviewed) ||
+                  !!invalidEntities.length
+                }
                 onClick={() =>
                   dispatch(
                     PublicationActions.approvePublication({
