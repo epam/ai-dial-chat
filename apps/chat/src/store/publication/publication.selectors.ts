@@ -5,7 +5,9 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { FeatureType } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 
+import { selectConversations } from '../conversations/conversations.selectors';
 import { RootState } from '../index';
+import { selectPrompts } from '../prompts/prompts.selectors';
 import { PublicationState } from './publication.reducers';
 
 const rootSelector = (state: RootState): PublicationState => state.publication;
@@ -81,5 +83,14 @@ export const selectIsAllItemsUploaded = createSelector(
   [rootSelector, (_state, featureType: FeatureType) => featureType],
   (state, featureType) => {
     return state.allPublishedWithMeItemsUploaded[featureType];
+  },
+);
+
+export const selectNonExistentEntities = createSelector(
+  [selectConversations, selectPrompts],
+  (conversations, prompts) => {
+    return [...conversations, ...prompts].filter(
+      (entity) => entity.publicationInfo?.isNotExist,
+    );
   },
 );
