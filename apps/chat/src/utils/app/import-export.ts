@@ -310,10 +310,7 @@ export const updateAttachment = ({
       constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
     );
 
-  const newType =
-    oldAttachment.type === PLOTLY_CONTENT_TYPE
-      ? oldAttachment.type ?? newAttachmentFile.contentType
-      : newAttachmentFile.contentType ?? oldAttachment.type;
+  const newType = oldAttachment.type ?? newAttachmentFile.contentType;
 
   const newTitle =
     oldAttachment.type === PLOTLY_CONTENT_TYPE
