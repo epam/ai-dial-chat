@@ -31,7 +31,7 @@ interface Props {
   onChangeTemperature: (temperature: number) => void;
 }
 
-const MAX_ITEMS_IN_MODELS_DROPDOWN = 2;
+const MAX_ITEMS_IN_MODELS_DROPDOWN = 3;
 
 export const ModelListSelector = ({
   modelId,
@@ -46,11 +46,7 @@ export const ModelListSelector = ({
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   const entities = useMemo(() => {
-    const modelIds =
-      modelId && recentModelsIds && recentModelsIds.includes(modelId)
-        ? recentModelsIds.filter((model) => model !== modelId)
-        : recentModelsIds;
-    const recentEntities = getValidEntitiesFromIds(modelIds, modelsMap);
+    const recentEntities = getValidEntitiesFromIds(recentModelsIds, modelsMap);
     const recentEntitiesModelsOnly = recentEntities.filter(
       (model) => model?.type === 'model',
     );
