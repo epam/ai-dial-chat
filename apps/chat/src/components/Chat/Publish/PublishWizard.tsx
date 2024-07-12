@@ -23,7 +23,11 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
+import {
+  PublicationFunctions,
+  PublishActions,
+  TargetAudienceFilter,
+} from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -147,6 +151,8 @@ export function PublishModal({
       const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
+          filter.filterFunction === PublicationFunctions.False ||
+          filter.filterFunction === PublicationFunctions.True ||
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
       const preparedFilters = currentFolderRules
@@ -293,7 +299,7 @@ export function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal flex min-h-[579px] min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
+        'group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -400,12 +406,14 @@ export function PublishModal({
                         <IconPlus stroke="1" size={18} />
                       </button>
                     )}
-                    <IconX
-                      size={18}
-                      stroke="2"
-                      onClick={() => setOtherTargetAudienceFilters([])}
-                      className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
-                    />
+                    {!!otherTargetAudienceFilters.length && (
+                      <IconX
+                        size={18}
+                        stroke="2"
+                        onClick={() => setOtherTargetAudienceFilters([])}
+                        className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -451,7 +459,7 @@ export function PublishModal({
               className="button button-primary py-2"
               onClick={handlePublish}
               data-qa="publish"
-              disabled={!publishRequestName.trim().length}
+              disabled={!publishRequestName.trim().length || isRuleSetterOpened}
             >
               {t('Send request')}
             </button>
