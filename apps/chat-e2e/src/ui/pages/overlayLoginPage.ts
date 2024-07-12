@@ -1,12 +1,12 @@
 import { BasePage } from '@/src/ui/pages/basePage';
-import { overlayFrame } from '@/src/ui/selectors';
+import { OverlaySelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 
 export class OverlayLoginPage extends BasePage {
   public loginButton = new BaseElement(
     this.page,
     '',
-    this.page.frameLocator(overlayFrame).getByText('Login'),
+    this.page.frameLocator(OverlaySelectors.overlayFrame).getByText('Login'),
   );
 
   public async clickLoginButton() {
