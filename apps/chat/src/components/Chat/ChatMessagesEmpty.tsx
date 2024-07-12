@@ -7,6 +7,7 @@ import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
@@ -82,8 +83,11 @@ export const ChatMessagesEmpty = ({
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
   const modelId = conversation.model.id;
   const model = modelsMap[modelId];
+
+  if (talkTo && talkTo !== modelId) return null;
 
   return (
     <>
