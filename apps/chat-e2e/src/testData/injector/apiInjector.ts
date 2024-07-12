@@ -3,7 +3,6 @@ import { Prompt } from '@/chat/types/prompt';
 import { ItemApiHelper } from '@/src/testData/api';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 
-
 export class ApiInjector implements DataInjectorInterface {
   private itemApiHelper: ItemApiHelper;
 
