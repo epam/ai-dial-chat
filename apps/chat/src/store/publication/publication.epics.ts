@@ -162,8 +162,11 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               uploadedUnpublishEntities: from(rootFolderPaths).pipe(
                 mergeMap((path) =>
                   isConversationId(path)
-                    ? ConversationService.getConversations(path, true)
-                    : PromptService.getPrompts(path, true),
+                    ? ConversationService.getConversations(
+                        path,
+                        !isRootId(path),
+                      )
+                    : PromptService.getPrompts(path, !isRootId(path)),
                 ),
                 toArray(),
                 map((data) => data.flatMap((data) => data)),
@@ -503,11 +506,14 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const pathsToUpload = selectedIds.filter((id) =>
-            id.startsWith(
-              `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
-            ),
-          );
+          const pathsToUpload = selectedIds
+            // do not upload root entities, as they uploaded with listing
+            .filter((id) => id.split('/').length > 3)
+            .filter((id) =>
+              id.startsWith(
+                `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
+              ),
+            );
 
           if (pathsToUpload.length) {
             const rootFolderIds = uniq(
