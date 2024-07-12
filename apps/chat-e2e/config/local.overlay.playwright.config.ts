@@ -28,6 +28,7 @@ config.webServer = [
       IS_IFRAME: 'true',
       ALLOWED_IFRAME_ORIGINS: '*',
       NEXTAUTH_URL: 'http://localhost:3000',
+      ENABLED_FEATURES: 'top-settings,top-chat-info,top-clear-conversation',
     },
   },
   {
@@ -36,6 +37,9 @@ config.webServer = [
     url: 'http://localhost:4200',
     timeout: 180000,
     reuseExistingServer: true,
+    env: {
+      NEXT_PUBLIC_OVERLAY_HOST: 'http://localhost:3000',
+    },
   },
 ];
 
