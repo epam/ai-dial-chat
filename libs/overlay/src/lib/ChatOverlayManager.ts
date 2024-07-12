@@ -247,7 +247,7 @@ export class ChatOverlayManager {
     });
 
     button.innerHTML = options?.iconSvg || overlayToggleIconOptions.iconSvg;
-
+    button.name = 'open';
     return button;
   }
 

@@ -294,4 +294,5 @@ export enum ExpectedMessages {
   tableEntityBackgroundColorIsValid = 'Table entity background color is valid',
   tableControlTooltipIsVisible = 'Table control tooltip is visible',
   copiedContentIsValid = 'Copied content is valid',
+  applicationThemeIsValid = 'Application theme is valid',
 }

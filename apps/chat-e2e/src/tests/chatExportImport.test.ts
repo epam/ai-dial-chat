@@ -191,6 +191,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(() =>
           chatBar.exportButton.click(),
         );
