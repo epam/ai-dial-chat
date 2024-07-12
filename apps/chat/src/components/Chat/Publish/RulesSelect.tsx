@@ -16,7 +16,8 @@ interface FilterTypeProps {
   selectedFilter: string;
   capitalizeFirstLetters?: boolean;
   onChangeFilter: (filterType: PublicationFunctions) => void;
-  className?: string;
+  menuClassName?: string;
+  triggerClassName?: string;
 }
 
 export function RulesSelect({
@@ -25,7 +26,8 @@ export function RulesSelect({
   selectedFilter,
   capitalizeFirstLetters,
   onChangeFilter,
-  className,
+  menuClassName,
+  triggerClassName,
 }: FilterTypeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,36 +38,37 @@ export function RulesSelect({
 
   return (
     <Menu
-      className={classNames('grow', className)}
+      className={classNames('w-full grow', menuClassName)}
       onOpenChange={setIsOpen}
-      listClassName="rounded-none"
+      listClassName="rounded-none w-full"
       trigger={
         <div
           data-qa={`filter-selector-${id}`}
-          className="size-full min-h-[31px] bg-layer-3 px-2 py-[6.5px] text-xs"
+          className={classNames(
+            'flex w-full justify-between gap-2 bg-layer-3 px-2 py-[6.5px] text-xs',
+            triggerClassName,
+          )}
         >
-          <div className="flex w-full items-center justify-between gap-2">
-            {capitalizeFirstLetters
-              ? startCase(toLower(selectedFilter))
-              : selectedFilter}
-            <IconChevronDown
-              data-qa={`open-filter-dropdown-${id}`}
-              className={classNames(
-                'shrink-0 text-primary transition-all',
-                isOpen && 'rotate-180',
-              )}
-              width={18}
-              height={18}
-            />
-          </div>
+          {capitalizeFirstLetters
+            ? startCase(toLower(selectedFilter))
+            : selectedFilter}
+          <IconChevronDown
+            data-qa={`open-filter-dropdown-${id}`}
+            className={classNames(
+              'shrink-0 text-primary transition-all',
+              isOpen && 'rotate-180',
+            )}
+            width={18}
+            height={18}
+          />
         </div>
       }
     >
-      <div className="bg-layer-3">
+      <div className="w-full bg-layer-3">
         {filters.map((filterType) => (
           <MenuItem
             key={filterType}
-            className="max-w-[350px] text-xs hover:bg-accent-primary-alpha"
+            className="max-w-full text-xs hover:bg-accent-primary-alpha"
             item={
               capitalizeFirstLetters
                 ? startCase(toLower(filterType))
