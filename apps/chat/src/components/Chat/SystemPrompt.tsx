@@ -70,6 +70,7 @@ export const SystemPrompt: FC<Props> = ({
   const {
     content,
     setContent,
+    addPromptContent,
     setActivePromptIndex,
     setIsModalVisible,
     isModalVisible,
@@ -124,14 +125,14 @@ export const SystemPrompt: FC<Props> = ({
 
   const handleSubmit = useCallback(
     (newContent: string) => {
-      setContent(newContent);
+      addPromptContent(newContent);
       onChangePrompt(newContent);
 
       if (textareaRef && textareaRef.current) {
         textareaRef.current.focus();
       }
     },
-    [setContent, onChangePrompt],
+    [addPromptContent, onChangePrompt],
   );
 
   const handleKeyDown = useCallback(
