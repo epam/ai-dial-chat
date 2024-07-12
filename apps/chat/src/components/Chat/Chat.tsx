@@ -54,8 +54,8 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { HandlePublication } from './Publish/HandlePublication';
 import { PublicationControls } from './Publish/PublicationChatControls';
+import { PublicationHandler } from './Publish/PublicationHandler';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -959,7 +959,7 @@ export function Chat() {
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
       <>
-        <HandlePublication publication={selectedPublication} />
+        <PublicationHandler publication={selectedPublication} />
         <ChatInputFooter />
       </>
     );
