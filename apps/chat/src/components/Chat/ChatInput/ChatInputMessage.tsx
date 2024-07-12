@@ -126,6 +126,7 @@ export const ChatInputMessage = ({
   const {
     content,
     setContent,
+    addPromptContent,
     activePromptIndex,
     setActivePromptIndex,
     isModalVisible,
@@ -262,16 +263,16 @@ export const ChatInputMessage = ({
         return;
       }
 
-      setContent(newContent);
+      addPromptContent(newContent);
 
       if (textareaRef && textareaRef.current) {
         textareaRef.current.focus();
       }
     },
     [
+      addPromptContent,
       getTokensLength,
       maxTokensLength,
-      setContent,
       setIsPromptLimitModalOpen,
       textareaRef,
     ],
