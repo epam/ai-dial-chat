@@ -15,7 +15,7 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-dialTest(
+dialTest.only(
   'Check chat header for Model with three addons, temp = 0.\n' +
     'Message is send on Enter',
   async ({

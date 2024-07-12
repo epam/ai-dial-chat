@@ -8,7 +8,7 @@ import { expect } from '@playwright/test';
 import * as process from 'node:process';
 
 export class ItemApiHelper extends BaseApiHelper {
-  public async deleteAllData(isOverlay?: boolean, bucket?: string) {
+  public async deleteAllData(bucket?: string, isOverlay = false) {
     const conversations = await this.listItems(
       API.conversationsHost(),
       bucket,

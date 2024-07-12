@@ -3,6 +3,7 @@ import { Prompt } from '@/chat/types/prompt';
 import { ItemApiHelper } from '@/src/testData/api';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 
+
 export class ApiInjector implements DataInjectorInterface {
   private itemApiHelper: ItemApiHelper;
 
@@ -28,7 +29,7 @@ export class ApiInjector implements DataInjectorInterface {
     await this.itemApiHelper.createConversations(conversations);
   }
 
-  async deleteAllData(isOverlay?: boolean) {
-    await this.itemApiHelper.deleteAllData(isOverlay);
+  async deleteAllData(isOverlay = false) {
+    await this.itemApiHelper.deleteAllData(undefined, isOverlay);
   }
 }
