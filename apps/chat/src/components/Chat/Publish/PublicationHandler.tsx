@@ -65,13 +65,15 @@ function FiltersComponent({
 
   return (
     <>
-      {!filteredRuleEntries.length && !publication.rules?.length && (
-        <p className="text-sm text-secondary">
-          {t(
-            'This publication will be available to all users in the organization',
-          )}
-        </p>
-      )}
+      {(!filteredRuleEntries.length ||
+        filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
+        !publication.rules?.length && (
+          <p className="text-sm text-secondary">
+            {t(
+              'This publication will be available to all users in the organization',
+            )}
+          </p>
+        )}
       {filteredRuleEntries
         .filter(([_, rules]) => rules.length)
         .map(([path, rules]) => (
@@ -89,7 +91,7 @@ interface Props {
   publication: Publication;
 }
 
-export function HandlePublication({ publication }: Props) {
+export function PublicationHandler({ publication }: Props) {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
