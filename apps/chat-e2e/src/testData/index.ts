@@ -6,3 +6,4 @@ export * from './conversationHistory/folderBuilder';
 export * from './prompts/promptBuilder';
 export * from './prompts/promptData';
 export * from './folders/folderData';
+export * from './types';

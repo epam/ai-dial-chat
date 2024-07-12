@@ -27,14 +27,6 @@ export class Conversations extends BaseConversation {
     return this.getEntityArrowIconColor(this.entitySelector, name, index);
   }
 
-  public getConversationCheckbox(name: string, index?: number) {
-    return this.getEntityCheckbox(this.entitySelector, name, index);
-  }
-
-  public async getConversationCheckboxState(name: string, index?: number) {
-    return this.getEntityCheckboxState(this.entitySelector, name, index);
-  }
-
   public async getConversationsByChronology() {
     await this.waitForState({ state: 'attached' });
     const allConversations = await this.getElementInnerContent();
