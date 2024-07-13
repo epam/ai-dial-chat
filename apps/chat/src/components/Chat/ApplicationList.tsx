@@ -12,12 +12,16 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { stopBubbling } from '@/src/constants/chat';
+import {
+  APPLICATIONS_DISPLAYING_ORDER,
+  stopBubbling,
+} from '@/src/constants/chat';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { FavoriteIcon } from '@/src/icons';
+import sortBy from 'lodash-es/sortBy';
 
 interface ApplicationProps {
   application: DialAIEntityModel;
@@ -131,6 +135,10 @@ export const ApplicationList = ({
   const favoriteAppIds = useAppSelector(
     ModelsSelectors.selectFavoriteApplicationsIds,
   );
+  const allApplicationsOrdered = sortBy(
+    allApplications,
+    (app) => APPLICATIONS_DISPLAYING_ORDER[app.id],
+  );
 
   return (
     <div className="flex size-full flex-col items-center py-14">
@@ -138,7 +146,7 @@ export const ApplicationList = ({
         {t('Applications')}
       </h3>
       <div className="flex flex-wrap justify-center gap-10 px-4 py-14 md:px-2">
-        {allApplications.map((app) => (
+        {allApplicationsOrdered.map((app) => (
           <Application
             onAppClick={onCreateNewConversation}
             key={app.id}

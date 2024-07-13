@@ -74,3 +74,8 @@ export const HEADER_TITLE_TEXT = 'PR GPT';
 
 export const CHINA_TIME_ZONE_OFFSET = 8;
 export const NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY = 4;
+
+export const APPLICATIONS_DISPLAYING_ORDER: Record<string, string> = {
+  [ModelId.HR_BUDDY]: '0',
+  [ModelId.RAG]: '1',
+};
