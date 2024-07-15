@@ -52,20 +52,6 @@ export const isPublishVersionUnique = (type: SharingType) => {
   }
 };
 
-export const getAttachments = (type: SharingType) => {
-  // TODO: get rid of it
-  switch (type) {
-    case SharingType.Conversation:
-    case SharingType.ConversationFolder:
-      return ConversationsSelectors.getAttachments;
-    case SharingType.Prompt:
-    case SharingType.PromptFolder:
-      return () => [];
-    default:
-      throw new Error('unknown type');
-  }
-};
-
 export const getShareType = (
   featureType?: FeatureType,
   isFolder?: boolean,
