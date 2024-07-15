@@ -1,4 +1,4 @@
-export interface ChatBarEntity {
+export interface TreeEntity {
   name: string;
   index?: number;
 }

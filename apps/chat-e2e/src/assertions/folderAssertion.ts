@@ -1,5 +1,5 @@
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
-import { ChatBarEntity } from '@/src/testData/types';
+import { TreeEntity } from '@/src/testData/types';
 import { Folders } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -11,7 +11,7 @@ export class FolderAssertion {
   }
 
   public async assertFolderState(
-    folder: ChatBarEntity,
+    folder: TreeEntity,
     expectedState: ElementState,
   ) {
     const folderLocator = this.folder.getFolderByName(
@@ -28,7 +28,7 @@ export class FolderAssertion {
   }
 
   public async assertFolderCheckbox(
-    folder: ChatBarEntity,
+    folder: TreeEntity,
     expectedState: ElementState,
   ) {
     const folderCheckboxLocator = this.folder.getFolderCheckbox(
@@ -45,7 +45,7 @@ export class FolderAssertion {
   }
 
   public async assertFolderCheckboxState(
-    folder: ChatBarEntity,
+    folder: TreeEntity,
     expectedState: CheckboxState,
   ) {
     const message =
@@ -63,7 +63,7 @@ export class FolderAssertion {
   }
 
   public async assertFolderCheckboxColor(
-    folder: ChatBarEntity,
+    folder: TreeEntity,
     expectedCheckboxColor: string,
   ) {
     const folderCheckboxColor = await this.folder.getFolderCheckboxColor(
@@ -76,7 +76,7 @@ export class FolderAssertion {
   }
 
   public async assertFolderCheckboxBorderColors(
-    folder: ChatBarEntity,
+    folder: TreeEntity,
     expectedCheckboxBorderColor: string,
   ) {
     const folderCheckboxBorderColors =
@@ -94,7 +94,7 @@ export class FolderAssertion {
   }
 
   public async assertFolderBackgroundColor(
-    folder: ChatBarEntity,
+    folder: TreeEntity,
     expectedColor: string,
   ) {
     const folderBackgroundColor = await this.folder.getFolderBackgroundColor(
@@ -110,7 +110,7 @@ export class FolderAssertion {
   }
 
   public async assertFolderDotsMenuState(
-    folder: ChatBarEntity,
+    folder: TreeEntity,
     expectedState: ElementState,
   ) {
     const dotsMenu = this.folder.folderDotsMenu(folder.name, folder.index);
@@ -124,8 +124,8 @@ export class FolderAssertion {
   }
 
   public async assertFolderEntityState(
-    folder: ChatBarEntity,
-    folderEntity: ChatBarEntity,
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
     expectedState: ElementState,
   ) {
     const folderEntityLocator = this.folder.getFolderEntity(
@@ -143,8 +143,8 @@ export class FolderAssertion {
   }
 
   public async assertFolderEntityCheckbox(
-    folder: ChatBarEntity,
-    folderEntity: ChatBarEntity,
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
     expectedState: ElementState,
   ) {
     const folderEntityCheckboxLocator = this.folder.getFolderEntityCheckbox(
@@ -164,8 +164,8 @@ export class FolderAssertion {
   }
 
   public async assertFolderEntityCheckboxState(
-    folder: ChatBarEntity,
-    folderEntity: ChatBarEntity,
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
     expectedState: CheckboxState,
   ) {
     const message =
@@ -184,8 +184,8 @@ export class FolderAssertion {
   }
 
   public async assertFolderEntityCheckboxColor(
-    folder: ChatBarEntity,
-    folderEntity: ChatBarEntity,
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
     expectedColor: string,
   ) {
     const folderEntityCheckboxColor =
@@ -199,8 +199,8 @@ export class FolderAssertion {
   }
 
   public async assertFolderEntityCheckboxBorderColors(
-    folder: ChatBarEntity,
-    folderEntity: ChatBarEntity,
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
     expectedColor: string,
   ) {
     const folderEntityCheckboxBorderColors =
@@ -218,8 +218,8 @@ export class FolderAssertion {
   }
 
   public async assertFolderEntityBackgroundColor(
-    folder: ChatBarEntity,
-    folderEntity: ChatBarEntity,
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
     expectedColor: string,
   ) {
     const folderEntityBackgroundColor =

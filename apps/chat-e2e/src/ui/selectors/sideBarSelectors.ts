@@ -33,7 +33,6 @@ export const ChatBarSelectors = {
     `${ChatBarSelectors.chatFolders} > [data-qa="pinned-chats-container"]`,
   sharedWithMeChats: () =>
     `${ChatBarSelectors.chatFolders} > [data-qa="shared-with-me-container"]`,
-  checkedEntity: 'input[data-qa="checked"]',
 };
 
 export const PromptBarSelectors = {

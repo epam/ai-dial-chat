@@ -1,8 +1,8 @@
 import {
-  ChatBarEntity,
   CheckboxState,
   ElementState,
   ExpectedMessages,
+  TreeEntity,
 } from '@/src/testData';
 import { BaseConversation } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
@@ -15,7 +15,7 @@ export class ConversationAssertion {
   }
 
   public async assertConversationState(
-    conversation: ChatBarEntity,
+    conversation: TreeEntity,
     expectedState: ElementState,
   ) {
     const conversationLocator = this.conversation.getConversationByName(
@@ -32,7 +32,7 @@ export class ConversationAssertion {
   }
 
   public async assertConversationCheckbox(
-    conversation: ChatBarEntity,
+    conversation: TreeEntity,
     expectedState: ElementState,
   ) {
     const conversationCheckboxLocator =
@@ -53,7 +53,7 @@ export class ConversationAssertion {
   }
 
   public async assertConversationCheckboxState(
-    conversation: ChatBarEntity,
+    conversation: TreeEntity,
     expectedState: CheckboxState,
   ) {
     const message =
@@ -72,7 +72,7 @@ export class ConversationAssertion {
   }
 
   public async assertConversationDotsMenuState(
-    conversation: ChatBarEntity,
+    conversation: TreeEntity,
     expectedState: ElementState,
   ) {
     const dotsMenuLocator = this.conversation.getConversationDotsMenu(
