@@ -95,7 +95,7 @@ export const APPLICATION_ACTIONS_STEP = {
   target: `#${TourGuideId.applicationActions}`,
   title: 'Applications',
   content:
-    'This is where you will find all of the custom applications hosted on PR GPT. Feel free to browse throughand try them!',
+    'Pernod Ricard GPT hosts different custom applications! By clicking here you may start a new conversation, pin or take out the application from the left side bar.',
   placement: 'right',
 };
 
