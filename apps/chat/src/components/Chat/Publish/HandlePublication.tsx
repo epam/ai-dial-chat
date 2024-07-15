@@ -212,9 +212,8 @@ export function HandlePublication({ publication }: Props) {
             className="w-full whitespace-pre text-center text-base font-semibold"
           >
             {publication.resources[0].action !== PublishActions.DELETE
-              ? t('Publication request for: ')
-              : t('Unpublish: ')}
-            {getPublicationId(publication.url)}
+              ? t('Publication request')
+              : t('Unpublish')}
           </h4>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden bg-layer-1 [&:first-child]:rounded-t-primary">
@@ -384,9 +383,9 @@ export function HandlePublication({ publication }: Props) {
           >
             {t('Go to a publication review...')}
           </button>
-          <div>
+          <div className="flex">
             <button
-              className="button button-secondary mr-3"
+              className="button button-ghost button-medium mr-3"
               onClick={() =>
                 dispatch(
                   PublicationActions.rejectPublication({
@@ -398,7 +397,7 @@ export function HandlePublication({ publication }: Props) {
               {t('Reject')}
             </button>
             <button
-              className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              className="button button-primary button-medium disabled:cursor-not-allowed disabled:text-controls-disable"
               disabled={!resourcesToReview.every((r) => r.reviewed)}
               onClick={() =>
                 dispatch(

@@ -6,7 +6,6 @@ import classNames from 'classnames';
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { getPublicationId } from '@/src/utils/app/publications';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
@@ -34,9 +33,14 @@ import some from 'lodash-es/some';
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
   featureType: FeatureType;
+  index: number;
 }
 
-const PublicationItem = ({ publication, featureType }: PublicationProps) => {
+const PublicationItem = ({
+  publication,
+  featureType,
+  index,
+}: PublicationProps) => {
   const dispatch = useAppDispatch();
 
   const selectedPublication = useAppSelector(
@@ -76,6 +80,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
         conversationIds: [],
       }),
     );
+    dispatch(ConversationsActions.setIsExploreAllApplicationsSelected(false));
   }, [dispatch, publication]);
 
   const ResourcesComponent =
@@ -109,7 +114,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
             )}
             data-qa="folder-name"
           >
-            {getPublicationId(publication.url)}
+            {`Approve request ${index + 1}`}
           </div>
         </div>
       </div>
@@ -184,11 +189,12 @@ export const ApproveRequiredSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
-      {publicationItems.map((p) => (
+      {publicationItems.map((p, index) => (
         <PublicationItem
           featureType={featureType}
           key={p.url}
           publication={p}
+          index={index}
         />
       ))}
     </CollapsibleSection>

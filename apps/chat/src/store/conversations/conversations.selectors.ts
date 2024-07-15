@@ -746,3 +746,8 @@ export const selectTalkTo = createSelector(
   [rootSelector],
   (state) => state.talkTo,
 );
+
+export const selectIsExploreAllConversationsSelected = createSelector(
+  [rootSelector],
+  (state) => state.isExploreAllApplicationsSelected,
+);

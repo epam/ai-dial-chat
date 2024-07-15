@@ -57,6 +57,7 @@ const initialState: ConversationsState = {
   customAttachmentDataLoading: false,
   initFoldersAndConversations: false,
   talkTo: '',
+  isExploreAllApplicationsSelected: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -185,6 +186,7 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{
         names: string[];
+        modelId?: string;
         shouldUploadConversationsForCompare?: boolean;
       }>,
     ) => {
@@ -727,6 +729,15 @@ export const conversationsSlice = createSlice({
     cleanupIsolatedConversation: (state) => state,
     setTalkTo: (state, { payload }: PayloadAction<string>) => {
       state.talkTo = payload;
+    },
+    clearSelectedConversationsIds: (state) => {
+      state.selectedConversationsIds = [];
+    },
+    setIsExploreAllApplicationsSelected: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isExploreAllApplicationsSelected = payload;
     },
     uploadChildConversationsWithFoldersSuccess: (
       state,

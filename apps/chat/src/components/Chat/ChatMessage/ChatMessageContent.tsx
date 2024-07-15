@@ -391,7 +391,7 @@ export const ChatMessageContent = ({
   return (
     <div
       ref={messageRef}
-      className={classNames('group h-full md:px-4 xl:px-8')}
+      className={classNames('group h-full md:px-4')}
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
@@ -402,7 +402,7 @@ export const ChatMessageContent = ({
     >
       <div
         className={classNames(
-          'm-auto flex h-full md:gap-6 md:py-6 lg:px-0',
+          'm-auto flex h-full md:gap-6 md:py-6',
           !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
           isMobileOrOverlay ? 'p-3' : 'p-4',
         )}
@@ -507,7 +507,7 @@ export const ChatMessageContent = ({
                   </div>
                   <div className="relative flex gap-3">
                     <button
-                      className="button button-secondary"
+                      className="button button-secondary button-medium"
                       onClick={() => {
                         setMessageContent(message.content);
                         setNewEditableAttachmentsIds(
@@ -520,7 +520,7 @@ export const ChatMessageContent = ({
                       {t('Cancel')}
                     </button>
                     <button
-                      className="button button-primary"
+                      className="button button-primary button-medium"
                       onClick={handleEditMessage}
                       disabled={isSubmitAllowed}
                       data-qa="save-and-submit"

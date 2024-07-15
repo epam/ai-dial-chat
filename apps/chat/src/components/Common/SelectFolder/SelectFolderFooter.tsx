@@ -29,7 +29,7 @@ export const SelectFolderFooter = ({
       <div>
         <button
           onClick={onSelectFolderClick}
-          className="button button-primary"
+          className="button button-primary button-medium"
           data-qa="select-folder"
         >
           {t('Select folder')}

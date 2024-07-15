@@ -39,7 +39,7 @@ export default function Search({
 
   return (
     <div
-      className="relative mx-5 my-2 flex items-center rounded-full border border-quaternary"
+      className="relative mx-5 my-2 flex min-h-[40px] items-center rounded-full border border-quaternary"
       data-qa="search"
     >
       <IconSearch

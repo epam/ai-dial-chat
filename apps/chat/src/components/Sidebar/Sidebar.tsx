@@ -23,6 +23,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import { TourGuideId } from '@/src/constants/share';
 
 import Loader from '../Common/Loader';
 import { NoData } from '../Common/NoData';
@@ -226,7 +227,14 @@ const Sidebar = <T,>({
 
             {actionButtons}
 
-            <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
+            <div
+              className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto"
+              id={
+                featureType === FeatureType.Chat
+                  ? TourGuideId.chatHistory
+                  : TourGuideId.promptBank
+              }
+            >
               {folderComponent}
 
               {filteredItems.length > 0 || filteredFolders.length > 0 ? (

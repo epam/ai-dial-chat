@@ -31,15 +31,18 @@ const TemperatureIndicator = ({
   onKeyDown,
   onMouseDown,
   onTouchStart,
+  children,
 }: TemperatureIndicatorProps) => {
   return (
     <div
-      className="absolute top-[calc(50%-12px)] flex size-6 cursor-pointer items-center justify-center rounded-full bg-layer-6 text-primary-bg-dark shadow-primary"
+      className="absolute top-[calc(50%-16px)] flex size-8 cursor-pointer items-center justify-center rounded-full bg-layer-6 text-primary-bg-dark shadow-primary"
       style={style}
       onKeyDown={onKeyDown}
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
-    />
+    >
+      {children}
+    </div>
   );
 };
 
@@ -56,7 +59,7 @@ export const TemperatureSlider: FC<Props> = ({
   temperature,
   disabled,
 }) => {
-  const [, setCurrentTemperature] = useState<number>(() => {
+  const [currentTemperature, setCurrentTemperature] = useState<number>(() => {
     return temperature ?? DEFAULT_TEMPERATURE;
   });
   const { t } = useTranslation(Translation.Chat);
@@ -95,7 +98,9 @@ export const TemperatureSlider: FC<Props> = ({
           max={1}
           step={0.1}
           handleRender={({ props }) => (
-            <TemperatureIndicator {...(props as TemperatureIndicatorProps)} />
+            <TemperatureIndicator {...(props as TemperatureIndicatorProps)}>
+              {currentTemperature}
+            </TemperatureIndicator>
           )}
         />
       </div>

@@ -56,7 +56,7 @@ export const ConfirmDialog = ({
         <div className="flex w-full items-center justify-end gap-3">
           {cancelLabel && (
             <button
-              className="button button-secondary"
+              className="button button-ghost button-medium"
               onClick={() => {
                 onClose(false);
               }}
@@ -68,7 +68,7 @@ export const ConfirmDialog = ({
           <button
             ref={confirmLabelRef}
             autoFocus
-            className="button button-primary"
+            className="button button-primary button-medium"
             onClick={() => onClose(true)}
             data-qa="confirm"
           >

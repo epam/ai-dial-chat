@@ -27,6 +27,7 @@ export interface Props {
   messagesLength: number;
   onEdit?: (editedMessage: Message, index: number) => void;
   onRegenerate?: () => void;
+  talkTo?: string;
 }
 
 const CONTEXT_MENU_OFFSET = 100;
@@ -43,6 +44,7 @@ export const ChatMessage: FC<Props> = memo(
     onEdit,
     messageIndex,
     messagesLength,
+    talkTo,
     ...props
   }) => {
     const { t } = useTranslation(Translation.Chat);
@@ -108,6 +110,10 @@ export const ChatMessage: FC<Props> = memo(
         }}
       />
     );
+
+    if (talkTo && talkTo !== conversation.model.id) {
+      return null;
+    }
 
     if (
       (!isSmallScreen() || isOverlay) &&

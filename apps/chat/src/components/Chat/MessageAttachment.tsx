@@ -1,5 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { IconDownload, IconFile, IconFolder } from '@tabler/icons-react';
+import {
+  IconCaretDownFilled,
+  IconDownload,
+  IconFile,
+  IconFolder,
+} from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlotParams } from 'react-plotly.js';
 
@@ -23,15 +28,16 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { PLOTLY_CONTENT_TYPE, stopBubbling } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
+import { ImageAttachmentRenderer } from '@/src/components/Chat/ImageAttachmentRenderer';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
 import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
-import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
+import { PromptIcon } from '@/src/icons/PromptIcon';
 import { sanitize } from 'isomorphic-dompurify';
 
 const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
@@ -185,6 +191,7 @@ const ChartAttachmentUrlRenderer = ({
 interface Props {
   attachment: Attachment;
   isInner?: boolean;
+  isShowImageImmediate?: boolean;
 }
 
 interface AttachmentUrlRendererComponentProps {
@@ -226,7 +233,11 @@ const AttachmentUrlRendererComponent = ({
   );
 };
 
-export const MessageAttachment = ({ attachment, isInner }: Props) => {
+export const MessageAttachment = ({
+  attachment,
+  isInner,
+  isShowImageImmediate,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const [isOpened, setIsOpened] = useState(false);
   const [wasOpened, setWasOpened] = useState(false);
@@ -263,7 +274,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   }, [wasOpened]);
 
   const isFolder = attachment.type === FOLDER_ATTACHMENT_CONTENT_TYPE;
-  const Icon = isFolder ? IconFolder : IconFile;
+  const Icon = isFolder ? IconFolder : attachment.type ? IconFile : PromptIcon;
 
   const isOpenable =
     attachment.data ||
@@ -279,6 +290,13 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
     [attachment.reference_url],
   );
 
+  if (
+    (attachment.type === 'image/png' || attachment.type === 'image/jpeg') &&
+    isShowImageImmediate
+  ) {
+    return <ImageAttachmentRenderer attachment={attachment} />;
+  }
+
   return (
     <div
       data-no-context-menu
@@ -288,9 +306,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           ? 'col-span-1 col-start-1 rounded-primary sm:col-span-2 md:col-span-3'
           : 'rounded-full hover:bg-accent-secondary-alpha',
         !isInner && 'border border-secondary',
+        isShowImageImmediate && !isExpanded && 'max-w-[180px]',
       )}
     >
-      <div className="flex items-center gap-3 px-2">
+      <div className="flex items-center gap-2 px-2">
         <div className="flex items-center">
           {mappedAttachmentReferenceUrl ? (
             <Tooltip tooltip="Open link">
@@ -308,10 +327,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
               </a>
             </Tooltip>
           ) : (
-            <Icon
-              size={18}
-              className="shrink-0 text-primary-bg-light"
-            />
+            <Icon size={18} className="shrink-0 text-primary-bg-light" />
           )}
         </div>
         <button
@@ -331,10 +347,10 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
         >
           <span
             className={classNames(
-              'shrink truncate whitespace-pre text-left text-sm text-primary-bg-light',
+              'shrink truncate whitespace-pre text-left text-sm font-medium text-primary-bg-light',
               isExpanded || isFolder || mappedAttachmentReferenceUrl
                 ? 'max-w-full'
-                : 'max-w-[calc(100%-30px)]',
+                : 'max-w-[calc(100%-20px)]',
             )}
             title={attachment.title || attachment.url || t('Attachment') || ''}
           >
@@ -352,13 +368,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                   <IconDownload size={18} />
                 </a>
               )}
-              <ChevronDown
-                height={18}
-                width={18}
+              <IconCaretDownFilled
                 className={classNames(
-                  'shrink-0 text-primary-bg-light transition',
+                  'shrink-0 text-quaternary-bg-light transition',
                   isOpened && 'rotate-180',
                 )}
+                size={12}
               />
             </div>
           ) : (
@@ -379,7 +394,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
       </div>
       {isOpenable && isOpened && (
         <div
-          className="relative mt-2 h-auto w-full overflow-hidden border-t border-tertiary p-3 pt-4 text-sm duration-200"
+          className="relative h-auto w-full overflow-hidden p-3 text-sm duration-200"
           ref={anchorRef}
         >
           {attachment.data && (

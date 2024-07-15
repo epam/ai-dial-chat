@@ -65,6 +65,19 @@ export class DataService {
     );
   }
 
+  public static getFavoriteAppsIds(): Observable<string[] | undefined> {
+    return BrowserStorage.getData(UIStorageKeys.FavoriteAppsIds, undefined);
+  }
+
+  public static setFavoriteAppsIds(
+    favoriteAppsIds: string[],
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.FavoriteAppsIds,
+      favoriteAppsIds,
+    );
+  }
+
   public static getTheme(): Observable<string> {
     return BrowserStorage.getData(UIStorageKeys.Settings, { theme: '' }).pipe(
       map((settings) => settings.theme),

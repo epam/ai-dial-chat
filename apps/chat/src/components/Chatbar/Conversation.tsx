@@ -139,11 +139,7 @@ interface Props {
   additionalItemData?: Record<string, unknown>;
 }
 
-export const ConversationComponent = ({
-  item: conversation,
-  level,
-  additionalItemData,
-}: Props) => {
+export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -338,35 +334,35 @@ export const ConversationComponent = ({
       setIsDeleting(true);
     }, []);
 
-  const handleStartReplay: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      talkTo && dispatch(ConversationsActions.setTalkTo(''));
-      dispatch(ConversationsActions.createNewReplayConversation(conversation));
-    },
-    [conversation, dispatch, talkTo],
-  );
+  // const handleStartReplay: MouseEventHandler<HTMLButtonElement> = useCallback(
+  //   (e) => {
+  //     e.stopPropagation();
+  //     setIsContextMenu(false);
+  //     talkTo && dispatch(ConversationsActions.setTalkTo(''));
+  //     dispatch(ConversationsActions.createNewReplayConversation(conversation));
+  //   },
+  //   [conversation, dispatch, talkTo],
+  // );
 
-  const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      talkTo && dispatch(ConversationsActions.setTalkTo(''));
-      dispatch(
-        ConversationsActions.createNewPlaybackConversation(conversation),
-      );
-      setIsContextMenu(false);
-    }, [conversation, dispatch, talkTo]);
+  // const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
+  //   useCallback(() => {
+  //     talkTo && dispatch(ConversationsActions.setTalkTo(''));
+  //     dispatch(
+  //       ConversationsActions.createNewPlaybackConversation(conversation),
+  //     );
+  //     setIsContextMenu(false);
+  //   }, [conversation, dispatch, talkTo]);
 
-  const handleCompare: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      if (isReplay || isPlayback) return;
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: [conversation.id],
-        }),
-      );
-      dispatch(UIActions.setIsCompareMode(true));
-    }, [conversation.id, dispatch, isPlayback, isReplay]);
+  // const handleCompare: MouseEventHandler<HTMLButtonElement> =
+  //   useCallback(() => {
+  //     if (isReplay || isPlayback) return;
+  //     dispatch(
+  //       ConversationsActions.selectConversations({
+  //         conversationIds: [conversation.id],
+  //       }),
+  //     );
+  //     dispatch(UIActions.setIsCompareMode(true));
+  //   }, [conversation.id, dispatch, isPlayback, isReplay]);
 
   const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -407,21 +403,21 @@ export const ConversationComponent = ({
       setIsContextMenu(false);
     }, []);
 
-  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsPublishing(true);
-      setIsContextMenu(false);
-    }, []);
+  // const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
+  //   useCallback(() => {
+  //     setIsPublishing(true);
+  //     setIsContextMenu(false);
+  //   }, []);
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
   }, []);
 
-  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnpublishing(true);
-      setIsContextMenu(false);
-    }, []);
+  // const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
+  //   useCallback(() => {
+  //     setIsUnpublishing(true);
+  //     setIsContextMenu(false);
+  //   }, []);
 
   const handleCloseUnpublishModal = useCallback(() => {
     setIsUnpublishing(false);
@@ -635,25 +631,21 @@ export const ConversationComponent = ({
             folders={folders}
             featureType={FeatureType.Chat}
             onOpenMoveToModal={() => setIsShowMoveToModal(true)}
-            onMoveToFolder={handleMoveToFolder}
+            onMoveToFolder={undefined}
             onDelete={handleOpenDeleteModal}
             onRename={handleStartRename}
-            onExport={handleExport}
+            onExport={undefined}
             onOpenExportModal={handleOpenExportModal}
-            onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
-            onDuplicate={handleDuplicate}
-            onReplay={!isReplay && !isPlayback ? handleStartReplay : undefined}
-            onPlayback={
-              !isReplay && !isPlayback ? handleCreatePlayback : undefined
+            onCompare={undefined}
+            onDuplicate={
+              conversation.sharedWithMe ? handleDuplicate : undefined
             }
+            onReplay={undefined}
+            onPlayback={undefined}
             onShare={!isReplay ? handleOpenSharing : undefined}
             onUnshare={!isReplay ? handleUnshare : undefined}
-            onPublish={!isReplay ? handleOpenPublishing : undefined}
-            onUnpublish={
-              isReplay || additionalItemData?.isApproveRequiredResource
-                ? undefined
-                : handleOpenUnpublishing
-            }
+            onPublish={undefined}
+            onUnpublish={undefined}
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}

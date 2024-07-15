@@ -48,10 +48,10 @@ interface ItemContextMenuProps {
   isOpen?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
-  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
+  onMoveToFolder?: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
-  onExport: (args?: unknown) => void;
+  onExport?: (args?: unknown) => void;
   onReplay?: MouseEventHandler<unknown>;
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
@@ -171,7 +171,10 @@ export default function ItemContextMenu({
       },
       {
         name: t('Export'),
-        display: !isEmptyConversation && featureType === FeatureType.Chat,
+        display:
+          !isEmptyConversation &&
+          featureType === FeatureType.Chat &&
+          !!onExport,
         dataQa: 'export-chat',
         Icon: IconFileArrowRight,
         className: 'max-md:hidden',
@@ -180,7 +183,7 @@ export default function ItemContextMenu({
             name: t('With attachments'),
             dataQa: 'with-attachments',
             onClick: () => {
-              onExport({ withAttachments: true });
+              onExport && onExport({ withAttachments: true });
             },
             className: 'invisible md:visible',
           },
@@ -188,7 +191,7 @@ export default function ItemContextMenu({
             name: t('Without attachments'),
             dataQa: 'without-attachments',
             onClick: () => {
-              onExport();
+              onExport && onExport();
             },
             className: 'invisible md:visible',
           },
@@ -205,7 +208,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Move to'),
-        display: !isExternal,
+        display: !isExternal && !!onMoveToFolder,
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
@@ -216,7 +219,7 @@ export default function ItemContextMenu({
             dataQa: 'new-folder',
             Icon: IconFolderPlus,
             onClick: () => {
-              onMoveToFolder({ isNewFolder: true });
+              onMoveToFolder && onMoveToFolder({ isNewFolder: true });
             },
             className: classNames('invisible md:visible', {
               'border-b border-primary': folders?.length > 0,
@@ -226,7 +229,7 @@ export default function ItemContextMenu({
             name: folder.name,
             dataQa: `folder-${folder.id}`,
             onClick: () => {
-              onMoveToFolder({ folderId: folder.id });
+              onMoveToFolder && onMoveToFolder({ folderId: folder.id });
             },
           })),
         ],

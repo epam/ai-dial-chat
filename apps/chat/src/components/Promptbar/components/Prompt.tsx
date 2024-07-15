@@ -34,6 +34,7 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
@@ -82,6 +83,9 @@ export const PromptComponent = ({
   );
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
   const isApproveRequiredResource =
     !!additionalItemData?.isApproveRequiredResource;
   const isSelected =
@@ -305,24 +309,27 @@ export const PromptComponent = ({
   );
 
   const onPromptClick = () => {
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
-    dispatch(PromptsActions.setIsPromptContentCopying(true));
+    if (selectedConversationsIds.length) {
+      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(PromptsActions.setIsPromptContentCopying(true));
 
-    dispatch(
-      PromptsActions.uploadPrompt({
-        promptId: prompt.id,
-      }),
-    );
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: prompt.id,
+        }),
+      );
+    }
   };
 
   return (
     <>
       <div
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:pr-9',
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
+          isSelected ? 'hover:pr-3' : 'hover:pr-9',
         )}
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -332,7 +339,7 @@ export const PromptComponent = ({
       >
         <div
           className={classNames('flex size-full items-center gap-2', {
-            'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
+            'pr-6': !isDeleting && !isRenaming && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, prompt)}
@@ -396,7 +403,7 @@ export const PromptComponent = ({
               }
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
-              onView={(e) => handleOpenEditModal(e, true)}
+              onView={undefined}
               isOpen={isContextMenu}
             />
           </div>

@@ -104,6 +104,9 @@ export const publicationSlice = createSlice({
     ) => {
       state.selectedPublication = payload.publication;
     },
+    clearSelectedPublication: (state) => {
+      state.selectedPublication = null;
+    },
     setPublicationsToReview: (
       state,
       {
