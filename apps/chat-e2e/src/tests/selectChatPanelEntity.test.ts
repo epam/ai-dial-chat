@@ -149,7 +149,6 @@ dialTest(
             { name: nestedFolders[i].name },
             expectedEntityBackgroundColor,
           );
-
           await chatBarFolderAssertion.assertFolderEntityCheckboxColor(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
@@ -243,6 +242,7 @@ dialTest(
             'hidden',
           );
         }
+
         for (const rootConversation of [
           emptyConversation,
           historyConversation,
@@ -382,7 +382,6 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.checked,
           );
-
           await chatBarFolderAssertion.assertFolderEntityCheckboxState(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
@@ -402,6 +401,7 @@ dialTest(
             CheckboxState.checked,
           );
         }
+
         for (const rootConversation of [
           emptyConversation,
           historyConversation,
@@ -451,6 +451,7 @@ dialTest(
             'hidden',
           );
         }
+
         for (const rootConversation of [
           emptyConversation,
           historyConversation,
@@ -538,13 +539,13 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.checked,
           );
-
           await chatBarFolderAssertion.assertFolderEntityCheckboxState(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
             CheckboxState.checked,
           );
         }
+
         await chatBarFolderAssertion.assertFolderCheckboxState(
           { name: nestedFolders[0].name },
           CheckboxState.partiallyChecked,
@@ -572,6 +573,7 @@ dialTest(
           'hidden',
         );
       }
+
       for (const singleConversation of [
         firstConversation,
         secondConversation,
@@ -611,7 +613,6 @@ dialTest(
             },
             'hidden',
           );
-
           await chatBarFolderAssertion.assertFolderEntityState(
             {
               name: nestedFolders[i].name,
@@ -750,19 +751,16 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.partiallyChecked,
           );
-
           await chatBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
             Colors.defaultBackground,
           );
-
           if (i !== threeNestedLevels - 1) {
             await chatBarFolderAssertion.assertFolderEntityCheckbox(
               { name: nestedFolders[i].name },
               { name: nestedConversations[i].name },
               'hidden',
             );
-
             await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
               { name: nestedFolders[i].name },
               { name: nestedConversations[i].name },
@@ -777,7 +775,6 @@ dialTest(
           },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: secondLevelFolder.folders.name },
           Colors.defaultBackground,
@@ -788,7 +785,6 @@ dialTest(
           { name: secondLevelFolder.conversations[0].name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: secondLevelFolder.folders.name },
           { name: secondLevelFolder.conversations[0].name },
@@ -800,7 +796,6 @@ dialTest(
           { name: lowLevelFolderConversation.name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderConversation.name },
@@ -824,7 +819,6 @@ dialTest(
           { name: nestedConversations[threeNestedLevels - 1].name },
           CheckboxState.checked,
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderConversation.name },
@@ -835,7 +829,6 @@ dialTest(
           { name: nestedFolders[threeNestedLevels - 1].name },
           CheckboxState.checked,
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           Colors.backgroundAccentSecondaryAlphaDark,
@@ -846,7 +839,6 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.partiallyChecked,
           );
-
           await chatBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
             Colors.defaultBackground,
@@ -857,7 +849,6 @@ dialTest(
             { name: nestedConversations[i].name },
             'hidden',
           );
-
           await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
@@ -871,7 +862,6 @@ dialTest(
           },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: secondLevelFolder.folders.name },
           Colors.defaultBackground,
@@ -882,7 +872,6 @@ dialTest(
           { name: secondLevelFolder.conversations[0].name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: secondLevelFolder.folders.name },
           { name: secondLevelFolder.conversations[0].name },
@@ -992,7 +981,6 @@ dialTest(
             lowLevelFolderConversation.name,
           )
           .hover();
-
         await chatBarFolderAssertion.assertFolderEntityCheckboxBorderColors(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderConversation.name },
@@ -1014,7 +1002,6 @@ dialTest(
           { name: nestedFolders[0].name },
           CheckboxState.partiallyChecked,
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: nestedFolders[0].name },
           Colors.defaultBackground,
@@ -1025,7 +1012,6 @@ dialTest(
           { name: nestedConversations[0].name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[0].name },
           { name: nestedConversations[0].name },
@@ -1037,7 +1023,6 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.checked,
           );
-
           await chatBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
             Colors.backgroundAccentSecondaryAlphaDark,
@@ -1048,7 +1033,6 @@ dialTest(
             { name: nestedConversations[i].name },
             CheckboxState.checked,
           );
-
           await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
@@ -1062,7 +1046,6 @@ dialTest(
           },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: secondLevelFolder.folders.name },
           Colors.defaultBackground,
@@ -1073,7 +1056,6 @@ dialTest(
           { name: secondLevelFolder.conversations[0].name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: secondLevelFolder.folders.name },
           { name: secondLevelFolder.conversations[0].name },
@@ -1104,7 +1086,6 @@ dialTest(
           { name: nestedConversations[1].name },
           CheckboxState.checked,
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[1].name },
           { name: nestedConversations[1].name },
@@ -1116,7 +1097,6 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.partiallyChecked,
           );
-
           await chatBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
             Colors.defaultBackground,
@@ -1128,7 +1108,6 @@ dialTest(
               { name: nestedConversations[i].name },
               'hidden',
             );
-
             await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
               { name: nestedFolders[i].name },
               { name: nestedConversations[i].name },
@@ -1143,7 +1122,6 @@ dialTest(
           },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           Colors.defaultBackground,
@@ -1158,7 +1136,6 @@ dialTest(
             { name: folderConversation },
             'hidden',
           );
-
           await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[threeNestedLevels - 1].name },
             { name: folderConversation },
@@ -1235,7 +1212,6 @@ dialTest(
           { name: nestedFolders[threeNestedLevels - 1].name },
           CheckboxState.unchecked,
         );
-
         await folderConversations
           .getFolderCheckbox(nestedFolders[threeNestedLevels - 1].name)
           .hover();
@@ -1258,7 +1234,6 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.checked,
           );
-
           await chatBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
             Colors.backgroundAccentSecondaryAlphaDark,
@@ -1269,7 +1244,6 @@ dialTest(
             { name: nestedConversations[i].name },
             CheckboxState.checked,
           );
-
           await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
@@ -1282,7 +1256,6 @@ dialTest(
           { name: lowLevelFolderConversation.name },
           CheckboxState.checked,
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderConversation.name },
@@ -1293,7 +1266,6 @@ dialTest(
           { name: nestedFolders[0].name },
           CheckboxState.partiallyChecked,
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: nestedFolders[0].name },
           Colors.defaultBackground,
@@ -1304,7 +1276,6 @@ dialTest(
           { name: nestedConversations[0].name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[0].name },
           { name: nestedConversations[0].name },
@@ -1326,7 +1297,6 @@ dialTest(
           { name: nestedConversations[1].name },
           CheckboxState.checked,
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[1].name },
           { name: nestedConversations[1].name },
@@ -1338,7 +1308,6 @@ dialTest(
             { name: nestedFolders[i].name },
             CheckboxState.partiallyChecked,
           );
-
           await chatBarFolderAssertion.assertFolderBackgroundColor(
             { name: nestedFolders[i].name },
             Colors.defaultBackground,
@@ -1351,7 +1320,6 @@ dialTest(
           },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           Colors.defaultBackground,
@@ -1362,7 +1330,6 @@ dialTest(
           { name: nestedConversations[threeNestedLevels - 1].name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: nestedConversations[threeNestedLevels - 1].name },
@@ -1374,7 +1341,6 @@ dialTest(
           { name: lowLevelFolderConversation.name },
           'hidden',
         );
-
         await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
           { name: nestedFolders[threeNestedLevels - 1].name },
           { name: lowLevelFolderConversation.name },

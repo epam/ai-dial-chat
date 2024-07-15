@@ -54,7 +54,7 @@ Config files used for CI pipeline: `chat.playwright.config.ts` and `overlay.play
 Generated Allure report is attached as a job artifact.
 To view CI Allure report:
 
-- for Chrome: run `chrome.exe --disable-web-security --disable-gpu --user-data-dir=~/chromeTemp`
+- for Chrome: open report in browser instance started with command `"[PATH_TO_CHROME]\chrome.exe" --disable-web-security --disable-gpu --user-data-dir=%LOCALAPPDATA%\Google\chromeTemp`
 - for FireFox: open `about:config` in browser and set `security.fileuri.strict_origin_policy` to false.
 
 CI report includes screenshots for failed tests.
