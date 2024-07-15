@@ -1,78 +1,76 @@
+import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import { ExpectedMessages } from '@/src/testData';
-import { LoginPage } from '@/src/ui/pages';
-import { Auth0Page } from '@/src/ui/pages/auth0Page';
-import { OverlayHomePage } from '@/src/ui/pages/overlayHomePage';
-import { OverlayLoginPage } from '@/src/ui/pages/overlayLoginPage';
-import test, { expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 
-const usernames = process.env.E2E_OVERLAY_USERNAME!.split(',');
+for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
+  dialOverlayTest(
+    `Overlay test for url: "${overlayUrl}"`,
+    async ({
+      overlayHomePage,
+      overlayContainer,
+      overlayChat,
+      overlayHeader,
+      overlayChatHeader,
+    }) => {
+      await overlayHomePage.navigateToUrl(overlayUrl);
+      if (overlayUrl.includes('overlay-manager')) {
+        await overlayHomePage.overlayChatIcon.click();
+      }
+      await expect
+        .soft(
+          overlayContainer.getConversationSettings().getElementLocator(),
+          ExpectedMessages.conversationSettingsVisible,
+        )
+        .toBeVisible();
+      await expect
+        .soft(
+          overlayHeader.chatPanelToggle.getElementLocator(),
+          ExpectedMessages.sideBarPanelIsHidden,
+        )
+        .toBeVisible();
+      await expect
+        .soft(
+          overlayHeader.promptsPanelToggle.getElementLocator(),
+          ExpectedMessages.sideBarPanelIsHidden,
+        )
+        .toBeVisible();
 
-test('Overlay test', async ({ page }) => {
-  const overlayLoginPage = new OverlayLoginPage(page);
-  await overlayLoginPage.navigateToUrl('/cases/overlay');
-  const newPage = await overlayLoginPage.clickLoginButton();
+      const overlayTheme = await overlayHomePage.getTheme();
+      expect
+        .soft(overlayTheme, ExpectedMessages.applicationThemeIsValid)
+        .toContain('light');
 
-  const loginPage = new LoginPage(newPage);
-  await newPage.waitForLoadState();
-  await loginPage.ssoSignInButton.click();
+      const userRequest = '1+2';
+      await overlayChat.sendRequestWithButton(userRequest);
+      //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/1742
+      // expect
+      //   .soft(request.modelId, ExpectedMessages.chatRequestModelIsValid)
+      //   .toBe(ModelIds.GPT_4);
 
-  const auth0Page = new Auth0Page(newPage);
-  await newPage.waitForLoadState();
-  const auth0Form = auth0Page.getAuth0();
-  await auth0Form.setCredentials(usernames[0], process.env.E2E_PASSWORD!);
-  await auth0Form.loginButton.click();
+      await expect
+        .soft(
+          overlayChatHeader.clearConversation.getElementLocator(),
+          ExpectedMessages.headerCleanConversationIconVisible,
+        )
+        .toBeVisible();
+      await expect
+        .soft(
+          overlayChatHeader.openConversationSettings.getElementLocator(),
+          ExpectedMessages.conversationSettingsVisible,
+        )
+        .toBeVisible();
 
-  const overlayHomePage = new OverlayHomePage(page);
-  const overlayContainer = overlayHomePage.getOverlayContainer();
-  const overlayChat = overlayContainer.getChat();
-  const overlayHeader = overlayContainer.getHeader();
-
-  await expect
-    .soft(
-      overlayContainer.getConversationSettings().getElementLocator(),
-      ExpectedMessages.conversationSettingsVisible,
-    )
-    .toBeVisible();
-  await expect
-    .soft(
-      overlayHeader.chatPanelToggle.getElementLocator(),
-      ExpectedMessages.sideBarPanelIsHidden,
-    )
-    .toBeVisible();
-  await expect
-    .soft(
-      overlayHeader.promptsPanelToggle.getElementLocator(),
-      ExpectedMessages.sideBarPanelIsHidden,
-    )
-    .toBeVisible();
-
-  const userRequest = '1+2';
-  await overlayChat.sendRequestWithButton(userRequest);
-
-  const overlayChatHeader = overlayChat.getChatHeader();
-  await expect
-    .soft(
-      overlayChatHeader.clearConversation.getElementLocator(),
-      ExpectedMessages.headerCleanConversationIconVisible,
-    )
-    .toBeVisible();
-  await expect
-    .soft(
-      overlayChatHeader.openConversationSettings.getElementLocator(),
-      ExpectedMessages.conversationSettingsVisible,
-    )
-    .toBeVisible();
-
-  const overlayChatTitle =
-    await overlayChatHeader.chatTitle.getElementInnerContent();
-  expect
-    .soft(overlayChatTitle, ExpectedMessages.headerTitleCorrespondRequest)
-    .toContain(userRequest);
-
-  await expect
-    .soft(
-      overlayChatHeader.chatModelIcon.getElementLocator(),
-      ExpectedMessages.entityIconIsValid,
-    )
-    .toBeVisible();
-});
+      const overlayChatTitle =
+        await overlayChatHeader.chatTitle.getElementInnerContent();
+      expect
+        .soft(overlayChatTitle, ExpectedMessages.headerTitleCorrespondRequest)
+        .toContain(userRequest);
+      await expect
+        .soft(
+          overlayChatHeader.chatModelIcon.getElementLocator(),
+          ExpectedMessages.entityIconIsValid,
+        )
+        .toBeVisible();
+    },
+  );
+}
