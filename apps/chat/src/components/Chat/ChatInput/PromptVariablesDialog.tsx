@@ -2,6 +2,7 @@ import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   FormEvent,
   KeyboardEvent,
   useCallback,
@@ -71,7 +72,11 @@ export const PromptVariablesDialog: FC<Props> = ({
     (e: FormEvent) => {
       e.preventDefault();
       setSubmitted(true);
-      if (inputsRefs.current.some((el) => !el?.validity.valid)) {
+      if (
+        inputsRefs.current.some(
+          (el) => !el?.validity.valid, // || !el?.value.trim(),
+        )
+      ) {
         return;
       }
       const content = prompt.content as string;
@@ -87,6 +92,19 @@ export const PromptVariablesDialog: FC<Props> = ({
       onClose();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
+  );
+
+  const handleOnBlur = useCallback(
+    (index: number, e: FocusEvent<HTMLTextAreaElement>) => {
+      e.target.value = e.target.value.trim();
+      setUpdatedVariables((prev) => {
+        const updated = [...prev];
+        updated[index].value = e.target.value;
+        return [...updated];
+      });
+      onBlur(e);
+    },
+    [],
   );
 
   const handleKeyDown = useCallback(
@@ -172,7 +190,9 @@ export const PromptVariablesDialog: FC<Props> = ({
                 }) as string
               }
               value={variable.value}
-              onBlur={onBlur}
+              onBlur={(e) => {
+                handleOnBlur(index, e);
+              }}
               onChange={(e) => {
                 handleChange(index, e);
               }}
