@@ -89,7 +89,8 @@ import { AppEpic } from '@/src/types/store';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
-import { ModelId, resetShareEntity } from '@/src/constants/chat';
+import { resetShareEntity } from '@/src/constants/chat';
+import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
@@ -394,7 +395,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 model: {
                   //PGPT-81: Set GPT3.5 turbo as the default selected model
                   //Changing recentModels and rearranging it impacts other parts of the code, which is why it is set directly
-                  id: modelId || model?.id || ModelId.GPT_35,
+                  id: modelId || model?.id || DEFAULT_MODEL_ID,
                 },
                 prompt: DEFAULT_SYSTEM_PROMPT,
                 temperature: DEFAULT_TEMPERATURE,

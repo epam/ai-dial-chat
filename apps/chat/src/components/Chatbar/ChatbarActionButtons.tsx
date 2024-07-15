@@ -23,6 +23,7 @@ import {
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { ModelId } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { TourGuideId } from '@/src/constants/share';
 
@@ -51,6 +52,8 @@ export const NewConversationActionButton = () => {
     SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
   );
   const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
+  const defaultModelId =
+    useAppSelector(SettingsSelectors.selectDefaultModelId) || ModelId.GPT_35;
 
   if (isNewConversationDisabled) {
     return null;
@@ -65,6 +68,12 @@ export const NewConversationActionButton = () => {
           dispatch(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
+            }),
+          );
+          dispatch(
+            ModelsActions.updateRecentModels({
+              modelId: defaultModelId,
+              rearrange: true,
             }),
           );
           dispatch(ConversationsActions.resetSearch());
