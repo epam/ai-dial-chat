@@ -559,6 +559,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversationsIds: string[];
         isRestart?: boolean;
+        isContinue?: boolean;
       }>,
     ) => state,
     replayConversation: (
@@ -568,22 +569,25 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         conversationId: string;
         isRestart?: boolean;
+        isContinue?: boolean;
         activeReplayIndex: number;
       }>,
     ) => {
       state.isReplayPaused = false;
-      state.conversations = (state.conversations as Conversation[]).map(
-        (conv) =>
-          conv.id === payload.conversationId
-            ? {
-                ...conv,
-                replay: {
-                  ...conv.replay,
-                  activeReplayIndex: payload.activeReplayIndex,
-                },
-              }
-            : conv,
-      );
+      if (!payload.isRestart && !payload.isContinue) {
+        state.conversations = (state.conversations as Conversation[]).map(
+          (conv) =>
+            conv.id === payload.conversationId
+              ? {
+                  ...conv,
+                  replay: {
+                    ...conv.replay,
+                    activeReplayIndex: payload.activeReplayIndex,
+                  },
+                }
+              : conv,
+        );
+      }
     },
     stopReplayConversation: (state) => {
       state.isReplayPaused = true;

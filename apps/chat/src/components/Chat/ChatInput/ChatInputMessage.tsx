@@ -3,6 +3,7 @@ import {
   MutableRefObject,
   useCallback,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -19,6 +20,7 @@ import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
 import { DialFile, DialLink } from '@/src/types/files';
+import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -71,6 +73,7 @@ export const ChatInputMessage = ({
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
+  const promptTemplateMappingRef = useRef(new Map<string, string>());
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -198,6 +201,10 @@ export const ChatInputMessage = ({
 
     dispatch(ConversationsActions.setIsMessageSending(true));
 
+    const usedTemplates = Array.from(promptTemplateMappingRef.current).filter(
+      ([key]) => content.includes(key),
+    );
+
     onSend({
       role: Role.User,
       content,
@@ -206,6 +213,7 @@ export const ChatInputMessage = ({
         selectedFolders,
         selectedDialLinks,
       ),
+      templateMapping: Object.fromEntries(usedTemplates),
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
@@ -264,13 +272,21 @@ export const ChatInputMessage = ({
       }
 
       addPromptContent(newContent);
+      if (promptTemplateMappingRef.current) {
+        promptTemplateMappingRef.current.set(
+          newContent,
+          (filteredPrompts[activePromptIndex] as Prompt)?.content || '',
+        );
+      }
 
       if (textareaRef && textareaRef.current) {
         textareaRef.current.focus();
       }
     },
     [
+      activePromptIndex,
       addPromptContent,
+      filteredPrompts,
       getTokensLength,
       maxTokensLength,
       setIsPromptLimitModalOpen,

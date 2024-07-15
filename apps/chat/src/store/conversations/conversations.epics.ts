@@ -1742,18 +1742,34 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             );
           }),
           switchMap(() => {
-            const convReplay = (
-              ConversationsSelectors.selectConversation(
-                state$.value,
-                conv.id,
-              ) as Conversation
-            ).replay;
+            const convReplay = ConversationsSelectors.selectConversation(
+              state$.value,
+              conv.id,
+            ) as Conversation;
 
-            return of(
-              ConversationsActions.replayConversation({
-                conversationId: updatedConversation.id,
-                activeReplayIndex: (convReplay?.activeReplayIndex ?? 0) + 1,
-              }),
+            return concat(
+              (convReplay.replay?.activeReplayIndex ?? 0) ===
+                messagesStack.length - 1
+                ? of(
+                    ConversationsActions.endReplayConversation({
+                      conversationId: updatedConversation.id,
+                    }),
+                  )
+                : of(
+                    ConversationsActions.updateConversation({
+                      id: updatedConversation.id,
+                      values: {
+                        replay: convReplay.replay
+                          ? {
+                              ...convReplay.replay,
+                              activeReplayIndex:
+                                (convReplay.replay?.activeReplayIndex ?? 0) + 1,
+                            }
+                          : undefined,
+                      },
+                    }),
+                  ),
+              of(ConversationsActions.stopReplayConversation()),
             );
           }),
         ),
