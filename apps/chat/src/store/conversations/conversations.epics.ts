@@ -2505,6 +2505,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.uploadConversationsByIds({
                 conversationIds: conversations.map((c) => c.id),
+                showLoader: true,
               }),
             ),
           );

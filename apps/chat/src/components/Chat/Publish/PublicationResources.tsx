@@ -40,6 +40,31 @@ interface PublicationResources {
   onSelect?: (ids: string[]) => void;
 }
 
+const filterItems = ({
+  isUnselectAllAction,
+  folderId,
+  items,
+  chosenItemsIds,
+}: {
+  isUnselectAllAction: boolean;
+  folderId: string;
+  items: ShareEntity[];
+  chosenItemsIds: string[];
+}) => {
+  const folderIdParts = folderId.split('/');
+
+  return items
+    .filter(
+      (c) =>
+        c.id.startsWith(folderId) &&
+        c.id.split('/').length >= folderIdParts.length &&
+        (isUnselectAllAction
+          ? chosenItemsIds.includes(c.id)
+          : !chosenItemsIds.includes(c.id)),
+    )
+    .map((c) => c.id);
+};
+
 export const PromptPublicationResources = ({
   resources,
   readonly,
@@ -47,6 +72,7 @@ export const PromptPublicationResources = ({
   showTooltip,
   isOpen = true,
   additionalItemData,
+  onSelect,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -61,6 +87,9 @@ export const PromptPublicationResources = ({
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
   const { isSelectedPromptApproveRequiredResource } = useAppSelector(
     PromptsSelectors.selectSelectedPromptId,
+  );
+  const chosenItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
   );
 
   const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
@@ -86,7 +115,17 @@ export const PromptPublicationResources = ({
               readonly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={folderItemsToDisplay}
-            itemComponent={readonly ? PromptsRow : PromptComponent}
+            itemComponent={(props) =>
+              readonly ? (
+                <PromptsRow
+                  {...props}
+                  onSelect={onSelect}
+                  isChosen={chosenItemsIds.some((id) => id === props.item.id)}
+                />
+              ) : (
+                <PromptComponent {...props} />
+              )
+            }
             onClickFolder={(folderId: string) => {
               if (readonly) return;
               dispatch(PromptsActions.toggleFolder({ id: folderId }));
@@ -107,20 +146,39 @@ export const PromptPublicationResources = ({
                 : highlightedFolders
             }
             folderClassName={classNames(readonly && 'h-[38px]')}
-            itemComponentClassNames={classNames(readonly && 'cursor-pointer ')}
+            itemComponentClassNames={classNames(
+              readonly && 'group/prompt-item cursor-pointer',
+            )}
             additionalItemData={additionalItemData}
             showTooltip={showTooltip}
             canSelectFolders
+            onSelectFolder={(folderId) => {
+              if (!onSelect) return;
+
+              onSelect(
+                filterItems({
+                  isUnselectAllAction: (
+                    additionalItemData?.partialSelectedFolderIds as string
+                  ).includes(folderId),
+                  items: prompts,
+                  folderId,
+                  chosenItemsIds,
+                }),
+              );
+            }}
+            isSidePanelFolder={false}
           />
         );
       })}
       {itemsToDisplay.map((p) =>
         readonly ? (
           <PromptsRow
-            itemComponentClassNames="cursor-pointer"
+            itemComponentClassNames="cursor-pointer group/prompt-item"
             key={p.id}
             item={p}
             level={0}
+            onSelect={onSelect}
+            isChosen={chosenItemsIds.some((id) => id === p.id)}
           />
         ) : (
           <PromptComponent
@@ -186,36 +244,20 @@ export const ConversationPublicationResources = ({
             onSelectFolder={(folderId) => {
               if (!onSelect) return;
 
-              const filterConversations = ({
-                isUnselectAllAction,
-              }: {
-                isUnselectAllAction: boolean;
-              }) => {
-                const folderIdParts = folderId.split('/');
-
-                return conversations
-                  .filter(
-                    (c) =>
-                      c.id.startsWith(folderId) &&
-                      c.id.split('/').length >= folderIdParts.length &&
-                      (isUnselectAllAction
-                        ? chosenItemsIds.includes(c.id)
-                        : !chosenItemsIds.includes(c.id)),
-                  )
-                  .map((c) => c.id);
-              };
-
               onSelect(
-                filterConversations({
+                filterItems({
                   isUnselectAllAction: (
                     additionalItemData?.partialSelectedFolderIds as string
                   ).includes(folderId),
+                  items: conversations,
+                  folderId,
+                  chosenItemsIds,
                 }),
               );
             }}
             allItems={folderItemsToDisplay}
-            itemComponent={(props) => {
-              return readonly ? (
+            itemComponent={(props) =>
+              readonly ? (
                 <ConversationRow
                   {...props}
                   onSelect={onSelect}
@@ -223,8 +265,8 @@ export const ConversationPublicationResources = ({
                 />
               ) : (
                 <ConversationComponent {...props} />
-              );
-            }}
+              )
+            }
             onClickFolder={(folderId: string) => {
               if (readonly) return;
               dispatch(ConversationsActions.toggleFolder({ id: folderId }));
@@ -247,6 +289,7 @@ export const ConversationPublicationResources = ({
             additionalItemData={additionalItemData}
             showTooltip={showTooltip}
             canSelectFolders
+            isSidePanelFolder={false}
           />
         );
       })}
@@ -258,6 +301,7 @@ export const ConversationPublicationResources = ({
             item={c}
             level={0}
             onSelect={onSelect}
+            isChosen={chosenItemsIds.some((id) => id === c.id)}
           />
         ) : (
           <ConversationComponent
@@ -279,6 +323,8 @@ export const FilePublicationResources = ({
   uploadedFiles,
   isOpen = true,
   showTooltip,
+  onSelect,
+  additionalItemData,
 }: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
@@ -287,6 +333,9 @@ export const FilePublicationResources = ({
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allFolders = useAppSelector(FilesSelectors.selectFolders);
+  const chosenItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
 
   const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
     usePublicationResources(allFolders, resources, files);
@@ -312,26 +361,55 @@ export const FilePublicationResources = ({
               readonly ? allFolders.map((f) => f.id) : openedFoldersIds
             }
             allItems={folderItemsToDisplay}
-            itemComponent={readonly ? FilesRow : FileItem}
+            itemComponent={(props) =>
+              readonly ? (
+                <FilesRow
+                  {...props}
+                  onSelect={onSelect}
+                  isChosen={chosenItemsIds.some((id) => id === props.item.id)}
+                />
+              ) : (
+                <FileItem {...props} />
+              )
+            }
             onClickFolder={(folderId: string) => {
               if (readonly) return;
               dispatch(FilesActions.getFolders({ id: folderId }));
             }}
             featureType={FeatureType.File}
             folderClassName={classNames(readonly && 'h-[38px]')}
-            itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
+            itemComponentClassNames={classNames(
+              readonly && 'group/file-item cursor-pointer',
+            )}
             showTooltip={showTooltip}
             canSelectFolders
+            onSelectFolder={(folderId) => {
+              if (!onSelect) return;
+
+              onSelect(
+                filterItems({
+                  isUnselectAllAction: (
+                    additionalItemData?.partialSelectedFolderIds as string
+                  ).includes(folderId),
+                  items: files,
+                  folderId,
+                  chosenItemsIds,
+                }),
+              );
+            }}
+            isSidePanelFolder={false}
           />
         );
       })}
       {(uploadedFiles ?? itemsToDisplay).map((f) =>
         readonly ? (
           <FilesRow
-            itemComponentClassNames="cursor-pointer"
+            itemComponentClassNames="cursor-pointer group/file-item"
             key={f.id}
             item={f}
             level={0}
+            onSelect={onSelect}
+            isChosen={chosenItemsIds.some((id) => id === f.id)}
           />
         ) : (
           <FileItem key={f.id} item={f} level={1} />

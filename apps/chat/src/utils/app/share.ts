@@ -53,6 +53,7 @@ export const isPublishVersionUnique = (type: SharingType) => {
 };
 
 export const getAttachments = (type: SharingType) => {
+  // TODO: get rid of it
   switch (type) {
     case SharingType.Conversation:
     case SharingType.ConversationFolder:

@@ -183,6 +183,7 @@ export const selectLoadedCharts = createSelector([rootSelector], (state) => {
   // PlotReactState had some additional "state" properties that were never declared or updated.
   return cloneDeep(state.loadedCharts);
 });
+
 export const selectChartLoading = createSelector([rootSelector], (state) => {
   return state.chartLoading;
 });
@@ -207,18 +208,7 @@ export const selectChildAndCurrentFoldersIdsById = createSelector(
     return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
   },
 );
-export const selectFullTreeChildConversationsByFolderId = createSelector(
-  [selectConversations, selectChildAndCurrentFoldersIdsById],
-  (conversations, foldersIds) => {
-    return conversations.filter((conv) => foldersIds.has(conv.folderId));
-  },
-);
-export const selectFullTreeChildFoldersByFolderId = createSelector(
-  [selectFolders, selectChildAndCurrentFoldersIdsById],
-  (folders, foldersIds) => {
-    return folders.filter((folder) => foldersIds.has(folder.id));
-  },
-);
+
 export const selectFirstSelectedConversation = createSelector(
   [selectSelectedConversations],
   (conversations): Conversation | undefined => {
@@ -590,11 +580,13 @@ export const getUniqueAttachments = (attachments: DialFile[]): DialFile[] =>
   uniqBy(attachments, (file) => constructPath(file.relativePath, file.name));
 
 export const getAttachments = createSelector(
-  [(state) => state, (_state: RootState, entityId: string) => entityId],
-  (state, entityId) => {
-    const folders = selectFolders(state);
-    const conversation = selectConversation(state, entityId);
-
+  [
+    selectFolders,
+    selectConversations,
+    (state: RootState, entityId: string) => selectConversation(state, entityId),
+    (_state: RootState, entityId: string) => entityId,
+  ],
+  (folders, conversations, conversation, entityId) => {
     if (conversation) {
       return getUniqueAttachments(
         getConversationAttachmentWithPath(conversation, folders),
@@ -607,12 +599,12 @@ export const getAttachments = createSelector(
 
     if (!folderIds.size) return [];
 
-    const conversations = selectConversations(state).filter(
+    const filteredConversations = conversations.filter(
       (conv) => conv.folderId && folderIds.has(conv.folderId),
     );
 
     return getUniqueAttachments(
-      conversations.flatMap((conv) =>
+      filteredConversations.flatMap((conv) =>
         getConversationAttachmentWithPath(conv, folders),
       ),
     );

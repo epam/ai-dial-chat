@@ -5,6 +5,7 @@ import {
   MouseEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -17,7 +18,6 @@ import classNames from 'classnames';
 import { constructPath } from '@/src/utils/app/file';
 import { getRootId } from '@/src/utils/app/id';
 import { createTargetUrl } from '@/src/utils/app/publications';
-import { getAttachments } from '@/src/utils/app/share';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -54,11 +54,12 @@ import toLower from 'lodash-es/toLower';
 
 interface Props {
   entity: ShareEntity;
-  entities: ShareEntity[];
+  entities?: ShareEntity[];
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
   depth?: number;
+  publishAction: PublishActions;
 }
 
 export function PublishModal({
@@ -68,6 +69,7 @@ export function PublishModal({
   type,
   depth,
   entities,
+  publishAction,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -97,7 +99,15 @@ export function PublishModal({
     ),
   );
   const files = useAppSelector((state) =>
-    getAttachments(type)(state, entity.id),
+    ConversationsSelectors.getAttachments(state, entity.id),
+  );
+  const selectedItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
+
+  const entitiesArray = useMemo(
+    () => (entities ? entities : [entity]),
+    [entities, entity],
   );
 
   const notCurrentFolderRules = Object.entries(rules).filter(
@@ -159,12 +169,18 @@ export function PublishModal({
       const folderRegExp = new RegExp(
         entity.folderId.split('/').slice(2).join('/'),
       );
+      const filteredEntities = entitiesArray.filter((e) =>
+        selectedItemsIds.includes(e.id),
+      );
+      const filteredFiles = files.filter((f) =>
+        selectedItemsIds.includes(f.id),
+      );
 
       if (
         type === SharingType.Conversation ||
         type === SharingType.ConversationFolder
       ) {
-        const mappedFiles = (entities as Conversation[])
+        const mappedFiles = (entitiesArray as Conversation[])
           .filter((c) =>
             (c.playback?.messagesStack || c.messages).some(
               (m) => m.custom_content?.attachments,
@@ -200,7 +216,7 @@ export function PublishModal({
             name: trimmedName,
             targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
             resources: [
-              ...entities.map((item) => ({
+              ...filteredEntities.map((item) => ({
                 sourceUrl: item.id,
                 targetUrl: createTargetUrl(
                   FeatureType.Chat,
@@ -211,24 +227,23 @@ export function PublishModal({
                   type,
                 ),
               })),
-              ...files.reduce<{ sourceUrl: string; targetUrl: string }[]>(
-                (acc, file) => {
-                  const decodedFileId = ApiUtils.decodeApiUrl(file.id);
-                  const item = mappedFiles.find(
-                    (f) => f.oldUrl === decodedFileId,
-                  );
+              ...filteredFiles.reduce<
+                { sourceUrl: string; targetUrl: string }[]
+              >((acc, file) => {
+                const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+                const item = mappedFiles.find(
+                  (f) => f.oldUrl === decodedFileId,
+                );
 
-                  if (item) {
-                    acc.push({
-                      sourceUrl: decodedFileId,
-                      targetUrl: item.newUrl,
-                    });
-                  }
+                if (item) {
+                  acc.push({
+                    sourceUrl: decodedFileId,
+                    targetUrl: item.newUrl,
+                  });
+                }
 
-                  return acc;
-                },
-                [],
-              ),
+                return acc;
+              }, []),
             ],
             rules: preparedFilters.map((filter) => ({
               function: filter.filterFunction,
@@ -242,7 +257,7 @@ export function PublishModal({
           PublicationActions.publish({
             name: trimmedName,
             resources: [
-              ...entities.map((item) => ({
+              ...filteredEntities.map((item) => ({
                 sourceUrl: item.id,
                 targetUrl: createTargetUrl(
                   FeatureType.Prompt,
@@ -269,25 +284,38 @@ export function PublishModal({
     [
       currentFolderRules,
       dispatch,
-      entities,
+      entitiesArray,
       entity.folderId,
       files,
       onClose,
       otherTargetAudienceFilters,
       path,
       publishRequestName,
+      selectedItemsIds,
       type,
     ],
   );
 
   useEffect(() => {
-    if (areSelectedConversationsLoaded && entities.length === 0) {
+    if (
+      // We should be able to unpublish any item even if it's invalid
+      publishAction !== PublishActions.DELETE &&
+      areSelectedConversationsLoaded &&
+      entitiesArray.length === 0
+    ) {
       dispatch(
         UIActions.showErrorToast(t('There is no valid items to publish')),
       );
       onClose();
     }
-  }, [areSelectedConversationsLoaded, dispatch, entities.length, onClose, t]);
+  }, [
+    publishAction,
+    areSelectedConversationsLoaded,
+    dispatch,
+    entitiesArray.length,
+    onClose,
+    t,
+  ]);
 
   return (
     <Modal
@@ -307,7 +335,11 @@ export function PublishModal({
             autoFocus
             onChange={(e) => setPublishRequestName(e.target.value)}
             value={publishRequestName}
-            placeholder={t('Type publication request name...') ?? ''}
+            placeholder={
+              publishAction === PublishActions.ADD
+                ? t('Type publication request name...') ?? ''
+                : t('Type unpublish request name...') ?? ''
+            }
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
         </div>
@@ -429,11 +461,11 @@ export function PublishModal({
             <PublicationItemsList
               type={type}
               entity={entity}
-              entities={entities}
+              entities={entitiesArray}
               path={path}
               files={files}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
-              publishAction={PublishActions.ADD}
+              publishAction={publishAction}
             />
           ) : (
             <div className="flex w-full items-center justify-center">

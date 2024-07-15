@@ -127,18 +127,6 @@ export const selectChildAndCurrentFoldersIdsById = createSelector(
     return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
   },
 );
-export const selectFullTreeChildPromptsByFolderId = createSelector(
-  [selectPrompts, selectChildAndCurrentFoldersIdsById],
-  (prompts, foldersIds) => {
-    return prompts.filter((conv) => foldersIds.has(conv.folderId));
-  },
-);
-export const selectFullTreeChildFoldersByFolderId = createSelector(
-  [selectFolders, selectChildAndCurrentFoldersIdsById],
-  (folders, foldersIds) => {
-    return folders.filter((folder) => foldersIds.has(folder.id));
-  },
-);
 
 export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;

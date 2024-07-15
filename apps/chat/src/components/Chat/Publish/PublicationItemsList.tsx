@@ -66,12 +66,21 @@ export function PublicationItemsList({
   const selectedFolderIds = useAppSelector((state) =>
     PublicationSelectors.selectChosenFolderIds(state, entities),
   );
+  const chosenItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
 
   useEffect(() => {
+    dispatch(
+      PublicationActions.selectItemsToPublish({
+        ids: [...entities.map((e) => e.id), ...files.map((f) => f.id)],
+      }),
+    );
+
     return () => {
       dispatch(PublicationActions.resetItemsToPublish());
     };
-  }, [dispatch]);
+  }, [dispatch, entities, files]);
 
   const handleSelect = useCallback(
     (ids: string[]) => {
@@ -106,10 +115,10 @@ export function PublicationItemsList({
               itemComponentClassNames="cursor-pointer group/conversation-item"
               item={entity as ConversationInfo}
               level={0}
+              isChosen={chosenItemsIds.some((id) => id === entity.id)}
             />
           ) : (
             <ConversationPublicationResources
-              onSelect={handleSelect}
               rootFolder={entity}
               resources={entities.map((entity) => ({
                 action: publishAction,
@@ -123,6 +132,7 @@ export function PublicationItemsList({
                 reviewUrl: entity.id,
               }))}
               readonly
+              onSelect={handleSelect}
               additionalItemData={{
                 partialSelectedFolderIds,
                 selectedFolderIds,
@@ -145,6 +155,11 @@ export function PublicationItemsList({
             resources={[]}
             readonly
             showTooltip
+            onSelect={handleSelect}
+            additionalItemData={{
+              partialSelectedFolderIds,
+              selectedFolderIds,
+            }}
           />
         </CollapsibleSection>
       )}
@@ -158,9 +173,11 @@ export function PublicationItemsList({
         >
           {type === SharingType.Prompt ? (
             <PromptsRow
-              itemComponentClassNames="cursor-pointer"
+              onSelect={handleSelect}
+              itemComponentClassNames="cursor-pointer group/prompt-item"
               item={entity}
               level={0}
+              isChosen={chosenItemsIds.some((id) => id === entity.id)}
             />
           ) : (
             <PromptPublicationResources
@@ -178,6 +195,11 @@ export function PublicationItemsList({
               }))}
               readonly
               showTooltip
+              onSelect={handleSelect}
+              additionalItemData={{
+                partialSelectedFolderIds,
+                selectedFolderIds,
+              }}
             />
           )}
         </CollapsibleSection>

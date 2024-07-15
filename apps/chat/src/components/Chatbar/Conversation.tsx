@@ -38,6 +38,7 @@ import { translate } from '@/src/utils/app/translation';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus, isNotLoaded } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
+import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -61,7 +62,6 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
-import { UnpublishModal } from '../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
@@ -486,10 +486,6 @@ export const ConversationComponent = ({
       setIsContextMenu(false);
     }, []);
 
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
-
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
       const conversationRootId = getConversationRootId();
@@ -783,25 +779,15 @@ export const ConversationComponent = ({
           </SidebarActionButton>
         </div>
       )}
-      {isPublishing && (
+      {(isPublishing || isUnpublishing) && (
         <PublishModal
           entity={conversation}
-          entities={[conversation]}
           type={SharingType.Conversation}
-          isOpen
+          isOpen={isPublishing || isUnpublishing}
           onClose={handleClosePublishModal}
-        />
-      )}
-      {isUnpublishing && (
-        <UnpublishModal
-          subtitle={t(
-            'Conversation will no longer be visible to the organization',
-          )}
-          entity={conversation}
-          entities={[conversation]}
-          isOpen
-          onClose={handleCloseUnpublishModal}
-          type={SharingType.Conversation}
+          publishAction={
+            isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
         />
       )}
       {isUnshareConfirmOpened && (

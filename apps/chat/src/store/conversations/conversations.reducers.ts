@@ -650,7 +650,9 @@ export const conversationsSlice = createSlice({
     uploadConversationsWithContentRecursive: (
       state,
       _action: PayloadAction<{ path: string }>,
-    ) => state,
+    ) => {
+      state.areSelectedConversationsLoaded = false;
+    },
     uploadConversationsWithFoldersRecursiveSuccess: (state) => {
       state.conversationsLoaded = true;
     },

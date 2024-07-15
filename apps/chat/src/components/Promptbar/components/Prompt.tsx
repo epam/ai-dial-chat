@@ -32,6 +32,7 @@ import { translate } from '@/src/utils/app/translation';
 import { FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -52,7 +53,6 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import { PublishModal } from '../../Chat/Publish/PublishWizard';
-import { UnpublishModal } from '../../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
@@ -165,10 +165,6 @@ export const PromptComponent = ({
     useCallback(() => {
       setIsUnpublishing(true);
     }, []);
-
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
 
   const handleDelete = useCallback(() => {
     if (isDeleting) {
@@ -490,23 +486,15 @@ export const PromptComponent = ({
         )}
       </button>
 
-      {isPublishing && (
+      {(isPublishing || isUnpublishing) && (
         <PublishModal
           entity={prompt}
-          entities={[prompt]}
           type={SharingType.Prompt}
           isOpen
           onClose={handleClosePublishModal}
-        />
-      )}
-      {isUnpublishing && (
-        <UnpublishModal
-          subtitle={t('Prompt will no longer be visible to the organization')}
-          type={SharingType.Prompt}
-          entity={prompt}
-          entities={[prompt]}
-          isOpen
-          onClose={handleCloseUnpublishModal}
+          publishAction={
+            isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
         />
       )}
       <ConfirmDialog
