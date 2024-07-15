@@ -693,6 +693,7 @@ export const ChatView = memo(() => {
                                         >
                                           <div className="size-full">
                                             <MemoizedChatMessage
+                                              talkTo={talkTo}
                                               key={conv.id}
                                               message={message}
                                               messageIndex={index}
