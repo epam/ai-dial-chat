@@ -72,11 +72,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     (e: FormEvent) => {
       e.preventDefault();
       setSubmitted(true);
-      if (
-        inputsRefs.current.some(
-          (el) => !el?.validity.valid, // || !el?.value.trim(),
-        )
-      ) {
+      if (inputsRefs.current.some((el) => !el?.validity.valid)) {
         return;
       }
       const content = prompt.content as string;
