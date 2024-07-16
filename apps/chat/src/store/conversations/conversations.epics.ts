@@ -1675,6 +1675,14 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         );
       }
       const activeMessage = messagesStack[conv.replay?.activeReplayIndex ?? 0];
+
+      if (Object.keys(activeMessage.templateMapping ?? {}).length) {
+        return concat(
+          of(ConversationsActions.setIsReplayRequiresVariables(true)),
+          of(ConversationsActions.stopReplayConversation()),
+        );
+      }
+
       let updatedConversation: Conversation = conv;
 
       if (
@@ -1742,34 +1750,18 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
             );
           }),
           switchMap(() => {
-            const convReplay = ConversationsSelectors.selectConversation(
-              state$.value,
-              conv.id,
-            ) as Conversation;
+            const convReplay = (
+              ConversationsSelectors.selectConversation(
+                state$.value,
+                conv.id,
+              ) as Conversation
+            ).replay;
 
-            return concat(
-              (convReplay.replay?.activeReplayIndex ?? 0) ===
-                messagesStack.length - 1
-                ? of(
-                    ConversationsActions.endReplayConversation({
-                      conversationId: updatedConversation.id,
-                    }),
-                  )
-                : of(
-                    ConversationsActions.updateConversation({
-                      id: updatedConversation.id,
-                      values: {
-                        replay: convReplay.replay
-                          ? {
-                              ...convReplay.replay,
-                              activeReplayIndex:
-                                (convReplay.replay?.activeReplayIndex ?? 0) + 1,
-                            }
-                          : undefined,
-                      },
-                    }),
-                  ),
-              of(ConversationsActions.stopReplayConversation()),
+            return of(
+              ConversationsActions.replayConversation({
+                conversationId: updatedConversation.id,
+                activeReplayIndex: (convReplay?.activeReplayIndex ?? 0) + 1,
+              }),
             );
           }),
         ),

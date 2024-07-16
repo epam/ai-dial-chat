@@ -44,6 +44,7 @@ import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
+import { ReplyVariables } from './ReplyVariables';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -491,6 +492,7 @@ export const ChatInputMessage = ({
             onClose={() => setIsModalVisible(false)}
           />
         )}
+        <ReplyVariables />
       </div>
 
       <ConfirmDialog

@@ -29,7 +29,7 @@ import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
@@ -89,7 +89,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       );
 
       onSubmit(newContent);
-      onClose();
+      onClose && onClose();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
   );
@@ -113,7 +113,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
-        onClose();
+        onClose && onClose();
       }
     },
     [handleSubmit, onClose],
@@ -122,7 +122,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
+        onClose && onClose();
       }
     };
 
@@ -164,12 +164,14 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          onClick={onClose}
-        >
-          <IconX size={24} />
-        </button>
+        {onClose && (
+          <button
+            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+            onClick={onClose}
+          >
+            <IconX size={24} />
+          </button>
+        )}
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>

@@ -600,6 +600,12 @@ export const conversationsSlice = createSlice({
     ) => {
       state.isReplayPaused = true;
     },
+    setIsReplayRequiresVariables: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isReplayRequiresVariables = payload;
+    },
     playbackNextMessageStart: (state) => {
       state.isPlaybackPaused = false;
     },
