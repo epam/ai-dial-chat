@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-import { usePublicationResources } from '@/src/hooks/usePublicationResources.1';
+import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
 import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';

@@ -5,27 +5,16 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { ConversationInfo } from '@/src/types/chat';
-import {
-  Entity,
-  FeatureType,
-  ShareEntity,
-  UploadStatus,
-} from '@/src/types/common';
+import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import {
   PublicationActions,
   PublicationSelectors,
@@ -184,20 +173,6 @@ export function PublicationItemsList({
                   isChosen={chosenItemsIds.some((id) => id === item.id)}
                 />
               )}
-              onClickFolder={(folderId: string) => {
-                dispatch(ConversationsActions.toggleFolder({ id: folderId }));
-
-                if (entity.status !== UploadStatus.LOADED) {
-                  dispatch(
-                    ConversationsActions.uploadConversationsWithFoldersRecursive(
-                      {
-                        path: folderId,
-                        noLoader: true,
-                      },
-                    ),
-                  );
-                }
-              }}
               featureType={FeatureType.Chat}
               folderClassName="h-[38px]"
               itemComponentClassNames={classNames(
@@ -277,18 +252,6 @@ export function PublicationItemsList({
                   isChosen={chosenItemsIds.some((id) => id === props.item.id)}
                 />
               )}
-              onClickFolder={(folderId: string) => {
-                dispatch(PromptsActions.toggleFolder({ id: folderId }));
-
-                if (entity.status !== UploadStatus.LOADED) {
-                  dispatch(
-                    PromptsActions.uploadPromptsWithFoldersRecursive({
-                      path: folderId,
-                      noLoader: true,
-                    }),
-                  );
-                }
-              }}
               featureType={FeatureType.Prompt}
               folderClassName="h-[38px]"
               itemComponentClassNames={classNames(
