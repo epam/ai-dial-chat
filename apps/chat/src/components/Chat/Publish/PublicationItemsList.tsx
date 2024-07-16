@@ -146,7 +146,6 @@ export function PublicationItemsList({
             <Folder
               noCaretIcon
               level={0}
-              key={entity.id}
               currentFolder={entity as FolderInterface}
               allFolders={conversationFolders.filter((f) =>
                 entities.some((item) => item.id.startsWith(`${f.id}/`)),
@@ -237,7 +236,6 @@ export function PublicationItemsList({
               readonly
               noCaretIcon
               level={0}
-              key={entity.id}
               currentFolder={entity as FolderInterface}
               allFolders={promptFolders.filter((f) =>
                 entities.some((item) => item.id.startsWith(`${f.id}/`)),
