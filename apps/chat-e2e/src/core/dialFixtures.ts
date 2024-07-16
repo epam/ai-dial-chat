@@ -18,6 +18,11 @@ import {
   SendMessage,
 } from '../ui/webElements';
 
+import { ChatBarAssertion } from '@/src/assertions/chatBarAssertion';
+import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
+import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
+import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ConversationData } from '@/src/testData';
@@ -167,6 +172,11 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectUploadFolder: Folders;
     attachedAllFiles: FolderFiles;
+    conversationAssertion: ConversationAssertion;
+    chatBarFolderAssertion: FolderAssertion;
+    tooltipAssertion: TooltipAssertion;
+    confirmationDialogAssertion: ConfirmationDialogAssertion;
+    chatBarAssertion: ChatBarAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -572,6 +582,28 @@ const dialTest = test.extend<
   attachedAllFiles: async ({ attachFilesModal }, use) => {
     const attachedAllFiles = attachFilesModal.getFolderFiles();
     await use(attachedAllFiles);
+  },
+  conversationAssertion: async ({ conversations }, use) => {
+    const chatBarAssertion = new ConversationAssertion(conversations);
+    await use(chatBarAssertion);
+  },
+  chatBarFolderAssertion: async ({ folderConversations }, use) => {
+    const chatBarFolderAssertion = new FolderAssertion(folderConversations);
+    await use(chatBarFolderAssertion);
+  },
+  tooltipAssertion: async ({ tooltip }, use) => {
+    const tooltipAssertion = new TooltipAssertion(tooltip);
+    await use(tooltipAssertion);
+  },
+  confirmationDialogAssertion: async ({ confirmationDialog }, use) => {
+    const confirmationDialogAssertion = new ConfirmationDialogAssertion(
+      confirmationDialog,
+    );
+    await use(confirmationDialogAssertion);
+  },
+  chatBarAssertion: async ({ chatBar }, use) => {
+    const chatBarAssertion = new ChatBarAssertion(chatBar);
+    await use(chatBarAssertion);
   },
 });
 
