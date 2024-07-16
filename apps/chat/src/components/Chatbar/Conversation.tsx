@@ -479,6 +479,7 @@ export const ConversationComponent = ({
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
+    setIsUnpublishing(false);
   }, []);
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =

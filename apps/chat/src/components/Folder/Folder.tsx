@@ -853,7 +853,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted
                     featureType={featureType}
                     containerClassName={
-                      !(isExternal || isSidePanelFolder) && canSelectFolders
+                      (!isExternal || !isSidePanelFolder) && canSelectFolders
                         ? 'group-hover/folder-item:hidden'
                         : ''
                     }
@@ -862,7 +862,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        !(isExternal || isSidePanelFolder) &&
+                        (!isExternal || !isSidePanelFolder) &&
                           canSelectFolders &&
                           'group-hover/folder-item:hidden',
                       )}
@@ -937,20 +937,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted={isContextMenu}
                     featureType={featureType}
                     containerClassName={
-                      (isExternal || isSidePanelFolder) && canSelectFolders
+                      (!isExternal || !isSidePanelFolder) && canSelectFolders
                         ? 'group-hover/folder-item:hidden'
                         : ''
                     }
                   >
-                    <IconFolder
-                      size={18}
-                      className={classNames(
-                        'mr-1 text-secondary',
-                        (isExternal || isSidePanelFolder) &&
-                          canSelectFolders &&
-                          'group-hover/folder-item:hidden',
-                      )}
-                    />
+                    <IconFolder size={18} className="mr-1 text-secondary" />
                   </ShareIcon>
                 )}
                 {canSelectFolders &&
@@ -978,6 +970,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                               : 'unchecked'
                         }
                       />
+                      {isSelected && (
+                        <IconCheck
+                          size={18}
+                          className="pointer-events-none absolute text-accent-primary"
+                        />
+                      )}
                       {isPartialSelected && (
                         <IconMinus
                           size={18}
