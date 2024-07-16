@@ -157,3 +157,10 @@ export const selectNonExistentEntities = createSelector(
     );
   },
 );
+
+export const selectSelectedItemsToPublish = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.selectedItemsToPublish;
+  },
+);

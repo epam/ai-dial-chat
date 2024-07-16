@@ -179,6 +179,7 @@ export const publicationSlice = createSlice({
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
     },
+<<<<<<< HEAD
     selectItemsToPublish: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
@@ -190,6 +191,13 @@ export const publicationSlice = createSlice({
     },
     resetItemsToPublish: (state) => {
       state.selectedItemsToPublish = [];
+=======
+    addSelectedItemsToPublish: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.selectedItemsToPublish = payload.ids;
+>>>>>>> 8a0b2b70 (resolve conflict)
     },
   },
 });

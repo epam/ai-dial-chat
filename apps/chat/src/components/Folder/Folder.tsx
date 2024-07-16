@@ -978,12 +978,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                               : 'unchecked'
                         }
                       />
-                      {isSelected && (
-                        <IconCheck
-                          size={18}
-                          className="pointer-events-none absolute text-accent-primary"
-                        />
-                      )}
                       {isPartialSelected && (
                         <IconMinus
                           size={18}
