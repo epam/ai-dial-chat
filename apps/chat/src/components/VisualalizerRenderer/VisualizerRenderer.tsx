@@ -12,6 +12,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
@@ -59,6 +60,10 @@ export const VisualizerRenderer = ({
 
   const currentConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const isAllowedSendMessage = useAppSelector(
+    SettingsSelectors.selectAllowVisualizerSendMessages,
   );
 
   const scrollWidth =
@@ -146,6 +151,7 @@ export const VisualizerRenderer = ({
       }
 
       if (
+        isAllowedSendMessage &&
         event.data.type ===
           `${visualizerTitle}/${VisualizerConnectorEvents.sendMessage}` &&
         event.data.payload &&

@@ -347,6 +347,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
+    allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
