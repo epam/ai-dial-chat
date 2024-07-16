@@ -176,7 +176,13 @@ export const VisualizerRenderer = ({
     window.addEventListener('message', postMessageListener, false);
 
     return () => window.removeEventListener('message', postMessageListener);
-  }, [visualizerTitle, rendererUrl, dispatch, currentConversations]);
+  }, [
+    visualizerTitle,
+    rendererUrl,
+    dispatch,
+    currentConversations,
+    isAllowedSendMessage,
+  ]);
 
   if (!attachmentUrl) {
     return null;
