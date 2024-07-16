@@ -5,9 +5,15 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 
-import { selectFolders as selectConversationFolders } from '../conversations//conversations.selectors';
+import {
+  selectFolders as selectConversationFolders,
+  selectConversations,
+} from '../conversations//conversations.selectors';
 import { RootState } from '../index';
-import { selectFolders as selectPromptFolders } from '../prompts/prompts.selectors';
+import {
+  selectFolders as selectPromptFolders,
+  selectPrompts,
+} from '../prompts/prompts.selectors';
 import { PublicationState } from './publication.reducers';
 
 const rootSelector = (state: RootState): PublicationState => state.publication;
@@ -140,5 +146,14 @@ export const selectChosenFolderIds = createSelector(
           .filter((item) => item.id.startsWith(folderId))
           .every((item) => selectedItemsToPublish.includes(item.id)),
       );
+  },
+);
+
+export const selectNonExistentEntities = createSelector(
+  [selectConversations, selectPrompts],
+  (conversations, prompts) => {
+    return [...conversations, ...prompts].filter(
+      (entity) => entity.publicationInfo?.isNotExist,
+    );
   },
 );
