@@ -470,7 +470,6 @@ export function PublishModal({
               type={type}
               entity={entity}
               entities={entitiesArray}
-              path={path}
               files={files}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={publishAction}

@@ -73,6 +73,7 @@ interface ViewProps {
   isInvalid: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
+  additionalItemData?: Record<string, unknown>;
 }
 
 export function ConversationView({
@@ -81,6 +82,7 @@ export function ConversationView({
   isInvalid,
   isChosen = false,
   isSelectMode,
+  additionalItemData,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -161,7 +163,13 @@ export function ConversationView({
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
           )}
           hideTooltip={!isNameOrPathInvalid}
-          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+          triggerClassName={classNames(
+            'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+            conversation.publicationInfo?.isNotExist && 'text-secondary',
+            !!additionalItemData?.isApproveRequiredResource &&
+              conversation.publicationInfo?.action === PublishActions.DELETE &&
+              'text-error',
+          )}
         >
           {conversation.name}
         </Tooltip>
@@ -691,6 +699,7 @@ export const ConversationComponent = ({
             isInvalid={isNameOrPathInvalid}
             isChosen={isChosen}
             isSelectMode={isSelectMode}
+            additionalItemData={additionalItemData}
           />
         </button>
       )}

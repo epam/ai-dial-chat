@@ -59,17 +59,18 @@ export const PromptPublicationResources = ({
     PromptsSelectors.selectSelectedPromptId,
   );
 
-  const { rootFolder, itemsToDisplay, folderItemsToDisplay } =
+  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
     usePublicationResources(allFolders, resources, prompts);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
-      {rootFolder && (
+      {rootFolders.map((f) => (
         <Folder
           readonly
+          key={f.id}
           noCaretIcon={!!readonly}
           level={readonly ? 0 : 1}
-          currentFolder={rootFolder}
+          currentFolder={f}
           allFolders={allFolders.filter((f) =>
             folderItemsToDisplay.some((item) => item.id.startsWith(`${f.id}/`)),
           )}
@@ -83,7 +84,7 @@ export const PromptPublicationResources = ({
             if (readonly) return;
             dispatch(PromptsActions.toggleFolder({ id: folderId }));
 
-            if (rootFolder.status !== UploadStatus.LOADED) {
+            if (f.status !== UploadStatus.LOADED) {
               dispatch(
                 PromptsActions.uploadPromptsWithFoldersRecursive({
                   path: folderId,
@@ -103,10 +104,10 @@ export const PromptPublicationResources = ({
             readonly && 'group/prompt-item cursor-pointer',
           )}
           showTooltip={showTooltip}
-          canSelectFolders
           isSidePanelFolder={false}
+          additionalItemData={additionalItemData}
         />
-      )}
+      ))}
       {itemsToDisplay.map((p) =>
         readonly ? (
           <PromptsRow
@@ -149,17 +150,18 @@ export const ConversationPublicationResources = ({
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
 
-  const { rootFolder, itemsToDisplay, folderItemsToDisplay } =
+  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
     usePublicationResources(allFolders, resources, conversations);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
-      {rootFolder && (
+      {rootFolders.map((f) => (
         <Folder
           readonly
+          key={f.id}
           noCaretIcon={!!readonly}
           level={readonly ? 0 : 1}
-          currentFolder={rootFolder}
+          currentFolder={f}
           allFolders={allFolders.filter((f) =>
             folderItemsToDisplay.some((item) => item.id.startsWith(`${f.id}/`)),
           )}
@@ -173,7 +175,7 @@ export const ConversationPublicationResources = ({
             if (readonly) return;
             dispatch(ConversationsActions.toggleFolder({ id: folderId }));
 
-            if (rootFolder.status !== UploadStatus.LOADED) {
+            if (f.status !== UploadStatus.LOADED) {
               dispatch(
                 ConversationsActions.uploadConversationsWithFoldersRecursive({
                   path: folderId,
@@ -190,10 +192,9 @@ export const ConversationPublicationResources = ({
           )}
           additionalItemData={additionalItemData}
           showTooltip={showTooltip}
-          canSelectFolders
           isSidePanelFolder={false}
         />
-      )}
+      ))}
       {itemsToDisplay.map((c) =>
         readonly ? (
           <ConversationRow
@@ -229,18 +230,19 @@ export const FilePublicationResources = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allFolders = useAppSelector(FilesSelectors.selectFolders);
 
-  const { rootFolder, itemsToDisplay, folderItemsToDisplay } =
+  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
     usePublicationResources(allFolders, resources, files);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
-      {rootFolder && (
+      {rootFolders.map((f) => (
         <Folder
+          key={f.id}
           readonly
           noCaretIcon={!!readonly}
           displayCaretAlways
           level={readonly ? 0 : 1}
-          currentFolder={rootFolder}
+          currentFolder={f}
           allFolders={allFolders.filter((f) =>
             folderItemsToDisplay.some((item) => item.id.startsWith(`${f.id}/`)),
           )}
@@ -260,9 +262,8 @@ export const FilePublicationResources = ({
             readonly && 'group/file-item cursor-pointer',
           )}
           showTooltip={showTooltip}
-          canSelectFolders
         />
-      )}
+      ))}
       {itemsToDisplay.map((f) =>
         readonly ? (
           <FilesRow

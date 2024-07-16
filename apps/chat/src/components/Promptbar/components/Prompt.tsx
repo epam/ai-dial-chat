@@ -413,7 +413,11 @@ export const PromptComponent = ({
               hideTooltip={!isNameOrPathInvalid}
               triggerClassName={classNames(
                 'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-                isNameOrPathInvalid && 'text-secondary',
+                (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
+                  'text-secondary',
+                !!additionalItemData?.isApproveRequiredResource &&
+                  prompt.publicationInfo?.action === PublishActions.DELETE &&
+                  'text-error',
               )}
             >
               {prompt.name}

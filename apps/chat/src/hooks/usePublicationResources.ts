@@ -9,6 +9,7 @@ import { PromptInfo } from '../types/prompt';
 import { PublicationResource } from '../types/publication';
 
 import minBy from 'lodash-es/minBy';
+import uniqBy from 'lodash-es/uniqBy';
 
 export const usePublicationResources = <
   T extends PromptInfo | ConversationInfo | DialFile,
@@ -35,20 +36,21 @@ export const usePublicationResources = <
       ),
     [items, resourceUrls],
   );
-  const rootFolder = useMemo(
-    () =>
-      minBy(
-        allFolders.filter((f) =>
-          resourceUrls.some((url) => url.startsWith(`${f.id}/`)),
+  const rootFolders = useMemo(() => {
+    return uniqBy(
+      resourceUrls.map((url) =>
+        minBy(
+          allFolders.filter((f) => url.startsWith(`${f.id}/`)),
+          (item) => item.id.split('/').length,
         ),
-        (item) => item.id.split('/').length,
       ),
-    [allFolders, resourceUrls],
-  );
+      'id',
+    ).filter(Boolean) as FolderInterface[];
+  }, [allFolders, resourceUrls]);
 
   return {
     itemsToDisplay,
     folderItemsToDisplay,
-    rootFolder,
+    rootFolders,
   };
 };
