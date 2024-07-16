@@ -4,41 +4,71 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
-
 import { ConversationInfo } from '@/src/types/chat';
-import { ApiKeys, Entity } from '@/src/types/common';
+import {
+  Entity,
+  FeatureType,
+  ShareEntity,
+  UploadStatus,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
 import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
-
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
   ConversationRow,
+  FilesRow,
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
-import {
-  ConversationPublicationResources,
-  FilePublicationResources,
-  PromptPublicationResources,
-} from './PublicationResources';
+import Folder from '../../Folder/Folder';
+
+const filterItems = ({
+  isUnselectAllAction,
+  folderId,
+  entities,
+  chosenItemsIds,
+}: {
+  isUnselectAllAction: boolean;
+  folderId: string;
+  entities: ShareEntity[];
+  chosenItemsIds: string[];
+}) => {
+  const folderIdParts = folderId.split('/');
+
+  return entities
+    .filter(
+      (e) =>
+        e.id.startsWith(folderId) &&
+        e.id.split('/').length >= folderIdParts.length &&
+        (isUnselectAllAction
+          ? chosenItemsIds.includes(e.id)
+          : !chosenItemsIds.includes(e.id)),
+    )
+    .map((e) => e.id);
+};
 
 interface Props {
   type: SharingType;
   entity: Entity;
   entities: Entity[];
-  path: string;
   files: DialFile[];
   containerClassNames?: string;
   collapsibleSectionClassNames?: string;
@@ -50,7 +80,6 @@ export function PublicationItemsList({
   type,
   entities,
   entity,
-  path,
   files,
   containerClassNames,
   collapsibleSectionClassNames,
@@ -68,6 +97,10 @@ export function PublicationItemsList({
   );
   const chosenItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
+  );
+  const promptFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const conversationFolders = useAppSelector(
+    ConversationsSelectors.selectFolders,
   );
 
   useEffect(() => {
@@ -121,29 +154,63 @@ export function PublicationItemsList({
               isChosen={chosenItemsIds.some((id) => id === entity.id)}
             />
           ) : (
-            <ConversationPublicationResources
-              rootFolder={entity}
-              resources={entities.map((entity) => ({
-                action: publishAction,
-                sourceUrl: entity.id,
-                targetUrl: constructPath(
-                  ApiKeys.Conversations,
-                  PUBLIC_URL_PREFIX,
-                  path,
-                  splitEntityId(entity.id).name,
-                ),
-                reviewUrl: entity.id,
-              }))}
-              readonly
-              onSelect={handleSelect}
+            <Folder
+              noCaretIcon
+              level={0}
+              key={entity.id}
+              currentFolder={entity as FolderInterface}
+              allFolders={conversationFolders.filter((f) =>
+                entities.some((item) => item.id.startsWith(`${f.id}/`)),
+              )}
+              searchTerm={''}
+              openedFoldersIds={conversationFolders.map((f) => f.id)}
+              onSelectFolder={(folderId) => {
+                handleSelect(
+                  filterItems({
+                    isUnselectAllAction:
+                      partialSelectedFolderIds.includes(folderId),
+                    entities,
+                    folderId,
+                    chosenItemsIds,
+                  }),
+                );
+              }}
+              allItems={entities}
+              itemComponent={({ item, ...props }) => (
+                <ConversationRow
+                  {...props}
+                  item={item as ConversationInfo}
+                  onSelect={handleSelect}
+                  isChosen={chosenItemsIds.some((id) => id === item.id)}
+                />
+              )}
+              onClickFolder={(folderId: string) => {
+                dispatch(ConversationsActions.toggleFolder({ id: folderId }));
+
+                if (entity.status !== UploadStatus.LOADED) {
+                  dispatch(
+                    ConversationsActions.uploadConversationsWithFoldersRecursive(
+                      {
+                        path: folderId,
+                        noLoader: true,
+                      },
+                    ),
+                  );
+                }
+              }}
+              featureType={FeatureType.Chat}
+              folderClassName="h-[38px]"
+              itemComponentClassNames={classNames(
+                'group/conversation-item cursor-pointer',
+                publishAction === PublishActions.DELETE && 'text-error',
+              )}
               additionalItemData={{
                 partialSelectedFolderIds,
                 selectedFolderIds,
               }}
               showTooltip
-              resourcesClassNames={classNames(
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
+              canSelectFolders
+              isSidePanelFolder={false}
             />
           )}
         </CollapsibleSection>
@@ -156,20 +223,19 @@ export function PublicationItemsList({
           dataQa="files-to-send-request"
           className={classNames('!pl-0', collapsibleSectionClassNames)}
         >
-          <FilePublicationResources
-            uploadedFiles={files}
-            resources={[]}
-            readonly
-            showTooltip
-            onSelect={handleSelect}
-            additionalItemData={{
-              partialSelectedFolderIds,
-              selectedFolderIds,
-            }}
-            resourcesClassNames={classNames(
-              publishAction === PublishActions.DELETE && 'text-error',
-            )}
-          />
+          {files.map((f) => (
+            <FilesRow
+              itemComponentClassNames={classNames(
+                'group/file-item cursor-pointer',
+                publishAction === PublishActions.DELETE && 'text-error',
+              )}
+              key={f.id}
+              item={f}
+              level={0}
+              onSelect={handleSelect}
+              isChosen={chosenItemsIds.some((id) => id === f.id)}
+            />
+          ))}
         </CollapsibleSection>
       )}
       {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
@@ -192,29 +258,61 @@ export function PublicationItemsList({
               isChosen={chosenItemsIds.some((id) => id === entity.id)}
             />
           ) : (
-            <PromptPublicationResources
-              rootFolder={entity}
-              resources={entities.map((entity) => ({
-                action: publishAction,
-                sourceUrl: entity.id,
-                targetUrl: constructPath(
-                  ApiKeys.Prompts,
-                  PUBLIC_URL_PREFIX,
-                  path,
-                  splitEntityId(entity.id).name,
-                ),
-                reviewUrl: entity.id,
-              }))}
+            <Folder
               readonly
-              showTooltip
-              onSelect={handleSelect}
+              noCaretIcon
+              level={0}
+              key={entity.id}
+              currentFolder={entity as FolderInterface}
+              allFolders={promptFolders.filter((f) =>
+                entities.some((item) => item.id.startsWith(`${f.id}/`)),
+              )}
+              searchTerm={''}
+              openedFoldersIds={promptFolders.map((f) => f.id)}
+              allItems={entities}
+              itemComponent={(props) => (
+                <PromptsRow
+                  {...props}
+                  onSelect={handleSelect}
+                  isChosen={chosenItemsIds.some((id) => id === props.item.id)}
+                />
+              )}
+              onClickFolder={(folderId: string) => {
+                dispatch(PromptsActions.toggleFolder({ id: folderId }));
+
+                if (entity.status !== UploadStatus.LOADED) {
+                  dispatch(
+                    PromptsActions.uploadPromptsWithFoldersRecursive({
+                      path: folderId,
+                      noLoader: true,
+                    }),
+                  );
+                }
+              }}
+              featureType={FeatureType.Prompt}
+              folderClassName="h-[38px]"
+              itemComponentClassNames={classNames(
+                'group/prompt-item cursor-pointer',
+                publishAction === PublishActions.DELETE && 'text-error',
+              )}
               additionalItemData={{
                 partialSelectedFolderIds,
                 selectedFolderIds,
               }}
-              resourcesClassNames={classNames(
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
+              showTooltip
+              canSelectFolders
+              onSelectFolder={(folderId) => {
+                handleSelect(
+                  filterItems({
+                    isUnselectAllAction:
+                      partialSelectedFolderIds.includes(folderId),
+                    entities,
+                    folderId,
+                    chosenItemsIds,
+                  }),
+                );
+              }}
+              isSidePanelFolder={false}
             />
           )}
         </CollapsibleSection>
