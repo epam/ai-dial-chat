@@ -45,7 +45,7 @@ dialTest(
           await promptModalDialog.saveButton.click();
           await expect
             .soft(
-              prompts.getPromptByName(ExpectedConstants.newPromptTitle(i)),
+              prompts.getEntityByName(ExpectedConstants.newPromptTitle(i)),
               ExpectedMessages.promptIsVisible,
             )
             .toBeVisible();
@@ -56,7 +56,7 @@ dialTest(
     await dialTest.step(
       'Rename prompts and verify new prompts still use correct numeration',
       async () => {
-        await prompts.openPromptDropdownMenu(
+        await prompts.openEntityDropdownMenu(
           ExpectedConstants.newPromptTitle(1),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
@@ -67,7 +67,7 @@ dialTest(
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
-            prompts.getPromptByName(renamedPrompt + 1),
+            prompts.getEntityByName(renamedPrompt + 1),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -77,12 +77,12 @@ dialTest(
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
-            prompts.getPromptByName(ExpectedConstants.newPromptTitle(4)),
+            prompts.getEntityByName(ExpectedConstants.newPromptTitle(4)),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
 
-        await prompts.openPromptDropdownMenu(
+        await prompts.openEntityDropdownMenu(
           ExpectedConstants.newPromptTitle(4),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
@@ -93,7 +93,7 @@ dialTest(
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
-            prompts.getPromptByName(renamedPrompt + 4),
+            prompts.getEntityByName(renamedPrompt + 4),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -103,7 +103,7 @@ dialTest(
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
-            prompts.getPromptByName(ExpectedConstants.newPromptTitle(4)),
+            prompts.getEntityByName(ExpectedConstants.newPromptTitle(4)),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -114,7 +114,7 @@ dialTest(
       'Delete prompts and verify new prompts still use correct numeration',
       async () => {
         for (let i = 2; i <= 3; i++) {
-          await prompts.openPromptDropdownMenu(
+          await prompts.openEntityDropdownMenu(
             ExpectedConstants.newPromptTitle(i),
           );
           await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
@@ -128,7 +128,7 @@ dialTest(
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
-            prompts.getPromptByName(ExpectedConstants.newPromptTitle(5)),
+            prompts.getEntityByName(ExpectedConstants.newPromptTitle(5)),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -138,7 +138,7 @@ dialTest(
     await dialTest.step(
       'Verify prompt numeration continues correctly after 999',
       async () => {
-        await prompts.openPromptDropdownMenu(renamedPrompt + 1);
+        await prompts.openEntityDropdownMenu(renamedPrompt + 1);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         await promptModalDialog.setField(
           promptModalDialog.name,
@@ -155,7 +155,7 @@ dialTest(
           await promptModalDialog.saveButton.click();
           await expect
             .soft(
-              prompts.getPromptByName(ExpectedConstants.newPromptTitle(i)),
+              prompts.getEntityByName(ExpectedConstants.newPromptTitle(i)),
               ExpectedMessages.promptIsVisible,
             )
             .toBeVisible();
@@ -166,7 +166,7 @@ dialTest(
     await dialTest.step(
       'Try to rename prompt to already existing name and verify error message is shown',
       async () => {
-        await prompts.openPromptDropdownMenu(
+        await prompts.openEntityDropdownMenu(
           ExpectedConstants.newPromptTitle(1000),
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
@@ -256,7 +256,7 @@ dialTest(
           await promptModalDialog.saveButton.click();
 
           await promptBar.dragAndDropEntityToFolder(
-            prompts.getPromptByName(duplicatedPromptName),
+            prompts.getEntityByName(duplicatedPromptName),
             folderPrompts.getFolderByName(
               ExpectedConstants.newPromptFolderWithIndexTitle(i),
             ),
@@ -278,7 +278,7 @@ dialTest(
         await promptModalDialog.saveButton.click();
         await expect
           .soft(
-            prompts.getPromptByName(duplicatedPromptName),
+            prompts.getEntityByName(duplicatedPromptName),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -295,7 +295,7 @@ dialTest(
 
         // Move it
         await promptBar.dragAndDropEntityToFolder(
-          prompts.getPromptByName(ExpectedConstants.newPromptTitle(2)),
+          prompts.getEntityByName(ExpectedConstants.newPromptTitle(2)),
           folderPrompts.getFolderByName(
             ExpectedConstants.newPromptFolderWithIndexTitle(1),
           ),
@@ -336,7 +336,7 @@ dialTest(
     await dialTest.step(
       'Try to move prompt to folder with already existing name and verify error message is shown',
       async () => {
-        await prompts.openPromptDropdownMenu(duplicatedPromptName);
+        await prompts.openEntityDropdownMenu(duplicatedPromptName);
         await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
         await prompts.selectMoveToMenuOption(
           ExpectedConstants.newPromptFolderWithIndexTitle(1),
@@ -362,7 +362,7 @@ dialTest(
         // Verify the prompt is not moved and stays in Recent
         await expect
           .soft(
-            prompts.getPromptByName(duplicatedPromptName),
+            prompts.getEntityByName(duplicatedPromptName),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();

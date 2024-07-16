@@ -276,7 +276,7 @@ dialTest(
           newDescr,
         );
         await promptModalDialog.saveButton.click();
-        await prompts.getPromptByName(newName).waitFor();
+        await prompts.getEntityByName(newName).waitFor();
       },
     );
   },
@@ -298,7 +298,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
 
     const menuOptions = await promptDropdownMenu.getAllMenuOptions();
     expect
@@ -334,7 +334,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
     // eslint-disable-next-line playwright/no-force-option
@@ -349,7 +349,7 @@ dialTest(
 
     await expect
       .soft(
-        prompts.getPromptByName(prompt.name),
+        prompts.getEntityByName(prompt.name),
         ExpectedMessages.promptNotUpdated,
       )
       .toBeVisible();
@@ -373,7 +373,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.updatePromptDetailsWithButton(
       newName,
@@ -389,10 +389,10 @@ dialTest(
       .toBeHidden();
 
     await expect
-      .soft(prompts.getPromptByName(newName), ExpectedMessages.promptNotUpdated)
+      .soft(prompts.getEntityByName(newName), ExpectedMessages.promptNotUpdated)
       .toBeVisible();
 
-    await prompts.openPromptDropdownMenu(newName);
+    await prompts.openEntityDropdownMenu(newName);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     expect
       .soft(
@@ -432,7 +432,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.updatePromptDetailsWithEnter(
       ExpectedConstants.allowedSpecialChars,
@@ -449,12 +449,12 @@ dialTest(
 
     await expect
       .soft(
-        prompts.getPromptByName(ExpectedConstants.allowedSpecialChars),
+        prompts.getEntityByName(ExpectedConstants.allowedSpecialChars),
         ExpectedMessages.promptNotUpdated,
       )
       .toBeVisible();
 
-    await prompts.openPromptDropdownMenu(ExpectedConstants.allowedSpecialChars);
+    await prompts.openEntityDropdownMenu(ExpectedConstants.allowedSpecialChars);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     expect
       .soft(
@@ -494,12 +494,12 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     await expect
       .soft(
-        prompts.getPromptByName(prompt.name),
+        prompts.getEntityByName(prompt.name),
         ExpectedMessages.promptDeleted,
       )
       .toBeHidden();
@@ -523,12 +523,12 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.cancelDialog();
     await expect
       .soft(
-        prompts.getPromptByName(prompt.name),
+        prompts.getEntityByName(prompt.name),
         ExpectedMessages.promptNotDeleted,
       )
       .toBeVisible();
@@ -591,7 +591,7 @@ dialTest(
 
     await expect
       .soft(
-        conversations.getConversationByName(singleConversation.name),
+        conversations.getEntityByName(singleConversation.name),
         ExpectedMessages.conversationNotDeleted,
       )
       .toBeVisible();
@@ -615,7 +615,7 @@ dialTest(
 
     await expect
       .soft(
-        prompts.getPromptByName(singlePrompt.name),
+        prompts.getEntityByName(singlePrompt.name),
         ExpectedMessages.promptNotDeleted,
       )
       .toBeVisible();
@@ -694,9 +694,7 @@ dialTest(
     );
     await folderPrompts.expandFolder(promptInFolder.folders.name);
     await folderConversations.expandFolder(conversationInFolder.folders.name);
-    await conversations
-      .getConversationByName(singleConversation.name)
-      .waitFor();
+    await conversations.getEntityByName(singleConversation.name).waitFor();
 
     await promptBar.deleteAllEntities();
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -720,9 +718,7 @@ dialTest(
           conversationInFolder.conversations[0].name,
         )
         .waitFor();
-      await conversations
-        .getConversationByName(singleConversation.name)
-        .waitFor();
+      await conversations.getEntityByName(singleConversation.name).waitFor();
 
       await expect
         .soft(
@@ -745,7 +741,7 @@ dialTest(
 
       await expect
         .soft(
-          prompts.getPromptByName(singlePrompt.name),
+          prompts.getEntityByName(singlePrompt.name),
           ExpectedMessages.promptDeleted,
         )
         .toBeHidden();
@@ -955,7 +951,7 @@ dialTest(
       'Clear search field and verify all prompts displayed',
       async () => {
         await promptBarSearch.setSearchValue('');
-        const resultCount = await prompts.getPromptsCount();
+        const resultCount = await prompts.getEntitiesCount();
         expect
           .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(5);
@@ -967,7 +963,7 @@ dialTest(
       async () => {
         for (const term of [searchTerm, searchTerm.toUpperCase()]) {
           await promptBarSearch.setSearchValue(term);
-          const resultCount = await prompts.getPromptsCount();
+          const resultCount = await prompts.getEntitiesCount();
           expect
             .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
             .toBe(isApiStorageType ? 1 : 3);
@@ -979,7 +975,7 @@ dialTest(
       'Type search term in the field and verify all prompts displayed',
       async () => {
         await promptBarSearch.setSearchValue(specialSymbolSearchTerm);
-        const resultCount = await prompts.getPromptsCount();
+        const resultCount = await prompts.getEntitiesCount();
         expect
           .soft(resultCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(1);
