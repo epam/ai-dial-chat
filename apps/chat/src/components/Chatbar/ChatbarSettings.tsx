@@ -103,7 +103,7 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Unselect all'),
-        dataQa: 'unselect all',
+        dataQa: 'unselect-all',
         Icon: IconSquareOff,
         onClick: () => {
           dispatch(ConversationsActions.resetChosenConversations());

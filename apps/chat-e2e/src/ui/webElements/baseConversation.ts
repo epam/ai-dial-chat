@@ -40,6 +40,10 @@ export class BaseConversation extends SideBarEntities {
     );
   }
 
+  public getConversationDotsMenu(name: string, index?: number) {
+    return this.entityDotsMenu(this.entitySelector, name, index);
+  }
+
   public async openConversationDropdownMenu(name: string, index?: number) {
     await this.openEntityDropdownMenu(this.entitySelector, name, index);
   }
@@ -99,5 +103,13 @@ export class BaseConversation extends SideBarEntities {
 
   public async getConversationBackgroundColor(name: string, index?: number) {
     return this.getEntityBackgroundColor(this.entitySelector, name, index);
+  }
+
+  public getConversationCheckbox(name: string, index?: number) {
+    return this.getEntityCheckbox(this.entitySelector, name, index);
+  }
+
+  public async getConversationCheckboxState(name: string, index?: number) {
+    return this.getEntityCheckboxState(this.entitySelector, name, index);
   }
 }

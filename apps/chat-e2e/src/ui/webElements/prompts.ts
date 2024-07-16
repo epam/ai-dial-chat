@@ -21,6 +21,14 @@ export class Prompts extends SideBarEntities {
     return this.getEntityArrowIconColor(this.entitySelector, name, index);
   }
 
+  public getPromptCheckbox(name: string, index?: number) {
+    return this.getEntityCheckbox(this.entitySelector, name, index);
+  }
+
+  public async getPromptCheckboxState(name: string, index?: number) {
+    return this.getEntityCheckboxState(this.entitySelector, name, index);
+  }
+
   public async openPromptDropdownMenu(name: string, index?: number) {
     await this.openEntityDropdownMenu(this.entitySelector, name, index);
   }
