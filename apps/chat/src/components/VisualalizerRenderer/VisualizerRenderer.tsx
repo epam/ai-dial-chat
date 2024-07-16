@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Role } from '@/src/types/chat';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
 
@@ -54,6 +55,10 @@ export const VisualizerRenderer = ({
 
   const customAttachmentData = useAppSelector((state) =>
     ConversationsSelectors.selectCustomAttachmentData(state, attachmentUrl),
+  );
+
+  const currentConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
   );
 
   const scrollWidth =
@@ -139,12 +144,33 @@ export const VisualizerRenderer = ({
       ) {
         setReady(true);
       }
+
+      if (
+        event.data.type ===
+          `${visualizerTitle}/${VisualizerConnectorEvents.sendMessage}` &&
+        event.data.payload &&
+        typeof event.data.payload === 'object' &&
+        Object.prototype.hasOwnProperty.call(event.data.payload, 'message')
+      ) {
+        const content = (event.data.payload as { message: string }).message;
+        dispatch(
+          ConversationsActions.sendMessages({
+            conversations: currentConversations,
+            deleteCount: 0,
+            message: {
+              role: Role.User,
+              content,
+            },
+            activeReplayIndex: 0,
+          }),
+        );
+      }
     };
 
     window.addEventListener('message', postMessageListener, false);
 
     return () => window.removeEventListener('message', postMessageListener);
-  }, [visualizerTitle, rendererUrl]);
+  }, [visualizerTitle, rendererUrl, dispatch, currentConversations]);
 
   if (!attachmentUrl) {
     return null;
