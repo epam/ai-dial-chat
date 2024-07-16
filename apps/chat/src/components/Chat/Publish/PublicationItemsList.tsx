@@ -112,7 +112,10 @@ export function PublicationItemsList({
           {type === SharingType.Conversation ? (
             <ConversationRow
               onSelect={handleSelect}
-              itemComponentClassNames="cursor-pointer group/conversation-item"
+              itemComponentClassNames={classNames(
+                'group/conversation-item cursor-pointer',
+                publishAction === PublishActions.DELETE && 'text-error',
+              )}
               item={entity as ConversationInfo}
               level={0}
               isChosen={chosenItemsIds.some((id) => id === entity.id)}
@@ -138,6 +141,9 @@ export function PublicationItemsList({
                 selectedFolderIds,
               }}
               showTooltip
+              resourcesClassNames={classNames(
+                publishAction === PublishActions.DELETE && 'text-error',
+              )}
             />
           )}
         </CollapsibleSection>
@@ -160,6 +166,9 @@ export function PublicationItemsList({
               partialSelectedFolderIds,
               selectedFolderIds,
             }}
+            resourcesClassNames={classNames(
+              publishAction === PublishActions.DELETE && 'text-error',
+            )}
           />
         </CollapsibleSection>
       )}
@@ -174,7 +183,10 @@ export function PublicationItemsList({
           {type === SharingType.Prompt ? (
             <PromptsRow
               onSelect={handleSelect}
-              itemComponentClassNames="cursor-pointer group/prompt-item"
+              itemComponentClassNames={classNames(
+                'group/prompt-item cursor-pointer',
+                publishAction === PublishActions.DELETE && 'text-error',
+              )}
               item={entity}
               level={0}
               isChosen={chosenItemsIds.some((id) => id === entity.id)}
@@ -200,6 +212,9 @@ export function PublicationItemsList({
                 partialSelectedFolderIds,
                 selectedFolderIds,
               }}
+              resourcesClassNames={classNames(
+                publishAction === PublishActions.DELETE && 'text-error',
+              )}
             />
           )}
         </CollapsibleSection>

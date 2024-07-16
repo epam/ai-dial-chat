@@ -38,6 +38,7 @@ interface PublicationResources {
   isOpen?: boolean;
   additionalItemData?: Record<string, unknown>;
   onSelect?: (ids: string[]) => void;
+  resourcesClassNames?: string;
 }
 
 const filterItems = ({
@@ -73,6 +74,7 @@ export const PromptPublicationResources = ({
   isOpen = true,
   additionalItemData,
   onSelect,
+  resourcesClassNames,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -148,6 +150,7 @@ export const PromptPublicationResources = ({
             folderClassName={classNames(readonly && 'h-[38px]')}
             itemComponentClassNames={classNames(
               readonly && 'group/prompt-item cursor-pointer',
+              resourcesClassNames,
             )}
             additionalItemData={additionalItemData}
             showTooltip={showTooltip}
@@ -173,7 +176,10 @@ export const PromptPublicationResources = ({
       {itemsToDisplay.map((p) =>
         readonly ? (
           <PromptsRow
-            itemComponentClassNames="cursor-pointer group/prompt-item"
+            itemComponentClassNames={classNames(
+              'group/prompt-item cursor-pointer',
+              resourcesClassNames,
+            )}
             key={p.id}
             item={p}
             level={0}
@@ -201,6 +207,7 @@ export const ConversationPublicationResources = ({
   isOpen = true,
   additionalItemData,
   onSelect,
+  resourcesClassNames,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -285,6 +292,7 @@ export const ConversationPublicationResources = ({
             folderClassName={classNames(readonly && 'h-[38px]')}
             itemComponentClassNames={classNames(
               readonly && 'group/conversation-item cursor-pointer',
+              resourcesClassNames,
             )}
             additionalItemData={additionalItemData}
             showTooltip={showTooltip}
@@ -296,7 +304,10 @@ export const ConversationPublicationResources = ({
       {itemsToDisplay.map((c) =>
         readonly ? (
           <ConversationRow
-            itemComponentClassNames="cursor-pointer group/conversation-item"
+            itemComponentClassNames={classNames(
+              'group/conversation-item cursor-pointer',
+              resourcesClassNames,
+            )}
             key={c.id}
             item={c}
             level={0}
@@ -325,6 +336,7 @@ export const FilePublicationResources = ({
   showTooltip,
   onSelect,
   additionalItemData,
+  resourcesClassNames,
 }: PublicationResources & { uploadedFiles?: DialFile[] }) => {
   const dispatch = useAppDispatch();
 
@@ -380,6 +392,7 @@ export const FilePublicationResources = ({
             folderClassName={classNames(readonly && 'h-[38px]')}
             itemComponentClassNames={classNames(
               readonly && 'group/file-item cursor-pointer',
+              resourcesClassNames,
             )}
             showTooltip={showTooltip}
             canSelectFolders
@@ -404,7 +417,10 @@ export const FilePublicationResources = ({
       {(uploadedFiles ?? itemsToDisplay).map((f) =>
         readonly ? (
           <FilesRow
-            itemComponentClassNames="cursor-pointer group/file-item"
+            itemComponentClassNames={classNames(
+              'group/file-item cursor-pointer',
+              resourcesClassNames,
+            )}
             key={f.id}
             item={f}
             level={0}
