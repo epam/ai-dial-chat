@@ -3,7 +3,7 @@ import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
-import { Styles, Tags } from '@/src/ui/domData';
+import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
@@ -94,6 +94,20 @@ export class SideBarEntities extends BaseElement {
     return this.createElementFromLocator(
       this.getEntityArrowIcon(selector, name, index).locator(Tags.svg),
     ).getComputedStyleProperty(Styles.color);
+  }
+
+  protected getEntityCheckbox(selector: string, name: string, index?: number) {
+    return this.getEntityByName(selector, name, index).getByRole('checkbox');
+  }
+
+  protected async getEntityCheckboxState(
+    selector: string,
+    name: string,
+    index?: number,
+  ) {
+    return this.getEntityCheckbox(selector, name, index).getAttribute(
+      Attributes.dataQA,
+    );
   }
 
   protected async openEntityDropdownMenu(
