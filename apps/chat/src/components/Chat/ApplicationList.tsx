@@ -60,7 +60,7 @@ export const Application = ({
       >
         <div className="flex w-full items-center self-start border-secondary pr-10">
           <div className="self-start px-4 pt-4">
-            <AppIcon />
+            <AppIcon width={80} height={80} />
           </div>
           <div className="flex size-full flex-col items-start gap-2 text-left text-pr-primary-700">
             <div className="flex items-center pt-3 text-xl font-semibold">
