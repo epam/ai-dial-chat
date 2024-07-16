@@ -53,7 +53,7 @@ dialTest(
         rootFolder = promptData.preparePromptsInFolder(2);
         promptData.resetData();
 
-        singlePrompt = promptData.preparePrompt('content');
+        singlePrompt = promptData.prepareDefaultPrompt();
         promptData.resetData();
 
         await dataInjector.createPrompts(
@@ -68,7 +68,7 @@ dialTest(
           expectedEntityBackgroundColor =
             Colors.backgroundAccentTertiaryAlphaDark;
         } else {
-          expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
+          expectedCheckboxColor = Colors.textAccentTertiaryLight;
           expectedEntityBackgroundColor =
             Colors.backgroundAccentTertiaryAlphaLight;
         }
@@ -302,7 +302,7 @@ dialTest(
         rootFolder = promptData.preparePromptsInFolder(2);
         promptData.resetData();
 
-        singlePrompt = promptData.preparePrompt('content');
+        singlePrompt = promptData.prepareDefaultPrompt();
 
         await dataInjector.createPrompts(
           [...nestedPrompts, ...rootFolder.prompts, singlePrompt],
@@ -445,10 +445,12 @@ dialTest(
           promptData.preparePromptsForNestedFolders(nestedFolders);
         promptData.resetData();
 
-        rootFolder = promptData.preparePromptInFolder('content');
+        rootFolder = promptData.preparePromptInFolder(
+          GeneratorUtil.randomString(5),
+        );
         promptData.resetData();
 
-        singlePrompt = promptData.preparePrompt('content');
+        singlePrompt = promptData.prepareDefaultPrompt();
 
         await dataInjector.createPrompts(
           [...nestedPrompts, ...rootFolder.prompts, singlePrompt],
@@ -591,6 +593,7 @@ dialTest(
     folderPrompts,
     dataInjector,
     promptBarFolderAssertion,
+    page,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3677');
@@ -606,7 +609,9 @@ dialTest(
           promptData.preparePromptsForNestedFolders(nestedFolders);
         promptData.resetData();
 
-        secondLevelFolder = promptData.preparePromptInFolder('content');
+        secondLevelFolder = promptData.preparePromptInFolder(
+          GeneratorUtil.randomString(5),
+        );
         secondLevelFolder.folders.folderId = `${nestedFolders[0].folderId}/${secondLevelFolder.folders.name}`;
         secondLevelFolder.prompts[0].folderId =
           secondLevelFolder.folders.folderId;
@@ -634,6 +639,7 @@ dialTest(
           nestedPrompts[fourNestedLevels - 2].name,
         );
         await promptDropdownMenu.selectMenuOption(MenuOptions.select);
+        await page.mouse.move(0, 0);
 
         await promptBarFolderAssertion.assertFolderEntityCheckboxState(
           { name: nestedFolders[fourNestedLevels - 2].name },
@@ -710,6 +716,7 @@ dialTest(
             nestedPrompts[fourNestedLevels - 1].name,
           )
           .click();
+        await page.mouse.move(0, 0);
 
         await promptBarFolderAssertion.assertFolderEntityCheckboxState(
           { name: nestedFolders[fourNestedLevels - 1].name },
