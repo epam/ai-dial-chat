@@ -30,6 +30,7 @@ export interface SettingsState {
   isolatedModelId?: string;
   customRenderers?: CustomVisualizer[];
   isSignInInSameWindow?: boolean;
+  allowVisualizerSendMessages?: boolean;
 }
 
 const initialState: SettingsState = {
@@ -279,6 +280,13 @@ const selectIsSignInInSameWindow = createSelector([rootSelector], (state) => {
   return state.isSignInInSameWindow;
 });
 
+const selectAllowVisualizerSendMessages = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.allowVisualizerSendMessages;
+  },
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -304,4 +312,5 @@ export const SettingsSelectors = {
   selectPublicationFilters,
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
+  selectAllowVisualizerSendMessages,
 };
