@@ -69,6 +69,9 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
+  customClass?: string;
+  hasDeleteAll?: boolean;
+  itemHeight?: string;
 }
 
 export function MultipleComboBox<T>({
@@ -80,6 +83,9 @@ export function MultipleComboBox<T>({
   itemRow,
   selectedItemRow,
   disabled,
+  customClass,
+  hasDeleteAll = false,
+  itemHeight,
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
@@ -110,6 +116,7 @@ export function MultipleComboBox<T>({
     removeSelectedItem,
     selectedItems,
     addSelectedItem,
+    setSelectedItems,
   } = useMultipleSelection({
     selectedItems: initialSelectedItems || [],
     onStateChange({ selectedItems: newSelectedItems, type }) {
@@ -208,7 +215,10 @@ export function MultipleComboBox<T>({
 
   return (
     <div
-      className="relative col-span-5 w-full md:order-3 md:max-w-[205px]"
+      className={classNames(
+        'relative col-span-5 w-full md:order-3',
+        customClass,
+      )}
       data-qa="multiple-combobox"
     >
       <div className="flex w-full flex-col gap-1">
@@ -237,7 +247,11 @@ export function MultipleComboBox<T>({
                   tooltip={getItemLabel(selectedItemForRender)}
                 >
                   <span
-                    className="flex h-[23px] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
+                    className={classNames(
+                      'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
+                      { 'h-[23px]': !itemHeight },
+                      { [`h-[${itemHeight}]`]: itemHeight },
+                    )}
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,
@@ -324,6 +338,18 @@ export function MultipleComboBox<T>({
               )}
         </ul>
       </div>
+      {hasDeleteAll && selectedItems.length > 0 ? (
+        <span
+          className="cursor-pointer py-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedItems([]);
+            onChangeSelectedItems([]);
+          }}
+        >
+          <IconX height={18} width={18} />
+        </span>
+      ) : null}
     </div>
   );
 }

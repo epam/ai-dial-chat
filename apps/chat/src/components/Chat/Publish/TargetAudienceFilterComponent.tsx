@@ -152,6 +152,7 @@ export function TargetAudienceFilterComponent({
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
           placeholder={t('Enter one or more options...') as string}
+          customClass='md:max-w-[205px]'
         />
       )}
       <div className="-order-1 col-span-1 flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px] md:order-4">

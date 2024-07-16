@@ -82,6 +82,7 @@ const ModelGroup = ({
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
+        
         if (disabled) {
           return;
         }
@@ -193,6 +194,8 @@ export const ModelList = ({
       displayCountLimit ?? Number.MAX_SAFE_INTEGER,
     );
   }, [allEntities, displayCountLimit, entities]);
+  console.log(selectedModelId, 'selectedModelId');
+
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
       {heading && <span className="text-secondary">{heading}</span>}

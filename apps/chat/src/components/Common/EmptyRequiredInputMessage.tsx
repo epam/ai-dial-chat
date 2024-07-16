@@ -22,7 +22,7 @@ const EmptyRequiredInputMessage = ({
   return (
     <div
       className={classNames(
-        'text-xxs text-error peer-invalid:peer-[.submitted]:mb-4',
+        'text-xxs text-error peer-invalid:peer-[.submitted]:mb-1',
         useDisplay && 'hidden peer-invalid:peer-[.submitted]:block',
         !useDisplay &&
           !isShown &&

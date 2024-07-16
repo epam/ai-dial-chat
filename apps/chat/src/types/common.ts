@@ -28,6 +28,7 @@ export enum BackendResourceType {
 export interface EntityPublicationInfo {
   action: PublishActions;
   // TODO: add version
+  version?: string;
 }
 
 export interface Entity {

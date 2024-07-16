@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconLayoutGridAdd, IconX } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -12,11 +12,14 @@ import { ModalState } from '@/src/types/modal';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { selectApplications } from '@/src/store/application/application.selectors';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
+import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { ModelList } from './ModelList';
 
@@ -47,6 +50,8 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const models = useAppSelector(ModelsSelectors.selectModels);
+  const dispatch = useAppDispatch();
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
     EntityType.Model,
@@ -85,6 +90,10 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     );
   }, [models, entityTypes, searchTerm]);
 
+  const handleApplicationModal = () => {
+    setIsApplicationModalOpen(true);
+  };
+
   const handleSearch = useCallback((searchValue: string) => {
     setSearchTerm(searchValue.trim().toLowerCase());
   }, []);
@@ -109,6 +118,10 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       return [...entityTypes, entityType];
     });
   }, []);
+
+  useEffect(() => {
+    dispatch(ApplicationActions.list());
+  }, [dispatch]);
 
   const handleSelectModel = useCallback(
     (entityId: string) => {
@@ -139,17 +152,31 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         </button>
       </div>
 
-      <div className="px-3 md:px-5">
+      <div className="flex px-3 md:px-5">
         <input
           name="titleInput"
-          placeholder={t('Search model, assistant or application') || ''}
+          placeholder={t('Search model, assistant, or application') || ''}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);
           }}
-          className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="m-0 w-full flex-grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         ></input>
+        <button
+          onClick={handleApplicationModal}
+          className="flex w-[100px] items-center gap-2 text-accent-primary"
+        >
+          <IconLayoutGridAdd height={18} width={18} />
+          <span>Add app</span>
+        </button>
       </div>
+
+      <ApplicationDialog
+        isOpen={isApplicationModalOpen}
+        onClose={(result) => {
+          setIsApplicationModalOpen(false);
+        }}
+      />
 
       <div className="flex gap-2 px-3 md:px-5">
         <button

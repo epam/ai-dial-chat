@@ -23,10 +23,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const token = await getToken({ req });
-  
+
+  const urlSlug = Array.isArray(req.query.slug)
+    ? req.query.slug.join('/')
+    : req.query.slug;
+    
   try {
     const proxyRes = await fetch(
-      `${process.env.DIAL_API_HOST}/v1/metadata/applications/${req.query.bucket}/`,
+      `${process.env.DIAL_API_HOST}/v1/metadata/applications/${urlSlug}/`,
       {
         method: 'GET',
         headers: getApiHeaders({ jwt: token?.access_token as string }),

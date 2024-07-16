@@ -10,13 +10,25 @@ export const selectIsLoading = createSelector([rootSelector], (state) => {
 });
 
 export const selectApplication = createSelector([rootSelector], (state) => {
-  return state.application;
+   return state.application;
 });
 
 export const selectApplications = createSelector([rootSelector], (state) => {
-  return state.applications;
+   return state.applications;
 });
 
 export const selectHasError = createSelector([rootSelector], (state) => {
   return state.error;
+});
+
+export const selectApplicationDetails = createSelector([rootSelector], (state) => {
+   return state.appDetails;
+});
+
+export const selectReadOnlyAppDetails = createSelector([rootSelector], (state) => {
+  return state.appDetailsReadOnly;
+});
+
+export const selectOpenAIApplications = createSelector([rootSelector], (state) => {
+  return state.openaiApplications;
 });
