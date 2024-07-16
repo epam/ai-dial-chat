@@ -8,7 +8,6 @@ import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation, LikeState, Message } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -59,9 +58,6 @@ export const ChatMessage: FC<Props> = memo(
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const isLastMessage = messageIndex === (messagesLength ?? 0) - 1;
-    const isReplay = useAppSelector(
-      ConversationsSelectors.selectIsReplaySelectedConversations,
-    );
 
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
@@ -133,7 +129,7 @@ export const ChatMessage: FC<Props> = memo(
             onLike={handleLike}
             onCopy={handleCopy}
             message={message}
-            onRegenerate={!isReplay ? onRegenerate : undefined}
+            onRegenerate={onRegenerate}
             withButtons
             {...props}
           />
@@ -195,7 +191,7 @@ export const ChatMessage: FC<Props> = memo(
             onDelete={() => setIsDeleteConfirmationOpened(true)}
             isEditing={isEditing}
             toggleEditing={toggleEditing}
-            onRegenerate={!isReplay ? onRegenerate : undefined}
+            onRegenerate={onRegenerate}
             isConversationInvalid={isConversationInvalid}
           />
         </Menu>

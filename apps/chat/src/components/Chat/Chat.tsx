@@ -584,7 +584,11 @@ export const ChatView = memo(() => {
   }, []);
 
   const showLastMessageRegenerate =
-    !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
+    !isReplay &&
+    !isPlayback &&
+    !isExternal &&
+    !messageIsStreaming &&
+    !isLastMessageError;
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
 
@@ -794,7 +798,10 @@ export const ChatView = memo(() => {
                                             Feature.Likes,
                                           )}
                                           editDisabled={
-                                            !!notAllowedType || isExternal
+                                            !!notAllowedType ||
+                                            isExternal ||
+                                            isReplay ||
+                                            isPlayback
                                           }
                                           onEdit={onEditMessage}
                                           onLike={onLikeHandler(index, conv)}
