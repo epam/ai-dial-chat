@@ -316,6 +316,11 @@ export const ChatMessageContent = ({
               message.custom_content?.attachments && !attachments
                 ? { attachments: [] }
                 : attachments,
+            templateMapping: Object.fromEntries(
+              Object.entries(message.templateMapping ?? {}).filter(([key]) =>
+                messageContent.includes(key),
+              ),
+            ),
           },
           messageIndex,
         );
