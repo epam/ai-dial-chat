@@ -9,7 +9,6 @@ export * from './RagIcon';
 export * from './HRBuddyIcon';
 export * from './DallSquareIcon';
 export * from './RagSquareIcon';
-export * from './HRBuddySquareIcon';
 export * from './FavoriteIcon';
 export * from './PinIcon';
 export * from './UnpinIcon';
