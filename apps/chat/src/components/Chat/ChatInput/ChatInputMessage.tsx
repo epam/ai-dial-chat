@@ -275,8 +275,10 @@ export const ChatInputMessage = ({
       addPromptContent(newContent);
       if (promptTemplateMappingRef.current) {
         promptTemplateMappingRef.current.set(
-          newContent,
-          (filteredPrompts[activePromptIndex] as Prompt)?.content || '',
+          newContent.trim(),
+          (
+            (filteredPrompts[activePromptIndex] as Prompt)?.content || ''
+          ).trim(),
         );
       }
 
