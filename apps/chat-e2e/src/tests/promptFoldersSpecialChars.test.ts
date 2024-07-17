@@ -28,6 +28,7 @@ dialTest.only(
     const newNameWithSpecialChars = `${folderName} ${ExpectedConstants.allowedSpecialChars}`;
     const nameWithRestrictedChars = `Folder=,:;{}\\/%&"_name`;
     const expectedFolderName = 'Folder_name';
+    const newNameWithSpaces = 'Folder   1';
 
     await dialTest.step('Create prompt folder', async () => {
       await dialHomePage.openHomePage();
@@ -122,6 +123,28 @@ dialTest.only(
           ExpectedMessages.noErrorToastIsShown,
         )
         .toBeHidden();
+    });
+
+
+    await dialTest.step('Rename folder to have spaces in the middle', async () => {
+      await folderPrompts.openFolderDropdownMenu(expectedFolderName);
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+      await folderPrompts.editFolderName(newNameWithSpaces);
+      // Assert that the input field displays the name with spaces
+      expect
+        .soft(
+          await folderPrompts.getEditFolderInput().getEditInputValue(),
+          ExpectedMessages.folderNameUpdated,
+        )
+        .toBe(newNameWithSpaces);
+      await folderPrompts.getEditFolderInputActions().clickTickButton();
+      // Assert that the folder is renamed with spaces on the panel
+      await expect
+        .soft(
+          folderPrompts.getFolderByName(newNameWithSpaces),
+          ExpectedMessages.folderNameUpdated,
+        )
+        .toBeVisible();
     });
   },
 );
