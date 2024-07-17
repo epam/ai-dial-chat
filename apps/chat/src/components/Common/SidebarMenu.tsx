@@ -113,7 +113,7 @@ export default function SidebarMenu({
     return () => {
       containerElement && resizeObserver.observe(containerElement);
     };
-  }, []);
+  }, [displayedItems.length]);
 
   return (
     <div
