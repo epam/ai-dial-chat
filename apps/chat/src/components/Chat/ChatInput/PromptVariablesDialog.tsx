@@ -85,7 +85,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       );
 
       onSubmit(newContent);
-      onClose && onClose();
+      onClose?.();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
   );
@@ -109,7 +109,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
-        onClose && onClose();
+        onClose?.();
       }
     },
     [handleSubmit, onClose],
@@ -118,7 +118,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose && onClose();
+        onClose?.();
       }
     };
 
