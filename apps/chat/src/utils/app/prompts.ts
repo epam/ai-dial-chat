@@ -39,7 +39,7 @@ export const parseVariablesFromContent = (
   while ((match = PROMPT_VARIABLE_REGEX.exec(content)) !== null) {
     foundVariables.push({
       name: match[1],
-      defaultValue: match[2]?.slice(1) ?? '',
+      defaultValue: match[2]?.slice(1).trim() ?? '',
     });
   }
 

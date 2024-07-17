@@ -1,8 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import { replaceDefaultValuesFromContent } from '@/src/utils/app/prompts';
 
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -27,15 +30,31 @@ export const ReplayVariables = () => {
 };
 
 const ReplayVariablesDialog = () => {
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const conversation = useAppSelector(
     ConversationsSelectors.selectFirstSelectedConversation,
+  );
+
+  const isReplayRequiresVariables = useAppSelector(
+    ConversationsSelectors.selectIsReplayRequiresVariables,
   );
 
   const activeMessage =
     conversation?.replay?.replayUserMessagesStack?.[
       conversation?.replay?.activeReplayIndex ?? 0
     ];
+
+  const handleClose = useCallback(() => {
+    dispatch(ConversationsActions.setIsReplayRequiresVariables(false));
+  }, [dispatch]);
+
+  const onCloseRef = useRef<() => void>();
+  useEffect(() => {
+    if (isReplayRequiresVariables) {
+      onCloseRef.current = handleClose;
+    }
+  }, [handleClose, isReplayRequiresVariables]);
 
   const handleContentApply = useCallback(
     (newContent: string) => {
@@ -89,10 +108,15 @@ const ReplayVariablesDialog = () => {
     content: replaceDefaultValuesFromContent(activeMessage.content, template),
     id: '',
     folderId: '',
-    name: '',
+    name: t('Please, enter variables for template:'),
+    description: template,
   };
 
   return (
-    <PromptVariablesDialog prompt={prompt} onSubmit={handleContentApply} />
+    <PromptVariablesDialog
+      prompt={prompt}
+      onSubmit={handleContentApply}
+      onClose={onCloseRef.current}
+    />
   );
 };
