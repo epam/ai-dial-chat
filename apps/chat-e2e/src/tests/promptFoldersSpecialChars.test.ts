@@ -5,7 +5,6 @@ import {
   MenuOptions,
 } from '@/src/testData';
 import { expect } from '@playwright/test';
-import { keys } from '@/src/ui/keyboard'; 
 import { keys } from '@/src/ui/keyboard';
 
 dialTest.only(
@@ -14,7 +13,8 @@ dialTest.only(
   'Prompt folder: restricted special characters are not entered.\n' +
   'Prompt folder: restricted special characters are removed if to copy-paste.\n' +
   'Prompt folder: spaces in the middle of folder name stay.\n' +
-  'Prompt folder: name can not be blank or with spaces only',
+  'Prompt folder: name can not be blank or with spaces only.\n' +
+  'Prompt folder: spaces at the beginning or end of folder name are removed',
   async ({
     dialHomePage,
     promptBar,
@@ -24,13 +24,17 @@ dialTest.only(
     setTestIds,
     page,
   }) => {
-    setTestIds('EPMRTC-2975', 'EPMRTC-2976', 'EPMRTC-2977', 'EPMRTC-2978', 'EPMRTC-2979', 'EPMRTC-2980');
+    setTestIds(
+      'EPMRTC-2975', 'EPMRTC-2976', 'EPMRTC-2977', 'EPMRTC-2978', 'EPMRTC-2979', 'EPMRTC-2980', 'EPMRTC-2981'
+    );
     const folderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const newNameWithEndDot = `${folderName}.`;
     const newNameWithSpecialChars = `${folderName} ${ExpectedConstants.allowedSpecialChars}`;
     const nameWithRestrictedChars = `Folder=,:;{}\\/%&"_name`;
     const expectedFolderName = 'Folder_name';
     const newNameWithSpaces = 'Folder   1';
+    const nameWithSpacesBeforeAndAfter = '   Folder with spaces   ';
+    const expectedName = 'Folder with spaces';
 
     await dialTest.step('Create prompt folder', async () => {
       await dialHomePage.openHomePage();
@@ -153,6 +157,27 @@ dialTest.only(
             .toBeVisible();
         });
       }
+    });
+
+    await dialTest.step('Rename folder to have spaces at the beginning and at the end', async () => {
+      await folderPrompts.openFolderDropdownMenu(newNameWithSpaces);
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+      await folderPrompts.editFolderName(nameWithSpacesBeforeAndAfter);
+      // Assert that the input field displays the name with spaces
+      expect
+        .soft(
+          await folderPrompts.getEditFolderInput().getEditInputValue(),
+          ExpectedMessages.folderNameUpdated,
+        )
+        .toBe(nameWithSpacesBeforeAndAfter);
+      await folderPrompts.getEditFolderInputActions().clickTickButton();
+      // Assert that the folder is renamed with spaces on the panel
+      await expect
+        .soft(
+          folderPrompts.getFolderByName(expectedName),
+          ExpectedMessages.folderNameUpdated,
+        )
+        .toBeVisible();
     });
   },
 );
