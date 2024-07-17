@@ -66,16 +66,15 @@ export default function SidebarMenu({
   const [displayItemsCount, setDisplayItemsCount] =
     useState<number>(displayMenuItemCount);
   const containerRef = useRef<HTMLDivElement>(null);
+  const displayedItems = useMemo(
+    () => menuItems.filter(({ display = true }) => display),
+    [menuItems],
+  );
   const [visibleItems, hiddenItems] = useMemo(() => {
-    const displayedItems = menuItems.filter(({ display = true }) => display);
-    const displayCount =
-      displayedItems.length <= displayItemsCount
-        ? displayItemsCount
-        : displayItemsCount - 1;
-    const visibleItems = displayedItems.slice(0, displayCount);
-    const hiddenItems = displayedItems.slice(displayCount);
+    const visibleItems = displayedItems.slice(0, displayItemsCount);
+    const hiddenItems = displayedItems.slice(displayItemsCount);
     return [visibleItems, hiddenItems];
-  }, [menuItems, displayItemsCount]);
+  }, [displayedItems, displayItemsCount]);
 
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
@@ -88,6 +87,21 @@ export default function SidebarMenu({
             ITEM_WIDTH * (count + 1) - ITEMS_GAP_IN_PIXELS
           ) {
             count++;
+          }
+
+          let enoughPlaceForEllipsis = false;
+          if (
+            displayedItems.length > count + 1 ||
+            itemsContainerWidth >= ITEM_WIDTH * count + 20
+          ) {
+            count++;
+            enoughPlaceForEllipsis = true;
+          }
+          if (
+            displayedItems.length > count ||
+            (enoughPlaceForEllipsis && displayedItems.length >= count)
+          ) {
+            count--;
           }
           setDisplayItemsCount(count);
         }
