@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { replaceDefaultValuesFromContent } from '@/src/utils/app/prompts';
 
@@ -36,6 +36,15 @@ const ReplayVariablesDialog = () => {
     conversation?.replay?.replayUserMessagesStack?.[
       conversation?.replay?.activeReplayIndex ?? 0
     ];
+
+  const handleClose = useCallback(() => {
+    dispatch(ConversationsActions.setIsReplayRequiresVariables(false));
+  }, [dispatch]);
+
+  const onCloseRef = useRef<() => void>();
+  useEffect(() => {
+    onCloseRef.current = handleClose;
+  }, [handleClose]);
 
   const handleContentApply = useCallback(
     (newContent: string) => {
@@ -94,6 +103,10 @@ const ReplayVariablesDialog = () => {
   };
 
   return (
-    <PromptVariablesDialog prompt={prompt} onSubmit={handleContentApply} />
+    <PromptVariablesDialog
+      prompt={prompt}
+      onSubmit={handleContentApply}
+      onClose={onCloseRef.current}
+    />
   );
 };
