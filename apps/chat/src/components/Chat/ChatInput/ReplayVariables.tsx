@@ -26,7 +26,7 @@ export const ReplayVariables = () => {
   return <ReplayVariablesDialog />;
 };
 
-export const ReplayVariablesDialog = () => {
+const ReplayVariablesDialog = () => {
   const dispatch = useAppDispatch();
   const conversation = useAppSelector(
     ConversationsSelectors.selectFirstSelectedConversation,

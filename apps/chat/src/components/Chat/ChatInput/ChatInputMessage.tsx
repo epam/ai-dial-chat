@@ -44,7 +44,7 @@ import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
-import { ReplayVariables } from './ReplyVariables';
+import { ReplayVariables } from './ReplayVariables';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
