@@ -124,7 +124,7 @@ const Header = () => {
           </span>
           <span className="my-3 hidden border-r border-primary md:inline-block" />
           <span className="ml-2 hidden flex-wrap content-center text-s md:flex">
-            {t('Your secured IA assistant within Pernod Ricard environment')}
+            {t('Your secured AI assistant within Pernod Ricard environment')}
           </span>
         </div>
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
