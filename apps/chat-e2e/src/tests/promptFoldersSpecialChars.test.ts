@@ -8,7 +8,8 @@ import { expect } from '@playwright/test';
 
 dialTest.only(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
-  'Prompt folder: allowed special characters',
+  'Prompt folder: allowed special characters.\n' +
+  'Prompt folder: restricted special characters are not entered',
   async ({
     dialHomePage,
     promptBar,
@@ -17,7 +18,7 @@ dialTest.only(
     errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2975', 'EPMRTC-2976');
+    setTestIds('EPMRTC-2975', 'EPMRTC-2976', 'EPMRTC-2977');
     const folderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const newNameWithEndDot = `${folderName}.`;
     const newNameWithSpecialChars = `${folderName} ${ExpectedConstants.allowedSpecialChars}`;
@@ -69,6 +70,20 @@ dialTest.only(
           ExpectedMessages.folderNameUpdated,
         )
         .toBeVisible();
+    });
+
+    await dialTest.step('Try to type restricted special characters', async () => {
+      await folderPrompts.openFolderDropdownMenu(newNameWithSpecialChars);
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+      for (const char of ExpectedConstants.restrictedNameChars.split('')) {
+        await folderPrompts.editFolderName(char);
+        expect
+          .soft(
+            await folderPrompts.getEditFolderInput().getEditInputValue(),
+            ExpectedMessages.charactersAreNotDisplayed,
+          )
+          .toBe('');
+      }
     });
   },
 );
