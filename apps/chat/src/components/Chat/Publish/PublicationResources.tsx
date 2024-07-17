@@ -2,7 +2,7 @@ import classNames from 'classnames';
 
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
-import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 
 import {
@@ -31,7 +31,6 @@ import Folder from '../../Folder/Folder';
 interface PublicationResources {
   resources: PublicationResource[];
   readonly?: boolean;
-  rootFolder?: ShareEntity;
   showTooltip?: boolean;
   isOpen?: boolean;
   additionalItemData?: Record<string, unknown>;
