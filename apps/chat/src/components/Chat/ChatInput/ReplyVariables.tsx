@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import { replaceDefaultValuesFromContent } from '@/src/utils/app/prompts';
+
 import { Prompt } from '@/src/types/prompt';
 
 import {
@@ -79,12 +81,12 @@ export const ReplyVariablesDialog = () => {
   )
     return null;
 
-  let content = activeMessage.content;
+  let template = activeMessage.content;
   Object.entries(activeMessage.templateMapping).forEach(([key, value]) => {
-    content = content.replaceAll(key, value);
+    template = template.replaceAll(key, value);
   });
   const prompt: Prompt = {
-    content,
+    content: replaceDefaultValuesFromContent(activeMessage.content, template),
     id: '',
     folderId: '',
     name: '',
