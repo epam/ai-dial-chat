@@ -7,6 +7,8 @@ import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
 
+import escapeRegExp from 'lodash-es/escapeRegExp';
+
 const getGeneratedPromptId = (prompt: PartialBy<Prompt, 'id'>) =>
   constructPath(prompt.folderId, getPromptApiKey(prompt));
 
@@ -50,4 +52,30 @@ export const getPromptInfoFromId = (id: string): PromptInfo => {
     ...parsePromptApiKey(name),
     folderId: constructPath(apiKey, bucket, parentPath),
   });
+};
+const combinationWithoutSpecialRegexSymbols = '<<<>>>';
+export const replaceDefaultValuesFromContent = (
+  content: string,
+  template: string,
+) => {
+  let regexpString = template.replaceAll(
+    // replace all variable values by special combination
+    PROMPT_VARIABLE_REGEX,
+    combinationWithoutSpecialRegexSymbols,
+  );
+  regexpString = escapeRegExp(regexpString); // encode all specilal symbols
+  regexpString = regexpString.replaceAll(
+    combinationWithoutSpecialRegexSymbols,
+    '(.*)',
+  ); // replace special combination by regex group
+  const regexp = new RegExp(`^${regexpString}$`);
+  const match = regexp.exec(content); // find all variable values
+  let ind = 1;
+  const newTemplate = template.replace(
+    PROMPT_VARIABLE_REGEX,
+    function (_, variableName) {
+      return `{{${variableName}|${match?.[ind++]}}}`; // replace each variable by variable with default value from content
+    },
+  );
+  return newTemplate;
 };

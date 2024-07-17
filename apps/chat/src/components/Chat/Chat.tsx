@@ -96,6 +96,9 @@ export const ChatView = memo(() => {
   const isReplayPaused = useAppSelector(
     ConversationsSelectors.selectIsReplayPaused,
   );
+  const isReplayRequiresVariables = useAppSelector(
+    ConversationsSelectors.selectIsReplayRequiresVariables,
+  );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
@@ -126,12 +129,16 @@ export const ChatView = memo(() => {
   const lastScrollTop = useRef(0);
 
   const showReplayControls = useMemo(() => {
-    return isReplay && !messageIsStreaming && isReplayPaused;
-  }, [isReplay, isReplayPaused, messageIsStreaming]);
+    return (
+      isReplay &&
+      !messageIsStreaming &&
+      (isReplayPaused || !!isReplayRequiresVariables)
+    );
+  }, [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming]);
 
-  const isNotEmptyConversations = selectedConversations.some(
-    (conv) => conv.messages.length > 0,
-  );
+  const isNotEmptyConversations =
+    isReplayRequiresVariables ||
+    selectedConversations.some((conv) => conv.messages.length > 0);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
@@ -584,7 +591,11 @@ export const ChatView = memo(() => {
   }, []);
 
   const showLastMessageRegenerate =
-    !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
+    !isReplay &&
+    !isPlayback &&
+    !isExternal &&
+    !messageIsStreaming &&
+    !isLastMessageError;
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
 
@@ -794,7 +805,10 @@ export const ChatView = memo(() => {
                                             Feature.Likes,
                                           )}
                                           editDisabled={
-                                            !!notAllowedType || isExternal
+                                            !!notAllowedType ||
+                                            isExternal ||
+                                            isReplay ||
+                                            isPlayback
                                           }
                                           onEdit={onEditMessage}
                                           onLike={onLikeHandler(index, conv)}

@@ -2,6 +2,7 @@ import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   FormEvent,
   KeyboardEvent,
   useCallback,
@@ -28,7 +29,7 @@ import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
@@ -61,7 +62,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       setUpdatedVariables((prev) => {
         const updated = [...prev];
         updated[index].value = e.target.value;
-        return [...updated];
+        return updated;
       });
     },
     [],
@@ -84,9 +85,22 @@ export const PromptVariablesDialog: FC<Props> = ({
       );
 
       onSubmit(newContent);
-      onClose();
+      onClose?.();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
+  );
+
+  const handleOnBlur = useCallback(
+    (index: number, e: FocusEvent<HTMLTextAreaElement>) => {
+      e.target.value = e.target.value.trim();
+      setUpdatedVariables((prev) => {
+        const updated = [...prev];
+        updated[index].value = e.target.value;
+        return updated;
+      });
+      onBlur(e);
+    },
+    [],
   );
 
   const handleKeyDown = useCallback(
@@ -95,7 +109,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
-        onClose();
+        onClose?.();
       }
     },
     [handleSubmit, onClose],
@@ -104,7 +118,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
+        onClose?.();
       }
     };
 
@@ -146,12 +160,14 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          onClick={onClose}
-        >
-          <IconX size={24} />
-        </button>
+        {onClose && (
+          <button
+            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+            onClick={onClose}
+          >
+            <IconX size={24} />
+          </button>
+        )}
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
@@ -172,7 +188,9 @@ export const PromptVariablesDialog: FC<Props> = ({
                 }) as string
               }
               value={variable.value}
-              onBlur={onBlur}
+              onBlur={(e) => {
+                handleOnBlur(index, e);
+              }}
               onChange={(e) => {
                 handleChange(index, e);
               }}
