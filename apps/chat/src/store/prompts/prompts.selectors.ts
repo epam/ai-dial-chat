@@ -2,7 +2,6 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   getChildAndCurrentFoldersById,
-  getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
@@ -121,13 +120,6 @@ export const selectParentFoldersIds = createSelector(
   },
 );
 
-export const selectChildAndCurrentFoldersIdsById = createSelector(
-  [selectFolders, (_state, folderId: string) => folderId],
-  (folders, folderId) => {
-    return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
-  },
-);
-
 export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
@@ -220,53 +212,13 @@ export const selectDoesAnyMyItemExist = createSelector(
   },
 );
 
-export const isPublishFolderVersionUnique = createSelector(
-  [
-    selectFolders,
-    (_state: RootState, folderId: string) => folderId,
-    (_state: RootState, _folderId: string, version: string) => version,
-  ],
-  (folders, folderId, version) => {
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.every((folder) => folder.publishVersion !== version);
-  },
-);
-
-export const isPublishPromptVersionUnique = createSelector(
-  [
-    (state) => state,
-    (_state: RootState, entityId: string) => entityId,
-    (_state: RootState, _entityId: string, version: string) => version,
-  ],
-  (state, entityId, version) => {
-    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313;
-
-    if (!prompt || prompt?.publishVersion === version) return false;
-
-    const prompts = selectPrompts(state)
-      .map((prompt) => prompt as Prompt)
-      .filter(
-        (prmt) =>
-          prmt.originalId === entityId && prmt.publishVersion === version,
-      );
-
-    if (prompts.length) return false;
-
-    const folders = selectFolders(state);
-
-    const parentFolders = getParentAndCurrentFoldersById(
-      folders,
-      prompt.folderId,
-    );
-    return parentFolders.every((folder) => folder.publishVersion !== version);
-  },
-);
 export const selectTemporaryFolders = createSelector(
   [rootSelector],
   (state: PromptsState) => {
     return state.temporaryFolders;
   },
 );
+
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {

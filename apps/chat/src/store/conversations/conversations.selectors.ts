@@ -202,12 +202,6 @@ export const selectSelectedConversationsFoldersIds = createSelector(
     );
   },
 );
-export const selectChildAndCurrentFoldersIdsById = createSelector(
-  [selectFolders, (_state, folderId: string | undefined) => folderId],
-  (folders, folderId) => {
-    return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
-  },
-);
 
 export const selectFirstSelectedConversation = createSelector(
   [selectSelectedConversations],
@@ -489,47 +483,6 @@ export const hasExternalParent = createSelector(
   },
 );
 
-export const isPublishFolderVersionUnique = createSelector(
-  [
-    selectFolders,
-    (_state: RootState, folderId: string) => folderId,
-    (_state: RootState, _folderId: string, version: string) => version,
-  ],
-  (folders, folderId, version) => {
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.every((folder) => folder.publishVersion !== version);
-  },
-);
-
-export const isPublishConversationVersionUnique = createSelector(
-  [
-    (state) => state,
-    (_state: RootState, entityId: string) => entityId,
-    (_state: RootState, _entityId: string, version: string) => version,
-  ],
-  (state, entityId, version) => {
-    const conversation = selectConversation(state, entityId) as Conversation; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313
-
-    if (!conversation || conversation?.publishVersion === version) return false;
-
-    const conversations = selectConversations(state)
-      .map((conv) => conv as Conversation) // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313
-      .filter(
-        (conv) =>
-          conv.originalId === entityId && conv.publishVersion === version,
-      );
-
-    if (conversations.length) return false;
-
-    const folders = selectFolders(state);
-
-    const parentFolders = getParentAndCurrentFoldersById(
-      folders,
-      conversation.folderId,
-    );
-    return parentFolders.every((folder) => folder.publishVersion !== version);
-  },
-);
 export const selectTemporaryFolders = createSelector(
   [rootSelector],
   (state: ConversationsState) => {

@@ -37,21 +37,6 @@ export const isEntityOrParentsExternal = (
   );
 };
 
-export const isPublishVersionUnique = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsSelectors.isPublishConversationVersionUnique;
-    case SharingType.ConversationFolder:
-      return ConversationsSelectors.isPublishFolderVersionUnique;
-    case SharingType.Prompt:
-      return PromptsSelectors.isPublishPromptVersionUnique;
-    case SharingType.PromptFolder:
-      return PromptsSelectors.isPublishFolderVersionUnique;
-    default:
-      throw new Error('unknown type');
-  }
-};
-
 export const getShareType = (
   featureType?: FeatureType,
   isFolder?: boolean,
