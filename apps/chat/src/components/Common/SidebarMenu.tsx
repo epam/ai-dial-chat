@@ -68,8 +68,12 @@ export default function SidebarMenu({
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleItems, hiddenItems] = useMemo(() => {
     const displayedItems = menuItems.filter(({ display = true }) => display);
-    const visibleItems = displayedItems.slice(0, displayItemsCount);
-    const hiddenItems = displayedItems.slice(displayItemsCount);
+    const displayCount =
+      displayedItems.length <= displayItemsCount
+        ? displayItemsCount
+        : displayItemsCount - 1;
+    const visibleItems = displayedItems.slice(0, displayCount);
+    const hiddenItems = displayedItems.slice(displayCount);
     return [visibleItems, hiddenItems];
   }, [menuItems, displayItemsCount]);
 
@@ -78,8 +82,14 @@ export default function SidebarMenu({
       for (const entry of entries) {
         if (entry.contentBoxSize) {
           const itemsContainerWidth = entry.contentBoxSize[0].inlineSize;
-
-          setDisplayItemsCount(itemsContainerWidth / ITEM_WIDTH);
+          let count = 3;
+          while (
+            itemsContainerWidth >=
+            ITEM_WIDTH * (count + 1) - ITEMS_GAP_IN_PIXELS
+          ) {
+            count++;
+          }
+          setDisplayItemsCount(count);
         }
       }
     });
