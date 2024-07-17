@@ -1,4 +1,4 @@
-import { ChatSelectors } from '../selectors';
+import { ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
@@ -7,7 +7,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class Addons extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.addons, parentLocator);
+    super(page, ChatSettingsSelectors.addons, parentLocator);
   }
 
   private addonsDialog!: AddonsDialog;
@@ -20,21 +20,21 @@ export class Addons extends BaseElement {
   }
 
   public selectedAddons = this.getChildElementBySelector(
-    `${ChatSelectors.selectedAddons} >> ${Tags.button}`,
+    `${ChatSettingsSelectors.selectedAddons} >> ${Tags.button}`,
   );
 
   public selectedAddon = (addon: string) =>
     this.selectedAddons.getElementLocatorByText(addon);
 
   public recentAddons = this.getChildElementBySelector(
-    `${ChatSelectors.recentAddons} >> ${Tags.button}`,
+    `${ChatSettingsSelectors.recentAddons} >> ${Tags.button}`,
   );
 
   public recentAddon = (addon: string) =>
     this.recentAddons.getElementLocatorByText(addon);
 
   public seeAllAddonsButton = this.getChildElementBySelector(
-    ChatSelectors.seeAllSelectors,
+    ChatSettingsSelectors.seeAllSelectors,
   );
 
   public async getSelectedAddons() {
@@ -46,6 +46,7 @@ export class Addons extends BaseElement {
   }
 
   public async deleteSelectedAddon(addon: string) {
+    // eslint-disable-next-line playwright/no-force-option
     await this.selectedAddon(addon).click({ force: true });
   }
 

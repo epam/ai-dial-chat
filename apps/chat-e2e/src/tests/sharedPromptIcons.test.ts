@@ -44,12 +44,12 @@ dialTest.skip(
       'Click on "Cancel" button in modal window and verify no shared icon appears on prompt icon',
       async () => {
         await shareModal.closeButton.click();
-        const isArrowIconVisible = await prompts
-          .getPromptArrowIcon(prompt.name)
-          .isVisible();
-        expect
-          .soft(isArrowIconVisible, ExpectedMessages.promptIsNotShared)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await prompts.getPromptArrowIcon(prompt.name),
+            ExpectedMessages.promptIsNotShared,
+          )
+          .toBeHidden();
       },
     );
 
@@ -58,18 +58,21 @@ dialTest.skip(
       async () => {
         await prompts.openPromptDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.share);
+        // eslint-disable-next-line playwright/no-force-option
         await promptBar.draggableArea.click({ force: true });
-        const isModalVisible = await shareModal.isVisible();
-        expect
-          .soft(isModalVisible, ExpectedMessages.modalWindowIsClosed)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await shareModal.getElementLocator(),
+            ExpectedMessages.modalWindowIsClosed,
+          )
+          .toBeHidden();
 
-        const isArrowIconVisible = await prompts
-          .getPromptArrowIcon(prompt.name)
-          .isVisible();
-        expect
-          .soft(isArrowIconVisible, ExpectedMessages.promptIsNotShared)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await prompts.getPromptArrowIcon(prompt.name),
+            ExpectedMessages.promptIsNotShared,
+          )
+          .toBeHidden();
       },
     );
 
@@ -80,7 +83,13 @@ dialTest.skip(
         await promptDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModal.copyLinkButton.click();
         await shareModal.closeButton.click();
-        await prompts.getPromptArrowIcon(prompt.name).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptArrowIcon(prompt.name),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
+
         const arrowIconColor = await prompts.getPromptArrowIconColor(
           prompt.name,
         );
@@ -152,7 +161,13 @@ dialTest.skip(
       'Close modal window and verify purple shared icon appears on prompt icon',
       async () => {
         await shareModal.closeButton.click();
-        await prompts.getPromptArrowIcon(prompt.name).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptArrowIcon(prompt.name),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
+
         const arrowIconColor = await prompts.getPromptArrowIconColor(
           prompt.name,
         );
@@ -173,7 +188,13 @@ dialTest.skip(
           GeneratorUtil.randomString(20),
           GeneratorUtil.randomString(20),
         );
-        await prompts.getPromptArrowIcon(newName).waitFor();
+        await expect
+          .soft(
+            prompts.getPromptArrowIcon(newName),
+            ExpectedMessages.sharedEntityIconIsVisible,
+          )
+          .toBeVisible();
+
         const arrowIconColor = await prompts.getPromptArrowIconColor(newName);
         expect
           .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)

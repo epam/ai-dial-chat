@@ -101,12 +101,13 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     dispatch(UIActions.setTheme(localTheme));
     dispatch(UIActions.setIsChatFullWidth(isChatFullWidthLocal));
     if (localLogoFile && !deleteLogo) {
-      dispatch(UIActions.setCustomLogo({ logo: localLogoFile?.id }));
+      dispatch(UIActions.setCustomLogo({ logo: localLogoFile.id }));
     }
     if (deleteLogo) {
       dispatch(UIActions.deleteCustomLogo());
     }
 
+    setLocalLogoFile(undefined);
     onClose();
   }, [
     dispatch,
@@ -124,7 +125,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[500px] overflow-y-auto pb-4 align-bottom transition-all md:max-h-[400px]"
+      containerClassName="inline-block w-[570px] overflow-y-auto align-bottom transition-all md:h-[220px] md:max-h-[400px]"
       dataQa="settings-modal"
       hideClose
       state={open ? ModalState.OPENED : ModalState.CLOSED}
@@ -132,54 +133,54 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       initialFocus={saveBtnRef}
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="mb-4 flex justify-between bg-layer-3 px-3 py-4 text-xl font-medium text-primary-bg-dark md:px-5">
+      <div className="flex h-[80px] items-center justify-between bg-layer-3 px-5 py-4 text-xl font-medium text-primary-bg-dark">
         {t('Settings')}
         <button
           onClick={handleClose}
-          className="text-primary-bg-dark hover:text-accent-primary"
+          className="self-start text-primary-bg-dark hover:text-accent-primary"
         >
-          <IconX height={24} width={24} />
+          <IconX height={20} width={20} />
         </button>
       </div>
 
-      <div className="mb-4 flex flex-col gap-5 px-3 md:px-5">
-        <ThemeSelect
-          localTheme={localTheme}
-          onThemeChangeHandler={onThemeChangeHandler}
-        />
-        {isCustomLogoFeatureEnabled && (
-          <CustomLogoSelect
-            onLogoSelect={onLogoSelect}
-            onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
-            localLogo={
-              deleteLogo
-                ? undefined
-                : (localLogoFile && localLogoFile.name) ??
-                  customLogoLocalStoreName
-            }
+      <div className="flex h-[calc(100%-80px)] flex-col justify-between p-8">
+        <div className="flex flex-col gap-5">
+          <ThemeSelect
+            localTheme={localTheme}
+            onThemeChangeHandler={onThemeChangeHandler}
           />
-        )}
-        {!isSmallScreen() && (
-          <ToggleSwitchLabeled
-            isOn={isChatFullWidthLocal}
-            labelText={t('Full width chat')}
-            labelClassName="basis-1/3 md:basis-1/4 font-medium"
-            handleSwitch={onChangeHandlerFullWidth}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
-          />
-        )}
-      </div>
+          {isCustomLogoFeatureEnabled && (
+            <CustomLogoSelect
+              onLogoSelect={onLogoSelect}
+              onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
+              localLogo={
+                deleteLogo
+                  ? undefined
+                  : (localLogoFile && localLogoFile.name) ??
+                    customLogoLocalStoreName
+              }
+            />
+          )}
+          {!isSmallScreen() && (
+            <ToggleSwitchLabeled
+              isOn={isChatFullWidthLocal}
+              labelText={t('Full width chat')}
+              labelClassName="basis-1/3 md:basis-1/4 font-medium"
+              handleSwitch={onChangeHandlerFullWidth}
+            />
+          )}
+        </div>
 
-      <div className="flex justify-end pr-3 md:pr-5">
-        <button
-          type="button"
-          ref={saveBtnRef}
-          className="button button-primary"
-          onClick={handleSave}
-        >
-          {t('Save')}
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            ref={saveBtnRef}
+            className="button button-primary button-medium"
+            onClick={handleSave}
+          >
+            {t('Save')}
+          </button>
+        </div>
       </div>
     </Modal>
   );

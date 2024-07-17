@@ -1,16 +1,20 @@
 import config from '../../config/playwright.config';
 import { DialHomePage } from '../ui/pages';
 import {
+  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
   ChatMessages,
+  ChatNotFound,
   ConversationSettings,
   ConversationToCompare,
   Conversations,
   EntitySelector,
+  Folders,
   MoreInfo,
   PromptBar,
+  SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
 
@@ -48,6 +52,7 @@ import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
 import { GroupEntity } from '@/src/ui/webElements/groupEntity';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
+import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { Playback } from '@/src/ui/webElements/playback';
@@ -60,6 +65,7 @@ import { Search } from '@/src/ui/webElements/search';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
+import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { allure } from 'allure-playwright';
 import path from 'path';
@@ -89,7 +95,10 @@ const dialTest = test.extend<
     promptBar: PromptBar;
     chat: Chat;
     chatMessages: ChatMessages;
+    editMessageInputAttachments: InputAttachments;
     sendMessage: SendMessage;
+    attachmentDropdownMenu: DropdownMenu;
+    sendMessageInputAttachments: InputAttachments;
     conversations: Conversations;
     prompts: Prompts;
     folderConversations: FolderConversations;
@@ -106,6 +115,7 @@ const dialTest = test.extend<
     temperatureSlider: TemperatureSlider;
     addons: Addons;
     addonsDialog: AddonsDialog;
+    isolatedView: MoreInfo;
     conversationData: ConversationData;
     promptData: PromptData;
     conversationDropdownMenu: DropdownMenu;
@@ -146,9 +156,17 @@ const dialTest = test.extend<
     dataInjector: DataInjectorInterface;
     errorToast: ErrorToast;
     additionalShareUserRequestContext: APIRequestContext;
+    additionalSecondShareUserRequestContext: APIRequestContext;
     mainUserShareApiHelper: ShareApiHelper;
     additionalUserShareApiHelper: ShareApiHelper;
     additionalUserItemApiHelper: ItemApiHelper;
+    additionalSecondUserShareApiHelper: ShareApiHelper;
+    additionalSecondUserItemApiHelper: ItemApiHelper;
+    chatNotFound: ChatNotFound;
+    attachFilesModal: AttachFilesModal;
+    uploadFromDeviceModal: UploadFromDeviceModal;
+    selectFolderModal: SelectFolderModal;
+    selectUploadFolder: Folders;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -234,9 +252,21 @@ const dialTest = test.extend<
     const chatMessages = chat.getChatMessages();
     await use(chatMessages);
   },
+  editMessageInputAttachments: async ({ chatMessages }, use) => {
+    const editMessageInputAttachments = chatMessages.getInputAttachments();
+    await use(editMessageInputAttachments);
+  },
   sendMessage: async ({ chat }, use) => {
     const sendMessage = chat.getSendMessage();
     await use(sendMessage);
+  },
+  attachmentDropdownMenu: async ({ sendMessage }, use) => {
+    const attachmentDropdownMenu = sendMessage.getDropdownMenu();
+    await use(attachmentDropdownMenu);
+  },
+  sendMessageInputAttachments: async ({ sendMessage }, use) => {
+    const sendMessageInputAttachments = sendMessage.getInputAttachments();
+    await use(sendMessageInputAttachments);
   },
   conversations: async ({ chatBar }, use) => {
     const conversations = chatBar.getConversations();
@@ -325,6 +355,10 @@ const dialTest = test.extend<
   addonsDialog: async ({ addons }, use) => {
     const addonsDialog = addons.getAddonsDialog();
     await use(addonsDialog);
+  },
+  isolatedView: async ({ chat }, use) => {
+    const isolatedView = chat.getIsolatedView();
+    await use(isolatedView);
   },
   modelSelector: async ({ entitySettings }, use) => {
     const modelSelector = entitySettings.getModelSelector();
@@ -480,6 +514,13 @@ const dialTest = test.extend<
       });
     await use(additionalShareUserRequestContext);
   },
+  additionalSecondShareUserRequestContext: async ({ playwright }, use) => {
+    const additionalSecondShareUserRequestContext =
+      await playwright.request.newContext({
+        storageState: stateFilePath(+config.workers! + 1),
+      });
+    await use(additionalSecondShareUserRequestContext);
+  },
   additionalUserShareApiHelper: async (
     { additionalShareUserRequestContext },
     use,
@@ -489,6 +530,15 @@ const dialTest = test.extend<
     );
     await use(additionalUserShareApiHelper);
   },
+  additionalSecondUserShareApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondUserShareApiHelper = new ShareApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondUserShareApiHelper);
+  },
   additionalUserItemApiHelper: async (
     { additionalShareUserRequestContext },
     use,
@@ -497,6 +547,35 @@ const dialTest = test.extend<
       additionalShareUserRequestContext,
     );
     await use(additionalUserItemApiHelper);
+  },
+  chatNotFound: async ({ page }, use) => {
+    const chatNotFound = new ChatNotFound(page);
+    await use(chatNotFound);
+  },
+  additionalSecondUserItemApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondUserItemApiHelper = new ItemApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondUserItemApiHelper);
+  },
+  attachFilesModal: async ({ page }, use) => {
+    const attachFilesModal = new AttachFilesModal(page);
+    await use(attachFilesModal);
+  },
+  uploadFromDeviceModal: async ({ page }, use) => {
+    const uploadFromDeviceModal = new UploadFromDeviceModal(page);
+    await use(uploadFromDeviceModal);
+  },
+  selectFolderModal: async ({ page }, use) => {
+    const selectFolderModal = new SelectFolderModal(page);
+    await use(selectFolderModal);
+  },
+  selectUploadFolder: async ({ selectFolderModal }, use) => {
+    const selectUploadFolder = selectFolderModal.getUploadFolder();
+    await use(selectUploadFolder);
   },
 });
 

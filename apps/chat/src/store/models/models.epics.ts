@@ -127,6 +127,38 @@ const updateRecentModelsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
+const initFavoriteAppsIds: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => ModelsActions.init.match(action)),
+    switchMap(() => DataService.getFavoriteAppsIds()),
+    switchMap((appsIds) => {
+      const defaultAppsIds =
+        SettingsSelectors.selectFavoriteAppsIds(state$.value) || [];
+      return of(
+        ModelsActions.initFavoriteApplicationsIds({
+          appsIds: appsIds ? appsIds : defaultAppsIds,
+        }),
+      );
+    }),
+  );
+
+const updateFavoriteAppsIds: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ModelsActions.initFavoriteApplicationsIds.match(action) ||
+        ModelsActions.updateFavoriteApplicationsIds.match(action),
+    ),
+    withLatestFrom(state$),
+    map(([_action, state]) =>
+      ModelsSelectors.selectFavoriteApplicationsIds(state),
+    ),
+    switchMap((favoriteAppsIds) => {
+      return DataService.setFavoriteAppsIds(favoriteAppsIds);
+    }),
+    ignoreElements(),
+  );
+
 const getModelsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.getModelsSuccess.match),
@@ -161,4 +193,6 @@ export const ModelsEpics = combineEpics(
   getModelsFailEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
+  updateFavoriteAppsIds,
+  initFavoriteAppsIds,
 );

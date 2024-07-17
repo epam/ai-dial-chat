@@ -79,7 +79,7 @@ export default function ShareModal() {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-full max-w-[424px] p-6"
+      containerClassName="inline-block w-full max-w-[424px] px-3 py-4 md:p-6"
       dataQa="share-modal"
       state={modalState}
       onClose={handleClose}
@@ -93,16 +93,14 @@ export default function ShareModal() {
           {t('share.modal.link', { context: sharingType })}
         </p>
         <div className="relative mt-2">
-          <Tooltip tooltip={url}>
-            <input
-              type="text"
-              readOnly
-              className="w-full gap-2 truncate rounded-primary border border-primary bg-layer-3 p-3 pr-10 text-primary-bg-dark outline-none"
-              onCopyCapture={handleCopy}
-              value={url}
-              data-qa="share-link"
-            />
-          </Tooltip>
+          <input
+            type="text"
+            readOnly
+            className="w-full gap-2 truncate rounded-primary border border-primary bg-layer-3 p-3 pr-10 text-primary-bg-dark outline-none"
+            onCopyCapture={handleCopy}
+            value={url}
+            data-qa="share-link"
+          />
           <div className="absolute right-3 top-3">
             {urlCopied ? (
               <Tooltip tooltip={t('Copied!')}>

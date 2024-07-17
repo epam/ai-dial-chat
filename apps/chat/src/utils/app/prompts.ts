@@ -1,8 +1,9 @@
 import { PartialBy } from '@/src/types/common';
-import { Prompt } from '@/src/types/prompt';
+import { Prompt, PromptInfo } from '@/src/types/prompt';
 
-import { getPromptApiKey } from '../server/api';
+import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
+import { splitEntityId } from './folders';
 
 const getGeneratedPromptId = (prompt: PartialBy<Prompt, 'id'>) =>
   constructPath(prompt.folderId, getPromptApiKey(prompt));
@@ -35,4 +36,12 @@ export const parseVariablesFromContent = (content?: string) => {
   }
 
   return foundVariables;
+};
+
+export const getPromptInfoFromId = (id: string): PromptInfo => {
+  const { apiKey, bucket, name, parentPath } = splitEntityId(id);
+  return regeneratePromptId({
+    ...parsePromptApiKey(name),
+    folderId: constructPath(apiKey, bucket, parentPath),
+  });
 };

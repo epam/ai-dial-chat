@@ -4,10 +4,15 @@ import path from 'path';
 
 export const ExpectedConstants = {
   newConversationTitle: 'New conversation',
+  newConversationWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newConversationTitle} ${index}`,
+  entityWithIndexTitle: (name: string, index: number) => `${name} ${index}`,
   newPromptTitle: (index: number) => `Prompt ${index}`,
   promptPlaceholder: (variable: string) => `Enter a value for ${variable}...`,
   newFolderTitle: 'New folder',
   newFolderWithIndexTitle: (index: number) =>
+    `${ExpectedConstants.newFolderTitle} ${index}`,
+  newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
   emptyString: '',
   defaultTemperature: '1',
@@ -30,13 +35,21 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?',
+  deleteFileMessage: 'Are you sure that you want to delete this file',
+  deleteFilesMessage: 'Are you sure that you want to delete these files',
   deleteSharedFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?\n' +
     'Deleting will stop sharing and other users will no longer see this folder.',
+  deleteSharedConversationMessage:
+    'Are you sure that you want to delete a conversation?\n' +
+    'Deleting will stop sharing and other users will no longer see this conversation.',
   renameSharedFolderMessage:
     'Renaming will stop sharing and other users will no longer see this folder.',
+  renameSharedConversationMessage:
+    'Renaming will stop sharing and other users will no longer see this conversation.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
+  sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
   proceedReplayTooltip: 'Please continue replay to continue working with chat',
   stopGeneratingTooltip: 'Stop generating',
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
@@ -63,11 +76,14 @@ export const ExpectedConstants = {
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
+  shareInviteDoesNotExist:
+    'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
+  revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
   maxSidePanelWidthPercentage: 0.45,
   minSidePanelWidthPx: 260,
   attachments: 'Attachments',
-  responseContentPattern: /(?<=\{"content":")[^"^\\$]+/g,
+  responseContentPattern: /(?<="content":")[^"^\\$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
@@ -80,6 +96,36 @@ export const ExpectedConstants = {
   promptNameLabel: 'promptName',
   promptContentLabel: 'content',
   requiredFieldErrorMessage: 'Please fill in all required fields',
+  isolatedUrl: (modelId: string) => `${config.use!.baseURL}/models/${modelId}`,
+  modelNotFountErrorMessage:
+    'Model is not found.Please contact your administrator.',
+  nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
+  notAllowedDuplicatedFolderNameErrorMessage:
+    'Not allowed to have folders with same names',
+  duplicatedFolderNameErrorMessage: (name: string) =>
+    `Folder with name "${name}" already exists in this folder.`,
+  duplicatedFolderRootNameErrorMessage: (name: string) =>
+    `Folder with name "${name}" already exists at the root.`,
+  duplicatedConversationNameErrorMessage: (name: string) =>
+    `Conversation with name "${name}" already exists in this folder.`,
+  duplicatedConversationRootNameErrorMessage: (name: string) =>
+    `Conversation with name "${name}" already exists at the root.`,
+  prohibitedNameSymbols: `=,:;{}/%&`,
+  // eslint-disable-next-line no-irregular-whitespace
+  controlChars: `\b\t\f`,
+  attachedFileError: (filename: string) =>
+    `You've trying to upload files with incorrect type: ${filename}`,
+  allowedSpecialSymbolsInName: 'Test (`~!@#$^*-_+[]\'|<>.?")',
+  winAllowedSpecialSymbolsInName: "Test (`~!@#$^_-_+[]'___.__)",
+  duplicatedFilenameError: (filename: string) =>
+    `Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: ${filename}`,
+  sameFilenamesError: (filename: string) =>
+    `Files which you trying to upload have same names. Please rename or delete them from uploading files list: ${filename}`,
+  restrictedNameChars: ':;,=/{}%&\\',
+  notAllowedFilenameError: (filename: string) =>
+    `The symbols ${ExpectedConstants.restrictedNameChars} are not allowed in file name. Please rename or delete them from uploading files list: ${filename}`,
+  endDotFilenameError: (filename: string) =>
+    `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: ${filename}`,
 };
 
 export enum Groups {
@@ -106,6 +152,9 @@ export enum MenuOptions {
   unpublish = 'Unpublish',
   delete = 'Delete',
   newFolder = 'New folder',
+  attachments = 'Attachments',
+  download = 'Download',
+  addNewFolder = 'Add new folder',
 }
 
 export enum FilterMenuOptions {
@@ -116,6 +165,11 @@ export enum FilterMenuOptions {
 export enum AccountMenuOptions {
   settings = 'Settings',
   logout = 'Log out',
+}
+
+export enum UploadMenuOptions {
+  attachUploadedFiles = 'Attach uploaded files',
+  uploadFromDevice = 'Upload from device',
 }
 
 export const Chronology = {
@@ -139,8 +193,10 @@ export const API = {
   promptsHost: () => `${API.listingHost}/prompts`,
   filesListingHost: () => `${API.listingHost}/files`,
   fileHost: '/api/files',
+  importFileRootPath: (bucket: string) => `files/${bucket}`,
   modelFilePath: (modelId: string) => `appdata/${modelId}/images`,
-  importFilePath: (bucket: string) => `files/${bucket}/imports`,
+  importFilePath: (bucket: string, modelId: string) =>
+    `${API.importFileRootPath(bucket)}/${API.modelFilePath(modelId)}`,
   shareInviteAcceptanceHost: '/api/share/accept',
   shareConversationHost: '/api/share/create',
   shareWithMeListing: '/api/share/listing',
@@ -169,6 +225,20 @@ export const Attachment = {
   sunImageName: 'sun.jpg',
   cloudImageName: 'cloud.jpg',
   heartImageName: 'heart.webp',
+  flowerImageName: 'flower.jpg',
+  longImageName: 'attachmentWithVeryVeryVeryVeryVeryLongTitleDescription.jpg',
+  specialSymbolsName: "special (`~!@#$^-_+[]'.).jpg",
+  textName: 'text.txt',
+  allTypesExtension: '*/*',
+  allTypesLabel: 'all',
+  imageTypesExtension: 'image/*',
+  imagesTypesLabel: 'images',
+  zeroSizeFileName: 'test1.txt',
+  incrementedImageName: (index: number) => `test${index}.jpg`,
+  dotExtensionImageName: 'testdot..JPg',
+  restrictedSemicolonCharFilename: 'restricted;char.jpg',
+  restrictedEqualCharFilename: 'restricted=char.jpg',
+  fileWithoutExtension: 'withoutExtension',
 };
 
 export enum Side {
@@ -188,10 +258,13 @@ export enum ModelIds {
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
   GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',
+  GPT_4_TURBO_2024_04_29 = 'gpt-4-turbo-2024-04-09',
+  GPT_4_TURBO = 'gpt-4-turbo',
   GPT_4_32K = 'gpt-4-32k',
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
   GPT_4_VISION_PREVIEW = 'gpt-4-vision-preview',
+  GPT_4_O_2024_05_13 = 'gpt-4o-2024-05-13',
   CHAT_BISON = 'chat-bison',
   BISON_001 = 'chat-bison@001',
   BISON_32k_002 = 'chat-bison-32k@002',
@@ -206,16 +279,25 @@ export enum ModelIds {
   ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
   ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
   ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
-  ANTHROPIC_CLAUDE_V3 = 'anthropic.claude-v3',
+  ANTHROPIC_CLAUDE_V3_SONNET = 'anthropic.claude-v3-sonnet',
+  ANTHROPIC_CLAUDE_V3_HAIKU = 'anthropic.claude-v3-haiku',
+  ANTHROPIC_CLAUDE_V3_OPUS = 'anthropic.claude-v3-opus',
   STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
   IMAGE_GENERATION_005 = 'imagegeneration@005',
+  GEMINI_PRO_1_5 = 'gemini-1.5-pro-preview-0409',
+  GEMINI_FLASH_1_5 = 'gemini-1.5-flash-001',
   GEMINI_PRO_VISION = 'gemini-pro-vision',
   GEMINI_PRO = 'gemini-pro',
   META_LLAMA_2 = 'meta.llama2',
   LLAMA2_13B_CHAT_V1 = 'meta.llama2-13b-chat-v1',
   LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
+  LLAMA3_8B_INSTRUCT_V1 = 'meta.llama3-8b-instruct-v1',
+  LLAMA3_70B_INSTRUCT_V1 = 'meta.llama3-70b-instruct-v1',
   COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
   MISTRAL_LARGE = 'mistral-large-azure',
+  DATABRICKS_DBRX_INSTRUCT = 'databricks-dbrx-instruct',
+  DATABRICKS_MIXTRAL_8X7B_INSTRUCT = 'databricks-mixtral-8x7b-instruct',
+  DATABRICKS_LLAMA_2_70B_CHAT = 'databricks-llama-2-70b-chat',
 }
 
 export enum AddonIds {
@@ -237,4 +319,10 @@ export enum ResultFolder {
   allureReport = 'allure-results',
   htmlReport = 'html-report',
   testResults = 'test-results',
+}
+
+export enum ScrollState {
+  top = 'top',
+  middle = 'middle',
+  bottom = 'bottom',
 }

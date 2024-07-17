@@ -26,8 +26,7 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const item = (
     <button
       className={classNames(
-        'flex cursor-pointer items-center justify-center rounded p-[5px] disabled:cursor-not-allowed',
-        'hover:bg-accent-primary-alpha hover:text-accent-primary',
+        'flex cursor-pointer items-center justify-center rounded p-[5px] hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed',
         className,
       )}
       onClick={!childMenuItems ? onClick : undefined}
@@ -122,6 +121,7 @@ export default function SidebarMenu({
       })}
 
       <ContextMenu
+        triggerIconClassName="flex min-w-[34px] cursor-pointer items-center"
         menuItems={hiddenItems}
         isOpen={isOpen}
         featureType={featureType}

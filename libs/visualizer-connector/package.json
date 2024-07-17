@@ -1,0 +1,19 @@
+{
+  "name": "@epam/ai-dial-visualizer-connector",
+  "description": "Package for connecting custom visualizer into Dial Chat",
+  "homepage": "https://epam-rail.com",
+  "version": "0.0.1",
+  "dependencies": {
+    "@epam/ai-dial-shared": "*"
+  },
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/epam/ai-dial-chat/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/epam/ai-dial-chat.git",
+    "directory": "libs/visualizer-connector"
+  }
+}

@@ -3,7 +3,6 @@ import { Fragment, useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { FeatureType } from '@/src/types/common';
 import { ContextMenuProps, MenuItemRendererProps } from '@/src/types/menu';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -25,8 +24,8 @@ function ContextMenuItemRenderer({
   const item = (
     <div
       className={classNames(
-        'flex w-full items-center gap-3 truncate break-words',
-        !!childMenuItems && !disabled && 'text-primary-bg-dark',
+        'border-b-pr-grey-200 flex w-full items-center gap-3 truncate break-words',
+        !!childMenuItems && !disabled && 'text-primary-bg-light',
         !!childMenuItems && className,
       )}
     >
@@ -77,6 +76,8 @@ export default function ContextMenu({
   isOpen,
   onOpenChange,
   isLoading,
+  placement,
+  listClassNames,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -101,11 +102,9 @@ export default function ContextMenu({
 
   return (
     <Menu
-      className={classNames(triggerIconClassName)}
-      listClassName={classNames(
-        featureType === FeatureType.Chat && 'context-menu-chat',
-        featureType === FeatureType.Prompt && 'context-menu-prompt',
-      )}
+      placement={placement}
+      className={triggerIconClassName}
+      listClassName={listClassNames}
       disabled={disabled}
       type="contextMenu"
       onOpenChange={onOpenChange}

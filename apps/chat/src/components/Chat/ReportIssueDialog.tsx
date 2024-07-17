@@ -3,6 +3,7 @@ import {
   FC,
   FormEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -15,29 +16,18 @@ import { checkValidity } from '@/src/utils/app/forms';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { ModalState } from '@/src/types/modal';
-import { ReportIssueBody } from '@/src/types/report-issue';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ServiceActions,
+  ServiceSelectors,
+} from '@/src/store/service/service.reducer';
 import { UIActions } from '@/src/store/ui/ui.reducers';
-
-import { errorsMessages } from '@/src/constants/errors';
 
 import Modal from '@/src/components/Common/Modal';
 
 import EmptyRequiredInputMessage from '../Common/EmptyRequiredInputMessage';
-
-const reportIssue = async (fields: Omit<ReportIssueBody, 'email'>) => {
-  const controller = new AbortController();
-  return await fetch('api/report-issue', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    signal: controller.signal,
-    body: JSON.stringify(fields),
-  });
-};
 
 interface Props {
   isOpen: boolean;
@@ -46,6 +36,11 @@ interface Props {
 
 export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation(Translation.Settings);
+
+  const isSuccessfullySent = useAppSelector(
+    ServiceSelectors.selectIsSuccessfullySent,
+  );
+
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -72,6 +67,15 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
     [],
   );
 
+  useEffect(() => {
+    if (isSuccessfullySent) {
+      dispatch(ServiceActions.resetIsSuccessfullySent());
+
+      setTitle('');
+      setDescription('');
+    }
+  }, [isSuccessfullySent, dispatch]);
+
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -82,28 +86,8 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
         dispatch(
           UIActions.showLoadingToast(t('Reporting an issue in progress...')),
         );
+        dispatch(ServiceActions.reportIssue({ title, description }));
         handleClose();
-
-        const response = await reportIssue({
-          title,
-          description,
-        });
-
-        if (response.ok) {
-          dispatch(
-            UIActions.showSuccessToast(t('Issue reported successfully')),
-          );
-          setTitle('');
-          setDescription('');
-        } else {
-          dispatch(
-            UIActions.showErrorToast(
-              t(errorsMessages.generalServer, {
-                ns: 'common',
-              }),
-            ),
-          );
-        }
       }
     },
     [description, dispatch, handleClose, t, title],
@@ -176,7 +160,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
         <EmptyRequiredInputMessage />
       </div>
       <div className="flex  justify-end">
-        <button type="submit" className="button button-primary">
+        <button type="submit" className="button button-primary button-medium">
           {t('Report an issue')}
         </button>
       </div>

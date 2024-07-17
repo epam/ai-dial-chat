@@ -33,7 +33,7 @@ export const ConfirmDialog = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="confirmation-dialog"
-      containerClassName="inline-block w-full min-w-[90%] p-6 text-center md:min-w-[300px] md:max-w-[500px]"
+      containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 text-center md:min-w-[300px] md:max-w-[500px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
       heading={heading}
@@ -56,7 +56,7 @@ export const ConfirmDialog = ({
         <div className="flex w-full items-center justify-end gap-3">
           {cancelLabel && (
             <button
-              className="button button-secondary"
+              className="button button-ghost button-medium"
               onClick={() => {
                 onClose(false);
               }}
@@ -68,7 +68,7 @@ export const ConfirmDialog = ({
           <button
             ref={confirmLabelRef}
             autoFocus
-            className="button button-primary"
+            className="button button-primary button-medium"
             onClick={() => onClose(true)}
             data-qa="confirm"
           >

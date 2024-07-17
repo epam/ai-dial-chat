@@ -1,10 +1,12 @@
+import { isAbsoluteUrl } from '@/src/utils/app/file';
+
 import { Attachment } from '@/src/types/chat';
 
 export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {
     return undefined;
   }
-  return url.startsWith('//') || url.startsWith('http') ? url : `api/${url}`;
+  return isAbsoluteUrl(url) ? url : `api/${url}`;
 };
 
 export const getMappedAttachment = (attachment: Attachment): Attachment => {

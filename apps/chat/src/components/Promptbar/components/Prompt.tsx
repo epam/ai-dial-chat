@@ -34,11 +34,14 @@ import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -48,8 +51,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
-import PublishModal from '../../Chat/Publish/PublishWizard';
-import UnpublishModal from '../../Chat/UnpublishModal';
+import { PublishModal } from '../../Chat/Publish/PublishWizard';
+import { UnpublishModal } from '../../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
@@ -58,9 +61,14 @@ import { PreviewPromptModal } from './PreviewPromptModal';
 interface Props {
   item: PromptInfo;
   level?: number;
+  additionalItemData?: Record<string, unknown>;
 }
 
-export const PromptComponent = ({ item: prompt, level }: Props) => {
+export const PromptComponent = ({
+  item: prompt,
+  level,
+  additionalItemData,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -73,10 +81,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       true,
     ),
   );
-  const selectedPromptId = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
+  const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
+    useAppSelector(PromptsSelectors.selectSelectedPromptId);
+  const selectedConversationsIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
   );
-  const isSelected = selectedPromptId === prompt.id;
+  const isApproveRequiredResource =
+    !!additionalItemData?.isApproveRequiredResource;
+  const isSelected =
+    selectedPromptId === prompt.id &&
+    isApproveRequiredResource === isSelectedPromptApproveRequiredResource;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
@@ -88,6 +102,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
   );
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
+  );
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
@@ -184,11 +202,16 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       e.stopPropagation();
       e.preventDefault();
       setIsRenaming(true);
-      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: prompt.id,
+          isApproveRequiredResource,
+        }),
+      );
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
-    [dispatch, prompt.id],
+    [dispatch, isApproveRequiredResource, prompt.id],
   );
 
   const handleExportPrompt = useCallback(
@@ -198,7 +221,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       typedEvent.stopPropagation();
 
       dispatch(
-        PromptsActions.exportPrompt({
+        ImportExportActions.exportPrompt({
           id: prompt.id,
         }),
       );
@@ -286,24 +309,27 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
   );
 
   const onPromptClick = () => {
-    dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
-    dispatch(PromptsActions.setIsPromptContentCopying(true));
+    if (selectedConversationsIds.length) {
+      dispatch(PromptsActions.setSelectedPrompt({ promptId: prompt.id }));
+      dispatch(PromptsActions.setIsPromptContentCopying(true));
 
-    dispatch(
-      PromptsActions.uploadPrompt({
-        promptId: prompt.id,
-      }),
-    );
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: prompt.id,
+        }),
+      );
+    }
   };
 
   return (
     <>
       <div
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:pr-9',
+          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
+          isSelected ? 'hover:pr-3' : 'hover:pr-9',
         )}
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -313,7 +339,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       >
         <div
           className={classNames('flex size-full items-center gap-2', {
-            'pr-6 xl:pr-0': !isDeleting && !isRenaming && isSelected,
+            'pr-6': !isDeleting && !isRenaming && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid}
           onDragStart={(e) => handleDragStart(e, prompt)}
@@ -370,11 +396,14 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
               onShare={handleOpenSharing}
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
-              onPublishUpdate={handleOpenPublishing}
-              onUnpublish={handleOpenUnpublishing}
+              onUnpublish={
+                additionalItemData?.isApproveRequiredResource
+                  ? undefined
+                  : handleOpenUnpublishing
+              }
               onOpenChange={setIsContextMenu}
               onDuplicate={handleDuplicate}
-              onView={(e) => handleOpenEditModal(e, true)}
+              onView={undefined}
               isOpen={isContextMenu}
             />
           </div>
@@ -392,13 +421,19 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
         </div>
         {showModal && isSelected && isModalPreviewMode && (
           <PreviewPromptModal
+            prompt={prompt}
             isOpen
-            onDuplicate={(e) => {
-              handleDuplicate(e);
-              handleClose();
-            }}
+            isPublicationPreview={!!resourceToReview}
             onClose={handleClose}
-            onDelete={() => setIsDeleting(true)}
+            onDuplicate={
+              !resourceToReview
+                ? (e) => {
+                    handleDuplicate(e);
+                    handleClose();
+                  }
+                : undefined
+            }
+            onDelete={!resourceToReview ? () => setIsDeleting(true) : undefined}
           />
         )}
       </div>
@@ -406,6 +441,7 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isPublishing && (
         <PublishModal
           entity={prompt}
+          entities={[prompt]}
           type={SharingType.Prompt}
           isOpen
           onClose={handleClosePublishModal}
@@ -413,8 +449,10 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       )}
       {isUnpublishing && (
         <UnpublishModal
-          entity={prompt}
+          subtitle={t('Prompt will no longer be visible to the organization')}
           type={SharingType.Prompt}
+          entity={prompt}
+          entities={[prompt]}
           isOpen
           onClose={handleCloseUnpublishModal}
         />
@@ -437,14 +475,13 @@ export const PromptComponent = ({ item: prompt, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{promptName}}', {
+          heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}
           description={
-            t('Are you sure that you want to revoke access to this prompt?') ||
-            ''
+            t('Are you sure that you want to unshare this prompt?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);

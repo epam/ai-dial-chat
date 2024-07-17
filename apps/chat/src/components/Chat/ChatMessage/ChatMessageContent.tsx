@@ -1,3 +1,4 @@
+import { IconPaperclip } from '@tabler/icons-react';
 import {
   MouseEvent,
   RefObject,
@@ -18,11 +19,14 @@ import {
   getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
+import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
-import { DialFile, DialLink } from '@/src/types/files';
+import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -31,6 +35,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 import {
@@ -95,6 +101,7 @@ export const ChatMessageContent = ({
   onRegenerate,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -106,9 +113,18 @@ export const ChatMessageContent = ({
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
-  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+  const canAttachFiles = useAppSelector(
+    ConversationsSelectors.selectCanAttachFile,
+  );
+  const canAttachFolders = useAppSelector(
+    ConversationsSelectors.selectCanAttachFolders,
+  );
+  const canAttachLinks = useAppSelector(
+    ConversationsSelectors.selectCanAttachLink,
+  );
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
@@ -116,6 +132,8 @@ export const ChatMessageContent = ({
 
   const anchorRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
+
+  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
@@ -164,18 +182,53 @@ export const ChatMessageContent = ({
       (id) => !mappedUserEditableAttachmentsIds.includes(id),
     );
     const newFiles = newIds
-      .map((id) => files.find((file) => file.id === id))
+      .map(
+        (id) =>
+          files.find((file) => file.id === id) ||
+          (canAttachFolders && folders.find((folder) => folder.id === id)),
+      )
       .filter(Boolean) as DialFile[];
 
     return mappedUserEditableAttachments
       .filter(({ id }) => newEditableAttachmentsIds.includes(id))
       .concat(newFiles);
   }, [
+    canAttachFolders,
     files,
+    folders,
     mappedUserEditableAttachments,
     mappedUserEditableAttachmentsIds,
     newEditableAttachmentsIds,
   ]);
+
+  const selectedFileIds = useMemo(
+    () =>
+      newEditableAttachments.map((f) =>
+        f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE
+          ? ApiUtils.decodeApiUrl(f.id).replace(new RegExp('^metadata/'), '') +
+            '/'
+          : f.id,
+      ),
+    [newEditableAttachments],
+  );
+
+  const fileAttachments = useMemo(
+    () =>
+      newEditableAttachments.filter(
+        (f) => f.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
+      ),
+    [newEditableAttachments],
+  );
+
+  const folderAttachments = useMemo(
+    () =>
+      canAttachFolders
+        ? (newEditableAttachments.filter(
+            (f) => f.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
+          ) as unknown as FileFolderInterface[])
+        : undefined,
+    [canAttachFolders, newEditableAttachments],
+  );
 
   const isSubmitAllowed = useMemo(() => {
     const isContentEmptyAndNoAttachments =
@@ -194,13 +247,6 @@ export const ChatMessageContent = ({
     [],
   );
 
-  useEffect(() => {
-    if (shouldScroll) {
-      anchorRef.current?.scrollIntoView({ block: 'end' });
-      setShouldScroll(false);
-    }
-  }, [shouldScroll]);
-
   const handleToggleEditing = useCallback(
     (value?: boolean) => {
       toggleEditing(value ?? !isEditing);
@@ -209,13 +255,35 @@ export const ChatMessageContent = ({
     [isEditing, toggleEditing],
   );
 
+  useEffect(() => {
+    if (isEditing) {
+      setShouldScroll(true);
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (shouldScroll) {
+      anchorRef.current?.scrollIntoView({ block: 'end' });
+      setShouldScroll(false);
+    }
+  }, [shouldScroll]);
+
   const handleEditMessage = useCallback(() => {
     if (isSubmitAllowed) {
       return;
     }
 
     const attachments = getUserCustomContent(
-      newEditableAttachments,
+      newEditableAttachments.filter(
+        (a) =>
+          !(a as unknown as FolderInterface).type &&
+          a.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
+      ),
+      newEditableAttachments.filter(
+        (a) =>
+          !!(a as unknown as FolderInterface).type ||
+          a.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
+      ) as unknown as FolderInterface[],
       selectedDialLinks,
     );
     const isAttachmentsSame = isEqual(
@@ -266,7 +334,8 @@ export const ChatMessageContent = ({
   const handleUnselectFile = useCallback(
     (fileId: string) => {
       dispatch(FilesActions.uploadFileCancel({ id: fileId }));
-      setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fileId));
+      const fid = isFolderId(fileId) ? fileId.slice(0, -1) : fileId;
+      setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fid));
     },
     [dispatch],
   );
@@ -281,7 +350,9 @@ export const ChatMessageContent = ({
     if (typeof result === 'object') {
       const selectedFilesIds = result as string[];
       const uniqueFilesIds = uniq(selectedFilesIds);
-      setNewEditableAttachmentsIds(uniqueFilesIds);
+      setNewEditableAttachmentsIds(
+        uniqueFilesIds.map((id) => (isFolderId(id) ? id.slice(0, -1) : id)),
+      );
     }
   }, []);
 
@@ -320,7 +391,7 @@ export const ChatMessageContent = ({
   return (
     <div
       ref={messageRef}
-      className={classNames('group h-full md:px-4 xl:px-8')}
+      className={classNames('group h-full md:px-4')}
       style={{ overflowWrap: 'anywhere' }}
       data-qa="chat-message"
       onClick={(e) => {
@@ -331,7 +402,7 @@ export const ChatMessageContent = ({
     >
       <div
         className={classNames(
-          'm-auto flex h-full md:gap-6 md:py-6 lg:px-0',
+          'm-auto flex h-full md:gap-6 md:py-6',
           !isChatFullWidth && 'md:max-w-2xl xl:max-w-3xl',
           isMobileOrOverlay ? 'p-3' : 'p-4',
         )}
@@ -391,9 +462,13 @@ export const ChatMessageContent = ({
 
                   {(newEditableAttachments.length > 0 ||
                     selectedDialLinks.length > 0) && (
-                    <div className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3">
+                    <div
+                      className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+                      data-qa="attachment-container"
+                    >
                       <ChatInputAttachments
-                        files={newEditableAttachments}
+                        files={fileAttachments}
+                        folders={folderAttachments}
                         links={selectedDialLinks}
                         onUnselectFile={handleUnselectFile}
                         onRetryFile={handleRetry}
@@ -403,10 +478,28 @@ export const ChatMessageContent = ({
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex size-[34px] items-center justify-center rounded hover:bg-accent-primary-alpha">
+                <div
+                  className={classNames(
+                    'flex items-center',
+                    !canAttachFiles && !canAttachFolders && !canAttachLinks
+                      ? 'justify-end'
+                      : 'justify-between',
+                  )}
+                >
+                  <div className="size-[34px]">
                     <AttachButton
-                      selectedFilesIds={newEditableAttachmentsIds}
+                      contextMenuPlacement="bottom-start"
+                      TriggerCustomRenderer={
+                        <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
+                          <IconPaperclip
+                            strokeWidth="1.5"
+                            size={24}
+                            width={24}
+                            height={24}
+                          />
+                        </div>
+                      }
+                      selectedFilesIds={selectedFileIds}
                       onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                       onUploadFromDevice={handleUploadFromDevice}
                       onAddLinkToMessage={handleAddLinkToMessage}
@@ -414,7 +507,7 @@ export const ChatMessageContent = ({
                   </div>
                   <div className="relative flex gap-3">
                     <button
-                      className="button button-secondary"
+                      className="button button-secondary button-medium"
                       onClick={() => {
                         setMessageContent(message.content);
                         setNewEditableAttachmentsIds(
@@ -427,17 +520,14 @@ export const ChatMessageContent = ({
                       {t('Cancel')}
                     </button>
                     <button
-                      className="button button-primary"
+                      className="button button-primary button-medium"
                       onClick={handleEditMessage}
                       disabled={isSubmitAllowed}
                       data-qa="save-and-submit"
                     >
                       {t('Save & Submit')}
                     </button>
-                    <div
-                      ref={anchorRef}
-                      className="absolute bottom-[-120px]"
-                    ></div>
+                    <div ref={anchorRef} className="absolute bottom-0"></div>
                   </div>
                 </div>
               </div>
@@ -463,7 +553,7 @@ export const ChatMessageContent = ({
                   />
                   <div
                     ref={anchorRef}
-                    className="absolute bottom-[-160px]"
+                    className="absolute bottom-[-140px]"
                   ></div>
                 </div>
                 {showUserButtons && !isConversationInvalid && (
@@ -497,9 +587,15 @@ export const ChatMessageContent = ({
                   codeDetection(message.content) && (
                     <div className="text-xxs text-error">{t(codeWarning)}</div>
                   )}
-                <MessageAttachments
-                  attachments={message.custom_content?.attachments}
-                />
+                {!(
+                  conversation.isMessageStreaming &&
+                  conversation.playback?.isPlayback &&
+                  isLastMessage
+                ) && (
+                  <MessageAttachments
+                    attachments={message.custom_content?.attachments}
+                  />
+                )}
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
               {withButtons &&

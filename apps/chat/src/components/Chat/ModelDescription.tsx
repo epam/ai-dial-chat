@@ -30,7 +30,7 @@ export const ModelDescription = ({
       {!hideMoreInfo && <span>{t('More info')}</span>}
       <div
         className={classNames('flex items-center gap-2', className)}
-        data-qa="info-app"
+        data-qa="entity-info"
       >
         <ModelIcon
           entity={model}
@@ -43,7 +43,7 @@ export const ModelDescription = ({
       {model.description && (
         <span
           className="whitespace-pre-wrap text-xs text-quaternary-bg-light"
-          data-qa="app-descr"
+          data-qa="entity-descr"
         >
           <EntityMarkdownDescription isShortDescription={isShortDescription}>
             {model.description}

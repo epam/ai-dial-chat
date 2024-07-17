@@ -24,18 +24,18 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
     >
       <div className="flex w-full justify-end">
         <button onClick={closeProps.onClick}>
-          <CloseIcon color="#023465" />
+          <CloseIcon color="text-pr-primary-550" />
         </button>
       </div>
 
       <div className="my-[30px] flex items-center justify-center">
         <LogoIcon />
-        <div className="ml-[10px] font-weave text-[30px] font-bold text-[#000A32]">
+        <div className="ml-[10px] font-weave text-3xl font-bold text-primary-bg-light">
           PR GPT
         </div>
       </div>
 
-      <div className="px-[40px] text-[18px] font-medium leading-6">
+      <div className="px-10 text-[18px] font-medium leading-6">
         {step.title}
       </div>
 
@@ -46,7 +46,7 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.next}
         {...primaryProps}
-        className="my-[10px] mt-[27px] block rounded-[40px] bg-layer-3 px-[16px] py-[6px] text-primary-bg-dark"
+        className="bg-pr-primary-550 hover:bg-pr-primary-650 text-pr-grey-white my-[10px] mt-[27px] block rounded-[40px] px-[16px] py-[6px]"
       >
         {t('Start a quick tour')}
       </button>
@@ -54,7 +54,7 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.close}
         onClick={closeProps.onClick}
-        className="block text-pr-primary-700"
+        className="text-pr-primary-550 hover:text-pr-primary-650 block"
       >
         {t('Skip the tour')}
       </button>

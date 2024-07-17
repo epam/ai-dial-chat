@@ -91,6 +91,18 @@ export class ModelsUtil {
       .map((m) => m.id);
   }
 
+  public static getModelsWithAttachment() {
+    return ModelsUtil.getModels().filter(
+      (m) => m.inputAttachmentTypes !== undefined,
+    );
+  }
+
+  public static getLatestModelsWithAttachment() {
+    return ModelsUtil.getLatestModels().filter(
+      (m) => m.inputAttachmentTypes !== undefined,
+    );
+  }
+
   public static getApplication(appId: string) {
     return ModelsUtil.getApplications().find((a) => a.id === appId);
   }
@@ -178,5 +190,15 @@ export class ModelsUtil {
       group?.push(entity);
       return groupMap;
     }, new Map<string, DialAIEntityModel[]>());
+  }
+
+  public static getEntityName(entity: DialAIEntityModel) {
+    if (entity.version !== undefined) {
+      return entity.id.includes(entity.version)
+        ? entity.name
+        : `${entity.name} ${entity.version}`;
+    } else {
+      return entity.name;
+    }
   }
 }

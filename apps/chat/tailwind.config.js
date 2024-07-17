@@ -1,4 +1,31 @@
 // Default color palette is black when no themes presented
+const commonPRColors = {
+  'pr-primary-500': 'var(--pr-primary-500, #184487)',
+  'pr-primary-550': 'var(--pr-primary-550, #023465)',
+  'pr-primary-650': 'var(--pr-primary-650, #02274D)',
+  'pr-primary-700': 'var(--pr-primary-700, #082A5E)',
+  'pr-primary-800': 'var(--pr-primary-800, #002957)',
+  'pr-primary-500-alpha': 'var(--pr-primary-500-alpha, #18448766)',
+  'pr-primary-550-alpha': 'var(--pr-primary-550-alpha, #02346566)',
+
+  'pr-secondary-500': 'var(--pr-secondary-500, #6296E2)',
+  'pr-secondary-550': 'var(--pr-secondary-550, #7FA5D0)',
+  'pr-secondary-650': 'var(--pr-secondary-650, #5B8CC4)',
+  'pr-secondary-700': 'var(--pr-secondary-500, #336BBD)',
+  'pr-secondary-500-alpha': 'var(--pr-secondary-500, #6296E266)',
+  'pr-secondary-550-alpha': 'var(--pr-secondary-550, #7FA5D066)',
+
+  'pr-grey-white': 'var(--pr-grey-white, #FFFFFF)',
+  'pr-grey-100': 'var(--pr-grey-100, #F4F8FB)',
+  'pr-grey-200': 'var(--pr-grey-200, #E9EDF0)',
+  'pr-grey-300': 'var(--pr-grey-300, #C9CED8)',
+  'pr-grey-400': 'var(--pr-grey-400, #9AA5B8)',
+
+  'pr-tertiary-500': 'var(--pr-tertiary-500, #FFD440)',
+
+  'pr-alert-500': 'var(--pr-alert-500, #D14343)',
+};
+
 const commonBgColors = {
   transparent: 'transparent',
   'layer-0': 'var(--bg-layer-0, #000A32)',
@@ -11,6 +38,7 @@ const commonBgColors = {
   'layer-7': 'var(--bg-layer-7, #ECEEF4)',
   'layer-8': 'var(--bg-layer-8, #C0DDF2)',
   'layer-9': 'var(--bg-layer-9, #F3E8CE)',
+  'layer-10': 'var(--bg-layer-10, #E9EDF0)',
   blackout: 'var(--bg-blackout, #090F2599)',
   'blackout-1': 'var(--bg-blackout-1, #1844870D)',
   'blackout-2': 'var(--bg-blackout-2, #023465CC)',
@@ -30,6 +58,7 @@ const commonBorderColors = {
   secondary: 'var(--stroke-secondary, #E9EDF0)',
   tertiary: 'var(--stroke-tertiary, #082A5E)',
   quaternary: 'var(--stroke-quaternary, #FFFFFF)',
+  quinary: 'var(--bg-layer-3, #023465)',
   error: 'var(--stroke-accent-primary, #FFD440)',
   hover: 'var(--stroke-hover, #7092B8)',
   'accent-primary': 'var(--stroke-accent-primary, #FF9166)',
@@ -46,17 +75,25 @@ module.exports = {
   theme: {
     backgroundColor: {
       ...commonBgColors,
+      ...commonPRColors,
       'controls-accent': 'var(--controls-bg-accent, #7FA5D0)',
       'controls-permanent': 'var(--controls-text-permanent, #FFFFFF)',
       'controls-accent-hover': 'var(--controls-bg-accent-hover, #7092B8)',
       'controls-disable': 'var(--controls-bg-disable, #333942)',
     },
-    borderColor: commonBorderColors,
+    borderColor: {
+      ...commonBorderColors,
+      ...commonPRColors,
+    },
     stroke: {
       ...commonBorderColors,
+      ...commonPRColors,
       'controls-disable': 'var(--controls-bg-disable, #333942)',
     },
-    divideColor: commonBorderColors,
+    divideColor: {
+      ...commonBorderColors,
+      ...commonPRColors,
+    },
     textColor: {
       transparent: 'transparent',
       'primary-bg-dark': 'var(--text-primary-bg-dark, #FFFFFF)',
@@ -76,10 +113,15 @@ module.exports = {
       'temperature-secondary': 'var(--text-temperature-secondary, #426E9C)',
       'temperature-tertiary': 'var(--text-temperature-tertiary, #043667)',
       'pr-primary-700': 'var(--text-pr-primary-700, #023465)',
+      ...commonPRColors,
     },
     gradientColorStops: commonBgColors,
     /////////
     extend: {
+      backgroundImage: {
+        'conic-gradient':
+          'conic-gradient( #FFE280 , #D8E5F8, #8FB1E3, #FFE280)',
+      },
       animation: {
         'spin-steps': 'spin 0.75s steps(8, end) infinite',
       },
@@ -92,6 +134,7 @@ module.exports = {
       borderRadius: {
         DEFAULT: '3px',
         primary: '6px',
+        secondary: '10px',
       },
       opacity: {
         15: '15%',
@@ -99,9 +142,10 @@ module.exports = {
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--bg-blackout, #090D13B3)',
         primary: '0 5px 10px 0 var(--bg-blackout-1, #1844870D)',
+        secondary: '0 10px 15px 0 var(--bg-blackout-1, #1844870D)',
       },
       fontFamily: {
-        DEFAULT: ['var(--font-inter)'],
+        DEFAULT: ['var(--theme-font, var(--font-inter))'],
         weave: ['var(--font-weave)'],
       },
       fontSize: {

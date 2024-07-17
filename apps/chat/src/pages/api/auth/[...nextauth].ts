@@ -90,6 +90,11 @@ export const authOptions: AuthOptions = {
       ? `${process.env.APP_BASE_PATH || ''}/api/themes/image?name=favicon`
       : undefined,
   },
+  pages: {
+    // We use client side to redirect to the Azure AD auth page
+    // This workaround helps to remove extra login page
+    signIn: '/',
+  },
 };
 
 export default NextAuth(authOptions);

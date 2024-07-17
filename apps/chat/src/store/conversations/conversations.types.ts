@@ -1,16 +1,14 @@
 import { PlotParams } from 'react-plotly.js';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
+import { CustomVisualizerData } from '@epam/ai-dial-shared';
+
 export interface ConversationsState {
-  conversationsToMigrateCount: number;
-  migratedConversationsCount: number;
-  isChatsBackedUp: boolean;
-  failedMigratedConversations: Conversation[];
-  conversations: (ConversationInfo | Conversation)[];
+  conversations: ConversationInfo[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];
@@ -31,6 +29,9 @@ export interface ConversationsState {
   loadedCharts: { url: string; data: PlotParams }[];
   chartLoading: boolean;
   compareLoading?: boolean;
+  loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[];
+  customAttachmentDataLoading: boolean;
   initFoldersAndConversations: boolean;
   talkTo?: string;
+  isExploreAllApplicationsSelected?: boolean;
 }

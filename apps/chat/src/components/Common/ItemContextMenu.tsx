@@ -1,5 +1,4 @@
 import {
-  IconClockShare,
   IconCopy,
   IconDots,
   IconEye,
@@ -25,6 +24,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
+import { isItemPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -48,10 +48,10 @@ interface ItemContextMenuProps {
   isOpen?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
-  onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
+  onMoveToFolder?: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
   onRename: MouseEventHandler<unknown>;
-  onExport: (args?: unknown) => void;
+  onExport?: (args?: unknown) => void;
   onReplay?: MouseEventHandler<unknown>;
   onCompare?: MouseEventHandler<unknown>;
   onPlayback?: MouseEventHandler<unknown>;
@@ -59,7 +59,6 @@ interface ItemContextMenuProps {
   onUnshare?: MouseEventHandler<unknown>;
   onPublish?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
-  onPublishUpdate?: MouseEventHandler<unknown>;
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
@@ -84,8 +83,8 @@ export default function ItemContextMenu({
   onOpenMoveToModal,
   onShare,
   onUnshare,
+  onPublish,
   onUnpublish,
-  onPublishUpdate,
   onOpenChange,
   onDuplicate,
   onView,
@@ -126,7 +125,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Duplicate'),
-        display: !!onDuplicate,
+        display: !isEmptyConversation && !!onDuplicate,
         dataQa: 'duplicate',
         Icon: IconCopy,
         onClick: onDuplicate,
@@ -172,7 +171,10 @@ export default function ItemContextMenu({
       },
       {
         name: t('Export'),
-        display: !isEmptyConversation && featureType === FeatureType.Chat,
+        display:
+          !isEmptyConversation &&
+          featureType === FeatureType.Chat &&
+          !!onExport,
         dataQa: 'export-chat',
         Icon: IconFileArrowRight,
         className: 'max-md:hidden',
@@ -181,7 +183,7 @@ export default function ItemContextMenu({
             name: t('With attachments'),
             dataQa: 'with-attachments',
             onClick: () => {
-              onExport({ withAttachments: true });
+              onExport && onExport({ withAttachments: true });
             },
             className: 'invisible md:visible',
           },
@@ -189,7 +191,7 @@ export default function ItemContextMenu({
             name: t('Without attachments'),
             dataQa: 'without-attachments',
             onClick: () => {
-              onExport();
+              onExport && onExport();
             },
             className: 'invisible md:visible',
           },
@@ -206,7 +208,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Move to'),
-        display: !isExternal,
+        display: !isExternal && !!onMoveToFolder,
         dataQa: 'move-to',
         Icon: IconFolderShare,
         className: 'max-md:hidden',
@@ -217,7 +219,7 @@ export default function ItemContextMenu({
             dataQa: 'new-folder',
             Icon: IconFolderPlus,
             onClick: () => {
-              onMoveToFolder({ isNewFolder: true });
+              onMoveToFolder && onMoveToFolder({ isNewFolder: true });
             },
             className: classNames('invisible md:visible', {
               'border-b border-primary': folders?.length > 0,
@@ -227,7 +229,7 @@ export default function ItemContextMenu({
             name: folder.name,
             dataQa: `folder-${folder.id}`,
             onClick: () => {
-              onMoveToFolder({ folderId: folder.id });
+              onMoveToFolder && onMoveToFolder({ folderId: folder.id });
             },
           })),
         ],
@@ -253,26 +255,24 @@ export default function ItemContextMenu({
         onClick: onUnshare,
         disabled: disableAll,
       },
-      {
-        name: t('Update'),
-        dataQa: 'update-publishing',
-        display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onPublishUpdate,
-        Icon: IconClockShare,
-        onClick: onPublishUpdate,
-        disabled: disableAll,
-      },
+      // TODO: implement publication update in https://github.com/epam/ai-dial-chat/issues/318
+      // {
+      //   name: t('Update'),
+      //   dataQa: 'update-publishing',
+      //   display:
+      //     !isEmptyConversation &&
+      //     isPublishingEnabled &&
+      //     !!entity.isPublished &&
+      //     !!onPublishUpdate,
+      //   Icon: IconClockShare,
+      //   onClick: onPublishUpdate,
+      //   disabled: disableAll,
+      // },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
-          !isEmptyConversation &&
-          isPublishingEnabled &&
-          !!entity.isPublished &&
-          !!onUnpublish,
+          isPublishingEnabled && !!onUnpublish && isItemPublic(entity.id),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -285,11 +285,12 @@ export default function ItemContextMenu({
             getRootId({
               featureType,
             }),
-          ) || entity.sharedWithMe,
+          ) || !!entity.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       disableAll,
       entity.id,
@@ -311,7 +312,7 @@ export default function ItemContextMenu({
       onOpenExportModal,
       onOpenMoveToModal,
       onPlayback,
-      onPublishUpdate,
+      onPublish,
       onRename,
       onReplay,
       onShare,

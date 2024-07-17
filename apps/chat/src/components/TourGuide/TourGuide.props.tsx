@@ -32,19 +32,19 @@ export const DEFAULT_STEPS = [
     disableBeacon: true,
   },
   {
+    target: `#${TourGuideId.modelSelection}`,
+    title: 'Models',
+    content:
+      'Pernod Ricard GPT provides several models to generate text, images and even ask questions to documents. GPT-4 Vision integrates text and image comprehension for seamless content analysis and generation.',
+    placement: 'right',
+  },
+  {
     target: `#${TourGuideId.newConversation}`,
     title: 'New conversation',
     content:
       'You may start a new conversation by clicking on this button. Conversation history will appear below this area.',
     placement: 'right',
     disableBeacon: true,
-  },
-  {
-    target: `#${TourGuideId.modelSelection}`,
-    title: 'Model selection',
-    content:
-      'Pernod Ricard GPT provides several models to generate text, images and even ask questions to documents. You can chose gpt-35-turbo as a default, robust and fast text generation model.',
-    placement: 'right',
   },
   {
     target: `#${TourGuideId.startDiscussion}`,
@@ -54,10 +54,31 @@ export const DEFAULT_STEPS = [
     placement: 'top',
   },
   {
+    target: `#${TourGuideId.chatHistory}`,
+    title: 'History',
+    content:
+      'This is your chat history! You can find every conversation you had here. It will allow you to retrieve previous responses from the different models you used.',
+    placement: 'right',
+  },
+  {
+    target: `#${TourGuideId.exploreAllApplications}`,
+    title: 'Explore all applications',
+    content:
+      'This is where you can find all of the custom applications hosted on PR GPT. Feel free to browse through them and try them!',
+    placement: 'right',
+  },
+  {
+    target: `#${TourGuideId.promptBank}`,
+    title: 'Prompt bank',
+    content:
+      'This is your prompt bank. Soon, you will have a dedicated tour guide to help you understand how to use them or even create some, tailored to your needs. You can simply click on a prompt to launch it immediately.',
+    placement: 'left',
+  },
+  {
     target: `#${TourGuideId.newPrompt}`,
     title: 'Create a new prompt',
     content:
-      'This is your prompt bank, where you can create prompts that will be stored in separate folders for easy access. You can simply click on a prompt to launch it immediately.',
+      'This is where you can create your own new prompts ! Store them in dedicated folders to keep your prompt bank well organized!',
     placement: 'left',
   },
   {
@@ -70,12 +91,12 @@ export const DEFAULT_STEPS = [
   },
 ];
 
-export const SETTINGS_STEP = {
-  target: `#${TourGuideId.settings}`,
-  title: 'Conversation Settings',
+export const APPLICATION_ACTIONS_STEP = {
+  target: `#${TourGuideId.applicationActions}`,
+  title: 'Applications',
   content:
-    'Pernod Ricard GPT provides several models to generate text, images and even ask questions to documents. You can chose gpt-35-turbo as a default, robust and fast text generation model.',
-  placement: 'top',
+    'Pernod Ricard GPT hosts different custom applications! By clicking here you may start a new conversation, pin or take out the application from the left side bar.',
+  placement: 'right',
 };
 
 const disableBodyScroll = () => (document.body.style.overflow = 'hidden');

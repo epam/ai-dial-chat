@@ -10,6 +10,7 @@ import {
   Import,
   MenuOptions,
   ModelIds,
+  ScrollState,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -107,13 +108,15 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations
-          .getFolderEntity(
-            conversationInFolder.folders.name,
-            conversationInFolder.conversations[0].name,
+        await expect
+          .soft(
+            await folderConversations.getFolderEntity(
+              conversationInFolder.folders.name,
+              conversationInFolder.conversations[0].name,
+            ),
+            ExpectedMessages.conversationIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
 
@@ -129,13 +132,15 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations
-          .getFolderEntity(
-            conversationInFolder.folders.name,
-            conversationInFolder.conversations[0].name,
+        await expect
+          .soft(
+            await folderConversations.getFolderEntity(
+              conversationInFolder.folders.name,
+              conversationInFolder.conversations[0].name,
+            ),
+            ExpectedMessages.conversationIsVisible,
           )
-          .waitFor();
+          .toBeVisible();
       },
     );
   },
@@ -201,18 +206,33 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .waitFor();
-        await conversations
-          .getConversationByName(conversationOutsideFolder.name)
-          .waitFor();
+        await expect
+          .soft(
+            await folderConversations.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderExpanded,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            await conversations.getConversationByName(
+              conversationOutsideFolder.name,
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
 
         for (let i = 0; i <= levelsCount; i++) {
-          await folderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor();
+          await expect
+            .soft(
+              await folderConversations.getFolderEntity(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
+              ExpectedMessages.conversationIsVisible,
+            )
+            .toBeVisible();
         }
       },
     );
@@ -293,10 +313,6 @@ dialTest(
         await dialHomePage.importFile(folderConversationData, () =>
           chatBar.importButton.click(),
         );
-
-        await folderConversations.expandFolder(
-          conversationsInFolder.folders.name,
-        );
         await folderConversations.selectFolderEntity(
           conversationsInFolder.folders.name,
           importedFolderConversation.name,
@@ -337,14 +353,14 @@ dialTest(
         await conversations
           .getConversationByName(importedRootConversation.name)
           .waitFor();
-        expect
+        await expect
           .soft(
-            await conversations
-              .getConversationByName(conversationOutsideFolder.name)
-              .isVisible(),
+            await conversations.getConversationByName(
+              conversationOutsideFolder.name,
+            ),
             ExpectedMessages.conversationIsVisible,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -353,10 +369,6 @@ dialTest(
       async () => {
         await dialHomePage.importFile(newFolderConversationData, () =>
           chatBar.importButton.click(),
-        );
-
-        await folderConversations.expandFolder(
-          importedNewFolderConversation.folders.name,
         );
         await folderConversations.selectFolderEntity(
           importedNewFolderConversation.folders.name,
@@ -376,7 +388,8 @@ dialTest(
 dialTest(
   'Continue working with imported file. Regenerate response.\n' +
     'Continue working with imported file. Send a message.\n' +
-    'Continue working with imported file. Edit a message',
+    'Continue working with imported file. Edit a message.\n' +
+    'Position of user-message stays at the top if to click on edit',
   async ({
     dialHomePage,
     setTestIds,
@@ -386,7 +399,7 @@ dialTest(
     conversations,
     chatBar,
   }) => {
-    setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925');
+    setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925', 'EPMRTC-3075');
     let importedRootConversation: Conversation;
     const requests = ['1+2', '2+3', '3+4'];
 
@@ -438,10 +451,33 @@ dialTest(
     );
 
     await dialTest.step(
+      'Open 1st request edit mode and verify text area stays at the top, control buttons are visible',
+      async () => {
+        await chatMessages.openEditMessageMode(1);
+        const scrollPosition =
+          await chat.scrollableArea.getVerticalScrollPosition();
+        expect
+          .soft(scrollPosition, ExpectedMessages.scrollPositionIsCorrect)
+          .toBe(ScrollState.top);
+        await expect
+          .soft(
+            chatMessages.saveAndSubmit.getElementLocator(),
+            ExpectedMessages.buttonIsEnabled,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            chatMessages.cancel.getElementLocator(),
+            ExpectedMessages.buttonIsEnabled,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialTest.step(
       'Edit 1st request in chat and verify 1st response is regenerated',
       async () => {
         const updatedMessage = '6+7';
-        await chatMessages.openEditMessageMode(1);
         await chatMessages.editMessage(requests[0], updatedMessage);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -715,7 +751,7 @@ dialTest(
           nestedFolders[levelsCount - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
@@ -889,8 +925,7 @@ dialTest(
         nestedFolders = conversationData.prepareNestedFolder(levelsCount);
         thirdLevelFolderConversation =
           conversationData.prepareDefaultConversation();
-        thirdLevelFolderConversation.folderId =
-          nestedFolders[levelsCount].folderId;
+        thirdLevelFolderConversation.folderId = nestedFolders[levelsCount].id;
         thirdLevelFolderConversation.id = `${thirdLevelFolderConversation.folderId}/${thirdLevelFolderConversation.id}`;
 
         await dataInjector.createConversations(
@@ -921,6 +956,7 @@ dialTest(
       async () => {
         await chatBar.dragAndDropFolderToRootLevel(
           nestedFolders[levelsCount].name,
+          { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
@@ -929,17 +965,12 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify imported conversations is in 3rd level folder, under ther 2nd level folder',
+      'Verify imported conversations is in 3rd level folder, under the 2nd level folder',
       async () => {
-        await folderConversations.expandFolder(
-          nestedFolders[levelsCount].name,
-          { isHttpMethodTriggered: true },
-          1,
-        );
         await folderConversations
-          .getFolderEntity(
+          .getNestedFolder(
+            nestedFolders[levelsCount - 1].name,
             nestedFolders[levelsCount].name,
-            thirdLevelFolderConversation.name,
           )
           .waitFor();
 

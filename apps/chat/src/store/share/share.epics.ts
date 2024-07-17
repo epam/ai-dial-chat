@@ -17,7 +17,7 @@ import { combineEpics } from 'redux-observable';
 
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, isAttachmentLink } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -56,7 +56,8 @@ const getInternalResourcesUrls = (
     ?.map((message) =>
       message.custom_content?.attachments
         ?.map((attachment) => attachment.url)
-        .filter(Boolean),
+        .filter(Boolean)
+        .filter((url) => url && !isAttachmentLink(url)),
     )
     .filter(Boolean)
     .flat() || []) as string[];
@@ -109,14 +110,19 @@ const shareConversationEpic: AppEpic = (action$) =>
         folderId: constructPath(apiKey, bucket, parentPath),
       }).pipe(
         switchMap((res) => {
-          const internalResources = getInternalResourcesUrls(res?.messages);
+          const internalResources = getInternalResourcesUrls(
+            res?.playback?.messagesStack || res?.messages,
+          );
+
           return ShareService.share({
             invitationType: ShareRequestType.link,
             resources: [
               {
                 url: ApiUtils.encodeApiUrl(payload.resourceId),
               },
-              ...internalResources.map((res) => ({ url: res })),
+              ...internalResources.map((res) => ({
+                url: res,
+              })),
             ],
           }).pipe(
             map((response: ShareByLinkResponseModel) => {
@@ -158,7 +164,11 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
         map((res) => res.filter(Boolean) as Conversation[]),
         switchMap((conversations: Conversation[]) => {
           const internalResourcesIds = conversations
-            .flatMap((res) => getInternalResourcesUrls(res.messages))
+            .flatMap((res) =>
+              getInternalResourcesUrls(
+                res.playback?.messagesStack || res.messages,
+              ),
+            )
             .map((url) => ({ url }));
 
           return ShareService.share({
@@ -257,14 +267,21 @@ const acceptInvitationEpic: AppEpic = (action$) =>
           ShareService.getShareDetails({
             invitationId: payload.invitationId,
           }).pipe(
-            switchMap((data) =>
-              of(
+            switchMap((data) => {
+              const acceptedIds = data.resources.filter(
+                (resource) =>
+                  isPromptId(resource.url) || isConversationId(resource.url),
+              );
+
+              return of(
                 ShareActions.acceptShareInvitationSuccess({
-                  acceptedId: ApiUtils.decodeApiUrl(data.resources[0].url),
+                  acceptedId: ApiUtils.decodeApiUrl(acceptedIds[0].url),
                   isFolder: isFolderId(data.resources[0].url),
+                  isConversation: isConversationId(data.resources[0].url),
+                  isPrompt: isPromptId(data.resources[0].url),
                 }),
-              ),
-            ),
+              );
+            }),
           ),
         ),
         catchError((err) => {
@@ -282,9 +299,14 @@ const acceptInvitationEpic: AppEpic = (action$) =>
 const acceptInvitationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationSuccess.match),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       history.replaceState({}, '', window.location.origin);
 
+      if (payload.isPrompt) {
+        return of(UIActions.setShowPromptbar(true));
+      } else if (payload.isConversation) {
+        return of(UIActions.setShowChatbar(true));
+      }
       return EMPTY;
     }),
   );
@@ -315,7 +337,8 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
     filter(
       (action) =>
         ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedConversationListings.match(action),
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
@@ -342,8 +365,9 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
-        PromptsActions.initPromptsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        PromptsActions.initFoldersAndPromptsSuccess.match(action) ||
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedPromptListings.match(action),
     ),
     filter(() =>
       SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Prompt),
@@ -443,7 +467,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
     filter(ShareActions.getSharedListingSuccess.match),
     switchMap(({ payload }) => {
       const actions = [];
-      const { acceptedId, isFolderAccepted } =
+      const { acceptedId, isFolderAccepted, isConversation, isPrompt } =
         ShareSelectors.selectAcceptedEntityInfo(state$.value);
       const [selectedConv] = ConversationsSelectors.selectSelectedConversations(
         state$.value,
@@ -495,17 +519,13 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          const { needToUploadFolder } =
-            ShareSelectors.selectNeedToUploadFolder(state$.value);
-
           if (
             selectedConv &&
             hasExternalParent(
               state$.value,
               selectedConv.folderId,
               FeatureType.Chat,
-            ) &&
-            needToUploadFolder
+            )
           ) {
             const folderToUpload = payload.resources.folders.find((folder) =>
               selectedConv.folderId.startsWith(`${folder.id}/`),
@@ -552,8 +572,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 })) as FolderInterface[],
               }),
             );
-
-          actions.push(ShareActions.resetNeedToUploadFolder());
         }
       }
       if (payload.featureType === FeatureType.Prompt) {
@@ -648,7 +666,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (acceptedId) {
-        if (isConversationId(acceptedId)) {
+        if (isConversation) {
           if (isFolderAccepted) {
             actions.push(
               ConversationsActions.uploadConversationsWithFoldersRecursive({
@@ -664,7 +682,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
           }
-        } else if (isPromptId(acceptedId)) {
+        } else if (isPrompt) {
           if (isFolderAccepted) {
             actions.push(
               PromptsActions.uploadPromptsWithFoldersRecursive({
@@ -851,7 +869,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             of(
               ConversationsActions.setConversations({
                 conversations: newConversations,
-                ignoreCombining: true,
               }),
             ),
             ...actions,
@@ -872,7 +889,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           of(
             ConversationsActions.setConversations({
               conversations: newConversations,
-              ignoreCombining: true,
             }),
           ),
           ...actions,
@@ -886,7 +902,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           return of(
             PromptsActions.setPrompts({
               prompts: prompts.filter((item) => item.id !== payload.resourceId),
-              ignoreCombining: true,
             }),
           );
         }
@@ -907,7 +922,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
               prompts: prompts.filter(
                 (p) => !p.id.startsWith(`${payload.resourceId}/`),
               ),
-              ignoreCombining: true,
             }),
           ),
         );

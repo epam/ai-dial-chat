@@ -7,8 +7,11 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 
+import keyBy from 'lodash-es/keyBy';
+import merge from 'lodash-es/merge';
 import trimEnd from 'lodash-es/trimEnd';
 import uniq from 'lodash-es/uniq';
+import values from 'lodash-es/values';
 import { substring } from 'stringz';
 
 /**
@@ -21,12 +24,9 @@ export const combineEntities = <T extends Entity>(
   entities1: T[],
   entities2: T[],
 ): T[] => {
-  return entities1
-    .concat(entities2)
-    .filter(
-      (entity, index, self) =>
-        index === self.findIndex((c) => c.id === entity.id),
-    );
+  const mergedEntities = merge(keyBy(entities2, 'id'), keyBy(entities1, 'id'));
+
+  return values(mergedEntities);
 };
 
 export const isEntityNameOnSameLevelUnique = (

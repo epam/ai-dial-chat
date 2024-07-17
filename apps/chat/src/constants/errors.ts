@@ -9,7 +9,10 @@ export const errorsMessages = {
   400: 'Invalid request',
   contentFiltering:
     'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
-  unsupportedDataFormat: 'Unsupported data format',
+  unsupportedConversationsDataFormat:
+    'Import of conversations failed because of unsupported data format',
+  unsupportedPromptsDataFormat:
+    'Import of prompts failed because of unsupported data format',
   localStorageQuotaExceeded:
     'Conversation storage capacity exceeded. Please clean up some conversations (prefer ones with media attachments) and try again.',
   timeoutError:
@@ -22,7 +25,8 @@ export const errorsMessages = {
     'Error happened during getting file user bucket. Please contact your administrator or try to reload the page.',
   noModelsAvailable:
     'You do not have any available models. Please contact your administrator or try to reload the page.',
-  importFailed: 'Import failed',
+  importConversationsFailed: 'Import of conversations failed',
+  importPromptsFailed: 'Import of prompts failed',
   exportFailed: 'Export failed',
   shareFailed: 'Sharing failed. Please try again later.',
   acceptShareFailed:
@@ -42,4 +46,14 @@ export const errorsMessages = {
   entityPathInvalid: 'The parent folder name is invalid. Please, rename it',
   entityNameInvalidExternal: 'The name is invalid',
   entityPathInvalidExternal: 'The parent folder name is invalid',
+  publicationFailed: 'Publication failed. Please try again later.',
+  publicationsUploadFailed: 'Publications uploading failed.',
+  publicationUploadFailed: 'Publication uploading failed.',
+  publicationDeletionFailed: 'Publication deletion failed.',
+  publishedConversationsUploadFailed:
+    'Published conversations uploading failed.',
+  publicationApproveFailed: 'Publication approving failed.',
+  publicationRejectFailed: 'Publication rejecting failed.',
+  publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
+  rulesUploadingFailed: 'Rules uploading failed.',
 };

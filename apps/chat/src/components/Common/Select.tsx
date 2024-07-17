@@ -41,7 +41,7 @@ export const Select = ({
   return (
     <div className={classNames('h-[38px] rounded pr-1', containerClassName)}>
       <Menu
-        className={classNames('w-full px-3', selectClassName)}
+        className={classNames('flex w-full items-center px-3', selectClassName)}
         onOpenChange={setIsOpen}
         trigger={
           <div

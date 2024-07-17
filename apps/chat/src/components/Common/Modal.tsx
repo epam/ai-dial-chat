@@ -90,7 +90,7 @@ function ModalView({
         <FloatingOverlay
           lockScroll={lockScroll}
           className={classNames(
-            'z-50 flex items-center justify-center bg-blackout p-3 md:p-5 md:pb-24 md:pt-20',
+            'z-50 flex items-center justify-center bg-blackout p-3 md:p-5',
             overlayClassName,
           )}
           data-floating-overlay
@@ -131,7 +131,7 @@ function ModalView({
                   <Tooltip hideTooltip tooltip={heading}>
                     <div
                       className="line-clamp-2 w-full break-words"
-                      data-qa="modal-chat-name"
+                      data-qa="modal-entity-name"
                     >
                       {heading}
                     </div>

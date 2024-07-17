@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersFromIds,
@@ -36,7 +34,7 @@ import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 
-import { uniq } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 
 const getMappedActions = (
   items: Conversation[] | Prompt[] | DialFile[],
@@ -295,53 +293,43 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       }}
       hideClose
       dataQa="replace-confirmation-modal"
-      containerClassName={classNames(
-        'flex size-full flex-col sm:w-[525px]',
-        featuresToReplace.length < 3 && 'sm:h-fit',
-      )}
-      overlayClassName="px-0 py-0"
+      containerClassName="flex w-full min-h-[595px] flex-col gap-4 pt-4 sm:w-[525px] md:pt-6"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="flex h-full flex-col justify-between gap-2 sm:gap-4">
-        <div className="flex h-[90%] flex-col gap-4 p-6 pb-0">
-          <div className="flex h-fit flex-col gap-2">
-            <h2 className="text-base font-semibold">
-              {t('Some items failed to import due to duplicate names')}
-            </h2>
-            <p className="text-secondary-bg-dark">
-              {t(
-                'Add a postfix, ignore or replace existing items with importing ones.',
-              )}
-            </p>
-          </div>
+      <div className="flex h-fit flex-col gap-2 px-3 md:px-6">
+        <h2 className="text-base font-semibold">
+          {t('Some items failed to import due to duplicate names')}
+        </h2>
+        <p className="text-secondary-bg-dark">
+          {t(
+            'Add a postfix, ignore or replace existing items with importing ones.',
+          )}
+        </p>
+        <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pl-3">
+          <span>{t('All items')}</span>
+          <ReplaceSelector
+            selectedOption={actionForAllItems}
+            onOptionChangeHandler={handleOnChangeAllAction}
+          />
+        </div>
+      </div>
+      <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
+        {featuresToReplace && featureList}
+      </div>
 
-          <div className="flex h-[90%] min-h-[150px] flex-col sm:h-[92%]">
-            <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pb-1 pl-3 sm:pb-3">
-              <span>{t('All items')}</span>
-              <ReplaceSelector
-                selectedOption={actionForAllItems}
-                onOptionChangeHandler={handleOnChangeAllAction}
-              />
-            </div>
-            <div className="flex max-h-[80%] flex-col gap-1 overflow-y-scroll pt-1 sm:max-h-full">
-              {featuresToReplace && featureList}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-row justify-end gap-3 border-t-[1px] border-tertiary px-6 py-2 sm:py-4">
-          <button
-            onClick={handleCancel}
-            className="button button-secondary h-[38px] rounded px-3"
-          >
-            {t('Cancel')}
-          </button>
-          <button
-            onClick={handleContinueImport}
-            className="h-[38px] rounded bg-controls-accent px-3 hover:bg-controls-accent-hover"
-          >
-            {t('Continue')}
-          </button>
-        </div>
+      <div className="mt-auto flex h-fit flex-row justify-end gap-3 border-t-[1px] border-tertiary px-3 py-4 md:px-6 md:pb-4">
+        <button
+          onClick={handleCancel}
+          className="button button-secondary button-medium h-[38px] rounded px-3 py-0"
+        >
+          {t('Cancel')}
+        </button>
+        <button
+          onClick={handleContinueImport}
+          className="button button-primary button-medium h-[38px] rounded px-3 py-0"
+        >
+          {t('Continue')}
+        </button>
       </div>
     </Modal>
   );

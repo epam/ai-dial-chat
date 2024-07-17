@@ -27,6 +27,7 @@ export interface UIState {
   chatbarWidth?: number;
   promptbarWidth?: number;
   customLogo?: string;
+  collapsedSections: Record<FeatureType, string[]>;
   tourStepIndex?: number;
   isTourRun?: boolean;
 }
@@ -52,6 +53,8 @@ const initialState: UIState = {
   promptbarWidth: SIDEBAR_MIN_WIDTH,
   isChatFullWidth: false,
   showSelectToMigrateWindow: false,
+  customLogo: '',
+  collapsedSections: openFoldersInitialState,
   tourStepIndex: 0,
   isTourRun: false,
 };
@@ -122,7 +125,7 @@ export const uiSlice = createSlice({
       state.customLogo = payload.logo;
     },
     deleteCustomLogo: (state) => {
-      state.customLogo = undefined;
+      state.customLogo = '';
     },
     showToast: (
       state,
@@ -143,7 +146,10 @@ export const uiSlice = createSlice({
     ) => {
       state.openedFoldersIds = {
         ...state.openedFoldersIds,
-        [payload.featureType]: uniq(payload.openedFolderIds),
+        [payload.featureType]: uniq([
+          ...payload.openedFolderIds,
+          ...state.openedFoldersIds[payload.featureType],
+        ]),
       };
     },
     toggleFolder: (
@@ -197,6 +203,17 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<boolean>,
     ) => {
       state.showSelectToMigrateWindow = payload;
+    },
+    setCollapsedSections: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        featureType: FeatureType;
+        collapsedSections: string[];
+      }>,
+    ) => {
+      state.collapsedSections[payload.featureType] = payload.collapsedSections;
     },
   },
 });
@@ -301,6 +318,13 @@ export const selectIsAnyMenuOpen = createSelector(
     state.isProfileOpen,
 );
 
+export const selectCollapsedSections = createSelector(
+  [rootSelector, (_state, featureType: FeatureType) => featureType],
+  (state, featureType) => {
+    return state.collapsedSections[featureType];
+  },
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -322,6 +346,7 @@ export const UISelectors = {
   selectCustomLogo,
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,
+  selectCollapsedSections,
   selectTourStepIndex,
   selectIsTourRun,
 };

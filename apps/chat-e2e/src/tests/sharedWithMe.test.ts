@@ -1,8 +1,8 @@
 import { Conversation, Role } from '@/chat/types/chat';
-import { BackendDataEntity } from '@/chat/types/common';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
+import config from '@/config/playwright.config';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
@@ -15,7 +15,10 @@ import {
   MenuOptions,
   ModelIds,
 } from '@/src/testData';
+import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { DialHomePage, LoginPage } from '@/src/ui/pages';
+import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -30,52 +33,77 @@ dialSharedWithMeTest(
   'Shared with me. Share single chat in Today section.\n' +
     'Shared chat history is updated in Shared with me.\n' +
     'Shared chat history is shown if to refresh browser when shared chat history is on the screen.\n' +
-    'Shared with me. Chat is deleted when it was focused',
+    'Shared with me. Chat is deleted when it was focused.\n' +
+    'Shared with me. Shared chat is automatically opened if to click on the link.\n' +
+    'Error appears if shared chat link does not exist',
   async ({
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
-    additionalShareUserChatBar,
     additionalShareUserChatHeader,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalShareUserChatMessages,
-    localStorageManager,
     additionalShareUserChatInfoTooltip,
     additionalShareUserNotFound,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConfirmationDialog,
+    additionalShareUserErrorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1826', 'EPMRTC-1875', 'EPMRTC-2766', 'EPMRTC-2881');
+    setTestIds(
+      'EPMRTC-1826',
+      'EPMRTC-1875',
+      'EPMRTC-2766',
+      'EPMRTC-2881',
+      'EPMRTC-2722',
+      'EPMRTC-1877',
+    );
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
     await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
+      conversationData.resetData();
       await dataInjector.createConversations([conversation]);
       shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
         conversation,
       ]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialSharedWithMeTest.step(
-      'Open share link by another user and verify chat stays under Shared with me and is selected',
+      'Change share link, open it by another user and verify error message is shown',
       async () => {
-        await additionalShareUserDialHomePage.openHomePage(
-          { iconsToBeLoaded: [defaultModel!.iconUrl] },
+        await additionalShareUserDialHomePage.navigateToUrl(
+          ExpectedConstants.sharedConversationUrl(
+            shareByLinkResponse.invitationLink + 'abc',
+          ),
+        );
+        const errorMessage =
+          await additionalShareUserErrorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
+          .toBe(ExpectedConstants.shareInviteDoesNotExist);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open share link by another user and verify chat stays under Shared with me and is selected automatically',
+      async () => {
+        await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations
-          .getConversationByName(conversation.name)
-          .waitFor();
-        await additionalShareUserSharedWithMeConversations.selectConversation(
-          conversation.name,
-        );
+        await expect
+          .soft(
+            additionalShareUserSharedWithMeConversations.selectedConversation(
+              conversation.name,
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -121,7 +149,6 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Delete shared conversation and verify "Conversation not found" message is not shown',
       async () => {
-        await additionalShareUserChatBar.createNewConversation();
         await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
           conversation.name,
         );
@@ -131,10 +158,20 @@ dialSharedWithMeTest(
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });
-        await additionalShareUserSharedWithMeConversations
-          .getConversationByName(conversation.name)
-          .waitFor({ state: 'hidden' });
-        await additionalShareUserNotFound.waitForState({ state: 'hidden' });
+        await expect
+          .soft(
+            additionalShareUserSharedWithMeConversations.getConversationByName(
+              conversation.name,
+            ),
+            ExpectedMessages.conversationIsNotVisible,
+          )
+          .toBeHidden();
+        await expect
+          .soft(
+            additionalShareUserNotFound.getElementLocator(),
+            ExpectedMessages.conversationIsSelected,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -143,12 +180,12 @@ dialSharedWithMeTest(
 dialSharedWithMeTest(
   'Shared with me. Share single chat in Folder.\n' +
     'Shared chat disappears from Shared with me if the original was renamed.\n' +
-    'Shared with me. Structure appears only once if to open the same link several times',
+    'Shared with me. Structure appears only once if to open the same link several times.\n' +
+    'Confirmation message if to rename shared chat',
   async ({
     dialHomePage,
     folderConversations,
     conversationDropdownMenu,
-    conversations,
     confirmationDialog,
     page,
     localStorageManager,
@@ -160,7 +197,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1827', 'EPMRTC-2773', 'EPMRTC-1854');
+    setTestIds('EPMRTC-1827', 'EPMRTC-2773', 'EPMRTC-1854', 'EPMRTC-2814');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -193,9 +230,14 @@ dialSharedWithMeTest(
             ),
           );
           await additionalShareUserDialHomePage.waitForPageLoaded();
-          await additionalShareUserSharedWithMeConversations
-            .getConversationByName(conversation.name)
-            .waitFor();
+          await expect
+            .soft(
+              additionalShareUserSharedWithMeConversations.getConversationByName(
+                conversation.name,
+              ),
+              ExpectedMessages.conversationIsVisible,
+            )
+            .toBeVisible();
         }
       },
     );
@@ -213,14 +255,19 @@ dialSharedWithMeTest(
           conversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditConversationNameMode(
-          conversation.name,
-          updatedName,
-        );
+        await folderConversations
+          .getEditFolderEntityInput()
+          .editValue(updatedName);
         await page.keyboard.press(keys.enter);
-        if (await confirmationDialog.isVisible()) {
-          await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        }
+
+        expect
+          .soft(
+            await confirmationDialog.getConfirmationMessage(),
+            ExpectedMessages.confirmationMessageIsValid,
+          )
+          .toBe(ExpectedConstants.renameSharedConversationMessage);
+
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
@@ -240,7 +287,8 @@ dialSharedWithMeTest(
 dialSharedWithMeTest(
   'Shared with me. Share root Folder.\n' +
     'Shared with me. Folder with folder/chat inside is deleted.\n' +
-    'Shared with me. No delete option in context menu for chat/folder in shared folder',
+    'Shared with me. No delete option in context menu for chat/folder in shared folder.\n' +
+    'Shared with me. Chat in shared folder is automatically opened if to click on the link',
   async ({
     additionalShareUserDialHomePage,
     additionalShareUserSharedFolderConversations,
@@ -250,10 +298,9 @@ dialSharedWithMeTest(
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
-    additionalShareUserLocalStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833');
+    setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -265,6 +312,7 @@ dialSharedWithMeTest(
         conversationData.resetData();
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
+        conversationData.resetData();
         await dataInjector.createConversations(
           nestedConversations,
           ...nestedFolders,
@@ -277,11 +325,8 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open share link by another user and verify whole nested structure is displayed under Shared with section',
+      'Open share link by another user and verify whole nested structure is displayed under Shared with me section and root folder conversation is selected',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          nestedConversations[nestedLevel],
-        );
         await additionalShareUserDialHomePage.openHomePage(
           { iconsToBeLoaded: [defaultModel!.iconUrl] },
           ExpectedConstants.sharedConversationUrl(
@@ -289,27 +334,29 @@ dialSharedWithMeTest(
           ),
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        for (let i = 0; i <= nestedLevel; i++) {
-          await additionalShareUserSharedFolderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor();
-        }
+        await expect
+          .soft(
+            additionalShareUserSharedFolderConversations.getSelectedFolderEntity(
+              nestedFolders[0].name,
+              nestedConversations[0].name,
+            ),
+            ExpectedMessages.conversationIsSelected,
+          )
+          .toBeVisible();
       },
     );
 
     await dialSharedWithMeTest.step(
       'Verify no context menu available for folders and chats under root',
       async () => {
-        const isNestedFolderMenuAvailable =
-          await additionalShareUserSharedFolderConversations.isFolderDropdownMenuAvailable(
-            nestedFolders[1].name,
-          );
-        expect
+        await expect
           .soft(
-            isNestedFolderMenuAvailable,
+            await additionalShareUserSharedFolderConversations.getFolderDropdownMenu(
+              nestedFolders[1].name,
+            ),
             ExpectedMessages.contextMenuIsNotAvailable,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         await additionalShareUserSharedFolderConversations.openFolderEntityDropdownMenu(
           nestedFolders[nestedLevel].name,
@@ -336,9 +383,6 @@ dialSharedWithMeTest(
           MenuOptions.delete,
         );
         await additionalShareUserConfirmationDialog.cancelDialog();
-        await additionalShareUserSharedFolderConversations
-          .getFolderEntity(nestedFolders[0].name, nestedConversations[0].name)
-          .waitFor();
       },
     );
 
@@ -355,9 +399,15 @@ dialSharedWithMeTest(
           triggeredHttpMethod: 'POST',
         });
         for (let i = 0; i <= nestedLevel; i++) {
-          await additionalShareUserSharedFolderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor({ state: 'hidden' });
+          await expect
+            .soft(
+              additionalShareUserSharedFolderConversations.getFolderEntity(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
+              ExpectedMessages.conversationIsNotVisible,
+            )
+            .toBeHidden();
         }
       },
     );
@@ -366,11 +416,17 @@ dialSharedWithMeTest(
       'Reload page and verify deleted structure is not restored',
       async () => {
         await additionalShareUserDialHomePage.reloadPage();
-        await await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         for (let i = 0; i <= nestedLevel; i++) {
-          await additionalShareUserSharedFolderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor({ state: 'hidden' });
+          await expect
+            .soft(
+              additionalShareUserSharedFolderConversations.getFolderEntity(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
+              ExpectedMessages.conversationIsNotVisible,
+            )
+            .toBeHidden();
         }
       },
     );
@@ -433,14 +489,26 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
         for (let i = nestedLevel - 1; i <= nestedLevel; i++) {
-          await additionalShareUserSharedFolderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor();
+          await expect
+            .soft(
+              additionalShareUserSharedFolderConversations.getFolderEntity(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
+              ExpectedMessages.conversationIsVisible,
+            )
+            .toBeVisible();
         }
         for (let i = 0; i < nestedLevel - 1; i++) {
-          await additionalShareUserSharedFolderConversations
-            .getFolderEntity(nestedFolders[i].name, nestedConversations[i].name)
-            .waitFor({ state: 'hidden' });
+          await expect
+            .soft(
+              additionalShareUserSharedFolderConversations.getFolderEntity(
+                nestedFolders[i].name,
+                nestedConversations[i].name,
+              ),
+              ExpectedMessages.conversationIsNotVisible,
+            )
+            .toBeHidden();
         }
       },
     );
@@ -459,10 +527,7 @@ dialSharedWithMeTest(
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
 
-        await folderConversations.editFolderName(
-          nestedFolders[nestedLevel - 1].name,
-          updatedFolderName,
-        );
+        await folderConversations.editFolderName(updatedFolderName);
         await page.keyboard.press(keys.enter);
         if (await confirmationDialog.isVisible()) {
           await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
@@ -573,9 +638,12 @@ dialSharedWithMeTest(
         await localStorageManager.setSelectedConversation(sharedConversation);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await folderConversations
-          .getFolderArrowIcon(folderName)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            folderConversations.getFolderArrowIcon(folderName),
+            ExpectedMessages.sharedFolderIconIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
 
@@ -584,34 +652,29 @@ dialSharedWithMeTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
+        const sharedFolderEntity = sharedEntities.resources.find(
+          (e) => e.name === sharedFolderName,
+        );
         expect
-          .soft(
-            sharedEntities.resources.find((e) => e.name === sharedFolderName),
-            ExpectedMessages.folderIsShared,
-          )
+          .soft(sharedFolderEntity, ExpectedMessages.folderIsShared)
           .toBeDefined();
 
-        const sharedWithMeItems: BackendDataEntity[] = [];
-        for (const sharedEntity of sharedEntities.resources) {
-          const sharedItems = await additionalUserItemApiHelper.listItem(
-            sharedEntity.url,
-          );
-          sharedWithMeItems.push(...sharedItems);
+        const sharedItems = await additionalUserItemApiHelper.listItem(
+          sharedFolderEntity!.url,
+        );
+
+        for (const conversation of [
+          sharedConversation,
+          singleConversation,
+          conversationInFolder.conversations[0],
+        ]) {
+          expect
+            .soft(
+              sharedItems.find((i) => i.url === conversation.id),
+              ExpectedMessages.conversationIsShared,
+            )
+            .toBeDefined();
         }
-        expect
-          .soft(
-            sharedWithMeItems.find(
-              (i) => i.url === movedConversationInFolder.id,
-            ),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeDefined();
-        expect
-          .soft(
-            sharedWithMeItems.find((i) => i.url === singleConversation.id),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeDefined();
       },
     );
   },
@@ -625,6 +688,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalUserItemApiHelper,
+    itemApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2759');
@@ -656,6 +720,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Move shared conversation out of folder',
       async () => {
+        const sharedConversationToDelete = JSON.parse(
+          JSON.stringify(sharedConversation),
+        );
         sharedConversation.id = sharedConversation.id.replace(
           `/${sharedFolderName}`,
           '',
@@ -665,6 +732,7 @@ dialSharedWithMeTest(
           '',
         );
         await dataInjector.updateConversations([sharedConversation]);
+        await itemApiHelper.deleteConversation(sharedConversationToDelete);
       },
     );
 
@@ -673,26 +741,19 @@ dialSharedWithMeTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeEntities();
+        const sharedFolderEntity = sharedEntities.resources.find(
+          (e) => e.name === sharedFolderName,
+        );
         expect
-          .soft(
-            sharedEntities.resources.find((e) => e.name === sharedFolderName),
-            ExpectedMessages.folderIsShared,
-          )
+          .soft(sharedFolderEntity, ExpectedMessages.folderIsShared)
           .toBeDefined();
 
-        const sharedWithMeItems: BackendDataEntity[] = [];
-        for (const sharedEntity of sharedEntities.resources) {
-          const sharedItems = await additionalUserItemApiHelper.listItem(
-            sharedEntity.url,
-          );
-          sharedWithMeItems.push(...sharedItems);
-        }
+        const sharedItems = await additionalUserItemApiHelper.listItem(
+          sharedFolderEntity!.url,
+        );
         expect
-          .soft(
-            sharedWithMeItems.find((i) => i.url === sharedConversation.id),
-            ExpectedMessages.conversationIsNotShared,
-          )
-          .toBeUndefined();
+          .soft(sharedItems.length, ExpectedMessages.conversationIsNotShared)
+          .toBe(0);
       },
     );
   },
@@ -722,7 +783,6 @@ dialSharedWithMeTest(
     let sharedConversations: Conversation[];
 
     let dalleImageUrl: string;
-    let secondDalleImageUrl: string;
     let gptProVisionImageUrl: string;
 
     await dialSharedWithMeTest.step(
@@ -733,7 +793,7 @@ dialSharedWithMeTest(
           API.modelFilePath(ModelIds.DALLE),
         );
 
-        secondDalleImageUrl = await fileApiHelper.putFile(
+        await fileApiHelper.putFile(
           Attachment.cloudImageName,
           API.modelFilePath(ModelIds.DALLE),
         );
@@ -750,10 +810,10 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         gptVisionConversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            gptProVisionImageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             ModelIds.GPT_4_VISION_PREVIEW,
             true,
+            gptProVisionImageUrl,
           );
         conversationData.resetData();
 
@@ -798,7 +858,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
 
         await additionalShareUserChatMessages.getChatMessage(2).waitFor();
-        await additionalShareUserChatMessages.openChatMessageAttachment(
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
@@ -974,10 +1034,10 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         gptVisionConversation =
-          conversationData.prepareConversationWithAttachmentInRequest(
-            gptProVisionImageUrl,
+          conversationData.prepareConversationWithAttachmentsInRequest(
             ModelIds.GPT_4_VISION_PREVIEW,
             true,
+            gptProVisionImageUrl,
           );
         conversationData.resetData();
 
@@ -1069,7 +1129,7 @@ dialSharedWithMeTest(
           dalleConversation.name,
         );
         await additionalShareUserChatMessages.getChatMessage(2).waitFor();
-        await additionalShareUserChatMessages.openChatMessageAttachment(
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
@@ -1160,7 +1220,7 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'Open app by another user and delete shared conversation',
+      'Open app by another user and verify possibility to delete shared conversation',
       async () => {
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
@@ -1178,9 +1238,14 @@ dialSharedWithMeTest(
           triggeredHttpMethod: 'POST',
         });
 
-        await additionalShareUserSharedWithMeConversations
-          .getConversationByName(conversation.name)
-          .waitFor({ state: 'hidden' });
+        await expect
+          .soft(
+            await additionalShareUserSharedWithMeConversations.getConversationByName(
+              conversation.name,
+            ),
+            ExpectedMessages.conversationIsNotShared,
+          )
+          .toBeHidden();
       },
     );
   },
@@ -1263,16 +1328,19 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Shared folder disappears from Shared with me if the original was deleted.\n' +
-    'Shared chat disappears from Shared with me if the original was deleted',
+    'Shared chat disappears from Shared with me if the original was deleted.\n' +
+    'Error appears if chat was deleted, but user clicks on shared link',
   async ({
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     itemApiHelper,
+    additionalShareUserDialHomePage,
+    additionalShareUserErrorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2770', 'EPMRTC-2772');
+    setTestIds('EPMRTC-2770', 'EPMRTC-2772', 'EPMRTC-2726');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkFolderResponse: ShareByLinkResponseModel;
@@ -1337,6 +1405,284 @@ dialSharedWithMeTest(
             ExpectedMessages.conversationIsNotShared,
           )
           .toBeUndefined();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open again share conversation link by another user and verify error message is shown',
+      async () => {
+        await additionalShareUserDialHomePage.navigateToUrl(
+          ExpectedConstants.sharedConversationUrl(
+            shareByLinkConversationResponse.invitationLink,
+          ),
+        );
+        const errorMessage =
+          await additionalShareUserErrorToast.getElementContent();
+        expect
+          .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
+          .toBe(ExpectedConstants.shareInviteDoesNotExist);
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Shared with me. Replay chat',
+  async ({
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalShareUserDialHomePage,
+    additionalShareUserLocalStorageManager,
+    additionalShareUserSharedWithMeConversations,
+    additionalShareUserConversations,
+    additionalShareUserChat,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1846');
+    let conversationInFolder: FolderConversation;
+    let conversation: Conversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialSharedWithMeTest.step(
+      'Prepare shared conversation inside folder',
+      async () => {
+        conversationInFolder =
+          conversationData.prepareDefaultConversationInFolder();
+        await dataInjector.createConversations(
+          conversationInFolder.conversations,
+          conversationInFolder.folders,
+        );
+        conversation = conversationInFolder.conversations[0];
+        shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
+          [conversation],
+          true,
+        );
+        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open app by another user and verify Replay conversation creation for shared chat via dropdown menu',
+      async () => {
+        await additionalShareUserLocalStorageManager.setSelectedConversation(
+          conversation,
+        );
+        await additionalShareUserDialHomePage.openHomePage({
+          iconsToBeLoaded: [defaultModel!.iconUrl],
+        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+          conversation.name,
+        );
+        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+          MenuOptions.replay,
+          { triggeredHttpMethod: 'POST' },
+        );
+        await expect
+          .soft(
+            additionalShareUserConversations.getConversationByName(
+              ExpectedConstants.replayConversation + conversation.name,
+            ),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            additionalShareUserChat.replay.getElementLocator(),
+            ExpectedMessages.replayConversationCreated,
+          )
+          .toBeVisible();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Click on Replay button and verify request is sent',
+      async () => {
+        const replayRequest = await additionalShareUserChat.startReplay();
+        expect
+          .soft(replayRequest, ExpectedMessages.chatRequestIsSent)
+          .toBeDefined();
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Shared with me. Playback chat',
+  async ({
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalShareUserDialHomePage,
+    additionalShareUserLocalStorageManager,
+    additionalShareUserSharedWithMeConversations,
+    additionalShareUserConversations,
+    additionalShareUserPlaybackControl,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-1847');
+    let conversation: Conversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialSharedWithMeTest.step('Prepare shared conversation', async () => {
+      conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+      shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
+        conversation,
+      ]);
+      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+    });
+
+    await dialSharedWithMeTest.step(
+      'Open app by another user and verify Playback conversation creation for shared chat via dropdown menu',
+      async () => {
+        await additionalShareUserLocalStorageManager.setSelectedConversation(
+          conversation,
+        );
+        await additionalShareUserDialHomePage.openHomePage({
+          iconsToBeLoaded: [defaultModel!.iconUrl],
+        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+          conversation.name,
+        );
+        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+          MenuOptions.playback,
+          { triggeredHttpMethod: 'POST' },
+        );
+        await expect
+          .soft(
+            await additionalShareUserConversations.getConversationByName(
+              ExpectedConstants.playbackConversation + conversation.name,
+            ),
+            ExpectedMessages.conversationIsShared,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            await additionalShareUserPlaybackControl.getElementLocator(),
+            ExpectedMessages.playbackMessageIsInViewport,
+          )
+          .toBeVisible();
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Share Folder parent when there is no chat inside. The chat is in Folder child only',
+  async ({
+    additionalShareUserDialHomePage,
+    additionalShareUserSharedFolderConversations,
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2807');
+    let nestedFolders: FolderInterface[];
+    let nestedConversation: Conversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialSharedWithMeTest.step(
+      'Prepare conversation inside nested folder structure and share the root folder',
+      async () => {
+        nestedFolders = conversationData.prepareNestedFolder(1);
+        conversationData.resetData();
+        nestedConversation = conversationData.prepareDefaultConversation();
+        nestedConversation.folderId = nestedFolders[1].id;
+        nestedConversation.id = `${nestedFolders[1].id}/${nestedConversation.id}`;
+
+        await dataInjector.createConversations(
+          [nestedConversation],
+          ...nestedFolders,
+        );
+        shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
+          [nestedConversation],
+          true,
+          nestedFolders[0].name,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Open share link by another user and verify whole nested structure is displayed under Shared with section',
+      async () => {
+        await additionalShareUserDialHomePage.openHomePage(
+          { iconsToBeLoaded: [defaultModel!.iconUrl] },
+          ExpectedConstants.sharedConversationUrl(
+            shareByLinkResponse.invitationLink,
+          ),
+        );
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        for (const nestedFolder of nestedFolders) {
+          await expect
+            .soft(
+              await additionalShareUserSharedFolderConversations.getFolderEntity(
+                nestedFolder.name,
+                nestedConversation.name,
+              ),
+              ExpectedMessages.folderIsShared,
+            )
+            .toBeVisible();
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  'Shared with me. Shared chat appears in "Shared with me" structure if the link was clicked by user, who is logged out',
+  async ({
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    browser,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-2753');
+    let conversation: Conversation;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+
+    await dialTest.step('Prepare shared conversation', async () => {
+      conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+      shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
+        conversation,
+      ]);
+    });
+
+    await dialTest.step(
+      'Open share link by another logged out user and verify conversation is shared and selected ',
+      async () => {
+        const context = await browser.newContext({ storageState: undefined });
+        const page = await context.newPage();
+        const loginPage = new LoginPage(page);
+        await loginPage.navigateToUrl(
+          ExpectedConstants.sharedConversationUrl(
+            shareByLinkResponse.invitationLink,
+          ),
+        );
+        await loginPage.ssoSignInButton.click();
+        const username = process.env.E2E_USERNAME!.split(',')[+config.workers!];
+        const auth0Page = new Auth0Page(page);
+        await auth0Page.loginToChatBot(username);
+        const dialHomePage = new DialHomePage(page);
+        await dialHomePage.waitForPageLoaded();
+        const conversationBackgroundColor = await dialHomePage
+          .getAppContainer()
+          .getChatBar()
+          .getSharedWithMeConversations()
+          .getConversationBackgroundColor(conversation.name);
+        expect
+          .soft(
+            conversationBackgroundColor,
+            ExpectedMessages.conversationIsSelected,
+          )
+          .toBe(Colors.backgroundAccentSecondary);
       },
     );
   },

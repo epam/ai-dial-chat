@@ -1,6 +1,7 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconFolder, IconX } from '@tabler/icons-react';
+import { IconCheck, IconFolder, IconX } from '@tabler/icons-react';
 import {
+  ChangeEvent,
   DragEvent,
   FC,
   Fragment,
@@ -25,16 +26,19 @@ import {
   isEntityNameInvalid,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
-  trimEndDots,
 } from '@/src/utils/app/common';
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getFoldersDepth,
+  getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
-import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
+import {
+  hasParentWithAttribute,
+  hasParentWithFloatingOverlay,
+} from '@/src/utils/app/modals';
 import {
   getDragImage,
   getEntityMoveType,
@@ -44,15 +48,18 @@ import {
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -61,13 +68,14 @@ import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
-import PublishModal from '../Chat/Publish/PublishWizard';
-import UnpublishModal from '../Chat/UnpublishModal';
+import { PublishModal } from '../Chat/Publish/PublishWizard';
+import { UnpublishModal } from '../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
+import { FileItemEventIds } from '../Files/FileItem';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -77,6 +85,7 @@ export interface FolderProps<T, P = unknown> {
     readonly?: boolean;
     additionalItemData?: Record<string, unknown>;
     onEvent?: (eventId: string, data: P) => void;
+    itemComponentClassNames?: string;
   }>;
   allItems?: T[];
   allFolders: FolderInterface[];
@@ -93,7 +102,7 @@ export interface FolderProps<T, P = unknown> {
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onAddFolder?: (parentFolderId: string) => void;
-  onClickFolder: (folderId: string) => void;
+  onClickFolder?: (folderId: string) => void;
   featureType: FeatureType;
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
@@ -104,6 +113,12 @@ export interface FolderProps<T, P = unknown> {
   allFoldersWithoutFilters?: FolderInterface[];
   allItemsWithoutFilters?: T[];
   folderClassName?: string;
+  skipFolderRenameValidation?: boolean;
+  noCaretIcon?: boolean;
+  itemComponentClassNames?: string;
+  canAttachFolders?: boolean;
+  showTooltip?: boolean;
+  isSidePanelFolder?: boolean;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -135,6 +150,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   highlightTemporaryFolders,
   withBorderHighlight = true,
   folderClassName,
+  skipFolderRenameValidation = false,
+  noCaretIcon = false,
+  itemComponentClassNames,
+  canAttachFolders = false,
+  showTooltip,
+  isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -154,6 +175,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [isUploadedForUnpublishing, setIsUploadedForUnpublishing] =
+    useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
@@ -164,6 +187,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
+  const [isSelected, setIsSelected] = useState(false);
+
+  const handleToggleFolder = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      e.stopPropagation();
+      setIsSelected((value) => !value);
+      onItemEvent?.(FileItemEventIds.ToggleFolder, `${currentFolder.id}/`);
+      return;
+    },
+    [currentFolder.id, onItemEvent],
+  );
+
+  useEffect(() => {
+    setIsSelected(() => {
+      const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
+      return parentFolderIds.some((id) =>
+        ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+          `${id}/`,
+        ),
+      );
+    });
+  }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
 
   useEffect(() => {
     // only if search term was changed after first render
@@ -200,19 +245,64 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     setIsUnshareConfirmOpened(true);
   }, []);
 
-  const handleOpenPublishing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsPublishing(true);
-  }, []);
+  const allChildItems = useMemo(() => {
+    return sortByName(
+      allItems?.filter((item) => item.id.startsWith(currentFolder.id)) || [],
+    );
+  }, [allItems, currentFolder.id]);
+
+  const handleOpenPublishing: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (
+        featureType === FeatureType.Chat &&
+        (!allChildItems.length ||
+          !allChildItems.every((item) => 'messages' in item))
+      ) {
+        dispatch(
+          ConversationsActions.uploadConversationsByIds({
+            conversationIds: allChildItems.map((e) => e.id),
+          }),
+        );
+      }
+
+      setIsPublishing(true);
+    },
+    [allChildItems, dispatch, featureType],
+  );
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
   }, []);
 
-  const handleOpenUnpublishing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsUnpublishing(true);
-  }, []);
+  const handleOpenUnpublishing: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (featureType === FeatureType.Chat && !isUploadedForUnpublishing) {
+        dispatch(
+          ConversationsActions.uploadConversationsWithContentRecursive({
+            path: currentFolder.id,
+          }),
+        );
+      } else if (
+        featureType === FeatureType.Prompt &&
+        !isUploadedForUnpublishing
+      ) {
+        dispatch(
+          PromptsActions.uploadPromptsWithFoldersRecursive({
+            path: currentFolder.id,
+            noLoader: true,
+          }),
+        );
+      }
+
+      setIsUploadedForUnpublishing(true);
+      setIsUnpublishing(true);
+    },
+    [currentFolder.id, dispatch, featureType, isUploadedForUnpublishing],
+  );
 
   const handleCloseUnpublishModal = useCallback(() => {
     setIsUnpublishing(false);
@@ -257,6 +347,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const dismiss = useDismiss(context);
   const { getFloatingProps } = useInteractions([dismiss]);
 
+  const handleNewFolderRename = useCallback(() => {
+    if (newAddedFolderId === currentFolder.id) {
+      dispatch(FilesActions.resetNewFolderId());
+    }
+  }, [newAddedFolderId, dispatch, currentFolder]);
+
   const handleRename = useCallback(() => {
     if (!onRenameFolder) {
       return;
@@ -265,34 +361,36 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     const newName = prepareEntityName(renameValue, { forRenaming: true });
     setRenameValue(newName);
 
-    if (
-      !isEntityNameOnSameLevelUnique(
-        newName,
-        currentFolder,
-        allFoldersWithoutFilters,
-      )
-    ) {
-      dispatch(
-        UIActions.showErrorToast(
-          t(
-            'Folder with name "{{folderName}}" already exists in this folder.',
-            {
-              ns: 'folder',
-              folderName: newName,
-            },
+    if (!skipFolderRenameValidation) {
+      if (
+        !isEntityNameOnSameLevelUnique(
+          newName,
+          currentFolder,
+          allFoldersWithoutFilters,
+        )
+      ) {
+        dispatch(
+          UIActions.showErrorToast(
+            t(
+              'Folder with name "{{folderName}}" already exists in this folder.',
+              {
+                ns: 'folder',
+                folderName: newName,
+              },
+            ),
           ),
-        ),
-      );
-      return;
-    }
+        );
+        return;
+      }
 
-    if (doesHaveDotsInTheEnd(newName)) {
-      dispatch(
-        UIActions.showErrorToast(
-          t('Using a dot at the end of a name is not permitted.'),
-        ),
-      );
-      return;
+      if (doesHaveDotsInTheEnd(newName)) {
+        dispatch(
+          UIActions.showErrorToast(
+            t('Using a dot at the end of a name is not permitted.'),
+          ),
+        );
+        return;
+      }
     }
 
     if (currentFolder.isShared && newName !== currentFolder.name) {
@@ -303,16 +401,21 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
 
     if (newName && newName !== currentFolder.name) {
-      onRenameFolder(trimEndDots(newName), currentFolder.id);
+      onRenameFolder(newName, currentFolder.id);
     }
+
+    handleNewFolderRename();
+
     setRenameValue('');
     setIsRenaming(false);
     setIsContextMenu(false);
   }, [
     onRenameFolder,
     renameValue,
+    skipFolderRenameValidation,
     currentFolder,
     allFoldersWithoutFilters,
+    handleNewFolderRename,
     dispatch,
     t,
   ]);
@@ -618,6 +721,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isHighlighted =
     isRenaming ||
     isContextMenu ||
+    ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+      `${currentFolder.id}/`,
+    ) ||
     (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
 
   return (
@@ -637,13 +743,31 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     >
       <div
         className={classNames(
-          'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group/button group/folder-item group relative flex h-[30px] cursor-pointer items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           !withBorderHighlight && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
           isHighlighted && withBorderHighlight && 'border-tertiary',
           folderClassName,
         )}
         data-qa="folder"
+        onClick={(e) => {
+          if (
+            onClickFolder &&
+            !hasParentWithAttribute(
+              e.target as HTMLDivElement,
+              'data-item-checkbox',
+            )
+          ) {
+            onClickFolder(currentFolder.id);
+          }
+        }}
+        draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
+        onDragStart={(e) => handleDragStart(e, currentFolder)}
+        onDragOver={(e) => {
+          if (!isExternal && hasDragEventAnyData(e, featureType)) {
+            e.preventDefault();
+          }
+        }}
       >
         {isRenaming ? (
           <div
@@ -651,6 +775,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             style={{
               paddingLeft: `${level * 1.5}rem`,
             }}
+            data-qa="edit-container"
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
@@ -661,13 +786,47 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             !hasChildElements ? (
               <Spinner />
             ) : (
-              <ShareIcon
-                {...currentFolder}
-                isHighlighted
-                featureType={featureType}
-              >
-                <IconFolder size={18} className="mr-1 text-secondary-bg-dark" />
-              </ShareIcon>
+              <>
+                {!isSelected && (
+                  <ShareIcon
+                    {...currentFolder}
+                    isHighlighted
+                    featureType={featureType}
+                    containerClassName={
+                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                    }
+                  >
+                    <IconFolder
+                      size={18}
+                      className={classNames(
+                        'mr-1 text-secondary-bg-dark',
+                        canAttachFolders && 'group-hover/folder-item:hidden',
+                      )}
+                    />
+                  </ShareIcon>
+                )}
+                {canAttachFolders &&
+                  !loadingFolderIds.includes(currentFolder.id) && (
+                    <div
+                      className={classNames(
+                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                        isSelected ? 'flex' : 'hidden',
+                      )}
+                      data-item-checkbox
+                    >
+                      <input
+                        className="checkbox peer size-[18px] bg-layer-3"
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={handleToggleFolder}
+                      />
+                      <IconCheck
+                        size={18}
+                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                      />
+                    </div>
+                  )}
+              </>
             )}
 
             <input
@@ -681,64 +840,103 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }
               onKeyDown={handleEnterDown}
               ref={renameInputRef}
+              name="edit-input"
             />
           </div>
         ) : (
           <div
-            className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3"
+            className="group/folder-item flex max-w-full items-center gap-1 py-2 pr-3"
             style={{
               paddingLeft: `${level * 24}px`,
-            }}
-            onClick={() => {
-              onClickFolder(currentFolder.id);
-            }}
-            draggable={!!handleDrop && !isExternal && !isNameOrPathInvalid}
-            onDragStart={(e) => handleDragStart(e, currentFolder)}
-            onDragOver={(e) => {
-              if (!isExternal && hasDragEventAnyData(e, featureType)) {
-                e.preventDefault();
-              }
             }}
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
-              hidden={!hasChildElements && !displayCaretAlways}
+              hidden={
+                (!hasChildElements &&
+                  currentFolder.status === UploadStatus.LOADED &&
+                  !displayCaretAlways) ||
+                noCaretIcon
+              }
             />
 
             {loadingFolderIds.includes(currentFolder.id) &&
             !hasChildElements ? (
               <Spinner className="mr-1" />
             ) : (
-              <ShareIcon
-                {...currentFolder}
-                isHighlighted={isContextMenu}
-                featureType={featureType}
-              >
-                <IconFolder size={18} className="mr-1" />
-              </ShareIcon>
+              <>
+                {!isSelected && (
+                  <ShareIcon
+                    {...currentFolder}
+                    isHighlighted={isContextMenu}
+                    featureType={featureType}
+                    containerClassName={
+                      canAttachFolders ? 'group-hover/folder-item:hidden' : ''
+                    }
+                  >
+                    <IconFolder
+                      size={18}
+                      className={classNames(
+                        'mr-1',
+                        canAttachFolders && 'group-hover/folder-item:hidden',
+                      )}
+                    />
+                  </ShareIcon>
+                )}
+                {canAttachFolders &&
+                  !loadingFolderIds.includes(currentFolder.id) && (
+                    <div
+                      className={classNames(
+                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                        isSelected ? 'flex' : 'hidden',
+                      )}
+                      data-item-checkbox
+                    >
+                      <input
+                        className="checkbox peer size-[18px] bg-layer-3"
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={handleToggleFolder}
+                      />
+                      <IconCheck
+                        size={18}
+                        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+                      />
+                    </div>
+                  )}
+              </>
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 truncate break-all text-left group-hover/button:pr-5',
+                'relative max-h-5 flex-1 truncate text-left group-hover/button:pr-5',
                 isNameOrPathInvalid && 'text-secondary-bg-dark',
               )}
               data-qa="folder-name"
             >
               <Tooltip
-                tooltip={t(
-                  getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
-                )}
-                hideTooltip={!isNameOrPathInvalid}
+                tooltip={
+                  showTooltip && !isNameOrPathInvalid
+                    ? currentFolder.name
+                    : t(
+                        getEntityNameError(
+                          isNameInvalid,
+                          isInvalidPath,
+                          isExternal,
+                        ),
+                      )
+                }
+                contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                 triggerClassName={classNames(
-                  'max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                   highlightTemporaryFolders &&
                     (currentFolder.temporary
                       ? 'text-primary-bg-dark'
                       : 'text-secondary-bg-dark'),
                   isNameOrPathInvalid
                     ? 'text-secondary-bg-dark'
-                    : highlightedFolders?.includes(currentFolder.id) &&
-                        featureType
+                    : (highlightedFolders?.includes(currentFolder.id) &&
+                          featureType) ||
+                        isSelected
                       ? 'text-accent-primary'
                       : 'text-primary-bg-dark',
                 )}
@@ -770,20 +968,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onAddFolder={onAddFolder && onAdd}
                     onShare={handleShare}
                     onUnshare={handleUnshare}
-                    onPublish={handleOpenPublishing}
-                    onPublishUpdate={handleOpenPublishing}
+                    onPublish={
+                      featureType !== FeatureType.Chat ||
+                      !allChildItems.every(
+                        (item) => (item as ConversationInfo).isReplay,
+                      )
+                        ? handleOpenPublishing
+                        : undefined
+                    }
                     onUnpublish={handleOpenUnpublishing}
+                    onPublishUpdate={handleOpenPublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
+                    isSidePanelFolder={isSidePanelFolder}
                   />
                 </div>
               )}
           </div>
         )}
         {isRenaming && (
-          <div className="absolute right-1 z-10 flex">
+          <div className="absolute right-1 z-10 flex" data-qa="actions">
             <SidebarActionButton
               handleClick={(e) => {
                 e.stopPropagation();
@@ -791,6 +997,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   handleRename();
                 }
               }}
+              dataQA="confirm-edit"
             >
               <CheckIcon
                 width={18}
@@ -803,7 +1010,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               handleClick={(e) => {
                 e.stopPropagation();
                 setIsRenaming(false);
+                handleNewFolderRename();
               }}
+              dataQA="cancel-edit"
             >
               <IconX
                 width={18}
@@ -824,6 +1033,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 <Fragment key={item.id}>
                   <div className="h-1"></div>
                   <Folder
+                    folderClassName={folderClassName}
+                    noCaretIcon={noCaretIcon}
                     readonly={readonly}
                     level={level + 1}
                     searchTerm={searchTerm}
@@ -851,6 +1062,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     maxDepth={maxDepth}
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
+                    itemComponentClassNames={itemComponentClassNames}
+                    canAttachFolders={canAttachFolders}
+                    showTooltip={showTooltip}
+                    isSidePanelFolder={isSidePanelFolder}
                   />
                 </Fragment>
               );
@@ -864,6 +1079,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   level: level + 1,
                   readonly,
                   additionalItemData,
+                  itemComponentClassNames,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>
@@ -892,6 +1108,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isPublishing && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
+          entities={
+            featureType === FeatureType.Chat
+              ? (
+                  allChildItems as (Partial<Conversation> & ConversationInfo)[]
+                ).filter(
+                  (item) =>
+                    item.isPlayback ||
+                    (!item.isReplay && item.messages?.length),
+                )
+              : allChildItems
+          }
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder
@@ -904,12 +1131,22 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       )}
       {isUnpublishing && isPublishingEnabled && (
         <UnpublishModal
-          entity={currentFolder}
-          type={
-            featureType === FeatureType.Prompt
-              ? SharingType.PromptFolder
-              : SharingType.ConversationFolder
+          subtitle={
+            featureType === FeatureType.Chat
+              ? t(
+                  'Folder/conversations will no longer be visible to the organization',
+                )
+              : t(
+                  'Folder/prompts will no longer be visible to the organization',
+                )
           }
+          type={
+            featureType === FeatureType.Chat
+              ? SharingType.ConversationFolder
+              : SharingType.PromptFolder
+          }
+          entity={currentFolder}
+          entities={allChildItems}
           isOpen
           onClose={handleCloseUnpublishModal}
         />
@@ -917,14 +1154,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm revoking access to: {{folderName}}', {
+          heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}
           description={
-            t('Are you sure that you want to revoke access to this folder?') ||
-            ''
+            t('Are you sure that you want to unshare this folder?') || ''
           }
-          confirmLabel={t('Revoke access')}
+          confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);

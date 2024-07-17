@@ -3,6 +3,7 @@ import { Conversations } from './conversations';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
+import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
 import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
@@ -18,6 +19,7 @@ export class ChatBar extends SideBar {
   private sharedWithMeConversations!: SharedWithMeConversations;
   private folderConversations!: FolderConversations;
   private sharedFolderConversations!: SharedFolderConversations;
+  private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
   );
@@ -44,16 +46,29 @@ export class ChatBar extends SideBar {
 
   getFolderConversations(): FolderConversations {
     if (!this.folderConversations) {
-      this.folderConversations = new FolderConversations(this.page);
+      this.folderConversations = new FolderConversations(
+        this.page,
+        this.getElementLocator(),
+      );
     }
     return this.folderConversations;
   }
 
   getSharedFolderConversations(): SharedFolderConversations {
     if (!this.sharedFolderConversations) {
-      this.sharedFolderConversations = new SharedFolderConversations(this.page);
+      this.sharedFolderConversations = new SharedFolderConversations(
+        this.page,
+        this.getElementLocator(),
+      );
     }
     return this.sharedFolderConversations;
+  }
+
+  getBottomDropdownMenu(): DropdownMenu {
+    if (!this.bottomDropdownMenu) {
+      this.bottomDropdownMenu = new DropdownMenu(this.page);
+    }
+    return this.bottomDropdownMenu;
   }
 
   public async createNewConversation() {
@@ -106,6 +121,7 @@ export class ChatBar extends SideBar {
     folderName: string,
     folderConversationName: string,
     conversationName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folderConversation = this.getFolderConversations().getFolderEntity(
       folderName,
@@ -113,12 +129,17 @@ export class ChatBar extends SideBar {
     );
     const conversation =
       this.getConversations().getConversationByName(conversationName);
-    await this.dragAndDropEntityToFolder(conversation, folderConversation);
+    await this.dragAndDropEntityToFolder(conversation, folderConversation, {
+      isHttpMethodTriggered,
+    });
   }
 
-  public async dragAndDropFolderToRootLevel(folderName: string) {
+  public async dragAndDropFolderToRootLevel(
+    folderName: string,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     const folder =
       await this.getFolderConversations().getFolderByName(folderName);
-    await this.dragFolderToRoot(folder);
+    await this.dragFolderToRoot(folder, { isHttpMethodTriggered });
   }
 }

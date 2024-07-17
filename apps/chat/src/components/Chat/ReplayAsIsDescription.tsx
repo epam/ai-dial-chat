@@ -25,7 +25,7 @@ export const ReplayAsIsDescription = ({ isModelInMessages }: Props) => {
           <div className="flex flex-col justify-center">
             <span
               className="text-xs text-quaternary-bg-light"
-              data-qa="app-descr"
+              data-qa="replay-descr"
             >
               {t(
                 'This mode replicates user requests from the original conversation including settings set in each message.',

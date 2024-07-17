@@ -18,10 +18,11 @@ const EmptyRequiredInputMessage = ({
   isShown,
 }: Props) => {
   const { t } = useTranslation(Translation.Settings);
+
   return (
     <div
       className={classNames(
-        'text-xxs text-[#a4afc0] peer-invalid:peer-[.submitted]:mb-4',
+        'text-pr-alert-500 text-xxs peer-invalid:peer-[.submitted]:mb-1',
         useDisplay && 'hidden peer-invalid:peer-[.submitted]:block',
         !useDisplay &&
           !isShown &&

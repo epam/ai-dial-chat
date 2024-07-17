@@ -19,6 +19,7 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  favoriteApplicationsIds: string[];
 }
 
 const initialState: ModelsState = {
@@ -27,6 +28,7 @@ const initialState: ModelsState = {
   models: [],
   modelsMap: {},
   recentModelsIds: [],
+  favoriteApplicationsIds: [],
 };
 
 export const modelsSlice = createSlice({
@@ -36,6 +38,22 @@ export const modelsSlice = createSlice({
     init: (state) => state,
     getModels: (state) => {
       state.status = UploadStatus.LOADING;
+    },
+    initFavoriteApplicationsIds: (
+      state,
+      { payload }: PayloadAction<{ appsIds: string[] }>,
+    ) => {
+      state.favoriteApplicationsIds = payload.appsIds;
+    },
+    updateFavoriteApplicationsIds: (
+      state,
+      { payload }: PayloadAction<{ appsIds: string[]; isFavorite: boolean }>,
+    ) => {
+      state.favoriteApplicationsIds = payload.isFavorite
+        ? [...state.favoriteApplicationsIds, ...payload.appsIds]
+        : state.favoriteApplicationsIds.filter((id) =>
+            payload.appsIds.some((appsId) => id !== appsId),
+          );
     },
     getModelsSuccess: (
       state,
@@ -175,6 +193,17 @@ const selectModelsOnly = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
+const selectFavoriteApplicationsIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.favoriteApplicationsIds;
+  },
+);
+
+const selectAppsOnly = createSelector([selectModels], (models) => {
+  return models.filter((model) => model.type === EntityType.Application);
+});
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -185,6 +214,8 @@ export const ModelsSelectors = {
   selectRecentModels,
   selectModel,
   selectModelsOnly,
+  selectAppsOnly,
+  selectFavoriteApplicationsIds,
 };
 
 export const ModelsActions = modelsSlice.actions;

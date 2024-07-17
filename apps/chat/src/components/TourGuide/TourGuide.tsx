@@ -3,7 +3,8 @@ import Joyride, { CallBackProps, Step } from 'react-joyride';
 
 import { useTranslation } from 'next-i18next';
 
-import { Conversation } from '@/src/types/chat';
+import { isApplicationModelType } from '@/src/utils/app/conversation';
+
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -19,8 +20,8 @@ import {
 } from '@/src/components/TourGuide/components';
 
 import {
+  APPLICATION_ACTIONS_STEP,
   DEFAULT_STEPS,
-  SETTINGS_STEP,
   TourStepAction,
   TourStepType,
   handleBodyScroll,
@@ -50,9 +51,6 @@ const TourGuide = () => {
   const conversation = conversations.find(
     (chat) => chat?.id === currentChatId?.[0],
   );
-  const isEmptyConversation = !(
-    (conversation as Conversation)?.messages?.length > 0
-  );
 
   const isFirstStep = tourStepIndex === 0;
   const isLastStep = steps?.length - 1 === tourStepIndex;
@@ -76,15 +74,17 @@ const TourGuide = () => {
   }, [showPromptBar, showChatBar, isTourRun]);
 
   useEffect(() => {
-    if (!isEmptyConversation) {
+    if (conversation && isApplicationModelType(conversation?.model.id)) {
       const updatedSteps = steps.map((step) =>
-        step.target === `#${TourGuideId.modelSelection}` ? SETTINGS_STEP : step,
+        step.target === `#${TourGuideId.modelSelection}`
+          ? APPLICATION_ACTIONS_STEP
+          : step,
       );
 
       setSteps(updatedSteps);
     } else setSteps(DEFAULT_STEPS);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEmptyConversation]);
+  }, [conversation]);
 
   const handleJoyrideCallback = ({
     action,
@@ -97,7 +97,11 @@ const TourGuide = () => {
     handleBodyScroll(status, lifecycle); //To fix the built-in bug in react-joyride for target: body
 
     if (!isTargetInDocument(step.target as string)) {
-      dispatch(UIActions.setTourStepIndex(index + 1));
+      dispatch(
+        UIActions.setTourStepIndex(
+          index + (action === TourStepAction.prev ? -1 : 1),
+        ),
+      );
     }
 
     switch (true) {

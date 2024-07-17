@@ -38,7 +38,7 @@ export const SendMessageButton = ({
     return (
       <button
         className={classNames(
-          'absolute top-[calc(50%_-_12px)] rounded text-error hover:text-accent-primary',
+          'absolute top-[calc(50%_-_12px)] rounded text-quaternary-bg-light hover:text-primary-bg-light',
           isOverlay ? 'right-3' : 'right-4',
         )}
         onClick={onSend}

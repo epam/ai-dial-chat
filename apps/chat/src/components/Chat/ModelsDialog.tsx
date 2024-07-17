@@ -198,7 +198,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         ></input>
         <ContextMenu
           menuItems={menuItems}
-          triggerIconClassName="absolute right-8 md:right-12 cursor-pointer max-h-[38px]"
+          triggerIconClassName="absolute right-8 top-[8px] md:right-12 cursor-pointer max-h-[38px]"
           TriggerCustomRenderer={
             <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
               <div className="flex items-end text-quaternary-bg-light hover:text-primary-bg-light">

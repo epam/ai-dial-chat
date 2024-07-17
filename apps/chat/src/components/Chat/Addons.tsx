@@ -69,6 +69,7 @@ const Addon = ({
           }
           triggerClassName="flex shrink-0"
           contentClassName="max-w-[220px]"
+          placement="top"
         >
           {template}
         </Tooltip>

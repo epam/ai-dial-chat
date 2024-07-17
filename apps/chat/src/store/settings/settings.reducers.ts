@@ -2,6 +2,10 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import {
+  CustomVisualizer,
+  MappedVisualizers,
+} from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
 import { RootState } from '..';
@@ -11,9 +15,11 @@ import { Feature } from '@epam/ai-dial-shared';
 export interface SettingsState {
   appName: string;
   isOverlay: boolean;
+  overlayConversationId?: string;
   isAuthDisabled: boolean;
   footerHtmlMessage: string;
   enabledFeatures: Feature[];
+  publicationFilters: string[];
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
@@ -22,6 +28,9 @@ export interface SettingsState {
   storageType: StorageType;
   themesHostDefined: boolean;
   isolatedModelId?: string;
+  customRenderers?: CustomVisualizer[];
+  popularPromptsPaths?: Record<string, string>;
+  favoriteAppsIds?: string[];
 }
 
 const initialState: SettingsState = {
@@ -30,6 +39,7 @@ const initialState: SettingsState = {
   isAuthDisabled: false,
   footerHtmlMessage: '',
   enabledFeatures: [],
+  publicationFilters: [],
   codeWarning: '',
   announcement: '',
   defaultModelId: undefined,
@@ -37,6 +47,9 @@ const initialState: SettingsState = {
   defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
+  customRenderers: [],
+  popularPromptsPaths: {},
+  favoriteAppsIds: [],
 };
 
 export const settingsSlice = createSlice({
@@ -73,6 +86,12 @@ export const settingsSlice = createSlice({
       { payload }: PayloadAction<SettingsState['enabledFeatures']>,
     ) => {
       state.enabledFeatures = payload;
+    },
+    setPublicationFilters: (
+      state,
+      { payload }: PayloadAction<SettingsState['publicationFilters']>,
+    ) => {
+      state.publicationFilters = payload;
     },
     setCodeWarning: (
       state,
@@ -112,6 +131,9 @@ export const settingsSlice = createSlice({
     },
     setIsolatedModelId: (state, { payload }: PayloadAction<string>) => {
       state.isolatedModelId = payload;
+    },
+    setOverlayConversationId: (state, { payload }: PayloadAction<string>) => {
+      state.overlayConversationId = payload;
     },
   },
 });
@@ -204,6 +226,61 @@ const selectThemeHostDefined = createSelector([rootSelector], (state) => {
   return state.themesHostDefined;
 });
 
+const selectCustomVisualizers = createSelector([rootSelector], (state) => {
+  return state.customRenderers;
+});
+
+const selectMappedVisualizers = createSelector(
+  [selectCustomVisualizers],
+  (customVisualizers) => {
+    return customVisualizers?.reduce(
+      (visualizers: MappedVisualizers, currentVisualizerConfig) => {
+        const contentTypes = currentVisualizerConfig.contentType.split(',');
+
+        visualizers = contentTypes.reduce(
+          (visualizers: MappedVisualizers, contentType) => {
+            visualizers[contentType] = !visualizers[contentType]
+              ? [currentVisualizerConfig]
+              : visualizers[currentVisualizerConfig.contentType].concat(
+                  currentVisualizerConfig,
+                );
+
+            return visualizers;
+          },
+          {} as MappedVisualizers,
+        );
+
+        return visualizers;
+      },
+      {} as MappedVisualizers,
+    );
+  },
+);
+
+const selectIsCustomAttachmentType = createSelector(
+  [selectMappedVisualizers, (_state, attachmentType: string) => attachmentType],
+  (mappedVisualizers, attachmentType) => {
+    return (
+      mappedVisualizers &&
+      Object.prototype.hasOwnProperty.call(mappedVisualizers, attachmentType)
+    );
+  },
+);
+
+const selectPublicationFilters = createSelector([rootSelector], (state) => {
+  return state.publicationFilters;
+});
+
+const selectOverlayConversationId = createSelector([rootSelector], (state) => {
+  return state.overlayConversationId;
+});
+const selectPopularPromptsPaths = createSelector([rootSelector], (state) => {
+  return state.popularPromptsPaths;
+});
+const selectFavoriteAppsIds = createSelector([rootSelector], (state) => {
+  return state.favoriteAppsIds;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -223,4 +300,11 @@ export const SettingsSelectors = {
   selectThemeHostDefined,
   selectIsIsolatedView,
   selectIsolatedModelId,
+  selectCustomVisualizers,
+  selectMappedVisualizers,
+  selectIsCustomAttachmentType,
+  selectPublicationFilters,
+  selectOverlayConversationId,
+  selectPopularPromptsPaths,
+  selectFavoriteAppsIds,
 };

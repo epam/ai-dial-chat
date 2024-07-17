@@ -63,11 +63,11 @@ pre:has(div.codeblock) {
   }
 
   .temperature-slider .rc-slider-rail {
-    @apply rounded-full bg-gradient-to-r from-layer-5 to-layer-3;
+    @apply rounded-full bg-layer-10;
   }
 
   .temperature-slider .rc-slider-track {
-    @apply rounded-full bg-transparent;
+    @apply rounded-full bg-gradient-to-r from-layer-5 to-layer-3;
   }
 
   .input-form {
@@ -93,7 +93,24 @@ pre:has(div.codeblock) {
 
 @layer components {
   .button {
-    @apply rounded-primary border border-transparent px-3 py-2.5 outline-none;
+    @apply outline-none font-medium;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
+  }
+
+  .button.button-medium {
+    padding: 6px 16px;
+    gap: 10px;
+    line-height: 17px;
+  }
+
+  .button.button-small {
+    padding: 5px 12px;
+    gap: 4px;
+    font-size: 10px;
+    line-height: 12px;
   }
 
   .button:disabled {
@@ -105,24 +122,47 @@ pre:has(div.codeblock) {
     @apply border-hover;
   }
 
-  .button.button-primary {
-    @apply text-controls-permanent;
+  .button.button-primary,
+  .button.button-secondary,
+  .button.button-primary:disabled,
+  .button.button-secondary:disabled {
+    @apply text-pr-grey-white;
   }
 
   .button.button-primary:not(:disabled) {
-    @apply bg-layer-4 hover:bg-layer-3;
+    @apply bg-pr-primary-550 hover:bg-pr-primary-650;
   }
 
-  .button.button-secondary {
-    @apply border-primary text-controls-permanent;
+  .button.button-primary:disabled {
+    @apply bg-pr-primary-550-alpha;
   }
 
   .button.button-secondary:not(:disabled) {
-    @apply bg-controls-accent hover:bg-layer-3;
+    @apply bg-pr-secondary-550 hover:bg-pr-secondary-650;
   }
 
   .button.button-secondary:disabled {
-    @apply text-controls-disable;
+    @apply bg-pr-secondary-550-alpha;
+  }
+
+  .button.button-ghost {
+    @apply border;
+  }
+
+  .button.button-medium.button-ghost {
+    padding: 5px 15px;
+  }
+
+  .button.button-small.button-ghost {
+    padding: 4px 11px;
+  }
+
+  .button.button-ghost:not(:disabled) {
+    @apply border-pr-secondary-550 hover:border-pr-secondary-650 text-pr-secondary-550 hover:text-pr-secondary-650;
+  }
+
+  .button.button-ghost:disabled {
+    @apply border-pr-secondary-550-alpha;
   }
 
   .button.button-chat {
@@ -137,13 +177,20 @@ pre:has(div.codeblock) {
 }
 
 @layer components {
-  #chat .model-icon-template {
-    --text-primary-bg-dark: var(--text-quinary-bg-light);
+  #chat .model-icon-template,
+  #chat .entity-selector .model-icon-template,
+  .entity-menu-selector-item .model-icon-template {
+    --text-primary-bg-dark: var(--text-primary-bg-light);
   }
 
   .file-manager-modal,
   .select-folder-header,
-  .select-folder-footer {
+  .select-folder-footer,
+  .publish-wizard-modal,
+  .unpublish-modal,
+  .preview-prompt-modal,
+  .prompt-modal,
+  .publication-sections {
     --text-primary-bg-dark: var(--text-primary-bg-light);
     --text-secondary-bg-dark: var(--text-secondary-bg-light);
   }
@@ -152,14 +199,9 @@ pre:has(div.codeblock) {
     --text-accent-primary: var(--text-quinary-bg-light);
   }
 
-  .sidebar-left,
-  .context-menu-chat {
-    --bg-accent-primary: var(--bg-accent-secondary, #37babc);
-  }
-
-  .sidebar-right,
-  .context-menu-prompt {
-    --bg-accent-primary: var(--bg-accent-secondary, #a972ff);
+  .additional-description ul {
+    list-style-type: disc;
+    margin-left: 16px;
   }
 
   .sidebar-right .menu-trigger,
@@ -170,6 +212,10 @@ pre:has(div.codeblock) {
   .select-folder-header {
     --text-accent-primary: var(--text-primary-bg-light);
     --border-accent-primary: var(--border-tertiary);
+  }
+
+  #publish-wizard {
+    --text-primary-bg-dark: var(--text-primary-bg-light);
   }
 }
 

@@ -2,6 +2,7 @@ import { Components } from 'react-markdown';
 
 import classnames from 'classnames';
 
+import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -29,6 +30,10 @@ interface ChatMDComponentProps {
   content: string;
   isInner?: boolean;
 }
+
+const transformUri = (src: string): string => {
+  return getMappedAttachmentUrl(src) ?? '';
+};
 
 export const getMDComponents = (
   isShowResponseLoader: boolean,
@@ -78,7 +83,7 @@ export const getMDComponents = (
     },
     td({ children }) {
       return (
-        <td className="break-words border border-tertiary px-3 py-1 text-sm">
+        <td className="break-words border border-tertiary bg-layer-2 px-3 py-1 text-sm">
           {children}
         </td>
       );
@@ -110,7 +115,7 @@ const ChatMDComponent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const mdClassNames = classnames(
-    'prose min-w-full prose-a:text-accent-primary prose-a:no-underline hover:prose-a:underline',
+    'prose min-w-full prose-a:text-secondary-bg-light prose-a:no-underline hover:prose-a:underline',
     {
       'max-w-none': isChatFullWidth,
       'text-sm': isOverlay,
@@ -125,6 +130,8 @@ const ChatMDComponent = ({
         remarkPlugins={[remarkGfm]}
         linkTarget="_blank"
         components={getMDComponents(isShowResponseLoader, isInner)}
+        transformImageUri={transformUri}
+        transformLinkUri={transformUri}
       >
         {`${content}${
           isShowResponseLoader ? modelCursorSignWithBackquote : ''

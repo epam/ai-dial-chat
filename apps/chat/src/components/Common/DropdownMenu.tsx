@@ -46,7 +46,7 @@ import classNames from 'classnames';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 
 const menuItemClassNames = classNames(
-  'flex max-w-[300px] cursor-pointer items-center gap-3 focus-visible:border-none focus-visible:outline-none',
+  'flex max-w-[300px] cursor-pointer items-center gap-3 focus-visible:outline-none',
 );
 
 const MenuContext = createContext<{
@@ -74,12 +74,13 @@ interface MenuProps {
   placement?: Placement;
   shouldFlip?: boolean;
   shouldApplySize?: boolean;
-  dismissIfScroll?: boolean;
+  enableAncestorScroll?: boolean;
   noFocusReturn?: boolean;
+  isTriggerEnabled?: boolean;
 }
 
 export const MenuComponent = forwardRef<
-  HTMLButtonElement,
+  HTMLDivElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function MenuComponent(
   {
@@ -96,7 +97,8 @@ export const MenuComponent = forwardRef<
     shouldFlip = true,
     shouldApplySize = true,
     noFocusReturn = false,
-    dismissIfScroll = false,
+    enableAncestorScroll = false,
+    isTriggerEnabled = true,
     ...props
   },
   forwardedRef,
@@ -171,12 +173,13 @@ export const MenuComponent = forwardRef<
   const click = useClick(context, {
     event: 'mousedown',
     toggle: !isNested,
+    enabled: isTriggerEnabled,
     ignoreMouse: isNested,
   });
   const role = useRole(context, { role: 'menu' });
   const dismiss = useDismiss(context, {
     bubbles: true,
-    ancestorScroll: dismissIfScroll,
+    ancestorScroll: enableAncestorScroll,
   });
   const listNavigation = useListNavigation(context, {
     listRef: elementsRef,
@@ -227,7 +230,7 @@ export const MenuComponent = forwardRef<
 
   return (
     <FloatingNode id={nodeId}>
-      <button
+      <div
         ref={useMergeRefs([refs.setReference, item.ref, forwardedRef])}
         tabIndex={
           !isNested ? undefined : parent.activeIndex === item.index ? 0 : -1
@@ -238,7 +241,9 @@ export const MenuComponent = forwardRef<
         data-focus-inside={hasFocusInside ? '' : undefined}
         className={classNames(
           isNested && menuItemClassNames,
-          isNested ? 'h-[34px] w-full px-3' : 'h-full px-0',
+          isNested
+            ? 'hover:bg-pr-grey-100 border-b-pr-grey-200  h-[40px] w-full border-b px-3'
+            : 'h-full px-0',
           className,
         )}
         {...getReferenceProps(
@@ -256,7 +261,7 @@ export const MenuComponent = forwardRef<
         {!trigger && label && (
           <span className="inline-block truncate">{label}</span>
         )}
-      </button>
+      </div>
       <MenuContext.Provider
         value={{
           activeIndex,
@@ -277,7 +282,7 @@ export const MenuComponent = forwardRef<
               >
                 <div
                   className={classNames(
-                    'z-50 overflow-auto rounded bg-layer-0 text-primary-bg-dark shadow focus-visible:outline-none',
+                    'z-50 overflow-auto rounded-secondary bg-layer-2 text-primary-bg-light shadow focus-visible:outline-none',
                     listClassName,
                   )}
                   data-qa="dropdown-menu"
@@ -321,42 +326,40 @@ export const MenuItem = forwardRef<
   const isActive = item.index === menu.activeIndex;
 
   return (
-    <div>
-      <button
-        {...props}
-        ref={useMergeRefs([item.ref, forwardedRef])}
-        type="button"
-        role="menuitem"
-        className={classNames(
-          menuItemClassNames,
-          'h-[34px] w-full px-3',
-          disabled && '!cursor-not-allowed',
-          className,
-        )}
-        tabIndex={isActive ? 0 : -1}
-        disabled={disabled}
-        {...menu.getItemProps({
-          onClick(event: MouseEvent<HTMLButtonElement>) {
-            props.onClick?.(event);
-            tree?.events.emit('click');
-          },
-          onFocus(event: FocusEvent<HTMLButtonElement>) {
-            props.onFocus?.(event);
-            menu.setHasFocusInside(true);
-          },
-        })}
-      >
-        {ItemComponent}
-        {!ItemComponent && label && (
-          <span className="inline-block truncate">{label}</span>
-        )}
-      </button>
-    </div>
+    <button
+      {...props}
+      ref={useMergeRefs([item.ref, forwardedRef])}
+      type="button"
+      role="menuitem"
+      className={classNames(
+        menuItemClassNames,
+        'hover:bg-pr-grey-100 border-b-pr-grey-200 h-[40px] w-full min-w-[140px] border-b px-3 last:border-b-0',
+        disabled && '!cursor-not-allowed',
+        className,
+      )}
+      tabIndex={isActive ? 0 : -1}
+      disabled={disabled}
+      {...menu.getItemProps({
+        onClick(event: MouseEvent<HTMLButtonElement>) {
+          props.onClick?.(event);
+          tree?.events.emit('click');
+        },
+        onFocus(event: FocusEvent<HTMLButtonElement>) {
+          props.onFocus?.(event);
+          menu.setHasFocusInside(true);
+        },
+      })}
+    >
+      {ItemComponent}
+      {!ItemComponent && label && (
+        <span className="inline-block truncate">{label}</span>
+      )}
+    </button>
   );
 });
 
 export const Menu = forwardRef<
-  HTMLButtonElement,
+  HTMLDivElement,
   MenuProps & HTMLProps<HTMLButtonElement>
 >(function Menu(props, ref) {
   const parentId = useFloatingParentNodeId();

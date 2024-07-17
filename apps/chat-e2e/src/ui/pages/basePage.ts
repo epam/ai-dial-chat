@@ -1,12 +1,12 @@
 import config from '../../../config/playwright.config';
 
-import { API, Import } from '@/src/testData';
+import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
 import path from 'path';
 
 export interface UploadDownloadData {
   path: string;
-  isDownloadedData?: boolean;
+  dataType?: 'download' | 'upload';
 }
 
 const apiTimeout = 35000;
@@ -139,22 +139,54 @@ export class BasePage {
     method: () => Promise<T>,
     filename?: string,
   ): Promise<UploadDownloadData> {
-    const downloadPromise = this.page.waitForEvent('download');
+    const downloadedData = await this.downloadMultipleData(method, 1, filename);
+    return downloadedData[0];
+  }
+
+  async downloadMultipleData<T>(
+    method: () => Promise<T>,
+    expectedDownloadsCount: number,
+    filename?: string[] | string,
+  ) {
+    const downloadedData: UploadDownloadData[] = [];
+    let downloadCount = 0;
+    const receivedDownloads = new Promise<void>((fulfill) => {
+      this.page.on('download', async (download) => {
+        const filenamePath = filename
+          ? typeof filename === 'string'
+            ? filename
+            : filename[downloadCount]
+          : download.suggestedFilename();
+        const filePath = path.join(Import.exportPath, filenamePath);
+        downloadCount = downloadCount + 1;
+        downloadedData.push({ path: filePath, dataType: 'download' });
+        await download.saveAs(filePath);
+        if (downloadCount === expectedDownloadsCount) {
+          fulfill();
+        }
+      });
+    });
     await method();
-    const download = await downloadPromise;
-    const filePath = path.join(
-      Import.exportPath,
-      filename ?? download.suggestedFilename(),
-    );
-    await download.saveAs(filePath);
-    return { path: filePath, isDownloadedData: true };
+    await receivedDownloads;
+    return downloadedData;
   }
 
   public async uploadData<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
   ) {
-    const directory = uploadData.isDownloadedData ? '' : Import.importPath;
+    let directory;
+    const dataType = uploadData.dataType;
+    switch (dataType) {
+      case 'download':
+        directory = '';
+        break;
+      case 'upload':
+        directory = Attachment.attachmentPath;
+        break;
+      default:
+        directory = Import.importPath;
+    }
     const fileChooserPromise = this.page.waitForEvent('filechooser');
     await method();
     const fileChooser = await fileChooserPromise;

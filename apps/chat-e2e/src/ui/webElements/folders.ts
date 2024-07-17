@@ -1,4 +1,4 @@
-import { SideBarSelectors } from '../selectors';
+import { ChatBarSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -6,27 +6,73 @@ import { API, ExpectedConstants } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { Input } from '@/src/ui/webElements/input';
-import { Page } from '@playwright/test';
+import { EditInput } from '@/src/ui/webElements/editInput';
+import { EditInputActions } from '@/src/ui/webElements/editInputActions';
+import { Locator, Page } from '@playwright/test';
 
 export class Folders extends BaseElement {
-  private readonly entitySelector: string;
+  private readonly entitySelector?: string;
 
-  constructor(page: Page, folderSelector: string, entitySelector: string) {
-    super(page, folderSelector);
+  constructor(
+    page: Page,
+    parentLocator: Locator,
+    folderSelector: string,
+    entitySelector?: string,
+  ) {
+    super(page, folderSelector, parentLocator);
     this.entitySelector = entitySelector;
   }
 
-  private folderInput!: Input;
+  private editFolderInput!: EditInput;
 
-  getFolderInput(name: string): Input {
-    if (!this.folderInput) {
-      this.folderInput = new Input(
+  getEditFolderInput(): EditInput {
+    if (!this.editFolderInput) {
+      this.editFolderInput = new EditInput(
         this.page,
-        `${SideBarSelectors.folder} >> ${SideBarSelectors.renameInput(name)}`,
+        this.getElementLocator(),
+        SideBarSelectors.folder,
       );
     }
-    return this.folderInput;
+    return this.editFolderInput;
+  }
+
+  private editFolderEntityInput!: EditInput;
+
+  getEditFolderEntityInput(): EditInput {
+    if (!this.editFolderEntityInput) {
+      this.editFolderEntityInput = new EditInput(
+        this.page,
+        this.getElementLocator(),
+        this.entitySelector!,
+      );
+    }
+    return this.editFolderEntityInput;
+  }
+
+  private editFolderInputActions!: EditInputActions;
+
+  getEditFolderInputActions(): EditInputActions {
+    if (!this.editFolderInputActions) {
+      this.editFolderInputActions = new EditInputActions(
+        this.page,
+        this.getElementLocator(),
+        SideBarSelectors.folder,
+      );
+    }
+    return this.editFolderInputActions;
+  }
+
+  private editFolderEntityInputActions!: EditInputActions;
+
+  getEditFolderEntityInputActions(): EditInputActions {
+    if (!this.editFolderEntityInputActions) {
+      this.editFolderEntityInputActions = new EditInputActions(
+        this.page,
+        this.getElementLocator(),
+        this.entitySelector!,
+      );
+    }
+    return this.editFolderEntityInputActions;
   }
 
   private dropdownMenu!: DropdownMenu;
@@ -46,6 +92,12 @@ export class Folders extends BaseElement {
     return this.getChildElementBySelector(
       SideBarSelectors.folder,
     ).getElementLocatorByText(name, index);
+  }
+
+  public getFolderBackgroundColor(name: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getFolderByName(name, index),
+    ).getComputedStyleProperty(Styles.backgroundColor);
   }
 
   public getFolderName(name: string, index?: number) {
@@ -84,42 +136,56 @@ export class Folders extends BaseElement {
   }
 
   public async openFolderDropdownMenu(name: string, index?: number) {
-    const folderToEdit = this.getFolderByName(name, index);
-    await folderToEdit.hover();
-    await this.folderDotsMenu(name, index).click();
+    const folderDotsMenu = await this.getFolderDropdownMenu(name, index);
+    await folderDotsMenu.click();
     await this.getDropdownMenu().waitForState();
   }
 
-  public async isFolderDropdownMenuAvailable(name: string, index?: number) {
+  public async getFolderDropdownMenu(name: string, index?: number) {
     const folderToEdit = this.getFolderByName(name, index);
     await folderToEdit.hover();
-    return this.folderDotsMenu(name, index).isVisible();
+    return this.folderDotsMenu(name, index);
   }
 
-  public async editFolderNameWithEnter(name: string, newName: string) {
-    await this.editFolderName(name, newName);
+  public async editFolderNameWithEnter(newName: string) {
+    await this.editFolderName(newName);
     await this.page.keyboard.press(keys.enter);
   }
 
-  public async editFolderNameWithTick(name: string, newName: string) {
-    const folderInput = await this.editFolderName(name, newName);
-    if (isApiStorageType) {
+  public async editFolderNameWithTick(
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    await this.editFolderName(newName);
+    const folderInputActions = this.getEditFolderInputActions();
+    if (isHttpMethodTriggered && isApiStorageType) {
       const respPromise = this.page.waitForResponse((resp) => {
         return (
           resp.url().includes(API.conversationsHost()) ||
           resp.url().includes(API.promptsHost())
         );
       });
-      await folderInput.clickTickButton();
+      await folderInputActions.clickTickButton();
       return respPromise;
     }
-    await folderInput.clickTickButton();
+    await folderInputActions.clickTickButton();
   }
 
-  public async editFolderName(name: string, newName: string) {
-    const folderInput = await this.getFolderInput(name);
+  public async editFolderName(newName: string) {
+    const folderInput = await this.getEditFolderInput();
     await folderInput.editValue(newName);
     return folderInput;
+  }
+
+  public getFolderInEditMode(name: string) {
+    const folderInEditModeLocator = this.getChildElementBySelector(
+      SideBarSelectors.folder,
+    )
+      .getElementLocator()
+      .filter({
+        has: this.page.locator(`[${Attributes.value}="${name}"]`),
+      });
+    return this.createElementFromLocator(folderInEditModeLocator);
   }
 
   public async expandFolder(
@@ -142,7 +208,7 @@ export class Folders extends BaseElement {
     await folder.waitFor();
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
-        resp.url().includes(API.conversationsHost()),
+        resp.url().includes(API.listingHost),
       );
       await folder.click();
       return respPromise;
@@ -155,6 +221,17 @@ export class Folders extends BaseElement {
       this.getFolderByName(name, index).getByText(name),
     );
     return folder.getComputedStyleProperty(Styles.color);
+  }
+
+  public getNestedFolder(
+    parentName: string,
+    childName: string,
+    parentIndex?: number,
+  ) {
+    return this.getFolderByName(parentName, parentIndex)
+      .locator('~*')
+      .locator(SideBarSelectors.folder)
+      .filter({ hasText: childName });
   }
 
   public getFolderEntities(name: string, index?: number) {
@@ -187,12 +264,18 @@ export class Folders extends BaseElement {
     return this.getFolderEntity(folderName, entityName).isVisible();
   }
 
+  public getSelectedFolderEntity(folderName: string, entityName: string) {
+    return this.getFolderEntity(folderName, entityName).locator(
+      ChatBarSelectors.selectedEntity,
+    );
+  }
+
   public async selectFolderEntity(
     folderName: string,
-    conversationName: string,
+    entityName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folderEntity = this.getFolderEntity(folderName, conversationName);
+    const folderEntity = this.getFolderEntity(folderName, entityName);
     if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'GET',

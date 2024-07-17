@@ -1,5 +1,9 @@
 import config from '../../../config/playwright.config';
-import { ChatSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatSelectors,
+  MessageInputSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -7,6 +11,8 @@ import { Rate, Side } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
+import { MenuSelectors } from '@/src/ui/selectors/menuSelectors';
+import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Locator, Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
@@ -33,6 +39,14 @@ export class ChatMessages extends BaseElement {
     );
 
   public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
+  private inputAttachments!: InputAttachments;
+
+  getInputAttachments(): InputAttachments {
+    if (!this.inputAttachments) {
+      this.inputAttachments = new InputAttachments(this.page, this.rootLocator);
+    }
+    return this.inputAttachments;
+  }
 
   public messageStage = (messagesIndex: number, stageIndex: number) =>
     this.chatMessages
@@ -69,36 +83,76 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.rate(rate));
   }
 
-  public async openChatMessageAttachment(
+  public getChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
   ) {
-    const messageAttachment =
-      this.getChatMessage(message).getByTitle(attachmentTitle);
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) =>
-          resp.request().method() === 'GET' &&
-          resp.url().includes(attachmentTitle),
-        { timeout: config.use!.actionTimeout! * 2 },
+    return this.createElementFromLocator(
+      this.getChatMessage(message).getByTitle(attachmentTitle),
+    );
+  }
+
+  public getOpenedChatMessageAttachment(message: string | number) {
+    return this.getChatMessage(message).getByAltText('Attachment image');
+  }
+
+  public getDownloadAttachmentIcon(message: string | number) {
+    return this.getChatMessage(message).locator(
+      `${Tags.a}[${Attributes.download}]`,
+    );
+  }
+
+  public async expandChatMessageAttachment(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    const isCollapsed = await this.getChatMessage(message)
+      .locator(ChatSelectors.attachmentCollapsed)
+      .isVisible();
+    if (isCollapsed) {
+      const messageAttachment = this.getChatMessageAttachment(
+        message,
+        attachmentTitle,
       );
+      if (isApiStorageType) {
+        const respPromise = this.page.waitForResponse(
+          (resp) =>
+            resp.request().method() === 'GET' &&
+            resp.url().includes(attachmentTitle),
+          { timeout: config.use!.actionTimeout! * 2 },
+        );
+        await messageAttachment.click();
+        return respPromise;
+      }
       await messageAttachment.click();
-      return respPromise;
     }
-    await messageAttachment.click();
+  }
+
+  public async collapseChatMessageAttachment(
+    message: string | number,
+    attachmentTitle: string,
+  ) {
+    const isExpanded = await this.getChatMessage(message)
+      .locator(ChatSelectors.attachmentExpanded)
+      .isVisible();
+    if (isExpanded) {
+      await this.getChatMessageAttachment(message, attachmentTitle).click();
+    }
   }
 
   public async getChatMessageAttachmentUrl(message: string | number) {
     const openedMessageAttachment =
-      this.getChatMessage(message).getByAltText('Attachment image');
+      this.getOpenedChatMessageAttachment(message);
     return openedMessageAttachment.getAttribute(Attributes.src);
   }
 
   public async getChatMessageDownloadUrl(message: string | number) {
-    const openedMessageAttachment = this.getChatMessage(message).locator(
-      `${Tags.a}[${Attributes.download}]`,
-    );
+    const openedMessageAttachment = this.getDownloadAttachmentIcon(message);
     return openedMessageAttachment.getAttribute(Attributes.href);
+  }
+
+  public getChatMessageAttachmentsGroup(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.attachmentsGroup);
   }
 
   public async getGeneratedChatContent(messagesCount: number) {
@@ -221,6 +275,7 @@ export class ChatMessages extends BaseElement {
       rate,
       rowIndex,
     );
+    // eslint-disable-next-line playwright/no-force-option
     await thumb.hover({ force: true });
     await thumb.waitFor();
     const respPromise = this.page.waitForResponse(
@@ -322,34 +377,70 @@ export class ChatMessages extends BaseElement {
     return this.messageStage(messagesIndex, stageIndex).isVisible();
   }
 
-  public getChatMessageTextarea(message: string) {
-    return this.getChatMessage(message).locator(ChatSelectors.textarea);
+  public async isMessageStageOpened(messagesIndex: number, stageIndex: number) {
+    return this.messageStage(messagesIndex, stageIndex)
+      .locator(ChatSelectors.openedStage)
+      .isVisible();
+  }
+
+  public async openMessageStage(messagesIndex: number, stageIndex: number) {
+    const isStageOpened = await this.isMessageStageOpened(
+      messagesIndex,
+      stageIndex,
+    );
+    if (!isStageOpened) {
+      await this.messageStage(messagesIndex, stageIndex).click();
+    }
+  }
+
+  public async closeMessageStage(messagesIndex: number, stageIndex: number) {
+    const isStageOpened = await this.isMessageStageOpened(
+      messagesIndex,
+      stageIndex,
+    );
+    if (isStageOpened) {
+      await this.messageStage(messagesIndex, stageIndex).click();
+    }
+  }
+
+  public getChatMessageTextarea(message: string | number) {
+    return this.getChatMessage(message).locator(MessageInputSelectors.textarea);
+  }
+
+  public getChatMessageClipIcon(message: string | number) {
+    return this.getChatMessage(message).locator(MenuSelectors.menuTrigger);
   }
 
   public async isChatMessageCodeVisible(message: number | string) {
     return this.getChatMessage(message)
-      .locator(ChatSelectors.codeblock)
+      .locator(ChatSelectors.codeBlock)
       .isVisible();
   }
 
   public messageEditIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.editIcon);
-  public saveAndSubmit = new BaseElement(
-    this.page,
-    ChatSelectors.saveAndSubmit,
+  public saveAndSubmit = this.getChildElementBySelector(
+    MessageInputSelectors.saveAndSubmit,
   );
-  public cancel = new BaseElement(this.page, ChatSelectors.cancelEdit);
+  public cancel = this.getChildElementBySelector(
+    MessageInputSelectors.cancelEdit,
+  );
 
   public messageDeleteIcon = (message: string) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
   public async openEditMessageMode(message: string | number) {
+    const editIcon = await this.waitForEditMessageIcon(message);
+    await editIcon.click();
+  }
+
+  public async waitForEditMessageIcon(message: string | number) {
     const chatMessage = this.getChatMessage(message);
     await chatMessage.scrollIntoViewIfNeeded();
     await chatMessage.hover();
     const editIcon = this.messageEditIcon(chatMessage);
     await editIcon.waitFor();
-    await editIcon.click();
+    return editIcon;
   }
 
   public async editMessage(oldMessage: string, newMessage: string) {
@@ -358,24 +449,17 @@ export class ChatMessages extends BaseElement {
     await this.waitForResponseReceived();
   }
 
-  public async fillEditData(oldMessage: string, newMessage: string) {
-    const textArea = await this.clearEditTextarea(oldMessage);
+  public async fillEditData(oldMessage: string | number, newMessage: string) {
+    const textArea = await this.selectEditTextareaContent(oldMessage);
     await textArea.fill(newMessage);
   }
 
-  public async clearEditTextarea(oldMessage: string) {
+  public async selectEditTextareaContent(oldMessage: string | number) {
     const textArea = this.getChatMessageTextarea(oldMessage);
     await textArea.waitFor();
     await textArea.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     return textArea;
-  }
-
-  public async isSaveButtonEnabled() {
-    const disabledAttributeValue = await this.saveAndSubmit.getAttribute(
-      Attributes.disabled,
-    );
-    return disabledAttributeValue === undefined;
   }
 
   public async openDeleteMessageDialog(message: string) {

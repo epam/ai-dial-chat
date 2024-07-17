@@ -67,6 +67,7 @@ export const CustomLogoSelect = ({
           headerLabel={t('Select custom logo')}
           customButtonLabel={t('Select file') as string}
           customUploadButtonLabel={t('Upload files') as string}
+          forceShowSelectCheckBox
         />
       )}
     </div>

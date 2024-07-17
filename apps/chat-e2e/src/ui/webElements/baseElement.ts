@@ -1,6 +1,8 @@
 import { Styles, Tags } from '../domData';
 
+import { ScrollState } from '@/src/testData';
 import { Locator, Page } from '@playwright/test';
+import path from 'path';
 
 export interface EntityIcon {
   entityName: string;
@@ -124,6 +126,12 @@ export class BaseElement {
     await this.rootLocator.scrollIntoViewIfNeeded();
   }
 
+  async setElementInputFiles(filesDirectory: string, ...filenames: string[]) {
+    await this.rootLocator.setInputFiles(
+      filenames.map((filename) => path.join(filesDirectory, filename)),
+    );
+  }
+
   async getAllBorderColors() {
     const allBorderColors: {
       bottomBorderColors: string[];
@@ -175,6 +183,18 @@ export class BaseElement {
     const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
     const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
     return scrollHeight > clientHeight;
+  }
+
+  public async getVerticalScrollPosition(): Promise<ScrollState> {
+    const scrollHeight = await this.rootLocator.evaluate((p) => p.scrollHeight);
+    const scrollTop = await this.rootLocator.evaluate((p) => p.scrollTop);
+    const clientHeight = await this.rootLocator.evaluate((p) => p.clientHeight);
+    if (scrollTop == 0) {
+      return ScrollState.top;
+    } else if (scrollHeight - (scrollTop + clientHeight) < 1) {
+      return ScrollState.bottom;
+    }
+    return ScrollState.middle;
   }
 
   public async getElementIcons(

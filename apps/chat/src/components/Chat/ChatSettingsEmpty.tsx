@@ -43,11 +43,10 @@ export const ChatSettingsEmpty = ({
   );
 
   return (
-    <>
-      <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
-        <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-          {!isModels ? (
-            <div className="flex w-full items-center justify-center rounded-t-primary bg-layer-2 p-4">
+    <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
+      <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
+        {!isModels ? (
+          <div className="flex w-full items-center justify-center rounded-t-primary bg-layer-2 p-4">
               <Spinner size={16} className="mx-auto" />
             </div>
           ) : (
@@ -55,34 +54,31 @@ export const ChatSettingsEmpty = ({
               <div className="flex items-center">
                 <SecondaryLogo className="" width={27} height={30} />
                 <span className="ml-3 font-weave text-[22px] font-bold">
-                  {HEADER_TITLE_TEXT}
+                {HEADER_TITLE_TEXT}
                 </span>
               </div>
             </div>
           )}
 
-          {isShowSettings && isModels && (
-            <>
-              <ConversationSettings
-                conversation={conversation}
-                modelId={conversation.model.id}
-                assistantModelId={conversation.assistantModelId}
-                prompt={conversation.prompt}
-                selectedAddons={conversation.selectedAddons}
-                temperature={conversation.temperature}
-                prompts={prompts}
-                onChangePrompt={onChangePrompt}
-                onChangeTemperature={onChangeTemperature}
-                onSelectAssistantSubModel={onSelectAssistantSubModel}
-                onSelectModel={onSelectModel}
-                onChangeAddon={onChangeAddon}
-                onApplyAddons={handleOnApplyAddons}
-                debounceSystemPromptChanges
-              />
-            </>
-          )}
-        </div>
+        {isShowSettings && isModels && (
+          <ConversationSettings
+            conversation={conversation}
+            modelId={conversation.model.id}
+            assistantModelId={conversation.assistantModelId}
+            prompt={conversation.prompt}
+            selectedAddons={conversation.selectedAddons}
+            temperature={conversation.temperature}
+            prompts={prompts}
+            onChangePrompt={onChangePrompt}
+            onChangeTemperature={onChangeTemperature}
+            onSelectAssistantSubModel={onSelectAssistantSubModel}
+            onSelectModel={onSelectModel}
+            onChangeAddon={onChangeAddon}
+            onApplyAddons={handleOnApplyAddons}
+            debounceSystemPromptChanges
+          />
+        )}
       </div>
-    </>
+    </div>
   );
 };

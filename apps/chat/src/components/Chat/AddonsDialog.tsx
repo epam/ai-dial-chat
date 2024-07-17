@@ -279,7 +279,7 @@ export const AddonsDialog: FC<Props> = ({
       </div>
       <div className="flex items-center justify-end border-t-[1px] px-3 pt-4 md:px-5">
         <button
-          className="button button-primary"
+          className="button button-primary button-medium"
           onClick={() => {
             onClose();
             onAddonsSelected(selectedAddons.map(({ id }) => id));

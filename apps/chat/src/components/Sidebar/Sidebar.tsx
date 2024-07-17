@@ -23,6 +23,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import { TourGuideId } from '@/src/constants/share';
 
 import Loader from '../Common/Loader';
 import { NoData } from '../Common/NoData';
@@ -86,12 +87,12 @@ const Sidebar = <T,>({
   );
 
   const resizeTriggerColor = classNames(
-    'xl:bg-accent-primary xl:text-accent-primary',
-    isResizing ? 'bg-accent-primary text-accent-primary' : '',
+    'xl:bg-layer-3 xl:text-pr-primary-700',
+    isResizing ? 'bg-layer-3 text-pr-primary-700' : '',
   );
 
   const resizeTriggerClassName = classNames(
-    'invisible h-full w-0.5 bg-layer-3 text-secondary-bg-dark group-hover:visible md:visible',
+    'invisible h-full w-0.5 bg-layer-3 text-pr-primary-700 group-hover:visible md:visible',
     resizeTriggerColor,
     isResizing ? 'xl:visible' : 'xl:invisible',
   );
@@ -226,7 +227,14 @@ const Sidebar = <T,>({
 
             {actionButtons}
 
-            <div className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto">
+            <div
+              className="flex grow flex-col gap-px divide-y divide-tertiary overflow-y-auto"
+              id={
+                featureType === FeatureType.Chat
+                  ? TourGuideId.chatHistory
+                  : TourGuideId.promptBank
+              }
+            >
               {folderComponent}
 
               {filteredItems.length > 0 || filteredFolders.length > 0 ? (

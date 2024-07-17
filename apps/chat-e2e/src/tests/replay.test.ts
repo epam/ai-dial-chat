@@ -89,7 +89,9 @@ dialTest(
         await conversations.openConversationDropdownMenu(
           replayConversation!.name,
         );
-        await conversations.selectMenuOption(MenuOptions.replay);
+        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+          triggeredHttpMethod: 'POST',
+        });
       },
     );
 
@@ -208,12 +210,17 @@ dialTest(
       'Verify new Replay conversations are created inside 1st and 3rd level folders',
       async () => {
         for (let i = 0; i < nestedLevels; i = i + 2) {
-          await folderConversations.getFolderEntity(
-            nestedFolders[i + 1].name,
-            `${ExpectedConstants.replayConversation}${
-              nestedConversations[i + 1].name
-            }`,
-          ).waitFor;
+          await expect
+            .soft(
+              await folderConversations.getFolderEntity(
+                nestedFolders[i + 1].name,
+                `${ExpectedConstants.replayConversation}${
+                  nestedConversations[i + 1].name
+                }`,
+              ),
+              ExpectedMessages.replayConversationCreated,
+            )
+            .toBeVisible();
         }
       },
     );
@@ -694,38 +701,36 @@ dialTest(
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
-        await chat.stopGenerating.hoverOver();
+        await sendMessage.stopGenerating.hoverOver();
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
           .toBe(ExpectedConstants.stopGeneratingTooltip);
 
-        const isSendButtonVisible =
-          await sendMessage.sendMessageButton.isVisible();
-        expect
-          .soft(isSendButtonVisible, ExpectedMessages.sendMessageButtonDisabled)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await sendMessage.sendMessageButton.getElementLocator(),
+            ExpectedMessages.sendMessageButtonDisabled,
+          )
+          .toBeHidden();
       },
     );
 
     await dialTest.step(
       'Stop generating and verify message is preserved, footer is visible and tooltip shown on hover',
       async () => {
-        await chat.stopGenerating.click();
+        await sendMessage.stopGenerating.click();
         const inputMessage = await sendMessage.messageInput.getElementContent();
         expect
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        const isSendButtonVisible =
-          await sendMessage.sendMessageButton.isVisible();
-
-        expect
+        await expect
           .soft(
-            isSendButtonVisible,
+            await sendMessage.sendMessageButton.getElementLocator(),
             ExpectedMessages.sendMessageButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         await chat.footer.waitForState({ state: 'attached' });
       },
@@ -747,14 +752,12 @@ dialTest(
           .soft(inputMessage, ExpectedMessages.messageContentIsValid)
           .toBe(message);
 
-        const isSendButtonVisible =
-          await sendMessage.sendMessageButton.isVisible();
-        expect
+        await expect
           .soft(
-            isSendButtonVisible,
+            await sendMessage.sendMessageButton.getElementLocator(),
             ExpectedMessages.sendMessageButtonIsNotVisible,
           )
-          .toBeFalsy();
+          .toBeHidden();
 
         await chat.footer.waitForState({ state: 'attached' });
       },
@@ -937,11 +940,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
 
         await talkToSelector.waitForState({ state: 'attached' });
-
-        const isStartReplayVisible = await chat.replay.isVisible();
-        expect
-          .soft(isStartReplayVisible, ExpectedMessages.startReplayNotVisible)
-          .toBeFalsy();
+        await expect
+          .soft(
+            await chat.replay.getElementLocator(),
+            ExpectedMessages.startReplayNotVisible,
+          )
+          .toBeHidden();
 
         const notAllowedModelError =
           await chat.notAllowedModelLabel.getElementContent();
@@ -1004,9 +1008,12 @@ dialTest(
             filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
           )
           .waitFor();
-        await folderConversations.expandFolder(Import.oldVersionAppFolderName, {
-          isHttpMethodTriggered: true,
-        });
+        await folderConversations
+          .getFolderEntity(
+            Import.oldVersionAppFolderName,
+            Import.oldVersionAppFolderChatName,
+          )
+          .waitFor();
         await folderConversations.selectFolderEntity(
           Import.oldVersionAppFolderName,
           Import.oldVersionAppFolderChatName,

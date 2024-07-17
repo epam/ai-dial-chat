@@ -16,12 +16,15 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { ModelId } from '@/src/constants/chat';
 import { TourGuideId } from '@/src/constants/share';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
+
+import { DallIcon } from '@/src/icons';
 
 interface ModelGroupProps {
   entities: DialAIEntity[];
@@ -102,16 +105,19 @@ const ModelGroup = ({
         }
       }}
       data-qa="group-entity"
-      id={TourGuideId.modelSelection}
     >
       {disabled && <DisableOverlay />}
       <div className="flex min-h-[48px] items-center gap-3 border-secondary ">
-        <ModelIcon
-          entityId={currentEntity.id}
-          entity={currentEntity}
-          size={24}
-          isSmallIconSize={false}
-        />
+        {currentEntity.id === ModelId.DALL ? (
+          <DallIcon />
+        ) : (
+          <ModelIcon
+            entityId={currentEntity.id}
+            entity={currentEntity}
+            size={24}
+            isSmallIconSize={false}
+          />
+        )}
         <div className="flex w-full flex-col gap-0.5 text-left">
           <div className="flex items-center justify-between font-medium">
             <span data-qa="group-entity-name">
@@ -120,6 +126,7 @@ const ModelGroup = ({
                 : currentEntity.name}
             </span>
             <ModelVersionSelect
+              className="absolute right-3 h-max"
               entities={entities}
               onSelect={onSelect}
               currentEntity={currentEntity}

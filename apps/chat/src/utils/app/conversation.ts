@@ -17,6 +17,8 @@ import {
   DialAIEntityModel,
 } from '@/src/types/models';
 
+import { ModelId } from '@/src/constants/chat';
+
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
@@ -95,11 +97,13 @@ export const getNewConversationName = (
 ): string => {
   const convName = prepareEntityName(conversation.name);
   const content = prepareEntityName(message.content);
+
   if (content.length > 0) {
     return content;
   } else if (message.custom_content?.attachments?.length) {
-    const files = message.custom_content.attachments;
-    return files[0].title;
+    const { title, reference_url } = message.custom_content.attachments[0];
+
+    return prepareEntityName(!title && reference_url ? reference_url : title);
   }
 
   return convName;
@@ -235,3 +239,6 @@ export const groupModelsAndSaveOrder = (
 
   return result;
 };
+
+export const isApplicationModelType = (modelId: string): boolean =>
+  modelId === ModelId.HR_BUDDY || modelId === ModelId.RAG;

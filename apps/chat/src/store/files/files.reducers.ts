@@ -6,9 +6,11 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
   getParentAndChildFolders,
+  getParentAndCurrentFoldersById,
   sortByName,
 } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getFileRootId } from '@/src/utils/app/id';
+import { isEntityExternal } from '@/src/utils/app/share';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
@@ -60,7 +62,7 @@ export const filesSlice = createSlice({
         id: payload.id,
         name: payload.name,
         relativePath: payload.relativePath,
-        folderId: constructPath(getRootId(), payload.relativePath),
+        folderId: constructPath(getFileRootId(), payload.relativePath),
 
         status: UploadStatus.LOADING,
         percent: 0,
@@ -224,7 +226,7 @@ export const filesSlice = createSlice({
         parentId?: string;
       }>,
     ) => {
-      const rootFileId = getRootId();
+      const rootFileId = getFileRootId();
       const folderName = getNextDefaultName(
         DEFAULT_FOLDER_NAME,
         state.folders.filter(
@@ -241,7 +243,7 @@ export const filesSlice = createSlice({
         addGeneratedFolderId({
           name: folderName,
           type: FolderType.File,
-          folderId: payload.parentId || getRootId(),
+          folderId: payload.parentId || getFileRootId(),
           status: UploadStatus.LOADED,
         }),
       );
@@ -257,21 +259,31 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.newAddedFolderId = undefined;
-      state.folders = state.folders.map((folder) => {
-        if (folder.id !== payload.folderId) {
-          return folder;
-        }
 
-        const slashIndex = folder.id.lastIndexOf('/');
-        const oldFolderIdPath = folder.id.slice(
-          0,
-          slashIndex === -1 ? 0 : slashIndex,
-        );
-        return {
-          ...folder,
-          name: payload.newName.trim(),
-          id: constructPath(oldFolderIdPath, payload.newName),
-        };
+      const targetFolder = state.folders.find((f) => f.id === payload.folderId);
+
+      if (!targetFolder) return;
+
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            name: payload.newName.trim(),
+            id: constructPath(targetFolder.folderId, payload.newName),
+          };
+        } else if (folder.id.startsWith(`${payload.folderId}/`)) {
+          const updatedFolderId = folder.folderId.replace(
+            targetFolder.id,
+            constructPath(targetFolder.folderId, payload.newName),
+          );
+
+          return {
+            ...folder,
+            folderId: updatedFolderId,
+            id: constructPath(updatedFolderId, folder.name),
+          };
+        }
+        return folder;
       });
     },
     resetNewFolderId: (state) => {
@@ -340,6 +352,26 @@ export const filesSlice = createSlice({
         return file;
       });
     },
+    updateFoldersStatus: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        foldersIds: (string | undefined)[];
+        status: UploadStatus;
+      }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (payload.foldersIds.some((folderId) => folderId === folder.id)) {
+          return {
+            ...folder,
+            status: payload.status,
+          };
+        }
+
+        return folder;
+      });
+    },
   },
 });
 
@@ -358,6 +390,11 @@ const selectFilesByIds = createSelector(
 const selectSelectedFilesIds = createSelector([rootSelector], (state) => {
   return state.selectedFilesIds;
 });
+const selectFolders = createSelector([rootSelector], (state) => {
+  return [...state.folders].sort((a, b) =>
+    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
+  );
+});
 const selectSelectedFiles = createSelector(
   [selectSelectedFilesIds, selectFiles],
   (selectedFilesIds, files): FilesState['files'] => {
@@ -366,17 +403,21 @@ const selectSelectedFiles = createSelector(
       .filter(Boolean) as FilesState['files'];
   },
 );
+
+const selectSelectedFolders = createSelector(
+  [selectSelectedFilesIds, selectFolders],
+  (selectedFilesIds, folders): FilesState['folders'] => {
+    return selectedFilesIds
+      .map((fileId) => folders.find((folder) => `${folder.id}/` === fileId))
+      .filter(Boolean) as FilesState['folders'];
+  },
+);
 const selectIsUploadingFilePresent = createSelector(
   [selectSelectedFiles],
   (selectedFiles) =>
     selectedFiles.some((file) => file.status === UploadStatus.LOADING),
 );
 
-const selectFolders = createSelector([rootSelector], (state) => {
-  return [...state.folders].sort((a, b) =>
-    a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
-  );
-});
 const selectAreFoldersLoading = createSelector([rootSelector], (state) => {
   return state.foldersStatus === UploadStatus.LOADING;
 });
@@ -396,11 +437,28 @@ const selectFoldersWithSearchTerm = createSelector(
     return getParentAndChildFolders(folders, filtered);
   },
 );
+const selectPublicationFolders = createSelector(
+  [rootSelector],
+  (state: FilesState) => {
+    return state.folders.filter((f) => f.isPublicationFolder);
+  },
+);
+const hasExternalParent = createSelector(
+  [selectFolders, (_state: RootState, folderId: string) => folderId],
+  (folders, folderId) => {
+    if (!folderId.startsWith(getFileRootId())) {
+      return true;
+    }
+    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
+    return parentFolders.some((folder) => isEntityExternal(folder));
+  },
+);
 
 export const FilesSelectors = {
   selectFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
+  selectSelectedFolders,
   selectIsUploadingFilePresent,
   selectFolders,
   selectAreFoldersLoading,
@@ -408,6 +466,8 @@ export const FilesSelectors = {
   selectNewAddedFolderId,
   selectFilesByIds,
   selectFoldersWithSearchTerm,
+  selectPublicationFolders,
+  hasExternalParent,
 };
 
 export const FilesActions = filesSlice.actions;

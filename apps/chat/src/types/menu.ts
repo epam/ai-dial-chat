@@ -1,5 +1,6 @@
+import { Placement } from '@floating-ui/react';
 import { TablerIconsProps } from '@tabler/icons-react';
-import { FC, MouseEventHandler } from 'react';
+import { FC, MouseEventHandler, SVGProps } from 'react';
 
 import { FeatureType } from './common';
 
@@ -15,7 +16,7 @@ export interface DisplayMenuItemProps {
   display?: boolean;
   name: string;
   disabled?: boolean;
-  Icon?: (props: TablerIconsProps) => JSX.Element;
+  Icon?: (props: SVGProps<SVGSVGElement> | TablerIconsProps) => JSX.Element;
   dataQa: string;
   onClick?: onClickMenuItemHandler;
   CustomTriggerRenderer?: FC<CustomTriggerMenuRendererProps>;
@@ -47,4 +48,6 @@ export interface ContextMenuProps extends MenuProps {
   triggerTooltip?: string;
   TriggerCustomRenderer?: JSX.Element;
   isLoading?: boolean;
+  placement?: Placement;
+  listClassNames?: string;
 }

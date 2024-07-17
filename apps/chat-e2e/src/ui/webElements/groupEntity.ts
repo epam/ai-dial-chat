@@ -1,28 +1,28 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Styles, Tags } from '@/src/ui/domData';
-import { ChatSelectors } from '@/src/ui/selectors';
+import { ChatSettingsSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
 
 export class GroupEntity extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSelectors.groupEntity, parentLocator);
+    super(page, ChatSettingsSelectors.groupEntity, parentLocator);
   }
 
   public recentEntityNames = this.getChildElementBySelector(
-    ChatSelectors.groupEntityName,
+    ChatSettingsSelectors.groupEntityName,
   );
 
   public groupEntity = (entity: DialAIEntityModel) => {
     let entityName = new BaseElement(
       this.page,
-      `${ChatSelectors.groupEntityName}:text('${entity.name}')`,
+      `${ChatSettingsSelectors.groupEntityName}:text('${entity.name}')`,
     ).getElementLocator();
     if (entity.version) {
-      if (entity.version.match(/^\d+$/g)) {
+      if (entity.version.match(/^(\d+|\d{4}-\d{2}-\d{2})$/g)) {
         entityName = new BaseElement(
           this.page,
-          `${ChatSelectors.groupEntityName}:text('${entity.name} ${entity.version}')`,
+          `${ChatSettingsSelectors.groupEntityName}:text('${entity.name} ${entity.version}')`,
         ).getElementLocator();
         return this.createElementFromLocator(
           this.rootLocator.filter({ has: entityName }).first(),
@@ -30,7 +30,7 @@ export class GroupEntity extends BaseElement {
       }
       const entityVersion = new BaseElement(
         this.page,
-        `${ChatSelectors.groupEntityVersion}:has-text('${entity.version}')`,
+        `${ChatSettingsSelectors.groupEntityVersion}:has-text('${entity.version}')`,
       ).getElementLocator();
       return this.createElementFromLocator(
         this.rootLocator
@@ -47,7 +47,7 @@ export class GroupEntity extends BaseElement {
 
   public groupEntityDescription = (entity: DialAIEntityModel) =>
     this.groupEntity(entity).getChildElementBySelector(
-      ChatSelectors.groupEntityDescr,
+      ChatSettingsSelectors.groupEntityDescr,
     );
 
   public async getGroupEntityDescription(entity: DialAIEntityModel) {
@@ -70,7 +70,7 @@ export class GroupEntity extends BaseElement {
 
   public expandGroupEntity = (entity: DialAIEntityModel) =>
     this.groupEntity(entity).getChildElementBySelector(
-      ChatSelectors.expandGroupEntity,
+      ChatSettingsSelectors.expandGroupEntity,
     );
 
   public async expandGroupEntityDescription(entity: DialAIEntityModel) {
@@ -87,7 +87,7 @@ export class GroupEntity extends BaseElement {
       .and(
         new BaseElement(
           this.page,
-          ChatSelectors.selectedGroupEntity,
+          ChatSettingsSelectors.selectedGroupEntity,
         ).getElementLocator(),
       )
       .waitFor({ state: 'attached' });
@@ -98,7 +98,7 @@ export class GroupEntity extends BaseElement {
   }
 
   public async getEntitiesIcons() {
-    return this.getElementIcons(this, ChatSelectors.groupEntityName);
+    return this.getElementIcons(this, ChatSettingsSelectors.groupEntityName);
   }
 
   public async openGroupEntityDescriptionLink(
