@@ -14,11 +14,13 @@ import { ConversationComponent } from './Conversation';
 interface ConversationsRendererProps {
   conversations: Conversation[];
   label: string;
+  display: boolean;
 }
 
 export const ConversationsRenderer = ({
   conversations,
   label,
+  display,
 }: ConversationsRendererProps) => {
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -36,6 +38,8 @@ export const ConversationsRenderer = ({
       conversations.some((conv) => selectedConversationsIds.includes(conv.id)),
     );
   }, [selectedConversationsIds, conversations]);
+
+  if (!display) return null;
 
   return (
     <>

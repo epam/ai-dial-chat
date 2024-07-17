@@ -24,6 +24,7 @@ interface AllConversations {
 interface SortedBlock {
   conversations: ConversationInfo[];
   name: string;
+  display: boolean;
 }
 interface SortedConversations {
   today: SortedBlock;
@@ -110,26 +111,32 @@ export const Conversations = ({ conversations }: Props) => {
       today: {
         conversations: allConversations.today,
         name: conversationsDateBlocksNames.today,
+        display: true,
       },
       yesterday: {
         conversations: allConversations.yesterday,
         name: conversationsDateBlocksNames.yesterday,
+        display: true,
       },
       lastSevenDays: {
         conversations: allConversations.lastSevenDays,
         name: conversationsDateBlocksNames.lastSevenDays,
+        display: true,
       },
       lastThirtyDays: {
         conversations: allConversations.lastThirtyDays,
         name: conversationsDateBlocksNames.lastThirtyDays,
+        display: true,
       },
       lastYear: {
         conversations: allConversations.older,
         name: conversationsDateBlocksNames.older,
+        display: false,
       },
       other: {
         conversations: allConversations.other,
         name: conversationsDateBlocksNames.other,
+        display: false,
       },
     });
   }, [
@@ -148,6 +155,7 @@ export const Conversations = ({ conversations }: Props) => {
             key={key}
             conversations={value.conversations}
             label={t('{{name}}', { name: value.name })}
+            display={value.display}
           />
         ))}
     </div>
