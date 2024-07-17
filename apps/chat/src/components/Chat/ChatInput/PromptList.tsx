@@ -64,7 +64,7 @@ export const PromptList: FC<Props> = ({
         <li
           key={prompt.id}
           className={classNames(
-            'cursor-pointer px-3 py-2',
+            'cursor-pointer truncate px-3 py-2',
             index === activePromptIndex && 'bg-accent-primary-alpha',
           )}
           onClick={(e) => {

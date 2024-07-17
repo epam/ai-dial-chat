@@ -110,6 +110,9 @@ export const ChatMessageContent = ({
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const isReplay = useAppSelector(
+    ConversationsSelectors.selectIsReplaySelectedConversations,
+  );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
@@ -313,6 +316,11 @@ export const ChatMessageContent = ({
               message.custom_content?.attachments && !attachments
                 ? { attachments: [] }
                 : attachments,
+            templateMapping: Object.fromEntries(
+              Object.entries(message.templateMapping ?? {}).filter(([key]) =>
+                messageContent.includes(key),
+              ),
+            ),
           },
           messageIndex,
         );
@@ -397,7 +405,7 @@ export const ChatMessageContent = ({
       ? MOBILE_ICON_SIZE
       : DEFAULT_ICON_SIZE;
   const showUserButtons =
-    !isPlayback && !isEditing && !isExternal && withButtons;
+    !isReplay && !isPlayback && !isEditing && !isExternal && withButtons;
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
 
   return (

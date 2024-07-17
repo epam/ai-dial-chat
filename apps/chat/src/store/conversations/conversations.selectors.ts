@@ -283,6 +283,12 @@ export const selectSearchedConversations = createSelector(
 export const selectIsReplayPaused = createSelector([rootSelector], (state) => {
   return state.isReplayPaused;
 });
+export const selectIsReplayRequiresVariables = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isReplayRequiresVariables;
+  },
+);
 export const selectIsSendMessageAborted = createSelector(
   [selectConversationSignal],
   (state) => {
