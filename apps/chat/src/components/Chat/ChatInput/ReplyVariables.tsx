@@ -23,10 +23,10 @@ export const ReplayVariables = () => {
 
   if (!isReplay || !isReplayRequiresVariables) return null;
 
-  return <ReplyVariablesDialog />;
+  return <ReplayVariablesDialog />;
 };
 
-export const ReplyVariablesDialog = () => {
+export const ReplayVariablesDialog = () => {
   const dispatch = useAppDispatch();
   const conversation = useAppSelector(
     ConversationsSelectors.selectFirstSelectedConversation,
