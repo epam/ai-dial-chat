@@ -62,7 +62,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       setUpdatedVariables((prev) => {
         const updated = [...prev];
         updated[index].value = e.target.value;
-        return [...updated];
+        return updated;
       });
     },
     [],
@@ -96,7 +96,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       setUpdatedVariables((prev) => {
         const updated = [...prev];
         updated[index].value = e.target.value;
-        return [...updated];
+        return updated;
       });
       onBlur(e);
     },
