@@ -37,7 +37,7 @@ export const ApplicationMessagesEmpty = ({
       </div>
       <div className="flex items-center justify-center text-xs font-medium text-pr-primary-700">
         {application.id === ModelId.HR_BUDDY && (
-          <span>{t('Welcome to the dedicated chatbot to HR Campaigns!')}</span>
+          <span>{t('Welcome to the dedicated chatbot for HR Campaigns!')}</span>
         )}
       </div>
     </div>
