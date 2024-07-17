@@ -6,12 +6,15 @@ import {
 } from '@/src/testData';
 import { expect } from '@playwright/test';
 import { keys } from '@/src/ui/keyboard'; 
+import { keys } from '@/src/ui/keyboard';
 
 dialTest.only(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
   'Prompt folder: allowed special characters.\n' +
   'Prompt folder: restricted special characters are not entered.\n' +
-  'Prompt folder: restricted special characters are removed if to copy-paste',
+  'Prompt folder: restricted special characters are removed if to copy-paste.\n' +
+  'Prompt folder: spaces in the middle of folder name stay.\n' +
+  'Prompt folder: name can not be blank or with spaces only',
   async ({
     dialHomePage,
     promptBar,
@@ -20,9 +23,8 @@ dialTest.only(
     errorToast,
     setTestIds,
     page,
-    sendMessage,
   }) => {
-    setTestIds('EPMRTC-2975', 'EPMRTC-2976', 'EPMRTC-2977', 'EPMRTC-2978');
+    setTestIds('EPMRTC-2975', 'EPMRTC-2976', 'EPMRTC-2977', 'EPMRTC-2978', 'EPMRTC-2979', 'EPMRTC-2980');
     const folderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const newNameWithEndDot = `${folderName}.`;
     const newNameWithSpecialChars = `${folderName} ${ExpectedConstants.allowedSpecialChars}`;
@@ -94,29 +96,19 @@ dialTest.only(
     });
 
     await dialTest.step('Copy and paste restricted special characters', async () => {
-
-      // await page.evaluate(
-      //   (text) => navigator.clipboard.writeText(text),
-      //   nameWithRestrictedChars,
-      // );
-
       await page.evaluate(
         (text) => navigator.clipboard.writeText(text),
         nameWithRestrictedChars,
       );
       await folderPrompts.getEditFolderInput().editInput.click();
-
       await page.keyboard.press(keys.ctrlPlusV);
-
       await folderPrompts.getEditFolderInputActions().clickTickButton();
-
       await expect
         .soft(
           folderPrompts.getFolderByName(expectedFolderName),
           ExpectedMessages.folderIsVisible,
         )
         .toBeVisible();
-
       await expect
         .soft(
           errorToast.getElementLocator(),
@@ -124,7 +116,6 @@ dialTest.only(
         )
         .toBeHidden();
     });
-
 
     await dialTest.step('Rename folder to have spaces in the middle', async () => {
       await folderPrompts.openFolderDropdownMenu(expectedFolderName);
@@ -145,6 +136,23 @@ dialTest.only(
           ExpectedMessages.folderNameUpdated,
         )
         .toBeVisible();
+    });
+
+    await dialTest.step('Prompt folder: name can not be blank or with spaces only', async () => {
+      for (const name of ['', '   ']) {
+        await dialTest.step(`Try to rename folder to "${name}"`, async () => {
+          await folderPrompts.openFolderDropdownMenu(newNameWithSpaces);
+          await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+          await folderPrompts.editFolderName(name);
+          await folderPrompts.getEditFolderInputActions().clickTickButton();
+          await expect
+            .soft(
+              folderPrompts.getFolderByName(newNameWithSpaces),
+              ExpectedMessages.folderNameNotUpdated,
+            )
+            .toBeVisible();
+        });
+      }
     });
   },
 );
