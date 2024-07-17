@@ -81,10 +81,10 @@ const ReplayVariablesDialog = () => {
   )
     return null;
 
-  let template = activeMessage.content;
-  Object.entries(activeMessage.templateMapping).forEach(([key, value]) => {
-    template = template.replaceAll(key, value);
-  });
+  const template = Object.entries(activeMessage.templateMapping).reduce(
+    (acc, [key, value]) => acc.replaceAll(key, value),
+    activeMessage.content,
+  );
   const prompt: Prompt = {
     content: replaceDefaultValuesFromContent(activeMessage.content, template),
     id: '',
