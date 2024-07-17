@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { replaceDefaultValuesFromContent } from '@/src/utils/app/prompts';
 
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -27,9 +30,14 @@ export const ReplayVariables = () => {
 };
 
 const ReplayVariablesDialog = () => {
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const conversation = useAppSelector(
     ConversationsSelectors.selectFirstSelectedConversation,
+  );
+
+  const isReplayRequiresVariables = useAppSelector(
+    ConversationsSelectors.selectIsReplayRequiresVariables,
   );
 
   const activeMessage =
@@ -43,8 +51,10 @@ const ReplayVariablesDialog = () => {
 
   const onCloseRef = useRef<() => void>();
   useEffect(() => {
-    onCloseRef.current = handleClose;
-  }, [handleClose]);
+    if (isReplayRequiresVariables) {
+      onCloseRef.current = handleClose;
+    }
+  }, [handleClose, isReplayRequiresVariables]);
 
   const handleContentApply = useCallback(
     (newContent: string) => {
@@ -98,7 +108,7 @@ const ReplayVariablesDialog = () => {
     content: replaceDefaultValuesFromContent(activeMessage.content, template),
     id: '',
     folderId: '',
-    name: 'Please, enter variables for template:',
+    name: t('Please, enter variables for template:'),
     description: template,
   };
 
