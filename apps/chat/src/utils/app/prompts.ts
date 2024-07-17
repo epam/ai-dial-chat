@@ -53,14 +53,21 @@ export const getPromptInfoFromId = (id: string): PromptInfo => {
     folderId: constructPath(apiKey, bucket, parentPath),
   });
 };
-
+const combinationWithoutSpecialRegexSymbols = '<<<>>>';
 export const replaceDefaultValuesFromContent = (
   content: string,
   template: string,
 ) => {
-  let regexpString = template.replaceAll(PROMPT_VARIABLE_REGEX, '<<<>>>'); // replace all variable values by special combination without special regex symbols
+  let regexpString = template.replaceAll(
+    // replace all variable values by special combination
+    PROMPT_VARIABLE_REGEX,
+    combinationWithoutSpecialRegexSymbols,
+  );
   regexpString = escapeRegExp(regexpString); // encode all specilal symbols
-  regexpString = regexpString.replaceAll('<<<>>>', '(.*)'); // replace special combination by regex group
+  regexpString = regexpString.replaceAll(
+    combinationWithoutSpecialRegexSymbols,
+    '(.*)',
+  ); // replace special combination by regex group
   const regexp = new RegExp(`^${regexpString}$`);
   const match = regexp.exec(content); // find all variable values
   let ind = 1;
