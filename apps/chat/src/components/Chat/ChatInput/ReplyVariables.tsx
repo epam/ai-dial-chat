@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 
-export const ReplyVariables = () => {
+export const ReplayVariables = () => {
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
