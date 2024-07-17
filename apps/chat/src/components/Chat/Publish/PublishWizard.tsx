@@ -53,6 +53,7 @@ import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
+import isEqual from 'lodash-es/isEqual';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 
@@ -175,115 +176,96 @@ export function PublishModal({
       const folderRegExp = new RegExp(
         entity.folderId.split('/').slice(2).join('/'),
       );
-      const filteredEntities = entitiesArray.filter((e) =>
+      const mappedFiles = (entitiesArray as Conversation[])
+        .filter((c) =>
+          (c.playback?.messagesStack || c.messages || []).some(
+            (m) => m.custom_content?.attachments,
+          ),
+        )
+        .flatMap((c) => {
+          const urls = compact(
+            flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+              m.custom_content?.attachments?.map((a) => a.url),
+            ),
+          );
+
+          return urls.map((oldUrl) => {
+            const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+
+            return {
+              oldUrl: decodedOldUrl,
+              newUrl: createTargetUrl(
+                FeatureType.File,
+                trimmedPath,
+                constructPath(
+                  ...c.id.split('/').slice(0, -1),
+                  ...decodedOldUrl.split('/').slice(-1),
+                ).replace(folderRegExp, ''),
+                type,
+              ),
+            };
+          });
+        });
+
+      const selectedEntities = entitiesArray.filter((e) =>
         selectedItemsIds.includes(e.id),
       );
-      const filteredFiles = files.filter((f) =>
+      const selectedFiles = files.filter((f) =>
         selectedItemsIds.includes(f.id),
       );
 
-      if (
-        type === SharingType.Conversation ||
-        type === SharingType.ConversationFolder
-      ) {
-        const mappedFiles = (entitiesArray as Conversation[])
-          .filter((c) =>
-            (c.playback?.messagesStack || c.messages).some(
-              (m) => m.custom_content?.attachments,
-            ),
-          )
-          .flatMap((c) => {
-            const urls = compact(
-              flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
-                m.custom_content?.attachments?.map((a) => a.url),
-              ),
-            );
+      dispatch(
+        PublicationActions.publish({
+          action: publishAction,
+          name: trimmedName,
+          targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
+          resources: [
+            ...(publishAction === PublishActions.DELETE
+              ? selectedEntities.map((entity) => ({ targetUrl: entity.id }))
+              : selectedEntities.map((item) => ({
+                  sourceUrl: item.id,
+                  targetUrl: createTargetUrl(
+                    type === SharingType.ConversationFolder ||
+                      type === SharingType.Conversation
+                      ? FeatureType.Chat
+                      : FeatureType.Prompt,
+                    trimmedPath,
+                    type === SharingType.ConversationFolder ||
+                      type === SharingType.PromptFolder
+                      ? item.id.replace(folderRegExp, '')
+                      : item.id,
+                    type,
+                  ),
+                }))),
+            ...(publishAction === PublishActions.DELETE
+              ? files.map((f) => ({
+                  targetUrl: ApiUtils.decodeApiUrl(f.id),
+                }))
+              : selectedFiles.reduce<
+                  { sourceUrl: string; targetUrl: string }[]
+                >((acc, file) => {
+                  const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+                  const item = mappedFiles.find(
+                    (f) => f.oldUrl === decodedFileId,
+                  );
 
-            return urls.map((oldUrl) => {
-              const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+                  if (item) {
+                    acc.push({
+                      sourceUrl: decodedFileId,
+                      targetUrl: item.newUrl,
+                    });
+                  }
 
-              return {
-                oldUrl: decodedOldUrl,
-                newUrl: createTargetUrl(
-                  FeatureType.File,
-                  trimmedPath,
-                  constructPath(
-                    ...c.id.split('/').slice(0, -1),
-                    ...decodedOldUrl.split('/').slice(-1),
-                  ).replace(folderRegExp, ''),
-                  type,
-                ),
-              };
-            });
-          });
-
-        dispatch(
-          PublicationActions.publish({
-            name: trimmedName,
-            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
-            resources: [
-              ...filteredEntities.map((item) => ({
-                sourceUrl: item.id,
-                targetUrl: createTargetUrl(
-                  FeatureType.Chat,
-                  trimmedPath,
-                  type === SharingType.ConversationFolder
-                    ? item.id.replace(folderRegExp, '')
-                    : item.id,
-                  type,
-                ),
-              })),
-              ...filteredFiles.reduce<
-                { sourceUrl: string; targetUrl: string }[]
-              >((acc, file) => {
-                const decodedFileId = ApiUtils.decodeApiUrl(file.id);
-                const item = mappedFiles.find(
-                  (f) => f.oldUrl === decodedFileId,
-                );
-
-                if (item) {
-                  acc.push({
-                    sourceUrl: decodedFileId,
-                    targetUrl: item.newUrl,
-                  });
-                }
-
-                return acc;
-              }, []),
-            ],
-            rules: preparedFilters.map((filter) => ({
-              function: filter.filterFunction,
-              source: filter.id,
-              targets: filter.filterParams,
-            })),
-          }),
-        );
-      } else {
-        dispatch(
-          PublicationActions.publish({
-            name: trimmedName,
-            resources: [
-              ...filteredEntities.map((item) => ({
-                sourceUrl: item.id,
-                targetUrl: createTargetUrl(
-                  FeatureType.Prompt,
-                  trimmedPath,
-                  type === SharingType.PromptFolder
-                    ? item.id.replace(folderRegExp, '')
-                    : item.id,
-                  type,
-                ),
-              })),
-            ],
-            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
-            rules: preparedFilters.map((filter) => ({
-              function: filter.filterFunction,
-              source: filter.id,
-              targets: filter.filterParams,
-            })),
-          }),
-        );
-      }
+                  return acc;
+                }, [])),
+          ],
+          rules: preparedFilters.map((filter) => ({
+            function: filter.filterFunction,
+            source: filter.id,
+            targets: filter.filterParams,
+          })),
+        }),
+      );
 
       onClose();
     },
@@ -296,6 +278,7 @@ export function PublishModal({
       onClose,
       otherTargetAudienceFilters,
       path,
+      publishAction,
       publishRequestName,
       selectedItemsIds,
       type,
@@ -322,6 +305,19 @@ export function PublishModal({
     onClose,
     t,
   ]);
+
+  const isNothingSelectedAndNoRuleChanges =
+    !selectedItemsIds.length &&
+    (isEqual(
+      otherTargetAudienceFilters.map((filter) => ({
+        function: filter.filterFunction,
+        source: filter.id,
+        targets: filter.filterParams,
+      })),
+      currentFolderRules,
+    ) ||
+      !path ||
+      (!otherTargetAudienceFilters.length && !currentFolderRules));
 
   return (
     <Modal
@@ -354,7 +350,9 @@ export function PublishModal({
             <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
               <div>
                 <label className="mb-4 flex text-sm" htmlFor="requestPath">
-                  {t('Publish to')}
+                  {publishAction === PublishActions.DELETE
+                    ? t('Unpublish from')
+                    : t('Publish to')}
                 </label>
                 <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
@@ -365,12 +363,14 @@ export function PublishModal({
                     >
                       {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
-                    <span
-                      className="cursor-pointer text-accent-primary"
-                      onClick={handleFolderChange}
-                    >
-                      {t('Change')}
-                    </span>
+                    {publishAction !== PublishActions.DELETE && (
+                      <span
+                        className="h-full cursor-pointer text-accent-primary"
+                        onClick={handleFolderChange}
+                      >
+                        {t('Change')}
+                      </span>
+                    )}
                   </div>
                 </button>
               </div>
@@ -484,13 +484,23 @@ export function PublishModal({
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <Tooltip
             hideTooltip={!!publishRequestName.trim().length}
-            tooltip={t('Enter a name for the publish request')}
+            tooltip={
+              !publishRequestName.trim().length
+                ? t('Enter a name for the publish request')
+                : isRuleSetterOpened
+                  ? t('Accept or reject rule changes')
+                  : t('Nothing is selected and rules not changed')
+            }
           >
             <button
               className="button button-primary py-2"
               onClick={handlePublish}
               data-qa="publish"
-              disabled={!publishRequestName.trim().length || isRuleSetterOpened}
+              disabled={
+                !publishRequestName.trim().length ||
+                isRuleSetterOpened ||
+                isNothingSelectedAndNoRuleChanges
+              }
             >
               {t('Send request')}
             </button>

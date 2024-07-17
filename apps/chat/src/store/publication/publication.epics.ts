@@ -90,8 +90,10 @@ const publishEpic: AppEpic = (action$) =>
         name: payload.name,
         targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
-          action: PublishActions.ADD,
-          sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
+          action: payload.action,
+          sourceUrl: r.sourceUrl
+            ? ApiUtils.encodeApiUrl(r.sourceUrl)
+            : undefined,
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
         })),
         rules: payload.rules,

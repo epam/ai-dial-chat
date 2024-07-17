@@ -276,14 +276,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       ) || [],
     );
 
-    // TODO: remove code below for unpublishing
+    if (isUnpublishing || featureType !== FeatureType.Chat) return sortedItems;
 
-    return featureType === FeatureType.Chat
-      ? (sortedItems as (Partial<Conversation> & ConversationInfo)[]).filter(
-          (item) => item.isPlayback || !item.isReplay,
-        )
-      : sortedItems;
-  }, [allItemsWithoutFilters, currentFolder.id, featureType]);
+    return (sortedItems as Partial<Conversation>[]).filter(
+      (item) =>
+        item.isPlayback ||
+        (!item.isReplay && (item.messages?.length || !item.messages)),
+    );
+  }, [allItemsWithoutFilters, currentFolder.id, featureType, isUnpublishing]);
 
   const handleOpenPublishing: MouseEventHandler = useCallback(
     (e) => {
@@ -1193,7 +1193,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {(isUnpublishing || isPublishing) && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
-          entities={allChildItems}
+          entities={allChildItems as T[]}
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder

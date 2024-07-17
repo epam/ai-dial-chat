@@ -53,7 +53,7 @@ export const ChangePathDialog = ({
   type,
   initiallySelectedFolderId,
   rootFolderId,
-  depth,
+  depth = 0,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -224,10 +224,7 @@ export const ChangePathDialog = ({
   const getPath = () => {
     const { path, pathDepth } = getPathToFolderById(folders, selectedFolderId);
 
-    if (
-      pathDepth + (depth ? depth : 0) >
-      MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH
-    ) {
+    if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
         UIActions.showErrorToast(
           t("It's not allowed to have more nested folders"),

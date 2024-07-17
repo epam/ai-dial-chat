@@ -28,7 +28,7 @@ export interface PublicationRequestModel {
   targetFolder: string;
   resources: {
     action: PublishActions;
-    sourceUrl: string;
+    sourceUrl?: string;
     targetUrl: string;
   }[];
   rules?: PublicationRule[];

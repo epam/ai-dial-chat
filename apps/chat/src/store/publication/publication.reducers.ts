@@ -5,6 +5,7 @@ import {
   Publication,
   PublicationInfo,
   PublicationRule,
+  PublishActions,
   ResourceToReview,
 } from '@/src/types/publication';
 
@@ -52,7 +53,8 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         name: string;
-        resources: { sourceUrl: string; targetUrl: string }[];
+        action: PublishActions;
+        resources: { sourceUrl?: string; targetUrl: string }[];
         targetFolder: string;
         rules: PublicationRule[];
       }>,
