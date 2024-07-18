@@ -47,7 +47,6 @@ dialTest.only(
     const nameWithSpacesBeforeAndAfter = '   Folder with spaces   ';
     const expectedName = 'Folder with spaces';
     const newNameWithEmojis = '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
-    // let prompt: Prompt;
 
     await dialTest.step('Create prompt folder', async () => {
       await dialHomePage.openHomePage();
