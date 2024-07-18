@@ -253,8 +253,8 @@ export const ChatbarActionButtons = () => {
       <NewConversationActionButton />
       <AllApplicationsActionButton />
       {favoriteApps.length > 0 &&
-        favoriteApps.map((app) => (
-          <FavoriteApplicationActionButton key={app.id} app={app} />
+        favoriteApps.map((app, index) => (
+          <FavoriteApplicationActionButton key={index} app={app} />
         ))}
     </>
   );
