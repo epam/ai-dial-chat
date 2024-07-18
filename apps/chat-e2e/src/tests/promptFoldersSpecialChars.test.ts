@@ -4,7 +4,6 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { keys } from '@/src/ui/keyboard';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -23,7 +22,7 @@ dialTest(
     folderDropdownMenu,
     errorToast,
     setTestIds,
-    page,
+    promptBarFolderAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2975',
@@ -50,12 +49,10 @@ dialTest(
       await dialHomePage.waitForPageLoaded();
 
       await promptBar.createNewFolder();
-      await expect
-        .soft(
-          folderPrompts.getFolderByName(folderName),
-          ExpectedMessages.folderIsVisible,
-        )
-        .toBeVisible();
+      await promptBarFolderAssertion.assertFolderState(
+        { name: folderName },
+        'visible',
+      );
     });
 
     await dialTest.step(
@@ -82,20 +79,20 @@ dialTest(
           ExpectedMessages.folderEditModeIsActive,
         )
         .toBeVisible();
-    });
 
-    // Closing the toast to move forward
-    await errorToast.closeToast();
+      // Closing the toast to move forward
+      await errorToast.closeToast();
+    }
+  );
 
     await dialTest.step('Rename it to contain special characters', async () => {
       await folderPrompts.editFolderNameWithTick(newNameWithSpecialChars);
-      await expect
-        .soft(
-          folderPrompts.getFolderByName(newNameWithSpecialChars),
-          ExpectedMessages.folderNameUpdated,
-        )
-        .toBeVisible();
-    });
+      await promptBarFolderAssertion.assertFolderState(
+        { name: newNameWithSpecialChars },
+        'visible',
+      );
+    }
+  );
 
     await dialTest.step(
       'Try to type restricted special characters',
@@ -121,12 +118,10 @@ dialTest(
         await folderPrompts.getEditFolderInput().editInput.click();
         await dialHomePage.pasteFromClipboard();
         await folderPrompts.getEditFolderInputActions().clickTickButton();
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(expectedFolderName),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+        await promptBarFolderAssertion.assertFolderState(
+          { name: expectedFolderName },
+          'visible',
+        );
         await expect
           .soft(
             errorToast.getElementLocator(),
@@ -151,12 +146,10 @@ dialTest(
           .toBe(newNameWithSpaces);
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         // Assert that the folder is renamed with spaces on the panel
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(newNameWithSpaces),
-            ExpectedMessages.folderNameUpdated,
-          )
-          .toBeVisible();
+        await promptBarFolderAssertion.assertFolderState(
+          { name: newNameWithSpaces },
+          'visible',
+        );
       },
     );
 
@@ -169,12 +162,10 @@ dialTest(
             await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
             await folderPrompts.editFolderName(name);
             await folderPrompts.getEditFolderInputActions().clickTickButton();
-            await expect
-              .soft(
-                folderPrompts.getFolderByName(newNameWithSpaces),
-                ExpectedMessages.folderNameNotUpdated,
-              )
-              .toBeVisible();
+            await promptBarFolderAssertion.assertFolderState(
+              { name: newNameWithSpaces },
+              'visible',
+            );
           }
         });
       },
@@ -195,12 +186,10 @@ dialTest(
           .toBe(nameWithSpacesBeforeAndAfter);
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         // Assert that the folder is renamed with spaces on the panel
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(expectedName),
-            ExpectedMessages.folderNameUpdated,
-          )
-          .toBeVisible();
+        await promptBarFolderAssertion.assertFolderState(
+          { name: expectedName },
+          'visible',
+        );
       },
     );
 
