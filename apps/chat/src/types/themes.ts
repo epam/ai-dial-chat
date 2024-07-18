@@ -3,6 +3,7 @@ export interface Theme {
   colors: Record<string, string>;
   'app-logo': string;
   'font-family'?: string;
+  'font-codeblock'?: string;
   id: string;
 }
 

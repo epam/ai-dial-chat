@@ -128,13 +128,10 @@ export const CodeBlock: FC<Props> = memo(
             fontSize: 14,
             padding: 12,
             letterSpacing: 0,
-            fontFamily: 'var(--theme-font)',
           }}
-          className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'}`}
+          className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'} font-codeblock`}
           codeTagProps={{
-            style: {
-              fontFamily: 'var(--theme-font)',
-            },
+            className: 'font-codeblock',
           }}
         >
           {value}
