@@ -7,7 +7,7 @@ import {
 import { keys } from '@/src/ui/keyboard';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
     'Prompt folder: allowed special characters.\n' +
     'Prompt folder: restricted special characters are not entered.\n' +
@@ -24,9 +24,6 @@ dialTest.only(
     errorToast,
     setTestIds,
     page,
-    promptData,
-    dataInjector,
-    prompts,
   }) => {
     setTestIds(
       'EPMRTC-2975',
