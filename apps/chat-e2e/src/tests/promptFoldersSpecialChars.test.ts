@@ -6,7 +6,6 @@ import {
 } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { expect } from '@playwright/test';
-import { only } from 'node:test';
 
 dialTest(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
@@ -85,8 +84,8 @@ dialTest(
         .toBeVisible();
     });
 
-    // Wait for the toast message to disappear
-    await errorToast.getElementLocator().waitFor({ state: 'hidden' });
+    // Closing the toast to move forward
+    await errorToast.closeToast();
 
     await dialTest.step('Rename it to contain special characters', async () => {
       await folderPrompts.editFolderNameWithTick(newNameWithSpecialChars);
@@ -167,8 +166,8 @@ dialTest(
     await dialTest.step(
       'Prompt folder: name can not be blank or with spaces only',
       async () => {
-        for (const name of ['', '   ']) {
-          await dialTest.step(`Try to rename folder to "${name}"`, async () => {
+        await dialTest.step(`Try to rename folder to "${name}"`, async () => {
+          for (const name of ['', '   ']) {
             await folderPrompts.openFolderDropdownMenu(newNameWithSpaces);
             await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
             await folderPrompts.editFolderName(name);
@@ -179,8 +178,8 @@ dialTest(
                 ExpectedMessages.folderNameNotUpdated,
               )
               .toBeVisible();
-          });
-        }
+          }
+        });
       },
     );
 
