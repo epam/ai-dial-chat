@@ -146,7 +146,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Delete shared conversation and verify "Conversation not found" message is not shown',
       async () => {
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
@@ -157,7 +157,7 @@ dialSharedWithMeTest(
         });
         await expect
           .soft(
-            additionalShareUserSharedWithMeConversations.getConversationByName(
+            additionalShareUserSharedWithMeConversations.getEntityByName(
               conversation.name,
             ),
             ExpectedMessages.conversationIsNotVisible,
@@ -229,7 +229,7 @@ dialSharedWithMeTest(
           await additionalShareUserDialHomePage.waitForPageLoaded();
           await expect
             .soft(
-              additionalShareUserSharedWithMeConversations.getConversationByName(
+              additionalShareUserSharedWithMeConversations.getEntityByName(
                 conversation.name,
               ),
               ExpectedMessages.conversationIsVisible,
@@ -800,7 +800,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
@@ -812,7 +812,7 @@ dialSharedWithMeTest(
 
         await expect
           .soft(
-            additionalShareUserSharedWithMeConversations.getConversationByName(
+            additionalShareUserSharedWithMeConversations.getEntityByName(
               conversation.name,
             ),
             ExpectedMessages.conversationIsNotShared,
@@ -1045,7 +1045,7 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
@@ -1054,7 +1054,7 @@ dialSharedWithMeTest(
         );
         await expect
           .soft(
-            additionalShareUserConversations.getConversationByName(
+            additionalShareUserConversations.getEntityByName(
               ExpectedConstants.replayConversation + conversation.name,
             ),
             ExpectedMessages.conversationIsVisible,
@@ -1118,7 +1118,7 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
@@ -1127,7 +1127,7 @@ dialSharedWithMeTest(
         );
         await expect
           .soft(
-            additionalShareUserConversations.getConversationByName(
+            additionalShareUserConversations.getEntityByName(
               ExpectedConstants.playbackConversation + conversation.name,
             ),
             ExpectedMessages.conversationIsShared,
@@ -1249,7 +1249,7 @@ dialTest(
           .getAppContainer()
           .getChatBar()
           .getSharedWithMeConversations()
-          .getConversationBackgroundColor(conversation.name);
+          .getEntityBackgroundColor(conversation.name);
         expect
           .soft(
             conversationBackgroundColor,

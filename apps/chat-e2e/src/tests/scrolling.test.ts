@@ -250,9 +250,7 @@ dialTest(
     await dialTest.step(
       'Create Replay conversation based on the first one, start replaying and verify autoscroll is active',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          firstConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.listTextBody,
@@ -329,10 +327,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chat.scrollContent(0, -100);
-        await conversations.openConversationDropdownMenu(
-          firstConversationName,
-          2,
-        );
+        await conversations.openEntityDropdownMenu(firstConversationName, 2);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversationSelector.selectModel(secondConversationName);
 

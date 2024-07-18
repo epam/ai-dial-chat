@@ -19,4 +19,7 @@ export enum Colors {
   backgroundAccentSecondaryAlphaDark = 'rgba(55, 186, 188, 0.15)',
   backgroundAccentSecondaryLight = 'rgb(0, 157, 159)',
   backgroundAccentSecondaryAlphaLight = 'rgba(0, 157, 159, 0.1)',
+  backgroundAccentTertiaryAlphaDark = 'rgba(169, 114, 255, 0.17)',
+  backgroundAccentTertiaryAlphaLight = 'rgba(132, 62, 243, 0.1)',
+  textAccentTertiaryLight = 'rgb(132, 62, 243)',
 }

@@ -1675,6 +1675,14 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         );
       }
       const activeMessage = messagesStack[conv.replay?.activeReplayIndex ?? 0];
+
+      if (Object.keys(activeMessage.templateMapping ?? {}).length) {
+        return concat(
+          of(ConversationsActions.setIsReplayRequiresVariables(true)),
+          of(ConversationsActions.stopReplayConversation()),
+        );
+      }
+
       let updatedConversation: Conversation = conv;
 
       if (

@@ -216,7 +216,7 @@ dialTest(
           .toBeHidden();
         await expect
           .soft(
-            conversations.getConversationByName(conversationOutsideFolder.name),
+            conversations.getEntityByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -349,11 +349,11 @@ dialTest(
           chatBar.importButton.click(),
         );
         await conversations
-          .getConversationByName(importedRootConversation.name)
+          .getEntityByName(importedRootConversation.name)
           .waitFor();
         await expect
           .soft(
-            conversations.getConversationByName(conversationOutsideFolder.name),
+            conversations.getEntityByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -528,7 +528,7 @@ dialTest(
           .toBeTruthy();
 
         await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+          .getEntityByName(ExpectedConstants.newConversationTitle, 2)
           .waitFor();
 
         await folderConversations.selectFolderEntity(
@@ -550,10 +550,10 @@ dialTest(
       'Verify New conversation with Gpt-4 icon is imported',
       async () => {
         await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+          .getEntityByName(ExpectedConstants.newConversationTitle, 2)
           .waitFor();
         const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
-        const newGpt4ConversationIcon = await conversations.getConversationIcon(
+        const newGpt4ConversationIcon = await conversations.getEntityIcon(
           ExpectedConstants.newConversationTitle,
           isApiStorageType ? 1 : 2,
         );
@@ -567,13 +567,13 @@ dialTest(
       'Verify Bison conversation with default icon is imported',
       async () => {
         await conversations
-          .getConversationByName(Import.v14AppBisonChatName)
+          .getEntityByName(Import.v14AppBisonChatName)
           .waitFor();
 
         const defaultIcon = await iconApiHelper.getEntityIcon(
           ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
         );
-        const bisonConversationIcon = await conversations.getConversationIcon(
+        const bisonConversationIcon = await conversations.getEntityIcon(
           Import.v14AppBisonChatName,
         );
         expect
@@ -586,7 +586,7 @@ dialTest(
     );
 
     await dialTest.step('Verify no prompts are imported', async () => {
-      const promptsCount = await prompts.getPromptsCount();
+      const promptsCount = await prompts.getEntitiesCount();
       expect.soft(promptsCount, ExpectedMessages.noPromptsImported).toBe(0);
     });
 

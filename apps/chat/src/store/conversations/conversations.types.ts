@@ -16,6 +16,7 @@ export interface ConversationsState {
   searchFilters: SearchFilters;
   conversationSignal: AbortController;
   isReplayPaused: boolean;
+  isReplayRequiresVariables?: boolean;
   isPlaybackPaused: boolean;
   newAddedFolderId?: string;
   conversationsLoaded: boolean;

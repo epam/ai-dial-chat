@@ -2,6 +2,7 @@ import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   FormEvent,
   KeyboardEvent,
   useCallback,
@@ -24,11 +25,12 @@ import { Translation } from '@/src/types/translation';
 import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import Tooltip from '../../Common/Tooltip';
 
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
@@ -61,7 +63,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       setUpdatedVariables((prev) => {
         const updated = [...prev];
         updated[index].value = e.target.value;
-        return [...updated];
+        return updated;
       });
     },
     [],
@@ -84,9 +86,22 @@ export const PromptVariablesDialog: FC<Props> = ({
       );
 
       onSubmit(newContent);
-      onClose();
+      onClose?.();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
+  );
+
+  const handleOnBlur = useCallback(
+    (index: number, e: FocusEvent<HTMLTextAreaElement>) => {
+      e.target.value = e.target.value.trim();
+      setUpdatedVariables((prev) => {
+        const updated = [...prev];
+        updated[index].value = e.target.value;
+        return updated;
+      });
+      onBlur(e);
+    },
+    [],
   );
 
   const handleKeyDown = useCallback(
@@ -95,7 +110,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
-        onClose();
+        onClose?.();
       }
     },
     [handleSubmit, onClose],
@@ -104,7 +119,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
+        onClose?.();
       }
     };
 
@@ -133,30 +148,37 @@ export const PromptVariablesDialog: FC<Props> = ({
         data-qa="variable-modal"
         onSubmit={handleSubmit}
       >
-        <div
-          className="mb-4 whitespace-pre text-base font-bold"
-          data-qa="variable-prompt-name"
+        <Tooltip
+          tooltip={prompt.name}
+          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+          triggerClassName="mb-4 truncate whitespace-pre text-base font-bold block"
+          dataQa="variable-prompt-name"
         >
           {prompt.name}
-        </div>
+        </Tooltip>
 
         {prompt.description && (
-          <div className="mb-5 italic" data-qa="variable-prompt-descr">
+          <div
+            className="mb-5 whitespace-pre-wrap italic"
+            data-qa="variable-prompt-descr"
+          >
             {prompt.description}
           </div>
         )}
 
-        <button
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          onClick={onClose}
-        >
-          <IconX size={24} />
-        </button>
+        {onClose && (
+          <button
+            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+            onClick={onClose}
+          >
+            <IconX size={24} />
+          </button>
+        )}
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
             <div className="mb-1 flex text-xs text-secondary">
-              {variable.key}
+              <span className="break-all">{variable.key}</span>
               <span className="ml-1 inline text-accent-primary">*</span>
             </div>
 
@@ -172,7 +194,9 @@ export const PromptVariablesDialog: FC<Props> = ({
                 }) as string
               }
               value={variable.value}
-              onBlur={onBlur}
+              onBlur={(e) => {
+                handleOnBlur(index, e);
+              }}
               onChange={(e) => {
                 handleChange(index, e);
               }}

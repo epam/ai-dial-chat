@@ -38,6 +38,8 @@ export const ExpectedConstants = {
     'Are you sure that you want to delete a folder with all nested elements?',
   deleteSelectedConversationsMessage:
     'Are you sure that you want to delete selected conversations?',
+  deleteSelectedPromptsMessage:
+    'Are you sure that you want to delete selected prompts?',
   deleteFileMessage: 'Are you sure that you want to delete this file?',
   deleteFilesMessage: 'Are you sure that you want to delete these files?',
   deleteSharedFolderMessage:
@@ -140,6 +142,7 @@ export const ExpectedConstants = {
   selectAllTooltip: 'Select all',
   unselectAllTooltip: 'Unselect all',
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
+  deleteSelectedPromptsTooltip: 'Delete selected prompts',
 };
 
 export enum Groups {

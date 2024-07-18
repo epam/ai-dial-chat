@@ -52,10 +52,11 @@ export const ChatControls: FC<Props> = ({
     dispatch(
       ConversationsActions.replayConversations({
         conversationsIds: selectedConversationsIds,
-        isRestart: true,
+        isRestart: isError,
+        isContinue: !isError,
       }),
     );
-  }, [dispatch, selectedConversationsIds]);
+  }, [dispatch, isError, selectedConversationsIds]);
 
   if (!showReplayControls) {
     return (
