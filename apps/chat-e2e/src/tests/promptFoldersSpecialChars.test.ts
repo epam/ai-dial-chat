@@ -82,8 +82,7 @@ dialTest(
 
       // Closing the toast to move forward
       await errorToast.closeToast();
-    }
-  );
+    });
 
     await dialTest.step('Rename it to contain special characters', async () => {
       await folderPrompts.editFolderNameWithTick(newNameWithSpecialChars);
@@ -91,8 +90,7 @@ dialTest(
         { name: newNameWithSpecialChars },
         'visible',
       );
-    }
-  );
+    });
 
     await dialTest.step(
       'Try to type restricted special characters',
