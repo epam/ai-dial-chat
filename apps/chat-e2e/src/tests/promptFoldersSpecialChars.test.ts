@@ -6,6 +6,7 @@ import {
 } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { expect } from '@playwright/test';
+import { only } from 'node:test';
 
 dialTest(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
@@ -38,11 +39,11 @@ dialTest(
     const folderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const newNameWithEndDot = `${folderName}.`;
     const newNameWithSpecialChars = `${folderName} ${ExpectedConstants.allowedSpecialChars}`;
-    const nameWithRestrictedChars = `Folder=,:;{}\\/%&"_name`;
+    const nameWithRestrictedChars = `Folder${ExpectedConstants.restrictedNameChars}_name`;
     const expectedFolderName = 'Folder_name';
     const newNameWithSpaces = 'Folder   1';
-    const nameWithSpacesBeforeAndAfter = '   Folder with spaces   ';
     const expectedName = 'Folder with spaces';
+    const nameWithSpacesBeforeAndAfter = `   ${expectedName}   `;
     const newNameWithEmojis = '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
 
     await dialTest.step('Create prompt folder', async () => {
