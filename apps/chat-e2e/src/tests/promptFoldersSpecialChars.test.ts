@@ -117,12 +117,9 @@ dialTest(
     await dialTest.step(
       'Copy and paste restricted special characters',
       async () => {
-        await page.evaluate(
-          (text) => navigator.clipboard.writeText(text),
-          nameWithRestrictedChars,
-        );
+        await dialHomePage.copyToClipboard(nameWithRestrictedChars);
         await folderPrompts.getEditFolderInput().editInput.click();
-        await page.keyboard.press(keys.ctrlPlusV);
+        await dialHomePage.pasteFromClipboard();
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
