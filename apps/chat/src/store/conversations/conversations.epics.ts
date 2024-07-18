@@ -366,6 +366,28 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         }),
     ),
     switchMap(({ names, modelId, conversations }) => {
+      const emptyConversation = conversations.find((conv) =>
+        conv.name.startsWith(DEFAULT_CONVERSATION_NAME),
+      );
+      if (emptyConversation) {
+        return concat(
+          of(
+            ConversationsActions.updateConversation({
+              id: emptyConversation.id,
+              values: {
+                model: { id: modelId || DEFAULT_MODEL_ID },
+              },
+            }),
+          ),
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [emptyConversation.id],
+            }),
+          ),
+          of(ConversationsActions.setIsActiveConversationRequest(false)),
+        );
+      }
+
       return state$.pipe(
         startWith(state$.value),
         map((state) => {
