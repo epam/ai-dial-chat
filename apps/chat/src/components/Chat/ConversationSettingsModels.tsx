@@ -14,7 +14,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
+import { RECENT_MODELS_COUNT, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
@@ -66,14 +66,16 @@ export const ConversationSettingsModel = ({
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
-      setIsReplayAsIs(false);
+      setIsReplayAsIs(entityId === REPLAY_AS_IS_MODEL);
       onModelSelect(entityId);
-      dispatch(
-        ModelsActions.updateRecentModels({
-          modelId: entityId,
-          rearrange,
-        }),
-      );
+      if (entityId !== REPLAY_AS_IS_MODEL) {
+        dispatch(
+          ModelsActions.updateRecentModels({
+            modelId: entityId,
+            rearrange,
+          }),
+        );
+      }
     },
     [dispatch, onModelSelect],
   );
@@ -87,9 +89,8 @@ export const ConversationSettingsModel = ({
           {isPlayback && <PlaybackModelButton />}
           {isReplay && conversation.replay && (
             <ReplayAsIsButton
-              replay={conversation.replay}
-              conversationId={conversation.id}
               selected={isReplayAsIs}
+              onSelect={handleModelSelect}
             />
           )}
           {!isPlayback && !isReplay && unavailableModelId && (

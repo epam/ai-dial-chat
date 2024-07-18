@@ -2,48 +2,30 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Replay } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch } from '@/src/store/hooks';
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
 import { NonModelButton } from '../Common/NonModelButton';
 import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 interface Props {
-  conversationId: string;
-  replay: Replay;
   selected: boolean;
+  onSelect: (entityId: string) => void;
 }
 
-export const ReplayAsIsButton = ({
-  replay,
-  conversationId,
-  selected,
-}: Props) => {
+export const ReplayAsIsButton = ({ selected, onSelect }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const dispatch = useAppDispatch();
-  const handleOnSelectReplayAsIs = useCallback(() => {
+  const handleOnSelect = useCallback(() => {
     if (!selected) {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversationId,
-          values: {
-            replay: {
-              ...replay,
-              replayAsIs: true,
-            },
-          },
-        }),
-      );
+      onSelect(REPLAY_AS_IS_MODEL);
     }
-  }, [conversationId, dispatch, replay, selected]);
+  }, [onSelect, selected]);
 
   return (
     <NonModelButton
-      onClickHandler={handleOnSelectReplayAsIs}
+      onClickHandler={handleOnSelect}
       icon={<ReplayAsIsIcon />}
       buttonLabel={t('Replay as is')}
       isSelected={selected}
