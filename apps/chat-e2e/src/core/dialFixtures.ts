@@ -18,8 +18,14 @@ import {
   SendMessage,
 } from '../ui/webElements';
 
+import { AccountSettingsAssertion } from '@/src/assertions/accountSettingsAssertion';
+import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
+import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { MenuAssertion } from '@/src/assertions/menuAssertion';
+import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
+import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
@@ -67,6 +73,7 @@ import { Prompts } from '@/src/ui/webElements/prompts';
 import { RecentEntities } from '@/src/ui/webElements/recentEntities';
 import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
 import { Search } from '@/src/ui/webElements/search';
+import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
@@ -172,6 +179,7 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectUploadFolder: Folders;
     attachedAllFiles: FolderFiles;
+    settingsModal: SettingsModal;
     conversationAssertion: SideBarEntityAssertion;
     chatBarFolderAssertion: FolderAssertion;
     tooltipAssertion: TooltipAssertion;
@@ -180,6 +188,12 @@ const dialTest = test.extend<
     promptBarFolderAssertion: FolderAssertion;
     promptAssertion: SideBarEntityAssertion;
     promptBarAssertion: SideBarAssertion;
+    accountSettingsAssertion: AccountSettingsAssertion;
+    accountDropdownMenuAssertion: MenuAssertion;
+    settingsModalAssertion: SettingsModalAssertion;
+    sendMessageAssertion: SendMessageAssertion;
+    chatHeaderAssertion: ChatHeaderAssertion;
+    chatMessagesAssertion: ChatMessagesAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -586,6 +600,10 @@ const dialTest = test.extend<
     const attachedAllFiles = attachFilesModal.getFolderFiles();
     await use(attachedAllFiles);
   },
+  settingsModal: async ({ page }, use) => {
+    const settingsModal = new SettingsModal(page);
+    await use(settingsModal);
+  },
   conversationAssertion: async ({ conversations }, use) => {
     const chatBarAssertion = new SideBarEntityAssertion(conversations);
     await use(chatBarAssertion);
@@ -619,6 +637,32 @@ const dialTest = test.extend<
   promptBarAssertion: async ({ promptBar }, use) => {
     const promptBarAssertion = new SideBarAssertion(promptBar);
     await use(promptBarAssertion);
+  },
+  accountSettingsAssertion: async ({ accountSettings }, use) => {
+    const accountSettingsAssertion = new AccountSettingsAssertion(
+      accountSettings,
+    );
+    await use(accountSettingsAssertion);
+  },
+  accountDropdownMenuAssertion: async ({ accountDropdownMenu }, use) => {
+    const accountDropdownMenuAssertion = new MenuAssertion(accountDropdownMenu);
+    await use(accountDropdownMenuAssertion);
+  },
+  settingsModalAssertion: async ({ settingsModal }, use) => {
+    const settingsModalAssertion = new SettingsModalAssertion(settingsModal);
+    await use(settingsModalAssertion);
+  },
+  sendMessageAssertion: async ({ sendMessage }, use) => {
+    const sendMessageAssertion = new SendMessageAssertion(sendMessage);
+    await use(sendMessageAssertion);
+  },
+  chatHeaderAssertion: async ({ chatHeader }, use) => {
+    const chatHeaderAssertion = new ChatHeaderAssertion(chatHeader);
+    await use(chatHeaderAssertion);
+  },
+  chatMessagesAssertion: async ({ chatMessages }, use) => {
+    const chatMessagesAssertion = new ChatMessagesAssertion(chatMessages);
+    await use(chatMessagesAssertion);
   },
 });
 
