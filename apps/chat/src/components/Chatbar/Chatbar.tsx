@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ChatbarActionButtons } from '@/src/components/Chatbar/ChatbarActionButtons';
+import { ChatbarSettings } from '@/src/components/Chatbar/ChatbarSettings';
 
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
@@ -120,6 +121,7 @@ export const Chatbar = () => {
       handleSearchFilters={(searchFilters: SearchFilters) =>
         dispatch(ConversationsActions.setSearchFilters({ searchFilters }))
       }
+      footerComponent={<ChatbarSettings />}
       handleDrop={handleDrop}
       areEntitiesUploaded={areEntitiesUploaded}
     />

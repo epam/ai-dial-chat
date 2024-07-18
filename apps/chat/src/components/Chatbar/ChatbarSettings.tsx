@@ -90,6 +90,7 @@ export const ChatbarSettings = () => {
         name: t('Create new folder'),
         dataQa: 'create-folder',
         Icon: FolderPlus,
+        display: false,
         onClick: () => {
           dispatch(
             ConversationsActions.createFolder({
@@ -110,6 +111,7 @@ export const ChatbarSettings = () => {
             zipImportHandler(typedArgs.content as File);
           }
         },
+        display: false,
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
@@ -119,7 +121,7 @@ export const ChatbarSettings = () => {
         dataQa: 'export',
         className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
-        display: isMyItemsExist,
+        display: false,
         onClick: () => {
           dispatch(ImportExportActions.exportConversations());
         },
@@ -137,6 +139,7 @@ export const ChatbarSettings = () => {
         name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
+        display: false,
         disabled: isStreaming || isActiveNewConversationRequest,
         onClick: () => {
           handleToggleCompare();
@@ -144,7 +147,7 @@ export const ChatbarSettings = () => {
       },
       {
         name: t('Attachments'),
-        display: enabledFeatures.has(Feature.AttachmentsManager),
+        display: false,
         dataQa: 'attachments',
         Icon: IconPaperclip,
         disabled: isStreaming,
