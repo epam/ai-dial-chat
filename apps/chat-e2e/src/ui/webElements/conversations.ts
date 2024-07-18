@@ -19,14 +19,6 @@ export class Conversations extends BaseConversation {
       SideBarSelectors.chronology,
     ).getElementLocatorByText(chronology);
 
-  public getConversationArrowIcon(name: string, index?: number) {
-    return this.getEntityArrowIcon(this.entitySelector, name, index);
-  }
-
-  public getConversationArrowIconColor(name: string, index?: number) {
-    return this.getEntityArrowIconColor(this.entitySelector, name, index);
-  }
-
   public async getConversationsByChronology() {
     await this.waitForState({ state: 'attached' });
     const allConversations = await this.getElementInnerContent();

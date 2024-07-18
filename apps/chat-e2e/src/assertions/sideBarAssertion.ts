@@ -1,16 +1,16 @@
 import { ElementState, ExpectedMessages } from '@/src/testData';
-import { ChatBar } from '@/src/ui/webElements';
+import { SideBar } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class ChatBarAssertion {
-  readonly chatBar: ChatBar;
+export class SideBarAssertion {
+  readonly sideBar: SideBar;
 
-  constructor(chatBar: ChatBar) {
-    this.chatBar = chatBar;
+  constructor(sideBar: SideBar) {
+    this.sideBar = sideBar;
   }
 
   public async assertUnselectAllButtonState(expectedState: ElementState) {
-    const buttonLocator = this.chatBar.unselectAllButton.getElementLocator();
+    const buttonLocator = this.sideBar.unselectAllButton.getElementLocator();
     expectedState == 'visible'
       ? await expect
           .soft(buttonLocator, ExpectedMessages.buttonIsVisible)

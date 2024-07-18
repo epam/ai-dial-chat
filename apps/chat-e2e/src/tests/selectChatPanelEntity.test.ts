@@ -125,7 +125,7 @@ dialTest(
           emptyConversation,
           historyConversation,
         ]) {
-          await conversationAssertion.assertConversationCheckboxState(
+          await conversationAssertion.assertEntityCheckboxState(
             { name: rootConversation.name },
             CheckboxState.checked,
           );
@@ -181,10 +181,8 @@ dialTest(
           'hidden',
         );
 
-        await conversations
-          .getConversationByName(historyConversation.name)
-          .hover();
-        await conversationAssertion.assertConversationDotsMenuState(
+        await conversations.getEntityByName(historyConversation.name).hover();
+        await conversationAssertion.assertEntityDotsMenuState(
           {
             name: historyConversation.name,
           },
@@ -247,7 +245,7 @@ dialTest(
           emptyConversation,
           historyConversation,
         ]) {
-          await conversationAssertion.assertConversationCheckbox(
+          await conversationAssertion.assertEntityCheckbox(
             {
               name: rootConversation.name,
             },
@@ -289,10 +287,8 @@ dialTest(
           'visible',
         );
 
-        await conversations
-          .getConversationByName(historyConversation.name)
-          .hover();
-        await conversationAssertion.assertConversationDotsMenuState(
+        await conversations.getEntityByName(historyConversation.name).hover();
+        await conversationAssertion.assertEntityDotsMenuState(
           {
             name: historyConversation.name,
           },
@@ -406,7 +402,7 @@ dialTest(
           emptyConversation,
           historyConversation,
         ]) {
-          await conversationAssertion.assertConversationCheckboxState(
+          await conversationAssertion.assertEntityCheckboxState(
             { name: rootConversation.name },
             CheckboxState.checked,
           );
@@ -456,7 +452,7 @@ dialTest(
           emptyConversation,
           historyConversation,
         ]) {
-          await conversationAssertion.assertConversationState(
+          await conversationAssertion.assertEntityState(
             {
               name: rootConversation.name,
             },
@@ -578,7 +574,7 @@ dialTest(
         firstConversation,
         secondConversation,
       ]) {
-        await conversationAssertion.assertConversationCheckbox(
+        await conversationAssertion.assertEntityCheckbox(
           {
             name: singleConversation.name,
           },
@@ -590,10 +586,8 @@ dialTest(
     await dialTest.step(
       'Click on 2nd single conversation and verify it becomes checked',
       async () => {
-        await conversations
-          .getConversationByName(secondConversation.name)
-          .click();
-        await conversationAssertion.assertConversationCheckboxState(
+        await conversations.getEntityByName(secondConversation.name).click();
+        await conversationAssertion.assertEntityCheckboxState(
           { name: secondConversation.name },
           CheckboxState.checked,
         );
@@ -622,7 +616,7 @@ dialTest(
           );
         }
 
-        await conversationAssertion.assertConversationCheckbox(
+        await conversationAssertion.assertEntityCheckbox(
           {
             name: secondConversation.name,
           },
@@ -641,7 +635,7 @@ dialTest(
           'visible',
         );
 
-        await conversationAssertion.assertConversationState(
+        await conversationAssertion.assertEntityState(
           {
             name: firstConversation.name,
           },
@@ -1399,15 +1393,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
-          singleConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
         await chatBarAssertion.assertUnselectAllButtonState('visible');
 
-        await conversations
-          .getConversationCheckbox(singleConversation.name)
-          .click();
+        await conversations.getEntityCheckbox(singleConversation.name).click();
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
       },
     );
@@ -1445,9 +1435,7 @@ dialTest(
     await dialTest.step(
       'Select single conversation, press "Create New Conversation" button and verify bottom panel does not include "select" buttons',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          singleConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
         await chatBar.createNewConversation();
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
@@ -1457,9 +1445,7 @@ dialTest(
     await dialTest.step(
       'Select single conversation, set some search term and verify bottom panel does not include "select" buttons',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          singleConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
         await chatBar.getSearch().setSearchValue('test');
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
@@ -1470,9 +1456,7 @@ dialTest(
     await dialTest.step(
       'Select single conversation, set Share filter to some value and verify bottom panel does not include "select" buttons',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          singleConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
         await chatFilter.openFilterDropdownMenu();
         await chatFilterDropdownMenu.selectMenuOption(

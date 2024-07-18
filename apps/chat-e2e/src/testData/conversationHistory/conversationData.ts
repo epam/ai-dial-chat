@@ -206,7 +206,7 @@ export class ConversationData extends FolderData {
   public preparePartiallyReplayedConversation(conversation: Conversation) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
-    const assistantMessages = conversation.messages.find(
+    const assistantMessages = conversation.messages.findLast(
       (m) => m.role === 'assistant',
     );
     assistantMessages!.content = 'partial response';
