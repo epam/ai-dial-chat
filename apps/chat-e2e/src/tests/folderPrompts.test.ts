@@ -204,7 +204,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
 
@@ -244,7 +244,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
 
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await prompts.selectMoveToMenuOption(
       ExpectedConstants.newFolderWithIndexTitle(1),
@@ -292,7 +292,7 @@ dialTest(
 
     await expect
       .soft(
-        prompts.getPromptByName(promptInFolder.prompts[0].name),
+        prompts.getEntityByName(promptInFolder.prompts[0].name),
         ExpectedMessages.promptIsVisible,
       )
       .toBeHidden();
@@ -462,7 +462,7 @@ dialTest(
             .toBeHidden();
           await expect
             .soft(
-              prompts.getPromptByName(nestedPrompts[i].name),
+              prompts.getEntityByName(nestedPrompts[i].name),
               ExpectedMessages.promptDeleted,
             )
             .toBeHidden();

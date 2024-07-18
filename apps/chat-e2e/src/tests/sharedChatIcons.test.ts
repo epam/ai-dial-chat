@@ -74,9 +74,8 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(conversation.name);
-        const firstShareRequestResponse =
-          await conversations.shareConversation();
+        await conversations.openEntityDropdownMenu(conversation.name);
+        const firstShareRequestResponse = await conversations.shareEntity();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
@@ -187,9 +186,8 @@ dialTest(
     await dialTest.step(
       'Open Share modal again, click "Copy" button and verify the link is different from the previous, no shared icon appears on conversation',
       async () => {
-        await conversations.openConversationDropdownMenu(conversation.name);
-        const secondShareRequestResponse =
-          await conversations.shareConversation();
+        await conversations.openEntityDropdownMenu(conversation.name);
+        const secondShareRequestResponse = await conversations.shareEntity();
         secondShareLinkResponse = secondShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
@@ -216,7 +214,7 @@ dialTest(
 
         await expect
           .soft(
-            conversations.getConversationArrowIcon(
+            conversations.getEntityArrowIcon(
               ExpectedConstants.newConversationTitle,
             ),
             ExpectedMessages.sharedEntityIconIsNotVisible,
@@ -247,11 +245,10 @@ dialTest(
           secondShareLinkResponse,
         );
         await dialHomePage.reloadPage();
-        await conversations
-          .getConversationArrowIcon(conversation.name)
-          .waitFor();
-        const arrowIconColor =
-          await conversations.getConversationArrowIconColor(conversation.name);
+        await conversations.getEntityArrowIcon(conversation.name).waitFor();
+        const arrowIconColor = await conversations.getEntityArrowIconColor(
+          conversation.name,
+        );
         expect
           .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
           .toBe(Colors.textAccentSecondary);
@@ -284,7 +281,7 @@ dialTest(
     await dialTest.step(
       'Try to delete shared conversation and verify confirmation message is shown',
       async () => {
-        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         expect
           .soft(
@@ -388,9 +385,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            conversations.getConversationArrowIcon(
-              firstConversationToShare.name,
-            ),
+            conversations.getEntityArrowIcon(firstConversationToShare.name),
             ExpectedMessages.conversationIsNotVisible,
           )
           .toBeVisible();
@@ -400,7 +395,7 @@ dialTest(
         ]) {
           await expect
             .soft(
-              conversations.getConversationArrowIcon(conversation.name),
+              conversations.getEntityArrowIcon(conversation.name),
               ExpectedMessages.sharedEntityIconIsNotVisible,
             )
             .toBeHidden();
@@ -526,7 +521,7 @@ dialTest(
         ]) {
           await expect
             .soft(
-              conversations.getConversationArrowIcon(conversation.name),
+              conversations.getEntityArrowIcon(conversation.name),
               ExpectedMessages.sharedEntityIconIsNotVisible,
             )
             .toBeHidden();
@@ -584,7 +579,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
+        await conversations.openEntityDropdownMenu(
           firstSharedConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
@@ -626,7 +621,7 @@ dialTest(
       'Hover over arrow icon in the side bar conversation and verify tooltip shown',
       async () => {
         await conversations
-          .getConversationArrowIcon(firstSharedConversation.name)
+          .getEntityArrowIcon(firstSharedConversation.name)
           .hover();
         const sharedTooltip = await tooltip.getContent();
         expect
@@ -995,10 +990,8 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations
-          .getConversationArrowIcon(conversation.name)
-          .waitFor();
-        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversations.getEntityArrowIcon(conversation.name).waitFor();
+        await conversations.openEntityDropdownMenu(conversation.name);
         const actualMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
         expect
@@ -1016,7 +1009,7 @@ dialTest(
         await confirmationDialog.cancelDialog();
         await expect
           .soft(
-            conversations.getConversationArrowIcon(conversation.name),
+            conversations.getEntityArrowIcon(conversation.name),
             ExpectedMessages.sharedEntityIconIsVisible,
           )
           .toBeVisible();
@@ -1026,12 +1019,12 @@ dialTest(
     await dialTest.step(
       'Select Unshare option for shared conversation, click Revoke and verify arrow icon disappears',
       async () => {
-        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await expect
           .soft(
-            conversations.getConversationArrowIcon(conversation.name),
+            conversations.getEntityArrowIcon(conversation.name),
             ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeHidden();
@@ -1041,7 +1034,7 @@ dialTest(
     await dialTest.step(
       'Open conversation dropdown menu and verify only Share option is available',
       async () => {
-        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name);
         const actualMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
         expect
@@ -1085,7 +1078,7 @@ dialTest(
         const newChatRequest = '1+2';
         await chatBar.createNewConversation();
         await chat.sendRequestWithButton(newChatRequest);
-        await conversations.openConversationDropdownMenu(newChatRequest);
+        await conversations.openEntityDropdownMenu(newChatRequest);
         const actualMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
         expect
@@ -1133,9 +1126,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await conversations
-          .getConversationArrowIcon(conversationName)
-          .waitFor();
+        await conversations.getEntityArrowIcon(conversationName).waitFor();
         await itemApiHelper.deleteConversation(conversation);
       },
     );
@@ -1155,13 +1146,13 @@ dialTest(
         });
         await expect
           .soft(
-            conversations.getConversationByName(conversationName),
+            conversations.getEntityByName(conversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
         await expect
           .soft(
-            conversations.getConversationArrowIcon(conversationName),
+            conversations.getEntityArrowIcon(conversationName),
             ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeHidden();
@@ -1214,7 +1205,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            conversations.getConversationArrowIcon(conversation.name),
+            conversations.getEntityArrowIcon(conversation.name),
             ExpectedMessages.sharedEntityIconIsVisible,
           )
           .toBeVisible();
@@ -1234,7 +1225,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            await conversations.getConversationArrowIcon(conversation.name),
+            conversations.getEntityArrowIcon(conversation.name),
             ExpectedMessages.sharedEntityIconIsNotVisible,
           )
           .toBeHidden();

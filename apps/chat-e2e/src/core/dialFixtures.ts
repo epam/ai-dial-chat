@@ -18,10 +18,10 @@ import {
   SendMessage,
 } from '../ui/webElements';
 
-import { ChatBarAssertion } from '@/src/assertions/chatBarAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
-import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
+import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
@@ -172,11 +172,14 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectUploadFolder: Folders;
     attachedAllFiles: FolderFiles;
-    conversationAssertion: ConversationAssertion;
+    conversationAssertion: SideBarEntityAssertion;
     chatBarFolderAssertion: FolderAssertion;
     tooltipAssertion: TooltipAssertion;
     confirmationDialogAssertion: ConfirmationDialogAssertion;
-    chatBarAssertion: ChatBarAssertion;
+    chatBarAssertion: SideBarAssertion;
+    promptBarFolderAssertion: FolderAssertion;
+    promptAssertion: SideBarEntityAssertion;
+    promptBarAssertion: SideBarAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -584,7 +587,7 @@ const dialTest = test.extend<
     await use(attachedAllFiles);
   },
   conversationAssertion: async ({ conversations }, use) => {
-    const chatBarAssertion = new ConversationAssertion(conversations);
+    const chatBarAssertion = new SideBarEntityAssertion(conversations);
     await use(chatBarAssertion);
   },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
@@ -602,8 +605,20 @@ const dialTest = test.extend<
     await use(confirmationDialogAssertion);
   },
   chatBarAssertion: async ({ chatBar }, use) => {
-    const chatBarAssertion = new ChatBarAssertion(chatBar);
+    const chatBarAssertion = new SideBarAssertion(chatBar);
     await use(chatBarAssertion);
+  },
+  promptBarFolderAssertion: async ({ folderPrompts }, use) => {
+    const promptBarFolderAssertion = new FolderAssertion(folderPrompts);
+    await use(promptBarFolderAssertion);
+  },
+  promptAssertion: async ({ prompts }, use) => {
+    const promptAssertion = new SideBarEntityAssertion(prompts);
+    await use(promptAssertion);
+  },
+  promptBarAssertion: async ({ promptBar }, use) => {
+    const promptBarAssertion = new SideBarAssertion(promptBar);
+    await use(promptBarAssertion);
   },
 });
 

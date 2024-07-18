@@ -65,6 +65,7 @@ export enum ExpectedMessages {
   promptValueUpdated = 'Prompt value is updated',
   promptMovedToFolder = 'Prompt is moved to a folder',
   promptIsVisible = 'Prompt is visible',
+  promptIsNotVisible = 'Prompt is not visible',
   noPromptsImported = 'No prompts are imported',
   deleteAllPromptsButtonNotVisible = 'Delete All Prompts button is not visible',
   promptApplied = 'Prompt is applied to the field',
@@ -306,4 +307,7 @@ export enum ExpectedMessages {
   buttonIsNotVisible = 'Button is not visible',
   folderEntityIsNotVisible = 'Folder entity is not visible',
   folderEntityIsVisible = 'Folder entity is visible',
+  entityIsNotVisible = 'Entity is not visible',
+  entityIsVisible = 'Entity is visible',
+  entityBackgroundColorIsValid = 'Entity background color is valid',
 }

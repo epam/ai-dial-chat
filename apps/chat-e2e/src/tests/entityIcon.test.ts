@@ -109,7 +109,7 @@ dialTest(
     await dialTest.step(
       'Verify default model icon is displayed on chat bar panel',
       async () => {
-        const defaultConversationIcon = await conversations.getConversationIcon(
+        const defaultConversationIcon = await conversations.getEntityIcon(
           ExpectedConstants.newConversationTitle,
         );
         const expectedDefaultIcon =
@@ -125,7 +125,7 @@ dialTest(
       async () => {
         await talkToSelector.selectModel(randomUpdateEntity);
 
-        const conversationIcon = await conversations.getConversationIcon(
+        const conversationIcon = await conversations.getEntityIcon(
           ExpectedConstants.newConversationTitle,
         );
         const expectedIcon =
