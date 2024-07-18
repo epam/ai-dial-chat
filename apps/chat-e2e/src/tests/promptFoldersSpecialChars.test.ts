@@ -14,7 +14,8 @@ dialTest.only(
   'Prompt folder: restricted special characters are removed if to copy-paste.\n' +
   'Prompt folder: spaces in the middle of folder name stay.\n' +
   'Prompt folder: name can not be blank or with spaces only.\n' +
-  'Prompt folder: spaces at the beginning or end of folder name are removed',
+  'Prompt folder: spaces at the beginning or end of folder name are removed.\n' +
+  'Prompt folder: smiles, hieroglyph, specific letters in name',
   async ({
     dialHomePage,
     promptBar,
@@ -23,9 +24,12 @@ dialTest.only(
     errorToast,
     setTestIds,
     page,
+    promptData,
+    dataInjector,
+    prompts,
   }) => {
     setTestIds(
-      'EPMRTC-2975', 'EPMRTC-2976', 'EPMRTC-2977', 'EPMRTC-2978', 'EPMRTC-2979', 'EPMRTC-2980', 'EPMRTC-2981'
+      'EPMRTC-2975', 'EPMRTC-2976', 'EPMRTC-2977', 'EPMRTC-2978', 'EPMRTC-2979', 'EPMRTC-2980', 'EPMRTC-2981', 'EPMRTC-2982'
     );
     const folderName = ExpectedConstants.newFolderWithIndexTitle(1);
     const newNameWithEndDot = `${folderName}.`;
@@ -35,6 +39,8 @@ dialTest.only(
     const newNameWithSpaces = 'Folder   1';
     const nameWithSpacesBeforeAndAfter = '   Folder with spaces   ';
     const expectedName = 'Folder with spaces';
+    const newNameWithEmojis = '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
+    // let prompt: Prompt;
 
     await dialTest.step('Create prompt folder', async () => {
       await dialHomePage.openHomePage();
@@ -179,5 +185,18 @@ dialTest.only(
         )
         .toBeVisible();
     });
+
+    await dialTest.step('Rename folder to contain emojis and hieroglyphs', async () => {
+      await folderPrompts.openFolderDropdownMenu(expectedName);
+      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+      await folderPrompts.editFolderNameWithTick(newNameWithEmojis);
+      await expect
+        .soft(
+          folderPrompts.getFolderByName(newNameWithEmojis),
+          ExpectedMessages.folderNameUpdated,
+        )
+        .toBeVisible();
+    });
+
   },
 );
