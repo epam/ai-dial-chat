@@ -111,7 +111,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await prompts.getEntityByName(promptOutsideFolder.name).waitFor();
 
         for (let i = 0; i < nestedFolders.length; i++) {
           const nestedFolder = nestedFolders[i];
@@ -221,7 +221,7 @@ dialTest(
             promptInsideFolder.prompts[0].name,
           )
           .waitFor();
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await prompts.getEntityByName(promptOutsideFolder.name).waitFor();
       },
     );
 
@@ -251,15 +251,15 @@ dialTest(
     await dialTest.step(
       'Open imported prompt edit screen, make some updates and verify imported prompt appears',
       async () => {
-        await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
+        await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         await promptModalDialog.updatePromptDetailsWithButton(
           newName,
           newDescr,
           newValue,
         );
-        await prompts.getPromptByName(newName).waitFor();
-        await prompts.openPromptDropdownMenu(newName);
+        await prompts.getEntityByName(newName).waitFor();
+        await prompts.openEntityDropdownMenu(newName);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         expect
           .soft(
@@ -318,7 +318,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
+        await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
         exportedData = await dialHomePage.downloadData(() =>
           promptDropdownMenu.selectMenuOption(MenuOptions.export),
         );
@@ -328,12 +328,12 @@ dialTest(
     await dialTest.step(
       'Delete exported prompt, re-import again and verify it is displayed in the root',
       async () => {
-        await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
+        await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await expect
           .soft(
-            prompts.getPromptByName(promptOutsideFolder.name),
+            prompts.getEntityByName(promptOutsideFolder.name),
             ExpectedMessages.noPromptsImported,
           )
           .toBeHidden();
@@ -343,7 +343,7 @@ dialTest(
         );
         await expect
           .soft(
-            prompts.getPromptByName(promptOutsideFolder.name),
+            prompts.getEntityByName(promptOutsideFolder.name),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -450,8 +450,8 @@ dialTest(
         await dialHomePage.importFile(rootPromptData, () =>
           promptBar.importButton.click(),
         );
-        await prompts.getPromptByName(importedRootPrompt.name).waitFor();
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await prompts.getEntityByName(importedRootPrompt.name).waitFor();
+        await prompts.getEntityByName(promptOutsideFolder.name).waitFor();
       },
     );
 

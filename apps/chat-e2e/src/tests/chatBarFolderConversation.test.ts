@@ -557,7 +557,7 @@ dialTest(
             .toBeHidden();
           await expect
             .soft(
-              conversations.getConversationByName(nestedConversations[i].name),
+              conversations.getEntityByName(nestedConversations[i].name),
               ExpectedMessages.conversationDeleted,
             )
             .toBeHidden();

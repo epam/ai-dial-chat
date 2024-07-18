@@ -118,7 +118,7 @@ export class ChatBar extends SideBar {
   ) {
     const folder = this.getFolderConversations().getFolderByName(folderName);
     const conversation =
-      this.getConversations().getConversationByName(conversationName);
+      this.getConversations().getEntityByName(conversationName);
     await this.dragEntityToFolder(conversation, folder);
   }
 
@@ -133,7 +133,7 @@ export class ChatBar extends SideBar {
       folderConversationName,
     );
     const conversation =
-      this.getConversations().getConversationByName(conversationName);
+      this.getConversations().getEntityByName(conversationName);
     await this.dragAndDropEntityToFolder(conversation, folderConversation, {
       isHttpMethodTriggered,
     });

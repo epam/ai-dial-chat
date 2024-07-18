@@ -790,7 +790,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify conversation context menu items',
       async () => {
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           playbackConversation.name,
         );
         const allMenuOptions =

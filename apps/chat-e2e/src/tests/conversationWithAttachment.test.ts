@@ -141,7 +141,7 @@ dialTest(
         await sendMessage.send();
         await expect
           .soft(
-            conversations.getConversationByName(attachedFiles[0]),
+            conversations.getEntityByName(attachedFiles[0]),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -205,7 +205,7 @@ dialTest(
         await chat.sendRequestWithKeyboard(request, false);
         await expect
           .soft(
-            conversations.getConversationByName(request),
+            conversations.getEntityByName(request),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();

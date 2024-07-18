@@ -1,8 +1,12 @@
 import { MenuSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
+import {
+  ShareByLinkResponseModel,
+  ShareRequestModel,
+} from '@/chat/types/share';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ExpectedConstants } from '@/src/testData';
+import { ExpectedConstants, MenuOptions } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
@@ -52,97 +56,63 @@ export class SideBarEntities extends BaseElement {
     return this.dropdownMenu;
   }
 
-  protected entityDotsMenu = (
-    selector: string,
-    name: string,
-    index?: number,
-  ) => {
-    return this.getEntityByName(selector, name, index).locator(
-      MenuSelectors.dotsMenu,
-    );
+  entityDotsMenu = (name: string, index?: number) => {
+    return this.getEntityByName(name, index).locator(MenuSelectors.dotsMenu);
   };
 
-  protected getEntityByName(selector: string, name: string, index?: number) {
-    return this.getChildElementBySelector(selector).getElementLocatorByText(
-      name,
-      index,
-    );
+  getEntityByName(name: string, index?: number) {
+    return this.getChildElementBySelector(
+      this.entitySelector,
+    ).getElementLocatorByText(name, index);
   }
 
-  protected getEntityName(
-    entitySelector: string,
-    nameSelector: string,
-    name: string,
-    index?: number,
-  ) {
+  protected getEntityName(nameSelector: string, name: string, index?: number) {
     return this.createElementFromLocator(
-      this.getEntityByName(entitySelector, name, index).locator(nameSelector),
+      this.getEntityByName(name, index).locator(nameSelector),
     );
   }
 
-  protected getEntityArrowIcon(selector: string, name: string, index?: number) {
-    return this.getEntityByName(selector, name, index).locator(
+  getEntityArrowIcon(name: string, index?: number) {
+    return this.getEntityByName(name, index).locator(
       SideBarSelectors.arrowAdditionalIcon,
     );
   }
 
-  protected getEntityArrowIconColor(
-    selector: string,
-    name: string,
-    index?: number,
-  ) {
+  getEntityArrowIconColor(name: string, index?: number) {
     return this.createElementFromLocator(
-      this.getEntityArrowIcon(selector, name, index).locator(Tags.svg),
+      this.getEntityArrowIcon(name, index).locator(Tags.svg),
     ).getComputedStyleProperty(Styles.color);
   }
 
-  protected getEntityCheckbox(selector: string, name: string, index?: number) {
-    return this.getEntityByName(selector, name, index).getByRole('checkbox');
+  getEntityCheckbox(name: string, index?: number) {
+    return this.getEntityByName(name, index).getByRole('checkbox');
   }
 
-  protected async getEntityCheckboxState(
-    selector: string,
-    name: string,
-    index?: number,
-  ) {
-    return this.getEntityCheckbox(selector, name, index).getAttribute(
-      Attributes.dataQA,
-    );
+  async getEntityCheckboxState(name: string, index?: number) {
+    return this.getEntityCheckbox(name, index).getAttribute(Attributes.dataQA);
   }
 
-  protected async openEntityDropdownMenu(
-    selector: string,
-    name: string,
-    index?: number,
-  ) {
-    const entity = this.getEntityByName(selector, name, index);
+  async openEntityDropdownMenu(name: string, index?: number) {
+    const entity = this.getEntityByName(name, index);
     await entity.hover();
-    await this.entityDotsMenu(selector, name, index).click();
+    await this.entityDotsMenu(name, index).click();
     await this.getDropdownMenu().waitForState();
   }
 
-  protected async openEditEntityNameMode(newName: string) {
+  async openEditEntityNameMode(newName: string) {
     const input = this.getEditEntityInput();
     await input.editValue(newName);
     return input;
   }
 
-  protected async getEntityIcon(
-    selector: string,
-    name: string,
-    index?: number,
-  ) {
-    const entity = this.getEntityByName(selector, name, index);
+  async getEntityIcon(name: string, index?: number) {
+    const entity = this.getEntityByName(name, index);
     return this.getElementIconHtml(entity);
   }
 
-  public async getEntityBackgroundColor(
-    selector: string,
-    name: string,
-    index?: number,
-  ) {
+  public async getEntityBackgroundColor(name: string, index?: number) {
     const backgroundColor = await this.createElementFromLocator(
-      this.getEntityByName(selector, name, index),
+      this.getEntityByName(name, index),
     ).getComputedStyleProperty(Styles.backgroundColor);
     backgroundColor[0] = backgroundColor[0].replace(
       ExpectedConstants.backgroundColorPattern,
@@ -182,5 +152,25 @@ export class SideBarEntities extends BaseElement {
     }
 
     await menu.selectMenuOption(option);
+  }
+
+  public async shareEntity() {
+    const response = await this.selectEntityMenuOption(MenuOptions.share, {
+      triggeredHttpMethod: 'POST',
+    });
+    if (response !== undefined) {
+      const responseText = await response.text();
+      const request = await response.request().postDataJSON();
+      return {
+        request: request as ShareRequestModel,
+        response: JSON.parse(responseText) as ShareByLinkResponseModel,
+      };
+    }
+  }
+
+  public async getEntitiesCount() {
+    return this.getChildElementBySelector(
+      this.entitySelector,
+    ).getElementsCount();
   }
 }

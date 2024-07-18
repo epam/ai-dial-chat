@@ -73,12 +73,10 @@ dialTest(
         playbackConversationName = `[${MenuOptions.playback}] ${conversation.name}`;
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
 
-        await conversations
-          .getConversationByName(playbackConversationName)
-          .waitFor();
+        await conversations.getEntityByName(playbackConversationName).waitFor();
 
         const expectedButtonBorderColor =
           theme === Theme.light
@@ -450,7 +448,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations
-          .getConversationByName(playbackConversation.name)
+          .getEntityByName(playbackConversation.name)
           .waitFor();
 
         for (let i = 0; i < playNextKeys.length; i++) {
@@ -774,9 +772,7 @@ dialTest(
     await dialTest.step('Verify playback next message has scroll', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations
-        .getConversationByName(playbackConversation.name)
-        .waitFor();
+      await conversations.getEntityByName(playbackConversation.name).waitFor();
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable =
         await playbackControl.playbackMessage.isElementScrollableVertically();

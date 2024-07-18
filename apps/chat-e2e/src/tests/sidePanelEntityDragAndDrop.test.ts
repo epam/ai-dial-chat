@@ -169,7 +169,7 @@ dialTest(
           )
           .waitFor();
         const conversationBackgroundColor =
-          await conversations.getConversationBackgroundColor(conversation.name);
+          await conversations.getEntityBackgroundColor(conversation.name);
         expect
           .soft(
             conversationBackgroundColor,
@@ -280,7 +280,7 @@ dialTest(
 
     await expect
       .soft(
-        prompts.getPromptByName(promptInFolder.prompts[0].name),
+        prompts.getEntityByName(promptInFolder.prompts[0].name),
         ExpectedMessages.promptIsVisible,
       )
       .toBeVisible();
