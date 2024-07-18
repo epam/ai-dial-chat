@@ -32,7 +32,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
   const [isSectionOpened, setIsSectionOpened] = useState(false);
 
   const isShowImageImmediate =
-    selectedConversations[0].model.id === ModelId.DALL;
+    selectedConversations[0]?.model.id === ModelId.DALL;
 
   if (!attachments?.length) {
     return null;
