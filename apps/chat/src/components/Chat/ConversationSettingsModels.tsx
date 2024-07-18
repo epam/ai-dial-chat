@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -43,6 +43,16 @@ export const ConversationSettingsModel = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
+  const isPlayback = conversation.playback?.isPlayback;
+  const isReplay = conversation.replay?.isReplay;
+  const [isReplayAsIs, setIsReplayAsIs] = useState(
+    conversation.replay?.replayAsIs ?? false,
+  );
+
+  useEffect(() => {
+    setIsReplayAsIs(conversation.replay?.replayAsIs ?? false);
+  }, [conversation.replay?.replayAsIs]);
+
   const enitities = useMemo(() => {
     return getValidEntitiesFromIds(
       modelId &&
@@ -56,6 +66,7 @@ export const ConversationSettingsModel = ({
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
+      setIsReplayAsIs(false);
       onModelSelect(entityId);
       dispatch(
         ModelsActions.updateRecentModels({
@@ -66,10 +77,6 @@ export const ConversationSettingsModel = ({
     },
     [dispatch, onModelSelect],
   );
-
-  const isPlayback = conversation.playback?.isPlayback;
-  const isReplay = conversation.replay?.isReplay;
-  const isReplayAsIs = conversation.replay?.replayAsIs;
 
   return (
     <div className="w-full" data-qa="entity-selector">
@@ -82,6 +89,7 @@ export const ConversationSettingsModel = ({
             <ReplayAsIsButton
               replay={conversation.replay}
               conversationId={conversation.id}
+              selected={isReplayAsIs}
             />
           )}
           {!isPlayback && !isReplay && unavailableModelId && (

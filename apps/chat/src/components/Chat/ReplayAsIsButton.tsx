@@ -14,32 +14,39 @@ import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 interface Props {
   conversationId: string;
   replay: Replay;
+  selected: boolean;
 }
 
-export const ReplayAsIsButton = ({ replay, conversationId }: Props) => {
+export const ReplayAsIsButton = ({
+  replay,
+  conversationId,
+  selected,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
   const handleOnSelectReplayAsIs = useCallback(() => {
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversationId,
-        values: {
-          replay: {
-            ...replay,
-            replayAsIs: true,
+    if (!selected) {
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversationId,
+          values: {
+            replay: {
+              ...replay,
+              replayAsIs: true,
+            },
           },
-        },
-      }),
-    );
-  }, [conversationId, dispatch, replay]);
+        }),
+      );
+    }
+  }, [conversationId, dispatch, replay, selected]);
 
   return (
     <NonModelButton
       onClickHandler={handleOnSelectReplayAsIs}
       icon={<ReplayAsIsIcon />}
       buttonLabel={t('Replay as is')}
-      isSelected={replay.replayAsIs}
+      isSelected={selected}
     />
   );
 };
