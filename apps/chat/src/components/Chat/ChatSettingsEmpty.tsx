@@ -8,6 +8,8 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 import { ModelDescription } from './ModelDescription';
@@ -84,7 +86,11 @@ export const ChatSettingsEmpty = ({
         {isShowSettings && isModels && (
           <ConversationSettings
             conversation={conversation}
-            modelId={conversation.model.id}
+            modelId={
+              conversation.replay?.replayAsIs
+                ? REPLAY_AS_IS_MODEL
+                : conversation.model.id
+            }
             assistantModelId={conversation.assistantModelId}
             prompt={conversation.prompt}
             selectedAddons={conversation.selectedAddons}
