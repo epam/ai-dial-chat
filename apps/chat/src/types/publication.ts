@@ -8,8 +8,6 @@ export enum PublicationFunctions {
   Equal = 'Equal',
   Contain = 'Contain',
   Regex = 'Regex',
-  True = 'True',
-  False = 'False',
 }
 
 export enum PublishActions {

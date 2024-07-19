@@ -43,9 +43,6 @@ const getPreparedFilterParams = (
   switch (filterFunction) {
     case PublicationFunctions.Regex:
       return [filterRegexParam];
-    case PublicationFunctions.True:
-    case PublicationFunctions.False:
-      return [];
     default:
       return filterParams.map((param) => param.trim());
   }
@@ -57,8 +54,6 @@ const filterFunctionValues = [
   PublicationFunctions.Contain,
   PublicationFunctions.Equal,
   PublicationFunctions.Regex,
-  PublicationFunctions.True,
-  PublicationFunctions.False,
 ];
 
 export function TargetAudienceFilterComponent({
@@ -137,15 +132,11 @@ export function TargetAudienceFilterComponent({
     filterFunction === PublicationFunctions.Regex &&
     !filterRegexParam
   );
-  const isTrueOrFalseFilterSelected =
-    filterFunction === PublicationFunctions.True ||
-    filterFunction === PublicationFunctions.False;
-  const isSaveBtnDisabled = isTrueOrFalseFilterSelected
-    ? !isTargetAndFunctionSelected
-    : !isTargetAndFunctionSelected ||
-      !areSomeFilterParamSelected ||
-      isRegexFilledInButNotSelected ||
-      isParamsFilledInButRegexIsSelected;
+  const isSaveBtnDisabled =
+    !isTargetAndFunctionSelected ||
+    !areSomeFilterParamSelected ||
+    isRegexFilledInButNotSelected ||
+    isParamsFilledInButRegexIsSelected;
 
   if (isSmallScreen()) {
     return (
@@ -186,30 +177,28 @@ export function TargetAudienceFilterComponent({
                 id="filterFns"
               />
             </div>
-            {!isTrueOrFalseFilterSelected && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-secondary">
-                  {t('Options')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
-                </label>
-                {filterFunction === PublicationFunctions.Regex ? (
-                  <RegexParamInput
-                    regEx={filterRegexParam}
-                    onRegExChange={handleChangeFilterRegexParam}
-                    className="h-[38px] rounded border border-primary"
-                  />
-                ) : (
-                  <MultipleComboBox
-                    className="flex min-h-[38px] items-center rounded border border-primary"
-                    initialSelectedItems={filterParams}
-                    getItemLabel={getItemLabel}
-                    getItemValue={getItemLabel}
-                    onChangeSelectedItems={handleChangeFilterParams}
-                    placeholder={t('Enter one or more options...') as string}
-                  />
-                )}
-              </div>
-            )}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-secondary">
+                {t('Options')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              {filterFunction === PublicationFunctions.Regex ? (
+                <RegexParamInput
+                  regEx={filterRegexParam}
+                  onRegExChange={handleChangeFilterRegexParam}
+                  className="h-[38px] rounded border border-primary"
+                />
+              ) : (
+                <MultipleComboBox
+                  className="flex min-h-[38px] items-center rounded border border-primary"
+                  initialSelectedItems={filterParams}
+                  getItemLabel={getItemLabel}
+                  getItemValue={getItemLabel}
+                  onChangeSelectedItems={handleChangeFilterParams}
+                  placeholder={t('Enter one or more options...') as string}
+                />
+              )}
+            </div>
           </div>
           <div className="flex justify-end">
             <button
@@ -236,30 +225,26 @@ export function TargetAudienceFilterComponent({
         id="targets"
       />
       <RulesSelect
-        menuClassName={classNames(
-          'max-w-full italic',
-          !isTrueOrFalseFilterSelected && 'md:max-w-[100px]',
-        )}
+        menuClassName={classNames('max-w-full italic')}
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
       />
-      {!isTrueOrFalseFilterSelected &&
-        (filterFunction === PublicationFunctions.Regex ? (
-          <RegexParamInput
-            regEx={filterRegexParam}
-            onRegExChange={handleChangeFilterRegexParam}
-          />
-        ) : (
-          <MultipleComboBox
-            initialSelectedItems={filterParams}
-            getItemLabel={getItemLabel}
-            getItemValue={getItemLabel}
-            onChangeSelectedItems={handleChangeFilterParams}
-            placeholder={t('Enter one or more options...') as string}
-          />
-        ))}
+      {filterFunction === PublicationFunctions.Regex ? (
+        <RegexParamInput
+          regEx={filterRegexParam}
+          onRegExChange={handleChangeFilterRegexParam}
+        />
+      ) : (
+        <MultipleComboBox
+          initialSelectedItems={filterParams}
+          getItemLabel={getItemLabel}
+          getItemValue={getItemLabel}
+          onChangeSelectedItems={handleChangeFilterParams}
+          placeholder={t('Enter one or more options...') as string}
+        />
+      )}
       <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
         <div className="flex gap-2">
           <button
