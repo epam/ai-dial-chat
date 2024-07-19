@@ -18,7 +18,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { MIN_TWO_CAL_CHAT_SETTINGS_WIDTH } from '@/src/constants/chat';
+import {
+  MIN_TWO_CAL_CHAT_SETTINGS_WIDTH,
+  REPLAY_AS_IS_MODEL,
+} from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -187,7 +190,7 @@ export const ConversationSettings = ({
           className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
           data-qa="entity-settings"
         >
-          {!conversation.replay?.replayAsIs ? (
+          {modelId !== REPLAY_AS_IS_MODEL ? (
             <>
               {model && model.type === EntityType.Application && (
                 <SettingContainer>
