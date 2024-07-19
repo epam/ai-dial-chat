@@ -16,7 +16,7 @@ import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/id';
+import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -181,9 +181,6 @@ export function PublishModal({
             id: rule.id,
           }))
         : notEmptyFilters;
-      const folderRegExp = new RegExp(
-        entity.folderId.split('/').slice(2).join('/'),
-      );
       const mappedFiles = (entitiesArray as Conversation[])
         .filter((c) =>
           (c.playback?.messagesStack || c.messages || []).some(
@@ -205,10 +202,12 @@ export function PublishModal({
               newUrl: createTargetUrl(
                 FeatureType.File,
                 trimmedPath,
-                constructPath(
-                  ...c.id.split('/').slice(0, -1),
-                  ...decodedOldUrl.split('/').slice(-1),
-                ).replace(folderRegExp, ''),
+                getIdWithoutRootPathSegments(
+                  constructPath(
+                    ...c.id.split('/').slice(0, -1),
+                    ...decodedOldUrl.split('/').slice(-1),
+                  ),
+                ),
                 type,
               ),
             };
@@ -240,7 +239,7 @@ export function PublishModal({
                     trimmedPath,
                     type === SharingType.ConversationFolder ||
                       type === SharingType.PromptFolder
-                      ? item.id.replace(folderRegExp, '')
+                      ? getIdWithoutRootPathSegments(item.id)
                       : item.id,
                     type,
                   ),
@@ -281,7 +280,6 @@ export function PublishModal({
       currentFolderRules,
       dispatch,
       entitiesArray,
-      entity.folderId,
       files,
       onClose,
       otherTargetAudienceFilters,

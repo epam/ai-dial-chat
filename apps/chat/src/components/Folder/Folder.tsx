@@ -35,7 +35,7 @@ import {
   getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
-import { isRootId } from '@/src/utils/app/id';
+import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -1208,7 +1208,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }
           defaultPath={
             isUnpublishing && !isRootId(currentFolder.folderId)
-              ? currentFolder.folderId.split('/').slice(2).join('/')
+              ? getIdWithoutRootPathSegments(currentFolder.folderId)
               : undefined
           }
         />
