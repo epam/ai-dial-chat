@@ -225,7 +225,7 @@ export function TargetAudienceFilterComponent({
         id="targets"
       />
       <RulesSelect
-        menuClassName={classNames('max-w-full italic')}
+        menuClassName="max-w-full italic"
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
