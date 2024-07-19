@@ -20,6 +20,7 @@ import {
 
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
@@ -174,6 +175,7 @@ const dialTest = test.extend<
     attachedAllFiles: FolderFiles;
     conversationAssertion: SideBarEntityAssertion;
     chatBarFolderAssertion: FolderAssertion;
+    errorToastAssertion: ErrorToastAssertion;
     tooltipAssertion: TooltipAssertion;
     confirmationDialogAssertion: ConfirmationDialogAssertion;
     chatBarAssertion: SideBarAssertion;
@@ -593,6 +595,10 @@ const dialTest = test.extend<
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
     const chatBarFolderAssertion = new FolderAssertion(folderConversations);
     await use(chatBarFolderAssertion);
+  },
+  errorToastAssertion: async ({ errorToast }, use) => {
+    const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
+    await use(promptErrorToastAssertion);
   },
   tooltipAssertion: async ({ tooltip }, use) => {
     const tooltipAssertion = new TooltipAssertion(tooltip);

@@ -6,7 +6,7 @@ import {
 } from '@/src/testData';
 import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.only(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
     'Prompt folder: allowed special characters.\n' +
     'Prompt folder: restricted special characters are not entered.\n' +
@@ -23,6 +23,7 @@ dialTest(
     errorToast,
     setTestIds,
     promptBarFolderAssertion,
+    errorToastAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2975',
@@ -67,18 +68,14 @@ dialTest(
     await dialTest.step('Click on confirmation button', async () => {
       await folderPrompts.getEditFolderInputActions().clickTickButton();
 
-      const errorMessage = await errorToast.getElementContent();
-      expect
-        .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
-        .toBe(ExpectedConstants.nameWithDotErrorMessage);
+      await errorToastAssertion.assertToastIsVisible();
+      await errorToastAssertion.assertToastMessage(
+        ExpectedConstants.nameWithDotErrorMessage,
+        ExpectedMessages.notAllowedNameErrorShown,
+      );
 
       // Verify folder name stays in edit mode
-      await expect
-        .soft(
-          folderPrompts.getEditFolderInput().getElementLocator(),
-          ExpectedMessages.folderEditModeIsActive,
-        )
-        .toBeVisible();
+      await promptBarFolderAssertion.assertFolderEditInputState('visible');
 
       // Closing the toast to move forward
       await errorToast.closeToast();
@@ -99,12 +96,7 @@ dialTest(
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         for (const char of ExpectedConstants.restrictedNameChars.split('')) {
           await folderPrompts.editFolderName(char);
-          expect
-            .soft(
-              await folderPrompts.getEditFolderInput().getEditInputValue(),
-              ExpectedMessages.charactersAreNotDisplayed,
-            )
-            .toBe('');
+          await promptBarFolderAssertion.assertFolderEditInputValue('');
         }
       },
     );
@@ -120,12 +112,7 @@ dialTest(
           { name: expectedFolderName },
           'visible',
         );
-        await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.noErrorToastIsShown,
-          )
-          .toBeHidden();
+        errorToastAssertion.assertToastIsHidden();
       },
     );
 
@@ -154,18 +141,16 @@ dialTest(
     await dialTest.step(
       'Prompt folder: name can not be blank or with spaces only',
       async () => {
-        await dialTest.step(`Try to rename folder to "${name}"`, async () => {
-          for (const name of ['', '   ']) {
-            await folderPrompts.openFolderDropdownMenu(newNameWithSpaces);
-            await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-            await folderPrompts.editFolderName(name);
-            await folderPrompts.getEditFolderInputActions().clickTickButton();
-            await promptBarFolderAssertion.assertFolderState(
-              { name: newNameWithSpaces },
-              'visible',
-            );
-          }
-        });
+        for (const name of ['', '   ']) {
+          await folderPrompts.openFolderDropdownMenu(newNameWithSpaces);
+          await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+          await folderPrompts.editFolderName(name);
+          await folderPrompts.getEditFolderInputActions().clickTickButton();
+          await promptBarFolderAssertion.assertFolderState(
+            { name: newNameWithSpaces },
+            'visible',
+          );
+        }
       },
     );
 
@@ -197,12 +182,10 @@ dialTest(
         await folderPrompts.openFolderDropdownMenu(expectedName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderPrompts.editFolderNameWithTick(newNameWithEmojis);
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(newNameWithEmojis),
-            ExpectedMessages.folderNameUpdated,
-          )
-          .toBeVisible();
+        await promptBarFolderAssertion.assertFolderState(
+          { name: newNameWithEmojis },
+          'visible',
+        );
       },
     );
   },
