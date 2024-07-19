@@ -115,24 +115,6 @@ export const ChangePathDialog = ({
 
         return;
       }
-      const selectedFolder = folders.find((f) => f.id === folderId);
-
-      if (!selectedFolder?.temporary) {
-        if (
-          type === SharingType.Conversation ||
-          type === SharingType.ConversationFolder
-        ) {
-          dispatch(
-            ConversationsActions.uploadConversationsWithFolders({
-              ids: [folderId],
-            }),
-          );
-        } else {
-          dispatch(
-            PromptsActions.uploadChildPromptsWithFolders({ ids: [folderId] }),
-          );
-        }
-      }
 
       if (openedFoldersIds.includes(folderId)) {
         const childFoldersIds = getChildAndCurrentFoldersIdsById(
@@ -146,7 +128,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [dispatch, folders, openedFoldersIds, type],
+    [folders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(

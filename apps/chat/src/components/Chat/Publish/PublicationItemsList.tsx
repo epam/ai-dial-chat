@@ -60,9 +60,7 @@ interface Props {
   entities: Entity[];
   files: DialFile[];
   containerClassNames?: string;
-  collapsibleSectionClassNames?: string;
   publishAction: PublishActions;
-  showTooltip?: boolean;
 }
 
 export function PublicationItemsList({
@@ -71,7 +69,6 @@ export function PublicationItemsList({
   entity,
   files,
   containerClassNames,
-  collapsibleSectionClassNames,
   publishAction,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
@@ -128,7 +125,7 @@ export function PublicationItemsList({
           togglerClassName="!text-sm !text-primary"
           name={t('Conversations')}
           openByDefault
-          className={classNames('!pl-0', collapsibleSectionClassNames)}
+          className="!pl-0"
           dataQa="conversations-to-send-request"
         >
           {type === SharingType.Conversation ? (
@@ -195,7 +192,7 @@ export function PublicationItemsList({
           name={t('Files')}
           openByDefault
           dataQa="files-to-send-request"
-          className={classNames('!pl-0', collapsibleSectionClassNames)}
+          className="!pl-0"
         >
           {files.map((f) => (
             <FilesRow
@@ -218,7 +215,7 @@ export function PublicationItemsList({
           name={t('Prompts')}
           openByDefault
           dataQa="prompts-to-send-request"
-          className={classNames('!pl-0', collapsibleSectionClassNames)}
+          className="!pl-0"
         >
           {type === SharingType.Prompt ? (
             <PromptsRow

@@ -35,6 +35,7 @@ import {
   getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
+import { isRootId } from '@/src/utils/app/id';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -1204,6 +1205,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           depth={getFoldersDepth(currentFolder, allFolders)}
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
+          defaultPath={
+            isUnpublishing && !isRootId(currentFolder.folderId)
+              ? currentFolder.folderId.split('/').slice(2).join('/')
+              : undefined
           }
         />
       )}

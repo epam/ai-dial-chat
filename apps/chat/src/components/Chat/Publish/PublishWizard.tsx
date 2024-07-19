@@ -59,12 +59,13 @@ import toLower from 'lodash-es/toLower';
 
 interface Props {
   entity: ShareEntity;
-  entities?: ShareEntity[];
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
-  depth?: number;
   publishAction: PublishActions;
+  entities?: ShareEntity[];
+  depth?: number;
+  defaultPath?: string;
 }
 
 export function PublishModal({
@@ -75,6 +76,7 @@ export function PublishModal({
   depth,
   entities,
   publishAction,
+  defaultPath,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -83,7 +85,7 @@ export function PublishModal({
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const [publishRequestName, setPublishRequestName] = useState('');
-  const [path, setPath] = useState('');
+  const [path, setPath] = useState(defaultPath ?? '');
   const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
@@ -114,12 +116,18 @@ export function PublishModal({
     () => (entities ? entities : [entity]),
     [entities, entity],
   );
-
-  const notCurrentFolderRules = Object.entries(rules).filter(
-    ([rulePath]) => constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+  const notCurrentFolderRules = useMemo(
+    () =>
+      Object.entries(rules).filter(
+        ([rulePath]) =>
+          constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+      ),
+    [path, rules],
   );
-  const currentFolderRules =
-    rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)];
+  const currentFolderRules = useMemo(
+    () => rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)],
+    [path, rules],
+  );
 
   useEffect(() => {
     if (path) {
@@ -347,33 +355,31 @@ export function PublishModal({
         </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
-            <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
-              <div>
-                <label className="mb-4 flex text-sm" htmlFor="requestPath">
-                  {publishAction === PublishActions.DELETE
-                    ? t('Unpublish from')
-                    : t('Publish to')}
-                </label>
-                <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
-                  <div className="flex w-full justify-between truncate whitespace-pre break-all">
-                    <Tooltip
-                      tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
-                      contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-                      triggerClassName="truncate whitespace-pre"
+            <section className="px-3 py-4 md:px-5">
+              <label className="mb-4 flex text-sm" htmlFor="requestPath">
+                {publishAction === PublishActions.DELETE
+                  ? t('Unpublish from')
+                  : t('Publish to')}
+              </label>
+              <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
+                <div className="flex w-full justify-between truncate whitespace-pre break-all">
+                  <Tooltip
+                    tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
+                    contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                    triggerClassName="truncate whitespace-pre"
+                  >
+                    {constructPath(PUBLISHING_FOLDER_NAME, path)}
+                  </Tooltip>
+                  {publishAction !== PublishActions.DELETE && (
+                    <span
+                      className="h-full cursor-pointer text-accent-primary"
+                      onClick={handleFolderChange}
                     >
-                      {constructPath(PUBLISHING_FOLDER_NAME, path)}
-                    </Tooltip>
-                    {publishAction !== PublishActions.DELETE && (
-                      <span
-                        className="h-full cursor-pointer text-accent-primary"
-                        onClick={handleFolderChange}
-                      >
-                        {t('Change')}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              </div>
+                      {t('Change')}
+                    </span>
+                  )}
+                </div>
+              </button>
             </section>
 
             <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
