@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
-import { Inter, Inconsolata } from 'next/font/google';
+import { Inconsolata, Inter } from 'next/font/google';
 
 import classNames from 'classnames';
 
