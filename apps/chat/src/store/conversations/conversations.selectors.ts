@@ -751,3 +751,8 @@ export const selectIsExploreAllConversationsSelected = createSelector(
   [rootSelector],
   (state) => state.isExploreAllApplicationsSelected,
 );
+
+export const selectShouldSelectConversationAfterSaving = createSelector(
+  [rootSelector],
+  (state) => state.shouldSelectConversationAfterSaving,
+);

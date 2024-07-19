@@ -325,6 +325,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
       ),
+      shouldUpdateConversation: payload.shouldUpdateConversation ?? true,
       conversations: ConversationsSelectors.selectConversations(state$.value),
       shouldUploadConversationsForCompare:
         payload.shouldUploadConversationsForCompare,
@@ -336,10 +337,12 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         lastConversation,
         conversations,
         shouldUploadConversationsForCompare,
+        shouldUpdateConversation,
       }) =>
         forkJoin({
           names: of(names),
           modelId: of(modelId),
+          shouldUpdateConversation: of(shouldUpdateConversation),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
               ? ConversationService.getConversation(lastConversation).pipe(
@@ -365,26 +368,24 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             : of(conversations),
         }),
     ),
-    switchMap(({ names, modelId, conversations }) => {
+    switchMap(({ names, modelId, shouldUpdateConversation, conversations }) => {
       const emptyConversation = conversations.find((conv) =>
         conv.name.startsWith(DEFAULT_CONVERSATION_NAME),
       );
-      if (emptyConversation) {
+
+      if (emptyConversation && shouldUpdateConversation) {
         return concat(
           of(
             ConversationsActions.updateConversation({
               id: emptyConversation.id,
               values: {
+                name: DEFAULT_CONVERSATION_NAME,
                 model: { id: modelId || DEFAULT_MODEL_ID },
               },
             }),
           ),
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: [emptyConversation.id],
-            }),
-          ),
           of(ConversationsActions.setIsActiveConversationRequest(false)),
+          of(ConversationsActions.shouldSelectConversationAfterSaving(true)),
         );
       }
 
@@ -401,18 +402,12 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           const model = models[0];
           const conversationRootId = getConversationRootId();
           const newConversations: Conversation[] = names.map(
-            (name: string, index): Conversation => {
+            (name: string): Conversation => {
               return regenerateConversationId({
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
-                    : getNextDefaultName(
-                        DEFAULT_CONVERSATION_NAME,
-                        conversations.filter(
-                          (conv) => conv.folderId === conversationRootId, // only my root conversations
-                        ),
-                        index,
-                      ),
+                    : DEFAULT_CONVERSATION_NAME,
                 messages: [],
                 model: {
                   //PGPT-81: Set GPT3.5 turbo as the default selected model
@@ -892,6 +887,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.createNewConversations({
                   names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  shouldUpdateConversation: false,
                 }),
               ),
             );
@@ -2250,6 +2246,59 @@ const saveConversationEpic: AppEpic = (action$) =>
     }),
   );
 
+const saveConversationSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.saveConversationSuccess.match(action),
+    ),
+    map(() => ({
+      shouldSelectConversationAfterUpdating:
+        ConversationsSelectors.selectShouldSelectConversationAfterSaving(
+          state$.value,
+        ),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
+    })),
+    switchMap(({ shouldSelectConversationAfterUpdating, conversations }) => {
+      if (!shouldSelectConversationAfterUpdating) {
+        return EMPTY;
+      }
+
+      const actions: Observable<AnyAction>[] = [
+        of(ConversationsActions.shouldSelectConversationAfterSaving(false)),
+      ];
+      const newConversation = conversations.find((conv) =>
+        conv.name.includes(DEFAULT_CONVERSATION_NAME),
+      );
+
+      newConversation &&
+        actions.push(
+          of(
+            ConversationsActions.selectConversations({
+              conversationIds: [newConversation.id],
+            }),
+          ),
+        );
+
+      return concat(...actions);
+    }),
+  );
+
+const saveConversationFailEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.saveConversationFail.match(action)),
+    map(() => ({
+      shouldSelectConversationAfterUpdating:
+        ConversationsSelectors.selectShouldSelectConversationAfterSaving(
+          state$.value,
+        ),
+    })),
+    switchMap(({ shouldSelectConversationAfterUpdating }) => {
+      return shouldSelectConversationAfterUpdating
+        ? of(ConversationsActions.shouldSelectConversationAfterSaving(false))
+        : EMPTY;
+    }),
+  );
+
 const recreateConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.recreateConversation.match),
@@ -2708,4 +2757,6 @@ export const ConversationsEpics = combineEpics(
   cleanupIsolatedConversationEpic,
 
   getCustomAttachmentDataEpic,
+  saveConversationSuccessEpic,
+  saveConversationFailEpic,
 );

@@ -34,4 +34,5 @@ export interface ConversationsState {
   initFoldersAndConversations: boolean;
   talkTo?: string;
   isExploreAllApplicationsSelected?: boolean;
+  shouldSelectConversationAfterSaving?: boolean;
 }

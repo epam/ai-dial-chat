@@ -58,6 +58,7 @@ const initialState: ConversationsState = {
   initFoldersAndConversations: false,
   talkTo: '',
   isExploreAllApplicationsSelected: false,
+  shouldSelectConversationAfterSaving: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -188,6 +189,7 @@ export const conversationsSlice = createSlice({
         names: string[];
         modelId?: string;
         shouldUploadConversationsForCompare?: boolean;
+        shouldUpdateConversation?: boolean;
       }>,
     ) => {
       state.isActiveNewConversationRequest = true;
@@ -738,6 +740,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<boolean>,
     ) => {
       state.isExploreAllApplicationsSelected = payload;
+    },
+    shouldSelectConversationAfterSaving: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.shouldSelectConversationAfterSaving = payload;
     },
     uploadChildConversationsWithFoldersSuccess: (
       state,
