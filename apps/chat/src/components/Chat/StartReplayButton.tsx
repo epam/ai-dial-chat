@@ -34,6 +34,7 @@ export const StartReplayButton = () => {
       className="button button-chat"
       onClick={handleReplayStart}
       data-qa="start-replay"
+      data-replay-variables
     >
       <Play height={18} width={18} className="shrink-0 text-secondary" />
       <span>{t('Start replay')}</span>
