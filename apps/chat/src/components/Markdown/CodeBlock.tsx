@@ -8,6 +8,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { programmingLanguages } from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
@@ -78,12 +80,18 @@ export const CodeBlock: FC<Props> = memo(
 
     return (
       <div
-        className={`codeblock relative overflow-hidden rounded border border-secondary font text-sm text-primary`}
+        className={classNames(
+          'codeblock relative overflow-hidden rounded border font text-sm text-primary',
+          isInner ? 'border-primary' : 'border-secondary',
+        )}
       >
         <div
-          className={`flex items-center justify-between border-b border-secondary p-3 ${
-            isInner ? 'bg-layer-3' : 'bg-layer-1'
-          }`}
+          className={classNames(
+            'flex items-center justify-between border-b p-3',
+            isInner
+              ? 'border-primary bg-layer-3'
+              : 'border-secondary bg-layer-1',
+          )}
         >
           <span className="lowercase">{language}</span>
 
