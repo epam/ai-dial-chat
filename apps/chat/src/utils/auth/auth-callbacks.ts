@@ -137,8 +137,14 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
+      const base64Payload = options.account.access_token?.split('.')[1];
+      const decodedPayload: Partial<{ dial_roles: string[] }> = base64Payload
+        ? JSON.parse(atob(base64Payload))
+        : {};
+
       return {
         ...options.token,
+        user: { dial_roles: decodedPayload.dial_roles },
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -175,6 +181,11 @@ export const callbacks: Partial<
       (options.session as Session & { error?: unknown }).error =
         options.token.error;
     }
+
+    if (options.session.user && options.token.user.dial_roles) {
+      options.session.user.dial_roles = options.token.user.dial_roles;
+    }
+
     return options.session;
   },
 };
