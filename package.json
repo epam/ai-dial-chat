@@ -52,7 +52,7 @@
     "downshift": "^8.1.0",
     "eventsource-parser": "^0.1.0",
     "i18next": "^22.4.13",
-    "isomorphic-dompurify": "^1.8.0",
+    "isomorphic-dompurify": "^2.13.0",
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
