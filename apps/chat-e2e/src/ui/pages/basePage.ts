@@ -1,4 +1,5 @@
 import config from '../../../config/chat.playwright.config';
+import { keys } from '../keyboard';
 
 import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
@@ -194,5 +195,16 @@ export class BasePage {
     await method();
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(directory, uploadData.path));
+  }
+
+  public async pasteFromClipboard() {
+    await this.page.keyboard.press(keys.ctrlPlusV);
+  }
+
+  public async copyToClipboard(text: string) {
+    await this.page.evaluate(
+      (text) => navigator.clipboard.writeText(text),
+      text,
+    );
   }
 }
