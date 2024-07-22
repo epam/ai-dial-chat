@@ -165,6 +165,10 @@ export class ChatMessages extends BaseElement {
     );
   }
 
+  public getChatMessageMaxWidth(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.maxWidth);
+  }
+
   public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
