@@ -43,6 +43,10 @@ const getPreparedFilterParams = (
   switch (filterFunction) {
     case PublicationFunctions.Regex:
       return [filterRegexParam];
+    // TODO: uncomment when it will be supported on core
+    // case PublicationFunctions.True:
+    // case PublicationFunctions.False:
+    //   return [];
     default:
       return filterParams.map((param) => param.trim());
   }
@@ -54,6 +58,9 @@ const filterFunctionValues = [
   PublicationFunctions.Contain,
   PublicationFunctions.Equal,
   PublicationFunctions.Regex,
+  // TODO: uncomment when it will be supported on core
+  // PublicationFunctions.True,
+  // PublicationFunctions.False,
 ];
 
 export function TargetAudienceFilterComponent({
@@ -138,6 +145,17 @@ export function TargetAudienceFilterComponent({
     isRegexFilledInButNotSelected ||
     isParamsFilledInButRegexIsSelected;
 
+  // TODO: uncomment when it will be supported on core
+  // const isTrueOrFalseFilterSelected =
+  //   filterFunction === PublicationFunctions.True ||
+  //   filterFunction === PublicationFunctions.False;
+  // const isSaveBtnDisabled = isTrueOrFalseFilterSelected
+  //   ? !isTargetAndFunctionSelected
+  //   : !isTargetAndFunctionSelected ||
+  //     !areSomeFilterParamSelected ||
+  //     isRegexFilledInButNotSelected ||
+  //     isParamsFilledInButRegexIsSelected;
+
   if (isSmallScreen()) {
     return (
       <Modal
@@ -177,6 +195,8 @@ export function TargetAudienceFilterComponent({
                 id="filterFns"
               />
             </div>
+            {/* TODO: uncomment when it will be supported on core */}
+            {/* {!isTrueOrFalseFilterSelected && ( */}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t('Options')}
@@ -200,6 +220,7 @@ export function TargetAudienceFilterComponent({
               )}
             </div>
           </div>
+          {/* )} */}
           <div className="flex justify-end">
             <button
               onClick={handleSaveFilter}
@@ -226,11 +247,18 @@ export function TargetAudienceFilterComponent({
       />
       <RulesSelect
         menuClassName="max-w-full italic"
+        // TODO: uncomment when it will be supported on core
+        // menuClassName={classNames(
+        //   'max-w-full italic',
+        //   !isTrueOrFalseFilterSelected && 'md:max-w-[100px]',
+        // )}
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
       />
+      {/* TODO: uncomment when it will be supported on core */}
+      {/* {!isTrueOrFalseFilterSelected && */}
       {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
           regEx={filterRegexParam}
@@ -245,6 +273,7 @@ export function TargetAudienceFilterComponent({
           placeholder={t('Enter one or more options...') as string}
         />
       )}
+      {/* } */}
       <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
         <div className="flex gap-2">
           <button

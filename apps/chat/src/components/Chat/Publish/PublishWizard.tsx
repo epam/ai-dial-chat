@@ -147,6 +147,9 @@ export function PublishModal({
       const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
+          // TODO: uncomment when it will be supported on core
+          // filter.filterFunction === PublicationFunctions.False ||
+          // filter.filterFunction === PublicationFunctions.True ||
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
       const preparedFilters = currentFolderRules
