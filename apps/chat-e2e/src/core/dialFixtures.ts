@@ -19,8 +19,8 @@ import {
 } from '../ui/webElements';
 
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
-import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
+import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';

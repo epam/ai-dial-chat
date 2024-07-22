@@ -236,15 +236,24 @@ export class FolderAssertion {
   }
 
   public async assertFolderEditInputState(expectedState: ElementState) {
-    const editInputLocator = this.folder.getEditFolderInput().getElementLocator();
+    const editInputLocator = this.folder
+      .getEditFolderInput()
+      .getElementLocator();
     expectedState === 'visible'
-      ? await expect.soft(editInputLocator, ExpectedMessages.folderEditModeIsActive).toBeVisible()
-      : await expect.soft(editInputLocator, ExpectedMessages.folderEditModeIsClosed).toBeHidden();
+      ? await expect
+          .soft(editInputLocator, ExpectedMessages.folderEditModeIsActive)
+          .toBeVisible()
+      : await expect
+          .soft(editInputLocator, ExpectedMessages.folderEditModeIsClosed)
+          .toBeHidden();
   }
 
   public async assertFolderEditInputValue(expectedValue: string) {
-    const inputValue = await this.folder.getEditFolderInput().getEditInputValue();
-    expect.soft(inputValue, ExpectedMessages.charactersAreNotDisplayed).toBe(expectedValue);
+    const inputValue = await this.folder
+      .getEditFolderInput()
+      .getEditInputValue();
+    expect
+      .soft(inputValue, ExpectedMessages.charactersAreNotDisplayed)
+      .toBe(expectedValue);
   }
-  
 }

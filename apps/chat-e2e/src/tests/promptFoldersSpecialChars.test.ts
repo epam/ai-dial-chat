@@ -123,12 +123,9 @@ dialTest.only(
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderPrompts.editFolderName(newNameWithSpaces);
         // Assert that the input field displays the name with spaces
-        expect
-          .soft(
-            await folderPrompts.getEditFolderInput().getEditInputValue(),
-            ExpectedMessages.folderNameUpdated,
-          )
-          .toBe(newNameWithSpaces);
+        await promptBarFolderAssertion.assertFolderEditInputValue(
+          newNameWithSpaces,
+        );
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         // Assert that the folder is renamed with spaces on the panel
         await promptBarFolderAssertion.assertFolderState(
@@ -161,12 +158,9 @@ dialTest.only(
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderPrompts.editFolderName(nameWithSpacesBeforeAndAfter);
         // Assert that the input field displays the name with spaces
-        expect
-          .soft(
-            await folderPrompts.getEditFolderInput().getEditInputValue(),
-            ExpectedMessages.folderNameUpdated,
-          )
-          .toBe(nameWithSpacesBeforeAndAfter);
+        await promptBarFolderAssertion.assertFolderEditInputValue(
+          nameWithSpacesBeforeAndAfter,
+        );
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         // Assert that the folder is renamed with spaces on the panel
         await promptBarFolderAssertion.assertFolderState(
