@@ -1183,8 +1183,8 @@ dialTest(
     );
   },
 );
-
-dialTest(
+// this test is not actual after https://github.com/epam/ai-dial-chat/pull/1809 where the "Clear conversation messages" were hidden for Replay-mode and during message streaming
+dialTest.skip(
   'Chat is in replay mode if while replaying to clear all messages',
   async ({
     dialHomePage,

@@ -289,6 +289,19 @@ export const selectIsReplayRequiresVariables = createSelector(
     return state.isReplayRequiresVariables;
   },
 );
+export const selectWillReplayRequireVariables = createSelector(
+  [selectFirstSelectedConversation],
+  (conversation) => {
+    if (!conversation?.replay) return false;
+    const replay = conversation.replay;
+    return (
+      Object.keys(
+        replay.replayUserMessagesStack?.[replay.activeReplayIndex ?? 0]
+          ?.templateMapping ?? {},
+      ).length > 0
+    );
+  },
+);
 export const selectIsSendMessageAborted = createSelector(
   [selectConversationSignal],
   (state) => {

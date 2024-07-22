@@ -234,4 +234,26 @@ export class FolderAssertion {
       )
       .toBe(expectedColor);
   }
+
+  public async assertFolderEditInputState(expectedState: ElementState) {
+    const editInputLocator = this.folder
+      .getEditFolderInput()
+      .getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(editInputLocator, ExpectedMessages.folderEditModeIsActive)
+          .toBeVisible()
+      : await expect
+          .soft(editInputLocator, ExpectedMessages.folderEditModeIsClosed)
+          .toBeHidden();
+  }
+
+  public async assertFolderEditInputValue(expectedValue: string) {
+    const inputValue = await this.folder
+      .getEditFolderInput()
+      .getEditInputValue();
+    expect
+      .soft(inputValue, ExpectedMessages.charactersAreNotDisplayed)
+      .toBe(expectedValue);
+  }
 }
