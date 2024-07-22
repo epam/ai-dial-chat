@@ -22,4 +22,6 @@ export enum Colors {
   backgroundAccentTertiaryAlphaDark = 'rgba(169, 114, 255, 0.17)',
   backgroundAccentTertiaryAlphaLight = 'rgba(132, 62, 243, 0.1)',
   textAccentTertiaryLight = 'rgb(132, 62, 243)',
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+  controlsTextDisable = 'rgb(51, 57, 66)',
 }

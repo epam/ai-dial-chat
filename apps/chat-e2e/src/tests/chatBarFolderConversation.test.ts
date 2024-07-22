@@ -358,7 +358,7 @@ dialTest(
             conversationInFolder.folders.name,
           );
         expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.folderCaretIsExpanded)
+          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
           .toBeFalsy();
 
         await folderConversations.expandCollapseFolder(
@@ -368,7 +368,7 @@ dialTest(
           conversationInFolder.folders.name,
         );
         expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.folderCaretIsExpanded)
+          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
           .toBeTruthy();
       },
     );
