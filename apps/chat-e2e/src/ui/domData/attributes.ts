@@ -11,7 +11,9 @@ export enum Attributes {
   ariaLabel = 'aria-label',
   visible = 'visible',
   invisible = 'invisible',
-  rotated = 'rotate-90',
+  rotated90 = 'rotate-90',
+  rotated180 = 'rotate-180',
   download = 'download',
   href = 'href',
+  dataQA = 'data-qa',
 }

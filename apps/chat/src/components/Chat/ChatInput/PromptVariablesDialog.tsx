@@ -2,6 +2,7 @@ import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   FormEvent,
   KeyboardEvent,
   useCallback,
@@ -15,24 +16,30 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
+import Tooltip from '../../Common/Tooltip';
 
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
   onClose: () => void;
+  ignoreOutsideClicks?: string;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
   prompt,
   onSubmit,
   onClose,
+  ignoreOutsideClicks,
 }) => {
   const variables = useMemo(
     () => parseVariablesFromContent(prompt.content),
@@ -42,7 +49,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     { key: string; value: string }[]
   >(
     variables
-      .map((variable) => ({ key: variable, value: '' }))
+      .map((variable) => ({ key: variable.name, value: variable.defaultValue }))
       .filter(
         (item, index, array) =>
           array.findIndex((t) => t.key === item.key) === index,
@@ -59,7 +66,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       setUpdatedVariables((prev) => {
         const updated = [...prev];
         updated[index].value = e.target.value;
-        return [...updated];
+        return updated;
       });
     },
     [],
@@ -74,14 +81,30 @@ export const PromptVariablesDialog: FC<Props> = ({
       }
       const content = prompt.content as string;
 
-      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
-        return updatedVariables.find((v) => v.key === variable)?.value ?? '';
-      });
+      const newContent = content.replace(
+        PROMPT_VARIABLE_REGEX,
+        (_, variable) => {
+          return updatedVariables.find((v) => v.key === variable)?.value ?? '';
+        },
+      );
 
       onSubmit(newContent);
       onClose();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
+  );
+
+  const handleOnBlur = useCallback(
+    (index: number, e: FocusEvent<HTMLTextAreaElement>) => {
+      e.target.value = e.target.value.trim();
+      setUpdatedVariables((prev) => {
+        const updated = [...prev];
+        updated[index].value = e.target.value;
+        return updated;
+      });
+      onBlur(e);
+    },
+    [],
   );
 
   const handleKeyDown = useCallback(
@@ -98,6 +121,12 @@ export const PromptVariablesDialog: FC<Props> = ({
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        ignoreOutsideClicks &&
+        hasParentWithAttribute(e.target as Element, ignoreOutsideClicks)
+      ) {
+        return;
+      }
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -108,7 +137,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     return () => {
       window.removeEventListener('click', handleOutsideClick);
     };
-  }, [onClose]);
+  }, [ignoreOutsideClicks, onClose]);
 
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
@@ -128,15 +157,20 @@ export const PromptVariablesDialog: FC<Props> = ({
         data-qa="variable-modal"
         onSubmit={handleSubmit}
       >
-        <div
-          className="mb-4 whitespace-pre text-base font-bold"
-          data-qa="variable-prompt-name"
+        <Tooltip
+          tooltip={prompt.name}
+          contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+          triggerClassName="mb-4 truncate whitespace-pre text-base font-bold block"
+          dataQa="variable-prompt-name"
         >
           {prompt.name}
-        </div>
+        </Tooltip>
 
         {prompt.description && (
-          <div className="mb-5 italic" data-qa="variable-prompt-descr">
+          <div
+            className="mb-5 whitespace-pre-wrap italic"
+            data-qa="variable-prompt-descr"
+          >
             {prompt.description}
           </div>
         )}
@@ -151,7 +185,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>
             <div className="mb-1 flex text-xs text-secondary">
-              {variable.key}
+              <span className="break-all">{variable.key}</span>
               <span className="ml-1 inline text-accent-primary">*</span>
             </div>
 
@@ -167,7 +201,9 @@ export const PromptVariablesDialog: FC<Props> = ({
                 }) as string
               }
               value={variable.value}
-              onBlur={onBlur}
+              onBlur={(e) => {
+                handleOnBlur(index, e);
+              }}
               onChange={(e) => {
                 handleChange(index, e);
               }}

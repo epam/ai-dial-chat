@@ -963,6 +963,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         checked={isSelected}
                         onChange={handleToggleFolder}
                         ref={checkboxRef}
+                        data-qa={
+                          isSelected
+                            ? 'checked'
+                            : isPartialSelected
+                              ? 'partiallyChecked'
+                              : 'unchecked'
+                        }
                       />
                       {isSelected && (
                         <IconCheck

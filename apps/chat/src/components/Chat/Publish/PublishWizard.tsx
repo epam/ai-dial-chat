@@ -147,6 +147,9 @@ export function PublishModal({
       const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
+          // TODO: uncomment when it will be supported on core
+          // filter.filterFunction === PublicationFunctions.False ||
+          // filter.filterFunction === PublicationFunctions.True ||
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
       const preparedFilters = currentFolderRules
@@ -293,7 +296,7 @@ export function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal flex min-h-[579px] min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
+        'group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -338,7 +341,7 @@ export function PublishModal({
               </div>
             </section>
 
-            <section className="flex h-full flex-col px-3 py-4 md:px-5">
+            <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2">
                 {t('Allow access if all match')}
               </h2>
@@ -352,14 +355,14 @@ export function PublishModal({
                 ))
               )}
               {!isRulesLoading && path && (
-                <>
+                <div>
                   <div className="mb-1 text-xs text-secondary">
                     {path.split('/').pop()}
                   </div>
-                  <div className="relative mb-2 flex min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
+                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
                     {otherTargetAudienceFilters.map((item) => (
                       <div className="flex items-center gap-1" key={item.id}>
-                        <div className="flex min-h-[31px] items-center justify-center rounded bg-accent-primary-alpha text-xs">
+                        <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
                           <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
                             <span className="font-semibold">
                               {startCase(toLower(item.id))}
@@ -368,12 +371,12 @@ export function PublishModal({
                               {toLower(item.filterFunction)}
                             </span>
                             {item.filterParams.map((param, index) => (
-                              <div className="flex gap-1" key={index}>
+                              <Fragment key={index}>
                                 {index > 0 && (
                                   <span className="italic">{t('or')}</span>
                                 )}
                                 <span className="font-semibold">{param}</span>
-                              </div>
+                              </Fragment>
                             ))}
                           </div>
                           <IconX
@@ -395,19 +398,21 @@ export function PublishModal({
                     {!isRuleSetterOpened && (
                       <button
                         onClick={() => setIsRuleSetterOpened(true)}
-                        className="flex h-full max-h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
                       >
                         <IconPlus stroke="1" size={18} />
                       </button>
                     )}
-                    <IconX
-                      size={18}
-                      stroke="2"
-                      onClick={() => setOtherTargetAudienceFilters([])}
-                      className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
-                    />
+                    {!!otherTargetAudienceFilters.length && (
+                      <IconX
+                        size={18}
+                        stroke="2"
+                        onClick={() => setOtherTargetAudienceFilters([])}
+                        className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
+                      />
+                    )}
                   </div>
-                </>
+                </div>
               )}
               {!path && (
                 <p className="text-secondary">
@@ -432,7 +437,7 @@ export function PublishModal({
               entities={entities}
               path={path}
               files={files}
-              containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
+              containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={PublishActions.ADD}
             />
           ) : (
@@ -451,7 +456,7 @@ export function PublishModal({
               className="button button-primary py-2"
               onClick={handlePublish}
               data-qa="publish"
-              disabled={!publishRequestName.trim().length}
+              disabled={!publishRequestName.trim().length || isRuleSetterOpened}
             >
               {t('Send request')}
             </button>

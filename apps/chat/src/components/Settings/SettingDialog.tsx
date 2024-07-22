@@ -173,6 +173,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           type="button"
           ref={saveBtnRef}
           className="button button-primary"
+          data-qa="save"
           onClick={handleSave}
         >
           {t('Save')}

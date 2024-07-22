@@ -5,7 +5,9 @@ import { EnumMapper } from '@/src/utils/app/mappers';
 import { FeatureType } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 
+import { selectConversations } from '../conversations/conversations.selectors';
 import { RootState } from '../index';
+import { selectPrompts } from '../prompts/prompts.selectors';
 import { PublicationState } from './publication.reducers';
 
 const rootSelector = (state: RootState): PublicationState => state.publication;
@@ -36,22 +38,30 @@ export const selectFilteredPublicationResources = createSelector(
 
 export const selectSelectedPublication = createSelector(
   [rootSelector],
-  (state) => state.selectedPublication,
+  (state) => {
+    return state.selectedPublication;
+  },
 );
 
 export const selectResourceToReview = createSelector(
   [rootSelector],
-  (state) => state.resourcesToReview,
+  (state) => {
+    return state.resourcesToReview;
+  },
 );
 
 export const selectResourceToReviewByReviewUrl = createSelector(
   [rootSelector, (_state, id: string) => id],
-  (state, id) => state.resourcesToReview.find((r) => r.reviewUrl === id),
+  (state, id) => {
+    return state.resourcesToReview.find((r) => r.reviewUrl === id);
+  },
 );
 
 export const selectResourcesToReviewByPublicationUrl = createSelector(
   [rootSelector, (_state, id: string) => id],
-  (state, id) => state.resourcesToReview.filter((r) => r.publicationUrl === id),
+  (state, id) => {
+    return state.resourcesToReview.filter((r) => r.publicationUrl === id);
+  },
 );
 
 export const selectRulesByPath = createSelector(
@@ -65,7 +75,22 @@ export const selectRulesByPath = createSelector(
   },
 );
 
-export const selectIsRulesLoading = createSelector(
-  [rootSelector],
-  (state) => state.isRulesLoading,
+export const selectIsRulesLoading = createSelector([rootSelector], (state) => {
+  return state.isRulesLoading;
+});
+
+export const selectIsAllItemsUploaded = createSelector(
+  [rootSelector, (_state, featureType: FeatureType) => featureType],
+  (state, featureType) => {
+    return state.allPublishedWithMeItemsUploaded[featureType];
+  },
+);
+
+export const selectNonExistentEntities = createSelector(
+  [selectConversations, selectPrompts],
+  (conversations, prompts) => {
+    return [...conversations, ...prompts].filter(
+      (entity) => entity.publicationInfo?.isNotExist,
+    );
+  },
 );

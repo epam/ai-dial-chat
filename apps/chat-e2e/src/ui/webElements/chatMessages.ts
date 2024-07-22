@@ -1,4 +1,4 @@
-import config from '../../../config/playwright.config';
+import config from '../../../config/chat.playwright.config';
 import {
   ChatSelectors,
   MessageInputSelectors,
@@ -163,6 +163,10 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(
       `${Tags.a}[${Attributes.href}]`,
     );
+  }
+
+  public getChatMessageMaxWidth(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.maxWidth);
   }
 
   public async expandChatMessageAttachment(

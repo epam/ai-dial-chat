@@ -65,6 +65,8 @@ const run = async () => {
     loaderClass: 'overlay__loader',
     // optional, id of the conversation to be selected at the start
     overlayConversationId: 'some-conversation-id',
+    // optional, if DIAL should redirect to sign in in the same browser window
+    signInInSameWindow: false,
   });
 
   // overlay loaded application and ready to send and receive information from the application
@@ -223,3 +225,7 @@ Other epics are self-explanatory.
 
 1. Add `epic` which gets the necessary information.
 2. Send the result to the host using `sendPMEvent`.
+
+### Overlay sandbox
+
+To experiment with overlay, refer to [overlay sandbox samples](https://github.com/epam/ai-dial-chat/tree/development/apps/overlay-sandbox/README.md)

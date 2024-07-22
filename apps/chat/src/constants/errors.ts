@@ -54,8 +54,7 @@ export const errorsMessages = {
   publicationsUploadFailed: 'Publications uploading failed.',
   publicationUploadFailed: 'Publication uploading failed.',
   publicationDeletionFailed: 'Publication deletion failed.',
-  publishedConversationsUploadFailed:
-    'Published conversations uploading failed.',
+  publishedItemsUploadFailed: 'Published items uploading failed.',
   publicationApproveFailed: 'Publication approving failed.',
   publicationRejectFailed: 'Publication rejecting failed.',
   publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',

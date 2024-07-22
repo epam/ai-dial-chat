@@ -372,6 +372,11 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             const models = ModelsSelectors.selectModels(state);
             return models.filter((i) => i?.id === isolatedModelId);
           }
+          if (lastConversation?.model.id) {
+            const lastModelId = lastConversation.model.id;
+            const models = ModelsSelectors.selectModels(state);
+            return models.filter((i) => i?.id === lastModelId);
+          }
           return ModelsSelectors.selectRecentModels(state);
         }),
         filter((models) => models && models.length > 0),
@@ -1670,6 +1675,14 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         );
       }
       const activeMessage = messagesStack[conv.replay?.activeReplayIndex ?? 0];
+
+      if (Object.keys(activeMessage.templateMapping ?? {}).length) {
+        return concat(
+          of(ConversationsActions.setIsReplayRequiresVariables(true)),
+          of(ConversationsActions.stopReplayConversation()),
+        );
+      }
+
       let updatedConversation: Conversation = conv;
 
       if (

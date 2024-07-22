@@ -2,8 +2,11 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
+  getFolderIdFromEntityId,
+  getNextDefaultName,
   getPathToFolderById,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
@@ -21,8 +24,10 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import {
   MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
   PUBLISHING_FOLDER_NAME,
@@ -68,10 +73,23 @@ export const ChangePathDialog = ({
       : { selectors: PromptsSelectors, actions: PromptsActions };
 
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
+
   const folders = useAppSelector((state) =>
-    selectors.selectTemporaryAndFilteredFolders(state, searchQuery),
+    selectors.selectTemporaryAndPublishedFolders(state, searchQuery),
   );
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
+
+  useEffect(() => {
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType:
+          type === SharingType.Conversation ||
+          type === SharingType.ConversationFolder
+            ? FeatureType.Chat
+            : FeatureType.Prompt,
+      }),
+    );
+  }, [dispatch, type]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -97,20 +115,23 @@ export const ChangePathDialog = ({
 
         return;
       }
+      const selectedFolder = folders.find((f) => f.id === folderId);
 
-      if (
-        type === SharingType.Conversation ||
-        type === SharingType.ConversationFolder
-      ) {
-        dispatch(
-          ConversationsActions.uploadConversationsWithFolders({
-            ids: [folderId],
-          }),
-        );
-      } else {
-        dispatch(
-          PromptsActions.uploadChildPromptsWithFolders({ ids: [folderId] }),
-        );
+      if (!selectedFolder?.temporary) {
+        if (
+          type === SharingType.Conversation ||
+          type === SharingType.ConversationFolder
+        ) {
+          dispatch(
+            ConversationsActions.uploadConversationsWithFolders({
+              ids: [folderId],
+            }),
+          );
+        } else {
+          dispatch(
+            PromptsActions.uploadChildPromptsWithFolders({ ids: [folderId] }),
+          );
+        }
       }
 
       if (openedFoldersIds.includes(folderId)) {
@@ -139,6 +160,19 @@ export const ChangePathDialog = ({
   const handleRenameFolder = useCallback(
     (newName: string, folderId: string) => {
       const error = validateFolderRenaming(folders, newName, folderId, false);
+      const newFolderId = constructPath(
+        getFolderIdFromEntityId(folderId),
+        newName,
+      );
+      const mappedFolderIds = folders.map(({ id }) => id);
+
+      if (mappedFolderIds.some((id) => id === newFolderId)) {
+        return;
+      }
+
+      setSelectedFolderId(
+        constructPath(getFolderIdFromEntityId(folderId), newName),
+      );
 
       if (error) {
         setErrorMessage(t(error) as string);
@@ -152,6 +186,18 @@ export const ChangePathDialog = ({
 
   const handleAddFolder = useCallback(
     (parentFolderId: string) => {
+      const folderName = getNextDefaultName(
+        t(DEFAULT_FOLDER_NAME),
+        folders,
+        0,
+        false,
+        true,
+      );
+
+      setSelectedFolderId(
+        constructPath(parentFolderId || rootFolderId, folderName),
+      );
+
       dispatch(
         actions.createTemporaryFolder({
           relativePath: parentFolderId,
@@ -162,7 +208,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
       }
     },
-    [actions, dispatch, openedFoldersIds],
+    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t],
   );
 
   const handleDeleteFolder = useCallback(

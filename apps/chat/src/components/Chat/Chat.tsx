@@ -38,6 +38,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
@@ -47,14 +48,15 @@ import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
+import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { HandlePublication } from './Publish/HandlePublication';
 import { PublicationControls } from './Publish/PublicationChatControls';
+import { PublicationHandler } from './Publish/PublicationHandler';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -95,6 +97,9 @@ export const ChatView = memo(() => {
   const isReplayPaused = useAppSelector(
     ConversationsSelectors.selectIsReplayPaused,
   );
+  const isReplayRequiresVariables = useAppSelector(
+    ConversationsSelectors.selectIsReplayRequiresVariables,
+  );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
@@ -125,12 +130,16 @@ export const ChatView = memo(() => {
   const lastScrollTop = useRef(0);
 
   const showReplayControls = useMemo(() => {
-    return isReplay && !messageIsStreaming && isReplayPaused;
-  }, [isReplay, isReplayPaused, messageIsStreaming]);
+    return (
+      isReplay &&
+      !messageIsStreaming &&
+      (isReplayPaused || !!isReplayRequiresVariables)
+    );
+  }, [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming]);
 
-  const isNotEmptyConversations = selectedConversations.some(
-    (conv) => conv.messages.length > 0,
-  );
+  const isNotEmptyConversations =
+    isReplayRequiresVariables ||
+    selectedConversations.some((conv) => conv.messages.length > 0);
 
   useEffect(() => {
     const modelIds = models.map((model) => model.id);
@@ -334,6 +343,14 @@ export const ChatView = memo(() => {
       conversation: Conversation,
       modelId: string | undefined,
     ): Partial<Conversation> => {
+      if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
+        return {
+          replay: {
+            ...conversation.replay,
+            replayAsIs: true,
+          },
+        };
+      }
       const newAiEntity = modelId ? modelsMap[modelId] : undefined;
       if (!modelId || !newAiEntity) {
         return {};
@@ -369,7 +386,7 @@ export const ChatView = memo(() => {
   const handleSelectModel = useCallback(
     (conversation: Conversation, modelId: string) => {
       const newAiEntity = modelsMap[modelId];
-      if (!newAiEntity) {
+      if (!newAiEntity && modelId !== REPLAY_AS_IS_MODEL) {
         return;
       }
 
@@ -583,7 +600,11 @@ export const ChatView = memo(() => {
   }, []);
 
   const showLastMessageRegenerate =
-    !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
+    !isReplay &&
+    !isPlayback &&
+    !isExternal &&
+    !messageIsStreaming &&
+    !isLastMessageError;
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
 
@@ -647,6 +668,8 @@ export const ChatView = memo(() => {
                                     Feature.TopClearConversation,
                                   ) &&
                                   !isPlayback &&
+                                  !isReplay &&
+                                  !messageIsStreaming &&
                                   !isExternal
                                 }
                                 isShowModelSelect={
@@ -793,7 +816,10 @@ export const ChatView = memo(() => {
                                             Feature.Likes,
                                           )}
                                           editDisabled={
-                                            !!notAllowedType || isExternal
+                                            !!notAllowedType ||
+                                            isExternal ||
+                                            isReplay ||
+                                            isPlayback
                                           }
                                           onEdit={onEditMessage}
                                           onLike={onLikeHandler(index, conv)}
@@ -821,7 +847,11 @@ export const ChatView = memo(() => {
                     </div>
                   </div>
                   {!isPlayback && notAllowedType ? (
-                    <NotAllowedModel type={notAllowedType} />
+                    <NotAllowedModel
+                      showScrollDownButton={showScrollDownButton}
+                      onScrollDownClick={handleScrollDown}
+                      type={notAllowedType}
+                    />
                   ) : (
                     <>
                       {isExternal && selectedConversations.length === 1 && (
@@ -829,6 +859,7 @@ export const ChatView = memo(() => {
                           showScrollDownButton={showScrollDownButton}
                           entity={selectedConversations[0]}
                           onScrollDownClick={handleScrollDown}
+                          controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
                         />
                       )}
 
@@ -951,7 +982,12 @@ export function Chat() {
   );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
-    return <HandlePublication publication={selectedPublication} />;
+    return (
+      <>
+        <PublicationHandler publication={selectedPublication} />
+        <ChatInputFooter />
+      </>
+    );
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {

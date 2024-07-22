@@ -69,7 +69,7 @@ dialTest(
     });
 
     await dialTest.step('Move the prompt to the new folder', async () => {
-      await prompts.openPromptDropdownMenu(prompt.name);
+      await prompts.openEntityDropdownMenu(prompt.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
       await promptDropdownMenu.selectMenuOption(
         ExpectedConstants.newFolderTitle,

@@ -1,18 +1,20 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
+  getChildAndCurrentFoldersById,
   getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
+  sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
-  doesPromptOrConversationContainSearchTerm,
+  doesEntityContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
@@ -46,8 +48,7 @@ export const selectFilteredPrompts = createSelector(
   (prompts, filters, searchTerm?, ignoreSectionFilter?) => {
     return prompts.filter(
       (prompt) =>
-        (!searchTerm ||
-          doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
+        (!searchTerm || doesEntityContainSearchTerm(prompt, searchTerm)) &&
         (filters.searchFilter?.(prompt) ?? true) &&
         (ignoreSectionFilter || (filters.sectionFilter?.(prompt) ?? true)),
     );
@@ -162,7 +163,7 @@ export const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],
   (prompts, searchTerm) => {
     return prompts.filter((prompt) =>
-      doesPromptOrConversationContainSearchTerm(prompt, searchTerm),
+      doesEntityContainSearchTerm(prompt, searchTerm),
     );
   },
 );
@@ -287,21 +288,25 @@ export const selectPublishedWithMeFolders = createSelector(
   },
 );
 
-export const selectTemporaryAndFilteredFolders = createSelector(
+export const selectTemporaryAndPublishedFolders = createSelector(
   [
     selectFolders,
     selectPublishedWithMeFolders,
     selectTemporaryFolders,
     (_state, searchTerm?: string) => searchTerm,
   ],
-  (allFolders, filteredFolders, temporaryFolders, searchTerm = '') => {
-    const filtered = [...filteredFolders, ...temporaryFolders].filter(
-      (folder) => folder.name.includes(searchTerm.toLowerCase()),
+  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
+    const allPublishedFolders = publishedFolders.flatMap((folder) =>
+      getChildAndCurrentFoldersById(folder.id, allFolders),
     );
+    const filteredFolders = [
+      ...sortByName(allPublishedFolders),
+      ...temporaryFolders,
+    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
 
     return getParentAndChildFolders(
-      [...allFolders, ...temporaryFolders],
-      filtered,
+      sortByName([...allFolders, ...temporaryFolders]),
+      filteredFolders,
     );
   },
 );

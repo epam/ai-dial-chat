@@ -4,6 +4,7 @@ export enum VisualizerConnectorEvents {
   initReady = 'INIT_READY',
   ready = 'READY',
   readyToInteract = 'READY_TO_INTERACT',
+  sendMessage = 'SEND_MESSAGE',
 }
 
 export enum VisualizerConnectorRequests {

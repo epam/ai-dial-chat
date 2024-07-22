@@ -24,7 +24,6 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { combineEpics } from 'redux-observable';
 
 import {
-  combineEntities,
   filterOnlyMyEntities,
   isImportEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
@@ -49,9 +48,7 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 import {
-  cleanConversationsFolders,
   cleanData,
-  cleanPromptsFolders,
   exportConversation,
   exportConversations,
   exportPrompt,
@@ -180,26 +177,17 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(
       () => ConversationService.getConversations(undefined, true), //listing of all entities
     ),
-    switchMap((conversationsListing) => {
-      const onlyMyConversationsListing =
-        filterOnlyMyEntities(conversationsListing);
-      const foldersIds = uniq(
-        onlyMyConversationsListing.map((info) => info.folderId),
-      );
-      //calculate all folders;
-      const foldersWithConversation = getFoldersFromIds(
+    switchMap((conversations) => {
+      const foldersIds = uniq(conversations.map((info) => info.folderId));
+      const folders = getFoldersFromIds(
         uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
         FolderType.Chat,
       );
 
-      const allFolders = ConversationsSelectors.selectFolders(state$.value);
-
-      const folders = combineEntities(foldersWithConversation, allFolders);
-
       return forkJoin({
         //get all conversations from api
         conversations: zip(
-          onlyMyConversationsListing.map((info) =>
+          conversations.map((info) =>
             ConversationService.getConversation(info),
           ),
         ),
@@ -264,26 +252,16 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       //listing of all entities
       PromptService.getPrompts(undefined, true),
     ),
-    switchMap((promptsListing) => {
-      const onlyMyPromptsListing = filterOnlyMyEntities(promptsListing);
-      const foldersIds = uniq(
-        onlyMyPromptsListing.map((info) => info.folderId),
-      );
-      //calculate all folders;
-      const foldersWithPrompts = getFoldersFromIds(
+    switchMap((prompts) => {
+      const foldersIds = uniq(prompts.map((info) => info.folderId));
+      const folders = getFoldersFromIds(
         uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
         FolderType.Prompt,
       );
 
-      const allFolders = PromptsSelectors.selectFolders(state$.value);
-
-      const folders = combineEntities(foldersWithPrompts, allFolders);
-
       return forkJoin({
         //get all prompts from api
-        prompts: zip(
-          onlyMyPromptsListing.map((info) => PromptService.getPrompt(info)),
-        ),
+        prompts: zip(prompts.map((info) => PromptService.getPrompt(info))),
         folders: of(folders),
       });
     }),
@@ -452,16 +430,10 @@ const importPromptsEpic: AppEpic = (action$) =>
             },
           );
 
-          const emptyFolders = promptsHistory.folders.filter(
-            (folder) =>
-              !preparedPrompts.some((conv) => conv.folderId === folder.id),
-          );
-
           if (!existedImportNamesPrompts.length) {
             return of(
               ImportExportActions.uploadImportedPrompts({
                 itemsToUpload: nonExistedImportNamesPrompts,
-                folders: emptyFolders,
               }),
             );
           }
@@ -480,12 +452,6 @@ const importPromptsEpic: AppEpic = (action$) =>
               ImportExportActions.showReplaceDialog({
                 duplicatedItems: existedImportNamesPrompts,
                 featureType: FeatureType.Prompt,
-              }),
-            ),
-            of(
-              ImportExportActions.uploadImportedPrompts({
-                itemsToUpload: nonExistedImportNamesPrompts,
-                folders: emptyFolders,
               }),
             ),
           );
@@ -526,25 +492,11 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 FolderType.Chat,
               );
 
-              const cleanFolders = cleanConversationsFolders(
-                payload.folders ?? [],
-              );
-
-              const newFolders = combineEntities(
-                conversationsFolders,
-                cleanFolders,
-              );
-
               const firstImportedConversation = uploadedConversations[0];
 
               const uploadedConversationsFoldersIds = uniq(
                 uploadedConversations.map((info) => info.folderId),
               );
-
-              const importedFoldersIds = cleanFolders.map(
-                (folder) => folder.id,
-              );
-
               const openedFolderIds = UISelectors.selectOpenedFoldersIds(
                 state$.value,
                 FeatureType.Chat,
@@ -556,7 +508,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   ConversationsActions.importConversationsSuccess({
                     conversations: conversationsListing,
-                    folders: newFolders,
+                    folders: conversationsFolders,
                   }),
                 ),
                 of(
@@ -568,7 +520,7 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                   UIActions.setOpenedFoldersIds({
                     openedFolderIds: uniq([
                       ...uploadedConversationsFoldersIds,
-                      ...importedFoldersIds,
+                      ...conversationsFolders.map((folder) => folder.id),
                       ...openedFolderIds,
                     ]),
                     featureType: FeatureType.Chat,
@@ -611,7 +563,8 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ImportExportActions.uploadImportedPrompts.match),
     switchMap(({ payload }) => {
-      const { itemsToUpload, folders } = payload;
+      const { itemsToUpload } = payload;
+
       return from(PromptService.setPrompts(itemsToUpload)).pipe(
         toArray(),
         switchMap(() => {
@@ -634,10 +587,6 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 FolderType.Prompt,
               );
 
-              const cleanFolders = cleanPromptsFolders(folders ?? []);
-
-              const newFolders = combineEntities(promptsFolders, cleanFolders);
-
               const isShowReplaceDialog =
                 ImportExportSelectors.selectIsShowReplaceDialog(state$.value);
 
@@ -645,7 +594,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 of(
                   PromptsActions.importPromptsSuccess({
                     prompts: promptsListing,
-                    folders: newFolders,
+                    folders: promptsFolders,
                   }),
                 ),
 

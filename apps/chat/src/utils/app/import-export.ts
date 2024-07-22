@@ -2,7 +2,7 @@ import { EMPTY, Observable, map, of } from 'rxjs';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-import { Attachment, Conversation, ConversationInfo } from '@/src/types/chat';
+import { Attachment, Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -31,11 +31,7 @@ import { successMessages } from '@/src/constants/successMessages';
 
 import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
-import {
-  combineEntities,
-  isImportEntityNameOnSameLevelUnique,
-  prepareEntityName,
-} from './common';
+import { isImportEntityNameOnSameLevelUnique } from './common';
 import { BucketService } from './data/bucket-service';
 import { ConversationService } from './data/conversation-service';
 import { constructPath, triggerDownload } from './file';
@@ -77,51 +73,6 @@ export const isLatestExportFormat = isExportFormatV5;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
-
-export function cleanFolders({
-  folders,
-  featureType,
-  folderType,
-}: {
-  folders: FolderInterface[];
-  folderType: FolderType;
-  featureType: FeatureType;
-}) {
-  return (folders || []).map((folder) => {
-    const parentFolder = folders.find((parentFolder) => {
-      return parentFolder.id === folder.folderId;
-    });
-    const newFolderId = constructPath(
-      getRootId({ featureType }),
-      parentFolder?.name,
-    );
-
-    const newName = prepareEntityName(folder.name, {
-      trimEndDotsRequired: true,
-    });
-    const newId = constructPath(newFolderId, newName);
-    return {
-      id: newId,
-      name: newName,
-      type: folderType,
-      folderId: newFolderId,
-    };
-  });
-}
-
-export const cleanConversationsFolders = (folders: FolderInterface[]) =>
-  cleanFolders({
-    folders,
-    folderType: FolderType.Chat,
-    featureType: FeatureType.Chat,
-  });
-
-export const cleanPromptsFolders = (folders: FolderInterface[]) =>
-  cleanFolders({
-    folders,
-    folderType: FolderType.Prompt,
-    featureType: FeatureType.Prompt,
-  });
 
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
@@ -318,78 +269,6 @@ export const exportPrompt = (
     folders,
   };
   triggerDownloadPrompt(data, appName);
-};
-
-export interface ImportConversationsResponse {
-  history: ConversationInfo[];
-  folders: FolderInterface[];
-  isError: boolean;
-}
-
-export const importConversations = (
-  importedData: SupportedExportFormats,
-  {
-    currentConversations,
-    currentFolders,
-  }: {
-    currentConversations: ConversationInfo[];
-    currentFolders: FolderInterface[];
-  },
-): ImportConversationsResponse => {
-  const { history, folders, isError } = cleanData(importedData);
-
-  const newHistory: ConversationInfo[] = combineEntities(
-    currentConversations,
-    history,
-  );
-
-  const newFolders: FolderInterface[] = combineEntities(
-    currentFolders,
-    folders,
-  ).filter((folder) => folder.type === FolderType.Chat);
-
-  return {
-    history: newHistory,
-    folders: newFolders,
-    isError,
-  };
-};
-
-export interface ImportPromtsResponse {
-  prompts: Prompt[];
-  folders: FolderInterface[];
-  isError: boolean;
-}
-
-export const importPrompts = (
-  importedData: PromptsHistory,
-  {
-    currentPrompts,
-    currentFolders,
-  }: {
-    currentPrompts: Prompt[];
-    currentFolders: FolderInterface[];
-  },
-): ImportPromtsResponse => {
-  if (!isPromptsFormat(importedData)) {
-    return {
-      prompts: currentPrompts,
-      folders: currentFolders,
-      isError: true,
-    };
-  }
-
-  const newPrompts: Prompt[] = combineEntities(
-    currentPrompts,
-    importedData.prompts,
-  );
-
-  const newFolders: FolderInterface[] = combineEntities(
-    currentFolders,
-    cleanPromptsFolders(importedData.folders),
-  ).filter((folder) => folder.type === FolderType.Prompt);
-
-  return { prompts: newPrompts, folders: newFolders, isError: false };
 };
 
 export const updateAttachment = ({

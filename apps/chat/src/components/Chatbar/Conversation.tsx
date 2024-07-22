@@ -114,6 +114,7 @@ export function ConversationView({
           type="checkbox"
           checked={isChosen}
           onChange={handleToggle}
+          data-qa={isChosen ? 'checked' : 'unchecked'}
         />
         <IconCheck
           size={18}

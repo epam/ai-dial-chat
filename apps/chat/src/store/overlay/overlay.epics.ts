@@ -204,6 +204,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
         enabledFeatures,
         signInOptions,
         overlayConversationId,
+        signInInSameWindow,
       }) => {
         const actions = [];
 
@@ -227,6 +228,12 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
               `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,
             );
           }
+        }
+
+        if (signInInSameWindow) {
+          actions.push(
+            of(SettingsActions.setIsSignInInSameWindow(signInInSameWindow)),
+          );
         }
 
         if (enabledFeatures) {

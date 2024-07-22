@@ -12,7 +12,7 @@ import {
   getConversationRootId,
   isRootConversationsId,
 } from '@/src/utils/app/id';
-import { doesPromptOrConversationContainSearchTerm } from '@/src/utils/app/search';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import {
   isEntityExternal,
   isEntityOrParentsExternal,
@@ -420,7 +420,9 @@ export const conversationsSlice = createSlice({
       const name = payload.name.trim();
 
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
-        folder.id !== payload.folderId ? folder : { ...folder, name },
+        folder.id !== payload.folderId
+          ? folder
+          : { ...folder, name, id: constructPath(folder.folderId, name) },
       );
     },
     resetNewFolderId: (state) => {
@@ -557,6 +559,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversationsIds: string[];
         isRestart?: boolean;
+        isContinue?: boolean;
       }>,
     ) => state,
     replayConversation: (
@@ -566,22 +569,25 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         conversationId: string;
         isRestart?: boolean;
+        isContinue?: boolean;
         activeReplayIndex: number;
       }>,
     ) => {
       state.isReplayPaused = false;
-      state.conversations = (state.conversations as Conversation[]).map(
-        (conv) =>
-          conv.id === payload.conversationId
-            ? {
-                ...conv,
-                replay: {
-                  ...conv.replay,
-                  activeReplayIndex: payload.activeReplayIndex,
-                },
-              }
-            : conv,
-      );
+      if (!payload.isRestart && !payload.isContinue) {
+        state.conversations = (state.conversations as Conversation[]).map(
+          (conv) =>
+            conv.id === payload.conversationId
+              ? {
+                  ...conv,
+                  replay: {
+                    ...conv.replay,
+                    activeReplayIndex: payload.activeReplayIndex,
+                  },
+                }
+              : conv,
+        );
+      }
     },
     stopReplayConversation: (state) => {
       state.isReplayPaused = true;
@@ -593,6 +599,12 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.isReplayPaused = true;
+    },
+    setIsReplayRequiresVariables: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isReplayRequiresVariables = payload;
     },
     playbackNextMessageStart: (state) => {
       state.isPlaybackPaused = false;
@@ -893,7 +905,7 @@ export const conversationsSlice = createSlice({
           .filter(
             (conv) =>
               !isEntityExternal(conv) &&
-              doesPromptOrConversationContainSearchTerm(conv, state.searchTerm),
+              doesEntityContainSearchTerm(conv, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {

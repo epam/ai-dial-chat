@@ -3,7 +3,6 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { FolderInterface } from '@/src/types/folder';
 import {
   MappedReplaceActions,
   Operation,
@@ -153,7 +152,6 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{
         itemsToUpload: Conversation[];
-        folders?: FolderInterface[];
       }>,
     ) => state,
     importPrompts: (
@@ -168,7 +166,6 @@ export const importExportSlice = createSlice({
       state,
       _action: PayloadAction<{
         itemsToUpload: Prompt[];
-        folders?: FolderInterface[];
       }>,
     ) => state,
     showReplaceDialog: (
