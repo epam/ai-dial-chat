@@ -106,3 +106,10 @@ export const SelectFolderModalSelectors = {
   allFolders: '[data-qa="all-folders"]',
   uploadRootFolder: '[data-qa="root-folder"]',
 };
+
+export const AccountSettingsModalSelector = {
+  settingsModal: '[data-qa="settings-modal"]',
+  theme: '[data-qa="theme"]',
+  fullWidthChatToggle: '[data-qa="toggle-switch"]',
+  save: '[data-qa="save"]',
+};

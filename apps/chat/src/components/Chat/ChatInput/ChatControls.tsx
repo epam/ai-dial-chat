@@ -80,6 +80,7 @@ export const ChatControls: FC<Props> = ({
       )}
       onClick={handleReplayReStart}
       data-qa="proceed-reply"
+      data-replay-variables
     >
       <Tooltip
         tooltip={isError ? t('Try again') : t('Continue replay')}

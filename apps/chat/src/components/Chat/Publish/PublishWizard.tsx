@@ -23,11 +23,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import {
-  PublicationFunctions,
-  PublishActions,
-  TargetAudienceFilter,
-} from '@/src/types/publication';
+import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -151,8 +147,9 @@ export function PublishModal({
       const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
-          filter.filterFunction === PublicationFunctions.False ||
-          filter.filterFunction === PublicationFunctions.True ||
+          // TODO: uncomment when it will be supported on core
+          // filter.filterFunction === PublicationFunctions.False ||
+          // filter.filterFunction === PublicationFunctions.True ||
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
       const preparedFilters = currentFolderRules
