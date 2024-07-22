@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 
 import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
-import { Inter } from 'next/font/google';
+import { Inconsolata, Inter } from 'next/font/google';
 
 import classNames from 'classnames';
 
@@ -18,6 +18,11 @@ export const inter = Inter({
   subsets: ['latin'],
   weight: 'variable',
   variable: '--font-inter',
+});
+export const inconsolata = Inconsolata({
+  subsets: ['latin'],
+  weight: 'variable',
+  variable: '--font-inconsolata',
 });
 
 function App({
