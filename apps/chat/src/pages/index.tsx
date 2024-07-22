@@ -349,7 +349,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     customRenderers: customRenderers || [],
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
     isAdminUser: !!(session?.user.dial_roles
-      ? session.user.dial_roles.includes('admin')
+      ? session.user.dial_roles.includes(process.env.ADMIN_ROLE_NAME ?? 'admin')
       : undefined),
   };
 
