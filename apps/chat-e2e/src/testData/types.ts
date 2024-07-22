@@ -4,3 +4,5 @@ export interface TreeEntity {
 }
 
 export type ElementState = 'visible' | 'hidden';
+
+export type ElementCaretState = 'expanded' | 'collapsed';

@@ -152,7 +152,7 @@ export class Folders extends BaseElement {
 
   public async isFolderCaretExpanded(name: string, index?: number) {
     return this.getFolderExpandIcon(name, index)
-      .locator(`.${Attributes.rotated}`)
+      .locator(`.${Attributes.rotated90}`)
       .isVisible();
   }
 
