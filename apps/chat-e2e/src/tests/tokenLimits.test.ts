@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { get_encoding } from '@dqbd/tiktoken';
 
 dialTest(
   'Prompt exceeded the limit is not copied into input message field.\n' +
@@ -21,12 +22,24 @@ dialTest(
     let conversation: Conversation;
     const allModels = ModelsUtil.getModels();
     const randomModel = GeneratorUtil.randomArrayElement(
-      allModels.filter((model) => model.limits?.maxRequestTokens !== undefined),
+      allModels.filter(
+        (model) =>
+          model.limits?.maxRequestTokens !== undefined &&
+          !model.inputAttachmentTypes,
+      ),
     );
     const requestTokensLimit = randomModel.limits?.maxRequestTokens;
     const exceededTokensLengthRequest = [
       ...GeneratorUtil.randomString(requestTokensLimit!),
     ].join(' ');
+    const firstRequestLine = 'hi there' + '\n';
+    let encoding;
+    if (randomModel.tokenizer?.encoding) {
+      encoding = get_encoding(randomModel.tokenizer.encoding);
+    }
+    const firstRequestLineTokens =
+      encoding?.encode(firstRequestLine).length ??
+      new Blob([firstRequestLine]).size;
 
     await dialTest.step(
       'Prepare empty conversation with random model',
@@ -60,14 +73,13 @@ dialTest(
     await dialTest.step(
       'Set short request and request with exceeded tokens count on next line and verify warning popup is displayed, only first request is preserved in the input',
       async () => {
-        const firstRequestLine = 'hi there' + '\n';
         await sendMessage.fillRequestData(firstRequestLine);
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
         await confirmationDialogAssertion.assertConfirmationMessage(
           ExpectedConstants.promptLimitExceededMessage(
             requestTokensLimit!,
-            firstRequestLine.length,
-            requestTokensLimit! - firstRequestLine.length,
+            firstRequestLineTokens,
+            requestTokensLimit! - firstRequestLineTokens,
           ),
         );
         await confirmationDialog.confirm();
