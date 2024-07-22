@@ -487,13 +487,17 @@ export function PublishModal({
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <Tooltip
-            hideTooltip={!!publishRequestName.trim().length}
+            hideTooltip={
+              !!publishRequestName.trim().length &&
+              !isRuleSetterOpened &&
+              !isNothingSelectedAndNoRuleChanges
+            }
             tooltip={
               !publishRequestName.trim().length
                 ? t('Enter a name for the publish request')
                 : isRuleSetterOpened
                   ? t('Accept or reject rule changes')
-                  : t('Nothing is selected and rules not changed')
+                  : t('Nothing is selected and rules have not changed')
             }
           >
             <button
