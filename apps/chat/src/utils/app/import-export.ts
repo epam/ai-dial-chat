@@ -36,7 +36,7 @@ import { BucketService } from './data/bucket-service';
 import { ConversationService } from './data/conversation-service';
 import { constructPath, triggerDownload } from './file';
 import { splitEntityId } from './folders';
-import { getConversationRootId, getFileRootId, getRootId } from './id';
+import { getConversationRootId, getFileRootId } from './id';
 import { translate } from './translation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
