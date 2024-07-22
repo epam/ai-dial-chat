@@ -37,8 +37,9 @@ describe('TargetAudienceFilterComponent', () => {
     PublicationFunctions.Contain,
     PublicationFunctions.Equal,
     PublicationFunctions.Regex,
-    PublicationFunctions.True,
-    PublicationFunctions.False,
+    // TODO: uncomment when it will be supported on core
+    // PublicationFunctions.True,
+    // PublicationFunctions.False,
   ];
 
   const defaultFilterOption = 'Select';
@@ -165,34 +166,35 @@ describe('TargetAudienceFilterComponent', () => {
     });
   });
 
-  it('fires onSaveFilter method with empty filterParams if click on check icon with TRUE filter param', async () => {
-    const selectedFilter = filterValues[3];
-    const selectedTarget = targetValues[0];
+  // TODO: uncomment when it will be supported on core
+  // it('fires onSaveFilter method with empty filterParams if click on check icon with TRUE filter param', async () => {
+  //   const selectedFilter = filterValues[3];
+  //   const selectedTarget = targetValues[0];
 
-    render(
-      <TargetAudienceFilterComponent
-        onSaveFilter={onSaveFilter}
-        onCloseFilter={onCLoseFilter}
-      />,
-    );
+  //   render(
+  //     <TargetAudienceFilterComponent
+  //       onSaveFilter={onSaveFilter}
+  //       onCloseFilter={onCLoseFilter}
+  //     />,
+  //   );
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedTargetOption = screen.getByText(selectedTarget);
-    await userEvent.click(selectedTargetOption);
+  //   await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+  //   const selectedTargetOption = screen.getByText(selectedTarget);
+  //   await userEvent.click(selectedTargetOption);
 
-    await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
-    const selectedFilterOption = screen.getByText(selectedFilter);
-    await userEvent.click(selectedFilterOption);
+  //   await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+  //   const selectedFilterOption = screen.getByText(selectedFilter);
+  //   await userEvent.click(selectedFilterOption);
 
-    const iconCheck = screen.getByTestId('save-filter');
-    await userEvent.click(iconCheck);
+  //   const iconCheck = screen.getByTestId('save-filter');
+  //   await userEvent.click(iconCheck);
 
-    expect(onSaveFilter).toHaveBeenCalledWith({
-      id: selectedTarget,
-      filterFunction: selectedFilter,
-      filterParams: [],
-    });
-  });
+  //   expect(onSaveFilter).toHaveBeenCalledWith({
+  //     id: selectedTarget,
+  //     filterFunction: selectedFilter,
+  //     filterParams: [],
+  //   });
+  // });
 
   it('fires onSaveFilter method if click on check icon with regex value', async () => {
     const selectedFilter = filterValues[2];
