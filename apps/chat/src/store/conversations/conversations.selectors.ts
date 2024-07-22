@@ -756,3 +756,8 @@ export const selectShouldSelectConversationAfterSaving = createSelector(
   [rootSelector],
   (state) => state.shouldSelectConversationAfterSaving,
 );
+
+export const selectShouldClearChatInputContent = createSelector(
+  [rootSelector],
+  (state) => state.shouldClearChatInputContent,
+);

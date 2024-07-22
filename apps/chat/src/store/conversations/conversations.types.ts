@@ -35,4 +35,5 @@ export interface ConversationsState {
   talkTo?: string;
   isExploreAllApplicationsSelected?: boolean;
   shouldSelectConversationAfterSaving?: boolean;
+  shouldClearChatInputContent?: boolean;
 }

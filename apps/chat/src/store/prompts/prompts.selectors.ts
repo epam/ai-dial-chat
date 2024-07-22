@@ -412,3 +412,8 @@ export const selectPublicationFolders = createSelector(
     return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
+
+export const selectPopularPromptsIsLoading = createSelector(
+  [rootSelector],
+  (state) => state.popularPromptsIsLoading,
+);

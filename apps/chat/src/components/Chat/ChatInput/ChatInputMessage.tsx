@@ -150,6 +150,9 @@ export const ChatInputMessage = ({
   const isPromptContentCopying = useAppSelector(
     PromptsSelectors.selectIsPromptContentCopying,
   );
+  const shouldClearChatInputContent = useAppSelector(
+    ConversationsSelectors.selectShouldClearChatInputContent,
+  );
 
   const isPromptHasVariable = (text: string) => {
     const regex = /\{\{.*?\}\}/;
@@ -185,6 +188,14 @@ export const ChatInputMessage = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, selectedPrompt?.content]);
+
+  useEffect(() => {
+    if (shouldClearChatInputContent) {
+      setContent('');
+      dispatch(ConversationsActions.shouldClearChatInputContent(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldClearChatInputContent]);
 
   const isInputEmpty = useMemo(() => {
     return (

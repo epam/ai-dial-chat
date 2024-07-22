@@ -82,3 +82,15 @@ export const APPLICATIONS_DISPLAYING_ORDER: Record<string, string> = {
   [ModelId.HR_BUDDY]: '0',
   [ModelId.RAG]: '1',
 };
+
+export enum HR_BUDDY_PERSONAS {
+  Employee = 'Employee',
+  Manager = 'Manager',
+  HR = 'HR',
+}
+
+export const HR_BUDDY_PERSONAS_DISPLAYING_ORDER: Record<string, number> = {
+  [HR_BUDDY_PERSONAS.Employee]: 0,
+  [HR_BUDDY_PERSONAS.Manager]: 1,
+  [HR_BUDDY_PERSONAS.HR]: 2,
+};

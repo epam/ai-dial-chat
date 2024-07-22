@@ -15,3 +15,6 @@ export * from './UnpinIcon';
 export * from './NewConversationIcon';
 export * from './InfoIcon';
 export * from './PromptIcon';
+export * from './EmployeeIcon';
+export * from './ManagerIcon';
+export * from './HRIcon';

@@ -40,6 +40,9 @@ export const ApplicationMessagesEmpty = ({
           <span>{t('Welcome to the dedicated chatbot for HR Campaigns!')}</span>
         )}
       </div>
+      <div className="mt-5 flex items-center justify-center">
+        <PopularPrompts model={application} />
+      </div>
     </div>
   );
 };

@@ -40,6 +40,7 @@ const initialState: PromptsState = {
   isNewPromptCreating: false,
   isPromptContentCopying: false,
   popularPrompts: [],
+  popularPromptsIsLoading: false,
 };
 
 export const promptsSlice = createSlice({
@@ -407,12 +408,15 @@ export const promptsSlice = createSlice({
     uploadPopularPrompts: (
       state,
       _action: PayloadAction<{ promptsPath: string }>,
-    ) => state,
+    ) => {
+      state.popularPromptsIsLoading = true;
+    },
     setPopularPrompts: (
       state,
-      { payload }: PayloadAction<{ popularPrompts: PromptInfo[] }>,
+      { payload }: PayloadAction<{ popularPrompts: Prompt[] }>,
     ) => {
       state.popularPrompts = payload.popularPrompts;
+      state.popularPromptsIsLoading = false;
     },
   },
 });

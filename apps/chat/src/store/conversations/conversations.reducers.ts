@@ -59,6 +59,7 @@ const initialState: ConversationsState = {
   talkTo: '',
   isExploreAllApplicationsSelected: false,
   shouldSelectConversationAfterSaving: false,
+  shouldClearChatInputContent: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -746,6 +747,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<boolean>,
     ) => {
       state.shouldSelectConversationAfterSaving = payload;
+    },
+    shouldClearChatInputContent: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.shouldClearChatInputContent = payload;
     },
     uploadChildConversationsWithFoldersSuccess: (
       state,

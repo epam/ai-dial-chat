@@ -19,4 +19,5 @@ export interface PromptsState {
   isNewPromptCreating: boolean;
   isPromptContentCopying: boolean;
   popularPrompts: PromptInfo[];
+  popularPromptsIsLoading: boolean;
 }

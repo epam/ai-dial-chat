@@ -1,14 +1,15 @@
 import { IconBulb } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
 import { DialAIEntityModel } from '@/src/types/models';
-import { PromptInfo } from '@/src/types/prompt';
+import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -16,12 +17,21 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY } from '@/src/constants/chat';
+import {
+  HR_BUDDY_PERSONAS,
+  HR_BUDDY_PERSONAS_DISPLAYING_ORDER,
+  ModelId,
+  NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY,
+} from '@/src/constants/chat';
 
-import { take } from 'lodash';
+import Loader from '@/src/components/Common/Loader';
+
+import { EmployeeIcon, HRIcon, ManagerIcon } from '@/src/icons';
+import { sortBy, take } from 'lodash';
 
 interface PopularPromptProps {
-  item: PromptInfo;
+  item: Prompt;
+  selectedPromptId?: string | undefined;
   onPromptClick: (promptId: string) => void;
 }
 
@@ -31,7 +41,7 @@ export const PopularPrompt = ({
 }: PopularPromptProps) => (
   <div
     className={classNames(
-      'rounded-secondary flex h-[110px] w-[150px] cursor-pointer flex-col items-center overflow-hidden border border-secondary bg-layer-2 px-4 py-2 shadow-primary hover:border-tertiary',
+      'flex h-[110px] w-[150px] cursor-pointer flex-col items-center overflow-hidden rounded-secondary border border-secondary bg-layer-2 px-4 py-2 shadow-primary hover:border-tertiary',
     )}
     onClick={() => onPromptClick(prompt.id)}
     data-qa="popular-prompt"
@@ -45,6 +55,54 @@ export const PopularPrompt = ({
   </div>
 );
 
+export const PersonaPrompt = ({
+  item: persona,
+  onPromptClick,
+  selectedPromptId = '',
+}: PopularPromptProps) => {
+  const PersonaIcon = useMemo(
+    () =>
+      persona.name === HR_BUDDY_PERSONAS.Employee
+        ? EmployeeIcon
+        : persona.name === HR_BUDDY_PERSONAS.Manager
+          ? ManagerIcon
+          : HRIcon,
+    [persona.name],
+  );
+
+  const shouldHidePersona = useMemo(
+    () =>
+      (Object.values(HR_BUDDY_PERSONAS) as string[]).some((item) =>
+        selectedPromptId.includes(item),
+      ) && selectedPromptId !== persona.id,
+    [persona.id, selectedPromptId],
+  );
+
+  return (
+    <div
+      className={classNames(
+        'flex h-[125px] w-[150px] cursor-pointer flex-col items-center overflow-hidden rounded-secondary border border-secondary bg-layer-2 px-2.5 py-2 shadow-primary hover:border-tertiary',
+        shouldHidePersona && 'opacity-50',
+        selectedPromptId === persona.id && 'opacity-100',
+      )}
+      onClick={() => onPromptClick(persona.id)}
+      data-qa="popular-prompt"
+    >
+      <div className="flex size-full flex-col items-start">
+        <div className="flex h-[50%] items-center gap-2 pl-2">
+          <PersonaIcon />
+          <span className="text-xs font-medium">{persona.name}</span>
+        </div>
+        <div className="mt-1 flex h-[50%] items-center border-t border-t-pr-grey-200">
+          <p className="overflow-hidden overflow-ellipsis text-left text-xxs leading-4">
+            {persona.description}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -52,13 +110,41 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
   const popularPrompts = useAppSelector(PromptsSelectors.selectPopularPrompts);
   const popularPromptsPaths =
     useAppSelector(SettingsSelectors.selectPopularPromptsPaths) || {};
+  const selectedPromptId = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
+  );
+  const popularPromptsIsLoading = useAppSelector(
+    PromptsSelectors.selectPopularPromptsIsLoading,
+  );
+  const sortedPopularPrompts = useMemo(
+    () =>
+      sortBy(
+        popularPrompts,
+        model.id === ModelId.HR_BUDDY
+          ? (prompt) => HR_BUDDY_PERSONAS_DISPLAYING_ORDER[prompt.name]
+          : 'name',
+      ),
+    [model.id, popularPrompts],
+  );
   const promptsPath = popularPromptsPaths[model.id];
+
+  const clearChatInputContent = (modelId: string) => {
+    if (modelId === ModelId.HR_BUDDY) {
+      dispatch(ConversationsActions.shouldClearChatInputContent(true));
+    }
+  };
 
   useEffect(() => {
     if (!promptsPath) return;
 
     dispatch(PromptsActions.uploadPopularPrompts({ promptsPath }));
-  }, [dispatch, promptsPath]);
+    clearChatInputContent(model.id);
+
+    return () => {
+      dispatch(PromptsActions.setSelectedPrompt({ promptId: '' }));
+      clearChatInputContent(model.id);
+    };
+  }, [dispatch, promptsPath, model.id]);
 
   const onPromptClick = useCallback(
     (promptId: string) => {
@@ -75,16 +161,35 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
 
   if (!promptsPath || !popularPrompts.length) return null;
 
+  if (popularPromptsIsLoading) return <Loader />;
+
   return (
     <div className="flex flex-col gap-5 px-3">
-      <div className="text-center font font-medium md:text-left">
-        {t('Our most popular prompts (questions):')}
+      <div
+        className={classNames(
+          'text-center font',
+          model.id === ModelId.HR_BUDDY
+            ? 'text-xs font-bold text-pr-primary-550 md:text-center'
+            : 'font-medium md:text-left',
+        )}
+      >
+        {model.id === ModelId.HR_BUDDY
+          ? t('Please select your persona')
+          : t('Our most popular prompts (questions):')}
       </div>
       <div className="flex flex-wrap justify-center gap-10">
-        {take(popularPrompts, NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY).map(
+        {take(sortedPopularPrompts, NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY).map(
           (prompt) => (
             <div key={prompt.id}>
-              <PopularPrompt item={prompt} onPromptClick={onPromptClick} />
+              {model.id === ModelId.HR_BUDDY ? (
+                <PersonaPrompt
+                  item={prompt}
+                  onPromptClick={onPromptClick}
+                  selectedPromptId={selectedPromptId.selectedPromptId}
+                />
+              ) : (
+                <PopularPrompt item={prompt} onPromptClick={onPromptClick} />
+              )}
             </div>
           ),
         )}

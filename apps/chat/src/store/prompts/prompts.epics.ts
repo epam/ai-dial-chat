@@ -57,7 +57,6 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
-import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -305,21 +304,22 @@ export const uploadPopularPromptsEpic: AppEpic = (action$) =>
     filter(PromptsActions.uploadPopularPrompts.match),
     switchMap(({ payload }) => {
       return PromptService.getPrompts(payload.promptsPath).pipe(
-        switchMap((prompts) =>
-          of(
-            PromptsActions.setPopularPrompts({
-              popularPrompts: sortBy(prompts, ['name']),
+        switchMap((prompts) => {
+          const requests$ =
+            prompts.length > 0
+              ? forkJoin(
+                  prompts.map((prompt) => PromptService.getPrompt(prompt)),
+                )
+              : of([]);
+
+          return requests$.pipe(
+            switchMap((enrichedPrompts) => {
+              return of(
+                PromptsActions.setPopularPrompts({
+                  popularPrompts: enrichedPrompts as Prompt[],
+                }),
+              );
             }),
-          ),
-        ),
-        catchError((err) => {
-          console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                `An error occurred while uploading popular prompts with path "${payload.promptsPath}"`,
-              ),
-            ),
           );
         }),
       );
