@@ -27,6 +27,7 @@ import { ModelId } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { TourGuideId } from '@/src/constants/share';
 
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -62,7 +63,7 @@ export const NewConversationActionButton = () => {
   return (
     <div className="flex">
       <button
-        className="bg-pr-secondary-550 hover:bg-pr-secondary-650 disabled:bg-pr-secondary-550-alpha mx-5 my-2 flex min-h-[40px] shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-3xl px-3 py-2 font-medium leading-3 transition-colors duration-200 disabled:cursor-not-allowed"
+        className="mx-5 my-2 flex min-h-[40px] shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-3xl bg-pr-secondary-550 px-3 py-2 font-medium leading-3 transition-colors duration-200 hover:bg-pr-secondary-650 disabled:cursor-not-allowed disabled:bg-pr-secondary-550-alpha"
         onClick={() => {
           talkTo && dispatch(ConversationsActions.setTalkTo(''));
           dispatch(
@@ -220,7 +221,16 @@ const FavoriteApplicationActionButton = ({
         }}
         data-qa="all-applications"
       >
-        <AppIcon />
+        {app?.id === ModelId.HR_BUDDY ? (
+          <ModelIcon
+            isCustomTooltip
+            entityId={ModelId.HR_BUDDY}
+            entity={app}
+            size={25}
+          />
+        ) : (
+          <AppIcon />
+        )}
         <span>{app.name}</span>
       </button>
       <ContextMenu
