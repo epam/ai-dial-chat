@@ -1,11 +1,11 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import {
-  LatestExportFormat,
+  MappedReplaceActions,
   Operation,
   PromptsHistory,
   SupportedExportFormats,
@@ -23,43 +23,37 @@ export type AttachmentToUpload = DialFile;
 interface ImportExportState {
   attachmentsIdsToUpload: string[];
   uploadedAttachments: UploadedAttachment[];
+  ignoredAttachmentsIds?: string[];
   nonDuplicatedFiles: DialFile[];
-  importedHistory: LatestExportFormat;
+  importedConversations: Conversation[];
   attachmentsErrors: string[];
   status?: UploadStatus;
   operation?: Operation;
   isPromptsBackedUp: boolean;
   isChatsBackedUp: boolean;
-  conversationsToReplace: Conversation[];
-  promptsToReplace: Prompt[];
+  duplicatedConversations?: Conversation[];
+  duplicatedPrompts: Prompt[];
   duplicatedFiles: DialFile[];
   isShowReplaceDialog: boolean;
   featureType: FeatureType;
-  numberOfRunningOperations: number;
+  mappedActions?: MappedReplaceActions;
 }
 
-const defaultImportedHistory: LatestExportFormat = {
-  version: 5,
-  history: [],
-  folders: [],
-  prompts: [],
-};
 const initialState: ImportExportState = {
   attachmentsIdsToUpload: [],
   uploadedAttachments: [],
   nonDuplicatedFiles: [],
-  importedHistory: defaultImportedHistory,
+  importedConversations: [],
   attachmentsErrors: [],
   isPromptsBackedUp: false,
   isChatsBackedUp: false,
-  conversationsToReplace: [],
-  promptsToReplace: [],
+  duplicatedConversations: [],
+  duplicatedPrompts: [],
   duplicatedFiles: [],
   status: undefined,
   operation: undefined,
   isShowReplaceDialog: false,
   featureType: FeatureType.Chat,
-  numberOfRunningOperations: 0,
 };
 
 export const importExportSlice = createSlice({
@@ -114,7 +108,8 @@ export const importExportSlice = createSlice({
       }: PayloadAction<{
         attachmentsToPostfix: AttachmentToUpload[];
         attachmentsToReplace?: AttachmentToUpload[];
-        completeHistory: LatestExportFormat;
+        ignoredAttachmentsIds?: string[];
+        importedConversations?: Conversation[];
       }>,
     ) => {
       const attachmentsToUpload = [
@@ -122,7 +117,12 @@ export const importExportSlice = createSlice({
         ...(payload.attachmentsToReplace ?? []),
       ];
       state.attachmentsIdsToUpload = attachmentsToUpload.map(({ id }) => id);
-      state.importedHistory = payload.completeHistory;
+      state.ignoredAttachmentsIds = payload.ignoredAttachmentsIds;
+
+      if (payload.importedConversations) {
+        state.importedConversations = payload.importedConversations;
+      }
+
       state.duplicatedFiles = [];
       state.isShowReplaceDialog = false;
     },
@@ -148,15 +148,14 @@ export const importExportSlice = createSlice({
     ) => {
       state.attachmentsErrors = state.attachmentsErrors.concat(payload.id);
     },
+    updateConversationWithUploadedAttachments: (state) => state,
     uploadImportedConversations: (
       state,
       _action: PayloadAction<{
         itemsToUpload: Conversation[];
         folders?: FolderInterface[];
       }>,
-    ) => {
-      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
-    },
+    ) => state,
     importPrompts: (
       state,
       _action: PayloadAction<{ promptsHistory: PromptsHistory }>,
@@ -171,92 +170,87 @@ export const importExportSlice = createSlice({
         itemsToUpload: Prompt[];
         folders?: FolderInterface[];
       }>,
-    ) => {
-      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
-    },
+    ) => state,
     showReplaceDialog: (
       state,
       {
         payload,
       }: PayloadAction<{
-        duplicatedItems: Conversation[] | Prompt[] | DialFile[];
+        duplicatedItems: Conversation[] | Prompt[];
         featureType: FeatureType;
-        completeHistory?: LatestExportFormat;
-        nonDuplicatedFiles?: DialFile[];
       }>,
     ) => {
       state.isShowReplaceDialog = true;
       state.featureType = payload.featureType;
 
       if (payload.featureType === FeatureType.Chat) {
-        state.conversationsToReplace =
+        state.duplicatedConversations =
           payload.duplicatedItems as Conversation[];
       }
 
       if (payload.featureType === FeatureType.Prompt) {
-        state.promptsToReplace = payload.duplicatedItems as Prompt[];
-      }
-
-      if (payload.featureType === FeatureType.File) {
-        state.duplicatedFiles = payload.duplicatedItems as DialFile[];
-        if (payload.nonDuplicatedFiles) {
-          state.nonDuplicatedFiles = payload.nonDuplicatedFiles;
-        }
-      }
-
-      if (payload.completeHistory) {
-        state.importedHistory = payload.completeHistory;
+        state.duplicatedPrompts = payload.duplicatedItems as Prompt[];
       }
     },
-    replaceFeatures: (
-      state,
-      _action: PayloadAction<{
-        itemsToReplace: (DialFile | ConversationInfo | Prompt)[];
-        featureType: FeatureType;
-      }>,
-    ) => {
-      state.status = UploadStatus.LOADING;
-      state.operation = Operation.Importing;
-    },
-    closeReplaceDialog: (state) => {
-      state.isShowReplaceDialog = false;
-    },
-    replaceConversation: (
-      state,
-      _action: PayloadAction<{
-        conversation: Conversation;
-      }>,
-    ) => {
-      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
-    },
-    replacePrompt: (state, _action: PayloadAction<{ prompt: Prompt }>) => {
-      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
-    },
-    handleDuplicatedItems: (
+    showAttachmentsReplaceDialog: (
       state,
       {
         payload,
       }: PayloadAction<{
-        itemsToReplace: Conversation[] | Prompt[];
-        itemsToPostfix: Conversation[] | Prompt[];
-        featureType: FeatureType;
+        duplicatedAttachments: DialFile[];
+        duplicatedConversations?: Conversation[];
+        nonDuplicatedConversations?: Conversation[];
+        nonDuplicatedFiles?: DialFile[];
+      }>,
+    ) => {
+      state.isShowReplaceDialog = true;
+      state.featureType = FeatureType.File;
+
+      state.duplicatedFiles = payload.duplicatedAttachments;
+      state.duplicatedConversations = payload.duplicatedConversations;
+
+      if (payload.nonDuplicatedFiles) {
+        state.nonDuplicatedFiles = payload.nonDuplicatedFiles;
+      }
+
+      if (payload.nonDuplicatedConversations) {
+        state.importedConversations = payload.nonDuplicatedConversations;
+      }
+    },
+
+    closeReplaceDialog: (state) => {
+      state.isShowReplaceDialog = false;
+    },
+
+    replaceConversations: (
+      state,
+      _action: PayloadAction<{
+        conversations: Conversation[];
+      }>,
+    ) => state,
+    replacePrompts: (
+      state,
+      _action: PayloadAction<{
+        prompts: Prompt[];
+      }>,
+    ) => state,
+    continueDuplicatedImport: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        mappedActions: MappedReplaceActions;
       }>,
     ) => {
       state.isShowReplaceDialog = false;
-
-      if (payload.featureType === FeatureType.Chat) {
-        state.conversationsToReplace = [];
-      }
-
-      if (payload.featureType === FeatureType.Prompt) {
-        state.promptsToReplace = [];
-      }
+      state.mappedActions = payload.mappedActions;
     },
-    increaseNumberOfRunningOperations: (state) => {
-      state.numberOfRunningOperations = state.numberOfRunningOperations + 1;
-    },
-    decreaseNumberOfRunningOperations: (state) => {
-      state.numberOfRunningOperations = state.numberOfRunningOperations - 1;
+
+    setImportedConversations: (
+      state,
+      { payload }: PayloadAction<{ importedConversations: Conversation[] }>,
+    ) => {
+      state.importedConversations = payload.importedConversations;
     },
   },
 });
@@ -275,8 +269,8 @@ const selectAttachmentsErrors = createSelector([rootSelector], (state) => {
   return state.attachmentsErrors;
 });
 
-const selectImportedHistory = createSelector([rootSelector], (state) => {
-  return state.importedHistory;
+const selectImportedConversations = createSelector([rootSelector], (state) => {
+  return state.importedConversations;
 });
 
 const selectImportStatus = createSelector([rootSelector], (state) => {
@@ -299,12 +293,15 @@ const selectFeatureType = createSelector([rootSelector], (state) => {
   return state.featureType;
 });
 
-const selectConversationToReplace = createSelector([rootSelector], (state) => {
-  return state.conversationsToReplace;
-});
+const selectDuplicatedConversations = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.duplicatedConversations;
+  },
+);
 
-const selectPromptsToReplace = createSelector([rootSelector], (state) => {
-  return state.promptsToReplace;
+const selectDuplicatedPrompts = createSelector([rootSelector], (state) => {
+  return state.duplicatedPrompts;
 });
 
 const selectDuplicatedFiles = createSelector([rootSelector], (state) => {
@@ -315,28 +312,30 @@ const selectNonDuplicatedFiles = createSelector([rootSelector], (state) => {
   return state.nonDuplicatedFiles;
 });
 
-const selectNumberOfRunningOperations = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.numberOfRunningOperations;
-  },
-);
+const selectIgnoredAttachmentsIds = createSelector([rootSelector], (state) => {
+  return state.ignoredAttachmentsIds;
+});
+
+const selectMappedActions = createSelector([rootSelector], (state) => {
+  return state.mappedActions;
+});
 
 export const ImportExportSelectors = {
   selectAttachmentsIdsToUpload,
   selectUploadedAttachments,
   selectAttachmentsErrors,
-  selectImportedHistory,
+  selectImportedConversations,
   selectImportStatus,
   selectOperationName,
   selectIsLoadingImportExport,
   selectIsShowReplaceDialog,
   selectFeatureType,
-  selectConversationToReplace,
-  selectPromptsToReplace,
+  selectDuplicatedConversations,
+  selectDuplicatedPrompts,
   selectDuplicatedFiles,
   selectNonDuplicatedFiles,
-  selectNumberOfRunningOperations,
+  selectIgnoredAttachmentsIds,
+  selectMappedActions,
 };
 
 export const ImportExportActions = importExportSlice.actions;

@@ -477,6 +477,20 @@ export const getFoldersFromIds = (
   );
 };
 
+export const getEntitiesFoldersFromEntities = (
+  entities: Conversation[] | Prompt[] | DialFile[],
+  folderType: FolderType,
+): FolderInterface[] => {
+  const foldersIds = uniq(entities.map((info) => info.folderId));
+  //calculate all folders;
+  const featuresFolders = getFoldersFromIds(
+    uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
+    folderType,
+  );
+
+  return featuresFolders;
+};
+
 export const sortByName = <T extends Entity>(entities: T[]): T[] =>
   sortBy(entities, (entity) => entity.name.toLowerCase());
 
