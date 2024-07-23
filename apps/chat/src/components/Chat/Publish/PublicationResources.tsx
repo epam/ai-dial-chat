@@ -1,6 +1,11 @@
+import { IconDownload } from '@tabler/icons-react';
+
 import classNames from 'classnames';
 
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
+
+import { constructPath } from '@/src/utils/app/file';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
@@ -99,9 +104,7 @@ export const PromptPublicationResources = ({
               : highlightedFolders
           }
           folderClassName={classNames(readonly && 'h-[38px]')}
-          itemComponentClassNames={classNames(
-            readonly && 'group/prompt-item cursor-pointer',
-          )}
+          itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
           showTooltip={showTooltip}
           isSidePanelFolder={false}
           additionalItemData={additionalItemData}
@@ -110,7 +113,7 @@ export const PromptPublicationResources = ({
       {itemsToDisplay.map((p) =>
         readonly ? (
           <PromptsRow
-            itemComponentClassNames="group/prompt-item cursor-pointer"
+            itemComponentClassNames="cursor-pointer"
             key={p.id}
             item={p}
             level={0}
@@ -186,9 +189,7 @@ export const ConversationPublicationResources = ({
           featureType={FeatureType.Chat}
           highlightedFolders={readonly ? undefined : highlightedFolders}
           folderClassName={classNames(readonly && 'h-[38px]')}
-          itemComponentClassNames={classNames(
-            readonly && 'group/conversation-item cursor-pointer',
-          )}
+          itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
           additionalItemData={additionalItemData}
           showTooltip={showTooltip}
           isSidePanelFolder={false}
@@ -197,7 +198,7 @@ export const ConversationPublicationResources = ({
       {itemsToDisplay.map((c) =>
         readonly ? (
           <ConversationRow
-            itemComponentClassNames="group/conversation-item cursor-pointer"
+            itemComponentClassNames="cursor-pointer"
             key={c.id}
             item={c}
             level={0}
@@ -250,27 +251,58 @@ export const FilePublicationResources = ({
             readonly ? allFolders.map((f) => f.id) : openedFoldersIds
           }
           allItems={folderItemsToDisplay}
-          itemComponent={readonly ? FilesRow : FileItem}
+          itemComponent={(props) =>
+            readonly ? (
+              <div key={f.id} className="flex items-center gap-2">
+                <FilesRow
+                  {...props}
+                  itemComponentClassNames={classNames(
+                    'w-full',
+                    props.itemComponentClassNames,
+                  )}
+                />
+                <a
+                  download={f.name}
+                  href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+                >
+                  <IconDownload
+                    className="shrink-0 text-secondary hover:text-accent-primary"
+                    size={18}
+                  />
+                </a>
+              </div>
+            ) : (
+              <FileItem {...props} />
+            )
+          }
           onClickFolder={(folderId: string) => {
             if (readonly) return;
             dispatch(FilesActions.getFolders({ id: folderId }));
           }}
           featureType={FeatureType.File}
           folderClassName={classNames(readonly && 'h-[38px]')}
-          itemComponentClassNames={classNames(
-            readonly && 'group/file-item cursor-pointer',
-          )}
+          itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
           showTooltip={showTooltip}
         />
       ))}
       {itemsToDisplay.map((f) =>
         readonly ? (
-          <FilesRow
-            itemComponentClassNames="group/file-item cursor-pointer"
-            key={f.id}
-            item={f}
-            level={0}
-          />
+          <div key={f.id} className="flex items-center gap-2">
+            <FilesRow
+              itemComponentClassNames="cursor-pointer w-full"
+              item={f}
+              level={0}
+            />
+            <a
+              download={f.name}
+              href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+            >
+              <IconDownload
+                className="shrink-0 text-secondary hover:text-accent-primary"
+                size={18}
+              />
+            </a>
+          </div>
         ) : (
           <FileItem key={f.id} item={f} level={1} />
         ),
