@@ -668,6 +668,8 @@ export const ChatView = memo(() => {
                                     Feature.TopClearConversation,
                                   ) &&
                                   !isPlayback &&
+                                  !isReplay &&
+                                  !messageIsStreaming &&
                                   !isExternal
                                 }
                                 isShowModelSelect={
