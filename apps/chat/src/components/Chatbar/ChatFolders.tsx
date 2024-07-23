@@ -51,6 +51,8 @@ interface ChatFolderProps {
   includeEmpty: boolean;
 }
 
+const publicationFeatureTypes = [FeatureType.Chat, FeatureType.File];
+
 const ChatFolderTemplate = ({
   folder,
   isLast,
@@ -377,7 +379,10 @@ export function ChatFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, FeatureType.Chat),
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      publicationFeatureTypes,
+    ),
   );
 
   const toApproveFolderItem = {
@@ -421,7 +426,8 @@ export function ChatFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          featureType={FeatureType.Chat}
+          featureTypes={[FeatureType.Chat, FeatureType.File]}
+          publicationItems={publicationItems}
           {...toApproveFolderItem}
         />
       )}

@@ -118,6 +118,7 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
   canSelectFolders?: boolean;
+  isSelectAlwaysVisible?: boolean;
   showTooltip?: boolean;
   isSidePanelFolder?: boolean;
 }
@@ -156,6 +157,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   itemComponentClassNames,
   canSelectFolders = false,
+  isSelectAlwaysVisible = false,
   showTooltip,
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
@@ -769,9 +771,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isHighlighted =
     isRenaming ||
     isContextMenu ||
-    ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+    (((additionalItemData?.selectedFolderIds as string[]) || []).includes(
       `${currentFolder.id}/`,
-    ) ||
+    ) &&
+      !isSelectAlwaysVisible) ||
     (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
 
   const hideContextMenu =
@@ -932,20 +935,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               <Spinner className="mr-1" />
             ) : (
               <>
-                {!isSelected && !isPartialSelected && (
-                  <ShareIcon
-                    {...currentFolder}
-                    isHighlighted={isContextMenu}
-                    featureType={featureType}
-                    containerClassName={
-                      (!isExternal || !isSidePanelFolder) && canSelectFolders
-                        ? 'group-hover/folder-item:hidden'
-                        : ''
-                    }
-                  >
-                    <IconFolder size={18} className="mr-1 text-secondary" />
-                  </ShareIcon>
-                )}
                 {canSelectFolders &&
                   ((!isExternal &&
                     !loadingFolderIds.includes(currentFolder.id)) ||
@@ -953,7 +942,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     <div
                       className={classNames(
                         'relative mr-1 size-[18px] group-hover/folder-item:flex',
-                        isSelected || isPartialSelected ? 'flex' : 'hidden',
+                        isSelected || isPartialSelected || isSelectAlwaysVisible
+                          ? 'flex'
+                          : 'hidden',
                       )}
                       data-item-checkbox
                     >
@@ -985,6 +976,23 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                     </div>
                   )}
+                {(isSelectAlwaysVisible ||
+                  (!isSelected && !isPartialSelected)) && (
+                  <ShareIcon
+                    {...currentFolder}
+                    isHighlighted={isContextMenu}
+                    featureType={featureType}
+                    containerClassName={
+                      (!isExternal || !isSidePanelFolder) &&
+                      canSelectFolders &&
+                      !isSelectAlwaysVisible
+                        ? 'group-hover/folder-item:hidden'
+                        : ''
+                    }
+                  >
+                    <IconFolder size={18} className="mr-1 text-secondary" />
+                  </ShareIcon>
+                )}
               </>
             )}
             <div
@@ -1149,6 +1157,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
                     canSelectFolders={canSelectFolders}
+                    isSelectAlwaysVisible={isSelectAlwaysVisible}
                     showTooltip={showTooltip}
                     isSidePanelFolder={isSidePanelFolder}
                     onSelectFolder={onSelectFolder}

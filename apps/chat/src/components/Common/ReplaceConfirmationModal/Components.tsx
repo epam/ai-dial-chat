@@ -149,12 +149,7 @@ const ConversationView = ({
   return (
     <FeatureContainer>
       {onSelect && (
-        <div
-          className={classNames(
-            'relative size-[18px] shrink-0 group-hover/conversation-item:flex',
-            !isChosen ? 'hidden' : 'flex',
-          )}
-        >
+        <div className="relative flex size-[18px] shrink-0">
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
@@ -169,30 +164,23 @@ const ConversationView = ({
           />
         </div>
       )}
-      <div
-        className={classNames(
-          onSelect && 'group-hover/conversation-item:hidden',
-          onSelect && isChosen && 'hidden',
-        )}
-      >
-        {conversation.isReplay && (
-          <span className="flex shrink-0">
-            <ReplayAsIsIcon size={18} />
-          </span>
-        )}
-        {conversation.isPlayback && (
-          <span className="flex shrink-0">
-            <PlaybackIcon size={18} />
-          </span>
-        )}
-        {!conversation.isReplay && !conversation.isPlayback && (
-          <ModelIcon
-            size={18}
-            entityId={conversation.model.id}
-            entity={modelsMap[conversation.model.id]}
-          />
-        )}
-      </div>
+      {conversation.isReplay && (
+        <span className="flex shrink-0">
+          <ReplayAsIsIcon size={18} />
+        </span>
+      )}
+      {conversation.isPlayback && (
+        <span className="flex shrink-0">
+          <PlaybackIcon size={18} />
+        </span>
+      )}
+      {!conversation.isReplay && !conversation.isPlayback && (
+        <ModelIcon
+          size={18}
+          entityId={conversation.model.id}
+          entity={modelsMap[conversation.model.id]}
+        />
+      )}
       <Tooltip
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
@@ -252,12 +240,7 @@ const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
   return (
     <FeatureContainer>
       {onSelect && (
-        <div
-          className={classNames(
-            'relative size-[18px] shrink-0 group-hover/prompt-item:flex',
-            !isChosen ? 'hidden' : 'flex',
-          )}
-        >
+        <div className="relative flex size-[18px] shrink-0">
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
@@ -272,13 +255,7 @@ const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
           />
         </div>
       )}
-      <span
-        className={classNames(
-          onSelect && 'group-hover/prompt-item:hidden',
-          onSelect && isChosen && 'hidden',
-          'flex shrink-0',
-        )}
-      >
+      <span className="flex shrink-0">
         <IconBulb size={18} className="text-secondary" />
       </span>
       <Tooltip
@@ -336,12 +313,7 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
   return (
     <FeatureContainer>
       {onSelect && (
-        <div
-          className={classNames(
-            'relative size-[18px] shrink-0 group-hover/file-item:flex',
-            !isChosen ? 'hidden' : 'flex',
-          )}
-        >
+        <div className={'relative flex size-[18px] shrink-0'}>
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
@@ -356,13 +328,7 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
           />
         </div>
       )}
-      <span
-        className={classNames(
-          onSelect && 'group-hover/file-item:hidden',
-          onSelect && isChosen && 'hidden',
-          'flex shrink-0',
-        )}
-      >
+      <span className="flex shrink-0">
         <IconFile size={18} className="text-secondary" />
       </span>
       <Tooltip

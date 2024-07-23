@@ -51,6 +51,9 @@ interface promptFolderProps {
   allowHighlight?: boolean;
 }
 
+// TODO: add applications when be ready
+const publicationFeatureTypes = [FeatureType.Prompt];
+
 const PromptFolderTemplate = ({
   folder,
   isLast,
@@ -355,7 +358,11 @@ export function PromptFolders() {
     SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, FeatureType.Prompt),
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      publicationFeatureTypes,
+      true,
+    ),
   );
 
   const toApproveFolderItem = {
@@ -406,7 +413,8 @@ export function PromptFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          featureType={FeatureType.Prompt}
+          featureTypes={[FeatureType.Prompt]}
+          publicationItems={publicationItems}
           {...toApproveFolderItem}
         />
       )}

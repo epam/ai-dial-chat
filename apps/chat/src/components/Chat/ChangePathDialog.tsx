@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -74,19 +74,31 @@ export const ChangePathDialog = ({
 
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
 
-  const folders = useAppSelector((state) =>
-    selectors.selectTemporaryAndPublishedFolders(state, searchQuery),
+  const conversationFolders = useAppSelector((state) =>
+    ConversationsSelectors.selectTemporaryAndPublishedFolders(
+      state,
+      searchQuery,
+    ),
+  );
+  const promptFolders = useAppSelector((state) =>
+    PromptsSelectors.selectTemporaryAndPublishedFolders(state, searchQuery),
   );
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
+
+  const folders = useMemo(
+    () => [...conversationFolders, ...promptFolders],
+    [conversationFolders, promptFolders],
+  );
 
   useEffect(() => {
     dispatch(
       PublicationActions.uploadAllPublishedWithMeItems({
-        featureType:
-          type === SharingType.Conversation ||
-          type === SharingType.ConversationFolder
-            ? FeatureType.Chat
-            : FeatureType.Prompt,
+        featureType: FeatureType.Chat,
+      }),
+    );
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType: FeatureType.Prompt,
       }),
     );
   }, [dispatch, type]);
@@ -256,6 +268,7 @@ export const ChangePathDialog = ({
           highlightTemporaryFolders
           rootFolderName={PUBLISHING_FOLDER_NAME}
           rootFolderId={rootFolderId}
+          showAllRootFolders
         />
       </SelectFolderHeader>
       <SelectFolderFooter

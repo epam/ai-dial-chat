@@ -181,6 +181,7 @@ export function PublicationItemsList({
               }}
               showTooltip
               canSelectFolders
+              isSelectAlwaysVisible
               isSidePanelFolder={false}
             />
           )}
@@ -259,6 +260,7 @@ export function PublicationItemsList({
               }}
               showTooltip
               canSelectFolders
+              isSelectAlwaysVisible
               onSelectFolder={(folderId) => {
                 handleSelect(
                   filterItems({

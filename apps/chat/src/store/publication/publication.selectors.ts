@@ -23,12 +23,23 @@ export const selectPublications = createSelector([rootSelector], (state) => {
 });
 
 export const selectFilteredPublications = createSelector(
-  [rootSelector, (_state, featureType: FeatureType) => featureType],
-  (state, featureType) => {
-    return state.publications.filter((p) =>
-      p.resourceTypes.includes(
-        EnumMapper.getBackendResourceTypeByFeatureType(featureType),
-      ),
+  [
+    rootSelector,
+    (_state, featureTypes: FeatureType[]) => featureTypes,
+    (_state, _featureTypes, includeEmptyResourceTypes?: boolean) =>
+      includeEmptyResourceTypes,
+  ],
+  (state, featureTypes, includeEmptyResourceTypes) => {
+    return state.publications.filter(
+      (p) =>
+        p.resourceTypes.some((resourceType) =>
+          featureTypes
+            .map((featureType) =>
+              EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+            )
+            .includes(resourceType),
+        ) ||
+        (includeEmptyResourceTypes && !p.resourceTypes.length),
     );
   },
 );
