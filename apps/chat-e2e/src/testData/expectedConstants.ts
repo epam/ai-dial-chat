@@ -334,9 +334,15 @@ export enum Rate {
 }
 
 export enum Theme {
-  light = 'light',
   dark = 'dark',
+  light = 'light',
 }
+
+export const toTitleCase = (str: string): string =>
+  str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
+  );
 
 export enum ResultFolder {
   allureChatReport = 'allure-chat-results',
@@ -361,4 +367,8 @@ export enum CheckboxState {
   checked = 'checked',
   unchecked = 'unchecked',
   partiallyChecked = 'partiallyChecked',
+}
+export enum ToggleState {
+  on = 'ON',
+  off = 'OFF',
 }

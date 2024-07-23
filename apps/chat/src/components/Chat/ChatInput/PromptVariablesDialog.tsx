@@ -16,6 +16,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -30,13 +31,15 @@ import Tooltip from '../../Common/Tooltip';
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
-  onClose?: () => void;
+  onClose: () => void;
+  ignoreOutsideClicks?: string;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
   prompt,
   onSubmit,
   onClose,
+  ignoreOutsideClicks,
 }) => {
   const variables = useMemo(
     () => parseVariablesFromContent(prompt.content),
@@ -86,7 +89,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       );
 
       onSubmit(newContent);
-      onClose?.();
+      onClose();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
   );
@@ -110,7 +113,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         e.preventDefault();
         handleSubmit(e);
       } else if (e.key === 'Escape') {
-        onClose?.();
+        onClose();
       }
     },
     [handleSubmit, onClose],
@@ -118,8 +121,14 @@ export const PromptVariablesDialog: FC<Props> = ({
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        ignoreOutsideClicks &&
+        hasParentWithAttribute(e.target as Element, ignoreOutsideClicks)
+      ) {
+        return;
+      }
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose?.();
+        onClose();
       }
     };
 
@@ -128,7 +137,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     return () => {
       window.removeEventListener('click', handleOutsideClick);
     };
-  }, [onClose]);
+  }, [ignoreOutsideClicks, onClose]);
 
   const inputClassName = classNames('input-form', 'peer', {
     'input-invalid': submitted,
@@ -166,14 +175,12 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        {onClose && (
-          <button
-            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-            onClick={onClose}
-          >
-            <IconX size={24} />
-          </button>
-        )}
+        <button
+          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+          onClick={onClose}
+        >
+          <IconX size={24} />
+        </button>
 
         {updatedVariables.map((variable, index) => (
           <div className="mb-4" key={variable.key}>

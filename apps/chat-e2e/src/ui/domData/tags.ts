@@ -14,4 +14,5 @@ export enum Tags {
   tbody = 'tbody',
   td = 'td',
   html = 'html',
+  label = 'label',
 }

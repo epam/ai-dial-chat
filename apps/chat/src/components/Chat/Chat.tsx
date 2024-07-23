@@ -38,6 +38,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
@@ -342,6 +343,14 @@ export const ChatView = memo(() => {
       conversation: Conversation,
       modelId: string | undefined,
     ): Partial<Conversation> => {
+      if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
+        return {
+          replay: {
+            ...conversation.replay,
+            replayAsIs: true,
+          },
+        };
+      }
       const newAiEntity = modelId ? modelsMap[modelId] : undefined;
       if (!modelId || !newAiEntity) {
         return {};
@@ -377,7 +386,7 @@ export const ChatView = memo(() => {
   const handleSelectModel = useCallback(
     (conversation: Conversation, modelId: string) => {
       const newAiEntity = modelsMap[modelId];
-      if (!newAiEntity) {
+      if (!newAiEntity && modelId !== REPLAY_AS_IS_MODEL) {
         return;
       }
 
@@ -659,6 +668,8 @@ export const ChatView = memo(() => {
                                     Feature.TopClearConversation,
                                   ) &&
                                   !isPlayback &&
+                                  !isReplay &&
+                                  !messageIsStreaming &&
                                   !isExternal
                                 }
                                 isShowModelSelect={
