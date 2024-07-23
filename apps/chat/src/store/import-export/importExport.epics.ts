@@ -656,24 +656,28 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           }
         });
 
-        if (conversationsToPostfix.length) {
-          actions.push(
-            of(
-              ImportExportActions.uploadImportedConversations({
-                itemsToUpload: conversationsToPostfix,
-              }),
-            ),
-          );
-        }
+        if (!conversationsToPostfix.length && !conversationsToReplace.length) {
+          actions.push(of(ImportExportActions.resetState()));
+        } else {
+          if (conversationsToPostfix.length) {
+            actions.push(
+              of(
+                ImportExportActions.uploadImportedConversations({
+                  itemsToUpload: conversationsToPostfix,
+                }),
+              ),
+            );
+          }
 
-        if (conversationsToReplace.length) {
-          actions.push(
-            of(
-              ImportExportActions.replaceConversations({
-                conversations: conversationsToReplace,
-              }),
-            ),
-          );
+          if (conversationsToReplace.length) {
+            actions.push(
+              of(
+                ImportExportActions.replaceConversations({
+                  conversations: conversationsToReplace,
+                }),
+              ),
+            );
+          }
         }
       }
 
@@ -695,24 +699,28 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           }
         });
 
-        if (promptsToReplace.length) {
-          actions.push(
-            of(
-              ImportExportActions.replacePrompts({
-                prompts: promptsToReplace,
-              }),
-            ),
-          );
-        }
+        if (!promptsToPostfix.length && !promptsToReplace.length) {
+          actions.push(of(ImportExportActions.resetState()));
+        } else {
+          if (promptsToReplace.length) {
+            actions.push(
+              of(
+                ImportExportActions.replacePrompts({
+                  prompts: promptsToReplace,
+                }),
+              ),
+            );
+          }
 
-        if (promptsToPostfix.length) {
-          actions.push(
-            of(
-              ImportExportActions.uploadImportedPrompts({
-                itemsToUpload: promptsToPostfix,
-              }),
-            ),
-          );
+          if (promptsToPostfix.length) {
+            actions.push(
+              of(
+                ImportExportActions.uploadImportedPrompts({
+                  itemsToUpload: promptsToPostfix,
+                }),
+              ),
+            );
+          }
         }
       }
 
@@ -740,9 +748,26 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
         });
 
         if (!attachmentsToPostfix.length && !attachmentsToReplace.length) {
-          actions.push(
-            of(ImportExportActions.updateConversationWithUploadedAttachments()),
-          );
+          const duplicatedConversations =
+            ImportExportSelectors.selectDuplicatedConversations(state$.value);
+          const importedConversations =
+            ImportExportSelectors.selectImportedConversations(state$.value);
+
+          const conversationToUpload =
+            importedConversations[0] ?? duplicatedConversations?.[0];
+
+          const duplicateAction =
+            payload.mappedActions?.[conversationToUpload.id];
+
+          if (duplicateAction === ReplaceOptions.Ignore) {
+            actions.push(of(ImportExportActions.resetState()));
+          } else {
+            actions.push(
+              of(
+                ImportExportActions.updateConversationWithUploadedAttachments(),
+              ),
+            );
+          }
         } else {
           actions.push(
             of(
@@ -1071,6 +1096,7 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
     filter(ImportExportActions.uploadConversationAttachments.match),
     switchMap(({ payload }) => {
       const { attachmentsToPostfix, attachmentsToReplace } = payload;
+
       const bucket = BucketService.getBucket();
 
       if (!bucket.length) {
