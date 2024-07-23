@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -36,10 +36,6 @@ const ReplayVariablesDialog = () => {
     ConversationsSelectors.selectFirstSelectedConversation,
   );
 
-  const isReplayRequiresVariables = useAppSelector(
-    ConversationsSelectors.selectIsReplayRequiresVariables,
-  );
-
   const activeMessage =
     conversation?.replay?.replayUserMessagesStack?.[
       conversation?.replay?.activeReplayIndex ?? 0
@@ -48,13 +44,6 @@ const ReplayVariablesDialog = () => {
   const handleClose = useCallback(() => {
     dispatch(ConversationsActions.setIsReplayRequiresVariables(false));
   }, [dispatch]);
-
-  const onCloseRef = useRef<() => void>();
-  useEffect(() => {
-    if (isReplayRequiresVariables) {
-      onCloseRef.current = handleClose;
-    }
-  }, [handleClose, isReplayRequiresVariables]);
 
   const handleContentApply = useCallback(
     (newContent: string) => {
@@ -116,7 +105,8 @@ const ReplayVariablesDialog = () => {
     <PromptVariablesDialog
       prompt={prompt}
       onSubmit={handleContentApply}
-      onClose={onCloseRef.current}
+      onClose={handleClose}
+      ignoreOutsideClicks="data-replay-variables"
     />
   );
 };

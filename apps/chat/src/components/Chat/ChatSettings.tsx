@@ -7,6 +7,7 @@ import { DialAIEntityAddon } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -40,7 +41,9 @@ export const ChatSettings = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [currentModelId, setCurrentModelId] = useState<string>(modelId);
+  const [currentModelId, setCurrentModelId] = useState<string>(
+    conversation.replay?.replayAsIs ? REPLAY_AS_IS_MODEL : modelId,
+  );
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
