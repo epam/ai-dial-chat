@@ -11,7 +11,7 @@ export interface UploadDownloadData {
 }
 
 const apiTimeout = 35000;
-const responseThrottlingTimeout = 2500;
+export const responseThrottlingTimeout = 2500;
 
 export class BasePage {
   protected page: Page;
