@@ -27,7 +27,6 @@ import { ModelId } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { TourGuideId } from '@/src/constants/share';
 
-import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -221,16 +220,7 @@ const FavoriteApplicationActionButton = ({
         }}
         data-qa="all-applications"
       >
-        {app?.id === ModelId.HR_BUDDY ? (
-          <ModelIcon
-            isCustomTooltip
-            entityId={ModelId.HR_BUDDY}
-            entity={app}
-            size={25}
-          />
-        ) : (
-          <AppIcon />
-        )}
+        <AppIcon />
         <span>{app.name}</span>
       </button>
       <ContextMenu

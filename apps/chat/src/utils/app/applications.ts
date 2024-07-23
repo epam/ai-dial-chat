@@ -2,7 +2,12 @@ import { ModelId } from '@/src/constants/chat';
 
 import DefaultAppIcon from '../../../public/images/icons/message-square-lines-alt.svg';
 
-import { HRBuddyIcon, RagIcon, RagSquareIcon } from '@/src/icons';
+import {
+  HRBuddyIcon,
+  HRBuddySquareIcon,
+  RagIcon,
+  RagSquareIcon,
+} from '@/src/icons';
 
 export const getApplicationIcon = (appId: string, isSquareIcon = false) => {
   if (appId === ModelId.RAG) {
@@ -10,7 +15,7 @@ export const getApplicationIcon = (appId: string, isSquareIcon = false) => {
   }
 
   if (appId === ModelId.HR_BUDDY) {
-    return HRBuddyIcon;
+    return isSquareIcon ? HRBuddySquareIcon : HRBuddyIcon;
   }
 
   return DefaultAppIcon;

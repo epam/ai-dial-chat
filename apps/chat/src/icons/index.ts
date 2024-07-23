@@ -18,3 +18,4 @@ export * from './PromptIcon';
 export * from './EmployeeIcon';
 export * from './ManagerIcon';
 export * from './HRIcon';
+export * from './HRBuddySquareIcon';
