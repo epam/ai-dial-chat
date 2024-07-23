@@ -426,7 +426,7 @@ export function ChatFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          featureTypes={[FeatureType.Chat, FeatureType.File]}
+          featureTypes={publicationFeatureTypes}
           publicationItems={publicationItems}
           {...toApproveFolderItem}
         />

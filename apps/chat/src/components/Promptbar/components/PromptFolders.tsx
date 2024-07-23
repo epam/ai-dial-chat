@@ -413,8 +413,9 @@ export function PromptFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          featureTypes={[FeatureType.Prompt]}
+          featureTypes={publicationFeatureTypes}
           publicationItems={publicationItems}
+          highlightIfResourcesTypesIsEmpty
           {...toApproveFolderItem}
         />
       )}

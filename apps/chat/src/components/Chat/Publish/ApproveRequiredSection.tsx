@@ -126,9 +126,11 @@ export const ApproveRequiredSection = ({
   openByDefault,
   dataQa,
   publicationItems,
+  highlightIfResourceTypesIsEmpty,
 }: Omit<FolderSectionProps, 'filters'> & {
   featureTypes: FeatureType[];
   publicationItems: (PublicationInfo & Partial<Publication>)[];
+  highlightIfResourceTypesIsEmpty?: boolean;
 }) => {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
@@ -156,13 +158,15 @@ export const ApproveRequiredSection = ({
     const shouldBeHighlighted = !!(
       (selectedPublication &&
         !selectedConversationsIds.length &&
-        selectedPublication.resourceTypes.some((resourceType) =>
+        (selectedPublication.resourceTypes.some((resourceType) =>
           featureTypes
             .map((featureType) =>
               EnumMapper.getBackendResourceTypeByFeatureType(featureType),
             )
             .includes(resourceType),
-        )) ||
+        ) ||
+          (!selectedPublication.resourceTypes.length &&
+            highlightIfResourceTypesIsEmpty))) ||
       selectedConversationsIds.some((id) => publicationReviewIds.includes(id))
     );
 
@@ -177,6 +181,7 @@ export const ApproveRequiredSection = ({
     selectedConversations,
     selectedConversationsIds,
     selectedPublication,
+    highlightIfResourceTypesIsEmpty,
   ]);
 
   return (
