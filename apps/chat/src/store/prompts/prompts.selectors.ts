@@ -417,3 +417,8 @@ export const selectPopularPromptsIsLoading = createSelector(
   [rootSelector],
   (state) => state.popularPromptsIsLoading,
 );
+
+export const selectSelectedPopularPromptId = createSelector(
+  [rootSelector],
+  (state) => state.selectedPopularPromptId,
+);

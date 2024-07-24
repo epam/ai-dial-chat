@@ -110,8 +110,8 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
   const popularPrompts = useAppSelector(PromptsSelectors.selectPopularPrompts);
   const popularPromptsPaths =
     useAppSelector(SettingsSelectors.selectPopularPromptsPaths) || {};
-  const selectedPromptId = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
+  const selectedPromptPopularId = useAppSelector(
+    PromptsSelectors.selectSelectedPopularPromptId,
   );
   const popularPromptsIsLoading = useAppSelector(
     PromptsSelectors.selectPopularPromptsIsLoading,
@@ -185,7 +185,7 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
                 <PersonaPrompt
                   item={prompt}
                   onPromptClick={onPromptClick}
-                  selectedPromptId={selectedPromptId.selectedPromptId}
+                  selectedPromptId={selectedPromptPopularId}
                 />
               ) : (
                 <PopularPrompt item={prompt} onPromptClick={onPromptClick} />

@@ -216,11 +216,11 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     >
       {selectedPrompt ? (
         <>
-          <div className="text-pr-grey-white bg-pr-primary-550 flex h-[80px] items-center justify-between py-4 pl-8 pr-4 text-xl font-medium">
+          <div className="flex h-[80px] items-center justify-between bg-pr-primary-550 py-4 pl-8 pr-4 text-xl font-medium text-pr-grey-white">
             {isNewPromptCreating ? t('New Prompt') : selectedPrompt.name}
             <button
               onClick={onClose}
-              className="hover:text-pr-tertiary-500 self-start"
+              className="self-start hover:text-pr-tertiary-500"
             >
               <IconX height={20} width={20} />
             </button>
@@ -232,14 +232,14 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 htmlFor="promptName"
               >
                 {t('Name')}
-                <span className="text-pr-alert-500 inline">*</span>
+                <span className="inline text-pr-alert-500">*</span>
               </label>
               <input
                 ref={nameInputRef}
                 name="promptName"
                 className={classNames(
                   inputClassName,
-                  'placeholder:text-pr-grey-400 m-0 rounded-primary border border-secondary bg-layer-2 shadow-primary focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                  'm-0 rounded-primary border border-secondary bg-layer-2 shadow-primary placeholder:text-pr-grey-400 focus-within:border-accent-quaternary hover:border-accent-quaternary',
                   isDotError &&
                     'border-error hover:border-error focus:border-error',
                 )}
@@ -273,7 +273,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 name="description"
                 className={classNames(
                   inputClassName,
-                  'placeholder:text-pr-grey-400 m-0 rounded-primary border-secondary bg-layer-2 shadow-primary focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                  'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-pr-grey-400 focus-within:border-accent-quaternary hover:border-accent-quaternary',
                 )}
                 style={{ resize: 'none' }}
                 placeholder={t('A description for your prompt.') || ''}
@@ -289,14 +289,14 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 htmlFor="content"
               >
                 {t('Prompt')}
-                <span className="text-pr-alert-500 inline">*</span>
+                <span className="inline text-pr-alert-500">*</span>
               </label>
               <textarea
                 ref={contentInputRef}
                 name="content"
                 className={classNames(
                   inputClassName,
-                  'placeholder:text-pr-grey-400 m-0 rounded-primary border-secondary bg-layer-2 shadow-primary focus-within:border-accent-quaternary hover:border-accent-quaternary',
+                  'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-pr-grey-400 focus-within:border-accent-quaternary hover:border-accent-quaternary',
                 )}
                 style={{ resize: 'none' }}
                 placeholder={

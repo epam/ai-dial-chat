@@ -41,6 +41,7 @@ const initialState: PromptsState = {
   isPromptContentCopying: false,
   popularPrompts: [],
   popularPromptsIsLoading: false,
+  selectedPopularPromptId: undefined,
 };
 
 export const promptsSlice = createSlice({
@@ -417,6 +418,12 @@ export const promptsSlice = createSlice({
     ) => {
       state.popularPrompts = payload.popularPrompts;
       state.popularPromptsIsLoading = false;
+    },
+    setPopularPromptId: (
+      state,
+      { payload }: PayloadAction<{ id: string | undefined }>,
+    ) => {
+      state.selectedPopularPromptId = payload.id;
     },
   },
 });

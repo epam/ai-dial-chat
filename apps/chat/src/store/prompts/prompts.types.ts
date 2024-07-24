@@ -20,4 +20,5 @@ export interface PromptsState {
   isPromptContentCopying: boolean;
   popularPrompts: PromptInfo[];
   popularPromptsIsLoading: boolean;
+  selectedPopularPromptId: string | undefined;
 }

@@ -177,10 +177,11 @@ export const ChatInputMessage = ({
         setActivePromptIndex(activeIndex);
       } else {
         setContent(selectedPrompt?.content);
+        dispatch(PromptsActions.setPopularPromptId({ id: selectedPrompt?.id }));
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPrompt?.content, isPromptContentCopying]);
+  }, [selectedPrompt?.content, isPromptContentCopying, selectedPrompt?.id]);
 
   useEffect(() => {
     if (selectedPrompt?.content && content === selectedPrompt?.content) {
@@ -320,6 +321,7 @@ export const ChatInputMessage = ({
       }
 
       setContent(newContent);
+      dispatch(PromptsActions.setPopularPromptId({ id: selectedPrompt?.id }));
       clearPromptCopying();
 
       if (textareaRef && textareaRef.current) {
@@ -333,6 +335,7 @@ export const ChatInputMessage = ({
       setContent,
       setIsPromptLimitModalOpen,
       textareaRef,
+      selectedPrompt?.id,
     ],
   );
 
