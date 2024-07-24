@@ -176,9 +176,12 @@ export class ConversationData extends FolderData {
     return defaultConversation;
   }
 
-  public prepareDefaultReplayConversation(conversation: Conversation) {
+  public prepareDefaultReplayConversation(
+    conversation: Conversation,
+    replayIndex?: number,
+  ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    return this.fillReplayData(conversation, userMessages!);
+    return this.fillReplayData(conversation, userMessages!, replayIndex);
   }
 
   public preparePartiallyReplayedStagedConversation(
@@ -203,12 +206,15 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedConversation(
+    conversation: Conversation,
+    replayIndex?: number,
+  ) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
-    const assistantMessages = conversation.messages.findLast(
-      (m) => m.role === 'assistant',
-    );
+    const assistantMessages = replayIndex
+      ? conversation.messages[replayIndex + 2]
+      : conversation.messages.findLast((m) => m.role === 'assistant');
     assistantMessages!.content = 'partial response';
     defaultReplayConversation.messages = conversation.messages;
     return defaultReplayConversation;
@@ -651,6 +657,7 @@ export class ConversationData extends FolderData {
   private fillReplayData(
     conversation: Conversation,
     userMessages: Message[],
+    replayIndex?: number,
   ): Conversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
@@ -660,7 +667,8 @@ export class ConversationData extends FolderData {
       replayConversation.replay = defaultReplay;
     }
     replayConversation.replay.isReplay = true;
-    replayConversation.replay.activeReplayIndex = 0;
+    replayConversation.replay.activeReplayIndex =
+      replayIndex ?? userMessages.length - 1;
     if (!replayConversation.replay.replayUserMessagesStack) {
       replayConversation.replay.replayUserMessagesStack = [];
     }
