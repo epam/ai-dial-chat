@@ -12,7 +12,8 @@ dialTest.only(
   'Prompt name: allowed special characters.\n' +
   'Prompt name: restricted special characters are not allowed to be entered while renaming.\n' +
   'Prompt name: restricted special characters are removed from prompt name if to copy-paste.\n' +
-  'Prompt name: smiles, hieroglyph, specific letters in name',
+  'Prompt name: smiles, hieroglyph, specific letters in name.\n' +
+  'Prompt name: spaces in the middle of prompt name stay',
   async ({
            dialHomePage,
            promptData,
@@ -32,6 +33,7 @@ dialTest.only(
       'EPMRTC-2993',
       'EPMRTC-2994',
       'EPMRTC-2997',
+      'EPMRTC-3085',
     );
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
@@ -40,6 +42,8 @@ dialTest.only(
     const expectedPromptName = 'Prompt_name';
     const longNameWithEmojis =
       '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
+    const nameWithSpaces = ' Prompt 1 ';
+    const expectedNameWithSpaces = 'Prompt 1';
 
     await dialTest.step(
       'Rename any prompt and add a dot at the end of the name',
@@ -199,6 +203,28 @@ dialTest.only(
 
     await dialTest.step(
       'Verify prompt is renamed successfully, the name looks fine on Prompt panel',
+      async () => {
+        await promptAssertion.assertEntityState(
+          {name: prompt.name},
+          'visible',
+        );
+        await errorToastAssertion.assertToastIsHidden();
+      },
+    );
+
+    await dialTest.step(
+      'Create a prompt and update its name to " Prompt 1 " (spaces before; after; in the middle)',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.setField(promptModalDialog.name, nameWithSpaces);
+        await promptModalDialog.saveButton.click();
+        prompt.name = longNameWithEmojis;
+      },
+    );
+
+    await dialTest.step(
+      'Verify prompt name is "Prompt 1"',
       async () => {
         await promptAssertion.assertEntityState(
           {name: prompt.name},
