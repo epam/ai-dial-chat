@@ -54,7 +54,7 @@ import {
   exportPrompt,
   exportPrompts,
   isPromptsFormat,
-  updateAttachment,
+  updateMessageAttachments,
 } from '@/src/utils/app/import-export';
 import { translate } from '@/src/utils/app/translation';
 import {
@@ -65,7 +65,7 @@ import {
   updateAttachmentsNames,
 } from '@/src/utils/app/zip-import-export';
 
-import { Conversation, Message, Stage } from '@/src/types/chat';
+import { Conversation, Message } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { LatestExportFormat } from '@/src/types/import-export';
@@ -1167,48 +1167,31 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
         attachmentsToUpload.length &&
         attachmentsToUpload.length === uploadedAttachments.length
       ) {
-        const updatedMessages: Message[] = loadedHistory.history[
-          firstConversationIndex
-        ].messages.map((message) => {
-          if (!message.custom_content?.attachments) {
-            return message;
-          }
+        const updateMessage = (message: Message) =>
+          updateMessageAttachments({ message, uploadedAttachments });
 
-          const newAttachments = message.custom_content.attachments.map(
-            (oldAttachment) =>
-              updateAttachment({ oldAttachment, uploadedAttachments }),
-          );
-
-          const newStages: Stage[] | undefined =
-            message.custom_content.stages &&
-            message.custom_content.stages.map((stage) => {
-              if (!stage.attachments) {
-                return stage;
-              }
-              const newStageAttachments = stage.attachments.map(
-                (oldAttachment) =>
-                  updateAttachment({ oldAttachment, uploadedAttachments }),
-              );
-              return {
-                ...stage,
-                attachments: newStageAttachments,
-              };
-            });
-
-          const newCustomContent: Message['custom_content'] = {
-            ...message.custom_content,
-            attachments: newAttachments,
-            stages: newStages,
-          };
-          return {
-            ...message,
-            custom_content: newCustomContent,
-          };
-        });
+        const conversation: Conversation =
+          loadedHistory.history[firstConversationIndex];
 
         const updatedConversation: Conversation = {
           ...loadedHistory.history[firstConversationIndex],
-          messages: updatedMessages,
+          messages: conversation.messages?.map(updateMessage) || [],
+          ...(conversation.playback && {
+            playback: {
+              ...conversation.playback,
+              messagesStack:
+                conversation.playback.messagesStack?.map(updateMessage) || [],
+            },
+          }),
+          ...(conversation.replay && {
+            replay: {
+              ...conversation.replay,
+              replayUserMessagesStack:
+                conversation.replay.replayUserMessagesStack?.map(
+                  updateMessage,
+                ) || [],
+            },
+          }),
         };
         return of(
           ImportExportActions.importConversations({

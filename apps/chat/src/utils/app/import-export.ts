@@ -1,4 +1,4 @@
-import { Attachment, Conversation } from '@/src/types/chat';
+import { Attachment, Conversation, Message, Stage } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportFormatV1,
@@ -325,4 +325,45 @@ export const updateAttachment = ({
     reference_url: newReferenceUrl,
   };
   return updatedAttachment;
+};
+
+export const updateMessageAttachments = ({
+  message,
+  uploadedAttachments,
+}: {
+  message: Message;
+  uploadedAttachments: UploadedAttachment[];
+}) => {
+  if (!message.custom_content?.attachments) {
+    return message;
+  }
+
+  const newAttachments = message.custom_content.attachments.map(
+    (oldAttachment) => updateAttachment({ oldAttachment, uploadedAttachments }),
+  );
+
+  const newStages: Stage[] | undefined =
+    message.custom_content.stages &&
+    message.custom_content.stages.map((stage) => {
+      if (!stage.attachments) {
+        return stage;
+      }
+      const newStageAttachments = stage.attachments.map((oldAttachment) =>
+        updateAttachment({ oldAttachment, uploadedAttachments }),
+      );
+      return {
+        ...stage,
+        attachments: newStageAttachments,
+      };
+    });
+
+  const newCustomContent: Message['custom_content'] = {
+    ...message.custom_content,
+    attachments: newAttachments,
+    stages: newStages,
+  };
+  return {
+    ...message,
+    custom_content: newCustomContent,
+  };
 };
