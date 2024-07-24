@@ -44,17 +44,26 @@ dialTest.only(
     await dialTest.step(
       'Check that Name field is red bordered and error message appears',
       async () => {
+        // Retrieve the computed border colors for all sides of the "Name" field
         const nameBorderColors = await promptModalDialog.name.getAllBorderColors();
+
+        // Iterate through each border side (top, bottom, left, right)
         Object.values(nameBorderColors).forEach((borders) => {
+          // Iterate through each individual border color within a side
           borders.forEach((borderColor) => {
+            // Assert that the current border color matches the expected error color
             expect
               .soft(borderColor, ExpectedMessages.fieldIsHighlightedWithRed)
               .toBe(Colors.textError);
           });
         });
+
+        // Wait for the error message element associated with the "Name" field to appear
         await promptModalDialog
           .getFieldBottomMessage(promptModalDialog.name)
           .waitFor();
+
+        // Assert that the error message element contains the expected error message text
         await expect
           .soft(
             promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
