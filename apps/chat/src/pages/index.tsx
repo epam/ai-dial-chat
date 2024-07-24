@@ -132,7 +132,7 @@ export default function Home({ initialState }: HomeProps) {
     );
 
     dispatch(AuthActions.setSession(session));
-    dispatch(AuthActions.setIdAdmin(isAdmin));
+    dispatch(AuthActions.setIsAdmin(isAdmin));
   }, [dispatch, session]);
 
   // ON LOAD --------------------------------------------

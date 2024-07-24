@@ -27,7 +27,7 @@ export const authSlice = createSlice({
     ) => {
       state.session = payload;
     },
-    setIdAdmin: (state, { payload }: PayloadAction<boolean>) => {
+    setIsAdmin: (state, { payload }: PayloadAction<boolean>) => {
       state.isAdmin = payload;
     },
   },
