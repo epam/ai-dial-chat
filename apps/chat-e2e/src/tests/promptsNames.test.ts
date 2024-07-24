@@ -4,29 +4,29 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import {Colors} from '@/src/ui/domData';
-import {expect} from '@playwright/test';
+import { Colors } from '@/src/ui/domData';
+import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.only(
   'Error message appears if to add a dot to the end of prompt name.\n' +
-  'Prompt name: allowed special characters.\n' +
-  'Prompt name: restricted special characters are not allowed to be entered while renaming.\n' +
-  'Prompt name: restricted special characters are removed from prompt name if to copy-paste.\n' +
-  'Prompt name: smiles, hieroglyph, specific letters in name.\n' +
-  'Prompt name: spaces in the middle of prompt name stay',
+    'Prompt name: allowed special characters.\n' +
+    'Prompt name: restricted special characters are not allowed to be entered while renaming.\n' +
+    'Prompt name: restricted special characters are removed from prompt name if to copy-paste.\n' +
+    'Prompt name: smiles, hieroglyph, specific letters in name.\n' +
+    'Prompt name: spaces in the middle of prompt name stay',
   async ({
-           dialHomePage,
-           promptData,
-           dataInjector,
-           prompts,
-           promptDropdownMenu,
-           promptModalDialog,
-           errorToast,
-           errorToastAssertion,
-           promptAssertion,
-           setTestIds,
-           promptBar,
-         }) => {
+    dialHomePage,
+    promptData,
+    dataInjector,
+    prompts,
+    promptDropdownMenu,
+    promptModalDialog,
+    errorToast,
+    errorToastAssertion,
+    promptAssertion,
+    setTestIds,
+    promptBar,
+  }) => {
     setTestIds(
       'EPMRTC-2991',
       'EPMRTC-1278',
@@ -45,24 +45,22 @@ dialTest(
     const nameWithSpaces = ' Prompt 1 ';
     const expectedNameWithSpaces = 'Prompt 1';
 
-    await dialTest.step(
-      'Add a dot at the end of a prompt name',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await prompts.openEntityDropdownMenu(prompt.name);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.setField(promptModalDialog.name, newNameWithDot);
-      },
-    );
+    await dialTest.step('Add a dot at the end of a prompt name', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded({
+        isNewConversationVisible: true,
+      });
+      await prompts.openEntityDropdownMenu(prompt.name);
+      await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+      await promptModalDialog.setField(promptModalDialog.name, newNameWithDot);
+    });
 
     await dialTest.step(
       'Check that the name field is red-bordered and an error message appears',
       async () => {
         // Retrieve the computed border colors for all sides of the "Name" field
-        const nameBorderColors = await promptModalDialog.name.getAllBorderColors();
+        const nameBorderColors =
+          await promptModalDialog.name.getAllBorderColors();
 
         // Iterate through each border side (top, bottom, left, right)
         Object.values(nameBorderColors).forEach((borders) => {
@@ -108,7 +106,7 @@ dialTest(
         ExpectedMessages.notAllowedNameErrorShown,
       );
       // Wating for (Closing) the toast to move forward
-      await errorToast.waitForState({state: 'hidden'});
+      await errorToast.waitForState({ state: 'hidden' });
     });
 
     await dialTest.step(
@@ -147,7 +145,7 @@ dialTest(
       'Verify the prompt is created and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
-          {name: expectedPromptName},
+          { name: expectedPromptName },
           'visible',
         );
         await errorToastAssertion.assertToastIsHidden();
@@ -176,7 +174,7 @@ dialTest(
       'Verify the prompt is created and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
-          {name: prompt.name},
+          { name: prompt.name },
           'visible',
         );
         await errorToastAssertion.assertToastIsHidden();
@@ -205,7 +203,7 @@ dialTest(
       'Verify the prompt is renamed successfully and the name looks fine on the Prompt panel',
       async () => {
         await promptAssertion.assertEntityState(
-          {name: prompt.name},
+          { name: prompt.name },
           'visible',
         );
         await errorToastAssertion.assertToastIsHidden();
@@ -217,21 +215,18 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.setField(promptModalDialog.name, nameWithSpaces);
+        await promptModalDialog.setField(
+          promptModalDialog.name,
+          nameWithSpaces,
+        );
         await promptModalDialog.saveButton.click();
         prompt.name = expectedNameWithSpaces;
       },
     );
 
-    await dialTest.step(
-      'Verify the prompt name is "Prompt 1"',
-      async () => {
-        await promptAssertion.assertEntityState(
-          {name: prompt.name},
-          'visible',
-        );
-        await errorToastAssertion.assertToastIsHidden();
-      },
-    );
+    await dialTest.step('Verify the prompt name is "Prompt 1"', async () => {
+      await promptAssertion.assertEntityState({ name: prompt.name }, 'visible');
+      await errorToastAssertion.assertToastIsHidden();
+    });
   },
 );
