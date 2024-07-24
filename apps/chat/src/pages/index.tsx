@@ -59,6 +59,7 @@ import { URL } from 'url';
 export interface HomeProps {
   initialState: {
     settings: SettingsState;
+    isAdmin: boolean;
   };
 }
 
@@ -126,13 +127,7 @@ export default function Home({ initialState }: HomeProps) {
   }, [isOverlay, shouldLogin]);
 
   useEffect(() => {
-    const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(',');
-    const isAdmin = adminRoleNames.some((role) =>
-      session.data?.user.dial_roles?.includes(role),
-    );
-
     dispatch(AuthActions.setSession(session));
-    dispatch(AuthActions.setIsAdmin(isAdmin));
   }, [dispatch, session]);
 
   // ON LOAD --------------------------------------------

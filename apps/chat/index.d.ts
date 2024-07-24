@@ -11,7 +11,7 @@ declare module '*.svg' {
 declare module 'next-auth' {
   interface Session {
     user: {
-      dial_roles?: string[];
+      isAdmin: boolean;
     } & DefaultSession['user'];
   }
 }

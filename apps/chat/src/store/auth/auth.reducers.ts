@@ -9,12 +9,10 @@ import { SettingsState } from '../settings/settings.reducers';
 
 interface AuthState {
   session: SessionContextValue<boolean> | undefined;
-  isAdmin: boolean;
 }
 
 const initialState: AuthState = {
   session: undefined,
-  isAdmin: false,
 };
 
 export const authSlice = createSlice({
@@ -26,9 +24,6 @@ export const authSlice = createSlice({
       { payload }: PayloadAction<SessionContextValue<boolean>>,
     ) => {
       state.session = payload;
-    },
-    setIsAdmin: (state, { payload }: PayloadAction<boolean>) => {
-      state.isAdmin = payload;
     },
   },
 });
@@ -53,7 +48,7 @@ const selectIsShouldLogin = createSelector(
   },
 );
 const selectIsAdmin = createSelector([rootSelector], (state) => {
-  return state.isAdmin;
+  return !!state.session?.data?.user.isAdmin;
 });
 
 export const AuthSelectors = {
