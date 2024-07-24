@@ -161,15 +161,11 @@ export const ChatView = memo(() => {
             );
           }
 
-          const model = models.find(
-            ({ id, reference }) =>
-              id === conv.model.id || reference === conv.model.id,
-          );
+          const model = modelsMap[conv.model.id];
 
           return (
-            !modelsMap[conv.model.id] ||
-            (model &&
-              model.type === EntityType.Assistant &&
+            !model ||
+            (model.type === EntityType.Assistant &&
               conv.assistantModelId &&
               !modelsMap[conv.assistantModelId])
           );
