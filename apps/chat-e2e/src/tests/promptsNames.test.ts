@@ -11,7 +11,8 @@ dialTest.only(
   'Error message appears if to add a dot to the end of prompt name.\n' +
   'Prompt name: allowed special characters.\n' +
   'Prompt name: restricted special characters are not allowed to be entered while renaming.\n' +
-  'Prompt name: restricted special characters are removed from prompt name if to copy-paste',
+  'Prompt name: restricted special characters are removed from prompt name if to copy-paste.\n' +
+  'Prompt name: smiles, hieroglyph, specific letters in name',
   async ({
            dialHomePage,
            promptData,
@@ -25,12 +26,20 @@ dialTest.only(
            setTestIds,
            promptBar,
          }) => {
-    setTestIds('EPMRTC-2991', 'EPMRTC-1278', 'EPMRTC-2993', 'EPMRTC-2994');
+    setTestIds(
+      'EPMRTC-2991',
+      'EPMRTC-1278',
+      'EPMRTC-2993',
+      'EPMRTC-2994',
+      'EPMRTC-2997',
+    );
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     const newNameWithDot = `${ExpectedConstants.newPromptTitle(1)}.`;
     const nameWithRestrictedChars = `Prompt${ExpectedConstants.restrictedNameChars}_name`;
     const expectedPromptName = 'Prompt_name';
+    const longNameWithEmojis =
+      '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
 
     await dialTest.step(
       'Rename any prompt and add a dot at the end of the name',
@@ -114,7 +123,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Create a prompt, copy-paste restricted chars to name and verify the name',
+      'Copy-paste restricted chars to the prompt name and verify the name',
       async () => {
         await dialHomePage.copyToClipboard(nameWithRestrictedChars);
         await promptModalDialog.name.click();
@@ -155,6 +164,7 @@ dialTest.only(
           ExpectedConstants.newPromptTitle(1),
         );
         await promptModalDialog.saveButton.click();
+        prompt.name = ExpectedConstants.allowedSpecialSymbolsInName();
       },
     );
 
@@ -162,7 +172,36 @@ dialTest.only(
       'Verify prompt is created and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
-          {name: ExpectedConstants.allowedSpecialSymbolsInName()},
+          {name: prompt.name},
+          'visible',
+        );
+        await errorToastAssertion.assertToastIsHidden();
+      },
+    );
+
+    await dialTest.step(
+      'Update prompt name to long name with emojis',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+        await promptModalDialog.setField(
+          promptModalDialog.name,
+          longNameWithEmojis,
+        );
+        await promptModalDialog.setField(
+          promptModalDialog.prompt,
+          ExpectedConstants.newPromptTitle(1),
+        );
+        await promptModalDialog.saveButton.click();
+        prompt.name = longNameWithEmojis;
+      },
+    );
+
+    await dialTest.step(
+      'Verify prompt is renamed successfully, the name looks fine on Prompt panel',
+      async () => {
+        await promptAssertion.assertEntityState(
+          {name: prompt.name},
           'visible',
         );
         await errorToastAssertion.assertToastIsHidden();
