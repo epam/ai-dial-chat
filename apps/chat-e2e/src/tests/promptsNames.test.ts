@@ -9,7 +9,8 @@ import {expect} from '@playwright/test';
 
 dialTest.only(
   'Error message appears if to add a dot to the end of prompt name.\n' +
-  'Prompt name: allowed special characters',
+  'Prompt name: allowed special characters.\n' +
+  'Prompt name: restricted special characters are not allowed to be entered while renaming',
   async ({
            dialHomePage,
            promptData,
@@ -23,7 +24,7 @@ dialTest.only(
            setTestIds,
            promptBar,
          }) => {
-    setTestIds('EPMRTC-2991', 'EPMRTC-1278');
+    setTestIds('EPMRTC-2991', 'EPMRTC-1278', 'EPMRTC-2993');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
     const newNameWithDot = `${ExpectedConstants.newPromptTitle(1)}.`;
@@ -94,6 +95,21 @@ dialTest.only(
       await errorToast.waitForState({state: 'hidden'});
     });
 
+    await dialTest.step(
+      'Select Rename item in context menu and type restricted chars one by one',
+      async () => {
+        for (const char of ExpectedConstants.restrictedNameChars.split('')) {
+          await promptModalDialog.setField(promptModalDialog.name, char);
+          expect
+            .soft(
+              await promptModalDialog.getName(),
+              ExpectedMessages.charactersAreNotDisplayed
+            )
+            .toBe('');
+        }
+      },
+    );
+    
     await dialTest.step(
       'Fill in prompt-body and add to the name spec chars',
       async () => {
