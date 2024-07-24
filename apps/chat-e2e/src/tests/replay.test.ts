@@ -796,7 +796,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
 
@@ -823,7 +823,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
   },
