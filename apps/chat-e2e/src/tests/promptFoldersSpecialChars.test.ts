@@ -7,23 +7,23 @@ import {
 
 dialTest(
   'Prompt folder: Error message appears if there is a dot is at the end of folder name.\n' +
-    'Prompt folder: allowed special characters.\n' +
-    'Prompt folder: restricted special characters are not entered.\n' +
-    'Prompt folder: restricted special characters are removed if to copy-paste.\n' +
-    'Prompt folder: spaces in the middle of folder name stay.\n' +
-    'Prompt folder: name can not be blank or with spaces only.\n' +
-    'Prompt folder: spaces at the beginning or end of folder name are removed.\n' +
-    'Prompt folder: smiles, hieroglyph, specific letters in name',
+  'Prompt folder: allowed special characters.\n' +
+  'Prompt folder: restricted special characters are not entered.\n' +
+  'Prompt folder: restricted special characters are removed if to copy-paste.\n' +
+  'Prompt folder: spaces in the middle of folder name stay.\n' +
+  'Prompt folder: name can not be blank or with spaces only.\n' +
+  'Prompt folder: spaces at the beginning or end of folder name are removed.\n' +
+  'Prompt folder: smiles, hieroglyph, specific letters in name',
   async ({
-    dialHomePage,
-    promptBar,
-    folderPrompts,
-    folderDropdownMenu,
-    errorToast,
-    setTestIds,
-    promptBarFolderAssertion,
-    errorToastAssertion,
-  }) => {
+           dialHomePage,
+           promptBar,
+           folderPrompts,
+           folderDropdownMenu,
+           errorToast,
+           setTestIds,
+           promptBarFolderAssertion,
+           errorToastAssertion,
+         }) => {
     setTestIds(
       'EPMRTC-2975',
       'EPMRTC-2976',
@@ -50,7 +50,7 @@ dialTest(
 
       await promptBar.createNewFolder();
       await promptBarFolderAssertion.assertFolderState(
-        { name: folderName },
+        {name: folderName},
         'visible',
       );
     });
@@ -83,7 +83,7 @@ dialTest(
     await dialTest.step('Rename it to contain special characters', async () => {
       await folderPrompts.editFolderNameWithTick(newNameWithSpecialChars);
       await promptBarFolderAssertion.assertFolderState(
-        { name: newNameWithSpecialChars },
+        {name: newNameWithSpecialChars},
         'visible',
       );
     });
@@ -108,10 +108,10 @@ dialTest(
         await dialHomePage.pasteFromClipboard();
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         await promptBarFolderAssertion.assertFolderState(
-          { name: expectedFolderName },
+          {name: expectedFolderName},
           'visible',
         );
-        errorToastAssertion.assertToastIsHidden();
+        await errorToastAssertion.assertToastIsHidden();
       },
     );
 
@@ -128,7 +128,7 @@ dialTest(
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         // Assert that the folder is renamed with spaces on the panel
         await promptBarFolderAssertion.assertFolderState(
-          { name: newNameWithSpaces },
+          {name: newNameWithSpaces},
           'visible',
         );
       },
@@ -143,7 +143,7 @@ dialTest(
           await folderPrompts.editFolderName(name);
           await folderPrompts.getEditFolderInputActions().clickTickButton();
           await promptBarFolderAssertion.assertFolderState(
-            { name: newNameWithSpaces },
+            {name: newNameWithSpaces},
             'visible',
           );
         }
@@ -163,7 +163,7 @@ dialTest(
         await folderPrompts.getEditFolderInputActions().clickTickButton();
         // Assert that the folder is renamed with spaces on the panel
         await promptBarFolderAssertion.assertFolderState(
-          { name: expectedName },
+          {name: expectedName},
           'visible',
         );
       },
@@ -176,7 +176,7 @@ dialTest(
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderPrompts.editFolderNameWithTick(newNameWithEmojis);
         await promptBarFolderAssertion.assertFolderState(
-          { name: newNameWithEmojis },
+          {name: newNameWithEmojis},
           'visible',
         );
       },

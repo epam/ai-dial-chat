@@ -1,41 +1,43 @@
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, MenuOptions } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
-import { expect } from '@playwright/test';
-import {Prompt} from "@/chat/types/prompt";
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+} from '@/src/testData';
+import {Colors} from '@/src/ui/domData';
+import {expect} from '@playwright/test';
 
 dialTest.only(
-  'Error message appears if to add a dot to the end of prompt name',
+  'Error message appears if to add a dot to the end of prompt name.\n' +
+  'Prompt name: allowed special characters',
   async ({
-    dialHomePage,
-    prompts,
-    promptData,
-    dataInjector,
-    promptDropdownMenu,
-    promptModalDialog,
-    errorToastAssertion,
-    setTestIds,
-  }) => {
-    setTestIds('EPMRTC-2991');
-    let prompt: Prompt;
-
-    await dialTest.step('Prepare prompt', async () => {
-      prompt = promptData.prepareDefaultPrompt();
-      await dataInjector.createPrompts([prompt]);
-    });
+           dialHomePage,
+           promptData,
+           dataInjector,
+           prompts,
+           promptDropdownMenu,
+           promptModalDialog,
+           errorToast,
+           errorToastAssertion,
+           promptAssertion,
+           setTestIds,
+           promptBar,
+         }) => {
+    setTestIds('EPMRTC-2991', 'EPMRTC-1278');
+    const prompt = promptData.prepareDefaultPrompt();
+    await dataInjector.createPrompts([prompt]);
+    const newNameWithDot = `${ExpectedConstants.newPromptTitle(1)}.`;
 
     await dialTest.step(
-      'Rename prompt and add a dot at the end of the name',
+      'Rename any prompt and add a dot at the end of the name',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.setField(
-          promptModalDialog.name,
-          `${ExpectedConstants.newPromptTitle(1)}.`,
-        );
-        // await promptModalDialog.description.click();
+        await promptModalDialog.setField(promptModalDialog.name, newNameWithDot);
       },
     );
 
@@ -50,14 +52,13 @@ dialTest.only(
               .toBe(Colors.textError);
           });
         });
-
         await promptModalDialog
           .getFieldBottomMessage(promptModalDialog.name)
           .waitFor();
         await expect
           .soft(
             promptModalDialog.getFieldBottomMessage(promptModalDialog.name),
-            ExpectedMessages.fieldIsHighlightedWithRed,
+            ExpectedMessages.promptNameInvalid,
           )
           .toHaveText(ExpectedConstants.nameWithDotErrorMessage);
       },
@@ -80,6 +81,34 @@ dialTest.only(
         ExpectedConstants.nameWithDotErrorMessage,
         ExpectedMessages.notAllowedNameErrorShown,
       );
+      // Closing the toast to move forward
+      await errorToast.closeToast();
     });
+
+    await dialTest.step(
+      'Fill in prompt-body and add to the name spec chars',
+      async () => {
+        await promptModalDialog.setField(
+          promptModalDialog.name,
+          ExpectedConstants.allowedSpecialSymbolsInName(),
+        );
+        await promptModalDialog.setField(
+          promptModalDialog.prompt,
+          ExpectedConstants.newPromptTitle(1),
+        );
+        await promptModalDialog.saveButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Verify prompt is created and no error toast is shown',
+      async () => {
+        await promptAssertion.assertEntityState(
+          {name: ExpectedConstants.allowedSpecialSymbolsInName()},
+          'visible',
+        );
+        await errorToastAssertion.assertToastIsHidden();
+      },
+    );
   },
 );

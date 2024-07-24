@@ -58,6 +58,7 @@ export enum ExpectedMessages {
   promptModalClosed = 'Prompt modal dialog is closed',
   promptNotUpdated = 'Prompt is not updated',
   promptNameValid = 'Prompt name is valid',
+  promptNameInvalid = 'Prompt name is not valid',
   promptDescriptionValid = 'Prompt description is valid',
   promptContentValid = 'Prompt content is valid',
   promptVariablePlaceholderValid = 'Prompt variable placeholder is valid',
