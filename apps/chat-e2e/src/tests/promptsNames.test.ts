@@ -7,7 +7,7 @@ import {
 import { Colors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Error message appears if to add a dot to the end of prompt name.\n' +
     'Prompt name: allowed special characters.\n' +
     'Prompt name: restricted special characters are not allowed to be entered while renaming.\n' +
@@ -25,7 +25,6 @@ dialTest.only(
     errorToastAssertion,
     promptAssertion,
     setTestIds,
-    promptBar,
   }) => {
     setTestIds(
       'EPMRTC-2991',
