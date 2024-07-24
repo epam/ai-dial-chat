@@ -31,7 +31,6 @@ export interface SettingsState {
   customRenderers?: CustomVisualizer[];
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
-  isAdminUser: boolean;
 }
 
 const initialState: SettingsState = {
@@ -49,7 +48,6 @@ const initialState: SettingsState = {
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],
-  isAdminUser: false,
 };
 
 export const settingsSlice = createSlice({
@@ -137,12 +135,6 @@ export const settingsSlice = createSlice({
     },
     setIsSignInInSameWindow: (state, { payload }: PayloadAction<boolean>) => {
       state.isSignInInSameWindow = payload;
-    },
-    setIsAdminUser: (
-      state,
-      { payload }: PayloadAction<SettingsState['isAdminUser']>,
-    ) => {
-      state.isAdminUser = payload;
     },
   },
 });
@@ -295,10 +287,6 @@ const selectAllowVisualizerSendMessages = createSelector(
   },
 );
 
-const selectIsAdminUser = createSelector([rootSelector], (state) => {
-  return state.isAdminUser;
-});
-
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -325,5 +313,4 @@ export const SettingsSelectors = {
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
   selectAllowVisualizerSendMessages,
-  selectIsAdminUser,
 };

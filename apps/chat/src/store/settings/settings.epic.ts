@@ -56,9 +56,7 @@ const initEpic: AppEpic = (action$, state$) =>
               const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
                 state$.value,
               );
-              const isAdminUser = SettingsSelectors.selectIsAdminUser(
-                state$.value,
-              );
+              const isAdminUser = AuthSelectors.selectIsAdmin(state$.value);
 
               const actions: Observable<AnyAction>[] = [
                 of(UIActions.init()),

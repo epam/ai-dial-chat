@@ -137,9 +137,15 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
-      const base64Payload = options.account.access_token?.split('.')[1];
-      const decodedPayload: Partial<{ dial_roles: string[] }> = base64Payload
-        ? JSON.parse(atob(base64Payload))
+      // decodes the token to extract dial_roles
+      const decodedPayload: Partial<{ dial_roles: string[] }> = options.account
+        .access_token
+        ? JSON.parse(
+            Buffer.from(
+              options.account.access_token.split('.')[1],
+              'base64',
+            ).toString(),
+          )
         : {};
 
       return {

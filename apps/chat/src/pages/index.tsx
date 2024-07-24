@@ -126,7 +126,13 @@ export default function Home({ initialState }: HomeProps) {
   }, [isOverlay, shouldLogin]);
 
   useEffect(() => {
+    const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(',');
+    const isAdmin = adminRoleNames.some((role) =>
+      session.data?.user.dial_roles?.includes(role),
+    );
+
     dispatch(AuthActions.setSession(session));
+    dispatch(AuthActions.setIdAdmin(isAdmin));
   }, [dispatch, session]);
 
   // ON LOAD --------------------------------------------
@@ -332,7 +338,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       ),
     publicationFilters: (
       process.env.PUBLICATION_FILTERS || 'title,role,dial_roles'
-    ).split(',') as string[],
+    ).split(','),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
@@ -348,9 +354,6 @@ export const getServerSideProps: GetServerSideProps = async ({
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
-    isAdminUser: !!(session?.user.dial_roles
-      ? session.user.dial_roles.includes(process.env.ADMIN_ROLE_NAME ?? 'admin')
-      : undefined),
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
