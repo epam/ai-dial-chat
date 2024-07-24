@@ -1,6 +1,5 @@
 import { ResultFolder } from '@/src/testData';
 import { FileUtil } from '@/src/utils';
-import type { FullConfig } from '@playwright/test';
 import path from 'path';
 
 export const isApiStorageType =
@@ -26,8 +25,8 @@ export const ExecutionResults = {
   testResultsPath: path.resolve(__dirname, `../../${ResultFolder.testResults}`),
 };
 
-async function globalSetup(config: FullConfig) {
-  if (config.projects[0].name === 'auth') {
+async function globalSetup() {
+  if (process.env.NX_TASK_TARGET_TARGET === 'e2e:chat') {
     for (const path of Object.values(ExecutionResults)) {
       FileUtil.deleteFolder(path);
     }
