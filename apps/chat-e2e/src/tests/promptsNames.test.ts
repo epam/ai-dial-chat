@@ -219,7 +219,7 @@ dialTest.only(
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         await promptModalDialog.setField(promptModalDialog.name, nameWithSpaces);
         await promptModalDialog.saveButton.click();
-        prompt.name = longNameWithEmojis;
+        prompt.name = expectedNameWithSpaces;
       },
     );
 
