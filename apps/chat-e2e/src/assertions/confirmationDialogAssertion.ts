@@ -9,6 +9,15 @@ export class ConfirmationDialogAssertion {
     this.confirmationDialog = confirmationDialog;
   }
 
+  public async assertConfirmationDialogTitle(expectedTitle: string) {
+    expect
+      .soft(
+        await this.confirmationDialog.entityName.getElementInnerContent(),
+        ExpectedMessages.modalDialogTitleIsValid,
+      )
+      .toBe(expectedTitle);
+  }
+
   public async assertConfirmationMessage(expectedMessage: string) {
     expect
       .soft(

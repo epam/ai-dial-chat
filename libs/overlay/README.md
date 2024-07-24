@@ -65,7 +65,7 @@ const run = async () => {
     loaderClass: 'overlay__loader',
     // optional, id of the conversation to be selected at the start
     overlayConversationId: 'some-conversation-id',
-    // optional, if DIAL should redirect to sign in in the same browser window
+    // optional, if DIAL should redirect to sign in the same browser window
     signInInSameWindow: false,
   });
 

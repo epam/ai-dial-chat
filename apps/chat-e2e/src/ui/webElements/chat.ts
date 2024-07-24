@@ -13,6 +13,7 @@ import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
+import { Footer } from '@/src/ui/webElements/footer';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { Locator, Page } from '@playwright/test';
@@ -32,6 +33,7 @@ export class Chat extends BaseElement {
   private compare!: Compare;
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
+  private footer!: Footer;
   public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(
@@ -43,7 +45,6 @@ export class Chat extends BaseElement {
     ChatSelectors.proceedGenerating,
   );
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
-  public footer = this.getChildElementBySelector(ChatSelectors.footer);
   public notAllowedModelLabel = this.getChildElementBySelector(
     ErrorLabelSelectors.notAllowedModel,
   );
@@ -102,6 +103,13 @@ export class Chat extends BaseElement {
       this.isolatedView = new MoreInfo(this.page, this.rootLocator);
     }
     return this.isolatedView;
+  }
+
+  getFooter(): Footer {
+    if (!this.footer) {
+      this.footer = new Footer(this.page, this.rootLocator);
+    }
+    return this.footer;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {
