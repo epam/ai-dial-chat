@@ -1,6 +1,12 @@
+import { PayloadAction } from "@reduxjs/toolkit";
+
 export interface ApplicationFeatures {
-  rate_endpoint: string;
-  configuration_endpoint: string;
+  rate_endpoint?: string;
+  configuration_endpoint?: string;
+  truncatePrompt?: boolean;
+  systemPrompt?: boolean;
+  urlAttachments?: boolean;
+  folderAttachments?: boolean;
 }
 
 export interface CreateApplicationModel {
@@ -9,7 +15,7 @@ export interface CreateApplicationModel {
   display_version: string;
   icon_url: string;
   description: string;
-  features: ApplicationFeatures;
+  features?: ApplicationFeatures;
   input_attachment_types?: string[];
   max_input_attachments?: number;
   defaults?: Record<string, unknown>;
@@ -66,10 +72,9 @@ export interface ApplicationDetailsResponse {
   icon_url: string;
   description: string;
   forward_auth_token: boolean;
-  features: {
-    rate_endpoint: string;
-    configuration_endpoint: string;
-  },
+  input_attachment_types: string[];
+  max_input_attachments: number;
+  features: Record<string, string>;
   defaults: Record<string, unknown>;
 }
 
@@ -113,3 +118,17 @@ export interface OpenAIApplicationListResponse {
   data: OpenAIApplicationListItem[];
   object: string;
 }
+
+export interface FeaturesData {
+  rate?: boolean;
+  tokenize?: boolean;
+  truncatePrompt?: boolean;
+  configurations?: boolean;
+  systemPrompt?: boolean;
+  tools?: boolean;
+  seed?: boolean;
+  urlAttachments?: boolean;
+  folderAttachments?: boolean;
+}
+
+export type DeleteApplicationAction = PayloadAction<string>;

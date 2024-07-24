@@ -59,6 +59,7 @@ export interface DialAIEntity {
     encoding?: TiktokenEncoding;
     tokensPerMessage?: number;
   };
+  isDefault?: boolean;
 }
 
 export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {

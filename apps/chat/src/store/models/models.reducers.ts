@@ -130,6 +130,39 @@ export const modelsSlice = createSlice({
         RECENT_MODELS_COUNT,
       );
     },
+    addModel: (
+      state,
+      { payload }: PayloadAction<{ model: DialAIEntityModel }>,
+    ) => {
+      state.models.push(payload.model);
+      state.modelsMap[payload.model.id] = payload.model;
+    },
+    updateModel: (
+      state,
+      { payload }: PayloadAction<{ model: DialAIEntityModel }>,
+    ) => {
+      const index = state.models.findIndex(
+        (model) => model?.id === payload.model.id,
+      );
+      if (index > -1) {
+        state.models[index] = payload.model;
+      }
+
+      if (state.modelsMap[payload.model?.id]) {
+        state.modelsMap[payload.model?.id] = payload.model;
+      }
+    },
+    deleteModel: (
+      state,
+      { payload }: PayloadAction<{ modelId: string }>
+    ) => {
+      state.models = state.models.filter(
+        (model) => model.name !== payload.modelId
+      );
+    
+      const { [payload.modelId]: deletedModel, ...otherModels } = state.modelsMap;
+      state.modelsMap = otherModels;
+    },
   },
 });
 

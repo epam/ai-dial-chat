@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconTrashX, IconWorldShare, IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FocusEvent,
@@ -20,17 +20,16 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 import { onBlur } from '@/src/utils/app/style-helpers';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { CreateApplicationModel } from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
-import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -39,14 +38,33 @@ import EmptyRequiredInputMessage from './EmptyRequiredInputMessage';
 import { MultipleComboBox } from './MultipleComboBox';
 import Tooltip from './Tooltip';
 
+interface Application {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  features: string;
+  inputAttachmentTypes: string[];
+  isDefault: boolean;
+  maxInputAttachments: number;
+  iconUrl: string;
+}
 interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
+  mode: string;
+  selectedApplication?: any;
 }
 
-export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
+interface FormData extends CreateApplicationModel {}
+
+export const ApplicationDialog = ({
+  isOpen,
+  onClose,
+  mode,
+  selectedApplication,
+}: Props) => {
   const dispatch = useAppDispatch();
-  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { t } = useTranslation(Translation.PromptBar);
   const [name, setName] = useState<string>('');
   const [version, setVersion] = useState('');
@@ -57,23 +75,19 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
   const [deleteLogo, setDeleteLogo] = useState<boolean>(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
   const files = useAppSelector(FilesSelectors.selectFiles);
-  const customLogoId = useAppSelector(UISelectors.selectCustomLogo);
   const featuresDataInputRef = useRef<HTMLTextAreaElement>(null);
   const [featuresData, setFeaturesData] = useState<string>('');
   const [featuresDataError, setFeaturesDataError] = useState<string>('');
   const [maxAttachments, setMaxAttachments] = useState('');
   const [completionUrl, setCompletionUrl] = useState<string>('');
   const [completionUrlError, setCompletionUrlError] = useState<string>('');
-  const [isConfirmDialog, setIsConfirmDialog] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [versionError, setVersionError] = useState<string | null>(null);
   const [iconError, setIconError] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [filterParams, setFilterParams] = useState<string[]>([]);
-  interface FormData extends CreateApplicationModel {}
 
   const [formData, setFormData] = useState<FormData>({
     endpoint: '',
@@ -81,10 +95,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
     display_version: '',
     icon_url: '',
     description: '',
-    features: {
-      rate_endpoint: '',
-      configuration_endpoint: '',
-    },
+    features: {},
     input_attachment_types: [],
     max_input_attachments: 0,
     defaults: {},
@@ -106,10 +117,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
       display_version: '',
       icon_url: '',
       description: '',
-      features: {
-        rate_endpoint: '',
-        configuration_endpoint: '',
-      },
+      features: {},
       input_attachment_types: [],
       max_input_attachments: 0,
       defaults: {},
@@ -132,12 +140,14 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
   }, [onClose]);
 
   const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
-    const newName = prepareEntityName(e.target.value.trim(), { forRenaming: true });
-    const pattern = /^[^!@#$^*()+]{3,160}$/;
-  
+    const newName = prepareEntityName(e.target.value.trim(), {
+      forRenaming: true,
+    });
+    const pattern = /^[^!@#$^*()+]{2,160}$/;
+
     if (!pattern.test(newName)) {
       setNameError(
-        'Name should be 3 to 160 characters long and should not contain special characters',
+        'Name should be 2 to 160 characters long and should not contain special characters',
       );
     } else {
       setNameError(null);
@@ -149,6 +159,9 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
+    console.log(e.target.value);
+    setName(newName);
+
     const pattern = /^[^!@#$^*()+]*$/;
 
     if (!pattern.test(newName)) {
@@ -224,29 +237,67 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
     }
   };
 
+  const validateUrl = (url: string) => {
+    var pattern = new RegExp(
+      '^(https?:\\/\\/)?' +
+        '(([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' +
+        '((\\d{1,3}\\.){3}\\d{1,3})' +
+        '(\\:\\d+)?(\\/?[-a-z\\d%_.~+]*)*' +
+        '(\\?[;&a-z\\d%_.~+=-]*)?' +
+        '(\\#[-a-z\\d_]*)?$',
+      'i',
+    );
+
+    return pattern.test(url);
+  };
+
+  const handleUrlValidation = (url: string) => {
+    if (!url.trim()) {
+      setCompletionUrlError('Completion URL is required.');
+    } else if (!validateUrl(url)) {
+      setCompletionUrlError(
+        'Invalid URL: URL should start with http:// or https:// and end with a domain extension.',
+      );
+    } else {
+      setCompletionUrlError('');
+      setFormData({ ...formData, endpoint: url });
+    }
+  };
+
   const handleCompletionUrlChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setCompletionUrl(event.target.value);
-    setFormData({ ...formData, endpoint: event.target.value });
+    const inputUrl = event.target.value;
+    setCompletionUrl(inputUrl);
+
+    handleUrlValidation(inputUrl);
+  };
+
+  const completionUrlOnBlurHandler = () => {
+    handleUrlValidation(completionUrl);
   };
 
   const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    const applicationName = name;
+    const applicationName = ApiUtils.encodeApiUrl(name);
     const applicationData = formData;
-    dispatch(ApplicationActions.create({ applicationName, applicationData }));
+
+    if (mode === 'edit') {
+      dispatch(ApplicationActions.edit({ applicationName, applicationData }));
+    } else {
+      dispatch(ApplicationActions.create({ applicationName, applicationData }));
+    }
+
     handleClose();
     resetForm();
-};
+  };
 
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
-        console.log(formData);
       }
     },
     [formData],
@@ -288,8 +339,11 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
     setDeleteLogo(false);
     const selectedFileId = filesIds[0];
     const newFile = files.find((file) => file.id === selectedFileId);
-    setLocalLogoFile(newFile?.name || '');
-    setFormData({ ...formData, icon_url: newFile?.name || '' });
+    setLocalLogoFile(newFile?.id || '');
+    setFormData({
+      ...formData,
+      icon_url: getAbsoluteImagePath(newFile?.id || ''),
+    });
   };
 
   const onDeleteLocalLogoHandler = () => {
@@ -298,25 +352,61 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
     setFormData({ ...formData, icon_url: '' });
   };
 
+  function getAbsoluteImagePath(fileId: string): string {
+    return `api/${ApiUtils.encodeApiUrl(fileId)}`;
+  }
+
+  function safeStringify(data: unknown): string {
+    if (typeof data === 'string') {
+      data = JSON.parse(data);
+    }
+
+    return JSON.stringify(data, (key, value) =>
+      typeof value === 'boolean' ? String(value) : value,
+    );
+  }
+
   useEffect(() => {
     nameInputRef.current?.focus();
   }, []);
 
   useEffect(() => {
-    if (customLogoId) {
-      const file = files.find((file) => file.id === customLogoId);
-      setLocalLogoFile(file?.name || '');
-      setFormData({ ...formData, icon_url: file?.name || '' });
+    if (mode === 'edit' && selectedApplication) {
+      setName(selectedApplication.display_name || '');
+      setVersion(selectedApplication.display_version || '');
+      setDescription(selectedApplication.description || '');
+      setFeaturesData(safeStringify(selectedApplication.features));
+      setFilterParams(selectedApplication.input_attachment_types || []);
+      setMaxAttachments(
+        selectedApplication.max_input_attachments.toString() || '',
+      );
+      setLocalLogoFile(selectedApplication.icon_url || '');
+      setDeleteLogo(!selectedApplication.icon_url);
+      setCompletionUrl(selectedApplication.endpoint || '');
+      setFormData({
+        endpoint: selectedApplication.endpoint || '',
+        display_name: selectedApplication.display_name || '',
+        display_version: selectedApplication.display_version || '',
+        description: selectedApplication.description || '',
+        features: selectedApplication.features,
+        input_attachment_types:
+          selectedApplication.input_attachment_types || [],
+        max_input_attachments: selectedApplication.max_input_attachments || 0,
+        icon_url: selectedApplication.icon_url || '',
+        defaults: {},
+      });
+    } else {
+      resetForm();
     }
-  }, [customLogoId, files]);
+  }, [mode, selectedApplication]);
 
   const inputClassName = classNames('input-form', 'mx-0', 'peer', {
     'input-invalid': submitted,
     submitted: submitted,
   });
 
-  const saveDisabled = !name.trim() || !version.trim() || !localLogoFile;
-  console.log(saveDisabled, !name.trim(), !version.trim(), !localLogoFile);
+  const saveDisabled =
+    !name.trim() || !version.trim() || !localLogoFile || !completionUrl.trim();
 
   return (
     <Modal
@@ -337,10 +427,12 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
         <IconX height={24} width={24} />
       </button>
       <div className="px-3 py-4 md:pl-4 md:pr-10">
-        <h2 className="text-base font-semibold">{t('Add application')}</h2>
+        <h2 className="text-base font-semibold">
+          {mode === 'edit' ? 'Edit Application' : 'Add Application'}
+        </h2>
       </div>
       <div className="flex flex-col gap-4 overflow-y-auto">
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="promptName"
@@ -366,7 +458,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
           />
           {nameError && <EmptyRequiredInputMessage isShown text={nameError} />}
         </div>
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="applicationVersion"
@@ -395,7 +487,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
             <EmptyRequiredInputMessage isShown text={versionError} />
           )}
         </div>
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="applicationIcon"
@@ -416,7 +508,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
             text={iconError || ''}
           />
         </div>
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="description"
@@ -435,7 +527,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
             data-qa="prompt-descr"
           />
         </div>
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="featuresData"
@@ -464,7 +556,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
             <EmptyRequiredInputMessage isShown text={featuresDataError} />
           )}
         </div>
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="attachmentTypes"
@@ -485,7 +577,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
             itemHeight="31"
           />
         </div>
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="maxAttachments"
@@ -502,7 +594,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
             data-qa="max-attachments"
           />
         </div>
-        <div className="flex flex-col px-3 md:px-5">
+        <div className="mb-4 flex flex-col px-3 md:px-6">
           <label
             className="mb-1 flex text-xs text-secondary"
             htmlFor="completionUrl"
@@ -517,11 +609,13 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
                 : '',
               inputClassName,
             )}
-            placeholder={t('Enter the completion URL') || ''}
+            onFocus={() => setCompletionUrlError('')}
+            placeholder={t('Type completion URL') || ''}
             value={completionUrl}
             type="text"
-            onFocus={() => setCompletionUrlError('')}
+            onBlur={completionUrlOnBlurHandler}
             onChange={handleCompletionUrlChange}
+            required
             data-qa="completion-url"
           />
           {completionUrlError && (
@@ -529,10 +623,42 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
           )}
         </div>
       </div>
-      <div className="flex justify-end gap-2 border-t border-primary p-4 md:px-5">
+      <div
+        className={`flex ${mode === 'edit' ? 'justify-between' : 'justify-end'} gap-2 border-t border-primary p-4 md:px-6`}
+      >
+        {mode === 'edit' ? (
+          <div className="flex items-center gap-2">
+            <Tooltip tooltip={t('Delete')}>
+              <button
+                // onClick={handleNewFolder}
+                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                data-qa="application-delete"
+              >
+                <IconTrashX
+                  size={24}
+                  className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
+                />
+              </button>
+            </Tooltip>
+            <Tooltip tooltip={t('Publish')}>
+              <button
+                // onClick={handleNewFolder}
+                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                data-qa="application-share"
+              >
+                <IconWorldShare
+                  size={24}
+                  className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
+                />
+              </button>
+            </Tooltip>
+          </div>
+        ) : (
+          ''
+        )}
         <Tooltip
           hideTooltip={!saveDisabled}
-          tooltip={t('Enter all required fields')}
+          tooltip={t('Fill in all required fields')}
         >
           <button
             className="button button-primary"
@@ -541,7 +667,7 @@ export const ApplicationDialog = ({ isOpen, onClose }: Props) => {
             disabled={saveDisabled}
             data-qa="save-application-dialog"
           >
-            {t('Create')}
+            {mode === 'edit' ? t('Save') : t('Create')}
           </button>
         </Tooltip>
       </div>

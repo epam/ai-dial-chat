@@ -13,7 +13,6 @@ import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { selectApplications } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
@@ -51,7 +50,9 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const { t } = useTranslation(Translation.Chat);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const dispatch = useAppDispatch();
-  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [applicationModalStatus, setApplicationModalStatus] =
+    useState('closed');
+  const openAddApplicationModal = () => setApplicationModalStatus('add');
 
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
     EntityType.Model,
@@ -67,6 +68,9 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
     useState<DialAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const modalIsOpen = applicationModalStatus !== 'closed';
+  const modalIsClosed = () => setApplicationModalStatus('closed');
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(
@@ -89,10 +93,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       ),
     );
   }, [models, entityTypes, searchTerm]);
-
-  const handleApplicationModal = () => {
-    setIsApplicationModalOpen(true);
-  };
 
   const handleSearch = useCallback((searchValue: string) => {
     setSearchTerm(searchValue.trim().toLowerCase());
@@ -118,10 +118,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       return [...entityTypes, entityType];
     });
   }, []);
-
-  useEffect(() => {
-    dispatch(ApplicationActions.list());
-  }, [dispatch]);
 
   const handleSelectModel = useCallback(
     (entityId: string) => {
@@ -152,7 +148,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         </button>
       </div>
 
-      <div className="flex px-3 md:px-5">
+      <div className="relative flex px-3 md:px-5">
         <input
           name="titleInput"
           placeholder={t('Search model, assistant, or application') || ''}
@@ -163,20 +159,21 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           className="m-0 w-full flex-grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         ></input>
         <button
-          onClick={handleApplicationModal}
-          className="flex w-[100px] items-center gap-2 text-accent-primary"
+          onClick={openAddApplicationModal}
+          className="absolute right-3 flex h-full w-[100px] items-center gap-2 text-accent-primary"
         >
           <IconLayoutGridAdd height={18} width={18} />
           <span>Add app</span>
         </button>
       </div>
 
-      <ApplicationDialog
-        isOpen={isApplicationModalOpen}
-        onClose={(result) => {
-          setIsApplicationModalOpen(false);
-        }}
-      />
+      {modalIsOpen && (
+        <ApplicationDialog
+          isOpen={modalIsOpen}
+          onClose={modalIsClosed}
+          mode={applicationModalStatus}
+        />
+      )}
 
       <div className="flex gap-2 px-3 md:px-5">
         <button

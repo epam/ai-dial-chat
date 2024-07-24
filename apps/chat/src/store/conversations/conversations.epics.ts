@@ -1339,6 +1339,8 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
+      console.log(chatBody,'chatBody');
+      
       return from(
         fetch('api/chat', {
           method: 'POST',

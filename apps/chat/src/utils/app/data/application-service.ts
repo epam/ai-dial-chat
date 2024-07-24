@@ -1,18 +1,52 @@
 import { Observable } from 'rxjs';
-import { CreateApplicationModel, ApplicationListResponseModel, ApplicationDetailsResponse, ReadOnlyAppDetailsResponse, OpenAIApplicationListResponse } from '@/src/types/applications';
-import { ApiUtils } from '../../server/api';
-import { BucketService } from './bucket-service';
-import { constructPath } from '../file';
 
+import {
+  ApplicationDetailsResponse,
+  ApplicationListResponseModel,
+  CreateApplicationModel,
+  OpenAIApplicationListResponse,
+  ReadOnlyAppDetailsResponse,
+} from '@/src/types/applications';
+
+import { ApiUtils } from '../../server/api';
+import { constructPath } from '../file';
+import { BucketService } from './bucket-service';
 
 export class ApplicationService {
-  public static create(applicationName: string, applicationData: CreateApplicationModel): Observable<any> {
+  public static create(
+    applicationName: string,
+    applicationData: CreateApplicationModel,
+  ): Observable<any> {
     const bucket = BucketService.getBucket();
-    return ApiUtils.request(`api/application/create/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationName))}`, {
-      method: 'PUT',
-      body: JSON.stringify(applicationData),
+    return ApiUtils.request(
+      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationName))}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(applicationData),
+      },
+    );
+  }
+
+  public static edit(
+    applicationName: string,
+    applicationData: CreateApplicationModel,
+  ): Observable<any> {
+    const bucket = BucketService.getBucket();
+    return ApiUtils.request(
+      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationName))}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(applicationData),
+      },
+    );
+  }
+
+  public static delete(applicationUrl: string): Observable<any> {
+    const bucket = BucketService.getBucket();
+    return ApiUtils.request(`api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationUrl))}`, {
+      method: 'DELETE',
     });
-}
+  }
 
   public static listing(): Observable<ApplicationListResponseModel[]> {
     const bucket = BucketService.getBucket();
@@ -20,24 +54,12 @@ export class ApplicationService {
       method: 'GET',
     });
   }
-  
-  public static fetchWriteOnlyAppDetails(appID: string): Observable<ApplicationDetailsResponse> {
-    const bucket = BucketService.getBucket(); 
-    return ApiUtils.request(`api/applications/${bucket}/${appID}`, {
-      method: 'GET',
-    });
-  }
 
-  public static fetchReadOnlyAppDetails(appID: string): Observable<ReadOnlyAppDetailsResponse> {
-    const bucket = BucketService.getBucket();  
-    return ApiUtils.request(`api/applications/${bucket}/${appID}`, {
+  public static getOne(appID: string): Observable<ApplicationDetailsResponse> {
+    const oneData = ApiUtils.request(`api/${appID}`, {
       method: 'GET',
     });
-  }
-
-  public static fetchOpenAIApplications(): Observable<OpenAIApplicationListResponse> {
-    return ApiUtils.request(`openai/applications`, {
-      method: 'GET',
-    });
+    console.log(oneData, 'oneData');
+    return oneData
   }
 }

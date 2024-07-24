@@ -1,5 +1,13 @@
-import { IconChevronDown } from '@tabler/icons-react';
+import {
+  IconChevronDown,
+  IconDots,
+  IconPencilMinus,
+  IconTrashX,
+  IconWorldShare,
+} from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
+
+import { t } from 'i18next';
 
 import classNames from 'classnames';
 
@@ -9,13 +17,21 @@ import {
 } from '@/src/utils/app/conversation';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
+import { ApiUtils } from '@/src/utils/server/api';
+import { logger } from '@/src/utils/server/logger';
 
+import { FeatureType } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntity } from '@/src/types/models';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { applicationSelectors } from '@/src/store/application/application.selectors';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
+import { ApplicationDialog } from '../Common/ApplicationDialog';
+import ContextMenu from '../Common/ContextMenu';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
@@ -28,6 +44,8 @@ interface ModelGroupProps {
   searchTerm?: string;
   disabled?: boolean;
   isReplayAsIs?: boolean;
+  openApplicationModal?: () => void;
+  setSelectedApplication?: ({}) => void;
 }
 
 const ModelGroup = ({
@@ -38,7 +56,12 @@ const ModelGroup = ({
   searchTerm,
   disabled,
   isReplayAsIs,
+  openApplicationModal,
+  setSelectedApplication,
 }: ModelGroupProps) => {
+  const dispatch = useAppDispatch();
+
+  const [isOpen, setIsOpen] = useState(false);
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
@@ -70,6 +93,58 @@ const ModelGroup = ({
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
   const description = currentEntity.description;
+  const applicationId = currentEntity.id;
+  // const applicationDetail = useAppSelector((state) =>
+  //   applicationSelectors.applicationDetail(state)
+  // );
+
+  // console.log(applicationDetail,'applicationDetail');
+
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: 'Edit',
+        dataQa: 'edit',
+        Icon: IconPencilMinus,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+
+          dispatch(ApplicationActions.getOne(applicationId));
+
+          if (openApplicationModal) {
+            openApplicationModal();
+          }
+          // if(setSelectedApplication){
+          //   setSelectedApplication(applicationDetail);
+          // }
+        },
+      },
+      {
+        name: 'Publish',
+        dataQa: 'publish',
+        display: true,
+        Icon: IconWorldShare,
+        onClick: () => console.log('publish'),
+      },
+      {
+        name: 'Unpublish',
+        dataQa: 'unpublish',
+        display: false,
+        Icon: IconWorldShare,
+        onClick: () => console.log('unpublish'),
+      },
+      {
+        name: 'Delete',
+        dataQa: 'delete',
+        Icon: IconTrashX,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          dispatch(ApplicationActions.delete(currentEntity.name));
+        },
+      },
+    ],
+    [t, openApplicationModal],
+  );
 
   return (
     <div
@@ -82,7 +157,6 @@ const ModelGroup = ({
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
-        
         if (disabled) {
           return;
         }
@@ -98,7 +172,7 @@ const ModelGroup = ({
       data-qa="group-entity"
     >
       {disabled && <DisableOverlay />}
-      <div className="flex h-full items-center gap-3 px-3 py-2">
+      <div className="flex h-full items-center gap-3 overflow-hidden px-3 py-2">
         <ModelIcon
           entityId={currentEntity.id}
           entity={currentEntity}
@@ -111,12 +185,29 @@ const ModelGroup = ({
                 ? getOpenAIEntityFullName(currentEntity)
                 : currentEntity.name}
             </span>
-            <ModelVersionSelect
-              className="absolute right-3 h-max"
-              entities={entities}
-              onSelect={onSelect}
-              currentEntity={currentEntity}
-            />
+            <div className="flex items-center gap-2">
+              <ModelVersionSelect
+                className="h-max"
+                entities={entities}
+                onSelect={onSelect}
+                currentEntity={currentEntity}
+              />
+              {currentEntity.id.includes('/') ? (
+                <ContextMenu
+                  menuItems={menuItems}
+                  TriggerIcon={IconDots}
+                  triggerIconSize={18}
+                  className="m-0 justify-self-end"
+                  featureType={FeatureType.Chat}
+                  isOpen={isOpen}
+                  onOpenChange={() => {
+                    openApplicationModal;
+                  }}
+                />
+              ) : (
+                ''
+              )}
+            </div>
           </div>
           {description && (
             <span
@@ -186,6 +277,12 @@ export const ModelList = ({
   disabled,
   isReplayAsIs,
 }: ModelListProps) => {
+  const [applicationModalStatus, setApplicationModalStatus] =
+    useState('closed');
+  const modalIsOpen = applicationModalStatus !== 'closed';
+  const modalIsClosed = () => setApplicationModalStatus('closed');
+  const openEditApplicationModal = () => setApplicationModalStatus('edit');
+
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
     const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
@@ -194,7 +291,10 @@ export const ModelList = ({
       displayCountLimit ?? Number.MAX_SAFE_INTEGER,
     );
   }, [allEntities, displayCountLimit, entities]);
-  console.log(selectedModelId, 'selectedModelId');
+
+  const applicationDetail = useAppSelector((state) =>
+    applicationSelectors.applicationDetail(state),
+  );
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
@@ -215,9 +315,18 @@ export const ModelList = ({
             disabled={disabled}
             searchTerm={searchTerm}
             isReplayAsIs={isReplayAsIs}
+            openApplicationModal={openEditApplicationModal}
           />
         ))}
       </div>
+      {modalIsOpen && (
+        <ApplicationDialog
+          isOpen={modalIsOpen}
+          onClose={modalIsClosed}
+          mode={applicationModalStatus}
+          selectedApplication={applicationDetail}
+        />
+      )}
     </div>
   );
 };

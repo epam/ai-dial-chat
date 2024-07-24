@@ -13,29 +13,34 @@ export interface ApplicationState {
   error: boolean;
   application: CreateApplicationModel | null;
   appDetails: ApplicationDetailsResponse | null;
-  appDetailsReadOnly: ReadOnlyAppDetailsResponse | null; 
+  appDetailsReadOnly: ReadOnlyAppDetailsResponse | null;
   applications: ApplicationListResponseModel[];
   openaiApplications: OpenAIApplicationListResponse | null;
+  applicationDetail: ApplicationDetailsResponse | null; // Added applicationDetail
 }
 
 const initialState: ApplicationState = {
-  loading: false, 
-  error: false, 
+  loading: false,
+  error: false,
   application: null,
   appDetails: null,
   appDetailsReadOnly: null,
   applications: [],
   openaiApplications: null,
+  applicationDetail: null, // Added applicationDetail
 };
 
 export const applicationSlice = createSlice({
   name: 'application',
   initialState,
   reducers: {
-    // create: (state, action: PayloadAction<CreateApplicationModel>) => {
-    //   state.loading = true;
-    // },
-    create: (state, action: PayloadAction<{ applicationName: string; applicationData: CreateApplicationModel }>) => {
+    create: (
+      state,
+      action: PayloadAction<{
+        applicationName: string;
+        applicationData: CreateApplicationModel;
+      }>,
+    ) => {
       state.loading = true;
     },
     createSuccess: (state, action: PayloadAction<CreateApplicationModel>) => {
@@ -78,7 +83,10 @@ export const applicationSlice = createSlice({
       state.loading = true;
     },
 
-    fetchReadOnlyAppDetailsSuccess: (state, action: PayloadAction<ReadOnlyAppDetailsResponse>) => {
+    fetchReadOnlyAppDetailsSuccess: (
+      state,
+      action: PayloadAction<ReadOnlyAppDetailsResponse>,
+    ) => {
       state.loading = false;
       state.appDetailsReadOnly = action.payload;
     },
@@ -91,11 +99,58 @@ export const applicationSlice = createSlice({
     fetchOpenAIApplications: (state) => {
       state.loading = true;
     },
-    fetchOpenAIApplicationsSuccess: (state, action: PayloadAction<OpenAIApplicationListResponse>) => {
+    fetchOpenAIApplicationsSuccess: (
+      state,
+      action: PayloadAction<OpenAIApplicationListResponse>,
+    ) => {
       state.loading = false;
       state.openaiApplications = action.payload;
     },
     fetchOpenAIApplicationsFail: (state) => {
+      state.loading = false;
+      state.error = true;
+    },
+    delete: (state, action: PayloadAction<string>) => {
+      state.loading = true;
+    },
+    deleteSuccess: (state, action: PayloadAction<void>) => {
+      state.loading = false;
+    },
+    deleteFail: (state) => {
+      state.loading = false;
+      state.error = true;
+    },
+    edit: (
+      state,
+      action: PayloadAction<{
+        applicationName: string;
+        applicationData: CreateApplicationModel;
+      }>,
+    ) => {
+      state.loading = true;
+    },
+    editSuccess: (state, action: PayloadAction<CreateApplicationModel>) => {
+      state.loading = false;
+      state.application = action.payload;
+    },
+    editFail: (state) => {
+      state.loading = false;
+      state.error = true;
+    },
+    getOne: (
+      state,
+      action: PayloadAction<string>, 
+    ) => {
+      state.loading = true;
+    },
+    getOneSuccess: (
+      state,
+      action: PayloadAction<ApplicationDetailsResponse>,
+    ) => {
+      state.loading = false;
+      state.appDetails = action.payload;
+    },
+    getOneFail: (state) => {
       state.loading = false;
       state.error = true;
     },

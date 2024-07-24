@@ -104,4 +104,5 @@ export enum ApiKeys {
   Files = 'files',
   Conversations = 'conversations',
   Prompts = 'prompts',
+  Applications = 'applications',
 }
