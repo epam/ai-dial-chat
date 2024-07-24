@@ -46,7 +46,7 @@ dialTest.only(
     const expectedNameWithSpaces = 'Prompt 1';
 
     await dialTest.step(
-      'Rename any prompt and add a dot at the end of the name',
+      'Add a dot at the end of a prompt name',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
@@ -59,7 +59,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Check that Name field is red bordered and error message appears',
+      'Check that the name field is red-bordered and an error message appears',
       async () => {
         // Retrieve the computed border colors for all sides of the "Name" field
         const nameBorderColors = await promptModalDialog.name.getAllBorderColors();
@@ -91,7 +91,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Fill in prompt body and click on Save button',
+      'Fill in the prompt body and click the Save button',
       async () => {
         await promptModalDialog.setField(
           promptModalDialog.prompt,
@@ -101,7 +101,7 @@ dialTest.only(
       },
     );
 
-    await dialTest.step('Check that UI error appears', async () => {
+    await dialTest.step('Check that a UI error appears', async () => {
       await errorToastAssertion.assertToastIsVisible();
       await errorToastAssertion.assertToastMessage(
         ExpectedConstants.nameWithDotErrorMessage,
@@ -112,7 +112,7 @@ dialTest.only(
     });
 
     await dialTest.step(
-      'Select Rename item in context menu and type restricted chars one by one',
+      'Type restricted characters one by one in the Rename prompt dialog',
       async () => {
         for (const char of ExpectedConstants.restrictedNameChars.split('')) {
           await promptModalDialog.setField(promptModalDialog.name, char);
@@ -127,7 +127,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Copy-paste restricted chars to the prompt name and verify the name',
+      'Copy and paste restricted characters to the prompt name and verify the name',
       async () => {
         await dialHomePage.copyToClipboard(nameWithRestrictedChars);
         await promptModalDialog.name.click();
@@ -144,7 +144,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Verify prompt is created and no error toast is shown',
+      'Verify the prompt is created and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
           {name: expectedPromptName},
@@ -155,7 +155,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Fill in prompt-body and add to the name spec chars',
+      'Add special characters to the prompt name',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
@@ -173,7 +173,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Verify prompt is created and no error toast is shown',
+      'Verify the prompt is created and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
           {name: prompt.name},
@@ -184,7 +184,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Update prompt name to long name with emojis',
+      'Update the prompt name to a long name with emojis',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
@@ -202,7 +202,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Verify prompt is renamed successfully, the name looks fine on Prompt panel',
+      'Verify the prompt is renamed successfully and the name looks fine on the Prompt panel',
       async () => {
         await promptAssertion.assertEntityState(
           {name: prompt.name},
@@ -213,7 +213,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Create a prompt and update its name to " Prompt 1 " (spaces before; after; in the middle)',
+      'Update the prompt name to " Prompt 1 " (spaces before, after, and in the middle)',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
@@ -224,7 +224,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Verify prompt name is "Prompt 1"',
+      'Verify the prompt name is "Prompt 1"',
       async () => {
         await promptAssertion.assertEntityState(
           {name: prompt.name},
