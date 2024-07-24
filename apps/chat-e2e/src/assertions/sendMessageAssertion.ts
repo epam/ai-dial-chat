@@ -25,4 +25,11 @@ export class SendMessageAssertion {
           .soft(sendMessageInputFullWidth, ExpectedMessages.elementWidthIsValid)
           .toBe(initialWidth);
   }
+
+  public async assertMessageValue(expectedValue: string) {
+    const messageValue = await this.sendMessage.getMessage();
+    expect
+      .soft(messageValue, ExpectedMessages.messageContentIsValid)
+      .toBe(expectedValue);
+  }
 }

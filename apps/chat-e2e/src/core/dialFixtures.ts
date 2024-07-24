@@ -24,6 +24,7 @@ import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { FooterAssertion } from '@/src/assertions/footerAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -196,6 +197,7 @@ const dialTest = test.extend<
     sendMessageAssertion: SendMessageAssertion;
     chatHeaderAssertion: ChatHeaderAssertion;
     chatMessagesAssertion: ChatMessagesAssertion;
+    footerAssertion: FooterAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -669,6 +671,10 @@ const dialTest = test.extend<
   chatMessagesAssertion: async ({ chatMessages }, use) => {
     const chatMessagesAssertion = new ChatMessagesAssertion(chatMessages);
     await use(chatMessagesAssertion);
+  },
+  footerAssertion: async ({ chat }, use) => {
+    const footerAssertion = new FooterAssertion(chat.getFooter());
+    await use(footerAssertion);
   },
 });
 

@@ -563,6 +563,53 @@ export class ConversationData extends FolderData {
       .build();
   }
 
+  public prepareConversationWithStagesInResponse(
+    model: DialAIEntityModel | string,
+    stagesCount: number,
+  ) {
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'stages request',
+      model: modelToUse,
+      settings: settings,
+    };
+
+    const stages: Stage[] = [];
+    for (let i = 0; i < stagesCount; i++) {
+      const stage: Stage = {
+        index: i,
+        name: `stage ${i}`,
+        status: 'completed',
+        content: 'stage content',
+      };
+      stages.push(stage);
+    }
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'response with stages',
+      model: modelToUse,
+      custom_content: {
+        stages: stages,
+      },
+      settings: settings,
+    };
+    const name = GeneratorUtil.randomString(10);
+    return this.conversationBuilder
+      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withName(name)
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
   public getAttachmentData(attachmentUrl: string) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     return {
