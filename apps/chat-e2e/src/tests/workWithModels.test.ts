@@ -578,7 +578,7 @@ dialTest(
 );
 
 dialTest(
-  'Use simple prompt in system prompt.\n' +
+  'Prompt text without parameters appear in System prompt field in chat settings.\n' +
     'System prompt set using slash is applied in Model',
   async ({
     dialHomePage,

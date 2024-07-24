@@ -143,6 +143,13 @@ export const ExpectedConstants = {
   unselectAllTooltip: 'Unselect all',
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
   deleteSelectedPromptsTooltip: 'Delete selected prompts',
+  promptLimitExceededTitle: 'Prompt limit exceeded',
+  promptLimitExceededMessage: (
+    maxPromptTokens: number,
+    enteredTokens: number,
+    remainedTokes: number,
+  ) =>
+    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
 };
 
 export enum Groups {
