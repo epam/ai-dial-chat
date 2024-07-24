@@ -12,22 +12,20 @@ export interface ApplicationState {
   loading: boolean;
   error: boolean;
   application: CreateApplicationModel | null;
-  appDetails: ApplicationDetailsResponse | null;
+  appDetails?: ApplicationDetailsResponse | undefined;
   appDetailsReadOnly: ReadOnlyAppDetailsResponse | null;
   applications: ApplicationListResponseModel[];
   openaiApplications: OpenAIApplicationListResponse | null;
-  applicationDetail: ApplicationDetailsResponse | null; // Added applicationDetail
 }
 
 const initialState: ApplicationState = {
   loading: false,
   error: false,
   application: null,
-  appDetails: null,
+  appDetails: undefined,
   appDetailsReadOnly: null,
   applications: [],
   openaiApplications: null,
-  applicationDetail: null, // Added applicationDetail
 };
 
 export const applicationSlice = createSlice({

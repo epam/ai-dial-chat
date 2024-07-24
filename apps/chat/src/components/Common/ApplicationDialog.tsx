@@ -14,22 +14,17 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  doesHaveDotsInTheEnd,
-  isEntityNameOnSameLevelUnique,
-  prepareEntityName,
-} from '@/src/utils/app/common';
+import { prepareEntityName } from '@/src/utils/app/common';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CreateApplicationModel } from '@/src/types/applications';
+import { ApplicationDetailsResponse, CreateApplicationModel } from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -37,23 +32,11 @@ import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
 import EmptyRequiredInputMessage from './EmptyRequiredInputMessage';
 import { MultipleComboBox } from './MultipleComboBox';
 import Tooltip from './Tooltip';
-
-interface Application {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  features: string;
-  inputAttachmentTypes: string[];
-  isDefault: boolean;
-  maxInputAttachments: number;
-  iconUrl: string;
-}
 interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   mode: string;
-  selectedApplication?: any;
+  selectedApplication?: ApplicationDetailsResponse;
 }
 
 interface FormData extends CreateApplicationModel {}
@@ -159,7 +142,6 @@ export const ApplicationDialog = ({
 
   const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
-    console.log(e.target.value);
     setName(newName);
 
     const pattern = /^[^!@#$^*()+]*$/;
@@ -293,6 +275,13 @@ export const ApplicationDialog = ({
     resetForm();
   };
 
+  const handleDelete = () => {
+    if (selectedApplication) {
+      dispatch(ApplicationActions.delete(selectedApplication.display_name));
+    }
+    handleClose();
+  };
+
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -339,7 +328,7 @@ export const ApplicationDialog = ({
     setDeleteLogo(false);
     const selectedFileId = filesIds[0];
     const newFile = files.find((file) => file.id === selectedFileId);
-    setLocalLogoFile(newFile?.id || '');
+    setLocalLogoFile(newFile?.name || '');
     setFormData({
       ...formData,
       icon_url: getAbsoluteImagePath(newFile?.id || ''),
@@ -630,7 +619,7 @@ export const ApplicationDialog = ({
           <div className="flex items-center gap-2">
             <Tooltip tooltip={t('Delete')}>
               <button
-                // onClick={handleNewFolder}
+                onClick={handleDelete}
                 className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                 data-qa="application-delete"
               >
