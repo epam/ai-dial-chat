@@ -59,7 +59,6 @@ import { URL } from 'url';
 export interface HomeProps {
   initialState: {
     settings: SettingsState;
-    isAdmin: boolean;
   };
 }
 
