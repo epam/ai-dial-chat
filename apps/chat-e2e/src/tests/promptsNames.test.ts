@@ -81,8 +81,8 @@ dialTest.only(
         ExpectedConstants.nameWithDotErrorMessage,
         ExpectedMessages.notAllowedNameErrorShown,
       );
-      // Closing the toast to move forward
-      await errorToast.closeToast();
+      // Wating for (Closing) the toast to move forward
+      await errorToast.waitForState({state: 'hidden'});
     });
 
     await dialTest.step(
