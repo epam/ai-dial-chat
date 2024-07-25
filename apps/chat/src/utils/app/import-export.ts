@@ -2,7 +2,7 @@ import { EMPTY, Observable, map, of } from 'rxjs';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-import { Attachment, Conversation } from '@/src/types/chat';
+import { Attachment, Conversation, Message, Stage } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -458,4 +458,45 @@ export const getMappedActions = (
     replaceActions[item.id] = action ?? ReplaceOptions.Postfix;
   });
   return { ...replaceActions };
+};
+
+export const updateMessageAttachments = ({
+  message,
+  uploadedAttachments,
+}: {
+  message: Message;
+  uploadedAttachments: UploadedAttachment[];
+}) => {
+  if (!message.custom_content?.attachments) {
+    return message;
+  }
+
+  const newAttachments = message.custom_content.attachments.map(
+    (oldAttachment) => updateAttachment({ oldAttachment, uploadedAttachments }),
+  );
+
+  const newStages: Stage[] | undefined =
+    message.custom_content.stages &&
+    message.custom_content.stages.map((stage) => {
+      if (!stage.attachments) {
+        return stage;
+      }
+      const newStageAttachments = stage.attachments.map((oldAttachment) =>
+        updateAttachment({ oldAttachment, uploadedAttachments }),
+      );
+      return {
+        ...stage,
+        attachments: newStageAttachments,
+      };
+    });
+
+  const newCustomContent: Message['custom_content'] = {
+    ...message.custom_content,
+    attachments: newAttachments,
+    stages: newStages,
+  };
+  return {
+    ...message,
+    custom_content: newCustomContent,
+  };
 };
