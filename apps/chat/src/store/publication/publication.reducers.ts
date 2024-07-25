@@ -11,7 +11,8 @@ import {
 
 import * as PublicationSelectors from './publication.selectors';
 
-import xor from 'lodash-es/xor';
+import difference from 'lodash-es/difference';
+import union from 'lodash-es/union';
 
 export { PublicationSelectors };
 
@@ -175,9 +176,9 @@ export const publicationSlice = createSlice({
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
-      state.selectedItemsToPublish = xor(
-        state.selectedItemsToPublish,
-        payload.ids,
+      state.selectedItemsToPublish = union(
+        difference(state.selectedItemsToPublish, payload.ids),
+        difference(payload.ids, state.selectedItemsToPublish),
       );
     },
     resetItemsToPublish: (state) => {

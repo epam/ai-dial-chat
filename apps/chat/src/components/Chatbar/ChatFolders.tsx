@@ -204,17 +204,23 @@ const ChatFolderTemplate = ({
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
-  const selectedFolderIds = useAppSelector(
-    ConversationsSelectors.selectAllChosenFolderIds,
+  const selectedFolderIds = useAppSelector((state) =>
+    ConversationsSelectors.selectChosenFolderIds(state, conversations),
   );
   const partialSelectedFolderIds = useAppSelector(
     ConversationsSelectors.selectPartialChosenFolderIds,
   );
   const handleFolderSelect = useCallback(
-    (folderId: string, isChosen: boolean) => {
-      dispatch(ConversationsActions.setChosenFolder({ folderId, isChosen }));
+    (folderId: string) => {
+      dispatch(
+        ConversationsActions.setChosenConversation({
+          ids: conversations
+            .filter((c) => c.id.startsWith(folderId))
+            .map((c) => c.id),
+        }),
+      );
     },
-    [dispatch],
+    [conversations, dispatch],
   );
 
   return (

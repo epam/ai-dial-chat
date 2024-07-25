@@ -91,6 +91,13 @@ const PromptFolderTemplate = ({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
   );
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const selectedFolderIds = useAppSelector((state) =>
+    PromptsSelectors.selectChosenFolderIds(state, prompts),
+  );
+  const partialSelectedFolderIds = useAppSelector(
+    PromptsSelectors.selectPartialChosenFolderIds,
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
@@ -171,18 +178,17 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
-  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const selectedFolderIds = useAppSelector(
-    PromptsSelectors.selectAllChosenFolderIds,
-  );
-  const partialSelectedFolderIds = useAppSelector(
-    PromptsSelectors.selectPartialChosenFolderIds,
-  );
   const handleFolderSelect = useCallback(
-    (folderId: string, isChosen: boolean) => {
-      dispatch(PromptsActions.setChosenFolder({ folderId, isChosen }));
+    (folderId: string) => {
+      dispatch(
+        PromptsActions.setChosenPrompts({
+          ids: prompts
+            .filter((p) => p.id.startsWith(folderId))
+            .map((p) => p.id),
+        }),
+      );
     },
-    [dispatch],
+    [dispatch, prompts],
   );
 
   return (

@@ -95,10 +95,9 @@ export function ConversationView({
 
   const handleToggle = useCallback(() => {
     ConversationsActions.setChosenConversation({
-      conversationId: conversation.id,
-      isChosen,
+      ids: [conversation.id],
     });
-  }, [conversation.id, isChosen]);
+  }, [conversation.id]);
 
   return (
     <>
@@ -237,16 +236,12 @@ export const ConversationComponent = ({
     ConversationsSelectors.selectIsSelectMode,
   );
   const chosenConversationIds = useAppSelector(
-    ConversationsSelectors.selectChosenConversationIds,
+    ConversationsSelectors.selectSelectedItems,
   );
-  const chosenFolderIds = useAppSelector(
-    ConversationsSelectors.selectChosenFolderIds,
-  );
+
   const isChosen = useMemo(
-    () =>
-      chosenConversationIds.includes(conversation.id) ||
-      chosenFolderIds.some((folderId) => conversation.id.startsWith(folderId)),
-    [chosenConversationIds, chosenFolderIds, conversation.id],
+    () => chosenConversationIds.includes(conversation.id),
+    [chosenConversationIds, conversation.id],
   );
 
   const { refs, context } = useFloating({
@@ -442,12 +437,11 @@ export const ConversationComponent = ({
       setIsContextMenu(false);
       dispatch(
         ConversationsActions.setChosenConversation({
-          conversationId: conversation.id,
-          isChosen,
+          ids: [conversation.id],
         }),
       );
     },
-    [conversation.id, dispatch, isChosen],
+    [conversation.id, dispatch],
   );
 
   useEffect(() => {
@@ -681,8 +675,7 @@ export const ConversationComponent = ({
                       conversationIds: [conversation.id],
                     })
                   : ConversationsActions.setChosenConversation({
-                      conversationId: conversation.id,
-                      isChosen,
+                      ids: [conversation.id],
                     }),
               );
             }

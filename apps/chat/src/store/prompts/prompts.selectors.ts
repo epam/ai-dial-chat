@@ -19,6 +19,7 @@ import {
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
+import { ShareEntity } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -341,44 +342,43 @@ export const selectPublicationFolders = createSelector(
 );
 
 export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return state.chosenPromptIds.length > 0 || state.chosenFolderIds.length > 0;
+  return state.chosenPromptIds.length > 0;
 });
 
-export const selectChosenPromptIds = createSelector([rootSelector], (state) => {
+export const selectSelectedItems = createSelector([rootSelector], (state) => {
   return state.chosenPromptIds;
 });
 
-export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
-  return state.chosenFolderIds;
-});
-
-export const selectAllChosenFolderIds = createSelector(
-  [rootSelector, selectFolders],
-  (state, folders) => {
-    return folders
+export const selectPartialChosenFolderIds = createSelector(
+  [selectSelectedItems, selectFolders],
+  (selectedItems, promptFolders) => {
+    return promptFolders
       .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
+      .filter(
+        (folderId) =>
+          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+            selectedItems.some((entityId) => entityId.startsWith(folderId))),
       );
   },
 );
 
-export const selectPartialChosenFolderIds = createSelector(
-  [rootSelector, selectFolders],
-  (state, folders) => {
+export const selectChosenFolderIds = createSelector(
+  [
+    selectSelectedItems,
+    selectFolders,
+    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
+  ],
+  (selectedItems, folders, itemsShouldBeChosen) => {
     return folders
       .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !state.chosenFolderIds.some((chosenId) =>
-            folderId.startsWith(chosenId),
-          ) &&
-          (state.chosenFolderIds.some((chosenId) =>
-            chosenId.startsWith(folderId),
-          ) ||
-            state.chosenPromptIds.some((promptId) =>
-              promptId.startsWith(folderId),
-            )),
+      .filter((folderId) =>
+        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
+      )
+      .filter((folderId) =>
+        itemsShouldBeChosen
+          .filter((item) => item.id.startsWith(folderId))
+          .every((item) => selectedItems.includes(item.id)),
       );
   },
 );

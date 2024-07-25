@@ -110,18 +110,12 @@ export const PromptComponent = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-  const chosenPromptIds = useAppSelector(
-    PromptsSelectors.selectChosenPromptIds,
-  );
+  const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const chosenFolderIds = useAppSelector(
-    PromptsSelectors.selectChosenFolderIds,
-  );
+
   const isChosen = useMemo(
-    () =>
-      chosenPromptIds.includes(prompt.id) ||
-      chosenFolderIds.some((folderId) => prompt.id.startsWith(folderId)),
-    [chosenPromptIds, chosenFolderIds, prompt.id],
+    () => chosenPromptIds.includes(prompt.id),
+    [chosenPromptIds, prompt.id],
   );
 
   const { refs, context } = useFloating({
@@ -320,11 +314,9 @@ export const PromptComponent = ({
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
-      );
+      dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
     },
-    [dispatch, isChosen, prompt.id],
+    [dispatch, prompt.id],
   );
 
   useEffect(() => {
@@ -335,8 +327,8 @@ export const PromptComponent = ({
   }, [isSelectMode]);
 
   const handleToggle = useCallback(() => {
-    PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen });
-  }, [isChosen, prompt.id]);
+    PromptsActions.setChosenPrompts({ ids: [prompt.id] });
+  }, [prompt.id]);
 
   return (
     <>
@@ -353,9 +345,7 @@ export const PromptComponent = ({
           if (isSelectMode && !isExternal) {
             setIsDeleting(false);
             setIsRenaming(false);
-            dispatch(
-              PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
-            );
+            dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
         style={{

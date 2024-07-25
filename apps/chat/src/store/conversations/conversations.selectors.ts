@@ -32,7 +32,7 @@ import {
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -710,49 +710,43 @@ export const selectIsConversationsEmpty = createSelector(
 );
 
 export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return (
-    state.chosenConversationIds.length > 0 || state.chosenFolderIds.length > 0
-  );
+  return state.chosenConversationIds.length > 0;
 });
 
-export const selectChosenConversationIds = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.chosenConversationIds;
-  },
-);
-
-export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
-  return state.chosenFolderIds;
+export const selectSelectedItems = createSelector([rootSelector], (state) => {
+  return state.chosenConversationIds;
 });
 
-export const selectAllChosenFolderIds = createSelector(
-  [rootSelector, selectFolders],
-  (state, folders) => {
-    return folders
+export const selectPartialChosenFolderIds = createSelector(
+  [selectSelectedItems, selectFolders],
+  (selectedItems, conversationFolders) => {
+    return conversationFolders
       .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
+      .filter(
+        (folderId) =>
+          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+            selectedItems.some((entityId) => entityId.startsWith(folderId))),
       );
   },
 );
 
-export const selectPartialChosenFolderIds = createSelector(
-  [rootSelector, selectFolders],
-  (state, folders) => {
+export const selectChosenFolderIds = createSelector(
+  [
+    selectSelectedItems,
+    selectFolders,
+    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
+  ],
+  (selectedItems, folders, itemsShouldBeChosen) => {
     return folders
       .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !state.chosenFolderIds.some((chosenId) =>
-            folderId.startsWith(chosenId),
-          ) &&
-          (state.chosenFolderIds.some((chosenId) =>
-            chosenId.startsWith(folderId),
-          ) ||
-            state.chosenConversationIds.some((convId) =>
-              convId.startsWith(folderId),
-            )),
+      .filter((folderId) =>
+        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
+      )
+      .filter((folderId) =>
+        itemsShouldBeChosen
+          .filter((item) => item.id.startsWith(folderId))
+          .every((item) => selectedItems.includes(item.id)),
       );
   },
 );
