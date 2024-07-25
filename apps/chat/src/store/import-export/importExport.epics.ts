@@ -1295,44 +1295,6 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
           );
         }
 
-        // const updatedMessages: Message[] = conversationToUpload.messages.map(
-        //   (message) => {
-        //     if (!message.custom_content?.attachments) {
-        //       return message;
-        //     }
-
-        //     const newAttachments = message.custom_content.attachments.map(
-        //       (oldAttachment) =>
-        //         updateAttachment({ oldAttachment, uploadedAttachments }),
-        //     );
-
-        //     const newStages: Stage[] | undefined =
-        //       message.custom_content.stages &&
-        //       message.custom_content.stages.map((stage) => {
-        //         if (!stage.attachments) {
-        //           return stage;
-        //         }
-        //         const newStageAttachments = stage.attachments.map(
-        //           (oldAttachment) =>
-        //             updateAttachment({ oldAttachment, uploadedAttachments }),
-        //         );
-        //         return {
-        //           ...stage,
-        //           attachments: newStageAttachments,
-        //         };
-        //       });
-
-        //     const newCustomContent: Message['custom_content'] = {
-        //       ...message.custom_content,
-        //       attachments: newAttachments,
-        //       stages: newStages,
-        //     };
-        //     return {
-        //       ...message,
-        //       custom_content: newCustomContent,
-        //     };
-        //   },
-        // );
         const updateMessage = (message: Message) =>
           updateMessageAttachments({ message, uploadedAttachments });
 

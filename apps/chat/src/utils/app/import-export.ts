@@ -32,7 +32,6 @@ import { successMessages } from '@/src/constants/successMessages';
 import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
 import { isImportEntityNameOnSameLevelUnique } from './common';
-import { BucketService } from './data/bucket-service';
 import { ConversationService } from './data/conversation-service';
 import { constructPath, triggerDownload } from './file';
 import { splitEntityId } from './folders';
@@ -313,11 +312,7 @@ export const updateAttachment = ({
     (oldAttachment.url || oldAttachment.reference_url) &&
     (newAttachmentFile
       ? constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name)
-      : constructPath(
-          getFileRootId(BucketService.getBucket()),
-          parentPath,
-          name,
-        ));
+      : constructPath(getFileRootId(), parentPath, name));
 
   const encodedNewAttachmentUrl =
     newAttachmentUrl && ApiUtils.encodeApiUrl(newAttachmentUrl);
