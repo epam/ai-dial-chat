@@ -47,11 +47,15 @@ const selectIsShouldLogin = createSelector(
     );
   },
 );
+const selectIsAdmin = createSelector([rootSelector], (state) => {
+  return !!state.session?.data?.user.isAdmin;
+});
 
 export const AuthSelectors = {
   selectIsShouldLogin,
   selectSession,
   selectStatus,
+  selectIsAdmin,
 };
 
 export const AuthActions = authSlice.actions;

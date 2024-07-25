@@ -52,9 +52,12 @@ const initEpic: AppEpic = (action$, state$) =>
           BucketService.requestBucket().pipe(
             switchMap(({ bucket }) => {
               BucketService.setBucket(bucket);
+
               const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
                 state$.value,
               );
+              const isAdminUser = AuthSelectors.selectIsAdmin(state$.value);
+
               const actions: Observable<AnyAction>[] = [
                 of(UIActions.init()),
                 of(MigrationActions.init()),
@@ -63,8 +66,11 @@ const initEpic: AppEpic = (action$, state$) =>
                 of(ConversationsActions.init()),
                 of(PromptsActions.init()),
                 of(ShareActions.init()),
-                of(PublicationActions.init()),
               ];
+
+              if (isAdminUser) {
+                actions.push(of(PublicationActions.init()));
+              }
 
               if (isIsolatedView) {
                 actions.unshift(
