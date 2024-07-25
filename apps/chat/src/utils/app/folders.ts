@@ -383,10 +383,12 @@ export const getConversationAttachmentWithPath = <
   folders: FolderInterface[],
 ): DialFile[] => {
   const { path } = getPathToFolderById(folders, conversation.folderId);
+  const isReplay =
+    'replay' in conversation ? conversation?.replay?.isReplay : false;
   const attachments =
     'messages' in conversation
       ? (
-          conversation.replay?.replayUserMessagesStack ||
+          (isReplay && conversation.replay?.replayUserMessagesStack) ||
           conversation.playback?.messagesStack ||
           conversation.messages
         ).flatMap((message) => {
