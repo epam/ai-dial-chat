@@ -62,12 +62,12 @@ export class ChatMessages extends BaseElement {
       ChatSelectors.stageLoader,
     );
 
-  public showMoreButton = this.getChildElementBySelector(
-    ChatSelectors.showMore,
+  public showPreviousButton = this.getChildElementBySelector(
+    ChatSelectors.showPrevious,
   );
 
-  public showLessButton = this.getChildElementBySelector(
-    ChatSelectors.showLess,
+  public hidePreviousButton = this.getChildElementBySelector(
+    ChatSelectors.hidePrevious,
   );
 
   public async waitForResponseReceived() {

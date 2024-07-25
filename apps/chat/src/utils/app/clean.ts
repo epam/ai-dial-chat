@@ -89,13 +89,27 @@ export const cleanConversation = (
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
-    replay: conversation.replay,
     selectedAddons: conversation.selectedAddons ?? [],
     assistantModelId,
     lastActivityDate: conversation.lastActivityDate || 0,
     isNameChanged: conversation.isNameChanged,
     ...(conversation.playback && {
-      playback: conversation.playback,
+      playback: {
+        ...conversation.playback,
+        messagesStack:
+          conversation.playback.messagesStack?.map(
+            migrateMessageAttachmentUrls,
+          ) || [],
+      },
+    }),
+    ...(conversation.replay && {
+      replay: {
+        ...conversation.replay,
+        replayUserMessagesStack:
+          conversation.replay.replayUserMessagesStack?.map(
+            migrateMessageAttachmentUrls,
+          ) || [],
+      },
     }),
   };
 
