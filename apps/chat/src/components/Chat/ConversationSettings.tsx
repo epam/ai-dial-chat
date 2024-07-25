@@ -176,14 +176,14 @@ export const ConversationSettings = ({
       <div
         ref={settingsRef}
         className={classNames(
-          'relative flex size-full flex-col gap-5 divide-x divide-tertiary overflow-auto rounded pt-3 md:pt-4',
+          'relative flex size-full flex-col gap-5 divide-x divide-tertiary overflow-auto rounded',
           settingsWidth &&
             settingsWidth >= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
             'md:grid md:grid-cols-2 md:grid-rows-1',
         )}
         data-qa="conversation-settings"
       >
-        <div className="shrink bg-layer-2 px-3 pb-4 md:pl-6 md:pr-0">
+        <div className="shrink bg-layer-2 px-3 py-4 md:pl-6 md:pr-0">
           <ConversationSettingsModel
             conversation={conversation}
             modelId={model?.id}
@@ -194,7 +194,7 @@ export const ConversationSettings = ({
           />
         </div>
         <div
-          className="flex shrink flex-col gap-4 divide-y divide-tertiary bg-layer-2 pb-4 md:overflow-auto"
+          className="flex shrink flex-col gap-4 divide-y divide-tertiary bg-layer-2 py-4 md:overflow-auto"
           data-qa="entity-settings"
         >
           {modelId !== REPLAY_AS_IS_MODEL ? (
