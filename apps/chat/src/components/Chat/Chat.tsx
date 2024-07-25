@@ -927,6 +927,7 @@ export const ChatView = memo(() => {
                         }}
                         onApplySettings={handleApplyChatSettings}
                         onClose={() => setIsShowChatSettings(false)}
+                        isOpen={isShowChatSettings}
                       />
                     </div>
                   ))}

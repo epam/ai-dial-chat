@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { Conversation } from '@/src/types/chat';
+import { ModalState } from '@/src/types/modal';
 import { DialAIEntityAddon } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -12,6 +13,7 @@ import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settin
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
+import Modal from '../Common/Modal';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
@@ -29,6 +31,7 @@ interface Props {
     isShared: boolean;
   }) => void;
   onApplySettings: () => void;
+  isOpen: boolean;
 }
 
 export const ChatSettings = ({
@@ -38,6 +41,7 @@ export const ChatSettings = ({
   onClose,
   onChangeSettings,
   onApplySettings,
+  isOpen,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -122,37 +126,45 @@ export const ChatSettings = ({
   }, [handleChangeSettings]);
 
   return (
-    <div className="absolute z-30 flex size-full grow items-start justify-center bg-blackout md:top-0 md:p-5">
-      <div className="max-h-full w-full overflow-auto rounded xl:max-w-[720px] 2xl:max-w-[1000px]">
-        <div className="flex flex-col divide-y divide-tertiary bg-layer-2">
-          <ConversationSettings
-            conversation={conversation}
-            isCloseEnabled
-            modelId={currentModelId}
-            prompts={prompts}
-            assistantModelId={currentAssistentModelId}
-            prompt={currentPrompt}
-            selectedAddons={currentSelectedAddonsIds}
-            temperature={currentTemperature}
-            onSelectModel={handleOnSelectModel}
-            onChangePrompt={handleOnChangePrompt}
-            onChangeTemperature={handleOnChangeTemperature}
-            onSelectAssistantSubModel={handleOnSelectAssistantSubModel}
-            onChangeAddon={handleOnChangeAddon}
-            onApplyAddons={handleOnApplyAddons}
-            onClose={onClose}
-          />
-          <div className="flex w-full items-center justify-end overflow-hidden bg-layer-2 px-3 py-4 md:px-5">
-            <button
-              className="button button-primary"
-              data-qa="apply-changes"
-              onClick={handleOnApplySettings}
-            >
-              {t('Apply changes')}
-            </button>
-          </div>
-        </div>
+    <Modal
+      portalId="theme-main"
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      onClose={() => {
+        return;
+      }}
+      hideClose
+      dataQa="chat-settings-modal"
+      overlayClassName="!items-start !z-40"
+      containerClassName="flex h-fit max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 xl:max-w-[720px] 2xl:max-w-[1000px]"
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
+    >
+      <ConversationSettings
+        conversation={conversation}
+        isCloseEnabled
+        modelId={currentModelId}
+        prompts={prompts}
+        assistantModelId={currentAssistentModelId}
+        prompt={currentPrompt}
+        selectedAddons={currentSelectedAddonsIds}
+        temperature={currentTemperature}
+        onSelectModel={handleOnSelectModel}
+        onChangePrompt={handleOnChangePrompt}
+        onChangeTemperature={handleOnChangeTemperature}
+        onSelectAssistantSubModel={handleOnSelectAssistantSubModel}
+        onChangeAddon={handleOnChangeAddon}
+        onApplyAddons={handleOnApplyAddons}
+        onClose={onClose}
+      />
+      <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 pt-4 md:px-5">
+        <button
+          className="button button-primary"
+          data-qa="apply-changes"
+          onClick={handleOnApplySettings}
+        >
+          {t('Apply changes')}
+        </button>
       </div>
+
       <ConfirmDialog
         isOpen={isConfirmModelChanging}
         heading={t('Confirm model changing')}
@@ -180,6 +192,6 @@ export const ChatSettings = ({
           }
         }}
       />
-    </div>
+    </Modal>
   );
 };

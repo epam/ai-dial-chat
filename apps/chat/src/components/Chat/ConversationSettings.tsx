@@ -61,6 +61,7 @@ interface Props {
   onChangeAddon: (addonsId: string) => void;
   onClose?: () => void;
   debounceSystemPromptChanges?: boolean;
+  isChatEmpty?: boolean;
 }
 
 export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
@@ -95,7 +96,7 @@ export const SettingContainer = ({ children }: SettingContainerProps) => {
     return null;
   }
 
-  return <div className="px-3 py-4 md:px-5">{children}</div>;
+  return <div className="px-3 py-4 first:pt-0 md:pl-5 md:pr-6">{children}</div>;
 };
 
 export const ConversationSettings = ({
@@ -115,6 +116,7 @@ export const ConversationSettings = ({
   onChangeAddon,
   onApplyAddons,
   debounceSystemPromptChanges = false,
+  isChatEmpty,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -165,18 +167,23 @@ export const ConversationSettings = ({
   }, [settingsWidth, settingsRef, dispatch]);
 
   return (
-    <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
+    <>
+      {!isChatEmpty && (
+        <div className="mb-3 bg-layer-2 px-3 text-base font-semibold md:px-6">
+          {t('Conversation settings')}
+        </div>
+      )}
       <div
         ref={settingsRef}
         className={classNames(
-          'relative size-full gap-[1px] overflow-auto',
+          'relative flex size-full flex-col gap-5 divide-x divide-tertiary overflow-auto rounded pt-3 md:pt-4',
           settingsWidth &&
             settingsWidth >= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
             'md:grid md:grid-cols-2 md:grid-rows-1',
         )}
         data-qa="conversation-settings"
       >
-        <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
+        <div className="shrink bg-layer-2 px-3 pb-4 md:pl-6 md:pr-0">
           <ConversationSettingsModel
             conversation={conversation}
             modelId={model?.id}
@@ -187,7 +194,7 @@ export const ConversationSettings = ({
           />
         </div>
         <div
-          className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+          className="flex shrink flex-col gap-4 divide-y divide-tertiary bg-layer-2 pb-4 md:overflow-auto"
           data-qa="entity-settings"
         >
           {modelId !== REPLAY_AS_IS_MODEL ? (
@@ -253,15 +260,16 @@ export const ConversationSettings = ({
             />
           )}
         </div>
-        {isCloseEnabled && (
-          <button
-            className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
-            onClick={onClose}
-          >
-            <IconX height={24} width={24} />
-          </button>
-        )}
       </div>
-    </div>
+
+      {isCloseEnabled && (
+        <button
+          className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
+          onClick={onClose}
+        >
+          <IconX height={24} width={24} />
+        </button>
+      )}
+    </>
   );
 };
