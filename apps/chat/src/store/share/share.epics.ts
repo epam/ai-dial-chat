@@ -958,7 +958,7 @@ const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
       const isSharedFolder = folders.find(
         (folder) => folder.id === payload.folderId,
       )?.isShared;
-      const requireRevoke = payload.values ? payload.values.name : true;
+      const requireRevoke = 'values' in payload ? payload.values.name : true;
 
       return payload.folderId && isSharedFolder && requireRevoke
         ? of(
