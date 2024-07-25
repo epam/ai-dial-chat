@@ -16,7 +16,6 @@ const LanguageSwitcher = () => {
   return (
     <Menu
       type="contextMenu"
-      className="w-full"
       listClassName="min-w-[170px]"
       trigger={
         <div
