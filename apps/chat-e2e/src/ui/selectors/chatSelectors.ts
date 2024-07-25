@@ -143,6 +143,8 @@ export const ChatSelectors = {
   messageSpinner: '[data-qa="message-input-spinner"]',
   plotlyContainer: '.plot-container',
   maxWidth: '.max-w-none',
+  showPrevious: '[data-qa="show-previous"]',
+  hidePrevious: '[data-qa="hide-previous"]',
 };
 
 export const TableSelectors = {

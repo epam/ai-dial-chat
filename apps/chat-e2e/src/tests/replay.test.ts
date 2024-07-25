@@ -3,6 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   Import,
@@ -284,6 +285,7 @@ dialTest(
         await talkToSelector.selectModel(bison);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         replayRequest = await chat.startReplay();
       },
     );
@@ -585,6 +587,7 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         replayRequest = await chat.startReplay(
           conversation.messages[0].content,
         );
@@ -793,7 +796,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
 
@@ -820,7 +823,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
   },

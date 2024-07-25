@@ -15,34 +15,34 @@ export interface Props {
 const NUMBER_OF_VISIBLE_STAGES = 3;
 
 export const MessageStages = ({ stages }: Props) => {
-  const [showMore, setShowMore] = useState(false);
+  const [showPrevious, setShowPrevious] = useState(false);
 
   const displayedStages = stages.slice(
-    0,
-    showMore ? stages.length : NUMBER_OF_VISIBLE_STAGES,
+    showPrevious ? -stages.length : -NUMBER_OF_VISIBLE_STAGES,
   );
 
   return (
     <div data-no-context-menu className="flex flex-col gap-1">
-      {displayedStages.map((stage) => (
-        <MessageStage key={stage.index} stage={stage} />
-      ))}
       {stages.length > NUMBER_OF_VISIBLE_STAGES && (
         <button
-          onClick={() => setShowMore(!showMore)}
-          className="mt-2 flex leading-[18px] text-accent-primary"
+          onClick={() => setShowPrevious(!showPrevious)}
+          className="mb-2 flex leading-[18px] text-accent-primary"
+          data-qa={showPrevious ? 'hide-previous' : 'show-previous'}
         >
-          {showMore ? 'Show less' : 'Show more'}
+          {showPrevious ? 'Hide previous' : 'Show previous'}
           <ChevronDown
             height={18}
             width={18}
             className={classNames(
               'ml-2 shrink-0 transition',
-              showMore && 'rotate-180',
+              !showPrevious && 'rotate-180',
             )}
           />
         </button>
       )}
+      {displayedStages.map((stage) => (
+        <MessageStage key={stage.index} stage={stage} />
+      ))}
     </div>
   );
 };
