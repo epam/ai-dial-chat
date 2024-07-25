@@ -6,6 +6,7 @@ import { Token } from '@/src/types/auth';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
+import { JWTPayload, decodeJwt } from 'jose';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
@@ -137,8 +138,14 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
+      const decodedPayload: JWTPayload & Partial<{ dial_roles: string[] }> =
+        options.account.access_token
+          ? decodeJwt(options.account.access_token)
+          : {};
+
       return {
         ...options.token,
+        user: { dial_roles: decodedPayload?.dial_roles ?? [] },
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -175,6 +182,17 @@ export const callbacks: Partial<
       (options.session as Session & { error?: unknown }).error =
         options.token.error;
     }
+
+    if (options.session.user && options.token.user.dial_roles) {
+      const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(
+        ',',
+      );
+
+      options.session.user.isAdmin = adminRoleNames.some((role) =>
+        options.token.user.dial_roles?.includes(role),
+      );
+    }
+
     return options.session;
   },
 };
