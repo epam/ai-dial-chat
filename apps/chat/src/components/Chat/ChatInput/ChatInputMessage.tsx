@@ -168,6 +168,10 @@ export const ChatInputMessage = ({
   };
 
   useEffect(() => {
+    dispatch(ConversationsActions.setChatInputContent({ content }));
+  }, [content]);
+
+  useEffect(() => {
     if (selectedPrompt?.content && isPromptContentCopying) {
       const isVariable = isPromptHasVariable(selectedPrompt?.content);
       const activeIndex = findActivePromptIndex(selectedPrompt.id);

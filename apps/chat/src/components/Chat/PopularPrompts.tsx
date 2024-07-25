@@ -9,7 +9,10 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -113,6 +116,9 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
   const selectedPromptPopularId = useAppSelector(
     PromptsSelectors.selectSelectedPopularPromptId,
   );
+  const chatInputContent = useAppSelector(
+    ConversationsSelectors.selectChatInputContent,
+  );
   const popularPromptsIsLoading = useAppSelector(
     PromptsSelectors.selectPopularPromptsIsLoading,
   );
@@ -133,6 +139,12 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
       dispatch(ConversationsActions.shouldClearChatInputContent(true));
     }
   };
+
+  useEffect(() => {
+    if (chatInputContent === '') {
+      dispatch(PromptsActions.setPopularPromptId({ id: '' }));
+    }
+  }, [chatInputContent]);
 
   useEffect(() => {
     if (!promptsPath) return;

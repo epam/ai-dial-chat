@@ -60,6 +60,7 @@ const initialState: ConversationsState = {
   isExploreAllApplicationsSelected: false,
   shouldSelectConversationAfterSaving: false,
   shouldClearChatInputContent: false,
+  chatInputContent: '',
 };
 
 export const conversationsSlice = createSlice({
@@ -780,6 +781,12 @@ export const conversationsSlice = createSlice({
         state.conversations,
         payload.conversations,
       );
+    },
+    setChatInputContent: (
+      state,
+      { payload }: PayloadAction<{ content: string }>,
+    ) => {
+      state.chatInputContent = payload.content;
     },
   },
 });

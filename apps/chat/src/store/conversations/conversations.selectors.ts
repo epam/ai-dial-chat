@@ -761,3 +761,8 @@ export const selectShouldClearChatInputContent = createSelector(
   [rootSelector],
   (state) => state.shouldClearChatInputContent,
 );
+
+export const selectChatInputContent = createSelector(
+  [rootSelector],
+  (state) => state.chatInputContent,
+);
