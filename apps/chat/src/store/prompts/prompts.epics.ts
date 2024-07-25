@@ -717,11 +717,13 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
     filter((action) => PromptsActions.deleteChosenPrompts.match(action)),
     switchMap(() => {
       const actions: Observable<AnyAction>[] = [];
-      const chosenPromptIds = PromptsSelectors.selectChosenPromptIds(
+      const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const chosenPromptIds = PromptsSelectors.selectSelectedItems(
         state$.value,
       );
       const chosenFolderIds = PromptsSelectors.selectChosenFolderIds(
         state$.value,
+        prompts,
       );
       const promptIds = PromptsSelectors.selectPrompts(state$.value).map(
         (prompt) => prompt.id,

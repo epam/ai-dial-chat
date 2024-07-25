@@ -2659,10 +2659,15 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(() => {
       const actions: Observable<AnyAction>[] = [];
-      const chosenConversationIds =
-        ConversationsSelectors.selectChosenConversationIds(state$.value);
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      const chosenConversationIds = ConversationsSelectors.selectSelectedItems(
+        state$.value,
+      );
       const chosenFolderIds = ConversationsSelectors.selectChosenFolderIds(
         state$.value,
+        conversations,
       );
       const conversationIds = ConversationsSelectors.selectConversations(
         state$.value,
