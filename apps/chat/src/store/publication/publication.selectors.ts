@@ -110,30 +110,6 @@ export const selectSelectedItemsToPublish = createSelector(
   },
 );
 
-export const selectPartialChosenFolderIds = createSelector(
-  [
-    selectSelectedItemsToPublish,
-    selectConversationFolders,
-    selectPromptFolders,
-  ],
-  (selectedItemsToPublish, conversationFolders, promptFolders) => {
-    return [...conversationFolders, ...promptFolders]
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItemsToPublish.some((chosenId) =>
-            folderId.startsWith(chosenId),
-          ) &&
-          (selectedItemsToPublish.some((chosenId) =>
-            chosenId.startsWith(folderId),
-          ) ||
-            selectedItemsToPublish.some((entityId) =>
-              entityId.startsWith(folderId),
-            )),
-      );
-  },
-);
-
 export const selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
@@ -147,7 +123,7 @@ export const selectChosenFolderIds = createSelector(
     promptFolders,
     itemsShouldBeChosen,
   ) => {
-    return [...conversationFolders, ...promptFolders]
+    const fullyChosenFolderIds = [...conversationFolders, ...promptFolders]
       .map((folder) => `${folder.id}/`)
       .filter((folderId) =>
         itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
@@ -157,6 +133,24 @@ export const selectChosenFolderIds = createSelector(
           .filter((item) => item.id.startsWith(folderId))
           .every((item) => selectedItemsToPublish.includes(item.id)),
       );
+
+    const partialChosenFolderIds = [...conversationFolders, ...promptFolders]
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !selectedItemsToPublish.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) &&
+          (selectedItemsToPublish.some((chosenId) =>
+            chosenId.startsWith(folderId),
+          ) ||
+            selectedItemsToPublish.some((entityId) =>
+              entityId.startsWith(folderId),
+            )) &&
+          !fullyChosenFolderIds.includes(folderId),
+      );
+
+    return { partialChosenFolderIds, fullyChosenFolderIds };
   },
 );
 

@@ -29,9 +29,8 @@ import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import { CustomVisualizerData } from '@epam/ai-dial-shared';
-import difference from 'lodash-es/difference';
-import union from 'lodash-es/union';
 import uniq from 'lodash-es/uniq';
+import xor from 'lodash-es/xor';
 
 export { ConversationsSelectors };
 
@@ -761,13 +760,13 @@ export const conversationsSlice = createSlice({
         payload.conversations,
       );
     },
-    setChosenConversation: (
+    setChosenConversations: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
-      state.chosenConversationIds = union(
-        difference(state.chosenConversationIds, payload.ids),
-        difference(payload.ids, state.chosenConversationIds),
+      state.chosenConversationIds = xor(
+        state.chosenConversationIds,
+        payload.ids,
       );
     },
     resetChosenConversations: (state) => {

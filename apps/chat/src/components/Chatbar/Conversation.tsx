@@ -94,7 +94,7 @@ export function ConversationView({
   );
 
   const handleToggle = useCallback(() => {
-    ConversationsActions.setChosenConversation({
+    ConversationsActions.setChosenConversations({
       ids: [conversation.id],
     });
   }, [conversation.id]);
@@ -436,7 +436,7 @@ export const ConversationComponent = ({
       e.stopPropagation();
       setIsContextMenu(false);
       dispatch(
-        ConversationsActions.setChosenConversation({
+        ConversationsActions.setChosenConversations({
           ids: [conversation.id],
         }),
       );
@@ -674,7 +674,7 @@ export const ConversationComponent = ({
                   ? ConversationsActions.selectConversations({
                       conversationIds: [conversation.id],
                     })
-                  : ConversationsActions.setChosenConversation({
+                  : ConversationsActions.setChosenConversations({
                       ids: [conversation.id],
                     }),
               );

@@ -92,11 +92,9 @@ const PromptFolderTemplate = ({
     isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
   );
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const selectedFolderIds = useAppSelector((state) =>
-    PromptsSelectors.selectChosenFolderIds(state, prompts),
-  );
-  const partialSelectedFolderIds = useAppSelector(
-    PromptsSelectors.selectPartialChosenFolderIds,
+  const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    (state) => PromptsSelectors.selectChosenFolderIds(state, prompts),
   );
 
   const handleDrop = useCallback(
@@ -183,12 +181,17 @@ const PromptFolderTemplate = ({
       dispatch(
         PromptsActions.setChosenPrompts({
           ids: prompts
-            .filter((p) => p.id.startsWith(folderId))
-            .map((p) => p.id),
+            .filter(
+              (p) =>
+                p.id.startsWith(folderId) &&
+                (!partialChosenFolderIds.includes(folderId) ||
+                  !selectedPrompts.includes(p.id)),
+            )
+            .map((e) => e.id),
         }),
       );
     },
-    [dispatch, prompts],
+    [dispatch, partialChosenFolderIds, prompts, selectedPrompts],
   );
 
   return (
@@ -237,8 +240,8 @@ const PromptFolderTemplate = ({
         featureType={FeatureType.Prompt}
         canSelectFolders={isSelectMode}
         additionalItemData={{
-          selectedFolderIds,
-          partialSelectedFolderIds,
+          selectedFolderIds: fullyChosenFolderIds,
+          partialSelectedFolderIds: partialChosenFolderIds,
         }}
         onSelectFolder={handleFolderSelect}
       />

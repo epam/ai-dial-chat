@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
+import { Entity, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
@@ -29,31 +29,6 @@ import {
 
 import Folder from '../../Folder/Folder';
 
-const filterItems = ({
-  isUnselectAllAction,
-  folderId,
-  entities,
-  chosenItemsIds,
-}: {
-  isUnselectAllAction: boolean;
-  folderId: string;
-  entities: ShareEntity[];
-  chosenItemsIds: string[];
-}) => {
-  const folderIdParts = folderId.split('/');
-
-  return entities
-    .filter(
-      (e) =>
-        e.id.startsWith(folderId) &&
-        e.id.split('/').length >= folderIdParts.length &&
-        (isUnselectAllAction
-          ? chosenItemsIds.includes(e.id)
-          : !chosenItemsIds.includes(e.id)),
-    )
-    .map((e) => e.id);
-};
-
 interface Props {
   type: SharingType;
   entity: Entity;
@@ -75,11 +50,8 @@ export function PublicationItemsList({
 
   const dispatch = useAppDispatch();
 
-  const partialSelectedFolderIds = useAppSelector(
-    PublicationSelectors.selectPartialChosenFolderIds,
-  );
-  const selectedFolderIds = useAppSelector((state) =>
-    PublicationSelectors.selectChosenFolderIds(state, entities),
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    (state) => PublicationSelectors.selectChosenFolderIds(state, entities),
   );
   const chosenItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
@@ -151,13 +123,14 @@ export function PublicationItemsList({
               openedFoldersIds={conversationFolders.map((f) => f.id)}
               onSelectFolder={(folderId) => {
                 handleSelect(
-                  filterItems({
-                    isUnselectAllAction:
-                      partialSelectedFolderIds.includes(folderId),
-                    entities,
-                    folderId,
-                    chosenItemsIds,
-                  }),
+                  entities
+                    .filter(
+                      (e) =>
+                        e.id.startsWith(folderId) &&
+                        (!partialChosenFolderIds.includes(folderId) ||
+                          !chosenItemsIds.includes(e.id)),
+                    )
+                    .map((e) => e.id),
                 );
               }}
               allItems={entities}
@@ -176,8 +149,8 @@ export function PublicationItemsList({
                 publishAction === PublishActions.DELETE && 'text-error',
               )}
               additionalItemData={{
-                partialSelectedFolderIds,
-                selectedFolderIds,
+                partialSelectedFolderIds: partialChosenFolderIds,
+                selectedFolderIds: fullyChosenFolderIds,
               }}
               showTooltip
               canSelectFolders
@@ -255,21 +228,22 @@ export function PublicationItemsList({
                 publishAction === PublishActions.DELETE && 'text-error',
               )}
               additionalItemData={{
-                partialSelectedFolderIds,
-                selectedFolderIds,
+                partialSelectedFolderIds: partialChosenFolderIds,
+                selectedFolderIds: fullyChosenFolderIds,
               }}
               showTooltip
               canSelectFolders
               isSelectAlwaysVisible
               onSelectFolder={(folderId) => {
                 handleSelect(
-                  filterItems({
-                    isUnselectAllAction:
-                      partialSelectedFolderIds.includes(folderId),
-                    entities,
-                    folderId,
-                    chosenItemsIds,
-                  }),
+                  entities
+                    .filter(
+                      (e) =>
+                        e.id.startsWith(folderId) &&
+                        (!partialChosenFolderIds.includes(folderId) ||
+                          !chosenItemsIds.includes(e.id)),
+                    )
+                    .map((e) => e.id),
                 );
               }}
               isSidePanelFolder={false}

@@ -22,8 +22,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
-import difference from 'lodash-es/difference';
-import union from 'lodash-es/union';
+import xor from 'lodash-es/xor';
 
 export { PromptsSelectors };
 
@@ -402,10 +401,7 @@ export const promptsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
-      state.chosenPromptIds = union(
-        difference(state.chosenPromptIds, payload.ids),
-        difference(payload.ids, state.chosenPromptIds),
-      );
+      state.chosenPromptIds = xor(state.chosenPromptIds, payload.ids);
     },
     resetChosenPrompts: (state) => {
       state.chosenPromptIds = [];

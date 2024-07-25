@@ -717,20 +717,6 @@ export const selectSelectedItems = createSelector([rootSelector], (state) => {
   return state.chosenConversationIds;
 });
 
-export const selectPartialChosenFolderIds = createSelector(
-  [selectSelectedItems, selectFolders],
-  (selectedItems, conversationFolders) => {
-    return conversationFolders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            selectedItems.some((entityId) => entityId.startsWith(folderId))),
-      );
-  },
-);
-
 export const selectChosenFolderIds = createSelector(
   [
     selectSelectedItems,
@@ -738,7 +724,7 @@ export const selectChosenFolderIds = createSelector(
     (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
   ],
   (selectedItems, folders, itemsShouldBeChosen) => {
-    return folders
+    const fullyChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter((folderId) =>
         itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
@@ -748,5 +734,19 @@ export const selectChosenFolderIds = createSelector(
           .filter((item) => item.id.startsWith(folderId))
           .every((item) => selectedItems.includes(item.id)),
       );
+
+    const partialChosenFolderIds = folders
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+            fullyChosenFolderIds.some((entityId) =>
+              entityId.startsWith(folderId),
+            )) &&
+          !fullyChosenFolderIds.includes(folderId),
+      );
+
+    return { fullyChosenFolderIds, partialChosenFolderIds };
   },
 );
