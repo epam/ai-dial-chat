@@ -210,11 +210,11 @@ export const AddonsDialog: FC<Props> = ({
         {(selectedAddons?.filter((addon) => addonsMap[addon.id]).length > 0 ||
           preselectedAddonsIds?.length > 0) && (
           <CollapsibleSection
-            togglerClassName="!text-secondary"
+            togglerClassName="!text-secondary !pt-0"
             name={t('Selected')}
             openByDefault
             dataQa="selected-addons"
-            className="flex flex-col gap-3 !pl-0"
+            className="flex flex-col !pl-0 !pt-0"
           >
             <div className="flex flex-wrap gap-1">
               {preselectedAddonsIds.map((addonID) => {
