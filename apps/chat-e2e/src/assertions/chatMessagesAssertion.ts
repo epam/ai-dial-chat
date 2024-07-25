@@ -27,8 +27,8 @@ export class ChatMessagesAssertion {
   ) {
     const button =
       label === 'more'
-        ? this.chatMessages.showMoreButton.getElementLocator()
-        : this.chatMessages.showLessButton.getElementLocator();
+        ? this.chatMessages.showPreviousButton.getElementLocator()
+        : this.chatMessages.hidePreviousButton.getElementLocator();
     expectedState === 'visible'
       ? await expect
           .soft(button, ExpectedMessages.buttonIsVisible)
@@ -44,8 +44,8 @@ export class ChatMessagesAssertion {
   ) {
     const button =
       label === 'more'
-        ? this.chatMessages.showMoreButton
-        : this.chatMessages.showLessButton;
+        ? this.chatMessages.showPreviousButton
+        : this.chatMessages.hidePreviousButton;
     const color = await button.getComputedStyleProperty(Styles.color);
     expect
       .soft(color[0], ExpectedMessages.elementColorIsValid)

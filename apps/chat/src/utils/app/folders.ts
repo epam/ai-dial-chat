@@ -6,6 +6,7 @@ import {
 } from '@/src/utils/app/file';
 
 import {
+  Attachment,
   Conversation,
   ConversationInfo,
   PrepareNameOptions,
@@ -384,9 +385,20 @@ export const getConversationAttachmentWithPath = <
   const { path } = getPathToFolderById(folders, conversation.folderId);
   const attachments =
     'messages' in conversation
-      ? (conversation.playback?.messagesStack || conversation.messages).flatMap(
-          (message) => message.custom_content?.attachments || [],
-        )
+      ? (
+          conversation.replay?.replayUserMessagesStack ||
+          conversation.playback?.messagesStack ||
+          conversation.messages
+        ).flatMap((message) => {
+          const messageAttachments: Attachment[] =
+            message.custom_content?.attachments || [];
+          const stagesAttachments: Attachment[] =
+            message.custom_content?.stages?.flatMap(
+              ({ attachments }) => attachments ?? [],
+            ) || [];
+
+          return [...messageAttachments, ...stagesAttachments];
+        })
       : [];
 
   return getDialFilesFromAttachments(attachments || []).map((file) => ({

@@ -54,7 +54,7 @@ dialTest(
     await dialTest.step(
       'Click on "Show more" and verify all stages and "Show less" button are displayed',
       async () => {
-        await chatMessages.showMoreButton.click();
+        await chatMessages.showPreviousButton.click();
         await chatMessagesAssertion.assertMessageStagesCount(2, stagesCount);
         await chatMessagesAssertion.assertShowMoreLessButtonState(
           'less',
@@ -70,7 +70,7 @@ dialTest(
     await dialTest.step(
       'Click on "Show less" and verify 3 stages and "Show more" button are displayed',
       async () => {
-        await chatMessages.showLessButton.click();
+        await chatMessages.hidePreviousButton.click();
         await chatMessagesAssertion.assertMessageStagesCount(
           2,
           maxDisplayedStagesCount,
