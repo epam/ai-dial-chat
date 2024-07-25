@@ -19,3 +19,5 @@ export * from './EmployeeIcon';
 export * from './ManagerIcon';
 export * from './HRIcon';
 export * from './HRBuddySquareIcon';
+export * from './EnglishLangIcon';
+export * from './ChineseLangIcon';

@@ -16,6 +16,7 @@ import { FAQ_URL } from '@/src/constants/header';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+import LanguageSwitcher from '@/src/components/Common/LanguageSwitcher';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
@@ -57,6 +58,7 @@ export const UserDesktop = () => {
 
   return (
     <div className="flex items-center justify-center">
+      <LanguageSwitcher />
       <div
         className={isClient && isSmallScreenOrMobile ? 'invisible' : 'visible'}
       >
