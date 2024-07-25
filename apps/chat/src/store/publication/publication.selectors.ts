@@ -8,7 +8,7 @@ import { PublicationResource } from '@/src/types/publication';
 import {
   selectFolders as selectConversationFolders,
   selectConversations,
-} from '../conversations//conversations.selectors';
+} from '../conversations/conversations.selectors';
 import { RootState } from '../index';
 import {
   selectFolders as selectPromptFolders,
