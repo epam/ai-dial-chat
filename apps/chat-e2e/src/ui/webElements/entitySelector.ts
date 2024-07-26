@@ -50,7 +50,6 @@ export class EntitySelector extends BaseElement {
 
   public async selectEntity(entity: DialAIEntityModel, group: Groups) {
     const recentEntities = this.getRecentEntities();
-    await recentEntities.waitForState({ state: 'attached' });
     const recentGroupEntity = recentEntities.getTalkToGroup().getGroupEntity();
     const isEntityVisible = await recentGroupEntity
       .groupEntity(entity)
