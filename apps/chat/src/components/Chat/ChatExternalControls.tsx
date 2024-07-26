@@ -26,7 +26,7 @@ export default function ChatExternalControls({
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
   const approveRequiredResources = useAppSelector(
-    PublicationSelectors.selectResourceToReview,
+    PublicationSelectors.selectResourcesToReview,
   );
 
   const dispatch = useAppDispatch();

@@ -49,3 +49,6 @@ export const isPromptId = (id?: string) =>
   id?.startsWith(`${ApiKeys.Prompts}/`);
 
 export const isFileId = (id?: string) => id?.startsWith(`${ApiKeys.Files}/`);
+
+export const getIdWithoutRootPathSegments = (id: string) =>
+  id.split('/').slice(2).join('/');
