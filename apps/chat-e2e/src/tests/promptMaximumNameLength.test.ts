@@ -1,25 +1,29 @@
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, MenuOptions } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+} from '@/src/testData';
 import { Overflow, Styles } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
 
 dialTest.only(
   'Prompt name consists of a maximum of 160 symbols.\n' +
-  'Long prompt name is cut in the panel.\n' +
-  'Prompt folder name consists of a maximum of 160 symbols',
+    'Long prompt name is cut in the panel.\n' +
+    'Prompt folder name consists of a maximum of 160 symbols',
   async ({
-           dialHomePage,
-           promptData,
-           dataInjector,
-           prompts,
-           promptDropdownMenu,
-           promptModalDialog,
-           errorToastAssertion,
-           promptAssertion,
-           setTestIds,
-           promptBar,
-           folderPrompts,
-         }) => {
+    dialHomePage,
+    promptData,
+    dataInjector,
+    prompts,
+    promptDropdownMenu,
+    promptModalDialog,
+    errorToastAssertion,
+    promptAssertion,
+    setTestIds,
+    promptBar,
+    folderPrompts,
+  }) => {
     setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
@@ -40,10 +44,7 @@ dialTest.only(
           isNewConversationVisible: true,
         });
         await promptBar.createNewPrompt();
-        await promptModalDialog.setField(
-          promptModalDialog.name,
-          longName,
-        );
+        await promptModalDialog.setField(promptModalDialog.name, longName);
         await promptModalDialog.setField(
           promptModalDialog.prompt,
           ExpectedConstants.newPromptTitle(1),
@@ -66,37 +67,39 @@ dialTest.only(
       },
     );
 
-    await dialTest.step(
-      'Rename the prompt to a long name',
-      async () => {
-        await prompts.openEntityDropdownMenu(expectedName);
-        await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
-        await promptModalDialog.setField(promptModalDialog.name, nameUnder160Symbols);
-        // Wait for the API request to update the prompt name
-        await promptModalDialog.updatePromptDetailsWithButton(nameUnder160Symbols, prompt.description || '', prompt.content || '');
-        prompt.name = nameUnder160Symbols;
-      },
-    );
+    await dialTest.step('Rename the prompt to a long name', async () => {
+      await prompts.openEntityDropdownMenu(expectedName);
+      await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
+      await promptModalDialog.setField(
+        promptModalDialog.name,
+        nameUnder160Symbols,
+      );
+      // Wait for the API request to update the prompt name
+      await promptModalDialog.updatePromptDetailsWithButton(
+        nameUnder160Symbols,
+        prompt.description || '',
+        prompt.content || '',
+      );
+      prompt.name = nameUnder160Symbols;
+    });
 
-    await dialTest.step(
-      'Check the prompt name in the panel',
-      async () => {
-        const promptNameElement = prompts.getPromptName(prompt.name);
-        const promptNameOverflow = await promptNameElement.getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(
-            promptNameOverflow[0],
-            ExpectedMessages.entityNameIsTruncated,
-          )
-          .toBe(Overflow.ellipsis);
-      },
-    );
+    await dialTest.step('Check the prompt name in the panel', async () => {
+      const promptNameElement = prompts.getPromptName(prompt.name);
+      const promptNameOverflow =
+        await promptNameElement.getComputedStyleProperty(Styles.text_overflow);
+      expect
+        .soft(promptNameOverflow[0], ExpectedMessages.entityNameIsTruncated)
+        .toBe(Overflow.ellipsis);
+    });
 
     await dialTest.step(
       'Hover over the prompt name and check the name in the panel',
       async () => {
         await prompts.getPromptName(prompt.name).hoverOver();
-        await promptAssertion.assertEntityDotsMenuState({ name: prompt.name }, 'visible');
+        await promptAssertion.assertEntityDotsMenuState(
+          { name: prompt.name },
+          'visible',
+        );
       },
     );
 
@@ -122,7 +125,7 @@ dialTest.only(
           folderPrompts.getFolderByName(
             ExpectedConstants.newPromptFolderWithIndexTitle(1),
           ),
-        )
+        );
       },
     );
 
@@ -132,12 +135,16 @@ dialTest.only(
         // await dialHomePage.copyToClipboard(longName);
 
         // Rename Folder_parent
-        await folderPrompts.openFolderDropdownMenu(ExpectedConstants.newPromptFolderWithIndexTitle(1));
+        await folderPrompts.openFolderDropdownMenu(
+          ExpectedConstants.newPromptFolderWithIndexTitle(1),
+        );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderPrompts.editFolderNameWithTick(longName);
 
         // Rename folder_child
-        await folderPrompts.openFolderDropdownMenu(ExpectedConstants.newPromptFolderWithIndexTitle(2));
+        await folderPrompts.openFolderDropdownMenu(
+          ExpectedConstants.newPromptFolderWithIndexTitle(2),
+        );
         await promptDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderPrompts.editFolderNameWithTick(longName);
       },
@@ -147,12 +154,20 @@ dialTest.only(
       'Check that the folder names are cut to 160 symbols and no error message appears',
       async () => {
         // Get the actual folder names
-        const parentFolderName = await folderPrompts.getFolderName(expectedName, 1).getElementInnerContent();
-        const childFolderName = await folderPrompts.getFolderName(expectedName, 2).getElementInnerContent();
+        const parentFolderName = await folderPrompts
+          .getFolderName(expectedName, 1)
+          .getElementInnerContent();
+        const childFolderName = await folderPrompts
+          .getFolderName(expectedName, 2)
+          .getElementInnerContent();
 
         // Assert that the names are truncated to the expectedName
-        expect.soft(parentFolderName, ExpectedMessages.folderNameUpdated).toBe(expectedName);
-        expect.soft(childFolderName, ExpectedMessages.folderNameUpdated).toBe(expectedName);
+        expect
+          .soft(parentFolderName, ExpectedMessages.folderNameUpdated)
+          .toBe(expectedName);
+        expect
+          .soft(childFolderName, ExpectedMessages.folderNameUpdated)
+          .toBe(expectedName);
 
         // Assert that no error toast is shown
         await errorToastAssertion.assertToastIsHidden();
