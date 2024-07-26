@@ -131,7 +131,6 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         id: string;
         values: Partial<Conversation>;
-        temperature?: number;
       }>,
     ) => state,
     updateConversationSuccess: (

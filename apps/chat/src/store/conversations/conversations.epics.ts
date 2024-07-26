@@ -395,8 +395,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     values: {
                       name: DEFAULT_CONVERSATION_NAME,
                       model: { id: modelId || DEFAULT_MODEL_ID },
+                      temperature: DEFAULT_TEMPERATURE,
                     },
-                    temperature: DEFAULT_TEMPERATURE,
                   }),
                 ),
                 of(
