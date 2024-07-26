@@ -1,4 +1,10 @@
+import { EMPTY, Observable, map, of } from 'rxjs';
+
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { Attachment, Conversation, Message, Stage } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import {
   ExportFormatV1,
@@ -8,20 +14,29 @@ import {
   ExportFormatV5,
   LatestExportConversationsFormat,
   LatestExportFormat,
+  MappedReplaceActions,
   PromptsHistory,
+  ReplaceOptions,
   SupportedExportFormats,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { UploadedAttachment } from '@/src/store/import-export/importExport.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { PLOTLY_CONTENT_TYPE } from '@/src/constants/chat';
+import { successMessages } from '@/src/constants/successMessages';
 
 import { ApiUtils } from '../server/api';
 import { cleanConversationHistory } from './clean';
+import { isImportEntityNameOnSameLevelUnique } from './common';
+import { ConversationService } from './data/conversation-service';
 import { constructPath, triggerDownload } from './file';
 import { splitEntityId } from './folders';
-import { getConversationRootId } from './id';
+import { getConversationRootId, getFileRootId } from './id';
+import { translate } from './translation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -293,29 +308,25 @@ export const updateAttachment = ({
     return oldRelativePath === cleanOldAttachmentRelativePath;
   });
 
-  if (!newAttachmentFile || !newAttachmentFile.name) {
-    return oldAttachment;
-  }
+  const newAttachmentUrl =
+    (oldAttachment.url || oldAttachment.reference_url) &&
+    (newAttachmentFile
+      ? constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name)
+      : constructPath(getFileRootId(), parentPath, name));
 
+  const encodedNewAttachmentUrl =
+    newAttachmentUrl && ApiUtils.encodeApiUrl(newAttachmentUrl);
   const newReferenceUrl =
     oldAttachment.reference_url &&
-    ApiUtils.encodeApiUrl(
-      constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
-    ) + `#${oldHash}`;
+    encodedNewAttachmentUrl &&
+    `${encodedNewAttachmentUrl}#${oldHash}`;
 
-  // TODO: remove ApiUtils.encodeApiUrl from updateAttachment()
-  const newAttachmentUrl =
-    oldAttachment.url &&
-    ApiUtils.encodeApiUrl(
-      constructPath(newAttachmentFile.absolutePath, newAttachmentFile.name),
-    );
-
-  const newType = oldAttachment.type ?? newAttachmentFile.contentType;
+  const newType = oldAttachment.type ?? newAttachmentFile?.contentType;
 
   const newTitle =
     oldAttachment.type === PLOTLY_CONTENT_TYPE
-      ? oldAttachment.title ?? newAttachmentFile.name
-      : newAttachmentFile.name ?? oldAttachment.title;
+      ? oldAttachment.title ?? newAttachmentFile?.name
+      : newAttachmentFile?.name ?? oldAttachment.title;
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
@@ -325,6 +336,123 @@ export const updateAttachment = ({
     reference_url: newReferenceUrl,
   };
   return updatedAttachment;
+};
+
+export const getDuplicatedConversations = (
+  preparedConversations: Conversation[],
+): Observable<{
+  newConversations: Conversation[];
+  duplicatedConversations: Conversation[];
+}> => {
+  return ConversationService.getConversations(undefined, true).pipe(
+    map((conversationsListing) => {
+      const existedImportNamesConversations = preparedConversations.filter(
+        (importConv) =>
+          !isImportEntityNameOnSameLevelUnique({
+            entity: importConv,
+            entities: conversationsListing,
+          }),
+      );
+
+      const nonExistedImportNamesConversations = preparedConversations.filter(
+        (importConv) => {
+          return isImportEntityNameOnSameLevelUnique({
+            entity: importConv,
+            entities: conversationsListing,
+          });
+        },
+      );
+
+      return {
+        newConversations: nonExistedImportNamesConversations,
+        duplicatedConversations: existedImportNamesConversations,
+      };
+    }),
+  );
+};
+
+export const getConversationActions = (
+  conversation: Conversation,
+  index: number,
+): Observable<AnyAction>[] => {
+  const firstConversationActions: Observable<AnyAction>[] = [];
+  if (index === 0) {
+    firstConversationActions.push(
+      of(
+        ConversationsActions.selectConversations({
+          conversationIds: [conversation.id],
+        }),
+      ),
+      of(
+        UIActions.setOpenedFoldersIds({
+          openedFolderIds: [conversation.folderId],
+          featureType: FeatureType.Chat,
+        }),
+      ),
+    );
+  }
+
+  return [
+    of(ConversationsActions.saveConversation(conversation)),
+    of(
+      ConversationsActions.updateConversationSuccess({
+        id: conversation.id,
+        conversation,
+      }),
+    ),
+    ...firstConversationActions,
+  ];
+};
+
+export const getPromptActions = (
+  prompt: Prompt,
+  index: number,
+): Observable<AnyAction>[] => {
+  const firstPromptAction: Observable<AnyAction> =
+    index === 0
+      ? of(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: [prompt.folderId],
+            featureType: FeatureType.Prompt,
+          }),
+        )
+      : EMPTY;
+
+  return [
+    of(PromptsActions.savePrompt(prompt)),
+    of(
+      PromptsActions.updatePromptSuccess({
+        id: prompt.id,
+        prompt,
+      }),
+    ),
+    firstPromptAction,
+  ];
+};
+
+export const getToastAction = (
+  errorList: string[],
+  featureType: string,
+): Observable<AnyAction> => {
+  const errorMessage = `It looks like these ${featureType}(s) ${errorList.join(', ')} have been deleted. Please reload the page and try again`;
+  const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
+
+  if (errorList.length > 0) {
+    return of(UIActions.showErrorToast(translate(errorMessage)));
+  } else {
+    return of(UIActions.showSuccessToast(translate(successMessage)));
+  }
+};
+
+export const getMappedActions = (
+  items: Conversation[] | Prompt[] | DialFile[],
+  action?: ReplaceOptions,
+) => {
+  const replaceActions: MappedReplaceActions = {};
+  items.forEach((item) => {
+    replaceActions[item.id] = action ?? ReplaceOptions.Postfix;
+  });
+  return { ...replaceActions };
 };
 
 export const updateMessageAttachments = ({

@@ -147,6 +147,7 @@ export const getSortedEntities = async (token: JWT | null) => {
 
     entities.push({
       id: entity.id,
+      reference: entity.reference,
       name: entity.display_name ?? entity.id,
       isDefault: defaultModelId === entity.id,
       version: entity.display_version,

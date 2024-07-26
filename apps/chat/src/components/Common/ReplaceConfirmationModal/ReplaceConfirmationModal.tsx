@@ -4,22 +4,17 @@ import { useTranslation } from 'next-i18next';
 
 import {
   getChildAndCurrentFoldersIdsById,
-  getFoldersFromIds,
-  getParentFolderIdsFromFolderId,
+  getEntitiesFoldersFromEntities,
 } from '@/src/utils/app/folders';
 import { isRootId } from '@/src/utils/app/id';
-import { getFolderTypeByFeatureType } from '@/src/utils/app/mappers';
+import { getMappedActions } from '@/src/utils/app/import-export';
 
-import { Conversation } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
-import { DialFile } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 import {
   MappedReplaceActions,
   ReplaceOptions,
 } from '@/src/types/import-export';
 import { ModalState } from '@/src/types/modal';
-import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -34,19 +29,6 @@ import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 
-import uniq from 'lodash-es/uniq';
-
-const getMappedActions = (
-  items: Conversation[] | Prompt[] | DialFile[],
-  action?: ReplaceOptions,
-) => {
-  const replaceActions: MappedReplaceActions = {};
-  items.forEach((item) => {
-    replaceActions[item.id] = action ?? ReplaceOptions.Postfix;
-  });
-  return { ...replaceActions };
-};
-
 interface Props {
   isOpen: boolean;
 }
@@ -57,57 +39,40 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
-  const featureType = useAppSelector(ImportExportSelectors.selectFeatureType);
-
-  const numberOfOperations = useAppSelector(
-    ImportExportSelectors.selectNumberOfRunningOperations,
-  );
-
   const conversations = useAppSelector(
-    ImportExportSelectors.selectConversationToReplace,
+    ImportExportSelectors.selectDuplicatedConversations,
   );
-  const prompts = useAppSelector(ImportExportSelectors.selectPromptsToReplace);
+  const prompts = useAppSelector(ImportExportSelectors.selectDuplicatedPrompts);
 
   const duplicatedFiles = useAppSelector(
     ImportExportSelectors.selectDuplicatedFiles,
   );
 
-  const importedHistory = useAppSelector(
-    ImportExportSelectors.selectImportedHistory,
+  const allFeaturesToReplace = useMemo(
+    () => [...(conversations ?? []), ...duplicatedFiles, ...prompts],
+    [conversations, prompts, duplicatedFiles],
   );
-
-  const featuresToReplace = useMemo(() => {
-    switch (featureType) {
-      case FeatureType.Chat:
-        return conversations;
-      case FeatureType.Prompt:
-        return prompts;
-      case FeatureType.File:
-        return duplicatedFiles;
-
-      default:
-        return [];
-    }
-  }, [featureType, conversations, prompts, duplicatedFiles]);
-
-  const folderType: FolderType = useMemo(
-    () => getFolderTypeByFeatureType(featureType),
-    [featureType],
-  );
-
-  const folders = useMemo(() => {
-    const foldersIds = uniq(featuresToReplace.map((info) => info.folderId));
-    //calculate all folders;
-    const featuresFolders = getFoldersFromIds(
-      uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
-      folderType,
-    );
-
-    return featuresFolders;
-  }, [featuresToReplace, folderType]);
 
   const [mappedActions, setMappedActions] = useState<MappedReplaceActions>(() =>
-    getMappedActions(featuresToReplace),
+    getMappedActions(allFeaturesToReplace),
+  );
+
+  const conversationsFolders = useMemo(
+    () =>
+      conversations
+        ? getEntitiesFoldersFromEntities(conversations, FolderType.Chat)
+        : [],
+    [conversations],
+  );
+
+  const promptsFolders = useMemo(
+    () => getEntitiesFoldersFromEntities(prompts, FolderType.Prompt),
+    [prompts],
+  );
+
+  const filesFolders = useMemo(
+    () => getEntitiesFoldersFromEntities(duplicatedFiles, FolderType.Chat),
+    [duplicatedFiles],
   );
 
   const [actionForAllItems, setActionForAllItems] = useState<ReplaceOptions>(
@@ -147,10 +112,11 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
       }
 
       if (openedFoldersIds.includes(folderId)) {
-        const childFoldersIds = getChildAndCurrentFoldersIdsById(
-          folderId,
-          folders,
-        );
+        const childFoldersIds = getChildAndCurrentFoldersIdsById(folderId, [
+          ...conversationsFolders,
+          ...promptsFolders,
+          ...filesFolders,
+        ]);
         setOpenedFoldersIds(
           openedFoldersIds.filter((id) => !childFoldersIds.includes(id)),
         );
@@ -158,131 +124,49 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [folders, openedFoldersIds],
+    [conversationsFolders, promptsFolders, filesFolders, openedFoldersIds],
   );
 
   const handleOnChangeAllAction = useCallback(
     (actionOption: string) => {
       setActionForAllItems(actionOption as ReplaceOptions);
       setMappedActions(() =>
-        getMappedActions(featuresToReplace, actionOption as ReplaceOptions),
+        getMappedActions(allFeaturesToReplace, actionOption as ReplaceOptions),
       );
     },
-    [featuresToReplace],
+    [allFeaturesToReplace],
   );
 
   const handleContinueImport = useCallback(() => {
-    let itemsToPostfix = [];
-    let itemsToReplace = [];
-    for (const featureId in mappedActions) {
-      const item = featuresToReplace.find(
-        (feature) => feature.id === featureId,
-      );
-      if (!item) {
-        return;
-      }
-
-      if (mappedActions[featureId] === ReplaceOptions.Postfix) {
-        itemsToPostfix.push(item);
-      }
-
-      if (mappedActions[featureId] === ReplaceOptions.Replace) {
-        itemsToReplace.push(item);
-      }
-    }
-    if (!itemsToReplace.length && !itemsToPostfix.length) {
-      if (featureType !== FeatureType.File && numberOfOperations <= 0) {
-        dispatch(ImportExportActions.importStop());
-      }
-      if (featureType === FeatureType.File) {
-        dispatch(
-          ImportExportActions.importConversations({ data: importedHistory }),
-        );
-      }
-    }
-
-    if (itemsToReplace.length || itemsToPostfix.length) {
-      if (featureType === FeatureType.File) {
-        dispatch(
-          ImportExportActions.uploadConversationAttachments({
-            attachmentsToPostfix: itemsToPostfix as DialFile[],
-            attachmentsToReplace: itemsToReplace as DialFile[],
-            completeHistory: importedHistory,
-          }),
-        );
-      } else {
-        dispatch(
-          ImportExportActions.handleDuplicatedItems({
-            itemsToReplace,
-            itemsToPostfix,
-            featureType,
-          }),
-        );
-      }
-    }
-
-    itemsToPostfix = [];
-    itemsToReplace = [];
-
-    dispatch(ImportExportActions.closeReplaceDialog());
-  }, [
-    dispatch,
-    featureType,
-    featuresToReplace,
-    mappedActions,
-    importedHistory,
-    numberOfOperations,
-  ]);
+    dispatch(
+      ImportExportActions.continueDuplicatedImport({
+        mappedActions,
+      }),
+    );
+  }, [dispatch, mappedActions]);
 
   useEffect(() => {
-    setMappedActions(() => getMappedActions(featuresToReplace));
-  }, [featuresToReplace]);
+    setMappedActions(() => getMappedActions(allFeaturesToReplace));
+  }, [allFeaturesToReplace]);
 
   useEffect(() => {
+    const folders = [
+      ...conversationsFolders,
+      ...filesFolders,
+      ...promptsFolders,
+    ];
     setOpenedFoldersIds(() => folders.map((folder) => folder.id));
-  }, [folders]);
+  }, [conversationsFolders, filesFolders, promptsFolders]);
 
-  const featureList = useMemo(() => {
-    const featureGeneralProps = {
-      folders,
+  const featureGeneralProps = useMemo(
+    () => ({
       mappedActions,
       openedFoldersIds,
       handleToggleFolder,
       onItemEvent,
-    };
-    switch (featureType) {
-      case FeatureType.Chat:
-        return (
-          <ConversationsList
-            conversationsToReplace={conversations}
-            {...featureGeneralProps}
-          />
-        );
-      case FeatureType.Prompt:
-        return (
-          <PromptsList promptsToReplace={prompts} {...featureGeneralProps} />
-        );
-      case FeatureType.File:
-        return (
-          <FilesList
-            duplicatedFiles={duplicatedFiles}
-            {...featureGeneralProps}
-          />
-        );
-      default:
-        return null;
-    }
-  }, [
-    featureType,
-    folders,
-    mappedActions,
-    openedFoldersIds,
-    conversations,
-    prompts,
-    duplicatedFiles,
-    handleToggleFolder,
-    onItemEvent,
-  ]);
+    }),
+    [mappedActions, openedFoldersIds, handleToggleFolder, onItemEvent],
+  );
 
   return (
     <Modal
@@ -314,7 +198,27 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
         </div>
       </div>
       <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
-        {featuresToReplace && featureList}
+        {conversations && (
+          <ConversationsList
+            conversationsToReplace={conversations}
+            folders={conversationsFolders}
+            {...featureGeneralProps}
+          />
+        )}
+        {duplicatedFiles && (
+          <FilesList
+            duplicatedFiles={duplicatedFiles}
+            folders={filesFolders}
+            {...featureGeneralProps}
+          />
+        )}
+        {prompts && (
+          <PromptsList
+            promptsToReplace={prompts}
+            folders={promptsFolders}
+            {...featureGeneralProps}
+          />
+        )}
       </div>
 
       <div className="mt-auto flex h-fit flex-row justify-end gap-3 border-t-[1px] border-tertiary px-3 py-4 md:px-6 md:pb-4">
