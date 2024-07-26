@@ -259,9 +259,17 @@ dialTest(
           triggeredHttpMethod: 'POST',
         });
 
+        const replayConversationName =
+          ExpectedConstants.replayConversation + firstConversation.name;
+        await conversationAssertion.assertEntityState(
+          {
+            name: replayConversationName,
+          },
+          'visible',
+        );
         await conversationAssertion.assertEntityBackgroundColor(
           {
-            name: ExpectedConstants.replayConversation + firstConversation.name,
+            name: replayConversationName,
           },
           Colors.backgroundAccentSecondary,
         );
