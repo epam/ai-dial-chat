@@ -232,9 +232,11 @@ export const ApproveRequiredSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
       additionalNode={
-        <span className="absolute right-4 flex h-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-[10px] font-semibold text-controls-disable">
-          {publicationsToReviewCount}
-        </span>
+        publicationsToReviewCount && (
+          <span className="absolute right-4 flex h-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-[10px] font-semibold text-controls-disable">
+            {publicationsToReviewCount}
+          </span>
+        )
       }
       className="relative gap-0.5"
     >
