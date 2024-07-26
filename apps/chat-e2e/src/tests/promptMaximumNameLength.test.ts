@@ -7,7 +7,7 @@ import {
 import { Overflow, Styles } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Prompt name consists of a maximum of 160 symbols.\n' +
     'Long prompt name is cut in the panel.\n' +
     'Prompt folder name consists of a maximum of 160 symbols',
