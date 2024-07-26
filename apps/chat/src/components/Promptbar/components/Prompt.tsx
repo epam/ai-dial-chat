@@ -53,6 +53,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import { PublishModal } from '../../Chat/Publish/PublishWizard';
+import { ReviewDot } from '../../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
@@ -394,26 +395,13 @@ export const PromptComponent = ({
             )}
           >
             {resourceToReview && !resourceToReview.reviewed && (
-              <span className="absolute bottom-[-2px] left-[-1px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
-                <span
-                  className={classNames(
-                    'rounded-full group-hover/prompt-item:bg-accent-tertiary-alpha',
-                    (selectedPromptId === prompt.id || isContextMenu) &&
-                      'bg-accent-tertiary-alpha',
-                  )}
-                >
-                  <svg
-                    width="4"
-                    height="4"
-                    viewBox="0 0 4 4"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="m-[3px] rounded-[1px] bg-accent-secondary"
-                  >
-                    <rect width="4" height="4" rx="1" />
-                  </svg>
-                </span>
-              </span>
+              <ReviewDot
+                className={classNames(
+                  'group-hover/prompt-item:bg-accent-tertiary-alpha',
+                  (selectedPromptId === prompt.id || isContextMenu) &&
+                    'bg-accent-tertiary-alpha',
+                )}
+              />
             )}
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>

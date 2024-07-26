@@ -72,6 +72,7 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
+import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
@@ -872,28 +873,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     }
                   >
                     {hasResourcesToReview && isSidePanelFolder && (
-                      <span className="absolute bottom-[-2px] left-[-1px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
-                        <span
-                          className={classNames(
-                            'rounded-full',
-                            featureType === FeatureType.Chat &&
-                              'group-hover/folder-item:bg-accent-secondary-alpha',
-                            featureType === FeatureType.Prompt &&
-                              'group-hover/folder-item:bg-accent-tertiary-alpha',
-                          )}
-                        >
-                          <svg
-                            width="4"
-                            height="4"
-                            viewBox="0 0 4 4"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="m-[3px] rounded-[1px] bg-accent-secondary"
-                          >
-                            <rect width="4" height="4" rx="1" />
-                          </svg>
-                        </span>
-                      </span>
+                      <ReviewDot
+                        className={classNames(
+                          featureType === FeatureType.Chat &&
+                            'group-hover/folder-item:bg-accent-secondary-alpha',
+                          featureType === FeatureType.Prompt &&
+                            'group-hover/folder-item:bg-accent-tertiary-alpha',
+                        )}
+                      />
                     )}
                     <IconFolder
                       size={18}
@@ -1024,28 +1011,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     }
                   >
                     {hasResourcesToReview && isSidePanelFolder && (
-                      <span className="absolute bottom-[-2px] left-[-1px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
-                        <span
-                          className={classNames(
-                            'rounded-full',
-                            featureType === FeatureType.Chat &&
-                              'group-hover/folder-item:bg-accent-secondary-alpha',
-                            featureType === FeatureType.Prompt &&
-                              'group-hover/folder-item:bg-accent-tertiary-alpha',
-                          )}
-                        >
-                          <svg
-                            width="4"
-                            height="4"
-                            viewBox="0 0 4 4"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="m-[3px] rounded-[1px] bg-accent-secondary"
-                          >
-                            <rect width="4" height="4" rx="1" />
-                          </svg>
-                        </span>
-                      </span>
+                      <ReviewDot
+                        className={classNames(
+                          featureType === FeatureType.Chat &&
+                            'group-hover/folder-item:bg-accent-secondary-alpha',
+                          featureType === FeatureType.Prompt &&
+                            'group-hover/folder-item:bg-accent-tertiary-alpha',
+                        )}
+                      />
                     )}
                     <IconFolder size={18} className="mr-1 text-secondary" />
                   </ShareIcon>

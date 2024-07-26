@@ -63,6 +63,7 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
+import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
@@ -145,27 +146,14 @@ export function ConversationView({
         )}
       >
         {resourceToReview && !resourceToReview.reviewed && (
-          <span className="absolute bottom-[-2px] left-[-1px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
-            <span
-              className={classNames(
-                'rounded-full group-hover/conversation-item:bg-accent-secondary-alpha',
-                (selectedConversationIds.includes(conversation.id) ||
-                  isContextMenu) &&
-                  'bg-accent-secondary-alpha',
-              )}
-            >
-              <svg
-                width="4"
-                height="4"
-                viewBox="0 0 4 4"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="m-[3px] rounded-[1px] bg-accent-secondary"
-              >
-                <rect width="4" height="4" rx="1" />
-              </svg>
-            </span>
-          </span>
+          <ReviewDot
+            className={classNames(
+              'group-hover/conversation-item:bg-accent-secondary-alpha',
+              (selectedConversationIds.includes(conversation.id) ||
+                isContextMenu) &&
+                'bg-accent-secondary-alpha',
+            )}
+          />
         )}
         {conversation.isReplay && (
           <span className="flex shrink-0">

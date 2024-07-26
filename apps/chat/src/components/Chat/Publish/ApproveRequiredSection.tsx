@@ -29,6 +29,7 @@ import {
   ConversationPublicationResources,
   PromptPublicationResources,
 } from './PublicationResources';
+import { ReviewDot } from './ReviewDot';
 
 import some from 'lodash-es/some';
 
@@ -88,6 +89,9 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   const ResourcesComponent = featureTypes.includes(FeatureType.Chat)
     ? ConversationPublicationResources
     : PromptPublicationResources;
+  const isLeftSidePublication =
+    featureTypes.includes(FeatureType.Chat) ||
+    featureTypes.includes(FeatureType.File);
 
   return (
     <div className="flex flex-col gap-1">
@@ -109,34 +113,18 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
               .filter((item) => !isFileId(item.reviewUrl))
               .every((item) => item.reviewed) ||
               publication.uploadStatus !== UploadStatus.LOADED) && (
-              <span className="absolute bottom-[-2px] left-[-1px] flex size-[10px] items-center justify-center rounded-full bg-layer-3">
-                <span
-                  className={classNames(
-                    'rounded-full',
-                    featureTypes.includes(FeatureType.Chat) ||
-                      featureTypes.includes(FeatureType.File)
-                      ? 'group-hover:bg-accent-secondary-alpha'
-                      : 'group-hover:bg-accent-tertiary-alpha',
-                    selectedPublication?.url === publication.url &&
-                      !selectedConversationIds.length &&
-                      (featureTypes.includes(FeatureType.Chat) ||
-                      featureTypes.includes(FeatureType.File)
-                        ? 'bg-accent-secondary-alpha'
-                        : 'bg-accent-tertiary-alpha'),
-                  )}
-                >
-                  <svg
-                    width="4"
-                    height="4"
-                    viewBox="0 0 4 4"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="m-[3px] rounded-[1px] bg-accent-secondary"
-                  >
-                    <rect width="4" height="4" rx="1" />
-                  </svg>
-                </span>
-              </span>
+              <ReviewDot
+                className={classNames(
+                  isLeftSidePublication
+                    ? 'group-hover:bg-accent-secondary-alpha'
+                    : 'group-hover:bg-accent-tertiary-alpha',
+                  selectedPublication?.url === publication.url &&
+                    !selectedConversationIds.length &&
+                    (isLeftSidePublication
+                      ? 'bg-accent-secondary-alpha'
+                      : 'bg-accent-tertiary-alpha'),
+                )}
+              />
             )}
           </div>
           <div
