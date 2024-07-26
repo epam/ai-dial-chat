@@ -325,6 +325,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
       ),
+      areSelectedConversationsLoaded:
+        ConversationsSelectors.selectAreSelectedConversationsLoaded(
+          state$.value,
+        ),
       shouldUpdateConversation: payload.shouldUpdateConversation ?? true,
       conversations: ConversationsSelectors.selectConversations(state$.value),
       shouldUploadConversationsForCompare:
@@ -338,6 +342,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         conversations,
         shouldUploadConversationsForCompare,
         shouldUpdateConversation,
+        areSelectedConversationsLoaded,
       }) =>
         forkJoin({
           names: of(names),
@@ -366,118 +371,133 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
               )
             : of(conversations),
+          areSelectedConversationsLoaded: of(areSelectedConversationsLoaded),
         }),
     ),
-    switchMap(({ names, modelId, shouldUpdateConversation, conversations }) => {
-      const emptyConversation = conversations.find((conv) =>
-        conv.name.startsWith(DEFAULT_CONVERSATION_NAME),
-      );
-
-      if (emptyConversation && shouldUpdateConversation) {
-        return concat(
-          of(
-            ConversationsActions.updateConversation({
-              id: emptyConversation.id,
-              values: {
-                name: DEFAULT_CONVERSATION_NAME,
-                model: { id: modelId || DEFAULT_MODEL_ID },
-              },
-            }),
-          ),
-          of(ConversationsActions.setIsActiveConversationRequest(false)),
-          of(ConversationsActions.shouldSelectConversationAfterSaving(true)),
+    switchMap(
+      ({
+        names,
+        modelId,
+        shouldUpdateConversation,
+        conversations,
+        areSelectedConversationsLoaded,
+      }) => {
+        const emptyConversation = conversations.find((conv) =>
+          conv.name.startsWith(DEFAULT_CONVERSATION_NAME),
         );
-      }
 
-      return state$.pipe(
-        startWith(state$.value),
-        map((state) => {
-          const talkToModelId = ConversationsSelectors.selectTalkTo(state);
-          return ModelsSelectors.selectModels(state).filter(
-            (model) => model.id === talkToModelId,
-          );
-        }),
-        take(1),
-        switchMap((models) => {
-          const model = models[0];
-          const conversationRootId = getConversationRootId();
-          const newConversations: Conversation[] = names.map(
-            (name: string): Conversation => {
-              return regenerateConversationId({
-                name:
-                  name !== DEFAULT_CONVERSATION_NAME
-                    ? name
-                    : DEFAULT_CONVERSATION_NAME,
-                messages: [],
-                model: {
-                  //PGPT-81: Set GPT3.5 turbo as the default selected model
-                  //Changing recentModels and rearranging it impacts other parts of the code, which is why it is set directly
-                  id: modelId || model?.id || DEFAULT_MODEL_ID,
-                },
-                prompt: DEFAULT_SYSTEM_PROMPT,
-                temperature: DEFAULT_TEMPERATURE,
-                selectedAddons: [],
-                lastActivityDate: Date.now(),
-                status: UploadStatus.LOADED,
-                folderId: conversationRootId,
-              });
-            },
-          );
-
-          return zip(
-            newConversations.map((info) =>
-              ConversationService.createConversation(info),
-            ),
-          ).pipe(
-            switchMap((conversations) => {
-              const newNames = newConversations.map((c) => c.name);
-              const apiNames = conversations
-                .filter(Boolean)
-                .map((c) => (c as Conversation).name);
-
-              return concat(
-                iif(
-                  // check if something renamed
-                  () => apiNames.some((name) => !newNames.includes(name)),
-                  concat(
-                    of(
-                      ConversationsActions.uploadConversationsWithFoldersRecursive(),
-                    ),
-                    of(ShareActions.triggerGettingSharedConversationListings()),
-                  ),
-                  concat(
-                    of(
-                      ConversationsActions.addConversations({
-                        conversations: newConversations,
-                      }),
-                    ),
-                    of(
-                      ConversationsActions.selectConversations({
-                        conversationIds: newConversations.map((c) => c.id),
-                      }),
-                    ),
-                  ),
-                ),
-                of(ConversationsActions.setIsActiveConversationRequest(false)),
-              );
-            }),
-            catchError((err) => {
-              console.error("New conversation wasn't created: ", err);
-              return concat(
+        if (emptyConversation && shouldUpdateConversation) {
+          return areSelectedConversationsLoaded
+            ? concat(
                 of(
-                  UIActions.showErrorToast(
-                    translate(
-                      'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                  ConversationsActions.updateConversation({
+                    id: emptyConversation.id,
+                    values: {
+                      name: DEFAULT_CONVERSATION_NAME,
+                      model: { id: modelId || DEFAULT_MODEL_ID },
+                    },
+                  }),
+                ),
+              )
+            : EMPTY;
+        }
+
+        return state$.pipe(
+          startWith(state$.value),
+          map((state) => {
+            const talkToModelId = ConversationsSelectors.selectTalkTo(state);
+            return ModelsSelectors.selectModels(state).filter(
+              (model) => model.id === talkToModelId,
+            );
+          }),
+          take(1),
+          switchMap((models) => {
+            const model = models[0];
+            const conversationRootId = getConversationRootId();
+            const newConversations: Conversation[] = names.map(
+              (name: string): Conversation => {
+                return regenerateConversationId({
+                  name:
+                    name !== DEFAULT_CONVERSATION_NAME
+                      ? name
+                      : DEFAULT_CONVERSATION_NAME,
+                  messages: [],
+                  model: {
+                    //PGPT-81: Set GPT3.5 turbo as the default selected model
+                    //Changing recentModels and rearranging it impacts other parts of the code, which is why it is set directly
+                    id: modelId || model?.id || DEFAULT_MODEL_ID,
+                  },
+                  prompt: DEFAULT_SYSTEM_PROMPT,
+                  temperature: DEFAULT_TEMPERATURE,
+                  selectedAddons: [],
+                  lastActivityDate: Date.now(),
+                  status: UploadStatus.LOADED,
+                  folderId: conversationRootId,
+                });
+              },
+            );
+
+            return zip(
+              newConversations.map((info) =>
+                ConversationService.createConversation(info),
+              ),
+            ).pipe(
+              switchMap((conversations) => {
+                const newNames = newConversations.map((c) => c.name);
+                const apiNames = conversations
+                  .filter(Boolean)
+                  .map((c) => (c as Conversation).name);
+
+                return concat(
+                  iif(
+                    // check if something renamed
+                    () => apiNames.some((name) => !newNames.includes(name)),
+                    concat(
+                      of(
+                        ConversationsActions.uploadConversationsWithFoldersRecursive(),
+                      ),
+                      of(
+                        ShareActions.triggerGettingSharedConversationListings(),
+                      ),
+                    ),
+                    concat(
+                      of(
+                        ConversationsActions.addConversations({
+                          conversations: newConversations,
+                        }),
+                      ),
+                      of(
+                        ConversationsActions.selectConversations({
+                          conversationIds: newConversations.map((c) => c.id),
+                        }),
+                      ),
                     ),
                   ),
-                ),
-                of(ConversationsActions.setIsActiveConversationRequest(false)),
-              );
-            }),
-          );
-        }),
-      );
-    }),
+                  of(
+                    ConversationsActions.setIsActiveConversationRequest(false),
+                  ),
+                );
+              }),
+              catchError((err) => {
+                console.error("New conversation wasn't created: ", err);
+                return concat(
+                  of(
+                    UIActions.showErrorToast(
+                      translate(
+                        'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                      ),
+                    ),
+                  ),
+                  of(
+                    ConversationsActions.setIsActiveConversationRequest(false),
+                  ),
+                );
+              }),
+            );
+          }),
+        );
+      },
+    ),
   );
 
 const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
@@ -2260,11 +2280,12 @@ const saveConversationSuccessEpic: AppEpic = (action$, state$) =>
     })),
     switchMap(({ shouldSelectConversationAfterUpdating, conversations }) => {
       if (!shouldSelectConversationAfterUpdating) {
-        return EMPTY;
+        return of(ConversationsActions.setIsActiveConversationRequest(false));
       }
 
       const actions: Observable<AnyAction>[] = [
         of(ConversationsActions.shouldSelectConversationAfterSaving(false)),
+        of(ConversationsActions.setIsActiveConversationRequest(false)),
       ];
       const newConversation = conversations.find((conv) =>
         conv.name.includes(DEFAULT_CONVERSATION_NAME),
@@ -2293,9 +2314,15 @@ const saveConversationFailEpic: AppEpic = (action$, state$) =>
         ),
     })),
     switchMap(({ shouldSelectConversationAfterUpdating }) => {
-      return shouldSelectConversationAfterUpdating
-        ? of(ConversationsActions.shouldSelectConversationAfterSaving(false))
-        : EMPTY;
+      const actions: Observable<AnyAction>[] = [
+        of(ConversationsActions.setIsActiveConversationRequest(false)),
+      ];
+      shouldSelectConversationAfterUpdating &&
+        actions.push(
+          of(ConversationsActions.shouldSelectConversationAfterSaving(false)),
+        );
+
+      return concat(...actions);
     }),
   );
 

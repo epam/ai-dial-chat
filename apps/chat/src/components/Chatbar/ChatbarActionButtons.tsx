@@ -146,6 +146,12 @@ const FavoriteApplicationActionButton = ({
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
   const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const isActiveNewConversationRequest = useAppSelector(
+    ConversationsSelectors.selectIsActiveNewConversationRequest,
+  );
   const [isMenuOpened, setIsMenuOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const AppIcon = getApplicationIcon(app?.id);
@@ -206,7 +212,7 @@ const FavoriteApplicationActionButton = ({
     >
       <button
         className={classNames(
-          'group flex size-full min-h-[50px] cursor-pointer select-none items-center gap-2 border-l-4  py-2 pl-4 pr-2 leading-3',
+          'group flex size-full min-h-[50px] cursor-pointer select-none items-center gap-2 border-l-4  py-2 pl-4 pr-2 leading-3 disabled:cursor-not-allowed',
           isSelected ? 'border-l-accent-primary' : 'border-l-quinary',
         )}
         onClick={() => {
@@ -219,8 +225,13 @@ const FavoriteApplicationActionButton = ({
           talkTo && dispatch(ConversationsActions.setTalkTo(''));
         }}
         data-qa="all-applications"
+        disabled={messageIsStreaming || isActiveNewConversationRequest}
       >
-        <AppIcon />
+        {isActiveNewConversationRequest ? (
+          <Spinner size={18} className={'text-primary-bg-dark'} />
+        ) : (
+          <AppIcon />
+        )}
         <span>{app.name}</span>
       </button>
       <ContextMenu
@@ -228,7 +239,8 @@ const FavoriteApplicationActionButton = ({
         listClassNames="min-w-[200px]"
         TriggerIcon={IconDots}
         triggerIconSize={18}
-        triggerIconClassName="pr-4 h-full flex items-center hover:cursor-pointer invisible group-hover:visible"
+        triggerIconClassName={`pr-4 h-full flex items-center hover:cursor-pointer invisible
+         ${messageIsStreaming || isActiveNewConversationRequest ? '' : 'group-hover:visible'}`}
         isOpen={isMenuOpened}
         onOpenChange={(isOpen) => {
           setIsMenuOpened(isOpen);
