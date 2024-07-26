@@ -2,7 +2,6 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   getChildAndCurrentFoldersById,
-  getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
@@ -20,6 +19,7 @@ import {
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
+import { ShareEntity } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -121,25 +121,6 @@ export const selectParentFoldersIds = createSelector(
   },
 );
 
-export const selectChildAndCurrentFoldersIdsById = createSelector(
-  [selectFolders, (_state, folderId: string) => folderId],
-  (folders, folderId) => {
-    return new Set(getChildAndCurrentFoldersIdsById(folderId, folders));
-  },
-);
-export const selectFullTreeChildPromptsByFolderId = createSelector(
-  [selectPrompts, selectChildAndCurrentFoldersIdsById],
-  (prompts, foldersIds) => {
-    return prompts.filter((conv) => foldersIds.has(conv.folderId));
-  },
-);
-export const selectFullTreeChildFoldersByFolderId = createSelector(
-  [selectFolders, selectChildAndCurrentFoldersIdsById],
-  (folders, foldersIds) => {
-    return folders.filter((folder) => foldersIds.has(folder.id));
-  },
-);
-
 export const selectSearchTerm = createSelector([rootSelector], (state) => {
   return state.searchTerm;
 });
@@ -232,53 +213,13 @@ export const selectDoesAnyMyItemExist = createSelector(
   },
 );
 
-export const isPublishFolderVersionUnique = createSelector(
-  [
-    selectFolders,
-    (_state: RootState, folderId: string) => folderId,
-    (_state: RootState, _folderId: string, version: string) => version,
-  ],
-  (folders, folderId, version) => {
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.every((folder) => folder.publishVersion !== version);
-  },
-);
-
-export const isPublishPromptVersionUnique = createSelector(
-  [
-    (state) => state,
-    (_state: RootState, entityId: string) => entityId,
-    (_state: RootState, _entityId: string, version: string) => version,
-  ],
-  (state, entityId, version) => {
-    const prompt = selectPrompt(state, entityId) as Prompt; // TODO: will be fixed in https://github.com/epam/ai-dial-chat/issues/313;
-
-    if (!prompt || prompt?.publishVersion === version) return false;
-
-    const prompts = selectPrompts(state)
-      .map((prompt) => prompt as Prompt)
-      .filter(
-        (prmt) =>
-          prmt.originalId === entityId && prmt.publishVersion === version,
-      );
-
-    if (prompts.length) return false;
-
-    const folders = selectFolders(state);
-
-    const parentFolders = getParentAndCurrentFoldersById(
-      folders,
-      prompt.folderId,
-    );
-    return parentFolders.every((folder) => folder.publishVersion !== version);
-  },
-);
 export const selectTemporaryFolders = createSelector(
   [rootSelector],
   (state: PromptsState) => {
     return state.temporaryFolders;
   },
 );
+
 export const selectPublishedWithMeFolders = createSelector(
   [selectFolders],
   (folders) => {
@@ -401,44 +342,41 @@ export const selectPublicationFolders = createSelector(
 );
 
 export const selectIsSelectMode = createSelector([rootSelector], (state) => {
-  return state.chosenPromptIds.length > 0 || state.chosenFolderIds.length > 0;
+  return state.chosenPromptIds.length > 0;
 });
 
-export const selectChosenPromptIds = createSelector([rootSelector], (state) => {
+export const selectSelectedItems = createSelector([rootSelector], (state) => {
   return state.chosenPromptIds;
 });
 
-export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
-  return state.chosenFolderIds;
-});
-
-export const selectAllChosenFolderIds = createSelector(
-  [rootSelector, selectFolders],
-  (state, folders) => {
-    return folders
+export const selectChosenFolderIds = createSelector(
+  [
+    selectSelectedItems,
+    selectFolders,
+    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
+  ],
+  (selectedItems, folders, itemsShouldBeChosen) => {
+    const fullyChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter((folderId) =>
-        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
+        itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
+      )
+      .filter((folderId) =>
+        itemsShouldBeChosen
+          .filter((item) => item.id.startsWith(folderId))
+          .every((item) => selectedItems.includes(item.id)),
       );
-  },
-);
 
-export const selectPartialChosenFolderIds = createSelector(
-  [rootSelector, selectFolders],
-  (state, folders) => {
-    return folders
+    const partialChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter(
         (folderId) =>
-          !state.chosenFolderIds.some((chosenId) =>
-            folderId.startsWith(chosenId),
-          ) &&
-          (state.chosenFolderIds.some((chosenId) =>
-            chosenId.startsWith(folderId),
-          ) ||
-            state.chosenPromptIds.some((promptId) =>
-              promptId.startsWith(folderId),
-            )),
+          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+            selectedItems.some((entityId) => entityId.startsWith(folderId))) &&
+          !fullyChosenFolderIds.includes(folderId),
       );
+
+    return { fullyChosenFolderIds, partialChosenFolderIds };
   },
 );

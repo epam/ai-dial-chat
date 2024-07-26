@@ -86,12 +86,14 @@ const publishEpic: AppEpic = (action$) =>
       const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
       const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
-      return PublicationService.publish({
+      return PublicationService.createPublicationRequest({
         name: payload.name,
         targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
-          action: PublishActions.ADD,
-          sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
+          action: payload.action,
+          sourceUrl: r.sourceUrl
+            ? ApiUtils.encodeApiUrl(r.sourceUrl)
+            : undefined,
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
         })),
         rules: payload.rules,
@@ -458,40 +460,6 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
     map(() =>
       UIActions.showErrorToast(
         translate(errorsMessages.publicationUploadFailed),
-      ),
-    ),
-  );
-
-const deletePublicationEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PublicationActions.deletePublication.match),
-    switchMap(({ payload }) => {
-      const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
-      const targetFolderSuffix = payload.targetFolder ? '/' : '';
-
-      return PublicationService.deletePublication({
-        name: payload.name,
-        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
-        resources: payload.resources.map((r) => ({
-          action: PublishActions.DELETE,
-          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
-        })),
-      }).pipe(
-        switchMap(() => EMPTY),
-        catchError((err) => {
-          console.error(err);
-          return of(PublicationActions.deletePublicationFail());
-        }),
-      );
-    }),
-  );
-
-const deletePublicationFailEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PublicationActions.deletePublicationFail.match),
-    map(() =>
-      UIActions.showErrorToast(
-        translate(errorsMessages.publicationDeletionFailed),
       ),
     ),
   );
@@ -976,7 +944,7 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadAllPublishedWithMeItems.match),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
         state$.value,
         payload.featureType,
@@ -1085,7 +1053,7 @@ export const PublicationEpics = combineEpics(
   // init
   initEpic,
 
-  // create
+  // create publication
   publishEpic,
   publishFailEpic,
 
@@ -1094,10 +1062,6 @@ export const PublicationEpics = combineEpics(
   uploadPublicationsFailEpic,
   uploadPublicationEpic,
   uploadPublicationFailEpic,
-
-  // delete publications
-  deletePublicationEpic,
-  deletePublicationFailEpic,
 
   // upload published resources
   uploadPublishedWithMeItemsEpic,

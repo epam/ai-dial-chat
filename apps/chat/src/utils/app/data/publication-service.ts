@@ -20,7 +20,7 @@ import { EnumMapper } from '../mappers';
 import mapKeys from 'lodash-es/mapKeys';
 
 export class PublicationService {
-  public static publish(
+  public static createPublicationRequest(
     publicationData: PublicationRequestModel,
   ): Observable<Publication> {
     return ApiUtils.request('api/publication/create', {
@@ -79,17 +79,6 @@ export class PublicationService {
         };
       }),
     );
-  }
-
-  public static deletePublication(data: {
-    name: string;
-    targetFolder: string;
-    resources: { targetUrl: string }[];
-  }): Observable<void> {
-    return ApiUtils.request('api/publication/create', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
   }
 
   public static getPublishedWithMeItems(
