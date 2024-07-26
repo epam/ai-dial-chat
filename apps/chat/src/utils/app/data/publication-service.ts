@@ -1,6 +1,10 @@
 import { Observable, map } from 'rxjs';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
@@ -85,19 +89,39 @@ export class PublicationService {
     parentPath: string,
     featureType: FeatureType,
     options?: Partial<{ recursive: boolean }>,
-  ): Observable<PublishedItem> {
+  ): Observable<{ folders: PublishedItem[]; items: PublishedItem[] }> {
     const query = new URLSearchParams({
       ...(options?.recursive && { recursive: String(options.recursive) }),
     });
     const resultQuery = query.toString();
-    return ApiUtils.request(`
+    return ApiUtils.request(
+      `
       ${constructPath(
         'api',
         'publication',
         EnumMapper.getApiKeyByFeatureType(featureType),
         PUBLIC_URL_PREFIX,
         ApiUtils.encodeApiUrl(parentPath),
-      )}${resultQuery ? `?${resultQuery}` : ''}`);
+      )}${resultQuery ? `?${resultQuery}` : ''}`,
+    ).pipe(
+      map((publications: PublishedItem) => {
+        if (!publications.items) {
+          return {
+            folders: [],
+            items: [],
+          };
+        }
+
+        return {
+          folders: publications.items.filter(
+            (item) => item.nodeType === BackendDataNodeType.FOLDER,
+          ),
+          items: publications.items.filter(
+            (item) => item.nodeType === BackendDataNodeType.ITEM,
+          ),
+        };
+      }),
+    );
   }
 
   public static getPublishedByMeItems(
