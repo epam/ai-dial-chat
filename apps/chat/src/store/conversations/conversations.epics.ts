@@ -274,12 +274,16 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const initFoldersAndConversationsEpic: AppEpic = (action$) =>
+const initFoldersAndConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initFoldersAndConversations.match),
     switchMap(() =>
-      ConversationService.getConversations(undefined, true).pipe(
-        switchMap((conversations) => {
+      forkJoin({
+        conversations: ConversationService.getConversations(undefined, true),
+        selectedConversationsIds:
+          ConversationService.getSelectedConversationsIds(),
+      }).pipe(
+        switchMap(({ conversations, selectedConversationsIds }) => {
           const paths = uniq(
             conversations.flatMap((c) =>
               getParentFolderIdsFromFolderId(c.folderId),
@@ -306,6 +310,13 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
                 featureType: FeatureType.Chat,
               }),
             ),
+            selectedConversationsIds.length === 0
+              ? of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [sortByDateAndName(conversations)[0].id],
+                  }),
+                )
+              : EMPTY,
           );
         }),
         catchError((err) => {
