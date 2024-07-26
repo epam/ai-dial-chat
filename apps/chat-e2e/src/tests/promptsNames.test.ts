@@ -42,7 +42,7 @@ dialTest(
     const longNameWithEmojis =
       '😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß';
     const nameWithSpaces = ' Prompt 1 ';
-    const expectedNameWithSpaces = 'Prompt 1';
+    const expectedNameWithSpaces = nameWithSpaces.trim();
 
     await dialTest.step('Add a dot at the end of a prompt name', async () => {
       await dialHomePage.openHomePage();
