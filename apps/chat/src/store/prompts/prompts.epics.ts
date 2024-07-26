@@ -717,11 +717,13 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
     filter((action) => PromptsActions.deleteChosenPrompts.match(action)),
     switchMap(() => {
       const actions: Observable<AnyAction>[] = [];
-      const chosenPromptIds = PromptsSelectors.selectChosenPromptIds(
+      const prompts = PromptsSelectors.selectPrompts(state$.value);
+      const chosenPromptIds = PromptsSelectors.selectSelectedItems(
         state$.value,
       );
-      const chosenFolderIds = PromptsSelectors.selectChosenFolderIds(
+      const { fullyChosenFolderIds } = PromptsSelectors.selectChosenFolderIds(
         state$.value,
+        prompts,
       );
       const promptIds = PromptsSelectors.selectPrompts(state$.value).map(
         (prompt) => prompt.id,
@@ -730,7 +732,7 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
       const deletedPromptIds = uniq([
         ...chosenPromptIds,
         ...promptIds.filter((id) =>
-          chosenFolderIds.some((folderId) => id.startsWith(folderId)),
+          fullyChosenFolderIds.some((folderId) => id.startsWith(folderId)),
         ),
       ]);
 
@@ -747,10 +749,10 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
       return concat(
         of(
           PromptsActions.setFolders({
-            folders: folders.filter((folder) =>
-              chosenFolderIds.every(
-                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
-              ),
+            folders: folders.filter(
+              (folder) =>
+                !fullyChosenFolderIds.includes(`${folder.id}/`) &&
+                prompts.some((p) => p.id.startsWith(`${folder.id}/`)),
             ),
           }),
         ),

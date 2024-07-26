@@ -1,4 +1,4 @@
-import { IconBulb, IconFile } from '@tabler/icons-react';
+import { IconBulb, IconCheck, IconFile } from '@tabler/icons-react';
 import {
   ReactElement,
   ReactNode,
@@ -127,6 +127,7 @@ export const EntityRow = ({
 
 interface FeatureContainerProps {
   children: ReactNode | ReactNode[];
+  selectorGroup?: string;
 }
 const FeatureContainer = ({ children }: FeatureContainerProps) => (
   <span className="flex w-2/3 flex-row items-center gap-2">{children}</span>
@@ -134,13 +135,35 @@ const FeatureContainer = ({ children }: FeatureContainerProps) => (
 
 interface ConversationViewProps {
   item: ConversationInfo;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
 }
 
-const ConversationView = ({ item: conversation }: ConversationViewProps) => {
+const ConversationView = ({
+  item: conversation,
+  onSelect,
+  isChosen,
+}: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <FeatureContainer>
+      {onSelect && (
+        <div className="relative flex size-[18px] shrink-0">
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([conversation.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
       {conversation.isReplay && (
         <span className="flex shrink-0">
           <ReplayAsIsIcon size={18} />
@@ -187,6 +210,8 @@ export const ConversationRow = ({
   additionalItemData,
   onEvent,
   itemComponentClassNames,
+  onSelect,
+  isChosen,
 }: ConversationRowProps) => {
   return (
     <EntityRow
@@ -196,18 +221,40 @@ export const ConversationRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <ConversationView item={conversation} />
+      <ConversationView
+        isChosen={isChosen}
+        onSelect={onSelect}
+        item={conversation}
+      />
     </EntityRow>
   );
 };
 
 interface PromptViewProps {
   item: Prompt;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
 }
 
-const PromptView = ({ item: prompt }: PromptViewProps) => {
+const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
   return (
     <FeatureContainer>
+      {onSelect && (
+        <div className="relative flex size-[18px] shrink-0">
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([prompt.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
       <span className="flex shrink-0">
         <IconBulb size={18} className="text-secondary" />
       </span>
@@ -240,6 +287,8 @@ export const PromptsRow = ({
   additionalItemData,
   onEvent,
   itemComponentClassNames,
+  isChosen,
+  onSelect,
 }: PromptRowProps) => {
   return (
     <EntityRow
@@ -249,21 +298,39 @@ export const PromptsRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <PromptView item={prompt} />
+      <PromptView isChosen={isChosen} onSelect={onSelect} item={prompt} />
     </EntityRow>
   );
 };
 
 interface FileViewProps {
   item: DialFile;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
 }
 
-const FileView = ({ item: file }: FileViewProps) => {
+const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
   return (
     <FeatureContainer>
-      <div className="flex shrink-0">
+      {onSelect && (
+        <div className={'relative flex size-[18px] shrink-0'}>
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([file.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
+      <span className="flex shrink-0">
         <IconFile size={18} className="text-secondary" />
-      </div>
+      </span>
       <Tooltip
         tooltip={file.name}
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
@@ -294,6 +361,8 @@ export const FilesRow = ({
   additionalItemData,
   onEvent,
   itemComponentClassNames,
+  isChosen,
+  onSelect,
 }: FileRowProps) => {
   return (
     <EntityRow
@@ -303,7 +372,7 @@ export const FilesRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <FileView item={item} />
+      <FileView onSelect={onSelect} isChosen={isChosen} item={item} />
     </EntityRow>
   );
 };
