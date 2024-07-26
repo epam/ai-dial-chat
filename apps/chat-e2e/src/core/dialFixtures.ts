@@ -348,8 +348,8 @@ const dialTest = test.extend<
     const folderPrompts = promptBar.getFolderPrompts();
     await use(folderPrompts);
   },
-  conversationSettings: async ({ chat }, use) => {
-    const conversationSettings = chat.getConversationSettings();
+  conversationSettings: async ({ appContainer }, use) => {
+    const conversationSettings = appContainer.getConversationSettings();
     await use(conversationSettings);
   },
   talkToSelector: async ({ conversationSettings }, use) => {

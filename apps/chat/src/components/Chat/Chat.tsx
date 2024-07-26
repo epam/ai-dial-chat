@@ -913,20 +913,22 @@ export const ChatView = memo(() => {
                       : 'grid-cols-2',
                   )}
                 >
-                  {selectedConversations.map((conv) => (
-                    <div className="relative h-full" key={conv.id}>
-                      <ChatSettings
-                        conversation={conv}
-                        modelId={conv.model.id}
-                        prompts={prompts}
-                        addons={addons}
-                        onChangeSettings={(args) => {
-                          handleTemporarySettingsSave(conv, args);
-                        }}
-                        onApplySettings={handleApplyChatSettings}
-                        onClose={() => setIsShowChatSettings(false)}
-                      />
-                    </div>
+                  {selectedConversations.map((conv, index) => (
+                    <ChatSettings
+                      key={conv.id}
+                      conversation={conv}
+                      modelId={conv.model.id}
+                      prompts={prompts}
+                      addons={addons}
+                      onChangeSettings={(args) => {
+                        handleTemporarySettingsSave(conv, args);
+                      }}
+                      onApplySettings={handleApplyChatSettings}
+                      onClose={() => setIsShowChatSettings(false)}
+                      isOpen={isShowChatSettings}
+                      isRight={index === 1}
+                      isCompareMode={isCompareMode}
+                    />
                   ))}
                 </div>
               )}

@@ -6,7 +6,6 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 import { ChatMessages } from './chatMessages';
-import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
 import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
@@ -27,7 +26,6 @@ export class Chat extends BaseElement {
   }
 
   private chatHeader!: ChatHeader;
-  private conversationSettings!: ConversationSettings;
   private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
   private compare!: Compare;
@@ -58,16 +56,6 @@ export class Chat extends BaseElement {
       this.chatHeader = new ChatHeader(this.page, this.rootLocator);
     }
     return this.chatHeader;
-  }
-
-  getConversationSettings(): ConversationSettings {
-    if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(
-        this.page,
-        this.rootLocator,
-      );
-    }
-    return this.conversationSettings;
   }
 
   getSendMessage(): SendMessage {
