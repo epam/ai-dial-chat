@@ -61,7 +61,6 @@ interface Props {
   onChangeAddon: (addonsId: string) => void;
   onClose?: () => void;
   debounceSystemPromptChanges?: boolean;
-  isChatEmpty?: boolean;
 }
 
 export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
@@ -116,7 +115,6 @@ export const ConversationSettings = ({
   onChangeAddon,
   onApplyAddons,
   debounceSystemPromptChanges = false,
-  isChatEmpty,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
@@ -168,11 +166,6 @@ export const ConversationSettings = ({
 
   return (
     <>
-      {!isChatEmpty && (
-        <div className="mb-3 bg-layer-2 px-3 text-base font-semibold md:px-6">
-          {t('Conversation settings')}
-        </div>
-      )}
       <div
         ref={settingsRef}
         className={classNames(

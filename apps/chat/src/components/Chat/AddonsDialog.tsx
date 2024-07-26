@@ -179,7 +179,7 @@ export const AddonsDialog: FC<Props> = ({
       overlayClassName="fixed inset-0 top-[48px] !items-start"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose
-      containerClassName="flex h-fit max-h-full min-h-full landscape:md:min-h-full landscape:xl:min-h-[700px] md:min-h-[700px] w-full grow justify-between flex-col gap-4 divide-tertiary py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="flex h-fit max-h-full h-[700px] w-full grow justify-between flex-col gap-4 divide-tertiary py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
     >
       <div className="flex h-fit justify-between px-3 md:px-5">
         {t('Addons (max 10)')}

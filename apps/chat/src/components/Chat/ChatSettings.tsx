@@ -129,18 +129,18 @@ export const ChatSettings = ({
     <Modal
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={() => {
-        return;
-      }}
-      hideClose
+      onClose={onClose}
       dataQa="chat-settings-modal"
       overlayClassName="!items-start !z-40"
-      containerClassName="flex h-fit max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center divide-y divide-tertiary !bg-layer-2 xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="flex h-fit max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center not:first:divide-y divide-tertiary !bg-layer-2 xl:max-w-[720px] 2xl:max-w-[1000px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
+      <div className="mb-3 bg-layer-2 px-3 text-base font-semibold md:px-6">
+        {t('Conversation settings')}
+      </div>
+
       <ConversationSettings
         conversation={conversation}
-        isCloseEnabled
         modelId={currentModelId}
         prompts={prompts}
         assistantModelId={currentAssistentModelId}
