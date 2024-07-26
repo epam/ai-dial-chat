@@ -16,13 +16,13 @@ export class GroupEntity extends BaseElement {
   public groupEntity = (entity: DialAIEntityModel) => {
     let entityName = new BaseElement(
       this.page,
-      `${ChatSettingsSelectors.groupEntityName}:text('${entity.name}')`,
+      `${ChatSettingsSelectors.groupEntityName}:text-is('${entity.name}')`,
     ).getElementLocator();
     if (entity.version) {
       if (entity.version.match(/^(\d+|\d{4}-\d{2}-\d{2})$/g)) {
         entityName = new BaseElement(
           this.page,
-          `${ChatSettingsSelectors.groupEntityName}:text('${entity.name} ${entity.version}')`,
+          `${ChatSettingsSelectors.groupEntityName}:text-is('${entity.name} ${entity.version}')`,
         ).getElementLocator();
         return this.createElementFromLocator(
           this.rootLocator.filter({ has: entityName }).first(),

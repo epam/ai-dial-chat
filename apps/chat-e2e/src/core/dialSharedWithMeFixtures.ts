@@ -142,11 +142,11 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserCompareConversationSelector);
   },
   additionalShareUserConversationSettings: async (
-    { additionalShareUserChat },
+    { additionalShareUserAppContainer },
     use,
   ) => {
     const additionalShareUserConversationSettings =
-      additionalShareUserChat.getConversationSettings();
+      additionalShareUserAppContainer.getConversationSettings();
     await use(additionalShareUserConversationSettings);
   },
   additionalShareUserTalkToSelector: async (
