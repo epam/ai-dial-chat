@@ -20,6 +20,7 @@ interface CollapsibleSectionProps {
   showOnHoverOnly?: boolean;
   togglerClassName?: string;
   sectionTooltip?: ReactNode;
+  additionalNode?: ReactNode;
 }
 
 export default function CollapsibleSection({
@@ -35,6 +36,7 @@ export default function CollapsibleSection({
   showOnHoverOnly,
   togglerClassName,
   sectionTooltip,
+  additionalNode,
 }: CollapsibleSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
   const handleClick = useCallback(() => {
@@ -77,6 +79,7 @@ export default function CollapsibleSection({
             <IconHelp size={18} />
           </Tooltip>
         )}
+        {additionalNode}
       </div>
       {isOpened && children}
     </div>

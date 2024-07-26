@@ -62,6 +62,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -162,11 +163,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
+  const checkboxRef = useRef<HTMLInputElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
   const [search, setSearch] = useState(searchTerm);
-  const renameInputRef = useRef<HTMLInputElement>(null);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
       newAddedFolderId === currentFolder.id &&
@@ -182,18 +186,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isUploadedForUnpublishing, setIsUploadedForUnpublishing] =
     useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const [isPartialSelected, setIsPartialSelected] = useState(false);
+
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
+  const hasResourcesToReview = useAppSelector((state) =>
+    PublicationSelectors.selectIsFolderContainsResourcesToApprove(
+      state,
+      currentFolder.id,
+    ),
+  );
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
-  const [isSelected, setIsSelected] = useState(false);
-  const [isPartialSelected, setIsPartialSelected] = useState(false);
-  const checkboxRef = useRef<HTMLInputElement>(null);
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -786,7 +796,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     <div
       id="folder"
       className={classNames(
-        'transition-colors duration-200',
         isDraggingOver && 'bg-accent-primary-alpha',
         currentFolder.temporary && 'text-primary',
       )}
@@ -862,6 +871,30 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         : ''
                     }
                   >
+                    {hasResourcesToReview && isSidePanelFolder && (
+                      <span className="absolute bottom-[-2px] left-[-1px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
+                        <span
+                          className={classNames(
+                            'rounded-full',
+                            featureType === FeatureType.Chat &&
+                              'group-hover/folder-item:bg-accent-secondary-alpha',
+                            featureType === FeatureType.Prompt &&
+                              'group-hover/folder-item:bg-accent-tertiary-alpha',
+                          )}
+                        >
+                          <svg
+                            width="4"
+                            height="4"
+                            viewBox="0 0 4 4"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="m-[3px] rounded-[1px] bg-accent-secondary"
+                          >
+                            <rect width="4" height="4" rx="1" />
+                          </svg>
+                        </span>
+                      </span>
+                    )}
                     <IconFolder
                       size={18}
                       className={classNames(
@@ -990,6 +1023,30 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         : ''
                     }
                   >
+                    {hasResourcesToReview && isSidePanelFolder && (
+                      <span className="absolute bottom-[-2px] left-[-1px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
+                        <span
+                          className={classNames(
+                            'rounded-full',
+                            featureType === FeatureType.Chat &&
+                              'group-hover/folder-item:bg-accent-secondary-alpha',
+                            featureType === FeatureType.Prompt &&
+                              'group-hover/folder-item:bg-accent-tertiary-alpha',
+                          )}
+                        >
+                          <svg
+                            width="4"
+                            height="4"
+                            viewBox="0 0 4 4"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="m-[3px] rounded-[1px] bg-accent-secondary"
+                          >
+                            <rect width="4" height="4" rx="1" />
+                          </svg>
+                        </span>
+                      </span>
+                    )}
                     <IconFolder size={18} className="mr-1 text-secondary" />
                   </ShareIcon>
                 )}

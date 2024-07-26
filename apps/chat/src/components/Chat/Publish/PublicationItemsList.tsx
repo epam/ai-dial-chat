@@ -155,7 +155,6 @@ export function PublicationItemsList({
               showTooltip
               canSelectFolders
               isSelectAlwaysVisible
-              isSidePanelFolder={false}
             />
           )}
         </CollapsibleSection>
@@ -246,7 +245,6 @@ export function PublicationItemsList({
                     .map((e) => e.id),
                 );
               }}
-              isSidePanelFolder={false}
             />
           )}
         </CollapsibleSection>

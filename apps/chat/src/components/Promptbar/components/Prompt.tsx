@@ -334,7 +334,7 @@ export const PromptComponent = ({
     <>
       <button
         className={classNames(
-          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
           !isSelectMode && isHighlited
             ? 'border-l-accent-primary '
@@ -393,6 +393,28 @@ export const PromptComponent = ({
               isChosen && !isExternal && 'hidden',
             )}
           >
+            {resourceToReview && !resourceToReview.reviewed && (
+              <span className="absolute bottom-[-2px] left-[-1px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
+                <span
+                  className={classNames(
+                    'rounded-full group-hover/prompt-item:bg-accent-tertiary-alpha',
+                    (selectedPromptId === prompt.id || isContextMenu) &&
+                      'bg-accent-tertiary-alpha',
+                  )}
+                >
+                  <svg
+                    width="4"
+                    height="4"
+                    viewBox="0 0 4 4"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="m-[3px] rounded-[1px] bg-accent-secondary"
+                  >
+                    <rect width="4" height="4" rx="1" />
+                  </svg>
+                </span>
+              </span>
+            )}
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
