@@ -47,6 +47,7 @@ export const AssistantSubModelSelector = ({
               isDefault: false,
               type: EntityType.Model,
               id: assistantModelId,
+              reference: assistantModelId,
             }
           }
           getItemLabel={(model: DialAIEntityModel) =>
