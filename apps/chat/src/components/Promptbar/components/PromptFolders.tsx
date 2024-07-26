@@ -424,7 +424,7 @@ export function PromptFolders() {
         <ApproveRequiredSection
           featureTypes={publicationFeatureTypes}
           publicationItems={publicationItems}
-          highlightIfResourceTypesIsEmpty
+          includeEmptyResourceTypesEmpty
           {...toApproveFolderItem}
         />
       )}

@@ -1,8 +1,9 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 
 import {
@@ -60,7 +61,7 @@ export const selectSelectedPublication = createSelector(
   },
 );
 
-export const selectResourceToReview = createSelector(
+export const selectResourcesToReview = createSelector(
   [rootSelector],
   (state) => {
     return state.resourcesToReview;
@@ -68,16 +69,16 @@ export const selectResourceToReview = createSelector(
 );
 
 export const selectResourceToReviewByReviewUrl = createSelector(
-  [rootSelector, (_state, id: string) => id],
-  (state, id) => {
-    return state.resourcesToReview.find((r) => r.reviewUrl === id);
+  [selectResourcesToReview, (_state, id: string) => id],
+  (resourcesToReview, id) => {
+    return resourcesToReview.find((r) => r.reviewUrl === id);
   },
 );
 
 export const selectResourcesToReviewByPublicationUrl = createSelector(
-  [rootSelector, (_state, id: string) => id],
-  (state, id) => {
-    return state.resourcesToReview.filter((r) => r.publicationUrl === id);
+  [selectResourcesToReview, (_state, id: string) => id],
+  (resourcesToReview, id) => {
+    return resourcesToReview.filter((r) => r.publicationUrl === id);
   },
 );
 
@@ -159,6 +160,44 @@ export const selectNonExistentEntities = createSelector(
   (conversations, prompts) => {
     return [...conversations, ...prompts].filter(
       (entity) => entity.publicationInfo?.isNotExist,
+    );
+  },
+);
+
+export const selectPublicationsToReviewCount = createSelector(
+  [
+    selectPublications,
+    selectResourcesToReview,
+    (_state, featureTypes: FeatureType[]) => featureTypes,
+    (_state, _featureTypes, includeEmptyFeatureTypes?: boolean) =>
+      includeEmptyFeatureTypes,
+  ],
+  (publications, resourcesToReview, featureTypes, includeEmptyFeatureTypes) => {
+    const filteredPublications = publications.filter(
+      (p) =>
+        featureTypes.some((featureType) =>
+          p.resourceTypes.includes(
+            EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+          ),
+        ) ||
+        (includeEmptyFeatureTypes && !p.resourceTypes.length),
+    );
+
+    return filteredPublications.filter(
+      (p) =>
+        !resourcesToReview
+          .filter((r) => r.publicationUrl === p.url)
+          .filter((item) => !isFileId(item.reviewUrl))
+          .every((r) => r.reviewed) || p.uploadStatus !== UploadStatus.LOADED,
+    ).length;
+  },
+);
+
+export const selectIsFolderContainsResourcesToApprove = createSelector(
+  [selectResourcesToReview, (_state, folderId: string) => folderId],
+  (resourcesToReview, folderId) => {
+    return resourcesToReview.some(
+      (r) => r.reviewUrl.startsWith(`${folderId}/`) && !r.reviewed,
     );
   },
 );
