@@ -30,4 +30,23 @@ export class PromptModalAssertion {
       )
       .toHaveText(expectedErrorMessage);
   }
+
+  public async assertNameFieldIsEmpty() {
+    expect
+      .soft(
+        await this.promptModalDialog.getName(),
+        ExpectedMessages.charactersAreNotDisplayed,
+      )
+      .toBe('');
+  }
+
+  public async assertPromptNameIsValid(expectedPromptName: string) {
+    expect
+      .soft(
+        await this.promptModalDialog.getName(),
+        ExpectedMessages.promptNameValid,
+      )
+      .toBe(expectedPromptName);
+  }
+
 }

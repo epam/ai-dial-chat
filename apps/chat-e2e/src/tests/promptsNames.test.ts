@@ -87,12 +87,7 @@ dialTest(
       async () => {
         for (const char of ExpectedConstants.restrictedNameChars.split('')) {
           await promptModalDialog.setField(promptModalDialog.name, char);
-          expect
-            .soft(
-              await promptModalDialog.getName(),
-              ExpectedMessages.charactersAreNotDisplayed,
-            )
-            .toBe('');
+          await promptModalAssertion.assertNameFieldIsEmpty();
         }
       },
     );
@@ -103,12 +98,7 @@ dialTest(
         await dialHomePage.copyToClipboard(nameWithRestrictedChars);
         await promptModalDialog.name.click();
         await dialHomePage.pasteFromClipboard();
-        expect
-          .soft(
-            await promptModalDialog.getName(),
-            ExpectedMessages.promptNameValid,
-          )
-          .toBe(expectedPromptName);
+        await promptModalAssertion.assertPromptNameIsValid(expectedPromptName);
         await promptModalDialog.saveButton.click();
         prompt.name = expectedPromptName;
       },
