@@ -4,12 +4,14 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   AddonIds,
   Attachment,
+  ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
   ModelIds,
   ScrollState,
 } from '@/src/testData';
+import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -178,7 +180,8 @@ dialTest(
 dialTest(
   'Scroll down button does not appear on new conversation screen if previously opened chat had the icon on the screen.\n' +
     'Scroll down button and scroll position are not applied to another chat.\n' +
-    "Autoscroll doesn't depend on scroll position in previous chat",
+    "Autoscroll doesn't depend on scroll position in previous chat.\n" +
+    'New replay chat is highlighted only. Parent chat is not highlighted',
   async ({
     dialHomePage,
     chat,
@@ -188,10 +191,10 @@ dialTest(
     dataInjector,
     sendMessage,
     conversations,
-    conversationDropdownMenu,
+    conversationAssertion,
     chatBar,
   }) => {
-    setTestIds('EPMRTC-493', 'EPMRTC-3072', 'EPMRTC-1783');
+    setTestIds('EPMRTC-493', 'EPMRTC-3072', 'EPMRTC-1783', 'EPMRTC-1754');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -248,10 +251,30 @@ dialTest(
     );
 
     await dialTest.step(
-      'Create Replay conversation based on the first one, start replaying and verify autoscroll is active',
+      'Create Replay conversation based on the first one and verify it is selected and highlighted',
       async () => {
+        await conversations.selectConversation(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+          triggeredHttpMethod: 'POST',
+        });
+
+        await conversationAssertion.assertEntityBackgroundColor(
+          {
+            name: ExpectedConstants.replayConversation + firstConversation.name,
+          },
+          Colors.backgroundAccentSecondary,
+        );
+        await conversationAssertion.assertEntityBackgroundColor(
+          { name: firstConversation.name, index: 2 },
+          Colors.defaultBackground,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Start replaying and verify autoscroll is active',
+      async () => {
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.listTextBody,
         );
@@ -358,7 +381,7 @@ dialTest(
     await dialTest.step('Prepare conversation with stage', async () => {
       stageConversation = conversationData.prepareAddonsConversation(
         ModelsUtil.getModel(ModelIds.GPT_4)!,
-        [AddonIds.XWEATHER],
+        AddonIds.XWEATHER,
       );
       await dataInjector.createConversations([stageConversation]);
       await localStorageManager.setSelectedConversation(stageConversation);

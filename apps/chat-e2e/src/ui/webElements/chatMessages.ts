@@ -510,7 +510,7 @@ export class ChatMessages extends BaseElement {
     MessageInputSelectors.cancelEdit,
   );
 
-  public messageDeleteIcon = (message: string) =>
+  public messageDeleteIcon = (message: string | number) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
   public async openEditMessageMode(message: string | number) {

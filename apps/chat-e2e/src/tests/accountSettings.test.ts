@@ -80,7 +80,7 @@ dialTest(
       async () => {
         await settingsModal.theme.click();
         const expectedThemes = Object.values(Theme).map((t) => toTitleCase(t));
-        await settingsModalAssertion.assertThemeMenuOptions(expectedThemes);
+        await settingsModalAssertion.assertThemeMenuOptions(...expectedThemes);
       },
     );
   },

@@ -1,7 +1,6 @@
 import { skipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
-import { expect } from '@playwright/test';
+import { ModelIds } from '@/src/testData';
 
 const modelsForImageGeneration = Array.of(
   ModelIds.STABLE_DIFFUSION,
@@ -9,12 +8,10 @@ const modelsForImageGeneration = Array.of(
   ModelIds.IMAGE_GENERATION_005,
 );
 
-let imageUrl: string | undefined;
-
 for (const modelToUse of modelsForImageGeneration) {
   dialTest(
     `Generate image for model: ${modelToUse}`,
-    async ({ conversationData, chatApiHelper }) => {
+    async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(modelToUse, [
@@ -22,20 +19,26 @@ for (const modelToUse of modelsForImageGeneration) {
         ]);
 
       const response = await chatApiHelper.postRequest(conversation);
-      const status = response.status();
-      expect
-        .soft(status, `${ExpectedMessages.responseCodeIsValid}${modelToUse}`)
-        .toBe(200);
-
-      const respBody = await response.text();
-      const result = respBody.match(ExpectedConstants.responseFileUrlPattern);
-      imageUrl = result ? result[0] : undefined;
-      expect
-        .soft(
-          imageUrl,
-          `${ExpectedMessages.imageUrlReturnedInResponse}${modelToUse}`,
-        )
-        .toMatch(ExpectedConstants.responseFileUrlContentPattern(modelToUse));
+      await apiAssertion.verifyResponseCode(response, modelToUse, 200);
+      await apiAssertion.verifyResponseAttachment(response, modelToUse);
     },
   );
 }
+
+dialTest(
+  'Replay feature receives attachments',
+  async ({ conversationData, chatApiHelper, setTestIds, apiAssertion }) => {
+    dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
+    setTestIds('EPMRTC-1803');
+    const conversation =
+      conversationData.prepareModelConversationBasedOnRequests(ModelIds.DALLE, [
+        'draw smiling emoticon',
+      ]);
+    conversationData.resetData();
+    const replayConversation =
+      conversationData.prepareDefaultReplayConversation(conversation);
+    const response = await chatApiHelper.postRequest(replayConversation);
+    await apiAssertion.verifyResponseCode(response, ModelIds.DALLE, 200);
+    await apiAssertion.verifyResponseAttachment(response, ModelIds.DALLE);
+  },
+);

@@ -4,4 +4,5 @@ export const IconSelectors = {
   deleteIcon: '.tabler-icon-trash',
   playbackIcon: '.tabler-icon-player-play',
   copyIcon: '.tabler-icon-copy',
+  replayIcon: '.tabler-icon-refresh-dot',
 };
