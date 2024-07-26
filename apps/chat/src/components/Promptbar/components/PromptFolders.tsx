@@ -51,6 +51,9 @@ interface promptFolderProps {
   allowHighlight?: boolean;
 }
 
+// TODO: add applications when be ready
+const publicationFeatureTypes = [FeatureType.Prompt];
+
 const PromptFolderTemplate = ({
   folder,
   isLast,
@@ -87,6 +90,11 @@ const PromptFolderTemplate = ({
   );
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
+  );
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    (state) => PromptsSelectors.selectChosenFolderIds(state, prompts),
   );
 
   const handleDrop = useCallback(
@@ -168,18 +176,22 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
-  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const selectedFolderIds = useAppSelector(
-    PromptsSelectors.selectAllChosenFolderIds,
-  );
-  const partialSelectedFolderIds = useAppSelector(
-    PromptsSelectors.selectPartialChosenFolderIds,
-  );
   const handleFolderSelect = useCallback(
-    (folderId: string, isChosen: boolean) => {
-      dispatch(PromptsActions.setChosenFolder({ folderId, isChosen }));
+    (folderId: string) => {
+      dispatch(
+        PromptsActions.setChosenPrompts({
+          ids: prompts
+            .filter(
+              (p) =>
+                p.id.startsWith(folderId) &&
+                (!partialChosenFolderIds.includes(folderId) ||
+                  !selectedPrompts.includes(p.id)),
+            )
+            .map((e) => e.id),
+        }),
+      );
     },
-    [dispatch],
+    [dispatch, partialChosenFolderIds, prompts, selectedPrompts],
   );
 
   return (
@@ -228,8 +240,8 @@ const PromptFolderTemplate = ({
         featureType={FeatureType.Prompt}
         canSelectFolders={isSelectMode}
         additionalItemData={{
-          selectedFolderIds,
-          partialSelectedFolderIds,
+          selectedFolderIds: fullyChosenFolderIds,
+          partialSelectedFolderIds: partialChosenFolderIds,
         }}
         onSelectFolder={handleFolderSelect}
       />
@@ -355,7 +367,11 @@ export function PromptFolders() {
     SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, FeatureType.Prompt),
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      publicationFeatureTypes,
+      true,
+    ),
   );
 
   const toApproveFolderItem = {
@@ -406,7 +422,9 @@ export function PromptFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          featureType={FeatureType.Prompt}
+          featureTypes={publicationFeatureTypes}
+          publicationItems={publicationItems}
+          highlightIfResourceTypesIsEmpty
           {...toApproveFolderItem}
         />
       )}
