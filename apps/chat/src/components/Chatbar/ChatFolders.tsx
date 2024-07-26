@@ -51,6 +51,8 @@ interface ChatFolderProps {
   includeEmpty: boolean;
 }
 
+const publicationFeatureTypes = [FeatureType.Chat, FeatureType.File];
+
 const ChatFolderTemplate = ({
   folder,
   isLast,
@@ -91,9 +93,18 @@ const ChatFolderTemplate = ({
   const loadingFolderIds = useAppSelector(
     ConversationsSelectors.selectLoadingFolderIds,
   );
-
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Chat),
+  );
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    (state) =>
+      ConversationsSelectors.selectChosenFolderIds(state, conversations),
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedItems,
   );
 
   const handleDrop = useCallback(
@@ -199,20 +210,22 @@ const ChatFolderTemplate = ({
     [dispatch, folder.id, folder.sharedWithMe],
   );
 
-  const isSelectMode = useAppSelector(
-    ConversationsSelectors.selectIsSelectMode,
-  );
-  const selectedFolderIds = useAppSelector(
-    ConversationsSelectors.selectAllChosenFolderIds,
-  );
-  const partialSelectedFolderIds = useAppSelector(
-    ConversationsSelectors.selectPartialChosenFolderIds,
-  );
   const handleFolderSelect = useCallback(
-    (folderId: string, isChosen: boolean) => {
-      dispatch(ConversationsActions.setChosenFolder({ folderId, isChosen }));
+    (folderId: string) => {
+      dispatch(
+        ConversationsActions.setChosenConversations({
+          ids: conversations
+            .filter(
+              (c) =>
+                c.id.startsWith(folderId) &&
+                (!partialChosenFolderIds.includes(folderId) ||
+                  !selectedConversations.includes(c.id)),
+            )
+            .map((e) => e.id),
+        }),
+      );
     },
-    [dispatch],
+    [conversations, dispatch, partialChosenFolderIds, selectedConversations],
   );
 
   return (
@@ -244,8 +257,8 @@ const ChatFolderTemplate = ({
         onSelectFolder={handleFolderSelect}
         canSelectFolders={isSelectMode}
         additionalItemData={{
-          selectedFolderIds,
-          partialSelectedFolderIds,
+          selectedFolderIds: fullyChosenFolderIds,
+          partialSelectedFolderIds: partialChosenFolderIds,
         }}
       />
       {isLast && (
@@ -377,7 +390,10 @@ export function ChatFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, FeatureType.Chat),
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      publicationFeatureTypes,
+    ),
   );
 
   const toApproveFolderItem = {
@@ -421,7 +437,8 @@ export function ChatFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          featureType={FeatureType.Chat}
+          featureTypes={publicationFeatureTypes}
+          publicationItems={publicationItems}
           {...toApproveFolderItem}
         />
       )}
