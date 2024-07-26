@@ -42,8 +42,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const token = await getToken({ req });
     const models = await getSortedEntities(token);
-    const model = models.find(({ id }) => id === modelId);
-    const assistantModel = models.find(({ id }) => id === assistantModelId);
+    const model = models.find(
+      ({ id, reference }) => id === modelId || reference === modelId,
+    );
+    const assistantModel = assistantModelId
+      ? models.find(
+          ({ id, reference }) =>
+            id === assistantModelId || reference === assistantModelId,
+        )
+      : undefined;
 
     if (
       !id ||
