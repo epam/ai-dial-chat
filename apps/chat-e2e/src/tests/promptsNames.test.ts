@@ -4,7 +4,6 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Error message appears if to add a dot to the end of prompt name.\n' +

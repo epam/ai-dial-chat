@@ -127,10 +127,8 @@ dialTest(
     );
 
     await dialTest.step(
-      'Edit both folder names: copy-paste the phrase with more than 160 symbols',
+      'Edit both folder names with more than 160 symbols names',
       async () => {
-        // await dialHomePage.copyToClipboard(longName);
-
         // Rename Folder_parent
         await folderPrompts.openFolderDropdownMenu(
           ExpectedConstants.newPromptFolderWithIndexTitle(1),
