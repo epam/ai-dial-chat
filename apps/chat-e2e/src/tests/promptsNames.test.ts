@@ -4,7 +4,6 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -58,7 +57,7 @@ dialTest(
     await dialTest.step(
       'Check that the name field is red-bordered and an error message appears',
       async () => {
-        await promptModalAssertion.assertNameFieldIsInvalid();
+        await promptModalAssertion.assertNameFieldIsInvalid(ExpectedConstants.nameWithDotErrorMessage);
       },
     );
 

@@ -1,7 +1,6 @@
-import { ChatBarSelectors, PromptBarSelectors } from '../selectors';
+import { PromptBarSelectors } from '../selectors';
 
 import { MenuOptions } from '@/src/testData';
-import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
 import { Page } from '@playwright/test';
 
