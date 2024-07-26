@@ -57,7 +57,9 @@ dialTest(
     await dialTest.step(
       'Check that the name field is red-bordered and an error message appears',
       async () => {
-        await promptModalAssertion.assertNameFieldIsInvalid(ExpectedConstants.nameWithDotErrorMessage);
+        await promptModalAssertion.assertNameFieldIsInvalid(
+          ExpectedConstants.nameWithDotErrorMessage,
+        );
       },
     );
 

@@ -4,27 +4,27 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import {Overflow, Styles} from '@/src/ui/domData';
-import {expect} from '@playwright/test';
+import { Overflow, Styles } from '@/src/ui/domData';
+import { expect } from '@playwright/test';
 
 dialTest(
   'Prompt name consists of a maximum of 160 symbols.\n' +
-  'Long prompt name is cut in the panel.\n' +
-  'Prompt folder name consists of a maximum of 160 symbols',
+    'Long prompt name is cut in the panel.\n' +
+    'Prompt folder name consists of a maximum of 160 symbols',
   async ({
-           dialHomePage,
-           promptData,
-           dataInjector,
-           prompts,
-           promptDropdownMenu,
-           promptModalDialog,
-           errorToastAssertion,
-           promptAssertion,
-           setTestIds,
-           promptBarFolderAssertion,
-           promptBar,
-           folderPrompts,
-         }) => {
+    dialHomePage,
+    promptData,
+    dataInjector,
+    prompts,
+    promptDropdownMenu,
+    promptModalDialog,
+    errorToastAssertion,
+    promptAssertion,
+    setTestIds,
+    promptBarFolderAssertion,
+    promptBar,
+    folderPrompts,
+  }) => {
     setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
@@ -61,7 +61,7 @@ dialTest(
       'Verify the prompt name is cut to 160 symbols and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
-          {name: expectedName},
+          { name: expectedName },
           'visible',
         );
         await errorToastAssertion.assertToastIsHidden();
@@ -78,8 +78,8 @@ dialTest(
       // Wait for the API request to update the prompt name
       await promptModalDialog.updatePromptDetailsWithButton(
         nameUnder160Symbols,
-        prompt.description || '',
-        prompt.content || '',
+        prompt.description,
+        prompt.content!,
       );
       prompt.name = nameUnder160Symbols;
     });
@@ -98,7 +98,7 @@ dialTest(
       async () => {
         await prompts.getPromptName(prompt.name).hoverOver();
         await promptAssertion.assertEntityDotsMenuState(
-          {name: prompt.name},
+          { name: prompt.name },
           'visible',
         );
       },
@@ -109,7 +109,10 @@ dialTest(
       async () => {
         for (let i = 1; i <= 2; i++) {
           await promptBar.createNewFolder();
-          await promptBarFolderAssertion.assertFolderState({name: ExpectedConstants.newPromptFolderWithIndexTitle(i)}, 'visible')
+          await promptBarFolderAssertion.assertFolderState(
+            { name: ExpectedConstants.newPromptFolderWithIndexTitle(i) },
+            'visible',
+          );
         }
 
         await promptBar.dragAndDropEntityToFolder(

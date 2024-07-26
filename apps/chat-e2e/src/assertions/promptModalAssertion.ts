@@ -11,7 +11,8 @@ export class PromptModalAssertion {
   }
 
   public async assertNameFieldIsInvalid(expectedErrorMessage: string) {
-    const nameBorderColors = await this.promptModalDialog.name.getAllBorderColors();
+    const nameBorderColors =
+      await this.promptModalDialog.name.getAllBorderColors();
     Object.values(nameBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
         expect
@@ -20,14 +21,13 @@ export class PromptModalAssertion {
       });
     });
 
-    const nameFieldErrorMessage = this.promptModalDialog.getFieldBottomMessage(this.promptModalDialog.name);
+    const nameFieldErrorMessage = this.promptModalDialog.getFieldBottomMessage(
+      this.promptModalDialog.name,
+    );
     await nameFieldErrorMessage.waitFor();
 
     await expect
-      .soft(
-        nameFieldErrorMessage,
-        ExpectedMessages.promptNameInvalid,
-      )
+      .soft(nameFieldErrorMessage, ExpectedMessages.promptNameInvalid)
       .toHaveText(expectedErrorMessage);
   }
 
@@ -48,5 +48,4 @@ export class PromptModalAssertion {
       )
       .toBe(expectedPromptName);
   }
-
 }

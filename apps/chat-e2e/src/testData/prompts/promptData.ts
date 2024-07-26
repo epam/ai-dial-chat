@@ -24,7 +24,11 @@ export class PromptData extends FolderData {
 
   public prepareDefaultPrompt(name?: string) {
     const promptName = name ?? GeneratorUtil.randomString(10);
-    return this.promptBuilder.withName(promptName).withId(promptName).build();
+    return this.promptBuilder
+      .withName(promptName)
+      .withId(promptName)
+      .withContent(promptName)
+      .build();
   }
 
   public prepareDefaultSharedPrompt(name?: string) {
