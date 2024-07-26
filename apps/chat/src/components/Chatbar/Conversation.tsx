@@ -38,6 +38,7 @@ import { translate } from '@/src/utils/app/translation';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus, isNotLoaded } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
+import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -61,7 +62,6 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
-import { UnpublishModal } from '../Chat/Publish/UnpublishModal';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
@@ -73,6 +73,7 @@ interface ViewProps {
   isInvalid: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
+  additionalItemData?: Record<string, unknown>;
 }
 
 export function ConversationView({
@@ -81,6 +82,7 @@ export function ConversationView({
   isInvalid,
   isChosen = false,
   isSelectMode,
+  additionalItemData,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -92,11 +94,10 @@ export function ConversationView({
   );
 
   const handleToggle = useCallback(() => {
-    ConversationsActions.setChosenConversation({
-      conversationId: conversation.id,
-      isChosen,
+    ConversationsActions.setChosenConversations({
+      ids: [conversation.id],
     });
-  }, [conversation.id, isChosen]);
+  }, [conversation.id]);
 
   return (
     <>
@@ -161,7 +162,13 @@ export function ConversationView({
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
           )}
           hideTooltip={!isNameOrPathInvalid}
-          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre break-all text-left"
+          triggerClassName={classNames(
+            'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+            conversation.publicationInfo?.isNotExist && 'text-secondary',
+            !!additionalItemData?.isApproveRequiredResource &&
+              conversation.publicationInfo?.action === PublishActions.DELETE &&
+              'text-error',
+          )}
         >
           {conversation.name}
         </Tooltip>
@@ -229,16 +236,12 @@ export const ConversationComponent = ({
     ConversationsSelectors.selectIsSelectMode,
   );
   const chosenConversationIds = useAppSelector(
-    ConversationsSelectors.selectChosenConversationIds,
+    ConversationsSelectors.selectSelectedItems,
   );
-  const chosenFolderIds = useAppSelector(
-    ConversationsSelectors.selectChosenFolderIds,
-  );
+
   const isChosen = useMemo(
-    () =>
-      chosenConversationIds.includes(conversation.id) ||
-      chosenFolderIds.some((folderId) => conversation.id.startsWith(folderId)),
-    [chosenConversationIds, chosenFolderIds, conversation.id],
+    () => chosenConversationIds.includes(conversation.id),
+    [chosenConversationIds, conversation.id],
   );
 
   const { refs, context } = useFloating({
@@ -433,13 +436,12 @@ export const ConversationComponent = ({
       e.stopPropagation();
       setIsContextMenu(false);
       dispatch(
-        ConversationsActions.setChosenConversation({
-          conversationId: conversation.id,
-          isChosen,
+        ConversationsActions.setChosenConversations({
+          ids: [conversation.id],
         }),
       );
     },
-    [conversation.id, dispatch, isChosen],
+    [conversation.id, dispatch],
   );
 
   useEffect(() => {
@@ -479,6 +481,7 @@ export const ConversationComponent = ({
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
+    setIsUnpublishing(false);
   }, []);
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
@@ -486,10 +489,6 @@ export const ConversationComponent = ({
       setIsUnpublishing(true);
       setIsContextMenu(false);
     }, []);
-
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
@@ -675,9 +674,8 @@ export const ConversationComponent = ({
                   ? ConversationsActions.selectConversations({
                       conversationIds: [conversation.id],
                     })
-                  : ConversationsActions.setChosenConversation({
-                      conversationId: conversation.id,
-                      isChosen,
+                  : ConversationsActions.setChosenConversations({
+                      ids: [conversation.id],
                     }),
               );
             }
@@ -694,6 +692,7 @@ export const ConversationComponent = ({
             isInvalid={isNameOrPathInvalid}
             isChosen={isChosen}
             isSelectMode={isSelectMode}
+            additionalItemData={additionalItemData}
           />
         </button>
       )}
@@ -784,25 +783,15 @@ export const ConversationComponent = ({
           </SidebarActionButton>
         </div>
       )}
-      {isPublishing && (
+      {(isPublishing || isUnpublishing) && (
         <PublishModal
           entity={conversation}
-          entities={[conversation]}
           type={SharingType.Conversation}
-          isOpen
+          isOpen={isPublishing || isUnpublishing}
           onClose={handleClosePublishModal}
-        />
-      )}
-      {isUnpublishing && (
-        <UnpublishModal
-          subtitle={t(
-            'Conversation will no longer be visible to the organization',
-          )}
-          entity={conversation}
-          entities={[conversation]}
-          isOpen
-          onClose={handleCloseUnpublishModal}
-          type={SharingType.Conversation}
+          publishAction={
+            isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
         />
       )}
       {isUnshareConfirmOpened && (
