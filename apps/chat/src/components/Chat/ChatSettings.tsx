@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityAddon } from '@/src/types/models';
@@ -32,6 +34,8 @@ interface Props {
   }) => void;
   onApplySettings: () => void;
   isOpen: boolean;
+  isRight?: boolean;
+  isCompareMode?: boolean;
 }
 
 export const ChatSettings = ({
@@ -42,6 +46,8 @@ export const ChatSettings = ({
   onChangeSettings,
   onApplySettings,
   isOpen,
+  isRight,
+  isCompareMode,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -129,9 +135,16 @@ export const ChatSettings = ({
     <Modal
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={onClose}
+      onClose={() => {
+        return;
+      }}
+      hideClose
       dataQa="chat-settings-modal"
-      overlayClassName="!items-start !z-40"
+      overlayClassName={classNames(
+        '!z-40 !items-start',
+        isCompareMode && 'w-1/2 portrait:hidden',
+        isRight && 'justify-self-end',
+      )}
       containerClassName="flex h-fit max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 xl:max-w-[720px] 2xl:max-w-[1000px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
@@ -154,6 +167,7 @@ export const ChatSettings = ({
         onChangeAddon={handleOnChangeAddon}
         onApplyAddons={handleOnApplyAddons}
         onClose={onClose}
+        isCloseEnabled
       />
       <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 pt-4 md:px-5">
         <button
