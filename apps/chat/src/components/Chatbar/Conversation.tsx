@@ -49,6 +49,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -62,6 +63,7 @@ import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMob
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
+import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
@@ -74,6 +76,7 @@ interface ViewProps {
   isChosen?: boolean;
   isSelectMode?: boolean;
   additionalItemData?: Record<string, unknown>;
+  isContextMenu: boolean;
 }
 
 export function ConversationView({
@@ -83,6 +86,7 @@ export function ConversationView({
   isChosen = false,
   isSelectMode,
   additionalItemData,
+  isContextMenu,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -91,6 +95,15 @@ export function ConversationView({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+  );
+  const resourceToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourceToReviewByReviewUrl(
+      state,
+      conversation.id,
+    ),
+  );
+  const selectedConversationIds = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
   );
 
   const handleToggle = useCallback(() => {
@@ -132,6 +145,16 @@ export function ConversationView({
           isChosen && !isExternal && 'hidden',
         )}
       >
+        {resourceToReview && !resourceToReview.reviewed && (
+          <ReviewDot
+            className={classNames(
+              'group-hover/conversation-item:bg-accent-secondary-alpha',
+              (selectedConversationIds.includes(conversation.id) ||
+                isContextMenu) &&
+                'bg-accent-secondary-alpha',
+            )}
+          />
+        )}
         {conversation.isReplay && (
           <span className="flex shrink-0">
             <ReplayAsIsIcon size={18} />
@@ -602,8 +625,7 @@ export const ConversationComponent = ({
         !isSelectMode && isHighlighted
           ? 'border-l-accent-primary'
           : 'border-l-transparent',
-        isHighlighted && 'bg-accent-primary-alpha',
-        { 'bg-accent-primary-alpha': isContextMenu },
+        (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
         isNameOrPathInvalid && !isRenaming && 'text-secondary',
       )}
       style={{
@@ -660,7 +682,7 @@ export const ConversationComponent = ({
       ) : (
         <button
           className={classNames(
-            'group/conversation-item flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed',
+            'group/conversation-item flex size-full cursor-pointer items-center gap-2 disabled:cursor-not-allowed',
             isSelectMode
               ? 'pr-0'
               : '[&:not(:disabled)]:group-hover/conversation-item:pr-6',
@@ -693,6 +715,7 @@ export const ConversationComponent = ({
             isChosen={isChosen}
             isSelectMode={isSelectMode}
             additionalItemData={additionalItemData}
+            isContextMenu={isContextMenu}
           />
         </button>
       )}

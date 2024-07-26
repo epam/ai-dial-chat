@@ -53,6 +53,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import { PublishModal } from '../../Chat/Publish/PublishWizard';
+import { ReviewDot } from '../../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
@@ -334,7 +335,7 @@ export const PromptComponent = ({
     <>
       <button
         className={classNames(
-          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
           !isSelectMode && isHighlited
             ? 'border-l-accent-primary '
@@ -393,6 +394,15 @@ export const PromptComponent = ({
               isChosen && !isExternal && 'hidden',
             )}
           >
+            {resourceToReview && !resourceToReview.reviewed && (
+              <ReviewDot
+                className={classNames(
+                  'group-hover/prompt-item:bg-accent-tertiary-alpha',
+                  (selectedPromptId === prompt.id || isContextMenu) &&
+                    'bg-accent-tertiary-alpha',
+                )}
+              />
+            )}
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
