@@ -95,7 +95,7 @@ export const SettingContainer = ({ children }: SettingContainerProps) => {
     return null;
   }
 
-  return <div className="px-3 py-4 first:pt-0 md:pl-5 md:pr-6">{children}</div>;
+  return <div className="px-3 py-4 md:pl-5 md:pr-6">{children}</div>;
 };
 
 export const ConversationSettings = ({
@@ -169,7 +169,7 @@ export const ConversationSettings = ({
       <div
         ref={settingsRef}
         className={classNames(
-          'relative flex size-full flex-col gap-5 divide-x divide-tertiary overflow-auto rounded',
+          'relative flex size-full flex-col divide-x divide-tertiary overflow-auto rounded border-t-[1px] border-tertiary',
           settingsWidth &&
             settingsWidth >= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
             'md:grid md:grid-cols-2 md:grid-rows-1',
@@ -187,7 +187,7 @@ export const ConversationSettings = ({
           />
         </div>
         <div
-          className="flex shrink flex-col gap-4 divide-y divide-tertiary bg-layer-2 py-4 md:overflow-auto"
+          className="flex shrink flex-col divide-y divide-tertiary bg-layer-2 md:overflow-auto"
           data-qa="entity-settings"
         >
           {modelId !== REPLAY_AS_IS_MODEL ? (
