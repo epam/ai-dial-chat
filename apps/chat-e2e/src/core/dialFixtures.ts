@@ -24,13 +24,16 @@ import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { FooterAssertion } from '@/src/assertions/footerAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
+import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
+import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ConversationData } from '@/src/testData';
@@ -198,6 +201,10 @@ const dialTest = test.extend<
     sendMessageAssertion: SendMessageAssertion;
     chatHeaderAssertion: ChatHeaderAssertion;
     chatMessagesAssertion: ChatMessagesAssertion;
+    footerAssertion: FooterAssertion;
+    sendMessagePromptListAssertion: PromptListAssertion;
+    systemPromptListAssertion: PromptListAssertion;
+    variableModalAssertion: VariableModalAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -335,8 +342,8 @@ const dialTest = test.extend<
     const folderPrompts = promptBar.getFolderPrompts();
     await use(folderPrompts);
   },
-  conversationSettings: async ({ chat }, use) => {
-    const conversationSettings = chat.getConversationSettings();
+  conversationSettings: async ({ appContainer }, use) => {
+    const conversationSettings = appContainer.getConversationSettings();
     await use(conversationSettings);
   },
   talkToSelector: async ({ conversationSettings }, use) => {
@@ -675,6 +682,28 @@ const dialTest = test.extend<
   chatMessagesAssertion: async ({ chatMessages }, use) => {
     const chatMessagesAssertion = new ChatMessagesAssertion(chatMessages);
     await use(chatMessagesAssertion);
+  },
+  footerAssertion: async ({ chat }, use) => {
+    const footerAssertion = new FooterAssertion(chat.getFooter());
+    await use(footerAssertion);
+  },
+  sendMessagePromptListAssertion: async ({ sendMessage }, use) => {
+    const sendMessagePromptListAssertion = new PromptListAssertion(
+      sendMessage.getPromptList(),
+    );
+    await use(sendMessagePromptListAssertion);
+  },
+  systemPromptListAssertion: async ({ entitySettings }, use) => {
+    const systemPromptListAssertion = new PromptListAssertion(
+      entitySettings.getPromptList(),
+    );
+    await use(systemPromptListAssertion);
+  },
+  variableModalAssertion: async ({ variableModalDialog }, use) => {
+    const variableModalAssertion = new VariableModalAssertion(
+      variableModalDialog,
+    );
+    await use(variableModalAssertion);
   },
 });
 

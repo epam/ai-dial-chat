@@ -364,9 +364,7 @@ dialTest(
     chatMessages,
     conversations,
     conversationDropdownMenu,
-    setIssueIds,
   }) => {
-    setIssueIds('1784');
     setTestIds('EPMRTC-512', 'EPMRTC-3451');
     let conversation: Conversation;
     let replayConversation: Conversation;
@@ -379,7 +377,7 @@ dialTest(
         [firstUserRequest, secondUserRequest],
       );
       replayConversation =
-        conversationData.preparePartiallyReplayedConversation(conversation);
+        conversationData.preparePartiallyReplayedConversation(conversation, 1);
       await dataInjector.createConversations([
         conversation,
         replayConversation,
@@ -796,7 +794,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
 
@@ -823,7 +821,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
   },

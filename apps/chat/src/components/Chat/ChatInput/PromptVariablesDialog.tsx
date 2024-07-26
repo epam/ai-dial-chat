@@ -183,10 +183,17 @@ export const PromptVariablesDialog: FC<Props> = ({
         </button>
 
         {updatedVariables.map((variable, index) => (
-          <div className="mb-4" key={variable.key}>
+          <div className="mb-4" key={variable.key} data-qa="variable">
             <div className="mb-1 flex text-xs text-secondary">
-              <span className="break-all">{variable.key}</span>
-              <span className="ml-1 inline text-accent-primary">*</span>
+              <span className="break-all" data-qa="variable-label">
+                {variable.key}
+              </span>
+              <span
+                className="ml-1 inline text-accent-primary"
+                data-qa="variable-asterisk"
+              >
+                *
+              </span>
             </div>
 
             <textarea

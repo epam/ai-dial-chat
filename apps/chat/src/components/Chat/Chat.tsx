@@ -142,7 +142,6 @@ export const ChatView = memo(() => {
     selectedConversations.some((conv) => conv.messages.length > 0);
 
   useEffect(() => {
-    const modelIds = models.map((model) => model.id);
     const isNotAllowedModel =
       isModelsLoaded &&
       (models.length === 0 ||
@@ -158,18 +157,17 @@ export const ChatView = memo(() => {
               (message) =>
                 message.role === Role.User &&
                 message.model?.id &&
-                !modelIds.includes(message.model.id),
+                !modelsMap[message.model.id],
             );
           }
 
-          const model = models.find(({ id }) => id === conv.model.id);
+          const model = modelsMap[conv.model.id];
 
           return (
-            !modelIds.includes(conv.model.id) ||
-            (model &&
-              model.type === EntityType.Assistant &&
+            !model ||
+            (model.type === EntityType.Assistant &&
               conv.assistantModelId &&
-              !modelIds.includes(conv.assistantModelId))
+              !modelsMap[conv.assistantModelId])
           );
         }));
     if (isNotAllowedModel) {
@@ -183,7 +181,7 @@ export const ChatView = memo(() => {
     } else {
       setNotAllowedType(null);
     }
-  }, [selectedConversations, models, isModelsLoaded, addonsMap]);
+  }, [selectedConversations, models, isModelsLoaded, addonsMap, modelsMap]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: LikeState) => {
@@ -371,7 +369,7 @@ export const ChatView = memo(() => {
           : conversation.selectedAddons;
 
       return {
-        model: { id: modelId },
+        model: { id: newAiEntity.reference },
         assistantModelId:
           newAiEntity.type === EntityType.Assistant
             ? DEFAULT_ASSISTANT_SUBMODEL_ID
@@ -915,20 +913,22 @@ export const ChatView = memo(() => {
                       : 'grid-cols-2',
                   )}
                 >
-                  {selectedConversations.map((conv) => (
-                    <div className="relative h-full" key={conv.id}>
-                      <ChatSettings
-                        conversation={conv}
-                        modelId={conv.model.id}
-                        prompts={prompts}
-                        addons={addons}
-                        onChangeSettings={(args) => {
-                          handleTemporarySettingsSave(conv, args);
-                        }}
-                        onApplySettings={handleApplyChatSettings}
-                        onClose={() => setIsShowChatSettings(false)}
-                      />
-                    </div>
+                  {selectedConversations.map((conv, index) => (
+                    <ChatSettings
+                      key={conv.id}
+                      conversation={conv}
+                      modelId={conv.model.id}
+                      prompts={prompts}
+                      addons={addons}
+                      onChangeSettings={(args) => {
+                        handleTemporarySettingsSave(conv, args);
+                      }}
+                      onApplySettings={handleApplyChatSettings}
+                      onClose={() => setIsShowChatSettings(false)}
+                      isOpen={isShowChatSettings}
+                      isRight={index === 1}
+                      isCompareMode={isCompareMode}
+                    />
                   ))}
                 </div>
               )}
@@ -956,6 +956,7 @@ export const ChatView = memo(() => {
     </div>
   );
 });
+
 ChatView.displayName = 'ChatView';
 
 export function Chat() {

@@ -46,11 +46,7 @@ import {
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
-import {
-  BackendDataNodeType,
-  FeatureType,
-  UploadStatus,
-} from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
@@ -86,12 +82,14 @@ const publishEpic: AppEpic = (action$) =>
       const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
       const targetFolderSuffix = payload.targetFolder ? '/' : '';
 
-      return PublicationService.publish({
+      return PublicationService.createPublicationRequest({
         name: payload.name,
         targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
         resources: payload.resources.map((r) => ({
-          action: PublishActions.ADD,
-          sourceUrl: ApiUtils.encodeApiUrl(r.sourceUrl),
+          action: payload.action,
+          sourceUrl: r.sourceUrl
+            ? ApiUtils.encodeApiUrl(r.sourceUrl)
+            : undefined,
           targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
         })),
         rules: payload.rules,
@@ -462,46 +460,12 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const deletePublicationEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PublicationActions.deletePublication.match),
-    switchMap(({ payload }) => {
-      const encodedTargetFolder = ApiUtils.encodeApiUrl(payload.targetFolder);
-      const targetFolderSuffix = payload.targetFolder ? '/' : '';
-
-      return PublicationService.deletePublication({
-        name: payload.name,
-        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
-        resources: payload.resources.map((r) => ({
-          action: PublishActions.DELETE,
-          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
-        })),
-      }).pipe(
-        switchMap(() => EMPTY),
-        catchError((err) => {
-          console.error(err);
-          return of(PublicationActions.deletePublicationFail());
-        }),
-      );
-    }),
-  );
-
-const deletePublicationFailEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(PublicationActions.deletePublicationFail.match),
-    map(() =>
-      UIActions.showErrorToast(
-        translate(errorsMessages.publicationDeletionFailed),
-      ),
-    ),
-  );
-
 const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublishedWithMeItems.match),
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
-        mergeMap((publications) => {
+        mergeMap(({ folders, items }) => {
           const actions: Observable<AnyAction>[] = [];
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
@@ -532,26 +496,22 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             );
           }
 
-          if (!publications.items) {
+          if (!folders.length && !items.length) {
             return EMPTY;
           }
 
           if (payload.featureType === FeatureType.Chat) {
-            const folderTypeEntities = publications.items.filter(
-              (item) => item.nodeType === BackendDataNodeType.FOLDER,
-            );
-
-            if (folderTypeEntities.length) {
+            if (folders.length) {
               actions.push(
                 of(
                   ConversationsActions.addFolders({
-                    folders: folderTypeEntities.map((item) => {
+                    folders: folders.map((folder) => {
                       const newUrl = ApiUtils.decodeApiUrl(
-                        item.url.slice(0, -1),
+                        folder.url.slice(0, -1),
                       );
 
                       return {
-                        name: item.name,
+                        name: folder.name,
                         id: newUrl,
                         folderId: getFolderIdFromEntityId(newUrl),
                         publishedWithMe: true,
@@ -563,15 +523,11 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               );
             }
 
-            const itemTypeEntities = publications.items.filter(
-              (item) => item.nodeType === BackendDataNodeType.ITEM,
-            );
-
-            if (itemTypeEntities) {
+            if (items.length) {
               actions.push(
                 of(
                   ConversationsActions.addConversations({
-                    conversations: itemTypeEntities.map((item) => {
+                    conversations: items.map((item) => {
                       const decodedUrl = ApiUtils.decodeApiUrl(item.url);
                       const parsedApiKey = parseConversationApiKey(
                         splitEntityId(decodedUrl).name,
@@ -589,15 +545,11 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               );
             }
           } else if (payload.featureType === FeatureType.Prompt) {
-            const folderTypeEntities = publications.items.filter(
-              (item) => item.nodeType === BackendDataNodeType.FOLDER,
-            );
-
-            if (folderTypeEntities.length) {
+            if (folders.length) {
               actions.push(
                 of(
                   PromptsActions.addFolders({
-                    folders: folderTypeEntities.map((item) => {
+                    folders: folders.map((item) => {
                       const newUrl = ApiUtils.decodeApiUrl(
                         item.url.slice(0, -1),
                       );
@@ -615,15 +567,11 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               );
             }
 
-            const itemTypeEntities = publications.items.filter(
-              (item) => item.nodeType === BackendDataNodeType.ITEM,
-            );
-
-            if (itemTypeEntities.length) {
+            if (items.length) {
               actions.push(
                 of(
                   PromptsActions.addPrompts({
-                    prompts: itemTypeEntities.map((item) => {
+                    prompts: items.map((item) => {
                       const decodedUrl = ApiUtils.decodeApiUrl(item.url);
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(decodedUrl).name,
@@ -976,7 +924,7 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadAllPublishedWithMeItems.match),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
         state$.value,
         payload.featureType,
@@ -1085,7 +1033,7 @@ export const PublicationEpics = combineEpics(
   // init
   initEpic,
 
-  // create
+  // create publication
   publishEpic,
   publishFailEpic,
 
@@ -1094,10 +1042,6 @@ export const PublicationEpics = combineEpics(
   uploadPublicationsFailEpic,
   uploadPublicationEpic,
   uploadPublicationFailEpic,
-
-  // delete publications
-  deletePublicationEpic,
-  deletePublicationFailEpic,
 
   // upload published resources
   uploadPublishedWithMeItemsEpic,
