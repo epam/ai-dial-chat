@@ -35,7 +35,6 @@ import { RecentEntitiesAssertion } from '@/src/assertions/recentEntitiesAssertio
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
-import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import test from '@/src/core/baseFixtures';
