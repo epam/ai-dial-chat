@@ -240,6 +240,14 @@ export class Chat extends BaseElement {
     );
   }
 
+  public async sendRequestWithPrompt(prompt: string, waitForAnswer = true) {
+    return this.sendRequest(
+      prompt,
+      () => this.getSendMessage().send(),
+      waitForAnswer,
+    );
+  }
+
   public async saveAndSubmitRequest(waitForAnswer = false) {
     return this.sendRequest(
       undefined,

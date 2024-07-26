@@ -25,7 +25,9 @@ const levelsCount = 4;
 
 dialTest(
   'Export and import prompt structure with all prompts.\n' +
-    'Continue working with imported file. Add imported prompt to a message',
+    'Continue working with imported file. Add imported prompt to a message.\n' +
+    'Prompt from the list is navigated on arrows and selected on Enter.\n' +
+    'Prompt text without parameters in Input message box influences on model response',
   async ({
     dialHomePage,
     setTestIds,
@@ -36,14 +38,16 @@ dialTest(
     confirmationDialog,
     promptData,
     sendMessage,
+    chatMessagesAssertion,
+    chat,
   }) => {
-    setTestIds('EPMRTC-883', 'EPMRTC-895');
+    setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
     let promptsInsideFolder: FolderPrompt;
     let promptOutsideFolder: Prompt;
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
-    const promptContent = 'test';
+    const promptContent = `Let's play a game. I give you a word and you answer me a word of opposite meaning`;
 
     await dialTest.step(
       'Prepare empty folder, folder with 2 prompts, another prompt in the root and nested folders with prompts inside',
@@ -135,7 +139,7 @@ dialTest(
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
-          .selectPrompt(promptOutsideFolder.name, {
+          .selectPromptWithKeyboard(promptOutsideFolder.name, {
             triggeredHttpMethod: 'GET',
           });
 
@@ -144,6 +148,15 @@ dialTest(
         expect
           .soft(selectedPromptContent, ExpectedMessages.promptNameValid)
           .toBe(promptContent);
+      },
+    );
+
+    await dialTest.step(
+      'Send request and verify response corresponds prompt',
+      async () => {
+        await chat.sendRequestWithPrompt(promptContent);
+        await chat.sendRequestWithButton('white');
+        await chatMessagesAssertion.assertLastMessageContent('black');
       },
     );
   },
@@ -486,6 +499,8 @@ dialTest(
     variableModalDialog,
     promptDropdownMenu,
     promptModalDialog,
+    variableModalAssertion,
+    sendMessageAssertion,
   }) => {
     setTestIds('EPMRTC-1135');
     const aVariable = 'A';
@@ -533,23 +548,17 @@ dialTest(
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
-          .selectPrompt(newName, { triggeredHttpMethod: 'GET' });
+          .selectPromptWithKeyboard(newName, { triggeredHttpMethod: 'GET' });
 
-        const promptName = await variableModalDialog.getName();
-        expect.soft(promptName, ExpectedMessages.promptNameValid).toBe(newName);
-
-        const promptDescr = await variableModalDialog.getDescription();
-        expect
-          .soft(promptDescr, ExpectedMessages.promptDescriptionValid)
-          .toBe(newDescr);
+        await variableModalAssertion.assertPromptName(newName);
+        await variableModalAssertion.assertPromptDescription(newDescr);
 
         const variable = '20';
-        await variableModalDialog.setVariable(aVariable, variable);
-
-        const actualMessage = await sendMessage.getMessage();
-        expect
-          .soft(actualMessage, ExpectedMessages.promptApplied)
-          .toBe(newValue.replace(`{{${aVariable}}}`, variable));
+        await variableModalDialog.setVariableValue(aVariable, variable);
+        await variableModalDialog.submitButton.click();
+        await sendMessageAssertion.assertMessageValue(
+          newValue.replace(`{{${aVariable}}}`, variable),
+        );
       },
     );
   },

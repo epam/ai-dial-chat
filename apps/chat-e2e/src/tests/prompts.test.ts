@@ -792,6 +792,8 @@ dialTest(
     dataInjector,
     sendMessage,
     variableModalDialog,
+    variableModalAssertion,
+    sendMessageAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1012', 'EPMRTC-2007', 'EPMRTC-2911');
@@ -812,35 +814,24 @@ dialTest(
     await sendMessage.messageInput.fillInInput('/');
     await sendMessage
       .getPromptList()
-      .selectPrompt(prompt.name, { triggeredHttpMethod: 'GET' });
+      .selectPromptWithKeyboard(prompt.name, { triggeredHttpMethod: 'GET' });
 
-    const promptName = await variableModalDialog.getName();
-    expect.soft(promptName, ExpectedMessages.promptNameValid).toBe(prompt.name);
-
-    const promptDescr = await variableModalDialog.getDescription();
-    expect
-      .soft(promptDescr, ExpectedMessages.promptDescriptionValid)
-      .toBe(prompt.description);
+    await variableModalAssertion.assertPromptName(prompt.name);
+    await variableModalAssertion.assertPromptDescription(prompt.description!);
 
     let varValue = 0;
     for (const variable of [aVariable, bVariable, cVariable]) {
-      const promptVariablePlaceholder =
-        await variableModalDialog.getVariablePlaceholder(variable);
-      expect
-        .soft(
-          promptVariablePlaceholder,
-          ExpectedMessages.promptVariablePlaceholderValid,
-        )
-        .toBe(ExpectedConstants.promptPlaceholder(variable));
-
+      await variableModalAssertion.assertPromptVariablePlaceholder(
+        variable,
+        ExpectedConstants.promptPlaceholder(variable),
+      );
       varValue += 10;
-      await variableModalDialog.setVariable(variable, varValue.toString());
+      await variableModalDialog.setVariableValue(variable, varValue.toString());
+      await variableModalDialog.submitButton.click();
     }
-
-    const actualMessage = await sendMessage.getMessage();
-    expect
-      .soft(actualMessage, ExpectedMessages.promptApplied)
-      .toBe(promptContent('10', '20', '30'));
+    await sendMessageAssertion.assertMessageValue(
+      promptContent('10', '20', '30'),
+    );
   },
 );
 
@@ -852,6 +843,7 @@ dialTest(
     dataInjector,
     sendMessage,
     variableModalDialog,
+    sendMessageAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1013');
@@ -869,7 +861,7 @@ dialTest(
     await sendMessage.messageInput.fillInInput('/');
     await sendMessage
       .getPromptList()
-      .selectPrompt(prompt.name, { triggeredHttpMethod: 'GET' });
+      .selectPromptWithKeyboard(prompt.name, { triggeredHttpMethod: 'GET' });
 
     const firstVariableValue = '20';
     const secondVariableValue = '30';
@@ -877,13 +869,12 @@ dialTest(
       ExpectedConstants.fillVariablesAlertText,
     );
     await variableModalDialog.submitButton.click();
-    await variableModalDialog.setVariable(aVariable, firstVariableValue);
-    await variableModalDialog.setVariable(bVariable, secondVariableValue);
-
-    const actualMessage = await sendMessage.getMessage();
-    expect
-      .soft(actualMessage, ExpectedMessages.promptApplied)
-      .toBe(promptContent(firstVariableValue, secondVariableValue));
+    await variableModalDialog.setVariableValue(aVariable, firstVariableValue);
+    await variableModalDialog.setVariableValue(bVariable, secondVariableValue);
+    await variableModalDialog.submitButton.click();
+    await sendMessageAssertion.assertMessageValue(
+      promptContent(firstVariableValue, secondVariableValue),
+    );
   },
 );
 
