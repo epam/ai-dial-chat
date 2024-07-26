@@ -88,7 +88,10 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
 
   const ResourcesComponent = featureTypes.includes(FeatureType.Chat)
     ? ConversationPublicationResources
-    : PromptPublicationResources;
+    : featureTypes.includes(FeatureType.Prompt)
+      ? PromptPublicationResources
+      : null;
+
   const isLeftSidePublication =
     featureTypes.includes(FeatureType.Chat) ||
     featureTypes.includes(FeatureType.File);
@@ -138,7 +141,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
           </div>
         </div>
       </div>
-      {publication.resources && (
+      {publication.resources && ResourcesComponent && (
         <ResourcesComponent
           resources={publication.resources}
           isOpen={isOpen}
