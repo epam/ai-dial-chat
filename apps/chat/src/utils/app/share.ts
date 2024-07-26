@@ -37,34 +37,6 @@ export const isEntityOrParentsExternal = (
   );
 };
 
-export const isPublishVersionUnique = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-      return ConversationsSelectors.isPublishConversationVersionUnique;
-    case SharingType.ConversationFolder:
-      return ConversationsSelectors.isPublishFolderVersionUnique;
-    case SharingType.Prompt:
-      return PromptsSelectors.isPublishPromptVersionUnique;
-    case SharingType.PromptFolder:
-      return PromptsSelectors.isPublishFolderVersionUnique;
-    default:
-      throw new Error('unknown type');
-  }
-};
-
-export const getAttachments = (type: SharingType) => {
-  switch (type) {
-    case SharingType.Conversation:
-    case SharingType.ConversationFolder:
-      return ConversationsSelectors.getAttachments;
-    case SharingType.Prompt:
-    case SharingType.PromptFolder:
-      return () => [];
-    default:
-      throw new Error('unknown type');
-  }
-};
-
 export const getShareType = (
   featureType?: FeatureType,
   isFolder?: boolean,

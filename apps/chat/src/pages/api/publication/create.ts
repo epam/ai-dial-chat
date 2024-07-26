@@ -7,7 +7,6 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
-import { ShareRequestModel } from '@/src/types/share';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -26,14 +25,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    const body = req.body as ShareRequestModel;
-
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/ops/publication/create`,
       {
         method: 'POST',
         headers: getApiHeaders({ jwt: token?.access_token as string }),
-        body: JSON.stringify(body),
+        body: JSON.stringify(req.body),
       },
     );
 

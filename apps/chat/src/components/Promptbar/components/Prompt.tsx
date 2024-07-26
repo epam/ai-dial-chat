@@ -32,6 +32,7 @@ import { translate } from '@/src/utils/app/translation';
 import { FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -52,7 +53,7 @@ import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 
 import { PublishModal } from '../../Chat/Publish/PublishWizard';
-import { UnpublishModal } from '../../Chat/Publish/UnpublishModal';
+import { ReviewDot } from '../../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
@@ -110,18 +111,12 @@ export const PromptComponent = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-  const chosenPromptIds = useAppSelector(
-    PromptsSelectors.selectChosenPromptIds,
-  );
+  const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const chosenFolderIds = useAppSelector(
-    PromptsSelectors.selectChosenFolderIds,
-  );
+
   const isChosen = useMemo(
-    () =>
-      chosenPromptIds.includes(prompt.id) ||
-      chosenFolderIds.some((folderId) => prompt.id.startsWith(folderId)),
-    [chosenPromptIds, chosenFolderIds, prompt.id],
+    () => chosenPromptIds.includes(prompt.id),
+    [chosenPromptIds, prompt.id],
   );
 
   const { refs, context } = useFloating({
@@ -159,16 +154,13 @@ export const PromptComponent = ({
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
+    setIsUnpublishing(false);
   }, []);
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsUnpublishing(true);
     }, []);
-
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
 
   const handleDelete = useCallback(() => {
     if (isDeleting) {
@@ -323,11 +315,9 @@ export const PromptComponent = ({
     (e) => {
       e.stopPropagation();
       setIsContextMenu(false);
-      dispatch(
-        PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
-      );
+      dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
     },
-    [dispatch, isChosen, prompt.id],
+    [dispatch, prompt.id],
   );
 
   useEffect(() => {
@@ -338,14 +328,14 @@ export const PromptComponent = ({
   }, [isSelectMode]);
 
   const handleToggle = useCallback(() => {
-    PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen });
-  }, [isChosen, prompt.id]);
+    PromptsActions.setChosenPrompts({ ids: [prompt.id] });
+  }, [prompt.id]);
 
   return (
     <>
       <button
         className={classNames(
-          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
           !isSelectMode && isHighlited
             ? 'border-l-accent-primary '
@@ -356,9 +346,7 @@ export const PromptComponent = ({
           if (isSelectMode && !isExternal) {
             setIsDeleting(false);
             setIsRenaming(false);
-            dispatch(
-              PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
-            );
+            dispatch(PromptsActions.setChosenPrompts({ ids: [prompt.id] }));
           }
         }}
         style={{
@@ -406,6 +394,15 @@ export const PromptComponent = ({
               isChosen && !isExternal && 'hidden',
             )}
           >
+            {resourceToReview && !resourceToReview.reviewed && (
+              <ReviewDot
+                className={classNames(
+                  'group-hover/prompt-item:bg-accent-tertiary-alpha',
+                  (selectedPromptId === prompt.id || isContextMenu) &&
+                    'bg-accent-tertiary-alpha',
+                )}
+              />
+            )}
             <IconBulb size={18} className="text-secondary" />
           </ShareIcon>
 
@@ -417,7 +414,11 @@ export const PromptComponent = ({
               hideTooltip={!isNameOrPathInvalid}
               triggerClassName={classNames(
                 'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
-                isNameOrPathInvalid && 'text-secondary',
+                (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
+                  'text-secondary',
+                !!additionalItemData?.isApproveRequiredResource &&
+                  prompt.publicationInfo?.action === PublishActions.DELETE &&
+                  'text-error',
               )}
             >
               {prompt.name}
@@ -491,23 +492,15 @@ export const PromptComponent = ({
         )}
       </button>
 
-      {isPublishing && (
+      {(isPublishing || isUnpublishing) && (
         <PublishModal
           entity={prompt}
-          entities={[prompt]}
           type={SharingType.Prompt}
           isOpen
           onClose={handleClosePublishModal}
-        />
-      )}
-      {isUnpublishing && (
-        <UnpublishModal
-          subtitle={t('Prompt will no longer be visible to the organization')}
-          type={SharingType.Prompt}
-          entity={prompt}
-          entities={[prompt]}
-          isOpen
-          onClose={handleCloseUnpublishModal}
+          publishAction={
+            isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
         />
       )}
       <ConfirmDialog

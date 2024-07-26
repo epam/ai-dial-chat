@@ -38,14 +38,14 @@ export function RulesSelect({
 
   return (
     <Menu
-      className={classNames('w-full grow', menuClassName)}
+      className={classNames('w-full grow bg-layer-3', menuClassName)}
       onOpenChange={setIsOpen}
       listClassName="rounded-none w-full"
       trigger={
         <div
           data-qa={`filter-selector-${id}`}
           className={classNames(
-            'flex w-full justify-between gap-2 bg-layer-3 px-2 py-[6.5px] text-xs',
+            'flex w-full justify-between gap-2 px-2 py-[6.5px] text-xs',
             triggerClassName,
           )}
         >
