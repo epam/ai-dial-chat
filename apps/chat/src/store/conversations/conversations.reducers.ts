@@ -242,6 +242,7 @@ export const conversationsSlice = createSlice({
         })),
         state.conversations,
       );
+      state.isActiveNewConversationRequest = false;
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
       }

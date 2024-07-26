@@ -398,6 +398,11 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     },
                   }),
                 ),
+                of(
+                  ConversationsActions.shouldSelectConversationAfterSaving(
+                    true,
+                  ),
+                ),
               )
             : EMPTY;
         }
