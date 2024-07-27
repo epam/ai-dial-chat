@@ -16,6 +16,7 @@ interface CustomLogoSelectProps {
   customPlaceholder?: string;
   hasLeftText?: boolean;
   className?: string;
+  fileManagerModalTitle?: string;
 }
 
 export const CustomLogoSelect = ({
@@ -25,6 +26,7 @@ export const CustomLogoSelect = ({
   customPlaceholder,
   hasLeftText = true,
   className,
+  fileManagerModalTitle,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -83,7 +85,7 @@ export const CustomLogoSelect = ({
             onLogoSelect(files as string[]);
             setIsSelectFilesDialogOpened(false);
           }}
-          headerLabel={t('Select custom logo')}
+          headerLabel={fileManagerModalTitle || t('Select custom logo')}
           customButtonLabel={t('Select file') as string}
           customUploadButtonLabel={t('Upload files') as string}
           forceShowSelectCheckBox

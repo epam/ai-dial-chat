@@ -31,6 +31,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
+import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ContextMenu from '../Common/ContextMenu';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
@@ -64,6 +65,7 @@ const ModelGroup = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
   const currentEntity = useMemo(() => {
     // if only 1 model without group
@@ -92,13 +94,14 @@ const ModelGroup = ({
     return entities[minIndex === Number.MAX_SAFE_INTEGER ? 0 : minIndex];
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
+  const handleDelete = () => {
+    if (currentEntity.name) {
+      dispatch(ApplicationActions.delete(currentEntity.name));
+    }
+  };
+
   const description = currentEntity.description;
   const applicationId = currentEntity.id;
-  // const applicationDetail = useAppSelector((state) =>
-  //   applicationSelectors.applicationDetail(state)
-  // );
-
-  // console.log(applicationDetail,'applicationDetail');
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -114,9 +117,6 @@ const ModelGroup = ({
           if (openApplicationModal) {
             openApplicationModal();
           }
-          // if(setSelectedApplication){
-          //   setSelectedApplication(applicationDetail);
-          // }
         },
       },
       {
@@ -139,7 +139,7 @@ const ModelGroup = ({
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          dispatch(ApplicationActions.delete(currentEntity.name));
+          setIsDeleteModalOpen(true);
         },
       },
     ],
@@ -246,6 +246,19 @@ const ModelGroup = ({
             </button>
           )}
       </div>
+      <ConfirmDialog
+        isOpen={isDeleteModalOpen}
+        heading="Confirm deleting application"
+        description="Are you sure you want to delete the application?"
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onClose={(result) => {
+          setIsDeleteModalOpen(false);
+          if (result) {
+            handleDelete();
+          }
+        }}
+      />
     </div>
   );
 };
