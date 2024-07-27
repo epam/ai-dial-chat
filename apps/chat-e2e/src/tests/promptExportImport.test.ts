@@ -21,11 +21,13 @@ const updatedExportedPrompts: UploadDownloadData[] = [];
 const newName = 'test prompt';
 const newDescr = 'test description';
 const newValue = 'what is {{A}}';
-const levelsCount = 3;
+const levelsCount = 4;
 
 dialTest(
   'Export and import prompt structure with all prompts.\n' +
-    'Continue working with imported file. Add imported prompt to a message',
+    'Continue working with imported file. Add imported prompt to a message.\n' +
+    'Prompt from the list is navigated on arrows and selected on Enter.\n' +
+    'Prompt text without parameters in Input message box influences on model response',
   async ({
     dialHomePage,
     setTestIds,
@@ -36,14 +38,16 @@ dialTest(
     confirmationDialog,
     promptData,
     sendMessage,
+    chatMessagesAssertion,
+    chat,
   }) => {
-    setTestIds('EPMRTC-883', 'EPMRTC-895');
+    setTestIds('EPMRTC-883', 'EPMRTC-895', 'EPMRTC-3835', 'EPMRTC-3822');
     let promptsInsideFolder: FolderPrompt;
     let promptOutsideFolder: Prompt;
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
     let exportedData: UploadDownloadData;
-    const promptContent = 'test';
+    const promptContent = `Let's play a game. I give you a word and you answer me a word of opposite meaning`;
 
     await dialTest.step(
       'Prepare empty folder, folder with 2 prompts, another prompt in the root and nested folders with prompts inside',
@@ -89,7 +93,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete all prompts and folders, re-import again and verify they are displayed',
+      'Delete all prompts and folders, re-import again and verify that all entities except empty folders are displayed',
       async () => {
         await promptBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -102,11 +106,16 @@ dialTest(
         await folderPrompts
           .getFolderByName(promptsInsideFolder.folders.name)
           .waitFor();
-        await folderPrompts
-          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
-          .waitFor();
+        await expect
+          .soft(
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(1),
+            ),
+            ExpectedMessages.folderIsNotVisible,
+          )
+          .toBeHidden();
 
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await prompts.getEntityByName(promptOutsideFolder.name).waitFor();
 
         for (let i = 0; i < nestedFolders.length; i++) {
           const nestedFolder = nestedFolders[i];
@@ -130,7 +139,7 @@ dialTest(
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
-          .selectPrompt(promptOutsideFolder.name, {
+          .selectPromptWithKeyboard(promptOutsideFolder.name, {
             triggeredHttpMethod: 'GET',
           });
 
@@ -139,6 +148,15 @@ dialTest(
         expect
           .soft(selectedPromptContent, ExpectedMessages.promptNameValid)
           .toBe(promptContent);
+      },
+    );
+
+    await dialTest.step(
+      'Send request and verify response corresponds prompt',
+      async () => {
+        await chat.sendRequestWithPrompt(promptContent);
+        await chat.sendRequestWithButton('white');
+        await chatMessagesAssertion.assertLastMessageContent('black');
       },
     );
   },
@@ -216,7 +234,7 @@ dialTest(
             promptInsideFolder.prompts[0].name,
           )
           .waitFor();
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await prompts.getEntityByName(promptOutsideFolder.name).waitFor();
       },
     );
 
@@ -246,15 +264,15 @@ dialTest(
     await dialTest.step(
       'Open imported prompt edit screen, make some updates and verify imported prompt appears',
       async () => {
-        await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
+        await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         await promptModalDialog.updatePromptDetailsWithButton(
           newName,
           newDescr,
           newValue,
         );
-        await prompts.getPromptByName(newName).waitFor();
-        await prompts.openPromptDropdownMenu(newName);
+        await prompts.getEntityByName(newName).waitFor();
+        await prompts.openEntityDropdownMenu(newName);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         expect
           .soft(
@@ -313,7 +331,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
+        await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
         exportedData = await dialHomePage.downloadData(() =>
           promptDropdownMenu.selectMenuOption(MenuOptions.export),
         );
@@ -323,12 +341,12 @@ dialTest(
     await dialTest.step(
       'Delete exported prompt, re-import again and verify it is displayed in the root',
       async () => {
-        await prompts.openPromptDropdownMenu(promptOutsideFolder.name);
+        await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await expect
           .soft(
-            prompts.getPromptByName(promptOutsideFolder.name),
+            prompts.getEntityByName(promptOutsideFolder.name),
             ExpectedMessages.noPromptsImported,
           )
           .toBeHidden();
@@ -338,7 +356,7 @@ dialTest(
         );
         await expect
           .soft(
-            prompts.getPromptByName(promptOutsideFolder.name),
+            prompts.getEntityByName(promptOutsideFolder.name),
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
@@ -445,8 +463,8 @@ dialTest(
         await dialHomePage.importFile(rootPromptData, () =>
           promptBar.importButton.click(),
         );
-        await prompts.getPromptByName(importedRootPrompt.name).waitFor();
-        await prompts.getPromptByName(promptOutsideFolder.name).waitFor();
+        await prompts.getEntityByName(importedRootPrompt.name).waitFor();
+        await prompts.getEntityByName(promptOutsideFolder.name).waitFor();
       },
     );
 
@@ -481,6 +499,8 @@ dialTest(
     variableModalDialog,
     promptDropdownMenu,
     promptModalDialog,
+    variableModalAssertion,
+    sendMessageAssertion,
   }) => {
     setTestIds('EPMRTC-1135');
     const aVariable = 'A';
@@ -528,23 +548,17 @@ dialTest(
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
-          .selectPrompt(newName, { triggeredHttpMethod: 'GET' });
+          .selectPromptWithKeyboard(newName, { triggeredHttpMethod: 'GET' });
 
-        const promptName = await variableModalDialog.getName();
-        expect.soft(promptName, ExpectedMessages.promptNameValid).toBe(newName);
-
-        const promptDescr = await variableModalDialog.getDescription();
-        expect
-          .soft(promptDescr, ExpectedMessages.promptDescriptionValid)
-          .toBe(newDescr);
+        await variableModalAssertion.assertPromptName(newName);
+        await variableModalAssertion.assertPromptDescription(newDescr);
 
         const variable = '20';
-        await variableModalDialog.setVariable(aVariable, variable);
-
-        const actualMessage = await sendMessage.getMessage();
-        expect
-          .soft(actualMessage, ExpectedMessages.promptApplied)
-          .toBe(newValue.replace(`{{${aVariable}}}`, variable));
+        await variableModalDialog.setVariableValue(aVariable, variable);
+        await variableModalDialog.submitButton.click();
+        await sendMessageAssertion.assertMessageValue(
+          newValue.replace(`{{${aVariable}}}`, variable),
+        );
       },
     );
   },
@@ -590,8 +604,8 @@ dialTest(
         await folderPrompts.expandFolder(nestedFolder.name);
       }
       await folderPrompts.openFolderEntityDropdownMenu(
-        nestedFolders[levelsCount].name,
-        nestedPrompts[levelsCount].name,
+        nestedFolders[levelsCount - 1].name,
+        nestedPrompts[levelsCount - 1].name,
       );
       exportedData = await dialHomePage.downloadData(() =>
         promptDropdownMenu.selectMenuOption(MenuOptions.export),
@@ -613,15 +627,15 @@ dialTest(
 
         await folderPrompts
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
+            nestedPrompts[levelsCount - 1].name,
           )
           .waitFor();
 
         expect
           .soft(
             await folderPrompts.getFolderEntitiesCount(
-              nestedFolders[levelsCount].name,
+              nestedFolders[levelsCount - 1].name,
             ),
             ExpectedMessages.promptsCountIsValid,
           )
@@ -631,28 +645,6 @@ dialTest(
 
     await dialTest.step(
       'Delete last folder with its prompt, re-import exported file again and verify last nested folder with its prompt imported',
-      async () => {
-        await folderPrompts.openFolderDropdownMenu(
-          nestedFolders[levelsCount].name,
-        );
-        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-
-        await dialHomePage.importFile(exportedData, () =>
-          promptBar.importButton.click(),
-        );
-
-        await folderPrompts
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
-          )
-          .waitFor();
-      },
-    );
-
-    await dialTest.step(
-      'Delete 2nd level folder with its nested content, re-import exported file and verify 2nd/3rd level folders with 3rd level prompt are imported',
       async () => {
         await folderPrompts.openFolderDropdownMenu(
           nestedFolders[levelsCount - 1].name,
@@ -666,19 +658,41 @@ dialTest(
 
         await folderPrompts
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedPrompts[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
+            nestedPrompts[levelsCount - 1].name,
+          )
+          .waitFor();
+      },
+    );
+
+    await dialTest.step(
+      'Delete 2nd level folder with its nested content, re-import exported file and verify 2nd/3rd level folders with 3rd level prompt are imported',
+      async () => {
+        await folderPrompts.openFolderDropdownMenu(
+          nestedFolders[levelsCount - 2].name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
+        await dialHomePage.importFile(exportedData, () =>
+          promptBar.importButton.click(),
+        );
+
+        await folderPrompts
+          .getFolderEntity(
+            nestedFolders[levelsCount - 1].name,
+            nestedPrompts[levelsCount - 1].name,
           )
           .waitFor();
 
         await folderPrompts
-          .getFolderByName(nestedFolders[levelsCount - 1].name)
+          .getFolderByName(nestedFolders[levelsCount - 2].name)
           .waitFor();
 
         expect
           .soft(
             await folderPrompts.getFolderEntitiesCount(
-              nestedFolders[levelsCount].name,
+              nestedFolders[levelsCount - 1].name,
             ),
             ExpectedMessages.promptsCountIsValid,
           )
@@ -763,9 +777,9 @@ dialTest(
             await folderPrompts.getFoldersCount(),
             ExpectedMessages.foldersCountIsValid,
           )
-          .toBe(levelsCount + 1);
+          .toBe(levelsCount);
 
-        for (let i = 0; i < levelsCount; i++) {
+        for (let i = 0; i < levelsCount - 1; i++) {
           expect
             .soft(
               await folderPrompts.isFolderEntityVisible(
@@ -823,7 +837,7 @@ dialTest(
       async () => {
         nestedFolders = promptData.prepareNestedFolder(levelsCount);
         thirdLevelFolderPrompt = promptData.prepareDefaultPrompt();
-        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount].id;
+        thirdLevelFolderPrompt.folderId = nestedFolders[levelsCount - 1].id;
         thirdLevelFolderPrompt.id = `${thirdLevelFolderPrompt.folderId}/${thirdLevelFolderPrompt.name}`;
 
         await dataInjector.createPrompts(
@@ -840,7 +854,7 @@ dialTest(
         await folderPrompts.expandFolder(nestedFolder.name);
       }
       await folderPrompts.openFolderEntityDropdownMenu(
-        nestedFolders[levelsCount].name,
+        nestedFolders[levelsCount - 1].name,
         thirdLevelFolderPrompt.name,
       );
       exportedData = await dialHomePage.downloadData(() =>
@@ -852,7 +866,7 @@ dialTest(
       'Move 3rd level folder on the 1st level folder and import exported prompt',
       async () => {
         await promptBar.drugAndDropFolderToFolder(
-          nestedFolders[levelsCount].name,
+          nestedFolders[levelsCount - 1].name,
           nestedFolders[0].name,
           { isHttpMethodTriggered: true },
         );
@@ -866,13 +880,13 @@ dialTest(
       'Verify imported prompt is in 3rd level folder on the 1st level',
       async () => {
         await folderPrompts.expandFolder(
-          nestedFolders[levelsCount].name,
+          nestedFolders[levelsCount - 1].name,
           { isHttpMethodTriggered: false },
           2,
         );
         await folderPrompts
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
             thirdLevelFolderPrompt.name,
             2,
           )
@@ -881,7 +895,7 @@ dialTest(
         const foldersCount = await folderPrompts.getFoldersCount();
         expect
           .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 2);
+          .toBe(levelsCount + 1);
       },
     );
   },

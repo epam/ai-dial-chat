@@ -5,6 +5,7 @@ import {
   MouseEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -15,9 +16,8 @@ import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getRootId } from '@/src/utils/app/id';
+import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { createTargetUrl } from '@/src/utils/app/publications';
-import { getAttachments } from '@/src/utils/app/share';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -49,16 +49,19 @@ import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
+import isEqual from 'lodash-es/isEqual';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 
 interface Props {
   entity: ShareEntity;
-  entities: ShareEntity[];
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
+  publishAction: PublishActions;
+  entities?: ShareEntity[];
   depth?: number;
+  defaultPath?: string;
 }
 
 export function PublishModal({
@@ -68,6 +71,8 @@ export function PublishModal({
   type,
   depth,
   entities,
+  publishAction,
+  defaultPath,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);  
 
@@ -76,7 +81,7 @@ export function PublishModal({
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const [publishRequestName, setPublishRequestName] = useState('');
-  const [path, setPath] = useState('');
+  const [path, setPath] = useState(defaultPath ?? '');
   const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
@@ -97,14 +102,28 @@ export function PublishModal({
     ),
   );
   const files = useAppSelector((state) =>
-    getAttachments(type)(state, entity.id),
+    ConversationsSelectors.getAttachments(state, entity.id),
+  );
+  const selectedItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
   );
 
-  const notCurrentFolderRules = Object.entries(rules).filter(
-    ([rulePath]) => constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+  const entitiesArray = useMemo(
+    () => (entities ? entities : [entity]),
+    [entities, entity],
   );
-  const currentFolderRules =
-    rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)];
+  const notCurrentFolderRules = useMemo(
+    () =>
+      Object.entries(rules).filter(
+        ([rulePath]) =>
+          constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+      ),
+    [path, rules],
+  );
+  const currentFolderRules = useMemo(
+    () => rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)],
+    [path, rules],
+  );
 
   useEffect(() => {
     if (path) {
@@ -147,6 +166,9 @@ export function PublishModal({
       const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
         (filter) =>
+          // TODO: uncomment when it will be supported on core
+          // filter.filterFunction === PublicationFunctions.False ||
+          // filter.filterFunction === PublicationFunctions.True ||
           filter.filterParams.filter((param) => Boolean(param.trim())).length,
       );
       const preparedFilters = currentFolderRules
@@ -156,63 +178,76 @@ export function PublishModal({
             id: rule.id,
           }))
         : notEmptyFilters;
-      const folderRegExp = new RegExp(
-        entity.folderId.split('/').slice(2).join('/'),
-      );
-
-      if (
-        type === SharingType.Conversation ||
-        type === SharingType.ConversationFolder
-      ) {
-        const mappedFiles = (entities as Conversation[])
-          .filter((c) =>
-            (c.playback?.messagesStack || c.messages).some(
-              (m) => m.custom_content?.attachments,
+      const mappedFiles = (entitiesArray as Conversation[])
+        .filter((c) =>
+          (c.playback?.messagesStack || c.messages || []).some(
+            (m) => m.custom_content?.attachments,
+          ),
+        )
+        .flatMap((c) => {
+          const urls = compact(
+            flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+              m.custom_content?.attachments?.map((a) => a.url),
             ),
-          )
-          .flatMap((c) => {
-            const urls = compact(
-              flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
-                m.custom_content?.attachments?.map((a) => a.url),
-              ),
-            );
+          );
 
-            return urls.map((oldUrl) => {
-              const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+          return urls.map((oldUrl) => {
+            const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
 
-              return {
-                oldUrl: decodedOldUrl,
-                newUrl: createTargetUrl(
-                  FeatureType.File,
-                  trimmedPath,
+            return {
+              oldUrl: decodedOldUrl,
+              newUrl: createTargetUrl(
+                FeatureType.File,
+                trimmedPath,
+                getIdWithoutRootPathSegments(
                   constructPath(
                     ...c.id.split('/').slice(0, -1),
                     ...decodedOldUrl.split('/').slice(-1),
-                  ).replace(folderRegExp, ''),
-                  type,
+                  ),
                 ),
-              };
-            });
+                type,
+              ),
+            };
           });
+        });
 
-        dispatch(
-          PublicationActions.publish({
-            name: trimmedName,
-            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
-            resources: [
-              ...entities.map((item) => ({
-                sourceUrl: item.id,
-                targetUrl: createTargetUrl(
-                  FeatureType.Chat,
-                  trimmedPath,
-                  type === SharingType.ConversationFolder
-                    ? item.id.replace(folderRegExp, '')
-                    : item.id,
-                  type,
-                ),
-              })),
-              ...files.reduce<{ sourceUrl: string; targetUrl: string }[]>(
-                (acc, file) => {
+      const selectedEntities = entitiesArray.filter((e) =>
+        selectedItemsIds.includes(e.id),
+      );
+      const selectedFiles = files.filter((f) =>
+        selectedItemsIds.includes(f.id),
+      );
+
+      dispatch(
+        PublicationActions.publish({
+          action: publishAction,
+          name: trimmedName,
+          targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
+          resources: [
+            ...(publishAction === PublishActions.DELETE
+              ? selectedEntities.map((entity) => ({ targetUrl: entity.id }))
+              : selectedEntities.map((item) => ({
+                  sourceUrl: item.id,
+                  targetUrl: createTargetUrl(
+                    type === SharingType.ConversationFolder ||
+                      type === SharingType.Conversation
+                      ? FeatureType.Chat
+                      : FeatureType.Prompt,
+                    trimmedPath,
+                    type === SharingType.ConversationFolder ||
+                      type === SharingType.PromptFolder
+                      ? getIdWithoutRootPathSegments(item.id)
+                      : item.id,
+                    type,
+                  ),
+                }))),
+            ...(publishAction === PublishActions.DELETE
+              ? files.map((f) => ({
+                  targetUrl: ApiUtils.decodeApiUrl(f.id),
+                }))
+              : selectedFiles.reduce<
+                  { sourceUrl: string; targetUrl: string }[]
+                >((acc, file) => {
                   const decodedFileId = ApiUtils.decodeApiUrl(file.id);
                   const item = mappedFiles.find(
                     (f) => f.oldUrl === decodedFileId,
@@ -226,74 +261,72 @@ export function PublishModal({
                   }
 
                   return acc;
-                },
-                [],
-              ),
-            ],
-            rules: preparedFilters.map((filter) => ({
-              function: filter.filterFunction,
-              source: filter.id,
-              targets: filter.filterParams,
-            })),
-          }),
-        );
-      } else {
-        dispatch(
-          PublicationActions.publish({
-            name: trimmedName,
-            resources: [
-              ...entities.map((item) => ({
-                sourceUrl: item.id,
-                targetUrl: createTargetUrl(
-                  FeatureType.Prompt,
-                  trimmedPath,
-                  type === SharingType.PromptFolder
-                    ? item.id.replace(folderRegExp, '')
-                    : item.id,
-                  type,
-                ),
-              })),
-            ],
-            targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
-            rules: preparedFilters.map((filter) => ({
-              function: filter.filterFunction,
-              source: filter.id,
-              targets: filter.filterParams,
-            })),
-          }),
-        );
-      }
+                }, [])),
+          ],
+          rules: preparedFilters.map((filter) => ({
+            function: filter.filterFunction,
+            source: filter.id,
+            targets: filter.filterParams,
+          })),
+        }),
+      );
 
       onClose();
     },
     [
       currentFolderRules,
       dispatch,
-      entities,
-      entity.folderId,
+      entitiesArray,
       files,
       onClose,
       otherTargetAudienceFilters,
       path,
+      publishAction,
       publishRequestName,
+      selectedItemsIds,
       type,
     ],
   );
 
   useEffect(() => {
-    if (areSelectedConversationsLoaded && entities.length === 0) {
+    if (
+      // We should be able to unpublish any item even if it's invalid
+      publishAction !== PublishActions.DELETE &&
+      areSelectedConversationsLoaded &&
+      entitiesArray.length === 0
+    ) {
       dispatch(
         UIActions.showErrorToast(t('There is no valid items to publish')),
       );
       onClose();
     }
-  }, [areSelectedConversationsLoaded, dispatch, entities.length, onClose, t]);
+  }, [
+    publishAction,
+    areSelectedConversationsLoaded,
+    dispatch,
+    entitiesArray.length,
+    onClose,
+    t,
+  ]);
+
+  const isNothingSelectedAndNoRuleChanges =
+    !selectedItemsIds.length &&
+    (isEqual(
+      otherTargetAudienceFilters.map((filter) => ({
+        function: filter.filterFunction,
+        source: filter.id,
+        targets: filter.filterParams,
+      })),
+      currentFolderRules,
+    ) ||
+      !path ||
+      (!otherTargetAudienceFilters.length && !currentFolderRules));
 
   return (
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'group/modal flex min-h-[579px] min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
+        'group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -307,38 +340,44 @@ export function PublishModal({
             autoFocus
             onChange={(e) => setPublishRequestName(e.target.value)}
             value={publishRequestName}
-            placeholder={t('Type publication request name...') ?? ''}
+            placeholder={
+              publishAction === PublishActions.ADD
+                ? t('Type publication request name...') ?? ''
+                : t('Type unpublish request name...') ?? ''
+            }
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
         </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
-            <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
-              <div>
-                <label className="mb-4 flex text-sm" htmlFor="requestPath">
-                  {t('Publish to')}
-                </label>
-                <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
-                  <div className="flex w-full justify-between truncate whitespace-pre break-all">
-                    <Tooltip
-                      tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
-                      contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-                      triggerClassName="truncate whitespace-pre"
-                    >
-                      {constructPath(PUBLISHING_FOLDER_NAME, path)}
-                    </Tooltip>
+            <section className="px-3 py-4 md:px-5">
+              <label className="mb-4 flex text-sm" htmlFor="requestPath">
+                {publishAction === PublishActions.DELETE
+                  ? t('Unpublish from')
+                  : t('Publish to')}
+              </label>
+              <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
+                <div className="flex w-full justify-between truncate whitespace-pre break-all">
+                  <Tooltip
+                    tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
+                    contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+                    triggerClassName="truncate whitespace-pre"
+                  >
+                    {constructPath(PUBLISHING_FOLDER_NAME, path)}
+                  </Tooltip>
+                  {publishAction !== PublishActions.DELETE && (
                     <span
-                      className="cursor-pointer text-accent-primary"
+                      className="h-full cursor-pointer text-accent-primary"
                       onClick={handleFolderChange}
                     >
                       {t('Change')}
                     </span>
-                  </div>
-                </button>
-              </div>
+                  )}
+                </div>
+              </button>
             </section>
 
-            <section className="flex h-full flex-col px-3 py-4 md:px-5">
+            <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2">
                 {t('Allow access if all match')}
               </h2>
@@ -352,14 +391,14 @@ export function PublishModal({
                 ))
               )}
               {!isRulesLoading && path && (
-                <>
+                <div>
                   <div className="mb-1 text-xs text-secondary">
                     {path.split('/').pop()}
                   </div>
-                  <div className="relative mb-2 flex min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
+                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
                     {otherTargetAudienceFilters.map((item) => (
                       <div className="flex items-center gap-1" key={item.id}>
-                        <div className="flex min-h-[31px] items-center justify-center rounded bg-accent-primary-alpha text-xs">
+                        <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
                           <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
                             <span className="font-semibold">
                               {startCase(toLower(item.id))}
@@ -368,12 +407,12 @@ export function PublishModal({
                               {toLower(item.filterFunction)}
                             </span>
                             {item.filterParams.map((param, index) => (
-                              <div className="flex gap-1" key={index}>
+                              <Fragment key={index}>
                                 {index > 0 && (
                                   <span className="italic">{t('or')}</span>
                                 )}
                                 <span className="font-semibold">{param}</span>
-                              </div>
+                              </Fragment>
                             ))}
                           </div>
                           <IconX
@@ -395,19 +434,21 @@ export function PublishModal({
                     {!isRuleSetterOpened && (
                       <button
                         onClick={() => setIsRuleSetterOpened(true)}
-                        className="flex h-full max-h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
                       >
                         <IconPlus stroke="1" size={18} />
                       </button>
                     )}
-                    <IconX
-                      size={18}
-                      stroke="2"
-                      onClick={() => setOtherTargetAudienceFilters([])}
-                      className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
-                    />
+                    {!!otherTargetAudienceFilters.length && (
+                      <IconX
+                        size={18}
+                        stroke="2"
+                        onClick={() => setOtherTargetAudienceFilters([])}
+                        className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
+                      />
+                    )}
                   </div>
-                </>
+                </div>
               )}
               {!path && (
                 <p className="text-secondary">
@@ -429,11 +470,10 @@ export function PublishModal({
             <PublicationItemsList
               type={type}
               entity={entity}
-              entities={entities}
-              path={path}
+              entities={entitiesArray}
               files={files}
-              containerClassNames="px-3 py-4 md:px-5 overflow-y-auto"
-              publishAction={PublishActions.ADD}
+              containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
+              publishAction={publishAction}
             />
           ) : (
             <div className="flex w-full items-center justify-center">
@@ -444,14 +484,28 @@ export function PublishModal({
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <Tooltip
-            hideTooltip={!!publishRequestName.trim().length}
-            tooltip={t('Enter a name for the publish request')}
+            hideTooltip={
+              !!publishRequestName.trim().length &&
+              !isRuleSetterOpened &&
+              !isNothingSelectedAndNoRuleChanges
+            }
+            tooltip={
+              !publishRequestName.trim().length
+                ? t('Enter a name for the publish request')
+                : isRuleSetterOpened
+                  ? t('Accept or reject rule changes')
+                  : t('Nothing is selected and rules have not changed')
+            }
           >
             <button
               className="button button-primary py-2"
               onClick={handlePublish}
               data-qa="publish"
-              disabled={!publishRequestName.trim().length}
+              disabled={
+                !publishRequestName.trim().length ||
+                isRuleSetterOpened ||
+                isNothingSelectedAndNoRuleChanges
+              }
             >
               {t('Send request')}
             </button>

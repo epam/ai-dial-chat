@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,7 +10,6 @@ import {
   getPathToFolderById,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
@@ -25,6 +24,7 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -53,7 +53,7 @@ export const ChangePathDialog = ({
   type,
   initiallySelectedFolderId,
   rootFolderId,
-  depth,
+  depth = 0,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -74,10 +74,34 @@ export const ChangePathDialog = ({
 
   const newFolderId = useAppSelector(selectors.selectNewAddedFolderId);
 
-  const folders = useAppSelector((state) =>
-    selectors.selectTemporaryAndFilteredFolders(state, searchQuery),
+  const conversationFolders = useAppSelector((state) =>
+    ConversationsSelectors.selectTemporaryAndPublishedFolders(
+      state,
+      searchQuery,
+    ),
+  );
+  const promptFolders = useAppSelector((state) =>
+    PromptsSelectors.selectTemporaryAndPublishedFolders(state, searchQuery),
   );
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
+
+  const folders = useMemo(
+    () => [...conversationFolders, ...promptFolders],
+    [conversationFolders, promptFolders],
+  );
+
+  useEffect(() => {
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType: FeatureType.Chat,
+      }),
+    );
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType: FeatureType.Prompt,
+      }),
+    );
+  }, [dispatch, type]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -134,7 +158,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [dispatch, folders, openedFoldersIds, type],
+    [folders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(
@@ -196,7 +220,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
       }
     },
-    [actions, dispatch, folders, openedFoldersIds, t],
+    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t],
   );
 
   const handleDeleteFolder = useCallback(
@@ -212,10 +236,7 @@ export const ChangePathDialog = ({
   const getPath = () => {
     const { path, pathDepth } = getPathToFolderById(folders, selectedFolderId);
 
-    if (
-      pathDepth + (depth ? depth : 0) >
-      MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH
-    ) {
+    if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
         UIActions.showErrorToast(
           t("It's not allowed to have more nested folders"),
@@ -265,6 +286,7 @@ export const ChangePathDialog = ({
           highlightTemporaryFolders
           rootFolderName={PUBLISHING_FOLDER_NAME}
           rootFolderId={rootFolderId}
+          showAllRootFolders
         />
       </SelectFolderHeader>
       <SelectFolderFooter

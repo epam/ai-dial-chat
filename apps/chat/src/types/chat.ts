@@ -55,6 +55,7 @@ export interface Message {
   model?: ConversationEntityModel;
   settings?: MessageSettings;
   responseId?: string;
+  templateMapping?: Record<string, string>;
 }
 
 export enum Role {

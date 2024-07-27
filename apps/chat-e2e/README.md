@@ -24,9 +24,9 @@ After tests execution finished, 2 kind of reports are generated: html, allure.
 
 Before generating Allure report, install it on your local machine following the guide: https://docs.qameta.io/allure/#_get_started.
 
-To open html report, run the command `npx playwright show-report apps\chat-e2e\html-report`.
+To open chat html report, run the command `npx playwright show-report apps\chat-e2e\chat-html-report`, for overlay report - `npx playwright show-report apps\chat-e2e\overlay-html-report`
 
-Allure report is opened in default browser using `allure serve apps/chat-e2e/allure-chat-results`.
+Chat allure report is opened in default browser using `allure serve apps/chat-e2e/allure-chat-results`, overlay allure report is triggered by `allure serve apps/chat-e2e/allure-overlay-results`
 
 Every test inside local report contains video recording and trace attached.
 
@@ -54,7 +54,7 @@ Config files used for CI pipeline: `chat.playwright.config.ts` and `overlay.play
 Generated Allure report is attached as a job artifact.
 To view CI Allure report:
 
-- for Chrome: run `chrome.exe --disable-web-security --disable-gpu --user-data-dir=~/chromeTemp`
+- for Chrome: open report in browser instance started with command `"[PATH_TO_CHROME]\chrome.exe" --disable-web-security --disable-gpu --user-data-dir=%LOCALAPPDATA%\Google\chromeTemp`
 - for FireFox: open `about:config` in browser and set `security.fileuri.strict_origin_policy` to false.
 
 CI report includes screenshots for failed tests.
@@ -63,11 +63,14 @@ CI report includes screenshots for failed tests.
 
 The following variables should be placed inside `chat-e2e/.env.local` file in order to run tests locally
 
-| Variable       | Required | Description                                                                                                                                                                                                | Available Values | Default values |
-| -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------------- |
-| `E2E_HOST`     | No       | The host URL for end-to-end testing.                                                                                                                                                                       | Any string       |                |
-| `E2E_USERNAME` | No       | Comma separated list of usernames for e2e authentification. The number of users should be equal to number of workers set in playwright config plus two users to verify share feature, e.g. E2E_WORKERS + 2 | Any string       |                |
-| `E2E_WORKERS`  | No       | Number of threads to run e2e tests                                                                                                                                                                         | Any number       |                |
-| `E2E_PASSWORD` | No       | A password for e2e authentification                                                                                                                                                                        | Any string       |                |
-| `TMS_URL`      | No       | TMS URL                                                                                                                                                                                                    | Any string       |                |
-| `ISSUE_URL`    | No       | Issue URL                                                                                                                                                                                                  | Any string       |                |
+| Variable                   | Required | Description                                                                                                                                                                                                | Available Values | Default values        |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------- |
+| `E2E_HOST`                 | No       | The host URL for end-to-end testing.                                                                                                                                                                       | Any string       | http://localhost:3000 |
+| `E2E_USERNAME`             | Yes      | Comma separated list of usernames for e2e authentification. The number of users should be equal to number of workers set in playwright config plus two users to verify share feature, e.g. E2E_WORKERS + 2 | Any string       |                       |
+| `E2E_OVERLAY_USERNAME`     | Yes      | Comma separated list of usernames for overlay sandbox authentification. The number of users should be equal to number of workers set in playwright config                                                  | Any string       |                       |
+| `E2E_WORKERS`              | No       | Number of threads to run e2e tests                                                                                                                                                                         | Any number       | 3                     |
+| `E2E_OVERLAY_WORKERS`      | No       | Number of threads to run e2e overlay tests                                                                                                                                                                 | Any number       | 1                     |
+| `E2E_PASSWORD`             | Yes      | A password for e2e authentification, same for chat and overlay                                                                                                                                             | Any string       |                       |
+| `TMS_URL`                  | No       | TMS URL                                                                                                                                                                                                    | Any string       |                       |
+| `ISSUE_URL`                | No       | Issue URL                                                                                                                                                                                                  | Any string       |                       |
+| `NEXT_PUBLIC_OVERLAY_HOST` | No       | Overlay domain host                                                                                                                                                                                        | Any string       | http://localhost:3000 |

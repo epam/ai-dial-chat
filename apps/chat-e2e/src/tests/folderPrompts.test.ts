@@ -204,7 +204,7 @@ dialTest(
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await promptDropdownMenu.selectMenuOption(MenuOptions.newFolder);
 
@@ -244,7 +244,7 @@ dialTest(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
 
-    await prompts.openPromptDropdownMenu(prompt.name);
+    await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await prompts.selectMoveToMenuOption(
       ExpectedConstants.newFolderWithIndexTitle(1),
@@ -292,7 +292,7 @@ dialTest(
 
     await expect
       .soft(
-        prompts.getPromptByName(promptInFolder.prompts[0].name),
+        prompts.getEntityByName(promptInFolder.prompts[0].name),
         ExpectedMessages.promptIsVisible,
       )
       .toBeHidden();
@@ -419,7 +419,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1384');
-    const levelsCount = 3;
+    const levelsCount = 4;
     const levelToDelete = 2;
     let nestedFolders: FolderInterface[];
     const nestedPrompts: Prompt[] = [];
@@ -428,7 +428,7 @@ dialTest(
       'Prepare nested folders with prompts inside each one',
       async () => {
         nestedFolders = promptData.prepareNestedFolder(levelsCount);
-        for (let i = 0; i <= levelsCount; i++) {
+        for (let i = 0; i < levelsCount; i++) {
           const nestedPrompt = promptData.prepareDefaultPrompt();
           nestedPrompts.push(nestedPrompt);
           nestedPrompt.folderId = nestedFolders[i].id;
@@ -453,7 +453,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-        for (let i = levelToDelete; i <= levelsCount; i++) {
+        for (let i = levelToDelete; i < levelsCount; i++) {
           await expect
             .soft(
               folderPrompts.getFolderByName(nestedFolders[i].name),
@@ -462,13 +462,13 @@ dialTest(
             .toBeHidden();
           await expect
             .soft(
-              prompts.getPromptByName(nestedPrompts[i].name),
+              prompts.getEntityByName(nestedPrompts[i].name),
               ExpectedMessages.promptDeleted,
             )
             .toBeHidden();
         }
 
-        for (let i = 0; i <= levelsCount - levelToDelete; i++) {
+        for (let i = 0; i < levelsCount - levelToDelete; i++) {
           await expect
             .soft(
               folderPrompts.getFolderByName(nestedFolders[i].name),

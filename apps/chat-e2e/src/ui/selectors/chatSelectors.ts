@@ -142,6 +142,9 @@ export const ChatSelectors = {
   attachmentsGroup: '[data-qa="grouped-attachments"]',
   messageSpinner: '[data-qa="message-input-spinner"]',
   plotlyContainer: '.plot-container',
+  maxWidth: '.max-w-none',
+  showMore: '[data-qa="show-more"]',
+  showLess: '[data-qa="show-less"]',
 };
 
 export const TableSelectors = {

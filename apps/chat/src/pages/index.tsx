@@ -98,6 +98,9 @@ export default function Home({ initialState }: HomeProps) {
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
+  const isSignInInSameWindow = useAppSelector(
+    SettingsSelectors.selectIsSignInInSameWindow,
+  );
 
   const isReplaceModalOpened = useAppSelector(
     ImportExportSelectors.selectIsShowReplaceDialog,
@@ -151,6 +154,7 @@ export default function Home({ initialState }: HomeProps) {
       (async () => {
         const authWindowLocation = new AuthWindowLocationLike(
           `api/auth/signin`,
+          isSignInInSameWindow,
         );
 
         await authWindowLocation.ready; // ready after redirects
@@ -328,7 +332,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       ),
     publicationFilters: (
       process.env.PUBLICATION_FILTERS || 'title,role,dial_roles'
-    ).split(',') as string[],
+    ).split(','),
     isOverlay: process.env.IS_IFRAME === 'true' || false,
     footerHtmlMessage: (process.env.FOOTER_HTML_MESSAGE ?? '').replace(
       '%%VERSION%%',
@@ -343,6 +347,7 @@ export const getServerSideProps: GetServerSideProps = async ({
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
+    allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

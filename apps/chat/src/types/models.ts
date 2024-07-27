@@ -12,6 +12,7 @@ export enum TokenizerModel {
 
 export interface CoreAIEntity<T = EntityType.Model> {
   id: string;
+  reference: string;
   object: T;
   display_name?: string;
   display_version?: string;
@@ -71,6 +72,7 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
     isMaxRequestTokensCustom: boolean;
   };
   type: EntityType;
+  reference: string;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {

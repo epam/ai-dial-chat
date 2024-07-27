@@ -6,6 +6,7 @@ import {
 } from '@/src/utils/app/file';
 
 import {
+  Attachment,
   Conversation,
   ConversationInfo,
   PrepareNameOptions,
@@ -382,11 +383,24 @@ export const getConversationAttachmentWithPath = <
   folders: FolderInterface[],
 ): DialFile[] => {
   const { path } = getPathToFolderById(folders, conversation.folderId);
+  const isReplay =
+    'replay' in conversation ? conversation?.replay?.isReplay : false;
   const attachments =
     'messages' in conversation
-      ? (conversation.playback?.messagesStack || conversation.messages).flatMap(
-          (message) => message.custom_content?.attachments || [],
-        )
+      ? (
+          (isReplay && conversation.replay?.replayUserMessagesStack) ||
+          conversation.playback?.messagesStack ||
+          conversation.messages
+        ).flatMap((message) => {
+          const messageAttachments: Attachment[] =
+            message.custom_content?.attachments || [];
+          const stagesAttachments: Attachment[] =
+            message.custom_content?.stages?.flatMap(
+              ({ attachments }) => attachments ?? [],
+            ) || [];
+
+          return [...messageAttachments, ...stagesAttachments];
+        })
       : [];
 
   return getDialFilesFromAttachments(attachments || []).map((file) => ({
@@ -477,6 +491,20 @@ export const getFoldersFromIds = (
   );
 };
 
+export const getEntitiesFoldersFromEntities = (
+  entities: Conversation[] | Prompt[] | DialFile[],
+  folderType: FolderType,
+): FolderInterface[] => {
+  const foldersIds = uniq(entities.map((info) => info.folderId));
+  //calculate all folders;
+  const featuresFolders = getFoldersFromIds(
+    uniq(foldersIds.flatMap((id) => getParentFolderIdsFromFolderId(id))),
+    folderType,
+  );
+
+  return featuresFolders;
+};
+
 export const sortByName = <T extends Entity>(entities: T[]): T[] =>
   sortBy(entities, (entity) => entity.name.toLowerCase());
 
@@ -513,5 +541,9 @@ export const updateMovedEntityId = (
 export const getFolderIdFromEntityId = (id: string) =>
   id.split('/').slice(0, -1).join('/');
 
-export const getRootFolderIdFromEntityId = (id: string) =>
-  id.split('/').slice(0, 3).join('/');
+export const getRootFolderIdFromEntityId = (id: string) => {
+  const splittedId = id.split('/');
+  const isRootEntity = splittedId.length === 3;
+
+  return splittedId.slice(0, isRootEntity ? 2 : 3).join('/');
+};

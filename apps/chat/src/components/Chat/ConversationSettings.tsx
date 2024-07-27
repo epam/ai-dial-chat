@@ -18,7 +18,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { MIN_TWO_CAL_CHAT_SETTINGS_WIDTH } from '@/src/constants/chat';
+import {
+  MIN_TWO_CAL_CHAT_SETTINGS_WIDTH,
+  REPLAY_AS_IS_MODEL,
+} from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -92,7 +95,7 @@ export const SettingContainer = ({ children }: SettingContainerProps) => {
     return null;
   }
 
-  return <div className="px-3 py-4 md:px-5">{children}</div>;
+  return <div className="px-3 py-4 md:pl-5 md:pr-6">{children}</div>;
 };
 
 export const ConversationSettings = ({
@@ -162,18 +165,18 @@ export const ConversationSettings = ({
   }, [settingsWidth, settingsRef, dispatch]);
 
   return (
-    <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
+    <>
       <div
         ref={settingsRef}
         className={classNames(
-          'relative size-full gap-[1px] overflow-auto',
+          'relative flex size-full flex-col divide-x divide-tertiary overflow-auto rounded border-t-[1px] border-tertiary',
           settingsWidth &&
             settingsWidth >= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
             'md:grid md:grid-cols-2 md:grid-rows-1',
         )}
         data-qa="conversation-settings"
       >
-        <div className="shrink overflow-auto bg-layer-2 px-3 py-4 md:px-5">
+        <div className="shrink bg-layer-2 px-3 py-4 md:pl-6 md:pr-0">
           <ConversationSettingsModel
             conversation={conversation}
             modelId={model?.id}
@@ -184,10 +187,10 @@ export const ConversationSettings = ({
           />
         </div>
         <div
-          className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+          className="flex shrink flex-col divide-y divide-tertiary bg-layer-2 md:overflow-auto"
           data-qa="entity-settings"
         >
-          {!conversation.replay?.replayAsIs ? (
+          {modelId !== REPLAY_AS_IS_MODEL ? (
             <>
               {model && model.type === EntityType.Application && (
                 <SettingContainer>
@@ -250,15 +253,16 @@ export const ConversationSettings = ({
             />
           )}
         </div>
-        {isCloseEnabled && (
-          <button
-            className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
-            onClick={onClose}
-          >
-            <IconX height={24} width={24} />
-          </button>
-        )}
       </div>
-    </div>
+
+      {isCloseEnabled && (
+        <button
+          className="absolute right-3 top-3 text-secondary hover:text-accent-primary"
+          onClick={onClose}
+        >
+          <IconX height={24} width={24} />
+        </button>
+      )}
+    </>
   );
 };

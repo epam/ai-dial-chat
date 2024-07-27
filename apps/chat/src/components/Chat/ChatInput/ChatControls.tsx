@@ -47,15 +47,19 @@ export const ChatControls: FC<Props> = ({
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+  const willReplayRequireVariables = useAppSelector(
+    ConversationsSelectors.selectWillReplayRequireVariables,
+  );
 
   const handleReplayReStart = useCallback(() => {
     dispatch(
       ConversationsActions.replayConversations({
         conversationsIds: selectedConversationsIds,
-        isRestart: true,
+        isRestart: !willReplayRequireVariables,
+        isContinue: willReplayRequireVariables,
       }),
     );
-  }, [dispatch, selectedConversationsIds]);
+  }, [dispatch, selectedConversationsIds, willReplayRequireVariables]);
 
   if (!showReplayControls) {
     return (
@@ -79,6 +83,7 @@ export const ChatControls: FC<Props> = ({
       )}
       onClick={handleReplayReStart}
       data-qa="proceed-reply"
+      data-replay-variables
     >
       <Tooltip
         tooltip={isError ? t('Try again') : t('Continue replay')}

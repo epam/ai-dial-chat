@@ -3,6 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   Import,
@@ -89,9 +90,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await conversations.openConversationDropdownMenu(
-          replayConversation!.name,
-        );
+        await conversations.openEntityDropdownMenu(replayConversation!.name);
         await conversations.selectEntityMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
         });
@@ -102,9 +101,7 @@ dialTest(
       'Verify new Replay conversation is created and Replay button appears',
       async () => {
         replayConversationName = `${ExpectedConstants.replayConversation}${replayConversation!.name}`;
-        await conversations
-          .getConversationByName(replayConversationName)
-          .waitFor();
+        await conversations.getEntityByName(replayConversationName).waitFor();
         expect
           .soft(
             await chat.replay.getElementContent(),
@@ -117,9 +114,7 @@ dialTest(
     await dialTest.step(
       'Verify "Share" option is not available in Replay conversation dropdown menu',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          replayConversationName,
-        );
+        await conversations.openEntityDropdownMenu(replayConversationName);
         const replayConversationMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
         expect
@@ -188,7 +183,7 @@ dialTest(
     setTestIds('EPMRTC-503');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
-    const nestedLevels = 3;
+    const nestedLevels = 4;
 
     await dialTest.step(
       'Prepare 3 levels folders hierarchy with chats inside',
@@ -213,7 +208,7 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        for (let i = 0; i < nestedLevels; i = i + 2) {
+        for (let i = 0; i < nestedLevels - 1; i = i + 2) {
           await folderConversations.openFolderEntityDropdownMenu(
             nestedFolders[i + 1].name,
             nestedConversations[i + 1].name,
@@ -226,7 +221,7 @@ dialTest(
     await dialTest.step(
       'Verify new Replay conversations are created inside 1st and 3rd level folders',
       async () => {
-        for (let i = 0; i < nestedLevels; i = i + 2) {
+        for (let i = 0; i < nestedLevels - 1; i = i + 2) {
           await expect
             .soft(
               folderConversations.getFolderEntity(
@@ -290,6 +285,7 @@ dialTest(
         await talkToSelector.selectModel(bison);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         replayRequest = await chat.startReplay();
       },
     );
@@ -372,15 +368,16 @@ dialTest(
     setTestIds('EPMRTC-512', 'EPMRTC-3451');
     let conversation: Conversation;
     let replayConversation: Conversation;
-    const userRequest = 'write down 100 adjectives';
+    const firstUserRequest = 'write down 100 adjectives';
+    const secondUserRequest = 'write down 200 adjectives';
 
     await dialTest.step('Prepare model conversation to replay', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(
         gpt35Model,
-        [userRequest],
+        [firstUserRequest, secondUserRequest],
       );
       replayConversation =
-        conversationData.preparePartiallyReplayedConversation(conversation);
+        conversationData.preparePartiallyReplayedConversation(conversation, 1);
       await dataInjector.createConversations([
         conversation,
         replayConversation,
@@ -393,9 +390,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
-          replayConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(replayConversation.name);
         const replayConversationMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
         expect
@@ -418,33 +413,46 @@ dialTest(
     await dialTest.step(
       'Proceed generating the answer and verify received content is preserved',
       async () => {
-        const receivedPartialContent =
-          await chatMessages.getGeneratedChatContent(
-            conversation.messages.length,
-          );
+        const chatContentBeforeReplay =
+          await chatMessages.chatMessages.getElementsInnerContent();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await chat.proceedReplaying(true);
-        const preservedPartialContent =
-          await chatMessages.getGeneratedChatContent(
-            conversation.messages.length,
-          );
+        const chatContentAfterReplay =
+          await chatMessages.chatMessages.getElementsInnerContent();
         expect
           .soft(
-            preservedPartialContent.includes(receivedPartialContent),
+            chatContentAfterReplay.length,
+            ExpectedMessages.messageCountIsCorrect,
+          )
+          .toBe(chatContentBeforeReplay.length);
+
+        expect
+          .soft(
+            JSON.stringify(
+              chatContentAfterReplay.slice(
+                0,
+                chatContentAfterReplay.length - 1,
+              ),
+            ),
             ExpectedMessages.replayContinuesFromReceivedContent,
           )
-          .toBeTruthy();
+          .toBe(
+            JSON.stringify(
+              chatContentBeforeReplay.slice(
+                0,
+                chatContentBeforeReplay.length - 1,
+              ),
+            ),
+          );
       },
     );
 
     await dialTest.step(
       'Verify "Share" option is available in dropdown menu for fully replayed conversation',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          replayConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(replayConversation.name);
         const replayConversationMenuOptions =
           await conversationDropdownMenu.getAllMenuOptions();
         expect
@@ -577,6 +585,7 @@ dialTest(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         replayRequest = await chat.startReplay(
           conversation.messages[0].content,
         );
@@ -698,7 +707,7 @@ dialTest(
           .soft(secondConversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedSecondModelIcon);
 
-        const chatBarConversationIcon = await conversations.getConversationIcon(
+        const chatBarConversationIcon = await conversations.getEntityIcon(
           ExpectedConstants.replayConversation + conversation.name,
         );
         expect
@@ -785,7 +794,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
 
@@ -812,7 +821,7 @@ dialTest(
           )
           .toBeHidden();
 
-        await chat.footer.waitForState({ state: 'attached' });
+        await chat.getFooter().waitForState({ state: 'attached' });
       },
     );
   },
@@ -1061,7 +1070,7 @@ dialTest(
           chatBar.importButton.click(),
         );
         await conversations
-          .getConversationByName(
+          .getEntityByName(
             ExpectedConstants.newConversationTitle,
             filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
           )
@@ -1166,7 +1175,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(conversation!.name);
+        await conversations.openEntityDropdownMenu(conversation!.name);
         const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
         expect
           .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
@@ -1175,8 +1184,8 @@ dialTest(
     );
   },
 );
-
-dialTest(
+// this test is not actual after https://github.com/epam/ai-dial-chat/pull/1809 where the "Clear conversation messages" were hidden for Replay-mode and during message streaming
+dialTest.skip(
   'Chat is in replay mode if while replaying to clear all messages',
   async ({
     dialHomePage,

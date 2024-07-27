@@ -8,7 +8,7 @@ import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { inter } from '../../_app';
+import { inconsolata, inter } from '../../_app';
 
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
@@ -126,7 +126,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
-          generateFontCssVariables({ 'theme-font': theme['font-family'] }),
+          generateFontCssVariables({
+            'theme-font': theme['font-family'],
+            'codeblock-font':
+              theme['font-codeblock'] ?? inconsolata.style.fontFamily,
+          }),
         ]),
       ),
       generateUrlsCssVariables({

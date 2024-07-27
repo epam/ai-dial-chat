@@ -16,6 +16,7 @@ export interface ConversationsState {
   searchFilters: SearchFilters;
   conversationSignal: AbortController;
   isReplayPaused: boolean;
+  isReplayRequiresVariables?: boolean;
   isPlaybackPaused: boolean;
   newAddedFolderId?: string;
   conversationsLoaded: boolean;
@@ -31,5 +32,4 @@ export interface ConversationsState {
   loadedCustomAttachmentsData: { url: string; data: CustomVisualizerData }[];
   customAttachmentDataLoading: boolean;
   chosenConversationIds: string[];
-  chosenFolderIds: string[];
 }

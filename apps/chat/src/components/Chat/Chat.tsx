@@ -38,6 +38,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
@@ -47,14 +48,15 @@ import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
+import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
-import { HandlePublication } from './Publish/HandlePublication';
 import { PublicationControls } from './Publish/PublicationChatControls';
+import { PublicationHandler } from './Publish/PublicationHandler';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -95,6 +97,9 @@ export const ChatView = memo(() => {
   const isReplayPaused = useAppSelector(
     ConversationsSelectors.selectIsReplayPaused,
   );
+  const isReplayRequiresVariables = useAppSelector(
+    ConversationsSelectors.selectIsReplayRequiresVariables,
+  );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
@@ -125,15 +130,18 @@ export const ChatView = memo(() => {
   const lastScrollTop = useRef(0);
 
   const showReplayControls = useMemo(() => {
-    return isReplay && !messageIsStreaming && isReplayPaused;
-  }, [isReplay, isReplayPaused, messageIsStreaming]);
+    return (
+      isReplay &&
+      !messageIsStreaming &&
+      (isReplayPaused || !!isReplayRequiresVariables)
+    );
+  }, [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming]);
 
-  const isNotEmptyConversations = selectedConversations.some(
-    (conv) => conv.messages.length > 0,
-  );
+  const isNotEmptyConversations =
+    isReplayRequiresVariables ||
+    selectedConversations.some((conv) => conv.messages.length > 0);
 
   useEffect(() => {
-    const modelIds = models.map((model) => model.id);
     const isNotAllowedModel =
       isModelsLoaded &&
       (models.length === 0 ||
@@ -149,18 +157,17 @@ export const ChatView = memo(() => {
               (message) =>
                 message.role === Role.User &&
                 message.model?.id &&
-                !modelIds.includes(message.model.id),
+                !modelsMap[message.model.id],
             );
           }
 
-          const model = models.find(({ id }) => id === conv.model.id);
+          const model = modelsMap[conv.model.id];
 
           return (
-            !modelIds.includes(conv.model.id) ||
-            (model &&
-              model.type === EntityType.Assistant &&
+            !model ||
+            (model.type === EntityType.Assistant &&
               conv.assistantModelId &&
-              !modelIds.includes(conv.assistantModelId))
+              !modelsMap[conv.assistantModelId])
           );
         }));
     if (isNotAllowedModel) {
@@ -174,7 +181,7 @@ export const ChatView = memo(() => {
     } else {
       setNotAllowedType(null);
     }
-  }, [selectedConversations, models, isModelsLoaded, addonsMap]);
+  }, [selectedConversations, models, isModelsLoaded, addonsMap, modelsMap]);
 
   const onLikeHandler = useCallback(
     (index: number, conversation: Conversation) => (rate: LikeState) => {
@@ -334,6 +341,14 @@ export const ChatView = memo(() => {
       conversation: Conversation,
       modelId: string | undefined,
     ): Partial<Conversation> => {
+      if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
+        return {
+          replay: {
+            ...conversation.replay,
+            replayAsIs: true,
+          },
+        };
+      }
       const newAiEntity = modelId ? modelsMap[modelId] : undefined;
       if (!modelId || !newAiEntity) {
         return {};
@@ -354,7 +369,7 @@ export const ChatView = memo(() => {
           : conversation.selectedAddons;
 
       return {
-        model: { id: modelId },
+        model: { id: newAiEntity.reference },
         assistantModelId:
           newAiEntity.type === EntityType.Assistant
             ? DEFAULT_ASSISTANT_SUBMODEL_ID
@@ -369,7 +384,7 @@ export const ChatView = memo(() => {
   const handleSelectModel = useCallback(
     (conversation: Conversation, modelId: string) => {
       const newAiEntity = modelsMap[modelId];
-      if (!newAiEntity) {
+      if (!newAiEntity && modelId !== REPLAY_AS_IS_MODEL) {
         return;
       }
 
@@ -583,7 +598,11 @@ export const ChatView = memo(() => {
   }, []);
 
   const showLastMessageRegenerate =
-    !isPlayback && !isExternal && !messageIsStreaming && !isLastMessageError;
+    !isReplay &&
+    !isPlayback &&
+    !isExternal &&
+    !messageIsStreaming &&
+    !isLastMessageError;
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
 
@@ -647,6 +666,8 @@ export const ChatView = memo(() => {
                                     Feature.TopClearConversation,
                                   ) &&
                                   !isPlayback &&
+                                  !isReplay &&
+                                  !messageIsStreaming &&
                                   !isExternal
                                 }
                                 isShowModelSelect={
@@ -793,7 +814,10 @@ export const ChatView = memo(() => {
                                             Feature.Likes,
                                           )}
                                           editDisabled={
-                                            !!notAllowedType || isExternal
+                                            !!notAllowedType ||
+                                            isExternal ||
+                                            isReplay ||
+                                            isPlayback
                                           }
                                           onEdit={onEditMessage}
                                           onLike={onLikeHandler(index, conv)}
@@ -833,6 +857,7 @@ export const ChatView = memo(() => {
                           showScrollDownButton={showScrollDownButton}
                           entity={selectedConversations[0]}
                           onScrollDownClick={handleScrollDown}
+                          controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
                         />
                       )}
 
@@ -888,20 +913,22 @@ export const ChatView = memo(() => {
                       : 'grid-cols-2',
                   )}
                 >
-                  {selectedConversations.map((conv) => (
-                    <div className="relative h-full" key={conv.id}>
-                      <ChatSettings
-                        conversation={conv}
-                        modelId={conv.model.id}
-                        prompts={prompts}
-                        addons={addons}
-                        onChangeSettings={(args) => {
-                          handleTemporarySettingsSave(conv, args);
-                        }}
-                        onApplySettings={handleApplyChatSettings}
-                        onClose={() => setIsShowChatSettings(false)}
-                      />
-                    </div>
+                  {selectedConversations.map((conv, index) => (
+                    <ChatSettings
+                      key={conv.id}
+                      conversation={conv}
+                      modelId={conv.model.id}
+                      prompts={prompts}
+                      addons={addons}
+                      onChangeSettings={(args) => {
+                        handleTemporarySettingsSave(conv, args);
+                      }}
+                      onApplySettings={handleApplyChatSettings}
+                      onClose={() => setIsShowChatSettings(false)}
+                      isOpen={isShowChatSettings}
+                      isRight={index === 1}
+                      isCompareMode={isCompareMode}
+                    />
                   ))}
                 </div>
               )}
@@ -929,6 +956,7 @@ export const ChatView = memo(() => {
     </div>
   );
 });
+
 ChatView.displayName = 'ChatView';
 
 export function Chat() {
@@ -955,7 +983,12 @@ export function Chat() {
   );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
-    return <HandlePublication publication={selectedPublication} />;
+    return (
+      <>
+        <PublicationHandler publication={selectedPublication} />
+        <ChatInputFooter />
+      </>
+    );
   }
 
   if (isolatedModelId && modelIsLoaded && !activeModel) {

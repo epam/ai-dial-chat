@@ -49,16 +49,26 @@ export class ChatMessages extends BaseElement {
     return this.inputAttachments;
   }
 
-  public messageStage = (messagesIndex: number, stageIndex: number) =>
+  public messageStages = (messagesIndex: number) =>
     this.chatMessages
       .getNthElement(messagesIndex)
-      .locator(ChatSelectors.messageStage)
-      .nth(stageIndex - 1);
+      .locator(ChatSelectors.messageStage);
+
+  public messageStage = (messagesIndex: number, stageIndex: number) =>
+    this.messageStages(messagesIndex).nth(stageIndex - 1);
 
   public messageStageLoader = (messagesIndex: number, stageIndex: number) =>
     this.messageStage(messagesIndex, stageIndex).locator(
       ChatSelectors.stageLoader,
     );
+
+  public showMoreButton = this.getChildElementBySelector(
+    ChatSelectors.showMore,
+  );
+
+  public showLessButton = this.getChildElementBySelector(
+    ChatSelectors.showLess,
+  );
 
   public async waitForResponseReceived() {
     const loadingCursorCount = await this.loadingCursor.getElementsCount();
@@ -163,6 +173,10 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(
       `${Tags.a}[${Attributes.href}]`,
     );
+  }
+
+  public getChatMessageMaxWidth(message: string | number) {
+    return this.getChatMessage(message).locator(ChatSelectors.maxWidth);
   }
 
   public async expandChatMessageAttachment(

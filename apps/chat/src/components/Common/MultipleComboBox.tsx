@@ -72,6 +72,7 @@ interface Props<T> {
   customClass?: string;
   hasDeleteAll?: boolean;
   itemHeight?: string;
+  className?: string;
 }
 
 export function MultipleComboBox<T>({
@@ -89,6 +90,7 @@ export function MultipleComboBox<T>({
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
+  className,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
@@ -215,10 +217,7 @@ export function MultipleComboBox<T>({
 
   return (
     <div
-      className={classNames(
-        'relative col-span-5 w-full md:order-3',
-        customClass,
-      )}
+      className={classNames('relative w-full md:max-w-[205px]', className)}
       data-qa="multiple-combobox"
     >
       <div className="flex w-full flex-col gap-1">
@@ -244,7 +243,8 @@ export function MultipleComboBox<T>({
                   key={`selected-item-${getItemLabel(
                     selectedItemForRender,
                   )}-${index}`}
-                  tooltip={getItemLabel(selectedItemForRender)}
+                  tooltip={getItemLabel(selectedItemForRender).trim()}
+                  contentClassName="text-xs"
                 >
                   <span
                     className={classNames(
@@ -319,7 +319,7 @@ export function MultipleComboBox<T>({
             ? displayedItems.map((item, index) => (
                 <li
                   className={classNames(
-                    'group flex min-h-[34px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3',
+                    'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
                     highlightedIndex === index && 'bg-accent-primary-alpha',
                     selectedItem === item && 'bg-accent-primary-alpha',
                   )}

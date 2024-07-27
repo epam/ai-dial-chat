@@ -8,7 +8,7 @@ You have the ability to tailor the appearance of your chat application using **t
 
 If you want to use any other than default themes, deploy `ai-dial-chat-themes` and create custom configurations.
 
-When this service is deployed, provide a `THEMES_CONFIG_HOST` environment variable in the AI DIAL Chat configuration containing the URL to your nginx server with themes. This ensures that the application fetches the configuration file with themes during loading. If the environment variable is not provided, [default themes and model icons](https://github.com/epam/ai-dial-chat-themes/blob/development/static/config.json) will be applied.
+When this service is deployed, provide a `THEMES_CONFIG_HOST` environment variable in the AI DIAL Chat configuration containing the URL to your nginx server with themes (can be both public and private). This ensures that the application fetches the configuration file with themes during loading. If the environment variable is not provided, [default themes and model icons](https://github.com/epam/ai-dial-chat-themes/blob/development/static/config.json) will be applied.
 
 ```bash
 THEMES_CONFIG_HOST=https://your-config-host.com

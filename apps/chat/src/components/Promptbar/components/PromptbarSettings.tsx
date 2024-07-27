@@ -55,7 +55,7 @@ export function PromptbarSettings() {
       },
       {
         name: t('Unselect all'),
-        dataQa: 'unselect all',
+        dataQa: 'unselect-all',
         Icon: IconSquareOff,
         onClick: () => {
           dispatch(PromptsActions.resetChosenPrompts());

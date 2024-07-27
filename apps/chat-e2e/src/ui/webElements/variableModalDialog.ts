@@ -1,5 +1,5 @@
-import { ExpectedConstants } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { Tags } from '@/src/ui/domData';
+import { ErrorLabelSelectors } from '@/src/ui/selectors';
 import { VariableModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
@@ -9,38 +9,49 @@ export class VariableModalDialog extends BaseElement {
     super(page, VariableModal.variableModalDialog);
   }
 
-  public name = new BaseElement(this.page, VariableModal.variablePromptName);
-  public description = new BaseElement(
-    this.page,
+  public name = this.getChildElementBySelector(
+    VariableModal.variablePromptName,
+  );
+  public description = this.getChildElementBySelector(
     VariableModal.variablePromptDescription,
   );
 
-  public getPromptVariableByPlaceholder = (placeholder: string) =>
-    this.getElementByPlaceholder(
-      ExpectedConstants.promptPlaceholder(placeholder),
+  public getPromptVariableByLabel = (label: string) =>
+    this.getChildElementBySelector(VariableModal.variable)
+      .getElementLocator()
+      .filter({
+        has: this.page.locator(
+          `${VariableModal.variableLabel}:text-is('${label}')`,
+        ),
+      });
+
+  public getPromptVariableLabel = (label: string) =>
+    this.getPromptVariableByLabel(label).locator(VariableModal.variableLabel);
+
+  public getPromptVariableLabelAsterisk = (label: string) =>
+    this.getPromptVariableByLabel(label).locator(
+      VariableModal.variableAsterisk,
     );
+
+  public getPromptVariableValue = (label: string) =>
+    this.getPromptVariableByLabel(label).locator(Tags.textarea);
+
+  public getPromptVariableValueElement = (label: string) =>
+    this.createElementFromLocator(this.getPromptVariableValue(label));
+
+  public getPromptVariableBottomMessage = (label: string) =>
+    this.createElementFromLocator(
+      this.getPromptVariableByLabel(label).locator(
+        ErrorLabelSelectors.fieldError,
+      ),
+    );
+
+  public async setVariableValue(label: string, value: string) {
+    await this.getPromptVariableValue(label).fill(value);
+  }
 
   public submitButton = new BaseElement(
     this.page,
     VariableModal.submitVariable,
   );
-
-  public async setVariable(variable: string, value: string) {
-    await this.getPromptVariableByPlaceholder(variable).fill(value);
-    await this.submitButton.click();
-  }
-
-  public async getName() {
-    return this.name.getElementContent();
-  }
-
-  public async getDescription() {
-    return this.description.getElementContent();
-  }
-
-  public async getVariablePlaceholder(variable: string) {
-    return this.getPromptVariableByPlaceholder(variable).getAttribute(
-      Attributes.placeholder,
-    );
-  }
 }

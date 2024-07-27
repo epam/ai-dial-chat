@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { IconExclamationCircle } from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -36,24 +37,23 @@ import {
 } from './PublicationResources';
 import { RuleListItem } from './RuleListItem';
 
+import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
 interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
   newRules: PublicationRule[];
   publication: Publication;
+  isRulesLoading: boolean;
 }
 
 function FiltersComponent({
   filteredRuleEntries,
   newRules,
   publication,
+  isRulesLoading,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
-
-  const isRulesLoading = useAppSelector(
-    PublicationSelectors.selectIsRulesLoading,
-  );
 
   if (isRulesLoading) {
     return (
@@ -65,13 +65,15 @@ function FiltersComponent({
 
   return (
     <>
-      {!filteredRuleEntries.length && !publication.rules?.length && (
-        <p className="text-sm text-secondary">
-          {t(
-            'This publication will be available to all users in the organization',
-          )}
-        </p>
-      )}
+      {(!filteredRuleEntries.length ||
+        filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
+        !publication.rules?.length && (
+          <p className="text-sm text-secondary">
+            {t(
+              'This publication will be available to all users in the organization',
+            )}
+          </p>
+        )}
       {filteredRuleEntries
         .filter(([_, rules]) => rules.length)
         .map(([path, rules]) => (
@@ -89,7 +91,7 @@ interface Props {
   publication: Publication;
 }
 
-export function HandlePublication({ publication }: Props) {
+export function PublicationHandler({ publication }: Props) {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
@@ -104,6 +106,12 @@ export function HandlePublication({ publication }: Props) {
   );
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
+  );
+  const nonExistentEntities = useAppSelector(
+    PublicationSelectors.selectNonExistentEntities,
+  );
+  const isRulesLoading = useAppSelector(
+    PublicationSelectors.selectIsRulesLoading,
   );
 
   useEffect(() => {
@@ -148,7 +156,7 @@ export function HandlePublication({ publication }: Props) {
     );
   }, [dispatch, publication.resources, publication.url]);
 
-  const handlePublicationReview = () => {
+  const handlePublicationReview = useCallback(() => {
     const conversationsToReviewIds = resourcesToReview.filter(
       (r) =>
         !r.reviewed &&
@@ -160,33 +168,6 @@ export function HandlePublication({ publication }: Props) {
         r.publicationUrl === publication.url && isConversationId(r.reviewUrl),
     );
 
-    if (conversationsToReviewIds.length || reviewedConversationsIds.length) {
-      const conversationPaths = uniq(
-        [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
-          (p) =>
-            getParentFolderIdsFromEntityId(
-              getFolderIdFromEntityId(p.reviewUrl),
-            ).filter((id) => id !== p.reviewUrl),
-        ),
-      );
-
-      dispatch(
-        UIActions.setOpenedFoldersIds({
-          openedFolderIds: conversationPaths,
-          featureType: FeatureType.Chat,
-        }),
-      );
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: [
-            conversationsToReviewIds.length
-              ? conversationsToReviewIds[0].reviewUrl
-              : reviewedConversationsIds[0].reviewUrl,
-          ],
-        }),
-      );
-    }
-
     const promptsToReviewIds = resourcesToReview.filter(
       (r) =>
         !r.reviewed &&
@@ -197,24 +178,59 @@ export function HandlePublication({ publication }: Props) {
       (r) => r.publicationUrl === publication.url && isPromptId(r.reviewUrl),
     );
 
-    if (promptsToReviewIds.length || reviewedPromptsIds.length) {
+    const expandFolders = () => {
+      const conversationPaths = uniq(
+        [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
+          (p) =>
+            getParentFolderIdsFromEntityId(
+              getFolderIdFromEntityId(p.reviewUrl),
+            ).filter((id) => id !== p.reviewUrl),
+        ),
+      );
+
+      if (conversationPaths.length) {
+        dispatch(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: conversationPaths,
+            featureType: FeatureType.Chat,
+          }),
+        );
+      }
+
       const promptPaths = uniq(
-        [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) => {
-          const url = p.reviewUrl;
-
-          return getParentFolderIdsFromEntityId(
-            getFolderIdFromEntityId(url),
-          ).filter((id) => id !== url);
-        }),
+        [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) =>
+          getParentFolderIdsFromEntityId(
+            getFolderIdFromEntityId(p.reviewUrl),
+          ).filter((id) => id !== p.reviewUrl),
+        ),
       );
 
-      dispatch(UIActions.setShowPromptbar(true));
+      if (promptPaths.length) {
+        dispatch(UIActions.setShowPromptbar(true));
+        dispatch(
+          UIActions.setOpenedFoldersIds({
+            openedFolderIds: promptPaths,
+            featureType: FeatureType.Prompt,
+          }),
+        );
+      }
+    };
+
+    const startConversationsReview = () => {
+      expandFolders();
       dispatch(
-        UIActions.setOpenedFoldersIds({
-          openedFolderIds: promptPaths,
-          featureType: FeatureType.Prompt,
+        ConversationsActions.selectConversations({
+          conversationIds: [
+            conversationsToReviewIds.length
+              ? conversationsToReviewIds[0].reviewUrl
+              : reviewedConversationsIds[0].reviewUrl,
+          ],
         }),
       );
+    };
+
+    const startPromptsReview = () => {
+      expandFolders();
       dispatch(
         PromptsActions.uploadPrompt({
           promptId: promptsToReviewIds.length
@@ -236,8 +252,24 @@ export function HandlePublication({ publication }: Props) {
           isPreview: true,
         }),
       );
+    };
+
+    if (conversationsToReviewIds.length) {
+      startConversationsReview();
+      return;
     }
-  };
+
+    if (promptsToReviewIds.length) {
+      startPromptsReview();
+      return;
+    }
+
+    if (reviewedConversationsIds.length) {
+      startConversationsReview();
+    } else {
+      startPromptsReview();
+    }
+  }, [dispatch, publication.url, resourcesToReview]);
 
   const sections = [
     {
@@ -266,10 +298,9 @@ export function HandlePublication({ publication }: Props) {
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
-  const areRulesChanged =
-    publication.rules &&
-    (publication.rules.length ||
-      (publication.targetFolder && rules[publication.targetFolder]));
+  const invalidEntities = nonExistentEntities.filter((entity) =>
+    publication.resources.some((r) => r.reviewUrl === entity.id),
+  );
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -289,9 +320,9 @@ export function HandlePublication({ publication }: Props) {
           </Tooltip>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
-          <div className="relative size-full gap-[1px] overflow-auto md:grid md:grid-cols-2 md:grid-rows-1">
+          <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
-              <div className="px-3 py-4 md:px-5">
+              <div className="px-3 md:px-5">
                 <label className="flex text-sm" htmlFor="approvePath">
                   {t('Publish to')}
                 </label>
@@ -322,66 +353,111 @@ export function HandlePublication({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p>{t('Allow access if all match')}</p>
-                    {areRulesChanged ? (
-                      <span
-                        onClick={() => setIsCompareModalOpened(true)}
-                        className="cursor-pointer text-accent-primary"
-                      >
-                        {t('See changes')}
-                      </span>
-                    ) : (
-                      <span className="text-secondary">{t('No changes')}</span>
-                    )}
+                    {!isRulesLoading &&
+                      (publication.rules &&
+                      !isEqual(
+                        publication.rules,
+                        rules[publication.targetFolder] || [],
+                      ) ? (
+                        <span
+                          onClick={() => setIsCompareModalOpened(true)}
+                          className="cursor-pointer text-accent-primary"
+                        >
+                          {t('See changes')}
+                        </span>
+                      ) : (
+                        <span className="text-secondary">
+                          {t('No changes')}
+                        </span>
+                      ))}
                   </div>
                 </h2>
                 <FiltersComponent
+                  isRulesLoading={isRulesLoading}
                   filteredRuleEntries={filteredRuleEntries}
                   newRules={newRules}
                   publication={publication}
                 />
               </section>
             </div>
-            <div className="overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">
-              {sections.map(
-                ({
-                  dataQa,
-                  sectionName,
-                  Component,
-                  featureType,
-                  showTooltip,
-                }) =>
-                  publication.resourceTypes.includes(
-                    EnumMapper.getBackendResourceTypeByFeatureType(featureType),
-                  ) && (
-                    <CollapsibleSection
-                      key={featureType}
-                      name={sectionName}
-                      openByDefault
-                      dataQa={dataQa}
-                      sectionTooltip={
-                        <p>
-                          Publish, <span className="text-error">Unpublish</span>
-                        </p>
-                      }
-                    >
-                      <Component
-                        resources={publication.resources}
-                        forViewOnly
-                        showTooltip={showTooltip}
-                      />
-                    </CollapsibleSection>
-                  ),
+            <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
+              {publication.resources.length ? (
+                sections.map(
+                  ({
+                    dataQa,
+                    sectionName,
+                    Component,
+                    featureType,
+                    showTooltip,
+                  }) =>
+                    publication.resourceTypes.includes(
+                      EnumMapper.getBackendResourceTypeByFeatureType(
+                        featureType,
+                      ),
+                    ) && (
+                      <CollapsibleSection
+                        key={featureType}
+                        name={sectionName}
+                        openByDefault
+                        dataQa={dataQa}
+                        togglerClassName="!text-sm !text-primary"
+                        sectionTooltip={
+                          <>
+                            {t('Publish')},
+                            <span className="text-error">
+                              {' '}
+                              {t('Unpublish')}
+                            </span>
+                          </>
+                        }
+                      >
+                        <Component
+                          resources={publication.resources}
+                          readonly
+                          showTooltip={showTooltip}
+                        />
+                      </CollapsibleSection>
+                    ),
+                )
+              ) : (
+                <p className="my-3">{t('This publication has no resources')}</p>
               )}
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 rounded-t bg-layer-2 px-3 py-4 md:px-4">
-          <button
-            className="text-accent-primary"
-            onClick={handlePublicationReview}
-          >
-            {t('Go to a review...')}
-          </button>
+        <div className="flex w-full items-center justify-between gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4">
+          {invalidEntities.length ? (
+            <div className="flex items-center gap-3">
+              <IconExclamationCircle
+                size={24}
+                className="shrink-0 text-error"
+                stroke="1.5"
+              />
+              <p className="text-sm text-error">
+                {invalidEntities.map((e, idx) => (
+                  <span key={e.id} className="italic">
+                    &quot;
+                    {e.name.substring(0, 50) === e.name
+                      ? e.name
+                      : `${e.name.substring(0, 50)}...`}
+                    &quot;{idx === invalidEntities.length - 1 ? ' ' : ', '}
+                  </span>
+                ))}
+                {t(
+                  "have already been unpublished. You can't approve this request.",
+                )}
+              </p>
+            </div>
+          ) : (
+            <button
+              className="text-accent-primary"
+              onClick={handlePublicationReview}
+            >
+              {resourcesToReview.some((r) => r.reviewed)
+                ? t('Continue review...')
+                : t('Go to a review...')}
+            </button>
+          )}
           <div className="flex gap-3">
             <button
               className="button button-secondary"
@@ -397,11 +473,20 @@ export function HandlePublication({ publication }: Props) {
             </button>
             <Tooltip
               hideTooltip={resourcesToReview.every((r) => r.reviewed)}
-              tooltip={t("It's required to review all resources")}
+              tooltip={
+                invalidEntities.length
+                  ? t(
+                      "Request can't be approved as some conversations are unpublished",
+                    )
+                  : t("It's required to review all resources")
+              }
             >
               <button
                 className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={!resourcesToReview.every((r) => r.reviewed)}
+                disabled={
+                  !resourcesToReview.every((r) => r.reviewed) ||
+                  !!invalidEntities.length
+                }
                 onClick={() =>
                   dispatch(
                     PublicationActions.approvePublication({

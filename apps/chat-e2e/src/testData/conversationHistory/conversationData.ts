@@ -176,9 +176,12 @@ export class ConversationData extends FolderData {
     return defaultConversation;
   }
 
-  public prepareDefaultReplayConversation(conversation: Conversation) {
+  public prepareDefaultReplayConversation(
+    conversation: Conversation,
+    replayIndex?: number,
+  ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    return this.fillReplayData(conversation, userMessages!);
+    return this.fillReplayData(conversation, userMessages!, replayIndex);
   }
 
   public preparePartiallyReplayedStagedConversation(
@@ -203,12 +206,15 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
+  public preparePartiallyReplayedConversation(
+    conversation: Conversation,
+    replayIndex?: number,
+  ) {
     const defaultReplayConversation =
       this.prepareDefaultReplayConversation(conversation);
-    const assistantMessages = conversation.messages.find(
-      (m) => m.role === 'assistant',
-    );
+    const assistantMessages = replayIndex
+      ? conversation.messages[replayIndex + 2]
+      : conversation.messages.findLast((m) => m.role === 'assistant');
     assistantMessages!.content = 'partial response';
     defaultReplayConversation.messages = conversation.messages;
     return defaultReplayConversation;
@@ -563,6 +569,53 @@ export class ConversationData extends FolderData {
       .build();
   }
 
+  public prepareConversationWithStagesInResponse(
+    model: DialAIEntityModel | string,
+    stagesCount: number,
+  ) {
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'stages request',
+      model: modelToUse,
+      settings: settings,
+    };
+
+    const stages: Stage[] = [];
+    for (let i = 0; i < stagesCount; i++) {
+      const stage: Stage = {
+        index: i,
+        name: `stage ${i}`,
+        status: 'completed',
+        content: 'stage content',
+      };
+      stages.push(stage);
+    }
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'response with stages',
+      model: modelToUse,
+      custom_content: {
+        stages: stages,
+      },
+      settings: settings,
+    };
+    const name = GeneratorUtil.randomString(10);
+    return this.conversationBuilder
+      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withName(name)
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
   public getAttachmentData(attachmentUrl: string) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     return {
@@ -604,6 +657,7 @@ export class ConversationData extends FolderData {
   private fillReplayData(
     conversation: Conversation,
     userMessages: Message[],
+    replayIndex?: number,
   ): Conversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
@@ -613,7 +667,8 @@ export class ConversationData extends FolderData {
       replayConversation.replay = defaultReplay;
     }
     replayConversation.replay.isReplay = true;
-    replayConversation.replay.activeReplayIndex = 0;
+    replayConversation.replay.activeReplayIndex =
+      replayIndex ?? userMessages.length - 1;
     if (!replayConversation.replay.replayUserMessagesStack) {
       replayConversation.replay.replayUserMessagesStack = [];
     }

@@ -5,10 +5,13 @@ import {
   Publication,
   PublicationInfo,
   PublicationRule,
+  PublishActions,
   ResourceToReview,
 } from '@/src/types/publication';
 
 import * as PublicationSelectors from './publication.selectors';
+
+import xor from 'lodash-es/xor';
 
 export { PublicationSelectors };
 
@@ -18,6 +21,12 @@ export interface PublicationState {
   resourcesToReview: ResourceToReview[];
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;
+  allPublishedWithMeItemsUploaded: {
+    [FeatureType.Chat]: boolean;
+    [FeatureType.Prompt]: boolean;
+    [FeatureType.File]: boolean;
+  };
+  selectedItemsToPublish: string[];
 }
 
 const initialState: PublicationState = {
@@ -26,6 +35,12 @@ const initialState: PublicationState = {
   resourcesToReview: [],
   rules: {},
   isRulesLoading: false,
+  allPublishedWithMeItemsUploaded: {
+    [FeatureType.Chat]: false,
+    [FeatureType.Prompt]: false,
+    [FeatureType.File]: false,
+  },
+  selectedItemsToPublish: [],
 };
 
 export const publicationSlice = createSlice({
@@ -37,7 +52,8 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         name: string;
-        resources: { sourceUrl: string; targetUrl: string }[];
+        action: PublishActions;
+        resources: { sourceUrl?: string; targetUrl: string }[];
         targetFolder: string;
         rules: PublicationRule[];
       }>,
@@ -64,19 +80,21 @@ export const publicationSlice = createSlice({
       );
     },
     uploadPublicationFail: (state) => state,
-    deletePublication: (
-      state,
-      _action: PayloadAction<{
-        name: string;
-        targetFolder: string;
-        resources: { targetUrl: string }[];
-      }>,
-    ) => state,
-    deletePublicationFail: (state) => state,
     uploadPublishedWithMeItems: (
       state,
       _action: PayloadAction<{ featureType: FeatureType }>,
     ) => state,
+    uploadAllPublishedWithMeItems: (
+      state,
+      _action: PayloadAction<{ featureType: FeatureType }>,
+    ) => state,
+    uploadAllPublishedWithMeItemsSuccess: (
+      state,
+      { payload }: PayloadAction<{ featureType: FeatureType }>,
+    ) => {
+      state.allPublishedWithMeItemsUploaded[payload.featureType] = true;
+    },
+    uploadAllPublishedWithMeItemsFail: (state) => state,
     uploadPublishedWithMeItemsFail: (state) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,
@@ -152,6 +170,18 @@ export const publicationSlice = createSlice({
     },
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
+    },
+    selectItemsToPublish: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.selectedItemsToPublish = xor(
+        state.selectedItemsToPublish,
+        payload.ids,
+      );
+    },
+    resetItemsToPublish: (state) => {
+      state.selectedItemsToPublish = [];
     },
   },
 });

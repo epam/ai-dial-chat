@@ -47,6 +47,9 @@ export const modelsSlice = createSlice({
       state.modelsMap = (payload.models as DialAIEntityModel[]).reduce(
         (acc, model) => {
           acc[model.id] = model;
+          if (model.id !== model.reference) {
+            acc[model.reference] = model;
+          }
 
           return acc;
         },

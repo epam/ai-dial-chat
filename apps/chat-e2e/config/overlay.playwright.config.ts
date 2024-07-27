@@ -8,6 +8,9 @@ import { devices } from '@playwright/test';
  * Config used for overlay run
  */
 config.testDir = '../src/tests/overlay';
+config.workers = process.env.E2E_OVERLAY_WORKERS
+  ? +process.env.E2E_OVERLAY_WORKERS
+  : 1;
 config.reporter = [
   ['list'],
   [
@@ -18,6 +21,7 @@ config.reporter = [
     },
   ],
 ];
+config.use!.baseURL = 'http://localhost:4200';
 config.use!.navigationTimeout = 60000;
 config.use!.actionTimeout = 60000;
 
@@ -33,11 +37,17 @@ config.webServer = {
 
 config.projects = [
   {
+    name: 'auth',
+    fullyParallel: true,
+    testMatch: /overlayAuth\.ts/,
+  },
+  {
     name: 'overlay',
     use: {
       ...devices['Desktop Chrome'],
       viewport: { width: 1536, height: 864 },
     },
+    dependencies: ['auth'],
   },
 ];
 
