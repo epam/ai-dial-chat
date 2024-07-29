@@ -40,6 +40,7 @@ import {
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
+  addPausedError,
   getConversationInfoFromId,
   getGeneratedConversationId,
   getNewConversationName,
@@ -1573,14 +1574,23 @@ const cleanMessagesEpic: AppEpic = (action$, state$) =>
       selectedConversations: ConversationsSelectors.selectSelectedConversations(
         state$.value,
       ),
+      selectedModels: ConversationsSelectors.selectSelectedConversationsModels(
+        state$.value,
+      ),
     })),
-    switchMap(({ selectedConversations }) => {
+    switchMap(({ selectedConversations, selectedModels }) => {
       return concat(
         ...selectedConversations.map((conv) => {
           return of(
             ConversationsActions.updateConversation({
               id: conv.id,
-              values: { messages: filterUnfinishedStages(conv.messages) },
+              values: {
+                messages: addPausedError(
+                  conv,
+                  selectedModels,
+                  filterUnfinishedStages(conv.messages),
+                ),
+              },
             }),
           );
         }),
