@@ -27,8 +27,8 @@ export class ChatMessagesAssertion {
   ) {
     const button =
       label === 'more'
-        ? this.chatMessages.showPreviousButton.getElementLocator()
-        : this.chatMessages.hidePreviousButton.getElementLocator();
+        ? this.chatMessages.showMoreButton.getElementLocator()
+        : this.chatMessages.showLessButton.getElementLocator();
     expectedState === 'visible'
       ? await expect
           .soft(button, ExpectedMessages.buttonIsVisible)
@@ -44,8 +44,8 @@ export class ChatMessagesAssertion {
   ) {
     const button =
       label === 'more'
-        ? this.chatMessages.showPreviousButton
-        : this.chatMessages.hidePreviousButton;
+        ? this.chatMessages.showMoreButton
+        : this.chatMessages.showLessButton;
     const color = await button.getComputedStyleProperty(Styles.color);
     expect
       .soft(color[0], ExpectedMessages.elementColorIsValid)
@@ -62,5 +62,12 @@ export class ChatMessagesAssertion {
     expect
       .soft(stagesCount, ExpectedMessages.elementsCountIsValid)
       .toBe(expectedCount);
+  }
+
+  public async assertLastMessageContent(expectedContent: string) {
+    const actualContent = await this.chatMessages.getLastMessageContent();
+    expect
+      .soft(actualContent.toLowerCase(), ExpectedMessages.messageContentIsValid)
+      .toBe(expectedContent);
   }
 }

@@ -17,4 +17,7 @@ export class Prompts extends SideBarEntities {
       return response.request().postDataJSON();
     }
   }
+  public getPromptName(name: string, index?: number) {
+    return this.getEntityName(PromptBarSelectors.promptName, name, index);
+  }
 }

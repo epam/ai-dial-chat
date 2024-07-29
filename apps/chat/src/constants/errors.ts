@@ -26,7 +26,11 @@ export const errorsMessages = {
   noModelsAvailable:
     'You do not have any available models. Please contact your administrator or try to reload the page.',
   importConversationsFailed: 'Import of conversations failed',
+  uploadingConversationsError:
+    'An error occurred while uploading conversations and folders',
   importPromptsFailed: 'Import of prompts failed',
+  uploadingPromptsError:
+    'An error occurred while uploading prompts and folders',
   exportFailed: 'Export failed',
   shareFailed: 'Sharing failed. Please try again later.',
   acceptShareFailed:
@@ -46,10 +50,9 @@ export const errorsMessages = {
   entityPathInvalid: 'The parent folder name is invalid. Please, rename it',
   entityNameInvalidExternal: 'The name is invalid',
   entityPathInvalidExternal: 'The parent folder name is invalid',
-  publicationFailed: 'Publication failed. Please try again later.',
+  publicationFailed: 'Creation of publication failed. Please try again later.',
   publicationsUploadFailed: 'Publications uploading failed.',
   publicationUploadFailed: 'Publication uploading failed.',
-  publicationDeletionFailed: 'Publication deletion failed.',
   publishedItemsUploadFailed: 'Published items uploading failed.',
   publicationApproveFailed: 'Publication approving failed.',
   publicationRejectFailed: 'Publication rejecting failed.',

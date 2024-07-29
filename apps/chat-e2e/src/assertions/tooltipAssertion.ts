@@ -17,4 +17,11 @@ export class TooltipAssertion {
       )
       .toBe(expectedContent);
   }
+
+  public async assertTooltipStyle(property: string, value: string) {
+    const tooltipStyle = await this.tooltip.getComputedStyleProperty(property);
+    expect
+      .soft(tooltipStyle[0], ExpectedMessages.promptVarLabelIsFullyVisible)
+      .toBe(value);
+  }
 }
