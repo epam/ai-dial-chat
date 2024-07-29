@@ -828,7 +828,6 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         folderId: string;
         isChosen: boolean;
-        searchTerm: string;
       }>,
     ) => {
       if (isChosen) {
