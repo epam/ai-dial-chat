@@ -768,7 +768,7 @@ export const selectAllChosenFolderIds = createSelector(
     return folders
       .map((folder) => `${folder.id}/`)
       .filter((folderId) => {
-        const filteredChats = state.conversations.filter(
+        const filteredConversations = state.conversations.filter(
           (conv) =>
             doesEntityContainSearchTerm(conv, state.searchTerm) &&
             conv.id.startsWith(folderId) &&
@@ -783,9 +783,9 @@ export const selectAllChosenFolderIds = createSelector(
           state.chosenFolderIds.some((chosenId) =>
             folderId.startsWith(chosenId),
           ) ||
-          (filteredChats.length &&
-            filteredChats.every((c) =>
-              state.chosenConversationIds.includes(c.id),
+          (filteredConversations.length &&
+            filteredConversations.every((conv) =>
+              state.chosenConversationIds.includes(conv.id),
             ))
         );
       });

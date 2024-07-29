@@ -422,7 +422,7 @@ export const selectAllChosenFolderIds = createSelector(
     return folders
       .map((folder) => `${folder.id}/`)
       .filter((folderId) => {
-        const filteredChats = state.prompts.filter(
+        const filteredPrompts = state.prompts.filter(
           (prompt) =>
             doesEntityContainSearchTerm(prompt, state.searchTerm) &&
             prompt.id.startsWith(folderId) &&
@@ -437,8 +437,10 @@ export const selectAllChosenFolderIds = createSelector(
           state.chosenFolderIds.some((chosenId) =>
             folderId.startsWith(chosenId),
           ) ||
-          (filteredChats.length &&
-            filteredChats.every((c) => state.chosenPromptIds.includes(c.id)))
+          (filteredPrompts.length &&
+            filteredPrompts.every((prompt) =>
+              state.chosenPromptIds.includes(prompt.id),
+            ))
         );
       });
   },
