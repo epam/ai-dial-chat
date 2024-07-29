@@ -769,12 +769,12 @@ export const selectAllChosenFolderIds = createSelector(
       .map((folder) => `${folder.id}/`)
       .filter((folderId) => {
         const filteredChats = state.conversations.filter(
-          (c) =>
-            doesEntityContainSearchTerm(c, state.searchTerm) &&
-            c.id.startsWith(folderId) &&
+          (conv) =>
+            doesEntityContainSearchTerm(conv, state.searchTerm) &&
+            conv.id.startsWith(folderId) &&
             !isEntityOrParentsExternal(
               { conversations: state },
-              c,
+              conv,
               FeatureType.Chat,
             ),
         );

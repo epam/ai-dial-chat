@@ -423,12 +423,12 @@ export const selectAllChosenFolderIds = createSelector(
       .map((folder) => `${folder.id}/`)
       .filter((folderId) => {
         const filteredChats = state.prompts.filter(
-          (c) =>
-            doesEntityContainSearchTerm(c, state.searchTerm) &&
-            c.id.startsWith(folderId) &&
+          (prompt) =>
+            doesEntityContainSearchTerm(prompt, state.searchTerm) &&
+            prompt.id.startsWith(folderId) &&
             !isEntityOrParentsExternal(
               { prompts: state },
-              c,
+              prompt,
               FeatureType.Prompt,
             ),
         );
