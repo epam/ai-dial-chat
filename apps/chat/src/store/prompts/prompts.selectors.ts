@@ -17,9 +17,13 @@ import {
   doesEntityContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
+import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -417,9 +421,26 @@ export const selectAllChosenFolderIds = createSelector(
   (state, folders) => {
     return folders
       .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
-      );
+      .filter((folderId) => {
+        const filteredChats = state.prompts.filter(
+          (c) =>
+            doesEntityContainSearchTerm(c, state.searchTerm) &&
+            c.id.startsWith(folderId) &&
+            !isEntityOrParentsExternal(
+              { prompts: state },
+              c,
+              FeatureType.Prompt,
+            ),
+        );
+
+        return (
+          state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) ||
+          (filteredChats.length &&
+            filteredChats.every((c) => state.chosenPromptIds.includes(c.id)))
+        );
+      });
   },
 );
 

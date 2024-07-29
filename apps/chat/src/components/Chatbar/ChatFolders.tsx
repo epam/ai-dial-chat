@@ -210,9 +210,15 @@ const ChatFolderTemplate = ({
   );
   const handleFolderSelect = useCallback(
     (folderId: string, isChosen: boolean) => {
-      dispatch(ConversationsActions.setChosenFolder({ folderId, isChosen }));
+      dispatch(
+        ConversationsActions.setChosenFolder({
+          folderId,
+          isChosen,
+          searchTerm,
+        }),
+      );
     },
-    [dispatch],
+    [dispatch, searchTerm],
   );
 
   return (
