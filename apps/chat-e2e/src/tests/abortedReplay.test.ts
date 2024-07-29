@@ -42,6 +42,8 @@ dialTest(
     conversationDropdownMenuAssertion,
     tooltipAssertion,
     recentEntitiesAssertion,
+    sendMessage,
+    sendMessageAssertion,
     page,
   }) => {
     setTestIds('EPMRTC-512', 'EPMRTC-3451', 'EPMRTC-1448', 'EPMRTC-1132');
@@ -64,7 +66,7 @@ dialTest(
       await iconApiHelper.getEntityIcon(newRandomModel);
 
     await dialTest.step(
-      'Prepare conversation with different models to replay',
+      'Prepare partially replayed conversation with different models',
       async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
@@ -109,16 +111,17 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify no "Edit", "Delete" icons are available for partial request, no "Clear" button displayed in the header',
+      'Verify no "Edit", "Delete" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',
       async () => {
         await chatMessagesAssertion.assertMessageEditIconState(3, 'hidden');
         await chatMessagesAssertion.assertMessageDeleteIconState(3, 'hidden');
         await chatHeaderAssertion.assertClearButtonState('hidden');
+        await sendMessageAssertion.assertContinueReplayButtonState('visible');
       },
     );
 
     await dialTest.step('Verify tooltip for Replay button', async () => {
-      await chat.proceedGenerating.hoverOver();
+      await sendMessage.proceedGenerating.hoverOver();
       await tooltipAssertion.assertTooltipContent(
         ExpectedConstants.continueReplayLabel,
       );
@@ -209,7 +212,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Edit", "Delete" icons are available for all request, "Clear" button displayed in the header',
+      'Verify "Edit", "Delete" icons are available for all request, "Clear" button displayed in the header, "Continue replay" button is not available',
       async () => {
         for (const request of historyConversation.messages.filter(
           (m) => m.role === 'user',
@@ -224,6 +227,7 @@ dialTest(
           );
         }
         await chatHeaderAssertion.assertClearButtonState('visible');
+        await sendMessageAssertion.assertContinueReplayButtonState('hidden');
       },
     );
   },
@@ -466,6 +470,7 @@ dialTest(
     chatMessages,
     tooltip,
     context,
+    sendMessage,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
     let conversation: Conversation;
@@ -493,8 +498,7 @@ dialTest(
 
     await dialTest.step('Verify error message is displayed', async () => {
       const generatedContent = await chatMessages.getLastMessageContent();
-
-      await chat.proceedGenerating.hoverOver();
+      await sendMessage.proceedGenerating.hoverOver();
       const tooltipContent = await tooltip.getContent();
 
       expect
