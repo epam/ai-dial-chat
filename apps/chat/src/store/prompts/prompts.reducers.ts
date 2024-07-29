@@ -433,12 +433,12 @@ export const promptsSlice = createSlice({
             ...state.prompts
 
               .filter(
-                (p) =>
-                  p.id !== promptId &&
+                (prompt) =>
+                  prompt.id !== promptId &&
                   parentFolderIds.some((parentId) =>
-                    p.id.startsWith(parentId),
+                    prompt.id.startsWith(parentId),
                   ) &&
-                  doesEntityContainSearchTerm(p, state.searchTerm),
+                  doesEntityContainSearchTerm(prompt, state.searchTerm),
               )
               .map((prompt) => prompt.id),
           ]);

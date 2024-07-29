@@ -745,7 +745,7 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         ),
       ]);
       const filteredPrompts = prompts.filter(
-        (p) => !deletedPromptIds.includes(p.id),
+        (prompt) => !deletedPromptIds.includes(prompt.id),
       );
 
       if (promptIds.length) {
@@ -762,7 +762,9 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         of(
           PromptsActions.setFolders({
             folders: folders.filter((folder) =>
-              filteredPrompts.some((p) => p.id.startsWith(`${folder.id}/`)),
+              filteredPrompts.some((prompt) =>
+                prompt.id.startsWith(`${folder.id}/`),
+              ),
             ),
           }),
         ),

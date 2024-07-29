@@ -2685,7 +2685,7 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         ),
       ]);
       const filteredConversations = conversations.filter(
-        (p) => !deletedConversationIds.includes(p.id),
+        (conv) => !deletedConversationIds.includes(conv.id),
       );
 
       if (conversationIds.length) {
@@ -2702,8 +2702,8 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.setFolders({
             folders: folders.filter((folder) =>
-              filteredConversations.some((c) =>
-                c.id.startsWith(`${folder.id}/`),
+              filteredConversations.some((conv) =>
+                conv.id.startsWith(`${folder.id}/`),
               ),
             ),
           }),
