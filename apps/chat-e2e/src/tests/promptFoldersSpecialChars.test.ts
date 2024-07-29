@@ -111,7 +111,7 @@ dialTest(
           { name: expectedFolderName },
           'visible',
         );
-        errorToastAssertion.assertToastIsHidden();
+        await errorToastAssertion.assertToastIsHidden();
       },
     );
 
