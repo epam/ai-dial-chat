@@ -107,10 +107,14 @@ export class ApiUtils {
     }).pipe(
       switchMap((response) => {
         if (!response.ok) {
-          return throwError(() => new Error(response.status + ''));
+          return from(response.text()).pipe(
+            switchMap((errorMessage) =>
+              throwError(() => new Error(errorMessage)),
+            ),
+          );
         }
 
-        return from(response.json());
+        return response.json();
       }),
     );
   }

@@ -4,6 +4,7 @@ import { getToken } from 'next-auth/jwt';
 
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
+import { getResponseErrorMsg } from '@/src/utils/server/get-response-error-msg';
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
@@ -36,11 +37,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     let json: unknown;
     if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch (err) {
-        json = undefined;
-      }
+      json = await getResponseErrorMsg(proxyRes);
 
       throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
