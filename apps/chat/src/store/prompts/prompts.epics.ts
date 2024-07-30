@@ -655,7 +655,28 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const uploadPromptsWithFoldersEpic: AppEpic = (action$, state$) =>
+const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadFoldersIfNotLoaded.match),
+    mergeMap(({ payload }) => {
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const notUploadedPaths = folders
+        .filter(
+          (folder) =>
+            payload.ids.includes(folder.id) &&
+            folder.status !== UploadStatus.LOADED,
+        )
+        .map((folder) => folder.id);
+
+      if (!notUploadedPaths.length) {
+        return EMPTY;
+      }
+
+      return of(PromptsActions.uploadFolders({ ids: notUploadedPaths }));
+    }),
+  );
+
+const uploadFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadFolders.match),
     mergeMap(({ payload }) => {
@@ -790,7 +811,8 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsWithFoldersRecursiveEpic,
-  uploadPromptsWithFoldersEpic,
+  uploadFolderIfNotLoadedEpic,
+  uploadFoldersEpic,
   openFolderEpic,
   toggleFolderEpic,
   saveFoldersEpic,
