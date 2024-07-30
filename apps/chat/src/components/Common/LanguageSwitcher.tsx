@@ -23,7 +23,7 @@ const LanguageSwitcher = () => {
           data-qa="locale-switcher"
         >
           {locale === 'en' && <EnglishLangIcon width={29} height={20} />}
-          {locale === 'zh' && <ChineseLangIcon width={29} height={29} />}
+          {locale === 'cn' && <ChineseLangIcon width={29} height={29} />}
         </div>
       }
     >
@@ -40,7 +40,7 @@ const LanguageSwitcher = () => {
                       {t('English')}
                     </>
                   )}
-                  {language === 'zh' && (
+                  {language === 'cn' && (
                     <>
                       <ChineseLangIcon /> {t('Chinese（中文)')}
                     </>
