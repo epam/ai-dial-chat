@@ -786,9 +786,28 @@ export const selectAllChosenFolderIds = createSelector(
   (state, folders) => {
     return folders
       .map((folder) => `${folder.id}/`)
-      .filter((folderId) =>
-        state.chosenFolderIds.some((chosenId) => folderId.startsWith(chosenId)),
-      );
+      .filter((folderId) => {
+        const filteredConversations = state.conversations.filter(
+          (conv) =>
+            doesEntityContainSearchTerm(conv, state.searchTerm) &&
+            conv.id.startsWith(folderId) &&
+            !isEntityOrParentsExternal(
+              { conversations: state },
+              conv,
+              FeatureType.Chat,
+            ),
+        );
+
+        return (
+          state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) ||
+          (filteredConversations.length &&
+            filteredConversations.every((conv) =>
+              state.chosenConversationIds.includes(conv.id),
+            ))
+        );
+      });
   },
 );
 

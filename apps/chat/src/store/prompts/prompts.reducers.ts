@@ -431,12 +431,16 @@ export const promptsSlice = createSlice({
               (convId: string) => convId !== promptId,
             ),
             ...state.prompts
-              .map((prompt) => prompt.id)
+
               .filter(
-                (prId) =>
-                  prId !== promptId &&
-                  parentFolderIds.some((parentId) => prId.startsWith(parentId)),
-              ),
+                (prompt) =>
+                  prompt.id !== promptId &&
+                  parentFolderIds.some((parentId) =>
+                    prompt.id.startsWith(parentId),
+                  ) &&
+                  doesEntityContainSearchTerm(prompt, state.searchTerm),
+              )
+              .map((prompt) => prompt.id),
           ]);
         } else {
           state.chosenPromptIds = state.chosenPromptIds.filter(
