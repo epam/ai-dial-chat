@@ -1,9 +1,16 @@
-import { EMPTY, Observable, of } from 'rxjs';
-import { catchError, filter, map, switchMap } from 'rxjs/operators';
+import { EMPTY, Observable, concat, forkJoin, iif, of } from 'rxjs';
+import {
+  catchError,
+  filter,
+  map,
+  mergeMap,
+  switchMap,
+  withLatestFrom,
+} from 'rxjs/operators';
 
 import { AnyAction, PayloadAction } from '@reduxjs/toolkit';
 
-import { combineEpics } from 'redux-observable';
+import { combineEpics, ofType } from 'redux-observable';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { translate } from '@/src/utils/app/translation';
@@ -12,7 +19,6 @@ import { ApiUtils } from '@/src/utils/server/api';
 import {
   CreateApplicationModel,
   DeleteApplicationAction,
-  FeaturesData,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 
@@ -66,7 +72,6 @@ const createApplicationEpic = (action$: Observable<AnyAction>) =>
           switchMap((application) =>
             ApplicationService.getOne(application.url).pipe(
               map((response) => {
-                // const featuresData = createFeatures(response.features);                
                 return ModelsActions.addModel({
                   model: {
                     id: ApiUtils.encodeApiUrl(response.name),
@@ -75,11 +80,11 @@ const createApplicationEpic = (action$: Observable<AnyAction>) =>
                     description: response.description,
                     iconUrl: response.icon_url,
                     type: EntityType.Application,
-                    // features: JSON.stringify(featuresData),
                     features: response.features,
                     inputAttachmentTypes: response.input_attachment_types,
                     isDefault: false,
                     maxInputAttachments: response.max_input_attachments,
+                    reference: response.reference,
                   },
                 });
               }),
@@ -152,64 +157,173 @@ const fetchApplicationDetailsFailEpic = (action$: Observable<AnyAction>) =>
 const editApplicationEpic = (action$: Observable<AnyAction>) =>
   action$.pipe(
     filter(ApplicationActions.edit.match),
-    switchMap(
-      ({
-        payload,
-      }: {
-        payload: {
-          applicationData: CreateApplicationModel;
-          applicationName: string;
-        };
-      }) =>
-        ApplicationService.edit(
-          payload.applicationName,
-          payload.applicationData,
-        ).pipe(
-          switchMap((application) =>
-            ApplicationService.getOne(application.url).pipe(
-              map((response) => {
-                // const featuresData = createFeatures(response.features);
-                return ModelsActions.updateModel({
-                  model: {
-                    id: ApiUtils.encodeApiUrl(response.name),
-                    name: response.display_name,
-                    version: response.display_version,
-                    description: response.description,
-                    iconUrl: response.icon_url,
-                    type: EntityType.Application,
-                    // features: JSON.stringify(featuresData),
-                    features: response.features,
-                    inputAttachmentTypes: response.input_attachment_types,
-                    isDefault: false,
-                    maxInputAttachments: response.max_input_attachments,
-                  },
-                });
-              }),
-            ),
-          ),
-          catchError((err) => {
-            console.error(err);
-            return of(ApplicationActions.editFail());
-          }),
-        ),
+    switchMap(({ payload }: { payload: { applicationData: CreateApplicationModel; oldApplicationName: string; }; }) => {
+
+      const move$ = iif(
+          () => payload.oldApplicationName !== payload.applicationData.display_name,
+          ApplicationService.move({
+              sourceUrl: payload.oldApplicationName,
+              destinationUrl: payload.applicationData.display_name,
+              overwrite: false,
+          }).pipe(catchError((err) => {
+            console.error('Move failed', err);
+            return EMPTY;
+          })),
+          of(payload),
+      );
+
+      const edit$ = ApplicationService.edit(payload.applicationData).pipe(
+        catchError(err => {
+          console.error('Edit failed', err);
+          return EMPTY;
+        })
+      );
+
+      return forkJoin({
+        moveResult: move$,
+        editResult: edit$
+      });
+    }),
+    switchMap(({ editResult }) =>
+      ApplicationService.getOne(editResult.url).pipe(
+        map((response) => {
+          return ModelsActions.updateModel({
+            model: {
+              id: ApiUtils.encodeApiUrl(response.name),
+              name: response.display_name,
+              version: response.display_version,
+              description: response.description,
+              iconUrl: response.icon_url,
+              type: EntityType.Application,
+              features: response.features,
+              inputAttachmentTypes: response.input_attachment_types,
+              isDefault: false,
+              maxInputAttachments: response.max_input_attachments,
+              reference: response.name,
+            },
+          });
+        }),
+        catchError((err) => {
+          console.error(`Fetch details failed`, err);
+          return EMPTY;
+        }),
+      )
     ),
   );
+// Edit application epic
+// const editApplicationEpic = (action$: Observable<AnyAction>) =>
+//   action$.pipe(
+//     filter(ApplicationActions.edit.match),
+//     switchMap(
+//       ({
+//         payload,
+//       }: {
+//         payload: {
+//           applicationData: CreateApplicationModel;
+//           oldApplicationName: string;
+//         };
+//       }) =>
+//         {
+//           if(payload.oldApplicationName !== payload.applicationData.display_name){
+//             ApplicationService.move({
+//               "sourceUrl": payload.oldApplicationName,
+//               "destinationUrl": application.url,
+//               "overwrite": false
+//             });
+//           }
+//           return ApplicationService.edit(
+//             payload.applicationData,
+//           ).pipe(
+//             switchMap((application) => {
+//               return ApplicationService.getOne(application.url).pipe(
+//                 map((response) => {
+//                   return ModelsActions.updateModel({
+//                     model: {
+//                       id: ApiUtils.encodeApiUrl(response.name),
+//                       name: response.display_name,
+//                       version: response.display_version,
+//                       description: response.description,
+//                       iconUrl: response.icon_url,
+//                       type: EntityType.Application,
+//                       features: response.features,
+//                       inputAttachmentTypes: response.input_attachment_types,
+//                       isDefault: false,
+//                       maxInputAttachments: response.max_input_attachments,
+//                     },
+//                   });
+//                 }),
+//               )
+//             }
+//             ),
+//             catchError((err) => {
+//               console.error(err);
+//               return of(ApplicationActions.editFail());
+//             }),
+//           )
+//         }
+//     ),
+//   );
 
-  const getApplicationEpic = (action$: Observable<AnyAction>) =>
-    action$.pipe(
-      filter(ApplicationActions.getOne.match),
-      switchMap(({ payload }: { payload: string }) => 
-        ApplicationService.getOne(payload).pipe(
-          map((response) => {
-            return ApplicationActions.getOneSuccess(response);
-          }),
-          catchError((err) => {
-            console.error(err);
-            return of(ApplicationActions.getOneFail());
-          }),
-        ),
+// const editApplicationEpic = (action$: Observable<AnyAction>, state$: any) =>
+//   action$.pipe(
+//     filter(ApplicationActions.edit.match),
+//     withLatestFrom(state$), // combine latest state with the action.
+//     switchMap(([ { payload }, state]) => { // destructure the payload and state from result array.
+
+//       const applicationName = payload.applicationData.display_name;
+
+//       return ApplicationService.edit(
+//           payload.applicationName,
+//           payload.applicationData,
+//         ).pipe(
+//           switchMap((application) =>
+//             ApplicationService.getOne(application.url).pipe(
+//               withLatestFrom(of(state.application.byId[applicationName])),
+//               switchMap(([response, previousApplication]) => {
+
+//                 const newApplication = transformResponse(response); // implement this function based on your response and business need.
+
+//                 // Check if id has changed.
+//                 if (previousApplication && previousApplication.id !== newApplication.id) {
+
+//                   // Replace these action functions with ones from your application.
+//                   return ApplicationActions.moveAndSaveApplication({
+//                     oldId: previousApplication.id,
+//                     newApplication
+//                   });
+//                 }
+//                 else {
+
+//                   // No change in application id.
+//                   return ApplicationActions.saveApplication(newApplication);
+//                 }
+
+//               }),
+//             ),
+//           ),
+//           catchError((err) => {
+//             console.error(err);
+//             return of(ApplicationActions.editFail());
+//           }),
+//         );
+//     })
+//    );
+
+const getApplicationEpic = (action$: Observable<AnyAction>) =>
+  action$.pipe(
+    filter(ApplicationActions.getOne.match),
+    switchMap(({ payload }: { payload: string }) =>
+      ApplicationService.getOne(payload).pipe(
+        map((response) => {
+          return ApplicationActions.getOneSuccess(response);
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ApplicationActions.getOneFail());
+        }),
       ),
-    );
+    ),
+  );
 
 export const ApplicationEpics = combineEpics<AnyAction>(
   createApplicationEpic,

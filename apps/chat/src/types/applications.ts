@@ -21,6 +21,12 @@ export interface CreateApplicationModel {
   defaults?: Record<string, unknown>;
 }
 
+export interface ApplicationMoveModel {
+  sourceUrl: string;
+  destinationUrl: string;
+  overwrite: boolean;
+}
+
 export interface ApplicationListItemModel {
   name: string;
   parentPath: null;
@@ -76,6 +82,7 @@ export interface ApplicationDetailsResponse {
   max_input_attachments: number;
   features: Record<string, string>;
   defaults: Record<string, unknown>;
+  reference: string;
 }
 
 export interface ReadOnlyAppDetailsResponse {

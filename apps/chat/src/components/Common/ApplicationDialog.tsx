@@ -275,7 +275,8 @@ export const ApplicationDialog = ({
     const applicationData = formData;
 
     if (mode === 'edit') {
-      dispatch(ApplicationActions.edit({ applicationName, applicationData }));
+      const oldApplicationName = selectedApplication?.display_name;
+      oldApplicationName && dispatch(ApplicationActions.edit({ oldApplicationName, applicationData }));
     } else {
       dispatch(ApplicationActions.create({ applicationName, applicationData }));
     }

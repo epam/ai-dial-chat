@@ -121,7 +121,7 @@ export const applicationSlice = createSlice({
     edit: (
       state,
       action: PayloadAction<{
-        applicationName: string;
+        oldApplicationName: string;
         applicationData: CreateApplicationModel;
       }>,
     ) => {

@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import {
   ApplicationDetailsResponse,
   ApplicationListResponseModel,
+  ApplicationMoveModel,
   CreateApplicationModel,
   OpenAIApplicationListResponse,
   ReadOnlyAppDetailsResponse,
@@ -28,12 +29,11 @@ export class ApplicationService {
   }
 
   public static edit(
-    applicationName: string,
     applicationData: CreateApplicationModel,
   ): Observable<any> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request(
-      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationName))}`,
+      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationData.display_name))}`,
       {
         method: 'PUT',
         body: JSON.stringify(applicationData),
@@ -41,11 +41,28 @@ export class ApplicationService {
     );
   }
 
+  public static move(
+    data: ApplicationMoveModel,
+  ): Observable<any> {
+    const bucket = BucketService.getBucket();
+    return ApiUtils.request('api/ops/resource/move', {
+      method: 'POST',
+      body: JSON.stringify({
+        sourceUrl: constructPath("applications", bucket, ApiUtils.encodeApiUrl(data.sourceUrl)),
+        destinationUrl: constructPath("applications",bucket, ApiUtils.encodeApiUrl(data.destinationUrl)),
+        overwrite: data.overwrite,             
+      }),
+    });
+  }
+
   public static delete(applicationUrl: string): Observable<any> {
     const bucket = BucketService.getBucket();
-    return ApiUtils.request(`api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationUrl))}`, {
-      method: 'DELETE',
-    });
+    return ApiUtils.request(
+      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationUrl))}`,
+      {
+        method: 'DELETE',
+      },
+    );
   }
 
   public static listing(): Observable<ApplicationListResponseModel[]> {
@@ -60,6 +77,6 @@ export class ApplicationService {
       method: 'GET',
     });
     console.log(oneData, 'oneData');
-    return oneData
+    return oneData;
   }
 }
