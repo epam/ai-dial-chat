@@ -2171,18 +2171,23 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.uploadConversationsByIds.match),
     switchMap(({ payload }) => {
       return forkJoin({
-        uploadedConversations: zip(
-          payload.conversationIds.map((id) =>
-            ConversationService.getConversation(
-              ConversationsSelectors.selectConversation(state$.value, id)!,
-            ).pipe(
-              catchError((err) => {
-                console.error('The selected conversation was not found:', err);
-                return of(null);
-              }),
-            ),
-          ),
-        ),
+        uploadedConversations: payload.conversationIds.length
+          ? zip(
+              payload.conversationIds.map((id) =>
+                ConversationService.getConversation(
+                  ConversationsSelectors.selectConversation(state$.value, id)!,
+                ).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The selected conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                ),
+              ),
+            )
+          : of([]),
         setIds: of(new Set(payload.conversationIds as string[])),
         showLoader: of(payload.showLoader),
       });
