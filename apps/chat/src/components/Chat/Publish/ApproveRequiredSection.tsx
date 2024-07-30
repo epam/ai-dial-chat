@@ -233,7 +233,14 @@ export const ApproveRequiredSection = ({
       isHighlighted={isSectionHighlighted}
       additionalNode={
         publicationsToReviewCount && (
-          <span className="absolute right-4 flex h-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-[10px] font-semibold text-controls-disable">
+          <span
+            className={classNames(
+              'absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded px-[2px] text-[10px] font-semibold text-controls-disable',
+              featureTypes.includes(FeatureType.Chat)
+                ? 'bg-accent-secondary'
+                : 'bg-accent-tertiary',
+            )}
+          >
             {publicationsToReviewCount}
           </span>
         )
