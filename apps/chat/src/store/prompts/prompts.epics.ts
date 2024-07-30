@@ -519,12 +519,10 @@ const openFolderEpic: AppEpic = (action$, state$) =>
       if (folder?.status === UploadStatus.LOADED) {
         return EMPTY;
       }
-      return concat(
-        of(
-          PromptsActions.uploadChildPromptsWithFolders({
-            ids: [payload.id],
-          }),
-        ),
+      return of(
+        PromptsActions.uploadChildPromptsWithFolders({
+          ids: [payload.id],
+        }),
       );
     }),
   );
@@ -581,6 +579,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
       PromptService.getPrompts(payload?.path, true).pipe(
         mergeMap((prompts) => {
           const actions: Observable<AnyAction>[] = [];
+          const folders = PromptsSelectors.selectFolders(state$.value);
           const paths = uniq(
             prompts.flatMap((p) => getParentFolderIdsFromFolderId(p.folderId)),
           );
@@ -599,7 +598,14 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
               concat(
                 of(
                   PromptsActions.uploadChildPromptsWithFoldersSuccess({
-                    parentIds: [...payload.path, ...paths],
+                    parentIds: [
+                      ...folders
+                        .filter((folder) =>
+                          folder.id.startsWith(payload.path || ''),
+                        )
+                        .map((folder) => folder.id),
+                      ...paths,
+                    ],
                     folders: getFoldersFromIds(
                       paths,
                       FolderType.Prompt,
@@ -656,7 +662,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
 const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.uploadChildPromptsWithFolders.match),
-    switchMap(({ payload }) =>
+    mergeMap(({ payload }) =>
       zip(
         payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
       ).pipe(
@@ -664,12 +670,22 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
 
-          return of(
-            PromptsActions.uploadChildPromptsWithFoldersSuccess({
-              parentIds: payload.ids,
-              folders,
-              prompts,
-            }),
+          return concat(
+            of(
+              PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                parentIds: payload.ids,
+                folders,
+                prompts,
+              }),
+            ),
+            ...payload.ids.map((id) =>
+              of(
+                PromptsActions.updateFolder({
+                  folderId: id,
+                  values: { status: UploadStatus.LOADED },
+                }),
+              ),
+            ),
           );
         }),
         catchError((err) => {
