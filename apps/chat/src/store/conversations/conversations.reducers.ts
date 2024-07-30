@@ -794,14 +794,15 @@ export const conversationsSlice = createSlice({
               (convId: string) => convId !== conversationId,
             ),
             ...state.conversations
-              .map((conv) => conv.id)
               .filter(
-                (convId) =>
-                  convId !== conversationId &&
+                (conv) =>
+                  conv.id !== conversationId &&
                   parentFolderIds.some((parentId) =>
-                    convId.startsWith(parentId),
-                  ),
-              ),
+                    conv.id.startsWith(parentId),
+                  ) &&
+                  doesEntityContainSearchTerm(conv, state.searchTerm),
+              )
+              .map((conv) => conv.id),
           ]);
         } else {
           state.chosenConversationIds = state.chosenConversationIds.filter(
@@ -836,7 +837,10 @@ export const conversationsSlice = createSlice({
       state,
       {
         payload: { folderId, isChosen },
-      }: PayloadAction<{ folderId: string; isChosen: boolean }>,
+      }: PayloadAction<{
+        folderId: string;
+        isChosen: boolean;
+      }>,
     ) => {
       if (isChosen) {
         const parentFolderIds = state.chosenFolderIds.filter(
@@ -861,12 +865,14 @@ export const conversationsSlice = createSlice({
             (convId: string) => !convId.startsWith(folderId),
           ),
           ...state.conversations
-            .map((conv) => conv.id)
             .filter(
-              (convId) =>
-                !convId.startsWith(folderId) &&
-                parentFolderIds.some((parentId) => convId.startsWith(parentId)),
-            ),
+              (conv) =>
+                !conv.id.startsWith(folderId) &&
+                parentFolderIds.some((parentId) =>
+                  conv.id.startsWith(parentId),
+                ),
+            )
+            .map((c) => c.id),
         ]);
       } else {
         state.chosenConversationIds = state.chosenConversationIds.filter(
