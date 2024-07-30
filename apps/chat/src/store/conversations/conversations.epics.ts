@@ -2420,7 +2420,6 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
       ConversationService.getConversations(payload?.path, true).pipe(
         mergeMap((conversations) => {
           const actions: Observable<AnyAction>[] = [];
-          const folders = ConversationsSelectors.selectFolders(state$.value);
           const paths = uniq(
             conversations.flatMap((c) =>
               getParentFolderIdsFromFolderId(c.folderId),
@@ -2446,14 +2445,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                 of(
                   ConversationsActions.uploadChildConversationsWithFoldersSuccess(
                     {
-                      parentIds: [
-                        ...folders
-                          .filter((folder) =>
-                            folder.id.startsWith(payload.path || ''),
-                          )
-                          .map((folder) => folder.id),
-                        ...paths,
-                      ],
+                      parentIds: [...payload.path, ...paths],
                       folders: getFoldersFromIds(
                         paths,
                         FolderType.Chat,
@@ -2574,20 +2566,28 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$) =>
+const openFolderEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
         UIActions.openFolder.match(action) &&
         action.payload.featureType === FeatureType.Chat,
     ),
-    switchMap(({ payload }) =>
-      of(
+    switchMap(({ payload }) => {
+      const folder = ConversationsSelectors.selectFolders(state$.value).find(
+        (f) => f.id === payload.id,
+      );
+
+      if (folder?.status === UploadStatus.LOADED) {
+        return EMPTY;
+      }
+
+      return of(
         ConversationsActions.uploadFolders({
           ids: [payload.id],
         }),
-      ),
-    ),
+      );
+    }),
   );
 
 const getChartAttachmentEpic: AppEpic = (action$) =>
