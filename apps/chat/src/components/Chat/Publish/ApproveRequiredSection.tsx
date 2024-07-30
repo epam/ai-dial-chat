@@ -232,7 +232,7 @@ export const ApproveRequiredSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
       additionalNode={
-        publicationsToReviewCount && (
+        !!publicationsToReviewCount && (
           <span
             className={classNames(
               'absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded px-[2px] text-[10px] font-semibold text-controls-disable',
