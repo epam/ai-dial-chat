@@ -31,6 +31,7 @@ import { FooterAssertion } from '@/src/assertions/footerAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
+import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { RecentEntitiesAssertion } from '@/src/assertions/recentEntitiesAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -191,6 +192,7 @@ const dialTest = test.extend<
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion;
     errorToastAssertion: ErrorToastAssertion;
+    promptModalAssertion: PromptModalAssertion;
     tooltipAssertion: TooltipAssertion;
     confirmationDialogAssertion: ConfirmationDialogAssertion;
     chatBarAssertion: SideBarAssertion;
@@ -632,6 +634,10 @@ const dialTest = test.extend<
   errorToastAssertion: async ({ errorToast }, use) => {
     const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
     await use(promptErrorToastAssertion);
+  },
+  promptModalAssertion: async ({ promptModalDialog }, use) => {
+    const promptModalAssertion = new PromptModalAssertion(promptModalDialog);
+    await use(promptModalAssertion);
   },
   tooltipAssertion: async ({ tooltip }, use) => {
     const tooltipAssertion = new TooltipAssertion(tooltip);
