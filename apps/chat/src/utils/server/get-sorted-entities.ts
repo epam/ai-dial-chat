@@ -170,6 +170,7 @@ export const getSortedEntities = async (token: JWT | null) => {
         truncatePrompt: entity.features.truncate_prompt || false,
         urlAttachments: entity.features.url_attachments || false,
         folderAttachments: entity.features.folder_attachments || false,
+        allowResume: entity.features.allowResume || true,
       },
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,

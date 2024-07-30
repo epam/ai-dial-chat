@@ -245,7 +245,7 @@ export const addPausedError = (
 ): Message[] => {
   if (
     models.every(
-      (m) => m.type === EntityType.Model && !conversation.selectedAddons.length,
+      (m) => m.features?.allowResume && !conversation.selectedAddons.length,
     )
   ) {
     return messages;
