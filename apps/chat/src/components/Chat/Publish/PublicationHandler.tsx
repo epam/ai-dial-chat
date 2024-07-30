@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -301,6 +303,9 @@ export function PublicationHandler({ publication }: Props) {
   const invalidEntities = nonExistentEntities.filter((entity) =>
     publication.resources.some((r) => r.reviewUrl === entity.id),
   );
+  const isOnlyFilesPublication = publication.resources.every((resource) =>
+    isFileId(resource.reviewUrl),
+  );
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -425,7 +430,12 @@ export function PublicationHandler({ publication }: Props) {
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4">
+        <div
+          className={classNames(
+            'flex w-full items-center gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4',
+            isOnlyFilesPublication ? 'justify-end' : 'justify-between',
+          )}
+        >
           {invalidEntities.length ? (
             <div className="flex items-center gap-3">
               <IconExclamationCircle
@@ -449,14 +459,16 @@ export function PublicationHandler({ publication }: Props) {
               </p>
             </div>
           ) : (
-            <button
-              className="text-accent-primary"
-              onClick={handlePublicationReview}
-            >
-              {resourcesToReview.some((r) => r.reviewed)
-                ? t('Continue review...')
-                : t('Go to a review...')}
-            </button>
+            !isOnlyFilesPublication && (
+              <button
+                className="text-accent-primary"
+                onClick={handlePublicationReview}
+              >
+                {resourcesToReview.some((r) => r.reviewed)
+                  ? t('Continue review...')
+                  : t('Go to a review...')}
+              </button>
+            )
           )}
           <div className="flex gap-3">
             <button

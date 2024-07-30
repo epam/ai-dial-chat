@@ -257,7 +257,7 @@ export const FilePublicationResources = ({
                 <FilesRow
                   {...props}
                   itemComponentClassNames={classNames(
-                    'w-full',
+                    'w-full truncate',
                     props.itemComponentClassNames,
                   )}
                 />
