@@ -313,7 +313,7 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
   return (
     <FeatureContainer>
       {onSelect && (
-        <div className={'relative flex size-[18px] shrink-0'}>
+        <div className="relative flex size-[18px] shrink-0">
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
