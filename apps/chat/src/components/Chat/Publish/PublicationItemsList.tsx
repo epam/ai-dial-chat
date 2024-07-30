@@ -1,8 +1,12 @@
+import { IconDownload } from '@tabler/icons-react';
 import { useCallback, useEffect } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
+
+import { constructPath } from '@/src/utils/app/file';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { Entity, FeatureType } from '@/src/types/common';
@@ -93,94 +97,114 @@ export function PublicationItemsList({
     >
       {(type === SharingType.Conversation ||
         type === SharingType.ConversationFolder) && (
-        <CollapsibleSection
-          togglerClassName="!text-sm !text-primary"
-          name={t('Conversations')}
-          openByDefault
-          className="!pl-0"
-          dataQa="conversations-to-send-request"
-        >
-          {type === SharingType.Conversation ? (
-            <ConversationRow
-              onSelect={handleSelect}
-              itemComponentClassNames={classNames(
-                'group/conversation-item cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
-              item={entity as ConversationInfo}
-              level={0}
-              isChosen={chosenItemsIds.some((id) => id === entity.id)}
-            />
-          ) : (
-            <Folder
-              noCaretIcon
-              level={0}
-              currentFolder={entity as FolderInterface}
-              allFolders={conversationFolders.filter((f) =>
-                entities.some((item) => item.id.startsWith(`${f.id}/`)),
-              )}
-              searchTerm={''}
-              openedFoldersIds={conversationFolders.map((f) => f.id)}
-              onSelectFolder={(folderId) => {
-                handleSelect(
-                  entities
-                    .filter(
-                      (e) =>
-                        e.id.startsWith(folderId) &&
-                        (!partialChosenFolderIds.includes(folderId) ||
-                          !chosenItemsIds.includes(e.id)),
-                    )
-                    .map((e) => e.id),
-                );
-              }}
-              allItems={entities}
-              itemComponent={({ item, ...props }) => (
-                <ConversationRow
-                  {...props}
-                  item={item as ConversationInfo}
-                  onSelect={handleSelect}
-                  isChosen={chosenItemsIds.some((id) => id === item.id)}
-                />
-              )}
-              featureType={FeatureType.Chat}
-              folderClassName="h-[38px]"
-              itemComponentClassNames={classNames(
-                'group/conversation-item cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
-              additionalItemData={{
-                partialSelectedFolderIds: partialChosenFolderIds,
-                selectedFolderIds: fullyChosenFolderIds,
-              }}
-              showTooltip
-              canSelectFolders
-              isSelectAlwaysVisible
-            />
-          )}
-        </CollapsibleSection>
-      )}
-      {!!files.length && (
-        <CollapsibleSection
-          togglerClassName="!text-sm !text-primary"
-          name={t('Files')}
-          openByDefault
-          dataQa="files-to-send-request"
-          className="!pl-0"
-        >
-          {files.map((f) => (
-            <FilesRow
-              itemComponentClassNames={classNames(
-                'group/file-item cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
-              key={f.id}
-              item={f}
-              level={0}
-              onSelect={handleSelect}
-              isChosen={chosenItemsIds.some((id) => id === f.id)}
-            />
-          ))}
-        </CollapsibleSection>
+        <>
+          <CollapsibleSection
+            togglerClassName="!text-sm !text-primary"
+            name={t('Conversations')}
+            openByDefault
+            className="!pl-0"
+            dataQa="conversations-to-send-request"
+          >
+            {type === SharingType.Conversation ? (
+              <ConversationRow
+                onSelect={handleSelect}
+                itemComponentClassNames={classNames(
+                  'group/conversation-item cursor-pointer',
+                  publishAction === PublishActions.DELETE && 'text-error',
+                )}
+                item={entity as ConversationInfo}
+                level={0}
+                isChosen={chosenItemsIds.some((id) => id === entity.id)}
+              />
+            ) : (
+              <Folder
+                noCaretIcon
+                level={0}
+                currentFolder={entity as FolderInterface}
+                allFolders={conversationFolders.filter((f) =>
+                  entities.some((item) => item.id.startsWith(`${f.id}/`)),
+                )}
+                searchTerm={''}
+                openedFoldersIds={conversationFolders.map((f) => f.id)}
+                onSelectFolder={(folderId) => {
+                  handleSelect(
+                    entities
+                      .filter(
+                        (e) =>
+                          e.id.startsWith(folderId) &&
+                          (!partialChosenFolderIds.includes(folderId) ||
+                            !chosenItemsIds.includes(e.id)),
+                      )
+                      .map((e) => e.id),
+                  );
+                }}
+                allItems={entities}
+                itemComponent={({ item, ...props }) => (
+                  <ConversationRow
+                    {...props}
+                    item={item as ConversationInfo}
+                    onSelect={handleSelect}
+                    isChosen={chosenItemsIds.some((id) => id === item.id)}
+                  />
+                )}
+                featureType={FeatureType.Chat}
+                folderClassName="h-[38px]"
+                itemComponentClassNames={classNames(
+                  'group/conversation-item cursor-pointer',
+                  publishAction === PublishActions.DELETE && 'text-error',
+                )}
+                additionalItemData={{
+                  partialSelectedFolderIds: partialChosenFolderIds,
+                  selectedFolderIds: fullyChosenFolderIds,
+                }}
+                showTooltip
+                canSelectFolders
+                isSelectAlwaysVisible
+              />
+            )}
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            togglerClassName="!text-sm !text-primary"
+            name={t('Files')}
+            openByDefault
+            dataQa="files-to-send-request"
+            className="!pl-0"
+          >
+            {files.length ? (
+              files.map((f) => (
+                <div key={f.id} className="flex items-center gap-2">
+                  <FilesRow
+                    itemComponentClassNames={classNames(
+                      'group/file-item w-full cursor-pointer truncate',
+                      publishAction === PublishActions.DELETE && 'text-error',
+                    )}
+                    key={f.id}
+                    item={f}
+                    level={0}
+                    onSelect={handleSelect}
+                    isChosen={chosenItemsIds.some((id) => id === f.id)}
+                  />
+                  <a
+                    download={f.name}
+                    href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+                  >
+                    <IconDownload
+                      className="shrink-0 text-secondary hover:text-accent-primary"
+                      size={18}
+                    />
+                  </a>
+                </div>
+              ))
+            ) : (
+              <p className="pl-3.5 text-secondary">
+                {type === SharingType.Conversation
+                  ? t("This conversation doesn't contain any files")
+                  : t("These conversations don't contain any files")}
+              </p>
+            )}
+          </CollapsibleSection>
+        </>
       )}
       {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
         <CollapsibleSection
