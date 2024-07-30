@@ -164,17 +164,14 @@ export const uiSlice = createSlice({
       }: PayloadAction<{
         id: string;
         featureType: FeatureType;
-        options?: Partial<{ doNotAutoOpenFolders: boolean }>;
       }>,
     ) => {
-      if (!payload?.options?.doNotAutoOpenFolders) {
-        const featureType = payload.featureType;
-        const openedFoldersIds = state.openedFoldersIds[featureType];
-        const isOpened = openedFoldersIds.includes(payload.id);
+      const featureType = payload.featureType;
+      const openedFoldersIds = state.openedFoldersIds[featureType];
+      const isOpened = openedFoldersIds.includes(payload.id);
 
-        if (!isOpened) {
-          state.openedFoldersIds[featureType].push(payload.id);
-        }
+      if (!isOpened) {
+        state.openedFoldersIds[featureType].push(payload.id);
       }
     },
     closeFolder: (

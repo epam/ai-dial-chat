@@ -505,26 +505,20 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$, state$) =>
+const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
         UIActions.openFolder.match(action) &&
         action.payload.featureType === FeatureType.Prompt,
     ),
-    switchMap(({ payload }) => {
-      const folder = PromptsSelectors.selectFolders(state$.value).find(
-        (f) => f.id === payload.id,
-      );
-      if (folder?.status === UploadStatus.LOADED) {
-        return EMPTY;
-      }
-      return of(
-        PromptsActions.uploadChildPromptsWithFolders({
+    switchMap(({ payload }) =>
+      of(
+        PromptsActions.uploadFolders({
           ids: [payload.id],
         }),
-      );
-    }),
+      ),
+    ),
   );
 
 const duplicatePromptEpic: AppEpic = (action$, state$) =>
@@ -659,11 +653,24 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
+const uploadPromptsWithFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.uploadChildPromptsWithFolders.match),
-    mergeMap(({ payload }) =>
-      zip(
+    filter(PromptsActions.uploadFolders.match),
+    mergeMap(({ payload }) => {
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const notUploadedPaths = folders
+        .filter(
+          (folder) =>
+            payload.ids.includes(folder.id) &&
+            folder.status !== UploadStatus.LOADED,
+        )
+        .map((folder) => folder.id);
+
+      if (!notUploadedPaths.length) {
+        return EMPTY;
+      }
+
+      return zip(
         payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
       ).pipe(
         switchMap((foldersAndEntities) => {
@@ -696,8 +703,8 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
             ),
           );
         }),
-      ),
-    ),
+      );
+    }),
   );
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>

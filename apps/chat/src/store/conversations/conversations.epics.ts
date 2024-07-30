@@ -2339,13 +2339,26 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
+const uploadFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsWithFolders.match),
-    mergeMap(({ payload }) =>
-      zip(
-        payload.ids.map((ids) =>
-          ConversationService.getConversationsAndFolders(ids),
+    filter(ConversationsActions.uploadFolders.match),
+    mergeMap(({ payload }) => {
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const notUploadedPaths = folders
+        .filter(
+          (folder) =>
+            payload.ids.includes(folder.id) &&
+            folder.status !== UploadStatus.LOADED,
+        )
+        .map((folder) => folder.id);
+
+      if (!notUploadedPaths.length) {
+        return EMPTY;
+      }
+
+      return zip(
+        notUploadedPaths.map((id) =>
+          ConversationService.getConversationsAndFolders(id),
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
@@ -2381,8 +2394,8 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
             of(ConversationsActions.uploadConversationsFail()),
           );
         }),
-      ),
-    ),
+      );
+    }),
   );
 
 const uploadConversationsFailEpic: AppEpic = (action$) =>
@@ -2561,27 +2574,20 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$, state$) =>
+const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
         UIActions.openFolder.match(action) &&
         action.payload.featureType === FeatureType.Chat,
     ),
-    switchMap(({ payload }) => {
-      const folder = ConversationsSelectors.selectFolders(state$.value).find(
-        (f) => f.id === payload.id,
-      );
-      if (folder?.status === UploadStatus.LOADED) {
-        return EMPTY;
-      }
-
-      return of(
-        ConversationsActions.uploadConversationsWithFolders({
+    switchMap(({ payload }) =>
+      of(
+        ConversationsActions.uploadFolders({
           ids: [payload.id],
         }),
-      );
-    }),
+      ),
+    ),
   );
 
 const getChartAttachmentEpic: AppEpic = (action$) =>
@@ -2766,7 +2772,7 @@ export const ConversationsEpics = combineEpics(
   duplicateConversationEpic,
   uploadConversationsByIdsEpic,
 
-  uploadConversationsWithFoldersEpic,
+  uploadFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
   uploadConversationsWithContentRecursiveEpic,
   uploadConversationsFailEpic,

@@ -361,7 +361,7 @@ export const promptsSlice = createSlice({
       }
     },
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
-    uploadChildPromptsWithFolders: (
+    uploadFolders: (
       state,
       {
         payload,

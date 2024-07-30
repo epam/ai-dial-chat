@@ -128,17 +128,7 @@ export const ChangePathDialog = ({
         return;
       }
 
-      dispatch(
-        UIActions.openFolder({
-          id: folderId,
-          featureType:
-            type === SharingType.Conversation ||
-            type === SharingType.ConversationFolder
-              ? FeatureType.Chat
-              : FeatureType.Prompt,
-          options: { doNotAutoOpenFolders: true },
-        }),
-      );
+      dispatch(actions.uploadFolders({ ids: [folderId] }));
 
       if (openedFoldersIds.includes(folderId)) {
         const childFoldersIds = getChildAndCurrentFoldersIdsById(
@@ -152,7 +142,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [dispatch, folders, openedFoldersIds, type],
+    [actions, dispatch, folders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(
