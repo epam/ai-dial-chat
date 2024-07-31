@@ -128,6 +128,8 @@ export const ChangePathDialog = ({
         return;
       }
 
+      dispatch(actions.uploadFolders({ ids: [folderId] }));
+
       if (openedFoldersIds.includes(folderId)) {
         const childFoldersIds = getChildAndCurrentFoldersIdsById(
           folderId,
@@ -140,7 +142,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [folders, openedFoldersIds],
+    [actions, dispatch, folders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(

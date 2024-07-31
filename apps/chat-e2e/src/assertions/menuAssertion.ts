@@ -16,11 +16,18 @@ export class MenuAssertion {
       .toEqual(expectedOptions);
   }
 
-  public async assertMenuIncludesOptions(expectedOptions: string[]) {
+  public async assertMenuIncludesOptions(...expectedOptions: string[]) {
     const menuOptions = await this.menu.getAllMenuOptions();
     expect
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
       .toEqual(expect.arrayContaining(expectedOptions));
+  }
+
+  public async assertMenuExcludesOptions(...excludedOptions: string[]) {
+    const menuOptions = await this.menu.getAllMenuOptions();
+    expect
+      .soft(menuOptions, ExpectedMessages.contextMenuOptionIsNotAvailable)
+      .not.toEqual(expect.arrayContaining(excludedOptions));
   }
 
   public async assertMenuState(expectedState: ElementState) {

@@ -2344,13 +2344,34 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
+const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsWithFolders.match),
-    switchMap(({ payload }) =>
+    filter(ConversationsActions.uploadFoldersIfNotLoaded.match),
+    mergeMap(({ payload }) => {
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const notUploadedPaths = folders
+        .filter(
+          (folder) =>
+            payload.ids.includes(folder.id) &&
+            folder.status !== UploadStatus.LOADED,
+        )
+        .map((folder) => folder.id);
+
+      if (!notUploadedPaths.length) {
+        return EMPTY;
+      }
+
+      return of(ConversationsActions.uploadFolders({ ids: notUploadedPaths }));
+    }),
+  );
+
+const uploadFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadFolders.match),
+    mergeMap(({ payload }) =>
       zip(
-        payload.ids.map((ids) =>
-          ConversationService.getConversationsAndFolders(ids),
+        payload.ids.map((id) =>
+          ConversationService.getConversationsAndFolders(id),
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
@@ -2362,8 +2383,16 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
               ConversationsActions.uploadChildConversationsWithFoldersSuccess({
                 parentIds: payload.ids,
                 folders: folders,
-                conversations: conversations,
+                conversations,
               }),
+            ),
+            ...payload.ids.map((id) =>
+              of(
+                ConversationsActions.updateFolder({
+                  folderId: id,
+                  values: { status: UploadStatus.LOADED },
+                }),
+              ),
             ),
           );
         }),
@@ -2550,29 +2579,20 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$, state$) =>
+const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
         UIActions.openFolder.match(action) &&
         action.payload.featureType === FeatureType.Chat,
     ),
-    switchMap(({ payload }) => {
-      const folder = ConversationsSelectors.selectFolders(state$.value).find(
-        (f) => f.id === payload.id,
-      );
-      if (folder?.status === UploadStatus.LOADED) {
-        return EMPTY;
-      }
-
-      return concat(
-        of(
-          ConversationsActions.uploadConversationsWithFolders({
-            ids: [payload.id],
-          }),
-        ),
-      );
-    }),
+    switchMap(({ payload }) =>
+      of(
+        ConversationsActions.uploadFoldersIfNotLoaded({
+          ids: [payload.id],
+        }),
+      ),
+    ),
   );
 
 const getChartAttachmentEpic: AppEpic = (action$) =>
@@ -2757,7 +2777,8 @@ export const ConversationsEpics = combineEpics(
   duplicateConversationEpic,
   uploadConversationsByIdsEpic,
 
-  uploadConversationsWithFoldersEpic,
+  uploadFolderIfNotLoadedEpic,
+  uploadFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
   uploadConversationsWithContentRecursiveEpic,
   uploadConversationsFailEpic,
