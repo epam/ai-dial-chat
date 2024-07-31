@@ -155,15 +155,13 @@ export const modelsSlice = createSlice({
         state.modelsMap[payload.model?.id] = payload.model;
       }
     },
-    deleteModel: (
-      state,
-      { payload }: PayloadAction<{ modelId: string }>
-    ) => {
+    deleteModel: (state, { payload }: PayloadAction<{ modelId: string }>) => {
       state.models = state.models.filter(
-        (model) => model.name !== payload.modelId
+        (model) => model.name !== payload.modelId,
       );
-    
-      const { [payload.modelId]: deletedModel, ...otherModels } = state.modelsMap;
+
+      const { [payload.modelId]: deletedModel, ...otherModels } =
+        state.modelsMap;
       state.modelsMap = otherModels;
     },
   },

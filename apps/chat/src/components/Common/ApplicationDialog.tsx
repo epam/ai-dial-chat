@@ -231,12 +231,10 @@ export const ApplicationDialog = ({
   const validateUrl = (url: string) => {
     var pattern = new RegExp(
       '^(https?:\\/\\/)?' +
-        '(([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' +
+        '(?:(?:[a-z\\d][a-z\\d-]*[a-z\\d])\\.)+[a-z]{2,}|' +
         '((\\d{1,3}\\.){3}\\d{1,3})' +
         '(\\:\\d+)?(\\/?[-a-z\\d%_.~+]*)*' +
-        '(\\?[;&a-z\\d%_.~+=-]*)?' +
-        '(\\#[-a-z\\d_]*)?$',
-      'i',
+        '(\\?[;&a-z\\d%_.~+=-]*)?',
     );
 
     return pattern.test(url);
@@ -276,7 +274,10 @@ export const ApplicationDialog = ({
 
     if (mode === 'edit') {
       const oldApplicationName = selectedApplication?.display_name;
-      oldApplicationName && dispatch(ApplicationActions.edit({ oldApplicationName, applicationData }));
+      oldApplicationName &&
+        dispatch(
+          ApplicationActions.edit({ oldApplicationName, applicationData }),
+        );
     } else {
       dispatch(ApplicationActions.create({ applicationName, applicationData }));
     }
@@ -383,7 +384,11 @@ export const ApplicationDialog = ({
       setMaxAttachments(
         selectedApplication.max_input_attachments.toString() || '',
       );
-      setLocalLogoFile(selectedApplication.icon_url?.substring(selectedApplication.icon_url.lastIndexOf('/') + 1) || '');
+      setLocalLogoFile(
+        selectedApplication.icon_url?.substring(
+          selectedApplication.icon_url.lastIndexOf('/') + 1,
+        ) || '',
+      );
       setDeleteLogo(!selectedApplication.icon_url);
       setCompletionUrl(selectedApplication.endpoint || '');
       setFormData({

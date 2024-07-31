@@ -17,33 +17,49 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import fetch from 'node-fetch';
 
+const getEntityUrlFromSlugs = (
+  dialApiHost: string,
+  req: NextApiRequest,
+): string => {
+  const slugs = Array.isArray(req.query.slug)
+    ? req.query.slug
+    : [req.query.slug];
+
+  if (!slugs || slugs.length === 0) {
+    throw new DialAIError(`No path provided`, '', '', '400');
+  }
+
+  return constructPath(
+    dialApiHost,
+    'v1',
+    'ops',
+    ServerUtils.encodeSlugs(slugs),
+  );
+};
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
-
+  const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   if (!isSessionValid) {
     return;
   }
 
   const token = await getToken({ req });
-  console.log('hi', req.body);
-  
+
   try {
-    const moveRes = await fetch(
-      `${process.env.DIAL_API_HOST}/v1/ops/resource/move`, 
-      {
-        method: 'POST',
-        headers: getApiHeaders({ jwt: token?.access_token as string }),
-        body: JSON.stringify(req.body), 
-      },
-    );
+    const moveRes = await fetch(url, {
+      method: 'POST',
+      headers: getApiHeaders({ jwt: token?.access_token as string }),
+      body: JSON.stringify(req.body),
+    });
 
     if (!moveRes.ok) {
       throw new DialAIError(
         `Move operation failed`,
-        '', 
-        '', 
-        moveRes.status + '', 
+        '',
+        '',
+        moveRes.status + '',
       );
     }
     return res.status(200).send({});

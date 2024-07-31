@@ -28,12 +28,15 @@ export class ApplicationService {
     );
   }
 
-  public static edit(
-    applicationData: CreateApplicationModel,
-  ): Observable<any> {
+  public static edit(applicationData: CreateApplicationModel): Observable<any> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request(
-      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationData.display_name))}`,
+      constructPath(
+        'api',
+        'applications',
+        bucket,
+        ApiUtils.encodeApiUrl(applicationData.display_name),
+      ),
       {
         method: 'PUT',
         body: JSON.stringify(applicationData),
@@ -41,16 +44,22 @@ export class ApplicationService {
     );
   }
 
-  public static move(
-    data: ApplicationMoveModel,
-  ): Observable<any> {
+  public static move(data: ApplicationMoveModel): Observable<any> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request('api/ops/resource/move', {
       method: 'POST',
       body: JSON.stringify({
-        sourceUrl: constructPath("applications", bucket, ApiUtils.encodeApiUrl(data.sourceUrl)),
-        destinationUrl: constructPath("applications",bucket, ApiUtils.encodeApiUrl(data.destinationUrl)),
-        overwrite: data.overwrite,             
+        sourceUrl: constructPath(
+          'applications',
+          bucket,
+          ApiUtils.encodeApiUrl(data.sourceUrl),
+        ),
+        destinationUrl: constructPath(
+          'applications',
+          bucket,
+          ApiUtils.encodeApiUrl(data.destinationUrl),
+        ),
+        overwrite: data.overwrite,
       }),
     });
   }
@@ -58,7 +67,12 @@ export class ApplicationService {
   public static delete(applicationUrl: string): Observable<any> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request(
-      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationUrl))}`,
+      constructPath(
+        'api',
+        'applications',
+        bucket,
+        ApiUtils.encodeApiUrl(applicationUrl),
+      ),
       {
         method: 'DELETE',
       },

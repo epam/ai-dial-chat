@@ -1,4 +1,4 @@
-import { PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction } from '@reduxjs/toolkit';
 
 export interface ApplicationFeatures {
   rate_endpoint?: string;
@@ -98,8 +98,8 @@ export interface ReadOnlyAppDetailsResponse {
   created_at: number;
   updated_at: number;
   features: {
-    [key: string]: boolean; 
-  },
+    [key: string]: boolean;
+  };
   defaults: Record<string, unknown>;
 }
 
@@ -116,7 +116,7 @@ export interface OpenAIApplicationListItem {
   created_at: number;
   updated_at: number;
   features: {
-    [key: string]: boolean; 
+    [key: string]: boolean;
   };
   defaults: Record<string, unknown>;
 }

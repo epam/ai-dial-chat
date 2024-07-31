@@ -157,33 +157,44 @@ const fetchApplicationDetailsFailEpic = (action$: Observable<AnyAction>) =>
 const editApplicationEpic = (action$: Observable<AnyAction>) =>
   action$.pipe(
     filter(ApplicationActions.edit.match),
-    switchMap(({ payload }: { payload: { applicationData: CreateApplicationModel; oldApplicationName: string; }; }) => {
-
-      const move$ = iif(
-          () => payload.oldApplicationName !== payload.applicationData.display_name,
+    switchMap(
+      ({
+        payload,
+      }: {
+        payload: {
+          applicationData: CreateApplicationModel;
+          oldApplicationName: string;
+        };
+      }) => {
+        const move$ = iif(
+          () =>
+            payload.oldApplicationName !== payload.applicationData.display_name,
           ApplicationService.move({
-              sourceUrl: payload.oldApplicationName,
-              destinationUrl: payload.applicationData.display_name,
-              overwrite: false,
-          }).pipe(catchError((err) => {
-            console.error('Move failed', err);
-            return EMPTY;
-          })),
+            sourceUrl: payload.oldApplicationName,
+            destinationUrl: payload.applicationData.display_name,
+            overwrite: false,
+          }).pipe(
+            catchError((err) => {
+              console.error('Move failed', err);
+              return EMPTY;
+            }),
+          ),
           of(payload),
-      );
+        );
 
-      const edit$ = ApplicationService.edit(payload.applicationData).pipe(
-        catchError(err => {
-          console.error('Edit failed', err);
-          return EMPTY;
-        })
-      );
+        const edit$ = ApplicationService.edit(payload.applicationData).pipe(
+          catchError((err) => {
+            console.error('Edit failed', err);
+            return EMPTY;
+          }),
+        );
 
-      return forkJoin({
-        moveResult: move$,
-        editResult: edit$
-      });
-    }),
+        return forkJoin({
+          moveResult: move$,
+          editResult: edit$,
+        });
+      },
+    ),
     switchMap(({ editResult }) =>
       ApplicationService.getOne(editResult.url).pipe(
         map((response) => {
@@ -207,7 +218,7 @@ const editApplicationEpic = (action$: Observable<AnyAction>) =>
           console.error(`Fetch details failed`, err);
           return EMPTY;
         }),
-      )
+      ),
     ),
   );
 // Edit application epic
