@@ -332,7 +332,7 @@ export const updateAttachment = ({
     ...oldAttachment,
     title: newTitle,
     type: newType,
-    url: newAttachmentUrl,
+    url: encodedNewAttachmentUrl,
     reference_url: newReferenceUrl,
   };
   return updatedAttachment;
