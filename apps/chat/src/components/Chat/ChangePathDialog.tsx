@@ -128,7 +128,7 @@ export const ChangePathDialog = ({
         return;
       }
 
-      dispatch(actions.uploadFolders({ ids: [folderId] }));
+      dispatch(actions.uploadFoldersIfNotLoaded({ ids: [folderId] }));
 
       if (openedFoldersIds.includes(folderId)) {
         const childFoldersIds = getChildAndCurrentFoldersIdsById(
