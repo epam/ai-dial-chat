@@ -231,13 +231,15 @@ const ChatFolderTemplate = ({
     [conversations, dispatch, partialChosenFolderIds, selectedConversations],
   );
 
+  const shouldDenyDrop = isExternal || isSelectMode || isConversationsStreaming;
+
   return (
     <>
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Chat}
-        denyDrop={isExternal || isSelectMode || isConversationsStreaming}
+        denyDrop={shouldDenyDrop}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -251,7 +253,7 @@ const ChatFolderTemplate = ({
         allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
-        handleDrop={!isConversationsStreaming ? handleDrop : undefined}
+        handleDrop={!shouldDenyDrop ? handleDrop : undefined}
         onRenameFolder={handleFolderRename}
         onDeleteFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
@@ -269,7 +271,7 @@ const ChatFolderTemplate = ({
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Chat}
-          denyDrop={isExternal || isSelectMode || isConversationsStreaming}
+          denyDrop={shouldDenyDrop}
         />
       )}
     </>
