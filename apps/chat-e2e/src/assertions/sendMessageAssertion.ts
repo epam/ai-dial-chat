@@ -1,4 +1,4 @@
-import { ExpectedMessages } from '@/src/testData';
+import { ElementState, ExpectedMessages } from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { SendMessage } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
@@ -31,5 +31,17 @@ export class SendMessageAssertion {
     expect
       .soft(messageValue, ExpectedMessages.messageContentIsValid)
       .toBe(expectedValue);
+  }
+
+  public async assertContinueReplayButtonState(expectedState: ElementState) {
+    const continueReplayButton =
+      this.sendMessage.proceedGenerating.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(continueReplayButton, ExpectedMessages.buttonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(continueReplayButton, ExpectedMessages.buttonIsNotVisible)
+          .toBeHidden();
   }
 }

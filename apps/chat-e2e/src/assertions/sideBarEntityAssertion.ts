@@ -7,10 +7,10 @@ import {
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
 import { expect } from '@playwright/test';
 
-export class SideBarEntityAssertion {
-  readonly sideBarEntities: SideBarEntities;
+export class SideBarEntityAssertion<T extends SideBarEntities> {
+  readonly sideBarEntities: T;
 
-  constructor(sideBarEntities: SideBarEntities) {
+  constructor(sideBarEntities: T) {
     this.sideBarEntities = sideBarEntities;
   }
 
@@ -83,6 +83,7 @@ export class SideBarEntityAssertion {
           .soft(dotsMenuLocator, ExpectedMessages.dotsMenuIsHidden)
           .toBeHidden();
   }
+
   public async assertEntityBackgroundColor(
     entity: TreeEntity,
     expectedColor: string,
@@ -98,5 +99,15 @@ export class SideBarEntityAssertion {
         ExpectedMessages.entityBackgroundColorIsValid,
       )
       .toBe(expectedColor);
+  }
+
+  public async assertEntityIcon(entity: TreeEntity, expectedIcon: string) {
+    const entityIcon = await this.sideBarEntities.getEntityIcon(
+      entity.name,
+      entity.index,
+    );
+    expect
+      .soft(entityIcon, ExpectedMessages.entityIconIsValid)
+      .toBe(expectedIcon);
   }
 }
