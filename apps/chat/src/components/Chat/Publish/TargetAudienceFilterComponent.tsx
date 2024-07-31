@@ -271,7 +271,6 @@ export function TargetAudienceFilterComponent({
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
           placeholder={t('Enter one or more options...') as string}
-          customClass='md:max-w-[205px]'
         />
       )}
       {/* } */}
