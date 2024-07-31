@@ -40,8 +40,8 @@ export class SettingsModalAssertion {
           .toBeHidden();
   }
 
-  public async assertThemeMenuOptions(expectedOptions: string[]) {
-    await this.menuAssertion.assertMenuIncludesOptions(expectedOptions);
+  public async assertThemeMenuOptions(...expectedOptions: string[]) {
+    await this.menuAssertion.assertMenuIncludesOptions(...expectedOptions);
   }
 
   public async assertFullWidthChatToggleState(expectedState: ToggleState) {

@@ -6,7 +6,6 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 import { ChatMessages } from './chatMessages';
-import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
 import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
@@ -27,23 +26,18 @@ export class Chat extends BaseElement {
   }
 
   private chatHeader!: ChatHeader;
-  private conversationSettings!: ConversationSettings;
   private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
   private compare!: Compare;
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
   private footer!: Footer;
-  public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
+  public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(
       this.page,
       ChatSettingsSelectors.applyChanges,
     ).getNthElement(index ?? 1);
-  public proceedGenerating = new BaseElement(
-    this.page,
-    ChatSelectors.proceedGenerating,
-  );
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
   public notAllowedModelLabel = this.getChildElementBySelector(
     ErrorLabelSelectors.notAllowedModel,
@@ -58,16 +52,6 @@ export class Chat extends BaseElement {
       this.chatHeader = new ChatHeader(this.page, this.rootLocator);
     }
     return this.chatHeader;
-  }
-
-  getConversationSettings(): ConversationSettings {
-    if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(
-        this.page,
-        this.rootLocator,
-      );
-    }
-    return this.conversationSettings;
   }
 
   getSendMessage(): SendMessage {
@@ -204,7 +188,7 @@ export class Chat extends BaseElement {
 
   public async proceedReplaying(waitForAnswer = false) {
     const requestPromise = this.page.waitForRequest(API.chatHost);
-    await this.proceedGenerating.click();
+    await this.getSendMessage().proceedGenerating.click();
     const request = await requestPromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
@@ -236,6 +220,14 @@ export class Chat extends BaseElement {
     return this.sendRequest(
       message,
       () => this.getSendMessage().send(message),
+      waitForAnswer,
+    );
+  }
+
+  public async sendRequestWithPrompt(prompt: string, waitForAnswer = true) {
+    return this.sendRequest(
+      prompt,
+      () => this.getSendMessage().send(),
       waitForAnswer,
     );
   }

@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
+import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
@@ -28,15 +29,16 @@ import {
   ConversationPublicationResources,
   PromptPublicationResources,
 } from './PublicationResources';
+import { ReviewDot } from './ReviewDot';
 
 import some from 'lodash-es/some';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
-  featureType: FeatureType;
+  featureTypes: FeatureType[];
 }
 
-const PublicationItem = ({ publication, featureType }: PublicationProps) => {
+const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   const dispatch = useAppDispatch();
 
   const selectedPublication = useAppSelector(
@@ -44,6 +46,12 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
   );
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
+  );
+  const itemsToReview = useAppSelector((state) =>
+    PublicationSelectors.selectResourcesToReviewByPublicationUrl(
+      state,
+      publication.url,
+    ),
   );
 
   const [isOpen, setIsOpen] = useState(
@@ -78,10 +86,15 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
     );
   }, [dispatch, publication]);
 
-  const ResourcesComponent =
-    featureType === FeatureType.Chat
-      ? ConversationPublicationResources
-      : PromptPublicationResources;
+  const ResourcesComponent = featureTypes.includes(FeatureType.Chat)
+    ? ConversationPublicationResources
+    : featureTypes.includes(FeatureType.Prompt)
+      ? PromptPublicationResources
+      : null;
+
+  const isLeftSidePublication =
+    featureTypes.includes(FeatureType.Chat) ||
+    featureTypes.includes(FeatureType.File);
 
   return (
     <div className="flex flex-col gap-1">
@@ -97,7 +110,26 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
       >
         <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
           <CaretIconComponent isOpen={isOpen} />
-          <IconClipboard className="text-secondary" width={18} height={18} />
+          <div className="relative">
+            <IconClipboard className="text-secondary" width={18} height={18} />
+            {(!itemsToReview
+              .filter((item) => !isFileId(item.reviewUrl))
+              .every((item) => item.reviewed) ||
+              publication.uploadStatus !== UploadStatus.LOADED) && (
+              <ReviewDot
+                className={classNames(
+                  isLeftSidePublication
+                    ? 'group-hover:bg-accent-secondary-alpha'
+                    : 'group-hover:bg-accent-tertiary-alpha',
+                  selectedPublication?.url === publication.url &&
+                    !selectedConversationIds.length &&
+                    (isLeftSidePublication
+                      ? 'bg-accent-secondary-alpha'
+                      : 'bg-accent-tertiary-alpha'),
+                )}
+              />
+            )}
+          </div>
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
@@ -109,7 +141,7 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
           </div>
         </div>
       </div>
-      {publication.resources && (
+      {publication.resources && ResourcesComponent && (
         <ResourcesComponent
           resources={publication.resources}
           isOpen={isOpen}
@@ -122,12 +154,16 @@ const PublicationItem = ({ publication, featureType }: PublicationProps) => {
 
 export const ApproveRequiredSection = ({
   name,
-  featureType,
+  featureTypes,
   displayRootFiles,
   openByDefault,
   dataQa,
+  publicationItems,
+  includeEmptyResourceTypesEmpty,
 }: Omit<FolderSectionProps, 'filters'> & {
-  featureType: FeatureType;
+  featureTypes: FeatureType[];
+  publicationItems: (PublicationInfo & Partial<Publication>)[];
+  includeEmptyResourceTypesEmpty?: boolean;
 }) => {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
@@ -138,13 +174,22 @@ export const ApproveRequiredSection = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
-  const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, featureType),
+  const publicationsToReviewCount = useAppSelector((state) =>
+    PublicationSelectors.selectPublicationsToReviewCount(
+      state,
+      featureTypes,
+      includeEmptyResourceTypesEmpty,
+    ),
   );
 
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
-  const { handleToggle, isExpanded } = useSectionToggle(name, featureType);
+  const { handleToggle, isExpanded } = useSectionToggle(
+    name,
+    featureTypes.includes(FeatureType.Chat)
+      ? FeatureType.Chat
+      : FeatureType.Prompt,
+  );
 
   useEffect(() => {
     const publicationReviewIds = publicationItems.flatMap((p) =>
@@ -153,9 +198,15 @@ export const ApproveRequiredSection = ({
     const shouldBeHighlighted = !!(
       (selectedPublication &&
         !selectedConversationsIds.length &&
-        selectedPublication.resourceTypes.includes(
-          EnumMapper.getBackendResourceTypeByFeatureType(featureType),
-        )) ||
+        (selectedPublication.resourceTypes.some((resourceType) =>
+          featureTypes
+            .map((featureType) =>
+              EnumMapper.getBackendResourceTypeByFeatureType(featureType),
+            )
+            .includes(resourceType),
+        ) ||
+          (!selectedPublication.resourceTypes.length &&
+            includeEmptyResourceTypesEmpty))) ||
       selectedConversationsIds.some((id) => publicationReviewIds.includes(id))
     );
 
@@ -166,10 +217,11 @@ export const ApproveRequiredSection = ({
     displayRootFiles,
     isSectionHighlighted,
     publicationItems,
-    featureType,
+    featureTypes,
     selectedConversations,
     selectedConversationsIds,
     selectedPublication,
+    includeEmptyResourceTypesEmpty,
   ]);
 
   return (
@@ -179,10 +231,18 @@ export const ApproveRequiredSection = ({
       openByDefault={openByDefault ?? isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
+      additionalNode={
+        publicationsToReviewCount && (
+          <span className="absolute right-4 flex h-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-[10px] font-semibold text-controls-disable">
+            {publicationsToReviewCount}
+          </span>
+        )
+      }
+      className="relative gap-0.5"
     >
       {publicationItems.map((p) => (
         <PublicationItem
-          featureType={featureType}
+          featureTypes={featureTypes}
           key={p.url}
           publication={p}
         />

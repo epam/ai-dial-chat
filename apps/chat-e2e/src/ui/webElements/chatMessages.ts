@@ -62,12 +62,12 @@ export class ChatMessages extends BaseElement {
       ChatSelectors.stageLoader,
     );
 
-  public showPreviousButton = this.getChildElementBySelector(
-    ChatSelectors.showPrevious,
+  public showMoreButton = this.getChildElementBySelector(
+    ChatSelectors.showMore,
   );
 
-  public hidePreviousButton = this.getChildElementBySelector(
-    ChatSelectors.hidePrevious,
+  public showLessButton = this.getChildElementBySelector(
+    ChatSelectors.showLess,
   );
 
   public async waitForResponseReceived() {
@@ -510,7 +510,7 @@ export class ChatMessages extends BaseElement {
     MessageInputSelectors.cancelEdit,
   );
 
-  public messageDeleteIcon = (message: string) =>
+  public messageDeleteIcon = (message: string | number) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
   public async openEditMessageMode(message: string | number) {

@@ -7,6 +7,7 @@ export const overlayFrame = '[name="overlay"]';
 export const SendMessageSelectors = {
   message: '[data-qa="message"]',
   stopGenerating: '[data-qa="stop-generating"]',
+  proceedGenerating: '[data-qa="proceed-reply"]',
   sendMessage: '[data-qa="send"]',
   scrollDownButton: '[data-qa="scroll-down-button"]',
 };
@@ -130,7 +131,6 @@ export const ChatSelectors = {
   stageLoader: '.animate-spin',
   loadingCursor: '[data-qa="loading-cursor"]',
   regenerate: '[data-qa="regenerate"]',
-  proceedGenerating: '[data-qa="proceed-reply"]',
   iconAnimation: '.animate-bounce',
   footer: '[data-qa="footer-message"]',
   rate: (rate: Rate) => `[data-qa="${rate}"]`,
@@ -143,8 +143,8 @@ export const ChatSelectors = {
   messageSpinner: '[data-qa="message-input-spinner"]',
   plotlyContainer: '.plot-container',
   maxWidth: '.max-w-none',
-  showPrevious: '[data-qa="show-previous"]',
-  hidePrevious: '[data-qa="hide-previous"]',
+  showMore: '[data-qa="show-more"]',
+  showLess: '[data-qa="show-less"]',
 };
 
 export const TableSelectors = {

@@ -19,18 +19,25 @@ import {
 } from '../ui/webElements';
 
 import { AccountSettingsAssertion } from '@/src/assertions/accountSettingsAssertion';
+import { ApiAssertion } from '@/src/assertions/api/apiAssertion';
+import { ChatAssertion } from '@/src/assertions/chatAssertion';
 import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
 import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
+import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
+import { PromptAssertion } from '@/src/assertions/promptAssertion';
+import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
+import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
+import { RecentEntitiesAssertion } from '@/src/assertions/recentEntitiesAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
-import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
+import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ConversationData } from '@/src/testData';
@@ -182,22 +189,30 @@ const dialTest = test.extend<
     selectUploadFolder: Folders;
     attachedAllFiles: FolderFiles;
     settingsModal: SettingsModal;
-    conversationAssertion: SideBarEntityAssertion;
+    conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion;
     errorToastAssertion: ErrorToastAssertion;
+    promptModalAssertion: PromptModalAssertion;
     tooltipAssertion: TooltipAssertion;
     confirmationDialogAssertion: ConfirmationDialogAssertion;
     chatBarAssertion: SideBarAssertion;
     promptBarFolderAssertion: FolderAssertion;
-    promptAssertion: SideBarEntityAssertion;
+    promptAssertion: PromptAssertion;
     promptBarAssertion: SideBarAssertion;
     accountSettingsAssertion: AccountSettingsAssertion;
     accountDropdownMenuAssertion: MenuAssertion;
+    conversationDropdownMenuAssertion: MenuAssertion;
     settingsModalAssertion: SettingsModalAssertion;
     sendMessageAssertion: SendMessageAssertion;
     chatHeaderAssertion: ChatHeaderAssertion;
     chatMessagesAssertion: ChatMessagesAssertion;
     footerAssertion: FooterAssertion;
+    sendMessagePromptListAssertion: PromptListAssertion;
+    systemPromptListAssertion: PromptListAssertion;
+    variableModalAssertion: VariableModalAssertion;
+    apiAssertion: ApiAssertion;
+    chatAssertion: ChatAssertion;
+    recentEntitiesAssertion: RecentEntitiesAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -335,8 +350,8 @@ const dialTest = test.extend<
     const folderPrompts = promptBar.getFolderPrompts();
     await use(folderPrompts);
   },
-  conversationSettings: async ({ chat }, use) => {
-    const conversationSettings = chat.getConversationSettings();
+  conversationSettings: async ({ appContainer }, use) => {
+    const conversationSettings = appContainer.getConversationSettings();
     await use(conversationSettings);
   },
   talkToSelector: async ({ conversationSettings }, use) => {
@@ -609,8 +624,8 @@ const dialTest = test.extend<
     await use(settingsModal);
   },
   conversationAssertion: async ({ conversations }, use) => {
-    const chatBarAssertion = new SideBarEntityAssertion(conversations);
-    await use(chatBarAssertion);
+    const conversationAssertion = new ConversationAssertion(conversations);
+    await use(conversationAssertion);
   },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
     const chatBarFolderAssertion = new FolderAssertion(folderConversations);
@@ -619,6 +634,10 @@ const dialTest = test.extend<
   errorToastAssertion: async ({ errorToast }, use) => {
     const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
     await use(promptErrorToastAssertion);
+  },
+  promptModalAssertion: async ({ promptModalDialog }, use) => {
+    const promptModalAssertion = new PromptModalAssertion(promptModalDialog);
+    await use(promptModalAssertion);
   },
   tooltipAssertion: async ({ tooltip }, use) => {
     const tooltipAssertion = new TooltipAssertion(tooltip);
@@ -639,7 +658,7 @@ const dialTest = test.extend<
     await use(promptBarFolderAssertion);
   },
   promptAssertion: async ({ prompts }, use) => {
-    const promptAssertion = new SideBarEntityAssertion(prompts);
+    const promptAssertion = new PromptAssertion(prompts);
     await use(promptAssertion);
   },
   promptBarAssertion: async ({ promptBar }, use) => {
@@ -655,6 +674,15 @@ const dialTest = test.extend<
   accountDropdownMenuAssertion: async ({ accountDropdownMenu }, use) => {
     const accountDropdownMenuAssertion = new MenuAssertion(accountDropdownMenu);
     await use(accountDropdownMenuAssertion);
+  },
+  conversationDropdownMenuAssertion: async (
+    { conversationDropdownMenu },
+    use,
+  ) => {
+    const conversationDropdownMenuAssertion = new MenuAssertion(
+      conversationDropdownMenu,
+    );
+    await use(conversationDropdownMenuAssertion);
   },
   settingsModalAssertion: async ({ settingsModal }, use) => {
     const settingsModalAssertion = new SettingsModalAssertion(settingsModal);
@@ -675,6 +703,37 @@ const dialTest = test.extend<
   footerAssertion: async ({ chat }, use) => {
     const footerAssertion = new FooterAssertion(chat.getFooter());
     await use(footerAssertion);
+  },
+  sendMessagePromptListAssertion: async ({ sendMessage }, use) => {
+    const sendMessagePromptListAssertion = new PromptListAssertion(
+      sendMessage.getPromptList(),
+    );
+    await use(sendMessagePromptListAssertion);
+  },
+  systemPromptListAssertion: async ({ entitySettings }, use) => {
+    const systemPromptListAssertion = new PromptListAssertion(
+      entitySettings.getPromptList(),
+    );
+    await use(systemPromptListAssertion);
+  },
+  variableModalAssertion: async ({ variableModalDialog }, use) => {
+    const variableModalAssertion = new VariableModalAssertion(
+      variableModalDialog,
+    );
+    await use(variableModalAssertion);
+  },
+  chatAssertion: async ({ chat }, use) => {
+    const chatAssertion = new ChatAssertion(chat);
+    await use(chatAssertion);
+  },
+  recentEntitiesAssertion: async ({ recentEntities }, use) => {
+    const recentEntitiesAssertion = new RecentEntitiesAssertion(recentEntities);
+    await use(recentEntitiesAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  apiAssertion: async ({}, use) => {
+    const apiAssertion = new ApiAssertion();
+    await use(apiAssertion);
   },
 });
 

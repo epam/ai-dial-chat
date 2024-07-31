@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
@@ -301,6 +303,9 @@ export function PublicationHandler({ publication }: Props) {
   const invalidEntities = nonExistentEntities.filter((entity) =>
     publication.resources.some((r) => r.reviewUrl === entity.id),
   );
+  const isOnlyFilesPublication = publication.resources.every((resource) =>
+    isFileId(resource.reviewUrl),
+  );
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
@@ -322,7 +327,7 @@ export function PublicationHandler({ publication }: Props) {
         <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
           <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
-              <div className="px-3 py-4 md:px-5">
+              <div className="px-3 md:px-5">
                 <label className="flex text-sm" htmlFor="approvePath">
                   {t('Publish to')}
                 </label>
@@ -380,43 +385,57 @@ export function PublicationHandler({ publication }: Props) {
                 />
               </section>
             </div>
-            <div className="overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">
-              {sections.map(
-                ({
-                  dataQa,
-                  sectionName,
-                  Component,
-                  featureType,
-                  showTooltip,
-                }) =>
-                  publication.resourceTypes.includes(
-                    EnumMapper.getBackendResourceTypeByFeatureType(featureType),
-                  ) && (
-                    <CollapsibleSection
-                      key={featureType}
-                      name={sectionName}
-                      openByDefault
-                      dataQa={dataQa}
-                      togglerClassName="!text-sm !text-primary"
-                      sectionTooltip={
-                        <>
-                          {t('Publish')},
-                          <span className="text-error"> {t('Unpublish')}</span>
-                        </>
-                      }
-                    >
-                      <Component
-                        resources={publication.resources}
-                        forViewOnly
-                        showTooltip={showTooltip}
-                      />
-                    </CollapsibleSection>
-                  ),
+            <div className="overflow-y-auto bg-layer-2 px-3 pb-4 pt-1 md:px-5">
+              {publication.resources.length ? (
+                sections.map(
+                  ({
+                    dataQa,
+                    sectionName,
+                    Component,
+                    featureType,
+                    showTooltip,
+                  }) =>
+                    publication.resourceTypes.includes(
+                      EnumMapper.getBackendResourceTypeByFeatureType(
+                        featureType,
+                      ),
+                    ) && (
+                      <CollapsibleSection
+                        key={featureType}
+                        name={sectionName}
+                        openByDefault
+                        dataQa={dataQa}
+                        togglerClassName="!text-sm !text-primary"
+                        sectionTooltip={
+                          <>
+                            {t('Publish')},
+                            <span className="text-error">
+                              {' '}
+                              {t('Unpublish')}
+                            </span>
+                          </>
+                        }
+                      >
+                        <Component
+                          resources={publication.resources}
+                          readonly
+                          showTooltip={showTooltip}
+                        />
+                      </CollapsibleSection>
+                    ),
+                )
+              ) : (
+                <p className="my-3">{t('This publication has no resources')}</p>
               )}
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4">
+        <div
+          className={classNames(
+            'flex w-full items-center gap-5 rounded-t bg-layer-2 px-3 py-4 md:px-4',
+            isOnlyFilesPublication ? 'justify-end' : 'justify-between',
+          )}
+        >
           {invalidEntities.length ? (
             <div className="flex items-center gap-3">
               <IconExclamationCircle
@@ -440,14 +459,16 @@ export function PublicationHandler({ publication }: Props) {
               </p>
             </div>
           ) : (
-            <button
-              className="text-accent-primary"
-              onClick={handlePublicationReview}
-            >
-              {resourcesToReview.some((r) => r.reviewed)
-                ? t('Continue review...')
-                : t('Go to a review...')}
-            </button>
+            !isOnlyFilesPublication && (
+              <button
+                className="text-accent-primary"
+                onClick={handlePublicationReview}
+              >
+                {resourcesToReview.some((r) => r.reviewed)
+                  ? t('Continue review...')
+                  : t('Go to a review...')}
+              </button>
+            )
           )}
           <div className="flex gap-3">
             <button

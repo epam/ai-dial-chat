@@ -176,9 +176,12 @@ export class ConversationData extends FolderData {
     return defaultConversation;
   }
 
-  public prepareDefaultReplayConversation(conversation: Conversation) {
+  public prepareDefaultReplayConversation(
+    conversation: Conversation,
+    replayIndex?: number,
+  ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    return this.fillReplayData(conversation, userMessages!);
+    return this.fillReplayData(conversation, userMessages!, replayIndex);
   }
 
   public preparePartiallyReplayedStagedConversation(
@@ -203,21 +206,43 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
-    const defaultReplayConversation =
-      this.prepareDefaultReplayConversation(conversation);
-    const assistantMessages = conversation.messages.findLast(
-      (m) => m.role === 'assistant',
+  public preparePartiallyReplayedConversation(
+    conversation: Conversation,
+    replayIndex?: number,
+    updatedModel?: DialAIEntityModel,
+  ) {
+    const defaultReplayConversation = this.prepareDefaultReplayConversation(
+      conversation,
+      replayIndex,
     );
-    assistantMessages!.content = 'partial response';
-    defaultReplayConversation.messages = conversation.messages;
+    const partialAssistantMessage = replayIndex
+      ? conversation.messages[replayIndex + 2]
+      : conversation.messages.findLast((m) => m.role === 'assistant');
+    partialAssistantMessage!.content = 'partial response';
+    const partialMessages = JSON.stringify(
+      conversation.messages.slice(
+        0,
+        conversation.messages.indexOf(partialAssistantMessage!) + 1,
+      ),
+    );
+    defaultReplayConversation.messages = JSON.parse(partialMessages);
+    if (updatedModel) {
+      defaultReplayConversation.model.id = updatedModel.id;
+      defaultReplayConversation.messages.forEach(
+        (m) => (m.model!.id = updatedModel.id),
+      );
+      defaultReplayConversation.replay!.replayAsIs = false;
+    }
     return defaultReplayConversation;
   }
 
-  public prepareAddonsConversation(model: DialAIEntityModel, addons: string[]) {
+  public prepareAddonsConversation(
+    model: DialAIEntityModel | string,
+    ...addons: string[]
+  ) {
     const conversation = this.prepareDefaultConversation(model);
     conversation.selectedAddons = addons;
-    conversation.assistantModelId = model.id;
+    conversation.assistantModelId = ModelIds.GPT_4;
     const messageSettings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
@@ -308,7 +333,7 @@ export class ConversationData extends FolderData {
     addons: string[],
     assistantModel?: DialAIEntityModel,
   ) {
-    const conversation = this.prepareAddonsConversation(assistant, addons);
+    const conversation = this.prepareAddonsConversation(assistant, ...addons);
     conversation.assistantModelId = assistantModel
       ? assistantModel.id
       : ModelIds.GPT_4;
@@ -651,6 +676,7 @@ export class ConversationData extends FolderData {
   private fillReplayData(
     conversation: Conversation,
     userMessages: Message[],
+    replayIndex?: number,
   ): Conversation {
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
@@ -660,7 +686,8 @@ export class ConversationData extends FolderData {
       replayConversation.replay = defaultReplay;
     }
     replayConversation.replay.isReplay = true;
-    replayConversation.replay.activeReplayIndex = 0;
+    replayConversation.replay.activeReplayIndex =
+      replayIndex ?? userMessages.length - 1;
     if (!replayConversation.replay.replayUserMessagesStack) {
       replayConversation.replay.replayUserMessagesStack = [];
     }

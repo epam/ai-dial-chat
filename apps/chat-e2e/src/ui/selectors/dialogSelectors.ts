@@ -25,6 +25,9 @@ export const VariableModal = {
   variablePromptName: '[data-qa="variable-prompt-name"]',
   variablePromptDescription: '[data-qa="variable-prompt-descr"]',
   submitVariable: '[data-qa="submit-variable"]',
+  variable: '[data-qa="variable"]',
+  variableAsterisk: '[data-qa="variable-asterisk"]',
+  variableLabel: '[data-qa="variable-label"]',
 };
 
 export const ModelDialog = {
