@@ -6,7 +6,9 @@ export class ChatApiHelper extends BaseApiHelper {
   public async postRequest(conversation: Conversation) {
     const requestData = {
       ...conversation,
-      messages: [conversation.messages[0]],
+      messages: conversation.replay?.replayUserMessagesStack ?? [
+        conversation.messages[0],
+      ],
       modelId: conversation.model.id,
     };
     return this.request.post(API.chatHost, {

@@ -63,6 +63,10 @@ export class SendMessage extends BaseElement {
     SendMessageSelectors.stopGenerating,
   );
 
+  public proceedGenerating = this.getChildElementBySelector(
+    SendMessageSelectors.proceedGenerating,
+  );
+
   public async send(message?: string) {
     await this.fillRequestData(message);
     await this.sendMessageButton.click();
