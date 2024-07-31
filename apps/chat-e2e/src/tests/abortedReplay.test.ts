@@ -101,7 +101,12 @@ dialTest(
     await dialTest.step(
       'Verify no "Share" option is available in dropdown menu for partially replayed conversation',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [
+            firstRandomModel.iconUrl,
+            secondRandomModel.iconUrl,
+          ],
+        });
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
@@ -316,7 +321,9 @@ dialTest(
     await dialTest.step(
       'Open conversation settings, select "Replay as is" option and verify it is highlighted',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [thirdRandomModel.iconUrl, newRandomModel.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
         await chatHeader.openConversationSettingsPopup();
         await recentEntities.replayAsIsButton.click();
