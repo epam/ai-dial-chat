@@ -99,6 +99,9 @@ const ChatFolderTemplate = ({
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
+  const isConversationsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
   const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
     (state) =>
       ConversationsSelectors.selectChosenFolderIds(state, conversations),
@@ -234,7 +237,7 @@ const ChatFolderTemplate = ({
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Chat}
-        denyDrop={isExternal || isSelectMode}
+        denyDrop={isExternal || isSelectMode || isConversationsStreaming}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -248,7 +251,7 @@ const ChatFolderTemplate = ({
         allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
-        handleDrop={handleDrop}
+        handleDrop={!isConversationsStreaming ? handleDrop : undefined}
         onRenameFolder={handleFolderRename}
         onDeleteFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
@@ -266,7 +269,7 @@ const ChatFolderTemplate = ({
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Chat}
-          denyDrop={isExternal || isSelectMode}
+          denyDrop={isExternal || isSelectMode || isConversationsStreaming}
         />
       )}
     </>
