@@ -1,4 +1,4 @@
-import { Observable, from, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -111,10 +111,11 @@ export class ApiUtils {
             switchMap((errorMessage) =>
               throwError(() => new Error(errorMessage)),
             ),
+            catchError(() => throwError(() => new Error(response.status + ''))),
           );
         }
 
-        return response.json();
+        return from(response.json());
       }),
     );
   }
