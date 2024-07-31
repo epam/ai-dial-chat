@@ -15,9 +15,11 @@ import {
   ErrorToast,
   ModelSelector,
   RecentEntities,
+  VariableModalDialog,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
+import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
@@ -53,6 +55,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConfirmationDialog: ConfirmationDialog;
   additionalShareUserPlaybackControl: PlaybackControl;
   additionalShareUserErrorToast: ErrorToast;
+  additionalShareUserVariableModalDialog: VariableModalDialog;
+  additionalShareUserVariableModalAssertion: VariableModalAssertion;
 }>({
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -230,6 +234,23 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserErrorToast =
       additionalShareUserAppContainer.getErrorToast();
     await use(additionalShareUserErrorToast);
+  },
+  additionalShareUserVariableModalDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserVariableModalDialog = new VariableModalDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserVariableModalDialog);
+  },
+  additionalShareUserVariableModalAssertion: async (
+    { additionalShareUserVariableModalDialog },
+    use,
+  ) => {
+    const additionalShareUserVariableModalAssertion =
+      new VariableModalAssertion(additionalShareUserVariableModalDialog);
+    await use(additionalShareUserVariableModalAssertion);
   },
 });
 

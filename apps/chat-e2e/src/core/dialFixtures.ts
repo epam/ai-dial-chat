@@ -25,6 +25,7 @@ import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
 import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
+import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
@@ -213,6 +214,7 @@ const dialTest = test.extend<
     apiAssertion: ApiAssertion;
     chatAssertion: ChatAssertion;
     recentEntitiesAssertion: RecentEntitiesAssertion;
+    entitySettingAssertion: EntitySettingAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -729,6 +731,10 @@ const dialTest = test.extend<
   recentEntitiesAssertion: async ({ recentEntities }, use) => {
     const recentEntitiesAssertion = new RecentEntitiesAssertion(recentEntities);
     await use(recentEntitiesAssertion);
+  },
+  entitySettingAssertion: async ({ entitySettings }, use) => {
+    const entitySettingAssertion = new EntitySettingAssertion(entitySettings);
+    await use(entitySettingAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {
