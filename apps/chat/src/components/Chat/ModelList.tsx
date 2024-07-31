@@ -7,8 +7,6 @@ import {
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 
-import { t } from 'i18next';
-
 import classNames from 'classnames';
 
 import {
