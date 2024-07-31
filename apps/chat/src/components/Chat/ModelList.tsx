@@ -15,10 +15,9 @@ import {
   getOpenAIEntityFullName,
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
+import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils } from '@/src/utils/server/api';
-import { logger } from '@/src/utils/server/logger';
 
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -46,7 +45,6 @@ interface ModelGroupProps {
   disabled?: boolean;
   isReplayAsIs?: boolean;
   openApplicationModal?: () => void;
-  setSelectedApplication?: ({}) => void;
 }
 
 const ModelGroup = ({
@@ -58,11 +56,9 @@ const ModelGroup = ({
   disabled,
   isReplayAsIs,
   openApplicationModal,
-  setSelectedApplication,
 }: ModelGroupProps) => {
   const dispatch = useAppDispatch();
 
-  const [isOpen, setIsOpen] = useState(false);
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
@@ -143,7 +139,7 @@ const ModelGroup = ({
         },
       },
     ],
-    [t, openApplicationModal],
+    [t, openApplicationModal, dispatch, applicationId],
   );
 
   return (
@@ -192,14 +188,13 @@ const ModelGroup = ({
                 onSelect={onSelect}
                 currentEntity={currentEntity}
               />
-              {currentEntity.id.includes('/') ? (
+              {isApplicationId(currentEntity.id) ? (
                 <ContextMenu
                   menuItems={menuItems}
                   TriggerIcon={IconDots}
                   triggerIconSize={18}
                   className="m-0 justify-self-end"
                   featureType={FeatureType.Chat}
-                  isOpen={isOpen}
                   onOpenChange={() => {
                     openApplicationModal;
                   }}

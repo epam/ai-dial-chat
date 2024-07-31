@@ -160,8 +160,7 @@ export const modelsSlice = createSlice({
         (model) => model.name !== payload.modelId,
       );
 
-      const { [payload.modelId]: deletedModel, ...otherModels } =
-        state.modelsMap;
+      const { [payload.modelId]: _, ...otherModels } = state.modelsMap;
       state.modelsMap = otherModels;
     },
   },

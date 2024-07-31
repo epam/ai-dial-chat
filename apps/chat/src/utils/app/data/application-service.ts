@@ -5,8 +5,6 @@ import {
   ApplicationListResponseModel,
   ApplicationMoveModel,
   CreateApplicationModel,
-  OpenAIApplicationListResponse,
-  ReadOnlyAppDetailsResponse,
 } from '@/src/types/applications';
 
 import { ApiUtils } from '../../server/api';
@@ -20,7 +18,12 @@ export class ApplicationService {
   ): Observable<any> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request(
-      `api/applications/${constructPath(bucket, ApiUtils.encodeApiUrl(applicationName))}`,
+      constructPath(
+        'api',
+        'applications',
+        bucket,
+        ApiUtils.encodeApiUrl(applicationName),
+      ),
       {
         method: 'POST',
         body: JSON.stringify(applicationData),
@@ -81,13 +84,16 @@ export class ApplicationService {
 
   public static listing(): Observable<ApplicationListResponseModel[]> {
     const bucket = BucketService.getBucket();
-    return ApiUtils.request(`api/application/listing/${bucket}`, {
-      method: 'GET',
-    });
+    return ApiUtils.request(
+      constructPath('api', 'application', 'listing', bucket),
+      {
+        method: 'GET',
+      },
+    );
   }
 
   public static getOne(appID: string): Observable<ApplicationDetailsResponse> {
-    const oneData = ApiUtils.request(`api/${appID}`, {
+    const oneData = ApiUtils.request(constructPath('api', appID), {
       method: 'GET',
     });
     console.log(oneData, 'oneData');

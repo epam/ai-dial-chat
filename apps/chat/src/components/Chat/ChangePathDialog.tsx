@@ -127,24 +127,6 @@ export const ChangePathDialog = ({
 
         return;
       }
-      const selectedFolder = folders.find((f) => f.id === folderId);
-
-      if (!selectedFolder?.temporary) {
-        if (
-          type === SharingType.Conversation ||
-          type === SharingType.ConversationFolder
-        ) {
-          dispatch(
-            ConversationsActions.uploadConversationsWithFolders({
-              ids: [folderId],
-            }),
-          );
-        } else {
-          dispatch(
-            PromptsActions.uploadChildPromptsWithFolders({ ids: [folderId] }),
-          );
-        }
-      }
 
       dispatch(actions.uploadFolders({ ids: [folderId] }));
 
@@ -222,7 +204,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
       }
     },
-    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t],
+    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t, type],
   );
 
   const handleDeleteFolder = useCallback(

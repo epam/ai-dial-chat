@@ -11,8 +11,6 @@ const selectIsLoading = (state: ApplicationState) => state.loading;
 const selectApplication = (state: ApplicationState) => state.application;
 const selectApplications = (state: ApplicationState) => state.applications;
 const selectHasError = (state: ApplicationState) => state.error;
-const selectReadOnlyAppDetails = (state: ApplicationState) => state.appDetailsReadOnly;
-const selectOpenAIApplications = (state: ApplicationState) => state.openaiApplications;
 const selectApplicationDetail = (state: ApplicationState) => state.appDetails;
 
 export const singleSelectors = {
@@ -20,9 +18,7 @@ export const singleSelectors = {
   application: selectApplication,
   applications: selectApplications,
   hasError: selectHasError,
-  readOnlyAppDetails: selectReadOnlyAppDetails,
-  openAIApplications: selectOpenAIApplications,
-  applicationDetail: selectApplicationDetail,  
+  applicationDetail: selectApplicationDetail,
 };
 
 // createSelector-based Selectors
@@ -31,7 +27,8 @@ export const applicationSelectors = {
   application: createSelector([rootSelector], singleSelectors.application),
   applications: createSelector([rootSelector], singleSelectors.applications),
   hasError: createSelector([rootSelector], singleSelectors.hasError),
-  readOnlyAppDetails: createSelector([rootSelector], singleSelectors.readOnlyAppDetails),
-  openAIApplications: createSelector([rootSelector], singleSelectors.openAIApplications),
-  applicationDetail: createSelector([rootSelector], singleSelectors.applicationDetail),
+  applicationDetail: createSelector(
+    [rootSelector],
+    singleSelectors.applicationDetail,
+  ),
 };

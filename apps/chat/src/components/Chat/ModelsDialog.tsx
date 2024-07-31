@@ -11,9 +11,7 @@ import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
-
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import Modal from '@/src/components/Common/Modal';
@@ -49,7 +47,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const dispatch = useAppDispatch();
   const [applicationModalStatus, setApplicationModalStatus] =
     useState('closed');
   const openAddApplicationModal = () => setApplicationModalStatus('add');
@@ -156,7 +153,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           onChange={(e) => {
             handleSearch(e.target.value);
           }}
-          className="m-0 w-full flex-grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="m-0 w-full grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         ></input>
         <button
           onClick={openAddApplicationModal}

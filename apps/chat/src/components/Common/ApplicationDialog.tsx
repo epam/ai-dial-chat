@@ -73,7 +73,7 @@ export const ApplicationDialog = ({
   const [submitted, setSubmitted] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [versionError, setVersionError] = useState<string | null>(null);
-  const [iconError, setIconError] = useState<string | null>(null);
+  const [iconError] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const [filterParams, setFilterParams] = useState<string[]>([]);
@@ -302,9 +302,13 @@ export const ApplicationDialog = ({
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
+
+        let event = document.createEvent('MouseEvents');
+        event.initEvent('click', true, true);
+        handleSubmit(event as unknown as MouseEvent<HTMLButtonElement>);
       }
     },
-    [formData],
+    [handleSubmit],
   );
 
   const featuresDataOnChangeHandler = (
@@ -441,7 +445,7 @@ export const ApplicationDialog = ({
           </h2>
         </div>
         {loading ? (
-          <div className="flex h-full w-full items-center justify-center">
+          <div className="flex size-full items-center justify-center">
             <Spinner size={48} dataQa="publication-items-spinner" />
           </div>
         ) : (
@@ -590,8 +594,8 @@ export const ApplicationDialog = ({
                   placeholder={
                     t('Enter one or more attachment types') as string
                   }
-                  customClass={classNames(
-                    'flex items-start py-1 pl-0',
+                  className={classNames(
+                    'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
                     inputClassName,
                   )}
                   hasDeleteAll={true}
@@ -709,10 +713,10 @@ export const ApplicationDialog = ({
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
-          // setIsDeleteModalOpen(false);
-          // if (result) {
-          //   handleDelete();
-          // }
+          setIsDeleteModalOpen(false);
+          if (result) {
+            handleDelete();
+          }
         }}
       />
     </>

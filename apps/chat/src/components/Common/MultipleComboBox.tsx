@@ -69,7 +69,6 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
-  customClass?: string;
   hasDeleteAll?: boolean;
   itemHeight?: string;
   className?: string;
@@ -84,7 +83,6 @@ export function MultipleComboBox<T>({
   itemRow,
   selectedItemRow,
   disabled,
-  customClass,
   hasDeleteAll = false,
   itemHeight,
   getItemLabel,

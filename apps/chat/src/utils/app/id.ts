@@ -52,3 +52,6 @@ export const isFileId = (id?: string) => id?.startsWith(`${ApiKeys.Files}/`);
 
 export const getIdWithoutRootPathSegments = (id: string) =>
   id.split('/').slice(2).join('/');
+
+export const isApplicationId = (id?: string) =>
+  id?.startsWith(`${ApiKeys.Applications}/`);

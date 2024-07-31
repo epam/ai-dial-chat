@@ -74,7 +74,7 @@ export function PublishModal({
   publishAction,
   defaultPath,
 }: Props) {
-  const { t } = useTranslation(Translation.Chat);  
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 

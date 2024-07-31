@@ -29,7 +29,7 @@ export interface ApplicationMoveModel {
 
 export interface ApplicationListItemModel {
   name: string;
-  parentPath: null;
+  parentPath?: null;
   bucket: string;
   url: string;
   nodeType: string;
@@ -49,17 +49,6 @@ export interface ApplicationListResponseModel {
   items: string[];
 }
 
-export interface FileModel {
-  name: string;
-  parentPath?: null;
-  bucket: string;
-  url: string;
-  nodeType: string;
-  resourceType: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
 export interface ListResponseModel {
   name: string;
   parentPath?: null;
@@ -67,7 +56,7 @@ export interface ListResponseModel {
   url: string;
   nodeType: string;
   resourceType: string;
-  files: FileModel[];
+  files: ApplicationListItemModel[];
 }
 
 export interface ApplicationDetailsResponse {
@@ -83,47 +72,6 @@ export interface ApplicationDetailsResponse {
   features: Record<string, string>;
   defaults: Record<string, unknown>;
   reference: string;
-}
-
-export interface ReadOnlyAppDetailsResponse {
-  id: string;
-  application: string;
-  display_name: string;
-  display_version: string;
-  icon_url: string;
-  description: string;
-  owner: string;
-  object: string;
-  status: string;
-  created_at: number;
-  updated_at: number;
-  features: {
-    [key: string]: boolean;
-  };
-  defaults: Record<string, unknown>;
-}
-
-export interface OpenAIApplicationListItem {
-  id: string;
-  application: string;
-  display_name: string;
-  display_version: string;
-  icon_url: string;
-  description: string;
-  owner: string;
-  object: string;
-  status: string;
-  created_at: number;
-  updated_at: number;
-  features: {
-    [key: string]: boolean;
-  };
-  defaults: Record<string, unknown>;
-}
-
-export interface OpenAIApplicationListResponse {
-  data: OpenAIApplicationListItem[];
-  object: string;
 }
 
 export interface FeaturesData {

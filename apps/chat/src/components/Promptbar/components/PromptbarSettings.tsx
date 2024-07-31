@@ -1,7 +1,6 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
-  IconLayoutGridAdd,
   IconSquareCheck,
   IconSquareOff,
   IconTrashX,
