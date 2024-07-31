@@ -275,6 +275,7 @@ export class ConversationData extends FolderData {
         (m) => (m.model!.id = updatedModel.id),
       );
       defaultReplayConversation.replay!.replayAsIs = false;
+      defaultReplayConversation.selectedAddons = [];
     }
     defaultReplayConversation.messages
       .filter((m) => m.role === 'user')
