@@ -32,16 +32,12 @@ export class Chat extends BaseElement {
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
   private footer!: Footer;
-  public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
+  public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(
       this.page,
       ChatSettingsSelectors.applyChanges,
     ).getNthElement(index ?? 1);
-  public proceedGenerating = new BaseElement(
-    this.page,
-    ChatSelectors.proceedGenerating,
-  );
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
   public notAllowedModelLabel = this.getChildElementBySelector(
     ErrorLabelSelectors.notAllowedModel,
@@ -192,7 +188,7 @@ export class Chat extends BaseElement {
 
   public async proceedReplaying(waitForAnswer = false) {
     const requestPromise = this.page.waitForRequest(API.chatHost);
-    await this.proceedGenerating.click();
+    await this.getSendMessage().proceedGenerating.click();
     const request = await requestPromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
