@@ -614,10 +614,11 @@ export const conversationsSlice = createSlice({
     playbackCancel: (state) => {
       state.isPlaybackPaused = true;
     },
-    uploadConversationsWithFolders: (
+    uploadFoldersIfNotLoaded: (
       state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
+      _action: PayloadAction<{ ids: string[] }>,
+    ) => state,
+    uploadFolders: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
       state.foldersStatus = UploadStatus.LOADING;
       state.loadingFolderIds = state.loadingFolderIds.concat(
         payload.ids as string[],
