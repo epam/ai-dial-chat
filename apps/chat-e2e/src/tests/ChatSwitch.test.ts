@@ -1,10 +1,10 @@
 import dialTest from '@/src/core/dialFixtures';
-import {API, ExpectedConstants, ExpectedMessages, MenuOptions} from '@/src/testData';
-import {expect} from '@playwright/test';
-import {Conversation} from "@/chat/types/chat";
-import {responseThrottlingTimeout} from "@/src/ui/pages";
-import {Styles} from "@/src/ui/domData";
-import {Cursors} from "@/src/ui/domData";
+import { API, ExpectedConstants, ExpectedMessages, MenuOptions } from '@/src/testData';
+import { expect } from '@playwright/test';
+import { Conversation } from "@/chat/types/chat";
+import { responseThrottlingTimeout } from "@/src/ui/pages";
+import { Styles } from "@/src/ui/domData";
+import { Cursors } from "@/src/ui/domData";
 
 dialTest.only(
   'Another chat is not available while AI is generating a response.\n' +
@@ -67,29 +67,29 @@ dialTest.only(
           .toBe(Cursors.notAllowed);
 
         await conversations.getEntityByName(secondConversation.name).hover();
-        style = await conversations.getConversationName(request).getComputedStyleProperty(Styles.cursor);
+        style = await conversations.getConversationName(secondConversation.name).getComputedStyleProperty(Styles.cursor);
         expect
           .soft(
             style[0],
             ExpectedMessages.sendButtonCursorIsNotAllowed,
           )
-          .toBe(Cursors.notAllowed);;
+          .toBe(Cursors.notAllowed);
       },
     )
-
-
 
     await dialTest.step(
       'Verify another conversation is not selectable during the text generation',
       async () => {
-        await conversations.selectConversation(secondConversation.name);
+        await conversations.getEntityByName(secondConversation.name).click();
+
+        // Assert that the first conversation is still selected
         await expect
           .soft(
             conversations.selectedConversation(request),
             ExpectedMessages.conversationIsSelected,
           )
-          .toBeHidden();
+          .toBeVisible();
       },
-    )
+    );
   },
 );
