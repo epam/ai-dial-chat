@@ -68,7 +68,6 @@ export const getOrUploadConversation = (
     state,
     payload.id,
   ) as Conversation;
-  
 
   if (conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({

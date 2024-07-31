@@ -60,5 +60,6 @@ export const errorsMessages = {
   rulesUploadingFailed: 'Rules uploading failed.',
   createFailed:
     'Failed to create application. Please check your input and try again.',
-  fetchDetailsFailed: "Fetching application details failed. Please try again later.",
+  fetchDetailsFailed:
+    'Fetching application details failed. Please try again later.',
 };

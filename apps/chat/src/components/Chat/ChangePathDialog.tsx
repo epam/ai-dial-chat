@@ -204,7 +204,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
       }
     },
-    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t, type],
+    [actions, dispatch, folders, rootFolderId, openedFoldersIds, t],
   );
 
   const handleDeleteFolder = useCallback(

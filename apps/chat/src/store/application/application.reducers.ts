@@ -84,7 +84,7 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
-    getOne: (state, action: PayloadAction<string>) => {
+    getOne: (state, _action: PayloadAction<string>) => {
       state.loading = true;
     },
     getOneSuccess: (

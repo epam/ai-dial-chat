@@ -428,6 +428,6 @@ export const isAbsoluteUrl = (url: string): boolean => {
     'ftp://',
     'mailto:',
     'telnet://',
-    'api/files'
+    'api/files',
   ].some((prefix) => urlLower.startsWith(prefix));
 };

@@ -10,6 +10,8 @@ import {
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
+import { ApplicationEpics } from './application/application.epics';
+import { applicationSlice } from './application/application.reducers';
 import { authSlice } from './auth/auth.reducers';
 import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
@@ -35,8 +37,6 @@ import { ShareEpics } from './share/share.epics';
 import { shareSlice } from './share/share.reducers';
 import UIEpics from './ui/ui.epics';
 import { uiSlice } from './ui/ui.reducers';
-import { ApplicationEpics } from './application/application.epics';
-import { applicationSlice } from './application/application.reducers';
 
 export const rootEpic = combineEpics(
   ModelsEpics,

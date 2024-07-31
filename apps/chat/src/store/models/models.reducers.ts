@@ -159,9 +159,6 @@ export const modelsSlice = createSlice({
       state.models = state.models.filter(
         (model) => model.name !== payload.modelId,
       );
-
-      const { [payload.modelId]: _, ...otherModels } = state.modelsMap;
-      state.modelsMap = otherModels;
     },
   },
 });

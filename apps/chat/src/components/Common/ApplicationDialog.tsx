@@ -45,8 +45,6 @@ interface Props {
   selectedApplication?: ApplicationDetailsResponse;
 }
 
-interface FormData extends CreateApplicationModel {}
-
 export const ApplicationDialog = ({
   isOpen,
   onClose,
@@ -79,7 +77,7 @@ export const ApplicationDialog = ({
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<CreateApplicationModel>({
     endpoint: '',
     display_name: '',
     display_version: '',
@@ -186,7 +184,7 @@ export const ApplicationDialog = ({
     const value = featuresData.trim();
     try {
       const parsedJson = JSON.parse(value);
-      for (let [key, value] of Object.entries(parsedJson)) {
+      for (const [key, value] of Object.entries(parsedJson)) {
         if (
           typeof key !== 'string' ||
           key.trim() === '' ||
@@ -199,7 +197,7 @@ export const ApplicationDialog = ({
       setFormData({ ...formData, features: parsedJson });
       setFeaturesDataError('');
     } catch (e) {
-      let error = e as Error;
+      const error = e as Error;
       if (error.message === 'Empty Key or Value') {
         setFeaturesDataError('Keys and Values should not be empty');
       } else {
@@ -229,7 +227,7 @@ export const ApplicationDialog = ({
   };
 
   const validateUrl = (url: string) => {
-    var pattern = new RegExp(
+    let pattern = new RegExp(
       '^(https?:\\/\\/)?' +
         '(?:(?:[a-z\\d][a-z\\d-]*[a-z\\d])\\.)+[a-z]{2,}|' +
         '((\\d{1,3}\\.){3}\\d{1,3})' +
@@ -266,25 +264,30 @@ export const ApplicationDialog = ({
     handleUrlValidation(completionUrl);
   };
 
-  const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const applicationName = ApiUtils.encodeApiUrl(name);
-    const applicationData = formData;
+  const handleSubmit = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const applicationName = ApiUtils.encodeApiUrl(name);
+      const applicationData = formData;
 
-    if (mode === 'edit') {
-      const oldApplicationName = selectedApplication?.display_name;
-      oldApplicationName &&
+      if (mode === 'edit') {
+        const oldApplicationName = selectedApplication?.display_name;
+        oldApplicationName &&
+          dispatch(
+            ApplicationActions.edit({ oldApplicationName, applicationData }),
+          );
+      } else {
         dispatch(
-          ApplicationActions.edit({ oldApplicationName, applicationData }),
+          ApplicationActions.create({ applicationName, applicationData }),
         );
-    } else {
-      dispatch(ApplicationActions.create({ applicationName, applicationData }));
-    }
+      }
 
-    handleClose();
-    resetForm();
-  };
+      handleClose();
+      resetForm();
+    },
+    [name, formData, mode, selectedApplication, dispatch, handleClose],
+  );
 
   const handleDelete = () => {
     if (selectedApplication) {
@@ -303,7 +306,7 @@ export const ApplicationDialog = ({
         e.preventDefault();
         e.stopPropagation();
 
-        let event = document.createEvent('MouseEvents');
+        const event = document.createEvent('MouseEvents');
         event.initEvent('click', true, true);
         handleSubmit(event as unknown as MouseEvent<HTMLButtonElement>);
       }
@@ -329,7 +332,7 @@ export const ApplicationDialog = ({
       }
       setFeaturesDataError('');
     } catch (e) {
-      let error = e as Error;
+      const error = e as Error;
       if (error.message === 'Empty JSON') {
         setFeaturesDataError(
           'Features data should have at least one key-value pair',
@@ -598,7 +601,7 @@ export const ApplicationDialog = ({
                     'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
                     inputClassName,
                   )}
-                  hasDeleteAll={true}
+                  hasDeleteAll
                   itemHeight="31"
                 />
               </div>

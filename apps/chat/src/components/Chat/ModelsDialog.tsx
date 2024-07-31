@@ -11,6 +11,7 @@ import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 

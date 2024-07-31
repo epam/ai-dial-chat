@@ -10,6 +10,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
+  ApplicationListItemModel,
   CreateApplicationModel,
   DeleteApplicationAction,
 } from '@/src/types/applications';
@@ -30,15 +31,15 @@ const createApplicationEpic = (action$: Observable<AnyAction>) =>
         payload,
       }: {
         payload: {
-          applicationData: CreateApplicationModel;
           applicationName: string;
+          applicationData: CreateApplicationModel;
         };
       }) =>
         ApplicationService.create(
           payload.applicationName,
           payload.applicationData,
         ).pipe(
-          switchMap((application) =>
+          switchMap((application: ApplicationListItemModel) =>
             ApplicationService.getOne(application.url).pipe(
               map((response) => {
                 return ModelsActions.addModel({
@@ -141,12 +142,13 @@ const editApplicationEpic = (action$: Observable<AnyAction>) =>
           of(payload),
         );
 
-        const edit$ = ApplicationService.edit(payload.applicationData).pipe(
-          catchError((err) => {
-            console.error('Edit failed', err);
-            return EMPTY;
-          }),
-        );
+        const edit$: Observable<ApplicationListItemModel> =
+          ApplicationService.edit(payload.applicationData).pipe(
+            catchError((err) => {
+              console.error('Edit failed', err);
+              return EMPTY;
+            }),
+          );
 
         return forkJoin({
           moveResult: move$,
@@ -154,7 +156,7 @@ const editApplicationEpic = (action$: Observable<AnyAction>) =>
         });
       },
     ),
-    switchMap(({ editResult }) =>
+    switchMap(({ editResult }: { editResult: ApplicationListItemModel }) =>
       ApplicationService.getOne(editResult.url).pipe(
         map((response) => {
           return ModelsActions.updateModel({

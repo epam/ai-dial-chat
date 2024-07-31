@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 
 import {
   ApplicationDetailsResponse,
+  ApplicationListItemModel,
   ApplicationListResponseModel,
   ApplicationMoveModel,
   CreateApplicationModel,
@@ -15,7 +16,7 @@ export class ApplicationService {
   public static create(
     applicationName: string,
     applicationData: CreateApplicationModel,
-  ): Observable<any> {
+  ): Observable<ApplicationListItemModel> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request(
       constructPath(
@@ -31,7 +32,9 @@ export class ApplicationService {
     );
   }
 
-  public static edit(applicationData: CreateApplicationModel): Observable<any> {
+  public static edit(
+    applicationData: CreateApplicationModel,
+  ): Observable<ApplicationListItemModel> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request(
       constructPath(
@@ -47,7 +50,9 @@ export class ApplicationService {
     );
   }
 
-  public static move(data: ApplicationMoveModel): Observable<any> {
+  public static move(
+    data: ApplicationMoveModel,
+  ): Observable<ApplicationMoveModel> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request('api/ops/resource/move', {
       method: 'POST',
@@ -67,7 +72,7 @@ export class ApplicationService {
     });
   }
 
-  public static delete(applicationUrl: string): Observable<any> {
+  public static delete(applicationUrl: string): Observable<string> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request(
       constructPath(
@@ -96,7 +101,6 @@ export class ApplicationService {
     const oneData = ApiUtils.request(constructPath('api', appID), {
       method: 'GET',
     });
-    console.log(oneData, 'oneData');
     return oneData;
   }
 }

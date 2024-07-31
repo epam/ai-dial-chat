@@ -120,14 +120,14 @@ const ModelGroup = ({
         dataQa: 'publish',
         display: true,
         Icon: IconWorldShare,
-        onClick: () => console.log('publish'),
+        // onClick: () => console.log('publish'),
       },
       {
         name: 'Unpublish',
         dataQa: 'unpublish',
         display: false,
         Icon: IconWorldShare,
-        onClick: () => console.log('unpublish'),
+        // onClick: () => console.log('unpublish'),
       },
       {
         name: 'Delete',
@@ -139,7 +139,7 @@ const ModelGroup = ({
         },
       },
     ],
-    [t, openApplicationModal, dispatch, applicationId],
+    [openApplicationModal, dispatch, applicationId],
   );
 
   return (
@@ -195,9 +195,7 @@ const ModelGroup = ({
                   triggerIconSize={18}
                   className="m-0 justify-self-end"
                   featureType={FeatureType.Chat}
-                  onOpenChange={() => {
-                    openApplicationModal;
-                  }}
+                  onOpenChange={() => openApplicationModal}
                 />
               ) : (
                 ''
