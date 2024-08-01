@@ -236,7 +236,8 @@ export function PublishModal({
                       ? FeatureType.Chat
                       : FeatureType.Prompt,
                     trimmedPath,
-                    type === SharingType.ConversationFolder
+                    type === SharingType.ConversationFolder ||
+                      type === SharingType.PromptFolder
                       ? item.id.replace(folderOldPathPartsRegExp, '')
                       : item.id,
                     type,
