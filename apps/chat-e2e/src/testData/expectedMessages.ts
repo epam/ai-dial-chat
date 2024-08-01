@@ -135,6 +135,7 @@ export enum ExpectedMessages {
   chatBarConversationIconIsReplay = 'Chat bar conversation icon is Replay',
   chatBarConversationIconIsNotReplay = 'Chat bar conversation icon is not Replay',
   playbackIconIsSelected = 'Playback icon is selected on Talk to list',
+  playbackIconIsHidden = 'Playback icon is hidden on Talk to list',
   responseLoadingStopped = 'Conversation response stopped',
   responseIsNotLoading = 'Conversation response not loading',
   responseIsLoading = 'Conversation response is loading',

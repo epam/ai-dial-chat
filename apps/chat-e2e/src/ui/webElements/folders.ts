@@ -287,10 +287,13 @@ export class Folders extends BaseElement {
     folderName: string,
     entityName: string,
     folderIndex?: number,
+    entityIndex?: number,
   ) {
-    return this.getFolderEntities(folderName, folderIndex).filter({
-      hasText: entityName,
-    });
+    return this.getFolderEntities(folderName, folderIndex)
+      .filter({
+        hasText: entityName,
+      })
+      .nth(entityIndex ? entityIndex - 1 : 0);
   }
 
   public folderEntityDotsMenu = (folderName: string, entityName: string) => {
@@ -383,22 +386,28 @@ export class Folders extends BaseElement {
   public getFolderEntityCheckbox(
     folderName: string,
     entityName: string,
-    index?: number,
+    folderIndex?: number,
+    entityIndex?: number,
   ) {
-    return this.getFolderEntity(folderName, entityName, index).getByRole(
-      'checkbox',
-    );
+    return this.getFolderEntity(
+      folderName,
+      entityName,
+      folderIndex,
+      entityIndex,
+    ).getByRole('checkbox');
   }
 
   public async getFolderEntityCheckboxState(
     folderName: string,
     entityName: string,
-    index?: number,
+    folderIndex?: number,
+    entityIndex?: number,
   ) {
     return this.getFolderEntityCheckbox(
       folderName,
       entityName,
-      index,
+      folderIndex,
+      entityIndex,
     ).getAttribute(Attributes.dataQA);
   }
 
