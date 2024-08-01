@@ -100,6 +100,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(ConversationsActions.setAllChosenConversations());
         },
+        disabled: isStreaming,
       },
       {
         name: t('Unselect all'),
@@ -109,6 +110,7 @@ export const ChatbarSettings = () => {
           dispatch(ConversationsActions.resetChosenConversations());
         },
         display: isSelectMode,
+        disabled: isStreaming,
       },
       {
         name: t('Create new folder'),
@@ -122,6 +124,7 @@ export const ChatbarSettings = () => {
           );
         },
         display: !isSelectMode,
+        disabled: isStreaming,
       },
       {
         name: t('Import conversations'),
@@ -139,6 +142,7 @@ export const ChatbarSettings = () => {
         dataQa: 'import',
         CustomTriggerRenderer: Import,
         display: !isSelectMode,
+        disabled: isStreaming,
       },
       {
         name: t('Export conversations without attachments'),
@@ -149,6 +153,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(ImportExportActions.exportConversations());
         },
+        disabled: isStreaming,
       },
       {
         name: t(`Delete ${deleteTerm} conversations`),
@@ -158,6 +163,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           setIsClearModalOpen(true);
         },
+        disabled: isStreaming,
       },
       {
         name: t('Compare mode'),

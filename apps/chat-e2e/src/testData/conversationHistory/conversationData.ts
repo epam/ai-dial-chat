@@ -209,21 +209,41 @@ export class ConversationData extends FolderData {
   public preparePartiallyReplayedConversation(
     conversation: Conversation,
     replayIndex?: number,
+    updatedModel?: DialAIEntityModel,
   ) {
-    const defaultReplayConversation =
-      this.prepareDefaultReplayConversation(conversation);
-    const assistantMessages = replayIndex
+    const defaultReplayConversation = this.prepareDefaultReplayConversation(
+      conversation,
+      replayIndex,
+    );
+    const partialAssistantMessage = replayIndex
       ? conversation.messages[replayIndex + 2]
       : conversation.messages.findLast((m) => m.role === 'assistant');
-    assistantMessages!.content = 'partial response';
-    defaultReplayConversation.messages = conversation.messages;
+    partialAssistantMessage!.content = 'partial response';
+    const partialMessages = JSON.stringify(
+      conversation.messages.slice(
+        0,
+        conversation.messages.indexOf(partialAssistantMessage!) + 1,
+      ),
+    );
+    defaultReplayConversation.messages = JSON.parse(partialMessages);
+    if (updatedModel) {
+      defaultReplayConversation.model.id = updatedModel.id;
+      defaultReplayConversation.messages.forEach(
+        (m) => (m.model!.id = updatedModel.id),
+      );
+      defaultReplayConversation.replay!.replayAsIs = false;
+      defaultReplayConversation.selectedAddons = [];
+    }
     return defaultReplayConversation;
   }
 
-  public prepareAddonsConversation(model: DialAIEntityModel, addons: string[]) {
+  public prepareAddonsConversation(
+    model: DialAIEntityModel | string,
+    ...addons: string[]
+  ) {
     const conversation = this.prepareDefaultConversation(model);
     conversation.selectedAddons = addons;
-    conversation.assistantModelId = model.id;
+    conversation.assistantModelId = ModelIds.GPT_4;
     const messageSettings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
@@ -314,7 +334,7 @@ export class ConversationData extends FolderData {
     addons: string[],
     assistantModel?: DialAIEntityModel,
   ) {
-    const conversation = this.prepareAddonsConversation(assistant, addons);
+    const conversation = this.prepareAddonsConversation(assistant, ...addons);
     conversation.assistantModelId = assistantModel
       ? assistantModel.id
       : ModelIds.GPT_4;

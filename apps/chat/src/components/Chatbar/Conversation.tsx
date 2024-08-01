@@ -258,6 +258,9 @@ export const ConversationComponent = ({
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
+  const isConversationsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
   const chosenConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
   );
@@ -366,7 +369,12 @@ export const ConversationComponent = ({
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
-      if (e.dataTransfer && !isExternal && !isSelectMode) {
+      if (
+        e.dataTransfer &&
+        !isExternal &&
+        !isSelectMode &&
+        !isConversationsStreaming
+      ) {
         e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(
           MoveType.Conversation,
@@ -374,7 +382,7 @@ export const ConversationComponent = ({
         );
       }
     },
-    [isExternal, isSelectMode],
+    [isConversationsStreaming, isExternal, isSelectMode],
   );
 
   const handleDelete = useCallback(() => {
@@ -703,7 +711,12 @@ export const ConversationComponent = ({
             }
           }}
           disabled={messageIsStreaming || (isSelectMode && isExternal)}
-          draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
+          draggable={
+            !isExternal &&
+            !isNameOrPathInvalid &&
+            !isSelectMode &&
+            !isConversationsStreaming
+          }
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
           data-qa={isSelected ? 'selected' : null}

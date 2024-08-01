@@ -257,7 +257,7 @@ export const FilePublicationResources = ({
                 <FilesRow
                   {...props}
                   itemComponentClassNames={classNames(
-                    'w-full',
+                    'w-full truncate',
                     props.itemComponentClassNames,
                   )}
                 />
@@ -289,7 +289,7 @@ export const FilePublicationResources = ({
         readonly ? (
           <div key={f.id} className="flex items-center gap-2">
             <FilesRow
-              itemComponentClassNames="cursor-pointer w-full"
+              itemComponentClassNames="cursor-pointer w-full truncate"
               item={f}
               level={0}
             />

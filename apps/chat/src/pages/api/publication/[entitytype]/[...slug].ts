@@ -77,10 +77,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         json = undefined;
       }
 
-      if (proxyRes.status === 403) {
-        return res.status(200).send({ publications: [] });
-      }
-
       throw new DialAIError(
         (typeof json === 'string' && json) || proxyRes.statusText,
         '',

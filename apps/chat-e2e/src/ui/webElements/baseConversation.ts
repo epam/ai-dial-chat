@@ -56,4 +56,8 @@ export class BaseConversation extends SideBarEntities {
       IconSelectors.playbackIcon,
     );
   }
+
+  public getConversationReplayIcon(name: string, index?: number) {
+    return this.getEntityByName(name, index).locator(IconSelectors.replayIcon);
+  }
 }

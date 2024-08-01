@@ -8,6 +8,7 @@ import {
   getFolderIdFromEntityId,
   getNextDefaultName,
   getPathToFolderById,
+  sortByName,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
@@ -86,7 +87,7 @@ export const ChangePathDialog = ({
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   const folders = useMemo(
-    () => [...conversationFolders, ...promptFolders],
+    () => sortByName([...conversationFolders, ...promptFolders]),
     [conversationFolders, promptFolders],
   );
 
@@ -128,6 +129,8 @@ export const ChangePathDialog = ({
         return;
       }
 
+      dispatch(actions.uploadFolders({ ids: [folderId] }));
+
       if (openedFoldersIds.includes(folderId)) {
         const childFoldersIds = getChildAndCurrentFoldersIdsById(
           folderId,
@@ -140,7 +143,7 @@ export const ChangePathDialog = ({
         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
       }
     },
-    [folders, openedFoldersIds],
+    [actions, dispatch, folders, openedFoldersIds],
   );
 
   const handleFolderSelect = useCallback(
