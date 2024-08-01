@@ -187,8 +187,10 @@ export class Chat extends BaseElement {
   }
 
   public async proceedReplaying(waitForAnswer = false) {
+    const proceedGeneratingButton = this.getSendMessage().proceedGenerating;
+    await proceedGeneratingButton.waitForState();
     const requestPromise = this.page.waitForRequest(API.chatHost);
-    await this.getSendMessage().proceedGenerating.click();
+    await proceedGeneratingButton.click();
     const request = await requestPromise;
     await this.waitForResponse(waitForAnswer);
     return request.postDataJSON();
