@@ -174,7 +174,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ isOpen, onClose }) => {
       ];
       if (checkValidity(inputs)) {
         dispatch(
-          UIActions.showLoadingToast(t('Requesting API key in progress...')),
+          UIActions.showInfoToast(t('Requesting API key in progress...')),
         );
         dispatch(
           ServiceActions.requestApiKey({

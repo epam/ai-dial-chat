@@ -140,11 +140,19 @@ const showErrorToastEpic: AppEpic = (action$) =>
     ),
   );
 
-const showLoadingToastEpic: AppEpic = (action$) =>
+const showWarningToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showLoadingToast.match),
+    filter(UIActions.showWarningToast.match),
     switchMap(({ payload }) =>
       of(UIActions.showToast({ message: payload, type: ToastType.Warning })),
+    ),
+  );
+
+const showInfoToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showInfoToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: ToastType.Info })),
     ),
   );
 
@@ -181,21 +189,21 @@ const showToastEpic: AppEpic = (action$) =>
       const toastConfig: ToastOptions = {
         id: 'toast',
         className: 'chat-toast',
-        duration: 1000000,
       };
 
       switch (payload.type) {
         case ToastType.Error:
-          toast.error(message, toastConfig);
-          break;
-        case ToastType.Warning:
-          toast.loading(message, toastConfig);
+          toast.error(message, { ...toastConfig, id: ToastType.Error });
           break;
         case ToastType.Success:
-          toast.success(message, toastConfig);
+          toast.success(message, { ...toastConfig, id: ToastType.Success });
           break;
+        case ToastType.Warning:
+          toast.loading(message, { ...toastConfig, id: ToastType.Warning });
+          break;
+        case ToastType.Info:
         default:
-          toast(message, toastConfig);
+          toast.loading(message, { ...toastConfig, id: ToastType.Info });
           break;
       }
     }),
@@ -296,7 +304,8 @@ const UIEpics = combineEpics(
   saveShowPromptbarEpic,
   showToastEpic,
   showErrorToastEpic,
-  showLoadingToastEpic,
+  showWarningToastEpic,
+  showInfoToastEpic,
   showSuccessToastEpic,
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
