@@ -73,7 +73,7 @@ dialTest.only(
       ]);
       await localStorageManager.setSelectedConversation(firstConversation);
     });
-//
+
     await dialTest.step('Send request to the first conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
@@ -84,7 +84,7 @@ dialTest.only(
       await chat.sendRequestWithButton(request, false);
       firstConversation.name = request;
     });
-//
+
     await dialTest.step(
       'Verify any conversation cursor is "not-allowed" during the text generation',
       async () => {
@@ -98,7 +98,7 @@ dialTest.only(
         );
       },
     );
-//
+
     await dialTest.step(
       'Verify another conversation is not selectable during text generation',
       async () => {
@@ -106,7 +106,7 @@ dialTest.only(
         await verifySelectedConversation(firstConversation.name);
       },
     );
-//
+
     await dialTest.step(
       'Select "Replay" option from the first conversation menu',
       async () => {
@@ -119,7 +119,7 @@ dialTest.only(
         await chat.startReplay();
       },
     );
-//
+
     await dialTest.step(
       'Verify conversation cursor is "not-allowed" during the chat replay',
       async () => {
@@ -129,7 +129,7 @@ dialTest.only(
         );
       },
     );
-//
+
     await dialTest.step(
       'Open compare mode for replayed conversation',
       async () => {
