@@ -22,7 +22,7 @@ export class ServerUtils {
   public static getErrorMessageFromResponse = async (
     res: Response,
   ): Promise<string | null> => {
-   try {
+    try {
       return (await res.json()) as string;
     } catch {
       try {
