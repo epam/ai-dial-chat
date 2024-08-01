@@ -51,14 +51,15 @@ dialTest.only(
           request,
           false,
         );
+        firstConversation.name = request;
       }
     )
 
     await dialTest.step(
       'Verify conversation name cursor is "not-allowed" during the text generation',
       async () => {
-        await conversations.getEntityByName(request).hover();
-        let style = await conversations.getConversationName(request).getComputedStyleProperty(Styles.cursor);
+        await conversations.getEntityByName(firstConversation.name).hover();
+        let style = await conversations.getConversationName(firstConversation.name).getComputedStyleProperty(Styles.cursor);
         expect
           .soft(
             style[0],
@@ -85,7 +86,7 @@ dialTest.only(
         // Assert that the first conversation is still selected
         await expect
           .soft(
-            conversations.selectedConversation(request),
+            conversations.selectedConversation(firstConversation.name),
             ExpectedMessages.conversationIsSelected,
           )
           .toBeVisible();
