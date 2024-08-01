@@ -8,7 +8,6 @@ import {
 } from '@/src/testData';
 import { Cursors, Styles } from '@/src/ui/domData';
 import { responseThrottlingTimeout } from '@/src/ui/pages';
-import { CompareSelectors } from '@/src/ui/selectors';
 import { expect } from '@playwright/test';
 
 dialTest.only(
