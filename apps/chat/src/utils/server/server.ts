@@ -22,19 +22,14 @@ export class ServerUtils {
   public static getErrorMessageFromResponse = async (
     res: Response,
   ): Promise<string | null> => {
-    let resBody: string | null;
-    let msg: string | null;
-    try {
-      resBody = await res?.text();
-    } catch (err) {
-      resBody = null;
+   try {
+      return (await res.json()) as string;
+    } catch {
+      try {
+        return await res?.text();
+      } catch {
+        return null;
+      }
     }
-    try {
-      msg = (await res.json()) as string;
-    } catch (err) {
-      msg = resBody;
-    }
-
-    return msg;
   };
 }
