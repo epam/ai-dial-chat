@@ -20,6 +20,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
+import { ToastType } from '@/src/types/toasts';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -135,7 +136,7 @@ const showErrorToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showErrorToast.match),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: 'error' })),
+      of(UIActions.showToast({ message: payload, type: ToastType.Error })),
     ),
   );
 
@@ -143,7 +144,7 @@ const showLoadingToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showLoadingToast.match),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: 'loading' })),
+      of(UIActions.showToast({ message: payload, type: ToastType.Warning })),
     ),
   );
 
@@ -151,7 +152,7 @@ const showSuccessToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showSuccessToast.match),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: 'success' })),
+      of(UIActions.showToast({ message: payload, type: ToastType.Success })),
     ),
   );
 
@@ -180,16 +181,17 @@ const showToastEpic: AppEpic = (action$) =>
       const toastConfig: ToastOptions = {
         id: 'toast',
         className: 'chat-toast',
+        duration: 1000000,
       };
 
       switch (payload.type) {
-        case 'error':
+        case ToastType.Error:
           toast.error(message, toastConfig);
           break;
-        case 'loading':
+        case ToastType.Warning:
           toast.loading(message, toastConfig);
           break;
-        case 'success':
+        case ToastType.Success:
           toast.success(message, toastConfig);
           break;
         default:
