@@ -10,7 +10,7 @@ import { Cursors, Styles } from '@/src/ui/domData';
 import { responseThrottlingTimeout } from '@/src/ui/pages';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   'Another chat is not available while AI is generating a response.\n' +
     'Chat menu is not available while AI is generating a response.\n' +
     'Switching to another chat is not available while AI is replaying a chat\n' +
@@ -38,7 +38,7 @@ dialTest.only(
       'give me a sci-fi story with a main topic of your choice. 200 tokens minimum';
     let firstConversation: Conversation;
     let secondConversation: Conversation;
-    let thirdConversationName: string;
+    let thirdConversationName;
 
     const verifyConversationCursor = async (
       conversationName: string,
