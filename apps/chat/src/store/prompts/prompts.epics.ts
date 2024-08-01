@@ -516,12 +516,14 @@ const openFolderEpic: AppEpic = (action$, state$) =>
       const folder = PromptsSelectors.selectFolders(state$.value).find(
         (f) => f.id === payload.id,
       );
+
       if (folder?.status === UploadStatus.LOADED) {
         return EMPTY;
       }
+
       return concat(
         of(
-          PromptsActions.uploadChildPromptsWithFolders({
+          PromptsActions.uploadFolders({
             ids: [payload.id],
           }),
         ),
@@ -653,23 +655,67 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
+const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PromptsActions.uploadChildPromptsWithFolders.match),
-    switchMap(({ payload }) =>
-      zip(
+    filter(PromptsActions.uploadFoldersIfNotLoaded.match),
+    mergeMap(({ payload }) => {
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const notUploadedPaths = folders
+        .filter(
+          (folder) =>
+            payload.ids.includes(folder.id) &&
+            folder.status !== UploadStatus.LOADED,
+        )
+        .map((folder) => folder.id);
+
+      if (!notUploadedPaths.length) {
+        return EMPTY;
+      }
+
+      return of(PromptsActions.uploadFolders({ ids: notUploadedPaths }));
+    }),
+  );
+
+const uploadFoldersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadFolders.match),
+    mergeMap(({ payload }) => {
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const notUploadedPaths = folders
+        .filter(
+          (folder) =>
+            payload.ids.includes(folder.id) &&
+            folder.status !== UploadStatus.LOADED,
+        )
+        .map((folder) => folder.id);
+
+      if (!notUploadedPaths.length) {
+        return EMPTY;
+      }
+
+      return zip(
         payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
       ).pipe(
-        switchMap((foldersAndEntities) => {
+        mergeMap((foldersAndEntities) => {
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
 
-          return of(
-            PromptsActions.uploadChildPromptsWithFoldersSuccess({
-              parentIds: payload.ids,
-              folders,
-              prompts,
-            }),
+          return concat(
+            of(
+              PromptsActions.uploadChildPromptsWithFoldersSuccess({
+                parentIds: payload.ids,
+                folders,
+                prompts,
+              }),
+            ),
+            ...payload.ids.map((id) =>
+              of(
+                PromptsActions.updateFolder({
+                  folderId: id,
+                  values: { status: UploadStatus.LOADED },
+                }),
+              ),
+            ),
           );
         }),
         catchError((err) => {
@@ -680,8 +726,8 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
             ),
           );
         }),
-      ),
-    ),
+      );
+    }),
   );
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>
@@ -765,7 +811,8 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsWithFoldersRecursiveEpic,
-  uploadPromptsWithFoldersEpic,
+  uploadFolderIfNotLoadedEpic,
+  uploadFoldersEpic,
   openFolderEpic,
   toggleFolderEpic,
   saveFoldersEpic,
