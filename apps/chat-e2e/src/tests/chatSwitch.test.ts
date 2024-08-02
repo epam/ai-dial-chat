@@ -139,8 +139,6 @@ dialTest(
         await conversationAssertion.assertSelectedConversation(
           replayConversation.name,
         );
-        await sendMessage.stopGenerating.waitForState({ state: 'visible' });
-        await sendMessage.stopGenerating.click();
       },
     );
   },
