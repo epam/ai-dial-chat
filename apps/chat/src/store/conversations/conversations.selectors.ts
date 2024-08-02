@@ -34,6 +34,7 @@ import { translate } from '@/src/utils/app/translation';
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -403,7 +404,7 @@ export const selectSelectedConversationsModels = createSelector(
   (conversations, modelsMap) => {
     return conversations
       .map((conv) => modelsMap[conv.model.id])
-      .filter(Boolean);
+      .filter(Boolean) as DialAIEntityModel[];
   },
 );
 
