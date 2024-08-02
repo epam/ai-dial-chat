@@ -34,7 +34,7 @@ import { translate } from '@/src/utils/app/translation';
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import { EntityFilters, SearchFilters } from '@/src/types/search';
+import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -557,9 +557,18 @@ export const getAttachments = createSelector(
     selectConversations,
     (state: RootState, entityId: string) => selectConversation(state, entityId),
     (_state: RootState, entityId: string) => entityId,
+    (
+      _state: RootState,
+      _entityId: string,
+      entityFilter?: EntityFilter<ConversationInfo>,
+    ) => entityFilter,
   ],
-  (folders, conversations, conversation, entityId) => {
+  (folders, conversations, conversation, entityId, entityFilter?) => {
+    const conversationFilter = entityFilter || (() => true);
+
     if (conversation) {
+      if (!conversationFilter(conversation)) return [];
+
       return getUniqueAttachments(
         getConversationAttachmentWithPath(conversation, folders),
       );
@@ -572,7 +581,10 @@ export const getAttachments = createSelector(
     if (!folderIds.size) return [];
 
     const filteredConversations = conversations.filter(
-      (conv) => conv.folderId && folderIds.has(conv.folderId),
+      (conv) =>
+        conv.folderId &&
+        folderIds.has(conv.folderId) &&
+        conversationFilter(conv),
     );
 
     return getUniqueAttachments(
