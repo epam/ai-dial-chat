@@ -292,9 +292,7 @@ const resizeEpic: AppEpic = (action$, state$) =>
         if (
           [showChatbar, showPromptbar].filter(Boolean).length > 1 // more then one panel open for the medium screen)
         ) {
-          if (showChatbar) {
-            actions.push(of(UIActions.setShowPromptbar(false)));
-          }
+          actions.push(of(UIActions.setShowPromptbar(false)));
         }
       }
 

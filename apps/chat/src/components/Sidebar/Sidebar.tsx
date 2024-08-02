@@ -109,7 +109,7 @@ const Sidebar = <T,>({
   );
 
   const resizeTriggerClassName = classNames(
-    'visible h-full w-0.5 bg-layer-3 text-secondary group-hover:visible xl:invisible',
+    'invisible h-full w-0.5 bg-layer-3 text-secondary group-hover:visible md:visible',
     resizeTriggerColor,
     isResizing ? 'xl:visible' : 'xl:invisible',
   );
@@ -119,9 +119,10 @@ const Sidebar = <T,>({
     [isLeftSidebar, chatbarWidth, promptbarWidth],
   );
 
-  const centralChatMinWidth = windowWidth
-    ? (isMediumScreen() && windowWidth / 12) || CENTRAL_CHAT_MIN_WIDTH // windowWidth / 12 = 8% of the windowWidth
-    : CENTRAL_CHAT_MIN_WIDTH; // fallback min width
+  const centralChatMinWidth =
+    windowWidth && isMediumScreen()
+      ? windowWidth / 12 // windowWidth / 12 = 8% of the windowWidth
+      : CENTRAL_CHAT_MIN_WIDTH; // fallback min width
 
   const oppositeSidebarMinWidth = useMemo(
     () =>
@@ -192,9 +193,9 @@ const Sidebar = <T,>({
     const sidebarAndCentralWidth = width + centralChatMinWidth;
     const maxOppositeSidebarWidth = windowWidth - sidebarAndCentralWidth;
     const maxSafeOppositeSidebarWidth =
-      (maxOppositeSidebarWidth > SIDEBAR_MIN_WIDTH &&
-        maxOppositeSidebarWidth) ||
-      SIDEBAR_MIN_WIDTH;
+      maxOppositeSidebarWidth > SIDEBAR_MIN_WIDTH
+        ? maxOppositeSidebarWidth
+        : SIDEBAR_MIN_WIDTH;
 
     if (!isMediumScreen()) {
       if (
@@ -272,8 +273,8 @@ const Sidebar = <T,>({
         topLeft: false,
       },
       handleClasses: {
-        right: 'group ',
-        left: 'group',
+        right: 'group invisible md:visible',
+        left: 'group invisible md:visible',
       },
       handleStyles: { right: { right: '-11px' }, left: { left: '-3px' } },
       handleComponent: {
