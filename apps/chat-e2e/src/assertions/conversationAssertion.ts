@@ -1,6 +1,6 @@
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
-import { Colors, Cursors, Styles } from '@/src/ui/domData';
+import { Colors, Styles } from '@/src/ui/domData';
 import { Conversations } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
