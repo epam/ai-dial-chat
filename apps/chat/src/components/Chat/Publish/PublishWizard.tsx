@@ -163,6 +163,10 @@ export function PublishModal({
       e.preventDefault();
       e.stopPropagation();
 
+      const folderOldPathPartsRegExp = new RegExp(
+        getIdWithoutRootPathSegments(entity.folderId),
+      );
+
       const trimmedPath = path.trim();
       const trimmedName = publishRequestName.trim();
       const notEmptyFilters = otherTargetAudienceFilters.filter(
@@ -200,12 +204,10 @@ export function PublishModal({
               newUrl: createTargetUrl(
                 FeatureType.File,
                 trimmedPath,
-                getIdWithoutRootPathSegments(
-                  constructPath(
-                    ...c.id.split('/').slice(0, -1),
-                    ...decodedOldUrl.split('/').slice(-1),
-                  ),
-                ),
+                constructPath(
+                  ...c.id.split('/').slice(0, -1),
+                  ...decodedOldUrl.split('/').slice(-1),
+                ).replace(folderOldPathPartsRegExp, ''),
                 type,
               ),
             };
@@ -237,7 +239,7 @@ export function PublishModal({
                     trimmedPath,
                     type === SharingType.ConversationFolder ||
                       type === SharingType.PromptFolder
-                      ? getIdWithoutRootPathSegments(item.id)
+                      ? item.id.replace(folderOldPathPartsRegExp, '')
                       : item.id,
                     type,
                   ),
@@ -278,6 +280,7 @@ export function PublishModal({
       currentFolderRules,
       dispatch,
       entitiesArray,
+      entity.folderId,
       files,
       onClose,
       otherTargetAudienceFilters,
