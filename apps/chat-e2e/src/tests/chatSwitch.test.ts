@@ -79,7 +79,7 @@ dialTest(
     );
 
     await dialTest.step('Send request to the first conversation', async () => {
-      await dialHomePage.throttleAPIResponse(API.chatHost, 60000);
+      await dialHomePage.throttleAPIResponse(API.chatHost);
       await chat.sendRequestWithButton(request, false);
       firstConversation.name = request;
     });
