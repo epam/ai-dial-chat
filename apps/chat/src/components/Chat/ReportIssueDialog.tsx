@@ -84,7 +84,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
 
       if (checkValidity(inputs)) {
         dispatch(
-          UIActions.showInfoToast(t('Reporting an issue in progress...')),
+          UIActions.showLoadingToast(t('Reporting an issue in progress...')),
         );
         dispatch(ServiceActions.reportIssue({ title, description }));
         handleClose();

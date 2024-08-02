@@ -124,12 +124,14 @@ export const uiSlice = createSlice({
         message?: string | null;
         type?: ToastType;
         response?: Response;
+        Icon?: JSX.Element;
       }>,
     ) => state,
     showErrorToast: (state, _action: PayloadAction<string>) => state,
     showWarningToast: (state, _action: PayloadAction<string>) => state,
     showInfoToast: (state, _action: PayloadAction<string>) => state,
     showSuccessToast: (state, _action: PayloadAction<string>) => state,
+    showLoadingToast: (state, _action: PayloadAction<string>) => state,
     setOpenedFoldersIds: (
       state,
       {

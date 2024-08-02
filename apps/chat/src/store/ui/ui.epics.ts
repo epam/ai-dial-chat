@@ -24,6 +24,8 @@ import { ToastType } from '@/src/types/toasts';
 
 import { errorsMessages } from '@/src/constants/errors';
 
+import { Spinner } from '@/src/components/Common/Spinner';
+
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions, UISelectors } from './ui.reducers';
 
@@ -164,6 +166,20 @@ const showSuccessToastEpic: AppEpic = (action$) =>
     ),
   );
 
+const showLoadingToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showLoadingToast.match),
+    switchMap(({ payload }) =>
+      of(
+        UIActions.showToast({
+          message: payload,
+          type: ToastType.Loading,
+          Icon: Spinner({ className: 'text-info', size: 18 }),
+        }),
+      ),
+    ),
+  );
+
 const showToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showToast.match),
@@ -189,6 +205,7 @@ const showToastEpic: AppEpic = (action$) =>
       const toastConfig: ToastOptions = {
         id: 'toast',
         className: 'chat-toast',
+        icon: payload.Icon,
       };
 
       switch (payload.type) {
@@ -201,7 +218,9 @@ const showToastEpic: AppEpic = (action$) =>
         case ToastType.Warning:
           toast.loading(message, { ...toastConfig, id: ToastType.Warning });
           break;
-        case ToastType.Info:
+        case ToastType.Loading:
+          toast.loading(message, { ...toastConfig, id: ToastType.Loading });
+          break;
         default:
           toast.loading(message, { ...toastConfig, id: ToastType.Info });
           break;
@@ -307,6 +326,7 @@ const UIEpics = combineEpics(
   showWarningToastEpic,
   showInfoToastEpic,
   showSuccessToastEpic,
+  showLoadingToastEpic,
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
