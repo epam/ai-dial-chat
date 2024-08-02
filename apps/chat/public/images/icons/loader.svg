@@ -1,10 +1,10 @@
 <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M24 39V46.5" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path opacity="0.4" d="M9 24H1.5" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path opacity="0.5" d="M8.0918 8.0918L13.3994 13.3994" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path opacity="0.6" d="M24 1.5V9" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path opacity="0.7" d="M39.9121 8.08594L37.2607 10.7373L34.6094 13.3887" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path opacity="0.8" d="M46.5 24H39" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path opacity="0.9" d="M34.6055 34.6055L39.9082 39.9082" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path opacity="0.3" d="M13.3936 34.6055L8.08594 39.9131" stroke="#7F8792" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M24 39V46.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.4" d="M9 24H1.5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.5" d="M8.0918 8.0918L13.3994 13.3994" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.6" d="M24 1.5V9" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.7" d="M39.9121 8.08594L37.2607 10.7373L34.6094 13.3887" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.8" d="M46.5 24H39" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.9" d="M34.6055 34.6055L39.9082 39.9082" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path opacity="0.3" d="M13.3936 34.6055L8.08594 39.9131" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
