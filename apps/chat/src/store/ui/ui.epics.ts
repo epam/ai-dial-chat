@@ -20,8 +20,11 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
+import { ToastType } from '@/src/types/toasts';
 
 import { errorsMessages } from '@/src/constants/errors';
+
+import { Spinner } from '@/src/components/Common/Spinner';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions, UISelectors } from './ui.reducers';
@@ -135,15 +138,23 @@ const showErrorToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showErrorToast.match),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: 'error' })),
+      of(UIActions.showToast({ message: payload, type: ToastType.Error })),
     ),
   );
 
-const showLoadingToastEpic: AppEpic = (action$) =>
+const showWarningToastEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(UIActions.showLoadingToast.match),
+    filter(UIActions.showWarningToast.match),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: 'loading' })),
+      of(UIActions.showToast({ message: payload, type: ToastType.Warning })),
+    ),
+  );
+
+const showInfoToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showInfoToast.match),
+    switchMap(({ payload }) =>
+      of(UIActions.showToast({ message: payload, type: ToastType.Info })),
     ),
   );
 
@@ -151,7 +162,21 @@ const showSuccessToastEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.showSuccessToast.match),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: 'success' })),
+      of(UIActions.showToast({ message: payload, type: ToastType.Success })),
+    ),
+  );
+
+const showLoadingToastEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.showLoadingToast.match),
+    switchMap(({ payload }) =>
+      of(
+        UIActions.showToast({
+          message: payload,
+          type: ToastType.Loading,
+          icon: Spinner({ className: 'text-info', size: 18 }),
+        }),
+      ),
     ),
   );
 
@@ -180,20 +205,24 @@ const showToastEpic: AppEpic = (action$) =>
       const toastConfig: ToastOptions = {
         id: 'toast',
         className: 'chat-toast',
+        icon: payload.icon,
       };
 
       switch (payload.type) {
-        case 'error':
-          toast.error(message, toastConfig);
+        case ToastType.Error:
+          toast.error(message, { ...toastConfig, id: ToastType.Error });
           break;
-        case 'loading':
-          toast.loading(message, toastConfig);
+        case ToastType.Success:
+          toast.success(message, { ...toastConfig, id: ToastType.Success });
           break;
-        case 'success':
-          toast.success(message, toastConfig);
+        case ToastType.Warning:
+          toast.loading(message, { ...toastConfig, id: ToastType.Warning });
+          break;
+        case ToastType.Loading:
+          toast.loading(message, { ...toastConfig, id: ToastType.Loading });
           break;
         default:
-          toast(message, toastConfig);
+          toast.loading(message, { ...toastConfig, id: ToastType.Info });
           break;
       }
     }),
@@ -294,8 +323,10 @@ const UIEpics = combineEpics(
   saveShowPromptbarEpic,
   showToastEpic,
   showErrorToastEpic,
-  showLoadingToastEpic,
+  showWarningToastEpic,
+  showInfoToastEpic,
   showSuccessToastEpic,
+  showLoadingToastEpic,
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
