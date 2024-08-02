@@ -1,10 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  API,
-  ExpectedConstants,
-  MenuOptions,
-} from '@/src/testData';
+import { API } from '@/src/testData';
 import { Cursors } from '@/src/ui/domData';
 
 dialTest(
@@ -20,8 +16,6 @@ dialTest(
     setTestIds,
     localStorageManager,
     chat,
-    compareConversationSelector,
-    compareConversation,
     conversationAssertion,
     sendMessage,
   }) => {
@@ -35,24 +29,57 @@ dialTest(
     const request =
       'give me a sci-fi story with a main topic of your choice. 200 tokens minimum';
     let firstConversation: Conversation;
-    let secondConversation: Conversation;
-    let thirdConversationName: string;
+    let preReplayConversation: Conversation;
+    let replayConversation: Conversation;
+    let comparedConversation: Conversation;
 
-    await dialTest.step('Prepare two empty conversations', async () => {
-      firstConversation = conversationData.prepareEmptyConversation();
-      conversationData.resetData();
-      secondConversation = conversationData.prepareEmptyConversation();
-      await dataInjector.createConversations([
-        firstConversation,
-        secondConversation,
-      ]);
-      await localStorageManager.setSelectedConversation(firstConversation);
-    });
+    await dialTest.step(
+      'Prepare 1 empty conversation, replay conversation and 2 default conversations',
+      async () => {
+        firstConversation = conversationData.prepareEmptyConversation();
+        conversationData.resetData();
+        preReplayConversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        comparedConversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        replayConversation = conversationData.prepareDefaultReplayConversation(
+          preReplayConversation,
+        );
+        conversationData.resetData();
+
+        await dataInjector.createConversations([
+          firstConversation,
+          preReplayConversation,
+          replayConversation,
+          comparedConversation,
+        ]);
+        // Initiates compare mode for two selected conversations
+        await localStorageManager.setSelectedConversation(
+          preReplayConversation,
+          comparedConversation,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify another conversation is selectable during being in compare mode',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+
+        await conversationAssertion.assertConversationCursor(
+          firstConversation.name,
+          Cursors.pointer,
+        );
+        await conversations.getEntityByName(firstConversation.name).click();
+        await conversationAssertion.assertSelectedConversation(
+          firstConversation.name,
+        );
+      },
+    );
 
     await dialTest.step('Send request to the first conversation', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-      await dialHomePage.throttleAPIResponse(API.chatHost);
+      await dialHomePage.throttleAPIResponse(API.chatHost, 60000);
       await chat.sendRequestWithButton(request, false);
       firstConversation.name = request;
     });
@@ -61,11 +88,11 @@ dialTest(
       'Verify any conversation cursor is "not-allowed" during text generation',
       async () => {
         await conversationAssertion.assertConversationCursor(
-          firstConversation.name,
+          preReplayConversation.name,
           Cursors.notAllowed,
         );
         await conversationAssertion.assertConversationCursor(
-          secondConversation.name,
+          firstConversation.name,
           Cursors.notAllowed,
         );
       },
@@ -74,7 +101,7 @@ dialTest(
     await dialTest.step(
       'Verify another conversation is not selectable during text generation',
       async () => {
-        await conversations.getEntityByName(secondConversation.name).click();
+        await conversations.getEntityByName(preReplayConversation.name).click();
         await conversationAssertion.assertSelectedConversation(
           firstConversation.name,
         );
@@ -82,14 +109,11 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select "Replay" option from the first conversation menu',
+      'Select [Replay] conversation and start generation',
       async () => {
+        await sendMessage.stopGenerating.waitForState({ state: 'visible' });
         await sendMessage.stopGenerating.click();
-        await conversations.openEntityDropdownMenu(firstConversation.name);
-        await conversations.selectEntityMenuOption(MenuOptions.replay, {
-          triggeredHttpMethod: 'POST',
-        });
-        thirdConversationName = `${ExpectedConstants.replayConversation}${firstConversation.name}`;
+        await conversations.getEntityByName(replayConversation.name).click();
         await chat.startReplay();
       },
     );
@@ -98,39 +122,25 @@ dialTest(
       'Verify conversation cursor is "not-allowed" during the chat replay',
       async () => {
         await conversationAssertion.assertConversationCursor(
-          secondConversation.name,
+          preReplayConversation.name,
+          Cursors.notAllowed,
+        );
+        await conversationAssertion.assertConversationCursor(
+          replayConversation.name,
           Cursors.notAllowed,
         );
       },
     );
 
     await dialTest.step(
-      'Open compare mode for replayed conversation',
+      'Verify another conversation is not selectable during text generation in Replay',
       async () => {
-        await sendMessage.stopGenerating.click();
-        await conversations.openEntityDropdownMenu(thirdConversationName);
-        await conversations.selectEntityMenuOption(MenuOptions.compare);
-        await compareConversation.checkShowAllConversations();
-        await compareConversationSelector.click();
-        await compareConversationSelector.selectModel(
-          thirdConversationName,
-          true,
-        );
-        await chat.getCompare().waitForComparedConversationsLoaded();
-      },
-    );
-
-    await dialTest.step(
-      'Verify another conversation is selectable during response regeneration in compare mode',
-      async () => {
-        await conversationAssertion.assertConversationCursor(
-          secondConversation.name,
-          Cursors.pointer,
-        );
-        await conversations.getEntityByName(secondConversation.name).click();
+        await conversations.getEntityByName(preReplayConversation.name).click();
         await conversationAssertion.assertSelectedConversation(
-          secondConversation.name,
+          replayConversation.name,
         );
+        await sendMessage.stopGenerating.waitForState({ state: 'visible' });
+        await sendMessage.stopGenerating.click();
       },
     );
   },
