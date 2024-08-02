@@ -124,7 +124,7 @@ export const uiSlice = createSlice({
         message?: string | null;
         type?: ToastType;
         response?: Response;
-        Icon?: JSX.Element;
+        icon?: JSX.Element;
       }>,
     ) => state,
     showErrorToast: (state, _action: PayloadAction<string>) => state,

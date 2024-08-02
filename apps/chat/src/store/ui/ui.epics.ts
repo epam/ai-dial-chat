@@ -174,7 +174,7 @@ const showLoadingToastEpic: AppEpic = (action$) =>
         UIActions.showToast({
           message: payload,
           type: ToastType.Loading,
-          Icon: Spinner({ className: 'text-info', size: 18 }),
+          icon: Spinner({ className: 'text-info', size: 18 }),
         }),
       ),
     ),
@@ -205,7 +205,7 @@ const showToastEpic: AppEpic = (action$) =>
       const toastConfig: ToastOptions = {
         id: 'toast',
         className: 'chat-toast',
-        icon: payload.Icon,
+        icon: payload.icon,
       };
 
       switch (payload.type) {
