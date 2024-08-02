@@ -38,7 +38,7 @@ dialTest(
       'give me a sci-fi story with a main topic of your choice. 200 tokens minimum';
     let firstConversation: Conversation;
     let secondConversation: Conversation;
-    let thirdConversationName;
+    let thirdConversationName: string;
 
     const verifyConversationCursor = async (
       conversationName: string,
@@ -78,7 +78,6 @@ dialTest(
       await dialHomePage.waitForPageLoaded();
       await dialHomePage.throttleAPIResponse(
         API.chatHost,
-        responseThrottlingTimeout,
       );
       await chat.sendRequestWithButton(request, false);
       firstConversation.name = request;
@@ -138,7 +137,7 @@ dialTest(
         await compareConversation.checkShowAllConversations();
         await compareConversationSelector.click();
         await compareConversationSelector.selectModel(
-          firstConversation.name,
+          thirdConversationName,
           true,
         );
         await chat.getCompare().waitForComparedConversationsLoaded();
