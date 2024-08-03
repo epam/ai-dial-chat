@@ -40,12 +40,11 @@ import {
   getPromptInfoFromId,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
-import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -724,29 +723,29 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
       const chosenFolderIds = PromptsSelectors.selectChosenFolderIds(
         state$.value,
       );
-      const searchTerm = PromptsSelectors.selectSearchTerm(state$.value);
-      const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const promptIds = prompts.map((prompt) => prompt.id);
+      const allPromptIds = PromptsSelectors.selectPrompts(state$.value).map(
+        (prompt) => prompt.id,
+      );
+      const promptIds = PromptsSelectors.selectSearchedPrompts(
+        state$.value,
+      ).map((prompt) => prompt.id);
       const folders = PromptsSelectors.selectFolders(state$.value);
       const deletedPromptIds = uniq([
-        ...chosenPromptIds.filter((id) =>
-          doesEntityContainSearchTerm(
-            parsePromptApiKey(id) as unknown as ShareEntity,
-            searchTerm,
-          ),
-        ),
-        ...promptIds.filter(
-          (id) =>
-            chosenFolderIds.some((folderId) => id.startsWith(folderId)) &&
-            doesEntityContainSearchTerm(
-              parsePromptApiKey(id) as unknown as ShareEntity,
-              searchTerm,
-            ),
+        ...chosenPromptIds,
+        ...promptIds.filter((id) =>
+          chosenFolderIds.some((folderId) => id.startsWith(folderId)),
         ),
       ]);
-      const filteredPrompts = prompts.filter(
-        (prompt) => !deletedPromptIds.includes(prompt.id),
-      );
+      const deletedFolderIds = chosenFolderIds.filter((id) => {
+        const folderPromptIds = allPromptIds.filter((promptId) =>
+          promptId.startsWith(id),
+        );
+        const deletedFolderPromptIds = deletedPromptIds.filter((promptId) =>
+          promptId.startsWith(id),
+        );
+
+        return folderPromptIds.length === deletedFolderPromptIds.length;
+      });
 
       if (promptIds.length) {
         actions.push(
@@ -762,8 +761,8 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         of(
           PromptsActions.setFolders({
             folders: folders.filter((folder) =>
-              filteredPrompts.some((prompt) =>
-                prompt.id.startsWith(`${folder.id}/`),
+              deletedFolderIds.every(
+                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
               ),
             ),
           }),
