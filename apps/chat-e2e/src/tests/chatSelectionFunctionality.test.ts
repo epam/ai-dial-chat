@@ -12,7 +12,8 @@ dialTest.only(
   'Playback chat1 when chat2 is opened.\n' +
   'Export of chat1 when chat2 is opened.\n' +
   'Delete of chat1 when chat2 is opened.\n' +
-  'Move to a folder of chat1 when chat2 is opened',
+  'Move to a folder of chat1 when chat2 is opened.\n' +
+  'Duplicate of chat1 when chat2 is opened',
   async ({
            dialHomePage,
            conversationData,
@@ -26,7 +27,7 @@ dialTest.only(
            folderConversations,
            chatBarFolderAssertion,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939', 'EPMRTC-940');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939', 'EPMRTC-940', 'EPMRTC-3059');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let replayConversation: string;
@@ -195,6 +196,18 @@ dialTest.only(
         {name: ExpectedConstants.newFolderWithIndexTitle(1)},
         {name: secondConversation.name},
         'visible',
+      );
+      secondConversation.folderId = `${secondConversation.folderId}/${ExpectedConstants.newFolderWithIndexTitle(1)}`;
+      // secondConversation.id = `${secondConversation.folderId}/${secondConversation.id}`;
+    });
+
+    await dialTest.step('Click on Duplicate', async () => {
+      await conversations.openEntityDropdownMenu(firstConversation.name, 2);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.duplicate);
+      await conversationAssertion.assertSelectedConversation(
+        `${firstConversation.name} 1`,
       );
     });
   },
