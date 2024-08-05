@@ -1,5 +1,5 @@
 import dialTest from '@/src/core/dialFixtures';
-import {ExpectedMessages, MenuOptions} from '@/src/testData';
+import {ExpectedConstants, ExpectedMessages, MenuOptions} from '@/src/testData';
 import {Colors} from '@/src/ui/domData';
 import {Conversation} from "@/chat/types/chat";
 import { expect } from '@playwright/test';
@@ -7,7 +7,8 @@ import { expect } from '@playwright/test';
 dialTest.only(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
   'Rename of chat1 when chat2 is opened.\n' +
-  'Compare mode is opened if to click on Compare for not selected chat',
+  'Compare mode is opened if to click on Compare for not selected chat.\n' +
+  'Replay chat1 when chat2 is opened',
   async ({
            dialHomePage,
            conversationData,
@@ -18,9 +19,10 @@ dialTest.only(
            localStorageManager,
            compareConversation,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
+    const updatedConversationName = 'Renamed chat';
 
     await dialTest.step('Create chat1 and chat2', async () => {
       firstConversation = conversationData.prepareDefaultConversation();
@@ -83,7 +85,6 @@ dialTest.only(
     );
 
     await dialTest.step('Click on Rename, rename and confirm', async () => {
-      const updatedConversationName = 'Renamed chat';
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.rename);
@@ -111,6 +112,16 @@ dialTest.only(
           ExpectedMessages.conversationToCompareVisible,
         )
         .toBeVisible();
+    });
+
+    await dialTest.step('Click on Replay', async () => {
+      await conversations.openEntityDropdownMenu(updatedConversationName);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.replay);
+      await conversationAssertion.assertSelectedConversation(
+        ExpectedConstants.replayConversation + updatedConversationName,
+      );
     });
   },
 );
