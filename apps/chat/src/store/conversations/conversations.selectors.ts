@@ -717,7 +717,7 @@ export const selectIsConversationsEmpty = createSelector(
   [selectSelectedConversations],
   (conversations) => {
     return conversations.some((conv) => {
-      return conv.messages.length === 0;
+      return !conv.messages || conv.messages.length === 0;
     });
   },
 );
