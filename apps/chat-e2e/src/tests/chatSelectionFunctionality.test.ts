@@ -20,8 +20,9 @@ dialTest.only(
            setTestIds,
            localStorageManager,
            compareConversation,
+           confirmationDialog,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let replayConversation: string;
@@ -148,9 +149,26 @@ dialTest.only(
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.withoutAttachments));
       expect(downloadedData.path).toBeTruthy();
+      expect(downloadedData.path).toMatch(/\.json$/);
       await conversationAssertion.assertSelectedConversation(
         playbackConversation,
       );
+    });
+
+    await dialTest.step('Click on Delete while another chat is selected', async () => {
+      await conversations.openEntityDropdownMenu(replayConversation);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.delete);
+      await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+      await conversationAssertion.assertSelectedConversation(
+        playbackConversation,
+      );
+      await conversationAssertion.assertEntityState(
+        {name: replayConversation},
+        'hidden',
+      );
+      replayConversation = '';
     });
   },
 );
