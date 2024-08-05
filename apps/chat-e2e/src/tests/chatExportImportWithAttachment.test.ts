@@ -6,15 +6,20 @@ import {
   ExpectedMessages,
   Import,
   MenuOptions,
+  MockedChatApiResponseBodies,
   ModelIds,
 } from '@/src/testData';
+import { Colors } from '@/src/ui/domData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { BucketUtil, FileUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let dalleImageUrl: string;
 let gptProVisionImageUrl: string;
+let geminiProVisionImageUrl: string;
+let stableDiffusionImageUrl: string;
 let gptProVisionAttachmentPath: string;
+let geminiProVisionAttachmentPath: string;
 let dalleAttachmentPath: string;
 
 dialTest(
@@ -367,6 +372,7 @@ dialTest(
     chat,
     playbackAssertion,
     chatMessagesAssertion,
+    conversationAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3521');
@@ -440,9 +446,10 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-        await conversations
-          .getEntityByName(playbackConversation.name)
-          .waitFor();
+        await conversationAssertion.assertEntityState(
+          { name: playbackConversation.name },
+          'visible',
+        );
         await recentEntitiesAssertion.assertPlaybackIconState('visible');
       },
     );
@@ -497,6 +504,287 @@ dialTest(
         await chatMessagesAssertion.assertMessageDownloadUrl(
           3,
           gptProVisionAttachmentPath,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Replay mode: export and import file with attachments in user message',
+  async ({
+    conversationData,
+    fileApiHelper,
+    dataInjector,
+    localStorageManager,
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    chatBar,
+    confirmationDialog,
+    recentEntitiesAssertion,
+    chat,
+    chatMessages,
+    chatAssertion,
+    chatMessagesAssertion,
+    conversationAssertion,
+    apiAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-914');
+    let geminiProVisionConversation: Conversation;
+    let gptProVisionConversation: Conversation;
+    let historyConversation: Conversation;
+    let replayConversation: Conversation;
+    let exportedData: UploadDownloadData;
+
+    await dialTest.step(
+      'Prepare conversation with image, pdf attachments in the requests and replay conversation based on it',
+      async () => {
+        geminiProVisionImageUrl = await fileApiHelper.putFile(
+          Attachment.sunImageName,
+        );
+        gptProVisionImageUrl = await fileApiHelper.putFile(Attachment.pdfName);
+
+        geminiProVisionConversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            ModelIds.GEMINI_PRO_VISION,
+            true,
+            geminiProVisionImageUrl,
+          );
+        conversationData.resetData();
+        gptProVisionConversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            ModelIds.GPT_4_VISION_PREVIEW,
+            true,
+            gptProVisionImageUrl,
+          );
+        conversationData.resetData();
+        historyConversation = conversationData.prepareHistoryConversation(
+          geminiProVisionConversation,
+          gptProVisionConversation,
+        );
+        replayConversation =
+          conversationData.prepareDefaultReplayConversation(
+            historyConversation,
+          );
+        await dataInjector.createConversations([
+          historyConversation,
+          replayConversation,
+        ]);
+        await localStorageManager.setSelectedConversation(replayConversation);
+      },
+    );
+
+    await dialTest.step(
+      'Export replay conversation with attachments',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(replayConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
+        exportedData = await dialHomePage.downloadData(() =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withAttachments,
+          ),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Remove all entities, import exported file and verify replay conversation is opened',
+      async () => {
+        await fileApiHelper.deleteAllFiles();
+        await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.importFile(exportedData, () =>
+          chatBar.importButton.click(),
+        );
+        await conversationAssertion.assertEntityState(
+          { name: replayConversation.name },
+          'visible',
+        );
+        await recentEntitiesAssertion.assertReplayAsIsBordersColor(
+          Colors.controlsBackgroundAccent,
+        );
+        await chatAssertion.assertReplayButtonState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Replay conversation and verify attachments are sent in the requests',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        const replayRequests = await chat.startReplayForDifferentModels();
+        await apiAssertion.verifyRequestAttachments(
+          replayRequests[0],
+          geminiProVisionImageUrl,
+        );
+        await apiAssertion.verifyRequestAttachments(
+          replayRequests[1],
+          gptProVisionImageUrl,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify request attachments can be opened and downloaded',
+      async () => {
+        geminiProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.sunImageName}`;
+        await chatMessages.expandChatMessageAttachment(
+          1,
+          Attachment.sunImageName,
+        );
+        await chatMessagesAssertion.assertMessageAttachmentUrl(
+          1,
+          geminiProVisionAttachmentPath,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          1,
+          geminiProVisionAttachmentPath,
+        );
+
+        gptProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.pdfName}`;
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          3,
+          gptProVisionAttachmentPath,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Replay mode: export and import file with attachments in model response',
+  async ({
+    conversationData,
+    fileApiHelper,
+    dataInjector,
+    localStorageManager,
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    chatBar,
+    confirmationDialog,
+    chatMessages,
+    chat,
+    chatMessagesAssertion,
+    conversationAssertion,
+    sendMessageAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3942');
+    let dalleConversation: Conversation;
+    let stableDiffusionConversation: Conversation;
+    let historyConversation: Conversation;
+    let replayConversation: Conversation;
+    let exportedData: UploadDownloadData;
+
+    await dialTest.step(
+      'Prepare conversation with attachments in the responses and replay conversation based on it',
+      async () => {
+        dalleImageUrl = await fileApiHelper.putFile(
+          Attachment.sunImageName,
+          API.modelFilePath(ModelIds.DALLE),
+        );
+        stableDiffusionImageUrl = await fileApiHelper.putFile(
+          Attachment.cloudImageName,
+          API.modelFilePath(ModelIds.STABLE_DIFFUSION),
+        );
+
+        dalleConversation =
+          conversationData.prepareConversationWithAttachmentInResponse(
+            dalleImageUrl,
+            ModelIds.DALLE,
+          );
+        conversationData.resetData();
+        stableDiffusionConversation =
+          conversationData.prepareConversationWithAttachmentInResponse(
+            stableDiffusionImageUrl,
+            ModelIds.STABLE_DIFFUSION,
+          );
+        conversationData.resetData();
+
+        historyConversation = conversationData.prepareHistoryConversation(
+          dalleConversation,
+          stableDiffusionConversation,
+        );
+
+        replayConversation =
+          conversationData.preparePartiallyReplayedConversation(
+            historyConversation,
+            1,
+          );
+        await dataInjector.createConversations([
+          historyConversation,
+          replayConversation,
+        ]);
+        await localStorageManager.setSelectedConversation(replayConversation);
+      },
+    );
+
+    await dialTest.step(
+      'Export replay conversation with attachments',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(replayConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
+        exportedData = await dialHomePage.downloadData(() =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withAttachments,
+          ),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Remove all entities, import exported file and verify replay mode is active',
+      async () => {
+        await fileApiHelper.deleteAllFiles();
+        await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.importFile(exportedData, () =>
+          chatBar.importButton.click(),
+        );
+        await conversationAssertion.assertEntityState(
+          { name: replayConversation.name },
+          'visible',
+        );
+        await sendMessageAssertion.assertContinueReplayButtonState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Verify first response attachment is visible and can be downloaded',
+      async () => {
+        dalleAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.DALLE)}/${Attachment.sunImageName}`;
+        await chatMessages.expandChatMessageAttachment(
+          2,
+          Attachment.sunImageName,
+        );
+        await chatMessagesAssertion.assertMessageAttachmentUrl(
+          2,
+          dalleAttachmentPath,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          2,
+          dalleAttachmentPath,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Proceed replaying and verify only last response is regenerated ',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.proceedReplaying(true);
+        await chatMessagesAssertion.assertMessagesCount(
+          historyConversation.messages.length,
         );
       },
     );

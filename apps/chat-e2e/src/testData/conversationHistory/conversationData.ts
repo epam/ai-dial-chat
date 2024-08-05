@@ -215,17 +215,18 @@ export class ConversationData extends FolderData {
       conversation,
       replayIndex,
     );
+    const conversationCopy = JSON.parse(
+      JSON.stringify(conversation),
+    ) as Conversation;
     const partialAssistantMessage = replayIndex
-      ? conversation.messages[replayIndex + 2]
-      : conversation.messages.findLast((m) => m.role === 'assistant');
+      ? conversationCopy.messages[replayIndex + 2]
+      : conversationCopy.messages.findLast((m) => m.role === 'assistant');
     partialAssistantMessage!.content = 'partial response';
-    const partialMessages = JSON.stringify(
-      conversation.messages.slice(
-        0,
-        conversation.messages.indexOf(partialAssistantMessage!) + 1,
-      ),
+    partialAssistantMessage!.custom_content = {};
+    defaultReplayConversation.messages = conversationCopy.messages.slice(
+      0,
+      conversationCopy.messages.indexOf(partialAssistantMessage!) + 1,
     );
-    defaultReplayConversation.messages = JSON.parse(partialMessages);
     if (updatedModel) {
       defaultReplayConversation.model.id = updatedModel.id;
       defaultReplayConversation.messages.forEach(
