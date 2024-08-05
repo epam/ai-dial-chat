@@ -2,14 +2,15 @@ import dialTest from '@/src/core/dialFixtures';
 import {ExpectedConstants, ExpectedMessages, MenuOptions} from '@/src/testData';
 import {Colors} from '@/src/ui/domData';
 import {Conversation} from "@/chat/types/chat";
-import { expect } from '@playwright/test';
+import {expect} from '@playwright/test';
 
 dialTest.only(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
   'Rename of chat1 when chat2 is opened.\n' +
   'Compare mode is opened if to click on Compare for not selected chat.\n' +
   'Replay chat1 when chat2 is opened.\n' +
-  'Playback chat1 when chat2 is opened',
+  'Playback chat1 when chat2 is opened.\n' +
+  'Export of chat1 when chat2 is opened',
   async ({
            dialHomePage,
            conversationData,
@@ -20,7 +21,7 @@ dialTest.only(
            localStorageManager,
            compareConversation,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let replayConversation: string;
@@ -133,6 +134,20 @@ dialTest.only(
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.playback);
       await conversations.getEntityByName(playbackConversation).waitFor();
+      await conversationAssertion.assertSelectedConversation(
+        playbackConversation,
+      );
+    });
+
+    await dialTest.step('Click on Export', async () => {
+      await conversations.openEntityDropdownMenu(replayConversation);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.export);
+      const downloadedData = await dialHomePage.downloadData(() => conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.withoutAttachments));
+      expect(downloadedData.path).toBeTruthy();
       await conversationAssertion.assertSelectedConversation(
         playbackConversation,
       );
