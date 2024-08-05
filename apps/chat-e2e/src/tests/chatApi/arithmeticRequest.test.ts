@@ -60,7 +60,7 @@ for (const modelToUse of modelsForArithmeticRequest) {
       const conversation = conversationData.prepareModelConversation(
         0,
         modelToUse.isSysPromptAllowed
-          ? 'Answer arithmetic question. The answer should be number, do not use natural language'
+          ? 'Compute arithmetic expression. The answer should be a number, do not use natural language'
           : '',
         [],
         modelToUse.modelId,
