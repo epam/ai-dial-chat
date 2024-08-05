@@ -46,6 +46,7 @@ dialTest(
     sendMessageAssertion,
     page,
   }) => {
+    dialTest.slow();
     setTestIds('EPMRTC-512', 'EPMRTC-3451', 'EPMRTC-1448', 'EPMRTC-1132');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
@@ -101,8 +102,14 @@ dialTest(
     await dialTest.step(
       'Verify no "Share" option is available in dropdown menu for partially replayed conversation',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [
+            firstRandomModel.iconUrl,
+            secondRandomModel.iconUrl,
+          ],
+        });
         await dialHomePage.waitForPageLoaded();
+        await conversations.getEntityByName(replayConversation.name).waitFor();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,
@@ -247,8 +254,10 @@ dialTest(
     iconApiHelper,
     chatMessagesAssertion,
     recentEntitiesAssertion,
+    conversations,
     page,
   }) => {
+    dialTest.slow();
     setTestIds('EPMRTC-1132');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
@@ -316,8 +325,11 @@ dialTest(
     await dialTest.step(
       'Open conversation settings, select "Replay as is" option and verify it is highlighted',
       async () => {
-        await dialHomePage.openHomePage();
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [thirdRandomModel.iconUrl, newRandomModel.iconUrl],
+        });
         await dialHomePage.waitForPageLoaded();
+        await conversations.getEntityByName(replayConversation.name).waitFor();
         await chatHeader.openConversationSettingsPopup();
         await recentEntities.replayAsIsButton.click();
         await page.mouse.move(0, 0);

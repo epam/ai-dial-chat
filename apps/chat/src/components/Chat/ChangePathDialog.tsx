@@ -8,6 +8,7 @@ import {
   getFolderIdFromEntityId,
   getNextDefaultName,
   getPathToFolderById,
+  sortByName,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
@@ -86,7 +87,7 @@ export const ChangePathDialog = ({
   const loadingFolderIds = useAppSelector(selectors.selectLoadingFolderIds);
 
   const folders = useMemo(
-    () => [...conversationFolders, ...promptFolders],
+    () => sortByName([...conversationFolders, ...promptFolders]),
     [conversationFolders, promptFolders],
   );
 
