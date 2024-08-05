@@ -8,7 +8,8 @@ dialTest.only(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
   'Rename of chat1 when chat2 is opened.\n' +
   'Compare mode is opened if to click on Compare for not selected chat.\n' +
-  'Replay chat1 when chat2 is opened',
+  'Replay chat1 when chat2 is opened.\n' +
+  'Playback chat1 when chat2 is opened',
   async ({
            dialHomePage,
            conversationData,
@@ -19,10 +20,11 @@ dialTest.only(
            localStorageManager,
            compareConversation,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
-    // const updatedConversationName = 'Renamed chat';
+    let replayConversation: string;
+    let playbackConversation: string;
 
     await dialTest.step('Create chat1 and chat2', async () => {
       firstConversation = conversationData.prepareDefaultConversation();
@@ -42,10 +44,6 @@ dialTest.only(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        // await conversations.selectConversation(secondConversation.name);
-        // await conversationAssertion.assertSelectedConversation(
-        //   secondConversation.name,
-        // );
       },
     );
 
@@ -117,7 +115,7 @@ dialTest.only(
     });
 
     await dialTest.step('Click on Replay', async () => {
-      const replayConversation = ExpectedConstants.replayConversation + secondConversation.name;
+      replayConversation = ExpectedConstants.replayConversation + secondConversation.name;
       await conversations.openEntityDropdownMenu(secondConversation.name);
       await conversations
         .getDropdownMenu()
@@ -125,6 +123,18 @@ dialTest.only(
       await conversations.getEntityByName(replayConversation).waitFor();
       await conversationAssertion.assertSelectedConversation(
         replayConversation,
+      );
+    });
+
+    await dialTest.step('Click on Playback', async () => {
+      playbackConversation = ExpectedConstants.playbackConversation + firstConversation.name;
+      await conversations.openEntityDropdownMenu(firstConversation.name);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.playback);
+      await conversations.getEntityByName(playbackConversation).waitFor();
+      await conversationAssertion.assertSelectedConversation(
+        playbackConversation,
       );
     });
   },
