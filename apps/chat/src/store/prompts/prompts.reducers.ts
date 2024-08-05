@@ -421,9 +421,13 @@ export const promptsSlice = createSlice({
               .filter(
                 (folderId) =>
                   !promptId.startsWith(folderId) &&
-                  parentFolderIds.some((parentId) => folderId.startsWith(parentId)) &&
+                  parentFolderIds.some((parentId) =>
+                    folderId.startsWith(parentId),
+                  ) &&
                   state.prompts
-                    .filter((prompt) => doesEntityContainSearchTerm(prompt, state.searchTerm))
+                    .filter((prompt) =>
+                      doesEntityContainSearchTerm(prompt, state.searchTerm),
+                    )
                     .some((prompt) => prompt.id.startsWith(folderId)),
               ),
           ]);
@@ -505,7 +509,9 @@ export const promptsSlice = createSlice({
               (prompt) =>
                 doesEntityContainSearchTerm(prompt, state.searchTerm) &&
                 !prompt.id.startsWith(folderId) &&
-                parentFolderIds.some((parentId) => prompt.id.startsWith(parentId))
+                parentFolderIds.some((parentId) =>
+                  prompt.id.startsWith(parentId),
+                ),
             )
             .map((prompt) => prompt.id),
         ]);
@@ -528,14 +534,14 @@ export const promptsSlice = createSlice({
                     doesEntityContainSearchTerm(prompt, state.searchTerm),
                   )
                   .some(
-                  (prompt) =>
-                    prompt.id.startsWith(fid) &&
-                    !prompt.id.startsWith(folderId) &&
-                    !state.chosenPromptIds.includes(prompt.id) &&
-                    !state.chosenFolderIds.some((chosenFolderId) =>
-                      prompt.id.startsWith(chosenFolderId),
-                    ),
-                ),
+                    (prompt) =>
+                      prompt.id.startsWith(fid) &&
+                      !prompt.id.startsWith(folderId) &&
+                      !state.chosenPromptIds.includes(prompt.id) &&
+                      !state.chosenFolderIds.some((chosenFolderId) =>
+                        prompt.id.startsWith(chosenFolderId),
+                      ),
+                  ),
             ),
         ]);
       }

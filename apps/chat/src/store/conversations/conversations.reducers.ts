@@ -784,9 +784,13 @@ export const conversationsSlice = createSlice({
               .filter(
                 (folderId) =>
                   !conversationId.startsWith(folderId) &&
-                  parentFolderIds.some((parentId) => folderId.startsWith(parentId)) &&
+                  parentFolderIds.some((parentId) =>
+                    folderId.startsWith(parentId),
+                  ) &&
                   state.conversations
-                    .filter((conv) => doesEntityContainSearchTerm(conv, state.searchTerm))
+                    .filter((conv) =>
+                      doesEntityContainSearchTerm(conv, state.searchTerm),
+                    )
                     .some((conv) => conv.id.startsWith(folderId)),
               ),
           ]);
@@ -870,7 +874,9 @@ export const conversationsSlice = createSlice({
               (conv) =>
                 doesEntityContainSearchTerm(conv, state.searchTerm) &&
                 !conv.id.startsWith(folderId) &&
-                parentFolderIds.some((parentId) => conv.id.startsWith(parentId)),
+                parentFolderIds.some((parentId) =>
+                  conv.id.startsWith(parentId),
+                ),
             )
             .map((c) => c.id),
         ]);
@@ -889,16 +895,18 @@ export const conversationsSlice = createSlice({
               (fid) =>
                 folderId.startsWith(fid) &&
                 !state.conversations
-                  .filter((conv) => doesEntityContainSearchTerm(conv, state.searchTerm))
+                  .filter((conv) =>
+                    doesEntityContainSearchTerm(conv, state.searchTerm),
+                  )
                   .some(
-                  (conv) =>
-                    conv.id.startsWith(fid) &&
-                    !conv.id.startsWith(folderId) &&
-                    !state.chosenConversationIds.includes(conv.id) &&
-                    !state.chosenFolderIds.some((chosenFolderId) =>
-                      conv.id.startsWith(chosenFolderId),
-                    ),
-                ),
+                    (conv) =>
+                      conv.id.startsWith(fid) &&
+                      !conv.id.startsWith(folderId) &&
+                      !state.chosenConversationIds.includes(conv.id) &&
+                      !state.chosenFolderIds.some((chosenFolderId) =>
+                        conv.id.startsWith(chosenFolderId),
+                      ),
+                  ),
             ),
         ]);
       }
