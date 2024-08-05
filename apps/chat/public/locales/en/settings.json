@@ -1,1 +1,11 @@
-{}
+{
+  "settings.custom_logo.no_custom_logo.label": "No custom logo",
+  "settings.custom_logo.button.add.label": "Add",
+  "settings.custom_logo.button.change.label": "Change",
+  "settings.custom_logo.button.select_custom_logo.label": "Select custom logo",
+  "settings.custom_logo.button.upload_files.label": "Upload files",
+  "settings.button.settings.label": "Settings",
+  "settings.button.save.label": "Save",
+  "settings.full_width_chat.label": "Full width chat",
+  "settings.theme.label": "Theme"
+}

@@ -21,7 +21,7 @@ export const ProfileButton = () => {
 
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
   const { data: session } = useSession();
 
   const onClick = useCallback(() => {
@@ -51,7 +51,7 @@ export const ProfileButton = () => {
           src={session?.user?.image}
           width={iconSize}
           height={iconSize}
-          alt={t('User avatar') || ''}
+          alt={t('header.user_avatar.label') || ''}
         />
       ) : (
         <UserMobileIcon width={iconSize} height={iconSize} />

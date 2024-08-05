@@ -125,8 +125,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       if (!isEntityNameOnSameLevelUnique(newName, selectedPrompt, allPrompts)) {
         dispatch(
           UIActions.showErrorToast(
-            t('Prompt with name "{{newName}}" already exists in this folder.', {
-              ns: 'prompt',
+            t('promptbar.error.prompt_with_name_already_exists_in_folder', {
               newName,
             }),
           ),
@@ -137,7 +136,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       if (doesHaveDotsInTheEnd(newName)) {
         dispatch(
           UIActions.showErrorToast(
-            t('Using a dot at the end of a name is not permitted.'),
+            t(
+              'promptbar.error.using_dot_at_the_end_of_name_is_not_permitted.label',
+            ),
           ),
         );
         return;
@@ -217,7 +218,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
       {selectedPrompt ? (
         <>
           <div className="flex h-[80px] items-center justify-between bg-pr-primary-550 py-4 pl-8 pr-4 text-xl font-medium text-pr-grey-white">
-            {isNewPromptCreating ? t('New Prompt') : selectedPrompt.name}
+            {isNewPromptCreating
+              ? t('promptbar.button.new_prompt')
+              : selectedPrompt.name}
             <button
               onClick={onClose}
               className="self-start hover:text-pr-tertiary-500"
@@ -231,7 +234,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 className="mb-1 flex font-medium text-primary-bg-light"
                 htmlFor="promptName"
               >
-                {t('Name')}
+                {t('promptbar.prompt_modal.name.label')}
                 <span className="inline text-pr-alert-500">*</span>
               </label>
               <input
@@ -243,7 +246,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                   isDotError &&
                     'border-error hover:border-error focus:border-error',
                 )}
-                placeholder={t('A name for your prompt.') || ''}
+                placeholder={t('promptbar.prompt_modal.name.placeholder') || ''}
                 value={name}
                 required
                 type="text"
@@ -255,8 +258,10 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 isShown={isDotError}
                 text={
                   (isDotError
-                    ? t('Using a dot at the end of a name is not permitted.')
-                    : t('Please fill in all required fields')) || ''
+                    ? t(
+                        'promptbar.error.using_dot_at_the_end_of_name_is_not_permitted.label',
+                      )
+                    : t('promptbar.error.fill_all_required_fields.label')) || ''
                 }
               />
             </div>
@@ -266,7 +271,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 className="mb-1 flex font-medium text-primary-bg-light"
                 htmlFor="description"
               >
-                {t('Description')}
+                {t('promptbar.prompt_modal.description.label')}
               </label>
               <textarea
                 ref={descriptionInputRef}
@@ -276,7 +281,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                   'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-pr-grey-400 focus-within:border-accent-quaternary hover:border-accent-quaternary',
                 )}
                 style={{ resize: 'none' }}
-                placeholder={t('A description for your prompt.') || ''}
+                placeholder={
+                  t('promptbar.prompt_modal.description.placeholder') || ''
+                }
                 value={description}
                 onChange={descriptionOnChangeHandler}
                 rows={3}
@@ -288,7 +295,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 className="mb-1 flex font-medium text-primary-bg-light"
                 htmlFor="content"
               >
-                {t('Prompt')}
+                {t('promptbar.prompt_modal.prompt.label')}
                 <span className="inline text-pr-alert-500">*</span>
               </label>
               <textarea
@@ -300,9 +307,10 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 )}
                 style={{ resize: 'none' }}
                 placeholder={
-                  t(
-                    'Prompt content. Use {{}} to denote a variable. Ex: {{name}} is a {{adjective}} {{noun}}',
-                  ) || ''
+                  t('promptbar.prompt_modal.prompt.placeholder', {
+                    openCurlyBracers: '{{',
+                    closeCurlyBracers: '}}',
+                  }) || ''
                 }
                 value={content}
                 onChange={contentOnChangeHandler}
@@ -319,11 +327,11 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 data-qa="cancel-prompt"
                 onClick={onClose}
               >
-                {t('Cancel')}
+                {t('promptbar.prompt_modal.button.cancel.label')}
               </button>
               <Tooltip
                 isTriggerClickable
-                tooltip={t('Please fill in all required fields')}
+                tooltip={t('promptbar.error.fill_all_required_fields.label')}
                 hideTooltip={!saveDisabled}
               >
                 <button
@@ -333,19 +341,21 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                   onClick={(e) => handleSubmit(e, selectedPrompt)}
                   disabled={saveDisabled}
                 >
-                  {t('Save')}
+                  {t('promptbar.prompt_modal.button.save.label')}
                 </button>
               </Tooltip>
             </div>
             <ConfirmDialog
               isOpen={isConfirmDialog}
-              heading={t('Confirm renaming prompt')}
-              confirmLabel={t('Rename')}
-              cancelLabel={t('Cancel')}
+              heading={t('promptbar.dialog.confirm_renaming_prompt.header')}
+              confirmLabel={t(
+                'promptbar.dialog.confirm_renaming_prompt.button.rename',
+              )}
+              cancelLabel={t(
+                'promptbar.dialog.confirm_renaming_prompt.button.cancel',
+              )}
               description={
-                t(
-                  'Renaming will stop sharing and other users will no longer see this prompt.',
-                ) || ''
+                t('promptbar.dialog.confirm_renaming_prompt.description') || ''
               }
               onClose={(result) => {
                 setIsConfirmDialog(false);
@@ -362,7 +372,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
           </div>
         </>
       ) : (
-        <NotFoundEntity entity={t('Prompt')} />
+        <NotFoundEntity entity={t('promptbar.not_found_prompt.label')} />
       )}
     </Modal>
   );

@@ -42,7 +42,7 @@ interface Props {
 }
 
 export const Table = ({ children, isLastMessageStreaming }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Markdown);
 
   const tableRef = useRef<HTMLTableElement | null>(null);
 
@@ -151,21 +151,21 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
       {!isLastMessageStreaming && (
         <div className="flex max-w-full justify-end bg-layer-3 px-2 py-1 text-primary-bg-dark">
           <div data-no-context-menu className="flex gap-2">
-            <Tooltip placement="top" tooltip={t('Copy as CSV')}>
+            <Tooltip placement="top" tooltip={t('markdown.copy_as_csv.label')}>
               <CopyIcon
                 Icon={IconCsv}
                 onClick={copyTableToCSV}
                 copied={CopyTableType.CSV === copiedType}
               />
             </Tooltip>
-            <Tooltip placement="top" tooltip={t('Copy as TXT')}>
+            <Tooltip placement="top" tooltip={t('markdown.copy_as_txt.label')}>
               <CopyIcon
                 Icon={IconTxt}
                 onClick={copyTableToTXT}
                 copied={CopyTableType.TXT === copiedType}
               />
             </Tooltip>
-            <Tooltip placement="top" tooltip={t('Copy as MD')}>
+            <Tooltip placement="top" tooltip={t('markdown.copy_as_md.label')}>
               <CopyIcon
                 Icon={IconMarkdown}
                 onClick={copyTableToMD}

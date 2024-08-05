@@ -137,8 +137,7 @@ const PromptFolderTemplate = ({
       ) {
         dispatch(
           UIActions.showErrorToast(
-            t('Folder with name "{{name}}" already exists at the root.', {
-              ns: 'folder',
+            t('promptbar.error.folder_with_name_already_exists_in_root', {
               name: folder.name,
             }),
           ),
@@ -357,14 +356,14 @@ export function PromptFolders() {
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared by users'),
+          name: t('promptbar.shared_by_users.label'),
           filters: SharedWithMeFilters,
           ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
         },
         {
-          name: t('Recent folders'),
+          name: t('promptbar.shared_by_users.label'),
           filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
           dataQa: 'pinned-prompts',

@@ -46,17 +46,17 @@ const WelcomeTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.next}
         {...primaryProps}
-        className="bg-pr-primary-550 hover:bg-pr-primary-650 text-pr-grey-white my-[10px] mt-[27px] block rounded-[40px] px-[16px] py-[6px]"
+        className="my-[10px] mt-[27px] block rounded-[40px] bg-pr-primary-550 px-[16px] py-[6px] text-pr-grey-white hover:bg-pr-primary-650"
       >
-        {t('Start a quick tour')}
+        {t('tour_guide.button.start_quick_tour.label')}
       </button>
 
       <button
         id={TooltipId.close}
         onClick={closeProps.onClick}
-        className="text-pr-primary-550 hover:text-pr-primary-650 block"
+        className="block text-pr-primary-550 hover:text-pr-primary-650"
       >
-        {t('Skip the tour')}
+        {t('tour_guide.button.skip_tour.label')}
       </button>
     </div>
   );

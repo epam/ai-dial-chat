@@ -1,1 +1,56 @@
-{}
+{
+  "promptbar.preview_prompt_modal.name.label": "Name: ",
+  "promptbar.preview_prompt_modal.description.label": "Description: ",
+  "promptbar.preview_prompt_modal.prompt.label": "Prompt: ",
+  "promptbar.preview_prompt_modal.button.delete_prompt.label": "Delete prompt",
+  "promptbar.preview_prompt_modal.button.duplicate_prompt.label": "Duplicate prompt",
+
+  "promptbar.prompt_modal.name.label": "Name",
+  "promptbar.prompt_modal.name.placeholder": "A name for your prompt.",
+  "promptbar.prompt_modal.description.label": "Description",
+  "promptbar.prompt_modal.description.placeholder": "A description for your prompt.",
+  "promptbar.prompt_modal.prompt.label": "Prompt",
+  "promptbar.prompt_modal.prompt.placeholder": "Prompt content. Use {{openCurlyBracers}}{{closeCurlyBracers}} to denote a variable. Ex: {{openCurlyBracers}}name{{closeCurlyBracers}} is a {{openCurlyBracers}}adjective{{closeCurlyBracers}} {{openCurlyBracers}}noun{{closeCurlyBracers}}",
+  "promptbar.prompt_modal.button.save.label": "Save",
+  "promptbar.prompt_modal.button.cancel.label": "Cancel",
+
+  "promptbar.export_prompt.label": "Export prompt",
+  "promptbar.not_found_prompt.label": "Prompt",
+  "promptbar.prompt_not_be_visible.label": "Prompt will no longer be visible to the organization",
+  "promptbar.button.create_new_folder": "Create new folder",
+  "promptbar.button.import_prompts": "Import prompts",
+  "promptbar.button.export_prompts": "Export prompts",
+  "promptbar.button.delete_all": "Delete all",
+  "promptbar.button.new_prompt": "New prompt",
+  "promptbar.shared_by_users.label": "Shared by users",
+  "promptbar.shared_by_users.label": "Recent folders",
+  "promptbar.pernod_ricard_useful_prompts.label": "Pernod Ricard useful prompts",
+  "promptbar.approve_required.label": "Approve required",
+  "promptbar.recent_prompts.label": "Recent prompts",
+
+  "promptbar.error.prompt_with_name_already_exists_in_folder": "Prompt with name \"{{name}}\" already exists in this folder.",
+  "promptbar.error.folder_with_name_already_exists_in_root": "Folder with name \"{{name}}\" already exists at the root.",
+  "promptbar.error.using_dot_at_the_end_of_name_is_not_permitted.label": "Using a dot at the end of a name is not permitted.",
+  "promptbar.error.fill_all_required_fields.label": "Please fill in all required fields",
+
+  "promptbar.dialog.confirm_deleting_prompt.header": "Confirm deleting prompt",
+  "promptbar.dialog.confirm_deleting_prompt.description": "Are you sure that you want to delete a prompt?",
+  "promptbar.dialog.confirm_deleting_prompt.extra_description": "\nDeleting will stop sharing and other users will no longer see this prompt.",
+  "promptbar.dialog.confirm_deleting_prompt.button.delete": "Delete",
+  "promptbar.dialog.confirm_deleting_prompt.button.cancel": "Cancel",
+
+  "promptbar.dialog.confirm_unsharing_prompt.header": "Confirm unsharing: {{promptName}}",
+  "promptbar.dialog.confirm_unsharing_prompt.description": "Are you sure that you want to unshare this prompt?",
+  "promptbar.dialog.confirm_unsharing_prompt.button.unshare": "Unshare",
+  "promptbar.dialog.confirm_unsharing_prompt.button.cancel": "Cancel",
+
+  "promptbar.dialog.confirm_renaming_prompt.header": "Confirm renaming prompt",
+  "promptbar.dialog.confirm_renaming_prompt.description": "Renaming will stop sharing and other users will no longer see this prompt.",
+  "promptbar.dialog.confirm_renaming_prompt.button.rename": "Rename",
+  "promptbar.dialog.confirm_renaming_prompt.button.cancel": "Cancel",
+
+  "promptbar.dialog.confirm_delete_all_prompts.header": "Confirm clearing all prompts",
+  "promptbar.dialog.confirm_delete_all_prompts.description": "Are you sure that you want to delete all prompts?",
+  "promptbar.dialog.confirm_delete_all_prompts.button.clear": "Clear",
+  "promptbar.dialog.confirm_delete_all_prompts.button.cancel": "Cancel"
+}

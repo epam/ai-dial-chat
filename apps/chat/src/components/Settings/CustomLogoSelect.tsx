@@ -39,11 +39,15 @@ export const CustomLogoSelect = ({
             localLogo ? 'text-primary-bg-dark' : 'text-secondary-bg-dark',
           )}
         >
-          {localLogo ? localLogo : t('No custom logo')}
+          {localLogo
+            ? localLogo
+            : t('settings.custom_logo.no_custom_logo.label')}
         </div>
         <div className="flex gap-3">
           <button onClick={onClickAddHandler} className="text-accent-primary">
-            {localLogo ? t('Change') : t('Add')}
+            {localLogo
+              ? t('settings.custom_logo.button.change.label')
+              : t('settings.custom_logo.button.add.label')}
           </button>
           {localLogo && (
             <button
@@ -64,9 +68,15 @@ export const CustomLogoSelect = ({
             onLogoSelect(files as string[]);
             setIsSelectFilesDialogOpened(false);
           }}
-          headerLabel={t('Select custom logo')}
-          customButtonLabel={t('Select file') as string}
-          customUploadButtonLabel={t('Upload files') as string}
+          headerLabel={t(
+            'settings.custom_logo.button.select_custom_logo.label',
+          )}
+          customButtonLabel={
+            t('settings.custom_logo.button.select_file.label') as string
+          }
+          customUploadButtonLabel={
+            t('settings.custom_logo.button.upload_files.label') as string
+          }
           forceShowSelectCheckBox
         />
       )}

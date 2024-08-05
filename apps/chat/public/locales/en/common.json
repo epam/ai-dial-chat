@@ -1,12 +1,14 @@
 {
   "common.footer.message": "PR GPT - Available <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>FAQ</strong></u></a> and <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>terms of use</strong></u></a> - Made with ❤️ by Tech",
   "footer_msg_zh": "PR GPT - 可用 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>常见问题</strong></u></a> 和 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>使用条款</strong></u></a> - 由 Tech ❤️ 制作",
+
   "common.dialog.replace_confirmation.header": "Some items failed to import due to duplicate names",
   "common.dialog.replace_confirmation.description": "Add a postfix, ignore or replace existing items with importing ones.",
   "common.dialog.replace_confirmation.description": "Add a postfix, ignore or replace existing items with importing ones.",
   "common.dialog.replace_confirmation.all_items.label": "All items",
   "common.dialog.replace_confirmation.all_items.button.continue": "Continue",
   "common.dialog.button.cancel": "Cancel",
+
   "common.button.select_folder": "Select folder",
   "common.button.upload": "Upload",
   "common.button.rename": "Rename",
@@ -17,6 +19,7 @@
   "common.button.update": "Update",
   "common.button.delete": "Delete",
   "common.button.add_new_folder": "Add new folder",
+  "common.button.refresh": "Refresh",
   "common.input.search_folders": "Search folders",
   "common.input.empty_required_message": "Please fill in all required fields",
   "common.combobox.no_items": "No available items",

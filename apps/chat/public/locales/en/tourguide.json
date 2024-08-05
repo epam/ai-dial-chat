@@ -1,0 +1,36 @@
+{
+  "tour_guide.steps.start.title": "Ready to harness the full power of artificial intelligence within Pernod Ricard?",
+  "tour_guide.steps.start.content": "Welcome to Pernod Ricard GPT tour guide. It will go through main features of this solution.",
+
+  "tour_guide.steps.model_selection.title": "Models",
+  "tour_guide.steps.model_selection.content": "Pernod Ricard GPT provides several models to generate text, images and even ask questions to documents. GPT-4 Vision integrates text and image comprehension for seamless content analysis and generation.",
+
+  "tour_guide.steps.new_conversation.title": "New conversation",
+  "tour_guide.steps.new_conversation.content": "You may start a new conversation by clicking on this button. Conversation history will appear below this area.",
+
+  "tour_guide.steps.start_discussion.title": "Start a discussion",
+  "tour_guide.steps.start_discussion.content": "You can input your question in the below and validate with enter or click on the button. Answers will appear from top to down.",
+
+  "tour_guide.steps.history.title": "History",
+  "tour_guide.steps.history.content": "This is your chat history! You can find every conversation you had here. It will allow you to retrieve previous responses from the different models you used.",
+
+  "tour_guide.steps.explore_all_applications.title": "Explore all applications",
+  "tour_guide.steps.explore_all_applications.content": "This is where you can find all of the custom applications hosted on PR GPT. Feel free to browse through them and try them!",
+
+  "tour_guide.steps.prompt_bank.title": "Prompt bank",
+  "tour_guide.steps.prompt_bank.content": "This is your prompt bank. Soon, you will have a dedicated tour guide to help you understand how to use them or even create some, tailored to your needs. You can simply click on a prompt to launch it immediately.",
+
+  "tour_guide.steps.create_new_prompt.title": "Create a new prompt",
+  "tour_guide.steps.create_new_prompt.content": "This is where you can create your own new prompts ! Store them in dedicated folders to keep your prompt bank well organized!",
+
+  "tour_guide.steps.applications.title": "Applications",
+  "tour_guide.steps.applications.content": "Pernod Ricard GPT hosts different custom applications! By clicking here you may start a new conversation, pin or take out the application from the left side bar.",
+
+  "tour_guide.button.start_quick_tour.label": "Start a quick tour",
+  "tour_guide.button.skip_the_tour.label": "Skip the tour",
+  "tour_guide.button.back.label": "Back",
+  "tour_guide.button.skip_tour.label": "Skip Tour",
+  "tour_guide.button.next.label": "Next",
+  "tour_guide.button.start_using_pr_gpt.label": "Start using PR GPT",
+  "tour_guide.steps.label": "Step {{currentStep}}/{{steps}}"
+}

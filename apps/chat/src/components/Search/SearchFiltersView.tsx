@@ -55,7 +55,7 @@ export default function SearchFiltersView({
               ? Feature.ConversationsSharing
               : Feature.PromptsSharing,
           ),
-          name: t('Shared by me'),
+          name: t('search.shared_by_me.label'),
           dataQa: 'shared-by-me-filter',
           filterValue: SearchFilters.SharedByMe,
         },
@@ -66,7 +66,7 @@ export default function SearchFiltersView({
         //       ? Feature.ConversationsPublishing
         //       : Feature.PromptsPublishing,
         //   ),
-        //   name: t('Published by me'),
+        //   name: t('search.published_by_me.label'),
         //   dataQa: 'published-by-me-filter',
         //   filterValue: SearchFilters.PublishedByMe,
         // },
@@ -92,7 +92,7 @@ export default function SearchFiltersView({
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
       onOpenChange={(open) => setIsOpen(open)}
       TriggerCustomRenderer={
-        <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
+        <Tooltip tooltip={t('search.search_filter.label')} hideTooltip={isOpen}>
           <IconFilter
             size={18}
             className={classNames(

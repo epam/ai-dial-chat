@@ -7,6 +7,7 @@ import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 
@@ -16,7 +17,9 @@ interface Props {
   prompts: PromptInfo[];
 }
 
-const RECENT_SECTION_NAME = translate('Recent prompts');
+const RECENT_SECTION_NAME = translate('promptbar.recent_prompts.label', {
+  ns: Translation.Folder,
+});
 
 export const Prompts: FC<Props> = ({ prompts }) => {
   const { handleToggle, isExpanded } = useSectionToggle(

@@ -250,8 +250,7 @@ export const PromptComponent = ({
       ) {
         dispatch(
           UIActions.showErrorToast(
-            t('Prompt with name "{{name}}" already exists in this folder.', {
-              ns: 'prompt',
+            t('promptbar.error.prompt_with_name_already_exists_in_folder', {
               name: prompt.name,
             }),
           ),
@@ -449,7 +448,7 @@ export const PromptComponent = ({
       )}
       {isUnpublishing && (
         <UnpublishModal
-          subtitle={t('Prompt will no longer be visible to the organization')}
+          subtitle={t('promptbar.prompt_not_be_visible.label')}
           type={SharingType.Prompt}
           entity={prompt}
           entities={[prompt]}
@@ -459,14 +458,18 @@ export const PromptComponent = ({
       )}
       <ConfirmDialog
         isOpen={isDeleting}
-        heading={t('Confirm deleting prompt')}
-        description={`${t('Are you sure that you want to delete a prompt?')}${t(
+        heading={t('promptbar.dialog.confirm_deleting_prompt.header')}
+        description={`${t('promptbar.dialog.confirm_deleting_prompt.description')}${t(
           prompt.isShared
-            ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
+            ? 'promptbar.dialog.confirm_deleting_prompt.extra_description'
             : '',
         )}`}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
+        confirmLabel={t(
+          'promptbar.dialog.confirm_deleting_prompt.button.delete',
+        )}
+        cancelLabel={t(
+          'promptbar.dialog.confirm_deleting_prompt.button.cancel',
+        )}
         onClose={(result) => {
           setIsDeleting(false);
           if (result) handleDelete();
@@ -475,14 +478,18 @@ export const PromptComponent = ({
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm unsharing: {{promptName}}', {
+          heading={t('promptbar.dialog.confirm_unsharing_prompt.header', {
             promptName: prompt.name,
           })}
           description={
-            t('Are you sure that you want to unshare this prompt?') || ''
+            t('promptbar.dialog.confirm_unsharing_prompt.description') || ''
           }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(
+            'promptbar.dialog.confirm_unsharing_prompt.button.unshare',
+          )}
+          cancelLabel={t(
+            'promptbar.dialog.confirm_unsharing_prompt.button.cancel',
+          )}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);
             if (result) {

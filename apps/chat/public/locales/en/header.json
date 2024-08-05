@@ -1,3 +1,16 @@
 {
-    "header.description": "Your secured AI assistant within Pernod Ricard environment"
+  "header.description": "Your secured AI assistant within Pernod Ricard environment",
+  "header.user_avatar.label": "User avatar",
+  "header.tour_guide.label": "User avatar",
+  "header.user.label": "User",
+  "header.settings.label": "Settings",
+  "header.logout.label": "Log out",
+  "header.login.label": "Login",
+  "header.conversation_list.label": "Conversation list",
+  "header.prompt_list.label": "Prompt list",
+
+  "header.dialog.confirm_logout.header": "Confirm logging out",
+  "header.dialog.confirm_logout.description": "Are you sure that you want to log out?",
+  "header.dialog.confirm_logout.button.logout": "Log out",
+  "header.dialog.confirm_logout.button.cancel": "Cancel"
 }

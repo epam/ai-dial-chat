@@ -215,7 +215,7 @@ const Sidebar = <T,>({
         {areEntitiesUploaded ? (
           <>
             <Search
-              placeholder={t('Search {{name}}', {
+              placeholder={t('sidebar.search.placeholder', {
                 name: featureType,
               })}
               searchTerm={searchTerm}

@@ -35,9 +35,9 @@ const FinalTooltip: FC<TooltipRenderProps> = ({
       <button
         id={TooltipId.next}
         {...primaryProps}
-        className="bg-pr-primary-550 hover:bg-pr-primary-650 text-pr-grey-white mt-[48px] block rounded-[40px] px-[16px] py-[6px]"
+        className="mt-[48px] block rounded-[40px] bg-pr-primary-550 px-[16px] py-[6px] text-pr-grey-white hover:bg-pr-primary-650"
       >
-        {t('Start using PR GPT')}
+        {t('tour_guide.button.start_using_pr_gpt.label')}
       </button>
     </div>
   );

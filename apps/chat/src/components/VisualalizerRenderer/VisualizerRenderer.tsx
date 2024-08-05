@@ -41,7 +41,7 @@ export const VisualizerRenderer = ({
 }: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Common);
 
   const [ready, setReady] = useState<boolean>();
   const { url: rendererUrl, title: visualizerTitle } = renderer;
@@ -160,7 +160,7 @@ export const VisualizerRenderer = ({
           onClick={() => visualizer.current && sendMessage(visualizer.current)}
         >
           <IconRefresh size={18} />
-          <span>{t('Refresh')}</span>
+          <span>{t('common.button.refresh')}</span>
         </button>
       </div>
       <div

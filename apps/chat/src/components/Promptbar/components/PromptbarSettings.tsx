@@ -39,7 +39,7 @@ export function PromptbarSettings() {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Create new folder'),
+        name: t('promptbar.button.create_new_folder'),
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
@@ -51,7 +51,7 @@ export function PromptbarSettings() {
         },
       },
       {
-        name: t('Import prompts'),
+        name: t('promptbar.button.import_prompts'),
         onClick: (promptsJSON: unknown) => {
           const typedJson = promptsJSON as { content: unknown };
           dispatch(
@@ -66,7 +66,7 @@ export function PromptbarSettings() {
       },
       {
         display: isMyItemsExist,
-        name: t('Export prompts'),
+        name: t('promptbar.button.export_prompts'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
         onClick: () => {
@@ -74,7 +74,7 @@ export function PromptbarSettings() {
         },
       },
       {
-        name: t('Delete all'),
+        name: t('promptbar.button.delete_all'),
         display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
@@ -92,12 +92,16 @@ export function PromptbarSettings() {
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t('Confirm clearing all prompts')}
+        heading={t('promptbar.dialog.confirm_delete_all_prompts.header')}
         description={
-          t('Are you sure that you want to delete all prompts?') || ''
+          t('promptbar.dialog.confirm_delete_all_prompts.description') || ''
         }
-        confirmLabel={t('Clear')}
-        cancelLabel={t('Cancel')}
+        confirmLabel={t(
+          'promptbar.dialog.confirm_delete_all_prompts.button.clear',
+        )}
+        cancelLabel={t(
+          'promptbar.dialog.confirm_delete_all_prompts.button.cancel',
+        )}
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {

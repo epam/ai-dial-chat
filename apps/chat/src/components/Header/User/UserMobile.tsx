@@ -33,7 +33,7 @@ const UserInfo = () => {
             src={session?.user?.image}
             width={18}
             height={18}
-            alt={t('User avatar') || ''}
+            alt={t('header.user_avatar.label') || ''}
           />
         ) : (
           <UserMobileIcon className="mx-2" width={18} height={18} />
@@ -59,7 +59,7 @@ const UserSettings = () => {
       onClick={onClick}
     >
       <IconSettings className="text-primary-bg-dark" size={18} />
-      <span>{t('Settings')}</span>
+      <span>{t('header.settings.label')}</span>
     </div>
   );
 };
@@ -88,14 +88,16 @@ const Logout = () => {
         }}
       >
         <LogOutIcon className="text-primary-bg-dark" width={18} height={18} />
-        <span>{session ? t('Log out') : t('Login')}</span>
+        <span>
+          {session ? t('header.logout.label') : t('header.login.label')}
+        </span>
       </div>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?') || ''}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t('header.dialog.confirm_logout.header')}
+        description={t('header.dialog.confirm_logout.description') || ''}
+        confirmLabel={t('header.dialog.confirm_logout.button.logout')}
+        cancelLabel={t('header.dialog.confirm_logout.button.cancel')}
         onClose={(result) => {
           setIsLogoutConfirmationOpened(false);
           if (result) {
