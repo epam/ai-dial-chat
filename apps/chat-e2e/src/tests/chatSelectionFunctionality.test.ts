@@ -2,10 +2,12 @@ import dialTest from '@/src/core/dialFixtures';
 import {ExpectedMessages, MenuOptions} from '@/src/testData';
 import {Colors} from '@/src/ui/domData';
 import {Conversation} from "@/chat/types/chat";
+import { expect } from '@playwright/test';
 
 dialTest.only(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
-  'Rename of chat1 when chat2 is opened',
+  'Rename of chat1 when chat2 is opened.\n' +
+  'Compare mode is opened if to click on Compare for not selected chat',
   async ({
            dialHomePage,
            conversationData,
@@ -14,8 +16,9 @@ dialTest.only(
            conversationAssertion,
            setTestIds,
            localStorageManager,
+           compareConversation,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -92,6 +95,22 @@ dialTest.only(
         {name: updatedConversationName},
         'visible',
       );
+    });
+
+    await dialTest.step('Click on Compare', async () => {
+      await conversations.openEntityDropdownMenu(secondConversation.name);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.compare);
+      await conversationAssertion.assertSelectedConversation(
+        secondConversation.name,
+      );
+      await expect
+        .soft(
+          compareConversation.getElementLocator(),
+          ExpectedMessages.conversationToCompareVisible,
+        )
+        .toBeVisible();
     });
   },
 );
