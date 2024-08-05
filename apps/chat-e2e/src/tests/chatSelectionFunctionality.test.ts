@@ -4,7 +4,8 @@ import {Colors} from '@/src/ui/domData';
 import {Conversation} from "@/chat/types/chat";
 
 dialTest.only(
-  '[UI] Check highlight of chat1 when chat2 is opened',
+  '[UI] Check highlight of chat1 when chat2 is opened.\n' +
+  'Rename of chat1 when chat2 is opened',
   async ({
            dialHomePage,
            conversationData,
@@ -14,7 +15,7 @@ dialTest.only(
            setTestIds,
            localStorageManager,
          }) => {
-    setTestIds('EPMRTC-934');
+    setTestIds('EPMRTC-934', 'EPMRTC-935');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -77,5 +78,20 @@ dialTest.only(
         );
       },
     );
+
+    await dialTest.step('Click on Rename, rename and confirm', async () => {
+      const updatedConversationName = 'Renamed chat';
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.rename);
+      await conversations.editConversationNameWithTick(updatedConversationName);
+      await conversationAssertion.assertSelectedConversation(
+        secondConversation.name,
+      );
+      await conversationAssertion.assertEntityState(
+        {name: updatedConversationName},
+        'visible',
+      );
+    });
   },
 );
