@@ -115,12 +115,14 @@ dialTest.only(
     });
 
     await dialTest.step('Click on Replay', async () => {
+      const replayConversation = ExpectedConstants.replayConversation + updatedConversationName;
       await conversations.openEntityDropdownMenu(updatedConversationName);
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.replay);
+      await conversations.getEntityByName(replayConversation).waitFor();
       await conversationAssertion.assertSelectedConversation(
-        ExpectedConstants.replayConversation + updatedConversationName,
+        replayConversation,
       );
     });
   },
