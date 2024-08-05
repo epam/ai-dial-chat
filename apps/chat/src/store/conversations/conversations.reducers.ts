@@ -784,9 +784,10 @@ export const conversationsSlice = createSlice({
               .filter(
                 (folderId) =>
                   !conversationId.startsWith(folderId) &&
-                  parentFolderIds.some((parentId) =>
-                    folderId.startsWith(parentId),
-                  ),
+                  parentFolderIds.some((parentId) => folderId.startsWith(parentId)) &&
+                  state.conversations
+                    .filter((conv) => doesEntityContainSearchTerm(conv, state.searchTerm))
+                    .some((conv) => conv.id.startsWith(folderId)),
               ),
           ]);
           state.chosenConversationIds = uniq([
@@ -867,10 +868,9 @@ export const conversationsSlice = createSlice({
           ...state.conversations
             .filter(
               (conv) =>
+                doesEntityContainSearchTerm(conv, state.searchTerm) &&
                 !conv.id.startsWith(folderId) &&
-                parentFolderIds.some((parentId) =>
-                  conv.id.startsWith(parentId),
-                ),
+                parentFolderIds.some((parentId) => conv.id.startsWith(parentId)),
             )
             .map((c) => c.id),
         ]);
@@ -888,7 +888,9 @@ export const conversationsSlice = createSlice({
             .filter(
               (fid) =>
                 folderId.startsWith(fid) &&
-                !state.conversations.some(
+                !state.conversations
+                  .filter((conv) => doesEntityContainSearchTerm(conv, state.searchTerm))
+                  .some(
                   (conv) =>
                     conv.id.startsWith(fid) &&
                     !conv.id.startsWith(folderId) &&

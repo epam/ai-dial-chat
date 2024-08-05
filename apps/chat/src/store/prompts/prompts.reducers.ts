@@ -421,9 +421,10 @@ export const promptsSlice = createSlice({
               .filter(
                 (folderId) =>
                   !promptId.startsWith(folderId) &&
-                  parentFolderIds.some((parentId) =>
-                    folderId.startsWith(parentId),
-                  ),
+                  parentFolderIds.some((parentId) => folderId.startsWith(parentId)) &&
+                  state.prompts
+                    .filter((prompt) => doesEntityContainSearchTerm(prompt, state.searchTerm))
+                    .some((prompt) => prompt.id.startsWith(folderId)),
               ),
           ]);
           state.chosenPromptIds = uniq([
@@ -431,7 +432,6 @@ export const promptsSlice = createSlice({
               (convId: string) => convId !== promptId,
             ),
             ...state.prompts
-
               .filter(
                 (prompt) =>
                   prompt.id !== promptId &&
@@ -501,12 +501,13 @@ export const promptsSlice = createSlice({
             (convId: string) => !convId.startsWith(folderId),
           ),
           ...state.prompts
-            .map((prompt) => prompt.id)
             .filter(
-              (convId) =>
-                !convId.startsWith(folderId) &&
-                parentFolderIds.some((parentId) => convId.startsWith(parentId)),
-            ),
+              (prompt) =>
+                doesEntityContainSearchTerm(prompt, state.searchTerm) &&
+                !prompt.id.startsWith(folderId) &&
+                parentFolderIds.some((parentId) => prompt.id.startsWith(parentId))
+            )
+            .map((prompt) => prompt.id),
         ]);
       } else {
         state.chosenPromptIds = state.chosenPromptIds.filter(
@@ -522,7 +523,11 @@ export const promptsSlice = createSlice({
             .filter(
               (fid) =>
                 folderId.startsWith(fid) &&
-                !state.prompts.some(
+                !state.prompts
+                  .filter((prompt) =>
+                    doesEntityContainSearchTerm(prompt, state.searchTerm),
+                  )
+                  .some(
                   (prompt) =>
                     prompt.id.startsWith(fid) &&
                     !prompt.id.startsWith(folderId) &&
