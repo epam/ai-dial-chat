@@ -18,6 +18,7 @@ import classNames from 'classnames';
 import { constructPath } from '@/src/utils/app/file';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { createTargetUrl } from '@/src/utils/app/publications';
+import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -102,7 +103,7 @@ export function PublishModal({
     ),
   );
   const files = useAppSelector((state) =>
-    ConversationsSelectors.getAttachments(state, entity.id),
+    ConversationsSelectors.getAttachments(state, entity.id, NotReplayFilter),
   );
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
