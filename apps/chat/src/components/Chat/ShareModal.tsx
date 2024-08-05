@@ -23,7 +23,7 @@ import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
 export default function ShareModal() {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const copyButtonRef = useRef<HTMLButtonElement>(null);
@@ -83,7 +83,9 @@ export default function ShareModal() {
       dataQa="share-modal"
       state={modalState}
       onClose={handleClose}
-      heading={`${t('Share')}: ${shareResourceName?.trim()}`}
+      heading={t('share.modal.link.header', {
+        name: shareResourceName?.trim(),
+      })}
     >
       <div className="flex flex-col justify-between gap-2">
         <p className="text-sm text-quaternary-bg-light">

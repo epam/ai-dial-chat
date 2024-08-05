@@ -73,9 +73,7 @@ function PublishModalFilters({
   if (!path || (rules && !rules.length)) {
     return (
       <p>
-        {t(
-          'This publication will be available to all users in the organization',
-        )}
+        {t('chat.publish.the_publication_will_be_available_to_all_users.text')}
       </p>
     );
   }
@@ -350,7 +348,9 @@ export function PublishModal({
                 className="w-full truncate break-words"
                 data-qa="modal-entity-name"
               >
-                {`${t('Publication request for')}: ${entity.name.trim()}`}
+                {t('chat.publish.publication_request_for_entity.label', {
+                  name: entity.name.trim(),
+                })}
               </div>
             </Tooltip>
           </span>
@@ -360,7 +360,7 @@ export function PublishModal({
             <section className="flex flex-col gap-3 px-5 py-4">
               <div>
                 <label className="mb-4 flex text-sm" htmlFor="requestPath">
-                  {t('Publish to')}
+                  {t('chat.publish.publish_to.label')}
                 </label>
                 <button
                   className="input-form mx-0 flex grow items-center justify-between rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary"
@@ -375,7 +375,7 @@ export function PublishModal({
                       {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
                     <span className="text-tertiary-bg-light">
-                      {t('Change')}
+                      {t('chat.publish.button.change.label')}
                     </span>
                   </div>
                 </button>
@@ -384,7 +384,7 @@ export function PublishModal({
 
             <section className="flex flex-col px-5 py-4">
               <h2 className="mb-4 flex gap-2 font-medium">
-                {t('Target Audience Filters')}
+                {t('chat.publish.target_audience_filters.label')}
 
                 {!!(path && rules && rules.length) && (
                   <Tooltip
@@ -392,7 +392,7 @@ export function PublishModal({
                     tooltip={
                       <div className="flex max-w-[230px] break-words text-xs">
                         {t(
-                          'The collection will be published for all users who meet AT LEAST ONE option from every',
+                          'chat.publish.the_collections_will_be_published.text',
                         )}
                       </div>
                     }
@@ -427,7 +427,7 @@ export function PublishModal({
             data-qa="publish"
             autoFocus
           >
-            {t('Send request')}
+            {t('chat.publish.button.send_request.label')}
           </button>
         </div>
       </div>

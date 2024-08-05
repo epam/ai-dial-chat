@@ -1,1 +1,9 @@
-{}
+{
+  "markdown.enter_file_name.label": "Xxxxxx xxxx xxxx",
+  "markdown.copied.label": "Xxxxxx!",
+  "markdown.copy_code.label": "Xxxx xxxx",
+  "markdown.download.label": "Xxxxxxxx",
+  "markdown.copy_as_csv.label": "Xxxx xx XXX",
+  "markdown.copy_as_txt.label": "Xxxx xx XXX",
+  "markdown.copy_as_md.label": "Xxxx xx XX"
+}

@@ -81,7 +81,11 @@ export const ChatControls: FC<Props> = ({
       data-qa="proceed-reply"
     >
       <Tooltip
-        tooltip={isError ? t('Try again') : t('Continue replay')}
+        tooltip={
+          isError
+            ? t('chat.chat_input.try_again.label')
+            : t('chat.chat_input.continue_replay.label')
+        }
         isTriggerClickable
       >
         <Icon

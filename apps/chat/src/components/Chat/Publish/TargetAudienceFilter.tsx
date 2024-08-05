@@ -35,7 +35,7 @@ export function TargetAudienceFilterComponent({
   onChangeFilter,
   readonly = false,
 }: Props) {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Chat);
 
   const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
     initialSelectedFilter?.filterFunction ?? filterFunctionValues[0],
@@ -115,7 +115,9 @@ export function TargetAudienceFilterComponent({
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
-          placeholder={t('Enter one or more options...') as string}
+          placeholder={
+            t('chat.publish.enter_one_or_more_options.text') as string
+          }
         />
       )}
     </div>

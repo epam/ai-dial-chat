@@ -3,8 +3,6 @@ import { TooltipRenderProps } from 'react-joyride';
 
 import { useTranslation } from 'next-i18next';
 
-import { translate } from '@/src/utils/app/translation';
-
 import { Translation } from '@/src/types/translation';
 
 import { TooltipId } from '@/src/components/TourGuide/TourGuide.props';
@@ -53,7 +51,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
           </button>
         )}
         <div>
-          {translate('tour_guide.steps.label', {
+          {t('tour_guide.steps.label', {
             currentStep: index,
             steps: size - 2,
           })}

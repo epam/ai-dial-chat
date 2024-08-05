@@ -42,12 +42,9 @@ export const DEFAULT_STEPS = [
     title: translate('tour_guide.steps.model_selection.title', {
       ns: Translation.TourGuide,
     }),
-    content: translate(
-      'Pernod Ricard GPT provides several models to generate text, images and even ask questions to documents. GPT-4 Vision integrates text and image comprehension for seamless content analysis and generation.',
-      {
-        ns: Translation.TourGuide,
-      },
-    ),
+    content: translate('tour_guide.steps.model_selection.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'right',
   },
   {

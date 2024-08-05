@@ -1,3 +1,4 @@
 {
-  "sidebar.search.placeholder": "Search {{name}}"
+  "sidebar.search_chat.placeholder": "Search chat",
+  "sidebar.search_prompt.placeholder": "Search prompt"
 }

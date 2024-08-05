@@ -141,7 +141,7 @@ export function PublicationControlsView<
           }}
           className="button button-primary button-medium flex items-center"
         >
-          {t('Back to publication request')}
+          {t('chat.publish.button.back_to_publication_request.label')}
         </button>
       </div>
     </div>

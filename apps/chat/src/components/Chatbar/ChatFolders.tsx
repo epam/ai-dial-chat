@@ -349,7 +349,7 @@ export function ChatFolders() {
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
-    name: PUBLISHING_APPROVE_REQUIRED_NAME,
+    name: t('promptbar.approve_required.label'),
     displayRootFiles: true,
     dataQa: 'approve-required',
   };
@@ -359,7 +359,7 @@ export function ChatFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: PUBLISHING_FOLDER_NAME,
+          name: t('promptbar.pernod_ricard_useful_prompts.label'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',

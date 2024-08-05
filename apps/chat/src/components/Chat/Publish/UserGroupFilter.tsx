@@ -46,8 +46,10 @@ export function UserGroupFilter({
       getItemLabel={getItemLabel}
       getItemValue={getItemValue}
       onChangeSelectedItems={handleOnUserGroupsChange}
-      placeholder={t('Enter one or more options...') as string}
-      notFoundPlaceholder={t('No user group available') as string}
+      placeholder={t('chat.publish.enter_one_or_more_options.text') as string}
+      notFoundPlaceholder={
+        t('chat.publish.no_user_group_available.text') as string
+      }
     />
   );
 }

@@ -98,12 +98,14 @@ export const ChatMessage: FC<Props> = memo(
     const confirmationDialog = (
       <ConfirmDialog
         isOpen={isDeleteConfirmationOpened}
-        heading={t('Confirm deleting message')}
+        heading={t('chat.chat_message.dialog.delete_message.header')}
         description={
-          t('Are you sure that you want to delete the message?') || ''
+          t('chat.chat_message.dialog.delete_message.description') || ''
         }
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
+        confirmLabel={t(
+          'chat.chat_message.dialog.delete_message.button.delete',
+        )}
+        cancelLabel={t('chat.chat_message.button.cancel.label')}
         onClose={(result) => {
           setIsDeleteConfirmationOpened(false);
           if (result) handleDeleteMessage();

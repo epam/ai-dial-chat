@@ -17,7 +17,7 @@ export const PlaybackIcon = ({ isCustomTooltip, size }: Props) => {
   return (
     <IconNonModelWithTooltip
       icon={<IconPlayerPlay size={size} />}
-      tooltipContent={t('Playback')}
+      tooltipContent={t('chat.playback.button.playback.label"')}
       isCustomTooltip={isCustomTooltip}
     />
   );

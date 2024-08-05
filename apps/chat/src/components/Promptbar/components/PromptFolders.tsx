@@ -339,7 +339,7 @@ export function PromptFolders() {
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
-    name: PUBLISHING_APPROVE_REQUIRED_NAME,
+    name: t('promptbar.approve_required.label'),
     displayRootFiles: true,
     dataQa: 'approve-required',
   };
@@ -349,7 +349,7 @@ export function PromptFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: PUBLISHING_FOLDER_NAME,
+          name: t('promptbar.pernod_ricard_useful_prompts.label'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
@@ -363,7 +363,7 @@ export function PromptFolders() {
           dataQa: 'shared-with-me',
         },
         {
-          name: t('promptbar.shared_by_users.label'),
+          name: t('promptbar.recent_folders.label'),
           filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
           dataQa: 'pinned-prompts',

@@ -90,7 +90,7 @@ export default function ItemContextMenu({
   onView,
   isLoading,
 }: ItemContextMenuProps) {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Common);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );

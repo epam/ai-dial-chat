@@ -23,7 +23,7 @@
   "promptbar.button.delete_all": "Delete all",
   "promptbar.button.new_prompt": "New prompt",
   "promptbar.shared_by_users.label": "Shared by users",
-  "promptbar.shared_by_users.label": "Recent folders",
+  "promptbar.recent_folders.label": "Recent folders",
   "promptbar.pernod_ricard_useful_prompts.label": "Pernod Ricard useful prompts",
   "promptbar.approve_required.label": "Approve required",
   "promptbar.recent_prompts.label": "Recent prompts",

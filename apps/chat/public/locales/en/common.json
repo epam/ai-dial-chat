@@ -42,4 +42,11 @@
   "common.text.entity_not_found": "{{entity}} not found.",
   "common.tooltip.published": "Published",
   "common.tooltip.shared": "Shared",
+  "common.tooltip.talk_to": "Choice of available models and applications you can use. Below is the list of latest models you have interacted with. You may click on “See full list…” for a complete list of available models and applications",
+  "common.tooltip.system_prompt": "Prompt that will always be executed in addition to your written prompts. Used to give more instructions or personality for this conversation, for instance “Act as a senior project manager and answer in a concise way“",
+
+
+  "common.errors.forms.field_is_required": "Field is required",
+  "common.errors.forms.url_is_not_correct": "URL is not correct"
+
 }

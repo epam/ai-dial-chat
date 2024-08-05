@@ -116,13 +116,13 @@ export const PublishAttachment = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Rename'),
+        name: t('chat.publish.button.rename.label'),
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: () => onStartRename(file),
       },
       {
-        name: t('Download'),
+        name: t('chat.publish.button.download.label'),
         dataQa: 'download',
         Icon: IconDownload,
         display:

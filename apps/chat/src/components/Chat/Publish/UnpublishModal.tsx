@@ -87,7 +87,9 @@ export function UnpublishModal({
       <div className="flex h-full flex-col">
         <h4 className="px-6 text-base font-semibold">
           <span className="line-clamp-2 break-words">
-            {`${t('Unpublish')}: ${entity.name.trim()}`}
+            {t('chat.publish.unpublish_entity.label', {
+              name: entity.name.trim(),
+            })}
           </span>
         </h4>
         <h5 className="mb-4 mt-2 px-6 text-secondary-bg-dark">{subtitle}</h5>
@@ -110,7 +112,7 @@ export function UnpublishModal({
               onClick={handleClose}
               data-qa="cancel"
             >
-              {t('Cancel')}
+              {t('chat.publish.button.cancel.label')}
             </button>
             <button
               className="button button-primary button-medium"
@@ -118,7 +120,7 @@ export function UnpublishModal({
               data-qa="unpublish"
               autoFocus
             >
-              {t('Unpublish')}
+              {t('chat.publish.button.unpublish.label')}
             </button>
           </div>
         </div>

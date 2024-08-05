@@ -178,21 +178,21 @@ export function HandlePublication({ publication }: Props) {
   const sections = [
     {
       featureType: FeatureType.Chat,
-      sectionName: t('Conversations'),
+      sectionName: t('chat.publish.sections.conversations.label'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
       showTooltip: true,
     },
     {
       featureType: FeatureType.Prompt,
-      sectionName: t('Prompts'),
+      sectionName: t('chat.publish.sections.prompts.label'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
       showTooltip: true,
     },
     {
       featureType: FeatureType.File,
-      sectionName: t('Files'),
+      sectionName: t('chat.publish.sections.files.label'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
       showTooltip: true,
@@ -212,8 +212,8 @@ export function HandlePublication({ publication }: Props) {
             className="w-full whitespace-pre text-center text-base font-semibold"
           >
             {publication.resources[0].action !== PublishActions.DELETE
-              ? t('Publication request')
-              : t('Unpublish')}
+              ? t('chat.publish.publication_request.label')
+              : t('chat.publish.unpublish.label')}
           </h4>
         </div>
         <div className="flex w-full flex-col gap-[1px] overflow-hidden bg-layer-1 [&:first-child]:rounded-t-primary">
@@ -226,7 +226,7 @@ export function HandlePublication({ publication }: Props) {
                       className="flex text-sm font-medium"
                       htmlFor="approvePath"
                     >
-                      {t('Publish to')}
+                      {t('chat.publish.publish_to.label')}
                     </label>
                     <button
                       className="mt-4 flex w-full items-center rounded-primary border border-secondary bg-transparent px-3 py-2 shadow-primary"
@@ -246,7 +246,7 @@ export function HandlePublication({ publication }: Props) {
                     </button>
                     <div className="my-4">
                       <p className="text-xs font-medium text-secondary-bg-light">
-                        {t('Request creation date: ')}
+                        {t('chat.publish.request_creation_date.label')}
                       </p>
                       <p className="mt-1 text-sm">
                         {new Date(publication.createdAt).toLocaleString()}
@@ -259,16 +259,18 @@ export function HandlePublication({ publication }: Props) {
                       className="flex text-sm font-medium"
                       htmlFor="approvePath"
                     >
-                      {t('General info')}
+                      {t('chat.publish.general_info.label')}
                     </label>
                     <div className="my-4 grid w-full grid-cols-3 gap-3 text-xs">
                       <p className="text-secondary-bg-light">
-                        <span>{t('Publication id: ')}</span>
+                        <span>{t('chat.publish.publication_id.label')}</span>
                       </p>
                       <span className="col-span-2 truncate">
                         {getPublicationId(publication.url)}
                       </span>
-                      <p className="text-secondary-bg-light">{t('Path: ')}</p>
+                      <p className="text-secondary-bg-light">
+                        {t('chat.publish.path.label')}
+                      </p>
                       <span className="col-span-2 flex truncate whitespace-pre">
                         <Tooltip
                           tooltip={publication.targetFolder?.replace(
@@ -285,7 +287,7 @@ export function HandlePublication({ publication }: Props) {
                         </Tooltip>
                       </span>
                       <p className="text-secondary-bg-light">
-                        {t('Publication date: ')}
+                        {t('chat.publish.publication_date.label')}
                       </p>
                       <span className="col-span-2">
                         {new Date(publication.createdAt).toLocaleString()}
@@ -296,7 +298,7 @@ export function HandlePublication({ publication }: Props) {
               </div>
               <section className="px-5">
                 <h2 className="my-4 flex items-center gap-2 text-sm font-medium">
-                  {t('Target Audience Filters')}
+                  {t('chat.publish.target_audience_filters.label')}
 
                   {!!filters.length && (
                     <Tooltip
@@ -304,7 +306,7 @@ export function HandlePublication({ publication }: Props) {
                       tooltip={
                         <div className="flex max-w-[230px] break-words text-xs">
                           {t(
-                            'The collection will be published for all users who meet AT LEAST ONE option from every',
+                            'chat.publish.the_collections_will_be_published.text',
                           )}
                         </div>
                       }
@@ -341,7 +343,7 @@ export function HandlePublication({ publication }: Props) {
                 ) : (
                   <h2 className="mt-4 flex items-center gap-4 text-sm">
                     {t(
-                      'This publication will be available to all users in the organization',
+                      'chat.publish.the_publication_will_be_available_to_all_users.text',
                     )}
                   </h2>
                 )}
@@ -381,7 +383,7 @@ export function HandlePublication({ publication }: Props) {
             className="text-quaternary-bg-light hover:text-pr-primary-700"
             onClick={handlePublicationReview}
           >
-            {t('Go to a publication review...')}
+            {t('chat.publish.button.go_to_publication_review.label')}
           </button>
           <div className="flex">
             <button
@@ -394,7 +396,7 @@ export function HandlePublication({ publication }: Props) {
                 )
               }
             >
-              {t('Reject')}
+              {t('chat.publish.button.reject.label')}
             </button>
             <button
               className="button button-primary button-medium disabled:cursor-not-allowed disabled:text-controls-disable"
@@ -407,7 +409,7 @@ export function HandlePublication({ publication }: Props) {
                 )
               }
             >
-              {t('Approve')}
+              {t('chat.publish.button.approve.label')}
             </button>
           </div>
         </div>

@@ -8,7 +8,7 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { ChineseLangIcon, EnglishLangIcon } from '@/src/icons';
 
 const LanguageSwitcher = () => {
-  const { t } = useTranslation(Translation.Header);
+  const { t } = useTranslation(Translation.Common);
   const { locale, locales, asPath, push } = useRouter();
 
   const onChangeLocale = (locale: string) => push(asPath, asPath, { locale });

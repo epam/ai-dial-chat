@@ -166,7 +166,9 @@ export const SystemPrompt: FC<Props> = ({
     <div className="flex flex-col">
       <div className="mb-4 flex items-center gap-2 font-medium">
         <label className="text-left">{t('System prompt')}</label>
-        <TooltipContainer description={t(SYSTEM_PROMPT_TOOLTIP)} />
+        <TooltipContainer
+          description={t(SYSTEM_PROMPT_TOOLTIP, { ns: Translation.Common })}
+        />
       </div>
       <div className="relative flex flex-col">
         {disabled && <DisableOverlay />}

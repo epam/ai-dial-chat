@@ -77,7 +77,9 @@ export const ConversationSettingsModel = ({
     <div className="w-full" data-qa="entity-selector">
       <div className="mb-4 flex items-center gap-2 font-medium">
         <div>{t('Start a discussion with')}</div>
-        <TooltipContainer description={t(TALK_TO_TOOLTIP)} />
+        <TooltipContainer
+          description={t(TALK_TO_TOOLTIP, { ns: Translation.Common })}
+        />
       </div>
 
       <div className="flex flex-col gap-3" data-qa="recent">

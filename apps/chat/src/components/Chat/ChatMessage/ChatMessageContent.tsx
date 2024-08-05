@@ -517,7 +517,7 @@ export const ChatMessageContent = ({
                       }}
                       data-qa="cancel"
                     >
-                      {t('Cancel')}
+                      {t('chat.chat_message.button.cancel.label')}
                     </button>
                     <button
                       className="button button-primary button-medium"
@@ -525,7 +525,7 @@ export const ChatMessageContent = ({
                       disabled={isSubmitAllowed}
                       data-qa="save-and-submit"
                     >
-                      {t('Save & Submit')}
+                      {t('chat.chat_message.button.save_submit.label')}
                     </button>
                     <div ref={anchorRef} className="absolute bottom-0"></div>
                   </div>

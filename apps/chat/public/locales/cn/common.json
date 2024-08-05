@@ -1,3 +1,52 @@
 {
-  "common.footer.message": "PR GPT - 可用 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>常见问题</strong></u></a> 和 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>使用条款</strong></u></a> - 由 Tech ❤️ 制作"
+  "common.footer.message": "XX XXX - Xxxxxxxxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>XXX</strong></u></a> xxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>xxxxx xx xxx</strong></u></a> - Xxxx xxxx ❤️ xx Xxxx",
+  "footer_msg_zh": "XX XXX - xxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>xxxxxx xxxxxxx</strong></u></a> xxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>xxxxxx xxxxxx</strong></u></a> - xxx Xxxx ❤️ xxxxxx",
+
+  "common.dialog.replace_confirmation.header": "Xxxx xxxx xxxxxx xx xxxxxx xxx xx xxxxxxxxx xxxxx",
+  "common.dialog.replace_confirmation.description": "Xxx x xxxxxxx, xxxxxx xx xxxxxxx xxxxxxxx xxxx xxxx xxxxxxxxx xxxx.",
+  "common.dialog.replace_confirmation.description": "Xxx x xxxxxxx, xxxxxx xx xxxxxxx xxxxxxxx xxxx xxxx xxxxxxxxx xxxx.",
+  "common.dialog.replace_confirmation.all_items.label": "Xxx xxxx",
+  "common.dialog.replace_confirmation.all_items.button.continue": "Xxxxxxxx",
+  "common.dialog.button.cancel": "Xxxxxx",
+
+  "common.button.select_folder": "Xxxxxx xxxxxx",
+  "common.button.upload": "Xxxxxx",
+  "common.button.rename": "Xxxxxx",
+  "common.button.share": "Xxxxx",
+  "common.button.unshare": "Xxxxxxxx",
+  "common.button.publish": "Xxxxxxx",
+  "common.button.unpublish": "Xxxxxxxxxx",
+  "common.button.update": "Xxxxxx",
+  "common.button.delete": "Xxxxxx",
+  "common.button.add_new_folder": "Xxx xxx xxxxxx",
+  "common.button.refresh": "Xxxxxxx",
+  "common.input.search_folders": "Xxxxxx xxxxxxx",
+  "common.input.empty_required_message": "Xxxxxx xxxx xx xxx xxxxxxxx xxxxxx",
+  "common.combobox.no_items": "Xx xxxxxxxxx xxxx",
+  "common.language.english": "Xxxxxxx",
+  "common.language.chinese": "Xxxxxxx（xx文)",
+  "common.button.move_to": "Xxxx xx",
+  "common.button.new_folder": "Xxx xxxxxx",
+  "common.button.rename": "Xxxxxx",
+  "common.button.edit": "Xxxx",
+  "common.button.compare": "Xxxxxxx",
+  "common.button.duplicate": "Xxxxxxxx",
+  "common.button.view": "Xxxx",
+  "common.button.replay": "Xxxxxx",
+  "common.button.playback": "Xxxxxxxx",
+  "common.button.export": "Xxxxxx",
+  "common.button.with_attachments": "Xxxx xxxxxxxxxxxxxxx",
+  "common.button.without_attachments": "Xxxxxxxx xxxxxxxxxxxxxxx",
+  "common.text.no_data": "Xx xxxx",
+  "common.text.no_results_found": "Xx xxxxxxx xxxxx",
+  "common.text.entity_not_found": "{{entity}} xxx xxxxx.",
+  "common.tooltip.published": "Xxxxxxxxx",
+  "common.tooltip.shared": "Xxxxxx",
+  "common.tooltip.talk_to": "Xxxxxx xx xxxxxxxxxx xxxxxx xxx xxxxxxxxxxxxxxxx xxx xxx xxx. Xxxxxx xx xxx xxxx xx xxxxxx xxxxxx xxx xxxx xxxxxxxxxxx xxxx. Xxx xxx xxxx xx “Xxx xxxx xxxx…” xxx x xxxxxxxx xxxx xx xxxxxxxxxx xxxxxx xxx xxxxxxxxxxxxxxxx",
+  "common.tooltip.system_prompt": "Xxxxxx xxxx xxxx xxxxxx xx xxxxxxxxx xx xxxxxxxx xx xxxx xxxxxxx xxxxxxx. Xxxx xx xxxx xxxx xxxxxxxxxxxx xx xxxxxxxxxx xxx xxxx xxxxxxxxxxxxx, xxx xxxxxxx “Xxx xx x xxxxxx xxxxxxx xxxxxxx xxx xxxxxx xx x xxxxxxx xxx“",
+
+
+  "common.errors.forms.field_is_required": "Xxxxx xx xxxxxxxx",
+  "common.errors.forms.url_is_not_correct": "XXX xx xxx xxxxxxx"
+
 }

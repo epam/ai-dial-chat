@@ -113,7 +113,7 @@ export const UserDesktop = () => {
           item={
             <div className="flex">
               <InfoIcon />
-              <span className="ml-3 font-medium">{t('FAQ')}</span>
+              <span className="ml-3 font-medium">{t('header.faq.label')}</span>
             </div>
           }
           onClick={() => {

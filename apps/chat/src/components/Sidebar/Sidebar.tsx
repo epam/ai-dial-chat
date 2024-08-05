@@ -215,9 +215,11 @@ const Sidebar = <T,>({
         {areEntitiesUploaded ? (
           <>
             <Search
-              placeholder={t('sidebar.search.placeholder', {
-                name: featureType,
-              })}
+              placeholder={t(
+                featureType === FeatureType.Chat
+                  ? 'sidebar.search_chat.placeholder'
+                  : 'sidebar.search_prompt.placeholder',
+              )}
               searchTerm={searchTerm}
               searchFilters={searchFilters}
               onSearch={handleSearchTerm}

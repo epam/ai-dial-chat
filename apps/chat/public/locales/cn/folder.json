@@ -1,0 +1,25 @@
+{
+  "folder.error.folder_with_name_already_exists": "Xxxxxx xxxx xxxx \"{{folderName}}\" xxxxxxx xxxxxx xx xxxx xxxxxx.",
+  "folder.error.using_dot_at_the_end_not_permitted": "Xxxxxx x xxx xx xxx xxx xx x xxxx xx xxx xxxxxxxxx.",
+  "folder.error.move_folder_not_allowed": "Xx'x xxx xxxxxxx xx xxxx xxxxxx xxxxxx xx xxxx xxxxxx",
+  "folder.error.nested_folders_limit": "Xx'x xxx xxxxxxx xx xxxx xxxx xxxxxxx xxxxxxx",
+  "folder.error.conversation_with_name_already_exist": "Xxxxxxxxxxxxx xxxx xxxx \"{{entityName}}\" xxxxxxx xxxxxx xx xxxx xxxxxx.",
+  "folder.error.prompt_with_name_already_exist": "Xxxxxx xxxx xxxx \"{{entityName}}\" xxxxxxx xxxxxx xx xxxx xxxxxx.",
+
+  "folder.dialog.confirm_deleting_folder.header": "Xxxxxxx xxxxxxxx xxxxxx",
+  "folder.dialog.confirm_deleting_folder.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxx x xxxxxx xxxx xxx xxxxxxx xxxxxxx?",
+  "folder.dialog.confirm_deleting_folder.shared.description": "\nXxxxxxxx xxxx xxxx xxxxxxxx xxx xxxxx xxxx xxxx xx xxxxxx xxx xxxx xxxxxx.",
+  "folder.dialog.confirm_deleting_folder.button.delete": "Xxxxxx",
+
+  "folder.dialog.confirm_unsharing_folder.header": "Xxxxxxx xxxxxxxx: {{folderName}}",
+  "folder.dialog.confirm_unsharing_folder.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxxx xxxx xxxxxx?",
+  "folder.dialog.confirm_unsharing_folder.button.unshare": "Xxxxxxxx",
+
+  "folder.dialog.confirm_rename_folder.header": "Xxxxxxx xxxxxxxx xxxxxx",
+  "folder.dialog.confirm_rename_folder.description": "Xxxxxxxx xxxx xxxx xxxxxxxx xxx xxxxx xxxx xxxx xx xxxxxx xxx xxxx xxxxxx.",
+  "folder.dialog.confirm_rename_folder.button.rename": "Xxxxxx",
+
+  "folder.dialog.button.cancel": "Xxxxxx",
+  "folder.text.folder_conversations_will_no_longer_visible": "Xxxxxx/conversations xxxx xx xxxxxx xx xxxxxxx xx xxx xxxxxxxxxxxxxxx",
+  "folder.text.folder_prompts_will_no_longer_visible": "Xxxxxx/prompts xxxx xx xxxxxx xx xxxxxxx xx xxx xxxxxxxxxxxxxxx"
+}
