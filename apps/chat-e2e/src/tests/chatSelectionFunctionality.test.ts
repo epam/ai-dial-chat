@@ -10,7 +10,9 @@ dialTest.only(
   'Compare mode is opened if to click on Compare for not selected chat.\n' +
   'Replay chat1 when chat2 is opened.\n' +
   'Playback chat1 when chat2 is opened.\n' +
-  'Export of chat1 when chat2 is opened',
+  'Export of chat1 when chat2 is opened.\n' +
+  'Delete of chat1 when chat2 is opened.\n' +
+  'Move to a folder of chat1 when chat2 is opened',
   async ({
            dialHomePage,
            conversationData,
@@ -21,8 +23,10 @@ dialTest.only(
            localStorageManager,
            compareConversation,
            confirmationDialog,
+           folderConversations,
+           chatBarFolderAssertion,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939', 'EPMRTC-940');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let replayConversation: string;
@@ -160,7 +164,7 @@ dialTest.only(
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.delete);
-      await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+      await confirmationDialog.confirm({triggeredHttpMethod: 'DELETE'});
       await conversationAssertion.assertSelectedConversation(
         playbackConversation,
       );
@@ -169,6 +173,29 @@ dialTest.only(
         'hidden',
       );
       replayConversation = '';
+    });
+
+    await dialTest.step('Click on "Move to -> New folder"', async () => {
+      await conversations.openEntityDropdownMenu(secondConversation.name);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.moveTo);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.newFolder);
+      await conversationAssertion.assertSelectedConversation(
+        playbackConversation,
+      );
+      await folderConversations.expandFolder(ExpectedConstants.newFolderWithIndexTitle(1));
+      await chatBarFolderAssertion.assertFolderState(
+        {name: ExpectedConstants.newFolderWithIndexTitle(1)},
+        'visible',
+      );
+      await chatBarFolderAssertion.assertFolderEntityState(
+        {name: ExpectedConstants.newFolderWithIndexTitle(1)},
+        {name: secondConversation.name},
+        'visible',
+      );
     });
   },
 );
