@@ -68,7 +68,7 @@ export const FolderContextMenu = ({
   isEmpty,
   isSidePanelFolder,
 }: FolderContextMenuProps) => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Common);
 
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
@@ -87,7 +87,7 @@ export const FolderContextMenu = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Upload'),
+        name: t('common.button.upload'),
         display: !!onUpload && !isExternal,
         dataQa: 'upload',
         Icon: IconUpload,
@@ -95,7 +95,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Rename'),
+        name: t('common.button.rename'),
         display: (!!onRename && !isExternal) || !!folder.temporary,
         dataQa: 'rename',
         Icon: IconPencilMinus,
@@ -103,7 +103,7 @@ export const FolderContextMenu = ({
         disabled: disableAll && !isNameInvalid,
       },
       {
-        name: t('Share'),
+        name: t('common.button.share'),
         display: !isEmpty && isSharingEnabled && !!onShare && !isExternal,
         dataQa: 'share',
         Icon: IconUserShare,
@@ -111,7 +111,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Unshare'),
+        name: t('common.button.unshare'),
         display:
           isSharingEnabled && !!onUnshare && !isExternal && !!folder.isShared,
         dataQa: 'unshare',
@@ -120,7 +120,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Publish'),
+        name: t('common.button.publish'),
         dataQa: 'publish',
         display:
           !isEmpty &&
@@ -133,7 +133,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Update'),
+        name: t('common.button.update'),
         dataQa: 'update-publishing',
         display:
           !isEmpty &&
@@ -145,7 +145,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Unpublish'),
+        name: t('common.button.unpublish'),
         dataQa: 'unpublish',
         display:
           isPublishingEnabled &&
@@ -157,7 +157,7 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Delete'),
+        name: t('common.button.delete'),
         display:
           (!!onDelete &&
             folder.id.startsWith(
@@ -171,14 +171,14 @@ export const FolderContextMenu = ({
         onClick: onDelete,
       },
       {
-        name: t('Delete'),
+        name: t('common.button.delete'),
         display: !!onDelete && !!folder.sharedWithMe,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,
       },
       {
-        name: t('Add new folder'),
+        name: t('common.button.add_new_folder'),
         display: !!onAddFolder,
         dataQa: 'new-folder',
         Icon: IconFolderPlus,

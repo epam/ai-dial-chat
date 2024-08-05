@@ -1,0 +1,46 @@
+{
+  "chatbar.error.conversation_with_name_already_exist_at_the_root" : "Conversation with name \"{{name}}\" already exists at the root.",
+  "chatbar.error.folder_with_name_already_exists_at_the_root" : "Folder with name \"{{name}}\" already exists at the root.",
+  "chatbar.error.conversation_with_name_already_exists_in_this_folder" : "Conversation with name \"{{newName}}\" already exists in this folder.",
+  "chatbar.error.using_a_dot_at_the_end_of_a_name" : "Using a dot at the end of a name is not permitted.",
+
+  "chatbar.button.new_conversation": "New conversation",
+  "chatbar.button.explore_all_applications": "Explore all applications",
+  "chatbar.button.remove_from_sidebar": "Remove from sidebar",
+  "chatbar.button.create_new_folder": "Create new folder",
+  "chatbar.button.import_conversations": "Import Conversations",
+  "chatbar.button.export_conversations_without_attachments": "Export conversations without attachments",
+  "chatbar.button.delete_all_conversations": "Delete all conversations",
+  "chatbar.button.compare_mode": "Compare mode",
+  "chatbar.button.attachments": "Attachments",
+  "chatbar.button.manage_attachments": "Manage attachments",
+  "chatbar.button.shared_with_me": "Shared with me",
+  "chatbar.button.pinned_conversations": "Pinned conversations",
+  "chatbar.button.with_attachments": "With attachments",
+  "chatbar.button.without_attachments": "Without attachments",
+  "chatbar.button.stop": "Stop",
+  "chatbar.button.cancel": "Cancel",
+
+  "chatbar.dialog.button.cancel": "Cancel",
+
+  "chatbar.dialog.confirm_unsharing.header": "Confirm unsharing: {{conversationName}}",
+  "chatbar.dialog.confirm_unsharing.description": "Are you sure that you want to unshare this conversation?",
+  "chatbar.dialog.confirm_unsharing.button.unshare": "Unshare",
+
+  "chatbar.dialog.confirm_deleting_conversation.header": "Confirm deleting conversation",
+  "chatbar.dialog.confirm_deleting_conversation.description": "Are you sure that you want to delete a conversation?",
+  "chatbar.dialog.confirm_deleting_conversation.shared.description": "\nDeleting will stop sharing and other users will no longer see this conversation.",
+  "chatbar.dialog.confirm_deleting_conversation.button.delete": "Delete",
+
+  "chatbar.dialog.confirm_clearing_all_conversations.header": "Confirm clearing all conversations",
+  "chatbar.dialog.confirm_clearing_all_conversations.description": "Are you sure that you want to delete all conversations?",
+  "chatbar.dialog.confirm_clearing_all_conversations.button.clear": "Clear",
+
+  "chatbar.dialog.confirm_renaming_conversation.header": "Confirm renaming conversation",
+  "chatbar.dialog.confirm_renaming_conversation.description": "Renaming will stop sharing and other users will no longer see this conversation.",
+  "chatbar.dialog.confirm_renaming_conversation.button.rename": "Rename",
+
+  "chatbar.header.export": "Export",
+
+  "chatbar.conversation_will_no_longer_be_visible": "Conversation will no longer be visible to the organization"
+}

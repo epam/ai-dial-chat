@@ -12,17 +12,17 @@ interface Props {
 }
 
 const EmptyRequiredInputMessage = ({
-  text = 'Please fill in all required fields',
+  text = 'common.input.empty_required_message',
   useDisplay = false,
   className,
   isShown,
 }: Props) => {
-  const { t } = useTranslation(Translation.Settings);
+  const { t } = useTranslation(Translation.Common);
 
   return (
     <div
       className={classNames(
-        'text-pr-alert-500 text-xxs peer-invalid:peer-[.submitted]:mb-1',
+        'text-xxs text-pr-alert-500 peer-invalid:peer-[.submitted]:mb-1',
         useDisplay && 'hidden peer-invalid:peer-[.submitted]:block',
         !useDisplay &&
           !isShown &&

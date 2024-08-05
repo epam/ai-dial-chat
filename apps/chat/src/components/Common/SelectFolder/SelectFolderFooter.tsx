@@ -13,7 +13,7 @@ export const SelectFolderFooter = ({
   handleNewFolder,
   onSelectFolderClick,
 }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Common);
 
   return (
     <div className="select-folder-footer flex items-center justify-between border-t border-primary px-6 py-4">
@@ -32,7 +32,7 @@ export const SelectFolderFooter = ({
           className="button button-primary button-medium"
           data-qa="select-folder"
         >
-          {t('Select folder')}
+          {t('common.button.select_folder')}
         </button>
       </div>
     </div>

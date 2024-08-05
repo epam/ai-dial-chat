@@ -48,7 +48,7 @@ export const Conversations = ({ conversations }: Props) => {
   const [sortedConversations, setSortedConversations] =
     useState<SortedConversations>();
 
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
 
   const conversationsToDisplay = useMemo(() => {
     const conversationRootId = getConversationRootId();
@@ -154,7 +154,7 @@ export const Conversations = ({ conversations }: Props) => {
           <ConversationsRenderer
             key={key}
             conversations={value.conversations}
-            label={t('{{name}}', { name: value.name })}
+            label={value.name}
             display={value.display}
           />
         ))}

@@ -1,0 +1,25 @@
+{
+  "folder.error.folder_with_name_already_exists": "Folder with name \"{{folderName}}\" already exists in this folder.",
+  "folder.error.using_dot_at_the_end_not_permitted": "Using a dot at the end of a name is not permitted.",
+  "folder.error.move_folder_not_allowed": "It's not allowed to move parent folder in child folder",
+  "folder.error.nested_folders_limit": "It's not allowed to have more nested folders",
+  "folder.error.conversation_with_name_already_exist": "Conversation with name \"{{entityName}}\" already exists in this folder.",
+  "folder.error.prompt_with_name_already_exist": "Prompt with name \"{{entityName}}\" already exists in this folder.",
+
+  "folder.dialog.confirm_deleting_folder.header": "Confirm deleting folder",
+  "folder.dialog.confirm_deleting_folder.description": "Are you sure that you want to delete a folder with all nested elements?",
+  "folder.dialog.confirm_deleting_folder.shared.description": "\nDeleting will stop sharing and other users will no longer see this folder.",
+  "folder.dialog.confirm_deleting_folder.button.delete": "Delete",
+
+  "folder.dialog.confirm_unsharing_folder.header": "Confirm unsharing: {{folderName}}",
+  "folder.dialog.confirm_unsharing_folder.description": "Are you sure that you want to unshare this folder?",
+  "folder.dialog.confirm_unsharing_folder.button.unshare": "Unshare",
+
+  "folder.dialog.confirm_rename_folder.header": "Confirm renaming folder",
+  "folder.dialog.confirm_rename_folder.description": "Renaming will stop sharing and other users will no longer see this folder.",
+  "folder.dialog.confirm_rename_folder.button.rename": "Rename",
+
+  "folder.dialog.button.cancel": "Cancel",
+  "folder.text.folder_conversations_will_no_longer_visible": "Folder/conversations will no longer be visible to the organization",
+  "folder.text.folder_prompts_will_no_longer_visible": "Folder/prompts will no longer be visible to the organization"
+}

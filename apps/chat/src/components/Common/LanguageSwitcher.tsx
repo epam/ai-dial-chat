@@ -37,12 +37,12 @@ const LanguageSwitcher = () => {
                   {language === 'en' && (
                     <>
                       <EnglishLangIcon />
-                      {t('English')}
+                      {t('common.language.english')}
                     </>
                   )}
                   {language === 'cn' && (
                     <>
-                      <ChineseLangIcon /> {t('Chinese（中文)')}
+                      <ChineseLangIcon /> {t('common.language.chinese')}
                     </>
                   )}
                 </div>

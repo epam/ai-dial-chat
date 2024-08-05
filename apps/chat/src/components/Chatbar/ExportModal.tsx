@@ -11,7 +11,7 @@ interface Props {
   isOpen: boolean;
 }
 export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
   return (
     <Modal
       dataQa="single-export-modal"
@@ -20,7 +20,9 @@ export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
       portalId="theme-main"
       containerClassName="inline-block max-w-[350px] w-full px-3 py-4 rounded"
     >
-      <h4 className="mb-3 text-base font-semibold">{t('Export')}</h4>
+      <h4 className="mb-3 text-base font-semibold">
+        {t('chatbar.header.export')}
+      </h4>
       <div className="flex flex-col items-start">
         <button
           data-qa="with-attachments"
@@ -29,7 +31,7 @@ export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
             onExport({ withAttachments: true });
           }}
         >
-          {t('With attachments')}
+          {t('chatbar.button.with_attachments')}
         </button>
         <button
           data-qa="without-attachments"
@@ -38,7 +40,7 @@ export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
             onExport();
           }}
         >
-          {t('Without attachments')}
+          {t('chatbar.button.without_attachments')}
         </button>
       </div>
     </Modal>

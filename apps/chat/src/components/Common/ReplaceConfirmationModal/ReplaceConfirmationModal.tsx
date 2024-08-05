@@ -54,7 +54,7 @@ interface Props {
 export type OnItemEvent = (actionOption: string, entityId: unknown) => void;
 
 export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
 
   const featureType = useAppSelector(ImportExportSelectors.selectFeatureType);
@@ -298,15 +298,13 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
     >
       <div className="flex h-fit flex-col gap-2 px-3 md:px-6">
         <h2 className="text-base font-semibold">
-          {t('Some items failed to import due to duplicate names')}
+          {t('common.dialog.replace_confirmation.header')}
         </h2>
         <p className="text-secondary-bg-dark">
-          {t(
-            'Add a postfix, ignore or replace existing items with importing ones.',
-          )}
+          {t('common.dialog.replace_confirmation.description')}
         </p>
         <div className="flex h-fit flex-row items-center justify-between overflow-y-scroll border-b-[1px] border-tertiary pl-3">
-          <span>{t('All items')}</span>
+          <span>{t('common.dialog.replace_confirmation.all_items.label')}</span>
           <ReplaceSelector
             selectedOption={actionForAllItems}
             onOptionChangeHandler={handleOnChangeAllAction}
@@ -322,13 +320,13 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
           onClick={handleCancel}
           className="button button-secondary button-medium h-[38px] rounded px-3 py-0"
         >
-          {t('Cancel')}
+          {t('common.dialog.button.cancel')}
         </button>
         <button
           onClick={handleContinueImport}
           className="button button-primary button-medium h-[38px] rounded px-3 py-0"
         >
-          {t('Continue')}
+          {t('common.dialog.replace_confirmation.all_items.button.continue')}
         </button>
       </div>
     </Modal>

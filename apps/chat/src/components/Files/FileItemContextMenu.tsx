@@ -40,7 +40,7 @@ export function FileItemContextMenu({
   onUnshare,
   onUnpublish,
 }: ContextMenuProps) {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Files);
 
   const isSharingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
@@ -53,7 +53,7 @@ export function FileItemContextMenu({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Download'),
+        name: t('files.button.download'),
         display:
           file.status !== UploadStatus.LOADING &&
           file.status !== UploadStatus.FAILED,
@@ -68,14 +68,14 @@ export function FileItemContextMenu({
         CustomTriggerRenderer: DownloadRenderer,
       },
       {
-        name: t('Unshare'),
+        name: t('files.button.unshare'),
         dataQa: 'unshare',
         display: isSharingConversationEnabled && !!onUnshare && !!file.isShared,
         Icon: IconUserX,
         onClick: onUnshare,
       },
       {
-        name: t('Unpublish'),
+        name: t('files.button.unpublish'),
         dataQa: 'unpublish',
         display:
           isPublishingConversationEnabled &&
@@ -85,7 +85,7 @@ export function FileItemContextMenu({
         onClick: onUnpublish,
       },
       {
-        name: t('Delete'),
+        name: t('files.button.delete'),
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,

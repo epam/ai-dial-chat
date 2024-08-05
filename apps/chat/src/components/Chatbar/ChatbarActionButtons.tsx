@@ -40,7 +40,7 @@ import {
 import { Feature } from '@epam/ai-dial-shared';
 
 export const NewConversationActionButton = () => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
   const dispatch = useAppDispatch();
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -87,14 +87,14 @@ export const NewConversationActionButton = () => {
         ) : (
           <PlusIcon width={18} height={18} />
         )}
-        {t('New conversation')}
+        {t('chatbar.button.new_conversation')}
       </button>
     </div>
   );
 };
 
 export const AllApplicationsActionButton = () => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
   const dispatch = useAppDispatch();
 
   const isExploreAllConversationsSelected = useAppSelector(
@@ -132,7 +132,7 @@ export const AllApplicationsActionButton = () => {
         data-qa="all-applications"
       >
         <AllApplicationsIcon />
-        {t('Explore all applications')}
+        {t('chatbar.button.explore_all_applications')}
       </button>
     </div>
   );
@@ -143,7 +143,7 @@ const FavoriteApplicationActionButton = ({
 }: {
   app: DialAIEntityModel;
 }) => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
   const dispatch = useAppDispatch();
   const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
   const messageIsStreaming = useAppSelector(
@@ -182,7 +182,7 @@ const FavoriteApplicationActionButton = ({
     () =>
       [
         {
-          name: t('New Conversation'),
+          name: t('chatbar.button.new_conversation'),
           display: true,
           dataQa: 'new-conversation',
           Icon: NewConversationIcon,
@@ -190,7 +190,7 @@ const FavoriteApplicationActionButton = ({
           disabled: false,
         },
         {
-          name: t('Remove from sidebar'),
+          name: t('chatbar.button.remove_from_sidebar'),
           display: true,
           dataQa: 'remove-from-sidebar',
           Icon: UnpinIcon,

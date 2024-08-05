@@ -14,7 +14,7 @@ export const NoData = () => {
         stroke={0.5}
         className="text-primary-bg-dark"
       />
-      <span>{t('No data')}</span>
+      <span>{t('common.text.no_data')}</span>
     </div>
   );
 };

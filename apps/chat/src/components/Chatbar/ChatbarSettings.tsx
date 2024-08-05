@@ -35,7 +35,7 @@ import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 export const ChatbarSettings = () => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -87,7 +87,7 @@ export const ChatbarSettings = () => {
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Create new folder'),
+        name: t('chatbar.button.create_new_folder'),
         dataQa: 'create-folder',
         Icon: FolderPlus,
         display: false,
@@ -100,7 +100,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: t('Import conversations'),
+        name: t('chatbar.button.import_conversations'),
         onClick: (importArgs: unknown) => {
           const typedArgs = importArgs as { content: unknown; zip?: boolean };
 
@@ -117,7 +117,7 @@ export const ChatbarSettings = () => {
         CustomTriggerRenderer: Import,
       },
       {
-        name: t('Export conversations without attachments'),
+        name: t('chatbar.button.export_conversations_without_attachments'),
         dataQa: 'export',
         className: 'max-w-[158px]',
         Icon: IconFileArrowRight,
@@ -127,7 +127,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: t('Delete all conversations'),
+        name: t('chatbar.button.delete_all_conversations'),
         display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
@@ -136,7 +136,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: t('Compare mode'),
+        name: t('chatbar.button.compare_mode'),
         dataQa: 'compare',
         Icon: IconScale,
         display: false,
@@ -146,7 +146,7 @@ export const ChatbarSettings = () => {
         },
       },
       {
-        name: t('Attachments'),
+        name: t('chatbar.button.attachments'),
         display: false,
         dataQa: 'attachments',
         Icon: IconPaperclip,
@@ -181,19 +181,22 @@ export const ChatbarSettings = () => {
           onClose={() => {
             setIsSelectFilesDialogOpened(false);
           }}
-          headerLabel={t('Manage attachments')}
+          headerLabel={t('chatbar.button.manage_attachments')}
           forceShowSelectCheckBox
         />
       )}
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t('Confirm clearing all conversations')}
+        heading={t('chatbar.dialog.confirm_clearing_all_conversations.header')}
         description={
-          t('Are you sure that you want to delete all conversations?') || ''
+          t('chatbar.dialog.confirm_clearing_all_conversations.description') ||
+          ''
         }
-        confirmLabel={t('Clear')}
-        cancelLabel={t('Cancel')}
+        confirmLabel={t(
+          'chatbar.dialog.confirm_clearing_all_conversations.button.clear',
+        )}
+        cancelLabel={t('chatbar.dialog.button.cancel')}
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {

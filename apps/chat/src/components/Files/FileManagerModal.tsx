@@ -304,13 +304,10 @@ export const FileManagerModal = ({
   const handleAttachFiles = useCallback(() => {
     if (selectedFilesIds.length > maximumAttachmentsAmount) {
       setErrorMessage(
-        t(
-          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. You've selected {{selectedAttachmentsAmount}}`,
-          {
-            maxAttachmentsAmount: maximumAttachmentsAmount,
-            selectedAttachmentsAmount: selectedFilesIds.length,
-          },
-        ) as string,
+        t(`files.error.maximum_allowed_attachments_number`, {
+          maxAttachmentsAmount: maximumAttachmentsAmount,
+          selectedAttachmentsAmount: selectedFilesIds.length,
+        }) as string,
       );
       return;
     }
@@ -324,12 +321,9 @@ export const FileManagerModal = ({
     ).map((file) => file.name);
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
-        t(
-          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
-          {
-            incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
-          },
-        ) as string,
+        t(`files.error.upload_files_with_incorrect_type`, {
+          incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
+        }) as string,
       );
       return;
     }
@@ -422,11 +416,11 @@ export const FileManagerModal = ({
           </h2>
         </div>
         <p id={descriptionId}>
-          {t('Max file size up to 512 Mb.')}
+          {t('files.text.max_file_size')}
           &nbsp;
           {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
             !!maximumAttachmentsAmount &&
-            t('Max selected files is {{maxAttachmentsAmount}}.', {
+            t('files.text.max_selected_files', {
               maxAttachmentsAmount: maximumAttachmentsAmount,
             })}
         </p>
@@ -441,7 +435,7 @@ export const FileManagerModal = ({
           <div className="group/modal flex flex-col gap-2 overflow-auto">
             <input
               name="titleInput"
-              placeholder={t('Search files') || ''}
+              placeholder={t('files.search.placeholder') || ''}
               type="text"
               onChange={handleSearch}
               className="m-0 w-full rounded-primary border border-accent-quaternary bg-transparent px-3 py-2 outline-none placeholder:text-tertiary-bg-light focus-within:border-tertiary"
@@ -452,7 +446,7 @@ export const FileManagerModal = ({
                 onClick={() => handleToggleFolder(getFileRootId())}
               >
                 <CaretIconComponent isOpen={isAllFilesOpened} />
-                {t('All files')}
+                {t('files.search.button.all_files')}
               </button>
               {isAllFilesOpened && (
                 <div className="flex grow flex-col gap-0.5 overflow-auto">
@@ -585,7 +579,7 @@ export const FileManagerModal = ({
             )}
             data-qa="upload-from-device"
           >
-            {t('Upload from device')}
+            {t('files.button.upload_from_device')}
           </button>
           {customButtonLabel && (
             <button
@@ -650,8 +644,8 @@ export const FileManagerModal = ({
             ].join(''),
           ) || ''
         }
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
+        confirmLabel={t('files.button.delete')}
+        cancelLabel={t('files.button.cancel')}
         onClose={(result) => {
           if (result) {
             handleDeleteMultipleFiles();
