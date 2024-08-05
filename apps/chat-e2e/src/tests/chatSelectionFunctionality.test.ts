@@ -1,35 +1,50 @@
+import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import {ExpectedConstants, ExpectedMessages, MenuOptions} from '@/src/testData';
-import {Colors} from '@/src/ui/domData';
-import {Conversation} from "@/chat/types/chat";
-import {expect} from '@playwright/test';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+} from '@/src/testData';
+import { Colors } from '@/src/ui/domData';
+import { expect } from '@playwright/test';
 
 dialTest.only(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
-  'Rename of chat1 when chat2 is opened.\n' +
-  'Compare mode is opened if to click on Compare for not selected chat.\n' +
-  'Replay chat1 when chat2 is opened.\n' +
-  'Playback chat1 when chat2 is opened.\n' +
-  'Export of chat1 when chat2 is opened.\n' +
-  'Delete of chat1 when chat2 is opened.\n' +
-  'Move to a folder of chat1 when chat2 is opened.\n' +
-  'Duplicate of chat1 when chat2 is opened.\n' +
-  'Share of chat1 when chat2 is opened',
+    'Rename of chat1 when chat2 is opened.\n' +
+    'Compare mode is opened if to click on Compare for not selected chat.\n' +
+    'Replay chat1 when chat2 is opened.\n' +
+    'Playback chat1 when chat2 is opened.\n' +
+    'Export of chat1 when chat2 is opened.\n' +
+    'Delete of chat1 when chat2 is opened.\n' +
+    'Move to a folder of chat1 when chat2 is opened.\n' +
+    'Duplicate of chat1 when chat2 is opened.\n' +
+    'Share of chat1 when chat2 is opened',
   async ({
-           dialHomePage,
-           conversationData,
-           dataInjector,
-           conversations,
-           conversationAssertion,
-           setTestIds,
-           localStorageManager,
-           compareConversation,
-           confirmationDialog,
-           folderConversations,
-           chatBarFolderAssertion,
-           shareModal,
-         }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939', 'EPMRTC-940', 'EPMRTC-3059', 'EPMRTC-3060');
+    dialHomePage,
+    conversationData,
+    dataInjector,
+    conversations,
+    conversationAssertion,
+    setTestIds,
+    localStorageManager,
+    compareConversation,
+    confirmationDialog,
+    folderConversations,
+    chatBarFolderAssertion,
+    shareModal,
+  }) => {
+    setTestIds(
+      'EPMRTC-934',
+      'EPMRTC-935',
+      'EPMRTC-936',
+      'EPMRTC-937',
+      'EPMRTC-3058',
+      'EPMRTC-938',
+      'EPMRTC-939',
+      'EPMRTC-940',
+      'EPMRTC-3059',
+      'EPMRTC-3060',
+    );
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let replayConversation: string;
@@ -44,9 +59,7 @@ dialTest.only(
         firstConversation,
         secondConversation,
       ]);
-      await localStorageManager.setSelectedConversation(
-        secondConversation
-      );
+      await localStorageManager.setSelectedConversation(secondConversation);
     });
 
     await dialTest.step(
@@ -60,11 +73,11 @@ dialTest.only(
     await dialTest.step('Hover over chat1', async () => {
       await conversations.getEntityByName(firstConversation.name).hover();
       await conversationAssertion.assertEntityBackgroundColor(
-        {name: firstConversation.name},
+        { name: firstConversation.name },
         Colors.backgroundAccentSecondary,
       );
       await conversationAssertion.assertEntityDotsMenuState(
-        {name: firstConversation.name},
+        { name: firstConversation.name },
         'visible',
       );
     });
@@ -78,15 +91,15 @@ dialTest.only(
           .menuOption(MenuOptions.delete)
           .hover();
         await conversationAssertion.assertEntityBackgroundColor(
-          {name: firstConversation.name},
+          { name: firstConversation.name },
           Colors.backgroundAccentSecondary,
         );
         await conversationAssertion.assertEntityBackgroundColor(
-          {name: secondConversation.name},
+          { name: secondConversation.name },
           Colors.backgroundAccentSecondary,
         );
         await conversationAssertion.assertEntityDotsMenuState(
-          {name: secondConversation.name},
+          { name: secondConversation.name },
           'hidden',
         );
       },
@@ -103,7 +116,7 @@ dialTest.only(
         secondConversation.name,
       );
       await conversationAssertion.assertEntityState(
-        {name: firstConversation.name},
+        { name: firstConversation.name },
         'visible',
       );
     });
@@ -125,7 +138,8 @@ dialTest.only(
     });
 
     await dialTest.step('Click on Replay', async () => {
-      replayConversation = ExpectedConstants.replayConversation + secondConversation.name;
+      replayConversation =
+        ExpectedConstants.replayConversation + secondConversation.name;
       await conversations.openEntityDropdownMenu(secondConversation.name);
       await conversations
         .getDropdownMenu()
@@ -137,7 +151,8 @@ dialTest.only(
     });
 
     await dialTest.step('Click on Playback', async () => {
-      playbackConversation = ExpectedConstants.playbackConversation + firstConversation.name;
+      playbackConversation =
+        ExpectedConstants.playbackConversation + firstConversation.name;
       await conversations.openEntityDropdownMenu(firstConversation.name);
       await conversations
         .getDropdownMenu()
@@ -153,9 +168,11 @@ dialTest.only(
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.export);
-      const downloadedData = await dialHomePage.downloadData(() => conversations
-        .getDropdownMenu()
-        .selectMenuOption(MenuOptions.withoutAttachments));
+      const downloadedData = await dialHomePage.downloadData(() =>
+        conversations
+          .getDropdownMenu()
+          .selectMenuOption(MenuOptions.withoutAttachments),
+      );
       expect(downloadedData.path).toBeTruthy();
       expect(downloadedData.path).toMatch(/\.json$/);
       await conversationAssertion.assertSelectedConversation(
@@ -163,21 +180,24 @@ dialTest.only(
       );
     });
 
-    await dialTest.step('Click on Delete while another chat is selected', async () => {
-      await conversations.openEntityDropdownMenu(replayConversation);
-      await conversations
-        .getDropdownMenu()
-        .selectMenuOption(MenuOptions.delete);
-      await confirmationDialog.confirm({triggeredHttpMethod: 'DELETE'});
-      await conversationAssertion.assertSelectedConversation(
-        playbackConversation,
-      );
-      await conversationAssertion.assertEntityState(
-        {name: replayConversation},
-        'hidden',
-      );
-      replayConversation = '';
-    });
+    await dialTest.step(
+      'Click on Delete while another chat is selected',
+      async () => {
+        await conversations.openEntityDropdownMenu(replayConversation);
+        await conversations
+          .getDropdownMenu()
+          .selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await conversationAssertion.assertSelectedConversation(
+          playbackConversation,
+        );
+        await conversationAssertion.assertEntityState(
+          { name: replayConversation },
+          'hidden',
+        );
+        replayConversation = '';
+      },
+    );
 
     await dialTest.step('Click on "Move to -> New folder"', async () => {
       await conversations.openEntityDropdownMenu(secondConversation.name);
@@ -190,14 +210,16 @@ dialTest.only(
       await conversationAssertion.assertSelectedConversation(
         playbackConversation,
       );
-      await folderConversations.expandFolder(ExpectedConstants.newFolderWithIndexTitle(1));
+      await folderConversations.expandFolder(
+        ExpectedConstants.newFolderWithIndexTitle(1),
+      );
       await chatBarFolderAssertion.assertFolderState(
-        {name: ExpectedConstants.newFolderWithIndexTitle(1)},
+        { name: ExpectedConstants.newFolderWithIndexTitle(1) },
         'visible',
       );
       await chatBarFolderAssertion.assertFolderEntityState(
-        {name: ExpectedConstants.newFolderWithIndexTitle(1)},
-        {name: secondConversation.name},
+        { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+        { name: secondConversation.name },
         'visible',
       );
       secondConversation.folderId = `${secondConversation.folderId}/${ExpectedConstants.newFolderWithIndexTitle(1)}`;
@@ -216,9 +238,7 @@ dialTest.only(
 
     await dialTest.step('Click on Share', async () => {
       await conversations.openEntityDropdownMenu(playbackConversation);
-      await conversations
-        .getDropdownMenu()
-        .selectMenuOption(MenuOptions.share);
+      await conversations.getDropdownMenu().selectMenuOption(MenuOptions.share);
       await expect
         .soft(
           shareModal.getElementLocator(),
