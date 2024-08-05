@@ -13,7 +13,8 @@ dialTest.only(
   'Export of chat1 when chat2 is opened.\n' +
   'Delete of chat1 when chat2 is opened.\n' +
   'Move to a folder of chat1 when chat2 is opened.\n' +
-  'Duplicate of chat1 when chat2 is opened',
+  'Duplicate of chat1 when chat2 is opened.\n' +
+  'Share of chat1 when chat2 is opened',
   async ({
            dialHomePage,
            conversationData,
@@ -26,8 +27,9 @@ dialTest.only(
            confirmationDialog,
            folderConversations,
            chatBarFolderAssertion,
+           shareModal,
          }) => {
-    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939', 'EPMRTC-940', 'EPMRTC-3059');
+    setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937', 'EPMRTC-3058', 'EPMRTC-938', 'EPMRTC-939', 'EPMRTC-940', 'EPMRTC-3059', 'EPMRTC-3060');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let replayConversation: string;
@@ -210,6 +212,20 @@ dialTest.only(
       await conversationAssertion.assertSelectedConversation(
         clonedConversation,
       );
+    });
+
+    await dialTest.step('Click on Share', async () => {
+      await conversations.openEntityDropdownMenu(playbackConversation);
+      await conversations
+        .getDropdownMenu()
+        .selectMenuOption(MenuOptions.share);
+      await expect
+        .soft(
+          shareModal.getElementLocator(),
+          ExpectedMessages.modalWindowIsOpened,
+        )
+        .toBeVisible();
+      await shareModal.closeButton.click();
     });
   },
 );
