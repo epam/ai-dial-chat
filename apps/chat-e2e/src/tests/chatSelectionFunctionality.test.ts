@@ -32,6 +32,7 @@ dialTest.only(
     let secondConversation: Conversation;
     let replayConversation: string;
     let playbackConversation: string;
+    let clonedConversation: string;
 
     await dialTest.step('Create chat1 and chat2', async () => {
       firstConversation = conversationData.prepareDefaultConversation();
@@ -198,7 +199,6 @@ dialTest.only(
         'visible',
       );
       secondConversation.folderId = `${secondConversation.folderId}/${ExpectedConstants.newFolderWithIndexTitle(1)}`;
-      // secondConversation.id = `${secondConversation.folderId}/${secondConversation.id}`;
     });
 
     await dialTest.step('Click on Duplicate', async () => {
@@ -206,8 +206,9 @@ dialTest.only(
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.duplicate);
+      clonedConversation = `${firstConversation.name} 1`;
       await conversationAssertion.assertSelectedConversation(
-        `${firstConversation.name} 1`,
+        clonedConversation,
       );
     });
   },
