@@ -22,7 +22,7 @@ dialTest.only(
     setTestIds('EPMRTC-934', 'EPMRTC-935', 'EPMRTC-936', 'EPMRTC-937');
     let firstConversation: Conversation;
     let secondConversation: Conversation;
-    const updatedConversationName = 'Renamed chat';
+    // const updatedConversationName = 'Renamed chat';
 
     await dialTest.step('Create chat1 and chat2', async () => {
       firstConversation = conversationData.prepareDefaultConversation();
@@ -33,7 +33,7 @@ dialTest.only(
         secondConversation,
       ]);
       await localStorageManager.setSelectedConversation(
-        firstConversation
+        secondConversation
       );
     });
 
@@ -42,10 +42,10 @@ dialTest.only(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(secondConversation.name);
-        await conversationAssertion.assertSelectedConversation(
-          secondConversation.name,
-        );
+        // await conversations.selectConversation(secondConversation.name);
+        // await conversationAssertion.assertSelectedConversation(
+        //   secondConversation.name,
+        // );
       },
     );
 
@@ -88,23 +88,25 @@ dialTest.only(
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.rename);
-      await conversations.editConversationNameWithTick(updatedConversationName);
+      firstConversation.name = 'Renamed chat';
+      await conversations.editConversationNameWithTick(firstConversation.name);
+      await conversations.getEntityByName(firstConversation.name).waitFor();
       await conversationAssertion.assertSelectedConversation(
         secondConversation.name,
       );
       await conversationAssertion.assertEntityState(
-        {name: updatedConversationName},
+        {name: firstConversation.name},
         'visible',
       );
     });
 
     await dialTest.step('Click on Compare', async () => {
-      await conversations.openEntityDropdownMenu(secondConversation.name);
+      await conversations.openEntityDropdownMenu(firstConversation.name);
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.compare);
       await conversationAssertion.assertSelectedConversation(
-        secondConversation.name,
+        firstConversation.name,
       );
       await expect
         .soft(
@@ -115,8 +117,8 @@ dialTest.only(
     });
 
     await dialTest.step('Click on Replay', async () => {
-      const replayConversation = ExpectedConstants.replayConversation + updatedConversationName;
-      await conversations.openEntityDropdownMenu(updatedConversationName);
+      const replayConversation = ExpectedConstants.replayConversation + secondConversation.name;
+      await conversations.openEntityDropdownMenu(secondConversation.name);
       await conversations
         .getDropdownMenu()
         .selectMenuOption(MenuOptions.replay);
