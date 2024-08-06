@@ -774,7 +774,12 @@ export const conversationsSlice = createSlice({
                   !conversationId.startsWith(folderId) &&
                   parentFolderIds.some((parentId) =>
                     folderId.startsWith(parentId),
-                  ),
+                  ) &&
+                  state.conversations
+                    .filter((conv) =>
+                      doesEntityContainSearchTerm(conv, state.searchTerm),
+                    )
+                    .some((conv) => conv.id.startsWith(folderId)),
               ),
           ]);
           state.chosenConversationIds = uniq([
@@ -855,6 +860,7 @@ export const conversationsSlice = createSlice({
           ...state.conversations
             .filter(
               (conv) =>
+                doesEntityContainSearchTerm(conv, state.searchTerm) &&
                 !conv.id.startsWith(folderId) &&
                 parentFolderIds.some((parentId) =>
                   conv.id.startsWith(parentId),
@@ -876,15 +882,19 @@ export const conversationsSlice = createSlice({
             .filter(
               (fid) =>
                 folderId.startsWith(fid) &&
-                !state.conversations.some(
-                  (conv) =>
-                    conv.id.startsWith(fid) &&
-                    !conv.id.startsWith(folderId) &&
-                    !state.chosenConversationIds.includes(conv.id) &&
-                    !state.chosenFolderIds.some((chosenFolderId) =>
-                      conv.id.startsWith(chosenFolderId),
-                    ),
-                ),
+                !state.conversations
+                  .filter((conv) =>
+                    doesEntityContainSearchTerm(conv, state.searchTerm),
+                  )
+                  .some(
+                    (conv) =>
+                      conv.id.startsWith(fid) &&
+                      !conv.id.startsWith(folderId) &&
+                      !state.chosenConversationIds.includes(conv.id) &&
+                      !state.chosenFolderIds.some((chosenFolderId) =>
+                        conv.id.startsWith(chosenFolderId),
+                      ),
+                  ),
             ),
         ]);
       }

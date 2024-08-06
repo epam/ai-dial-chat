@@ -69,11 +69,9 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -84,12 +82,7 @@ import {
   RateBody,
   Role,
 } from '@/src/types/chat';
-import {
-  EntityType,
-  FeatureType,
-  ShareEntity,
-  UploadStatus,
-} from '@/src/types/common';
+import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
 
@@ -2662,33 +2655,32 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
       const chosenFolderIds = ConversationsSelectors.selectChosenFolderIds(
         state$.value,
       );
-      const searchTerm = ConversationsSelectors.selectSearchTerm(state$.value);
-      const conversations = ConversationsSelectors.selectConversations(
+      const searchedConversationIds =
+        ConversationsSelectors.selectSearchedConversations(state$.value).map(
+          (conv) => conv.id,
+        );
+      const allConversationIds = ConversationsSelectors.selectConversations(
         state$.value,
-      );
-      const conversationIds = conversations.map((conv) => conv.id);
+      ).map((conv) => conv.id);
       const folders = ConversationsSelectors.selectFolders(state$.value);
       const deletedConversationIds = uniq([
-        ...chosenConversationIds.filter((id) =>
-          doesEntityContainSearchTerm(
-            parseConversationApiKey(id) as unknown as ShareEntity,
-            searchTerm,
-          ),
-        ),
-        ...conversationIds.filter(
-          (id) =>
-            chosenFolderIds.some((folderId) => id.startsWith(folderId)) &&
-            doesEntityContainSearchTerm(
-              parseConversationApiKey(id) as unknown as ShareEntity,
-              searchTerm,
-            ),
+        ...chosenConversationIds,
+        ...searchedConversationIds.filter((id) =>
+          chosenFolderIds.some((folderId) => id.startsWith(folderId)),
         ),
       ]);
-      const filteredConversations = conversations.filter(
-        (conv) => !deletedConversationIds.includes(conv.id),
-      );
+      const deletedFolderIds = chosenFolderIds.filter((id) => {
+        const folderConversationIds = allConversationIds.filter((convId) =>
+          convId.startsWith(id),
+        );
+        const deletedFolderConvIds = deletedConversationIds.filter((convId) =>
+          convId.startsWith(id),
+        );
 
-      if (conversationIds.length) {
+        return folderConversationIds.length === deletedFolderConvIds.length;
+      });
+
+      if (searchedConversationIds.length) {
         actions.push(
           of(
             ConversationsActions.deleteConversations({
@@ -2702,8 +2694,8 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         of(
           ConversationsActions.setFolders({
             folders: folders.filter((folder) =>
-              filteredConversations.some((conv) =>
-                conv.id.startsWith(`${folder.id}/`),
+              deletedFolderIds.every(
+                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
               ),
             ),
           }),
