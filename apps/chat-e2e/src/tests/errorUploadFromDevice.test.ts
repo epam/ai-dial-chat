@@ -71,7 +71,7 @@ dialTest(
         );
         expect
           .soft(errorTextColor[0], ExpectedMessages.errorTextColorIsValid)
-          .toBe(Colors.textError);
+          .toBe(Colors.textPrimary);
         await expect
           .soft(
             uploadErrorText.getElementLocator(),
