@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
-import { isSmallScreenOrMobile } from '@/src/utils/app/mobile';
+import { isMediumScreenOrMobile } from '@/src/utils/app/mobile';
 
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
@@ -115,7 +115,7 @@ export class DataService {
   public static getShowChatbar(): Observable<boolean> {
     return BrowserStorage.getData(
       UIStorageKeys.ShowChatbar,
-      !isSmallScreenOrMobile(),
+      !isMediumScreenOrMobile(),
     );
   }
 
@@ -126,7 +126,7 @@ export class DataService {
   public static getShowPromptbar(): Observable<boolean> {
     return BrowserStorage.getData(
       UIStorageKeys.ShowPromptbar,
-      !isSmallScreenOrMobile(),
+      !isMediumScreenOrMobile(),
     );
   }
 

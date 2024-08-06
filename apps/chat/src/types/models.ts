@@ -36,6 +36,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
     system_prompt?: boolean;
     url_attachments?: boolean;
     folder_attachments?: boolean;
+    allowResume?: boolean;
   };
   tokenizer_model?: TokenizerModel;
 }
@@ -55,6 +56,7 @@ export interface DialAIEntity {
     systemPrompt?: boolean;
     urlAttachments?: boolean;
     folderAttachments?: boolean;
+    allowResume?: boolean;
   };
   tokenizer?: {
     encoding?: TiktokenEncoding;
