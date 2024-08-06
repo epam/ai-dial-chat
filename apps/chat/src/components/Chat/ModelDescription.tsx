@@ -27,7 +27,7 @@ export const ModelDescription = ({
 
   return (
     <div className="flex flex-col gap-3" data-qa="more-info">
-      {!hideMoreInfo && <span>{t('More info')}</span>}
+      {!hideMoreInfo && <span>{t('chat.common.more_info.label')}</span>}
       <div
         className={classNames('flex items-center gap-2', className)}
         data-qa="entity-info"

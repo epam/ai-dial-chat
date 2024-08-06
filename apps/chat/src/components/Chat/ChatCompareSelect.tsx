@@ -87,14 +87,10 @@ export const ChatCompareSelect = ({
       <div className="flex max-w-[465px] flex-col gap-3 rounded bg-layer-2 p-6 ">
         <div className="flex flex-col gap-2">
           <h5 className="text-base font-semibold">
-            {t('Select conversation to compare with')}
+            {t('chat.common.compare.select_conversation.text')}
           </h5>
           <span className="text-tertiary-bg-light">
-            (
-            {t(
-              'Only conversations containing the same number of messages can be compared.',
-            )}
-            )
+            ({t('chat.common.compare.select_conversation_warning.text')})
           </span>
         </div>
         <div className="relative flex items-center">
@@ -111,7 +107,7 @@ export const ChatCompareSelect = ({
             className="pointer-events-none invisible absolute text-pr-primary-700 peer-checked:visible"
           />
           <label className="" htmlFor="showAllCheckbox">
-            {t('Show all conversations')}
+            {t('chat.common.compare.show_all_conversations.text')}
           </label>
         </div>
         {comparableConversations && (
@@ -122,11 +118,17 @@ export const ChatCompareSelect = ({
             itemRow={Option}
             placeholder={
               (comparableConversations?.length > 0
-                ? t('Select conversation')
-                : t('No conversations available')) as string
+                ? t('chat.common.compare.button.select_conversation.label')
+                : t(
+                    'chat.common.compare.button.no_conversations_available.label',
+                  )) as string
             }
             disabled={!comparableConversations?.length || isMobile()}
-            notFoundPlaceholder={t('No conversations available') || ''}
+            notFoundPlaceholder={
+              t(
+                'chat.common.compare.button.no_conversations_available.label',
+              ) || ''
+            }
             onSelectItem={(itemID: string) => {
               const selectedConversation = comparableConversations.find(
                 (conv) => conv.id === itemID,

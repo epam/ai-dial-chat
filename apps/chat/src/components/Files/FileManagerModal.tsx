@@ -62,7 +62,7 @@ export const FileManagerModal = ({
 }: Props) => {
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Files);
 
   const headingId = useId();
   const descriptionId = useId();
@@ -611,38 +611,23 @@ export const FileManagerModal = ({
 
       <ConfirmDialog
         isOpen={!!deletingFileIds.length || !!deletingFolderIds.length}
-        heading={t(
-          [
-            'Confirm deleting ',
-            deletingFolderIds.length > 0
-              ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
-              : '',
-            deletingFileIds.length > 0 && deletingFolderIds.length > 0
-              ? ' and '
-              : '',
-            deletingFileIds.length > 0
-              ? `file${deletingFileIds.length > 1 ? 's' : ''}`
-              : '',
-          ].join(''),
-        )}
+        heading={
+          deletingFolderIds.length > 0 && deletingFolderIds.length > 0
+            ? t('files.dialog.confirm_deleting_files_and_folders.header')
+            : deletingFolderIds.length > 0
+              ? t('files.dialog.confirm_deleting_folders.header')
+              : deletingFileIds.length > 0
+                ? t('files.dialog.confirm_deleting_files.header')
+                : ''
+        }
         description={
-          t(
-            [
-              'Are you sure that you want to delete ',
-              deletingFileIds.length + deletingFolderIds.length > 1
-                ? 'these '
-                : 'this ',
-              deletingFolderIds.length > 0
-                ? `folder${deletingFolderIds.length > 1 ? 's' : ''}`
-                : '',
-              deletingFileIds.length > 0 && deletingFolderIds.length > 0
-                ? ' and '
-                : '',
-              deletingFileIds.length > 0
-                ? `file${deletingFileIds.length > 1 ? 's' : ''}`
-                : '',
-            ].join(''),
-          ) || ''
+          (deletingFileIds.length && deletingFolderIds.length > 1
+            ? t('files.dialog.confirm_deleting_files_and_folders.description')
+            : deletingFolderIds.length > 0
+              ? t('files.dialog.confirm_deleting_folders.description')
+              : deletingFileIds.length > 0
+                ? t('files.dialog.confirm_deleting_files.description')
+                : '') as string
         }
         confirmLabel={t('files.button.delete')}
         cancelLabel={t('files.button.cancel')}

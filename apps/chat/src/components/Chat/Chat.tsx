@@ -961,8 +961,10 @@ export function Chat() {
     return (
       <div className="h-screen pt-2">
         <NotFoundEntity
-          entity={t('Model is')}
-          additionalText={t('Please contact your administrator.') || ''}
+          entity={t('chat.common.not_found_entity.model.label')}
+          additionalText={
+            t('chat.common.not_found_entity.model.additional.text') || ''
+          }
         />
       </div>
     );
@@ -982,8 +984,10 @@ export function Chat() {
   ) {
     return (
       <NotFoundEntity
-        entity={t('Conversation')}
-        additionalText={t('Please select another conversation.') || ''}
+        entity={t('chat.common.not_found_entity.conversation.label')}
+        additionalText={
+          t('chat.common.not_found_entity.conversation.additional.text') || ''
+        }
       />
     );
   }

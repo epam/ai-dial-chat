@@ -63,7 +63,7 @@ export const PreUploadDialog = ({
   customUploadButtonLabel,
 }: Props) => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Files);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
@@ -118,20 +118,16 @@ export const PreUploadDialog = ({
       const errors = [];
       if (incorrectSizeFiles.length > 0) {
         errors.push(
-          t(
-            `Max file size up to 512 Mb. Next files haven't been uploaded: {{incorrectSizeFileNames}}`,
-            { incorrectSizeFileNames: incorrectSizeFiles.join(', ') },
-          ),
+          t(`files.error.max_file_size.text`, {
+            incorrectSizeFileNames: incorrectSizeFiles.join(', '),
+          }),
         );
       }
       if (incorrectTypeFiles.length > 0) {
         errors.push(
-          t(
-            `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
-            {
-              incorrectTypeFileNames: incorrectTypeFiles.join(', '),
-            },
-          ),
+          t(`files.error.trying_to_upload.text`, {
+            incorrectTypeFileNames: incorrectTypeFiles.join(', '),
+          }),
         );
       }
       if (errors.length) {
@@ -164,14 +160,10 @@ export const PreUploadDialog = ({
     const errors = [];
     if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
-        t(
-          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}`,
-          {
-            maxAttachmentsAmount: maximumAttachmentsAmount,
-            selectedAttachmentsAmount:
-              selectedFiles.length + attachments.length,
-          },
-        ) as string,
+        t(`files.error.max_allowed_attachments.text`, {
+          maxAttachmentsAmount: maximumAttachmentsAmount,
+          selectedAttachmentsAmount: selectedFiles.length + attachments.length,
+        }) as string,
       );
     }
     const { filesWithNotAllowedSymbols, filesWithDotInTheEnd } =
@@ -186,35 +178,26 @@ export const PreUploadDialog = ({
       filesWithDotInTheEndNames.length
     ) {
       errors.push(
-        t(
-          `The symbols {{notAllowedSymbols}} and a dot at the end are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}`,
-          {
-            notAllowedSymbols,
-            fileNames: filesWithNotAllowedSymbolsNames.join(', '),
-          },
-        ) as string,
+        t(`files.error.symbol_not_allowed_and_dot.text`, {
+          notAllowedSymbols,
+          fileNames: filesWithNotAllowedSymbolsNames.join(', '),
+        }) as string,
       );
     } else {
       if (filesWithNotAllowedSymbolsNames.length) {
         errors.push(
-          t(
-            `The symbols {{notAllowedSymbols}} are not allowed in file name. Please rename or delete them from uploading files list: {{fileNames}}`,
-            {
-              notAllowedSymbols,
-              fileNames: filesWithNotAllowedSymbolsNames.join(', '),
-            },
-          ) as string,
+          t(`files.error.symbol_not_allowed.text`, {
+            notAllowedSymbols,
+            fileNames: filesWithNotAllowedSymbolsNames.join(', '),
+          }) as string,
         );
       }
 
       if (filesWithDotInTheEndNames.length) {
         errors.push(
-          t(
-            `Using a dot at the end of a name is not permitted. Please rename or delete them from uploading files list: {{fileNames}}`,
-            {
-              fileNames: filesWithDotInTheEndNames.join(', '),
-            },
-          ) as string,
+          t(`files.error.using_dot_not_permitted.text`, {
+            fileNames: filesWithDotInTheEndNames.join(', '),
+          }) as string,
         );
       }
     }
@@ -230,10 +213,10 @@ export const PreUploadDialog = ({
 
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
-        t(
-          `${errors.length ? '\n' : ''}Files which you trying to upload already presented in selected folder. Please rename or delete them from uploading files list: {{fileNames}}`,
+        `${errors.length ? '\n' : ''}${t(
+          'files.error.files_already_presented.text',
           { fileNames: localIncorrectSameNameFiles.join(', ') },
-        ) as string,
+        )}` as string,
       );
     }
 
@@ -243,10 +226,12 @@ export const PreUploadDialog = ({
     if (duplicateNames.length) {
       errors.push(
         t(
-          `${errors.length ? '\n' : ''}Files which you trying to upload have same names. Please rename or delete them from uploading files list: {{fileNames}}`,
-          {
-            fileNames: duplicateNames.join(', '),
-          },
+          `${errors.length ? '\n' : ''}${t(
+            'files.error.files_already_have_same_names.text',
+            {
+              fileNames: duplicateNames.join(', '),
+            },
+          )}`,
         ) as string,
       );
     }
@@ -355,11 +340,11 @@ export const PreUploadDialog = ({
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
-            {t('Upload from device')}
+            {t('files.upload_from_device.label')}
           </h2>
         </div>
         <p id={descriptionId} data-qa="supported-attributes">
-          {t('Max file size up to 512 Mb.')}
+          {t('files.text.max_file_size')}
         </p>
 
         <div>
@@ -373,7 +358,7 @@ export const PreUploadDialog = ({
           <div className="flex flex-col gap-1">
             <div>
               <span className="text-xs text-tertiary-bg-light">
-                {t('Upload to')}
+                {t('files.button.upload_to')}
               </span>
               <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
             </div>
@@ -382,13 +367,13 @@ export const PreUploadDialog = ({
               onClick={handleFolderChange}
             >
               <span className="truncate">
-                {constructPath(t('All files'), folderPath)}
+                {constructPath(t('files.search.button.all_files'), folderPath)}
               </span>
               <span
                 className="text-tertiary-bg-light"
                 data-qa="change-upload-to"
               >
-                {t('Change')}
+                {t('files.button.change')}
               </span>
             </button>
           </div>
@@ -397,7 +382,7 @@ export const PreUploadDialog = ({
             <div className="flex flex-col gap-1">
               <div>
                 <span className="text-xs text-tertiary-bg-light">
-                  {t('Files')}
+                  {t('files.button.files')}
                 </span>
                 <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
               </div>
@@ -448,7 +433,7 @@ export const PreUploadDialog = ({
           className="cursor-pointer rounded py-2.5 text-quaternary-bg-light hover:text-primary-bg-light"
           data-qa="add-more-files"
         >
-          {t('Add more files...')}
+          {t('files.add_more_files.label')}
           <input
             ref={uploadInputRef}
             id="file"
@@ -466,7 +451,9 @@ export const PreUploadDialog = ({
           disabled={selectedFiles.length === 0}
           data-qa="upload"
         >
-          {customUploadButtonLabel ? customUploadButtonLabel : t('Upload')}
+          {customUploadButtonLabel
+            ? customUploadButtonLabel
+            : t('files.button.upload')}
         </button>
       </div>
 

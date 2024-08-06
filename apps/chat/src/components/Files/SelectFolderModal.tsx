@@ -1,8 +1,11 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
 import { FeatureType } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -25,6 +28,7 @@ export const SelectFolderModal = ({
   rootFolderId,
   onClose,
 }: Props) => {
+  const { t } = useTranslation(Translation.Files);
   const dispatch = useAppDispatch();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,7 +111,7 @@ export const SelectFolderModal = ({
       isOpen={isOpen}
       modalDataQa="select-folder-modal"
       onClose={() => handleClose(undefined)}
-      title="Select folder"
+      title={t('files.select_folder.label')}
     >
       <SelectFolderHeader
         handleSearch={handleSearch}
@@ -132,7 +136,7 @@ export const SelectFolderModal = ({
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFilesOpened}
           selectedFolderId={selectedFolderId}
-          rootFolderName="All files"
+          rootFolderName={t('files.search.button.all_files')}
           rootFolderId={rootFolderId}
         />
       </SelectFolderHeader>

@@ -31,7 +31,7 @@ export const NotAllowedModel = ({ type = EntityType.Model }) => {
         data-qa="not-allowed-model-error"
       >
         <IconExclamationCircle size={24} />
-        <span> {t('chat.error.incorrect-selected', { context: type })}</span>
+        <span> {t(`chat.error.incorrect_selected_${type}.text`)}</span>
       </div>
       <ChatInputFooter />
     </div>

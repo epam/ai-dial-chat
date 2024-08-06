@@ -75,17 +75,17 @@ export const TemperatureSlider: FC<Props> = ({
         <label className="text-left font-medium">{label}</label>
       </div>
       <span className="mb-4 text-quaternary-bg-light">
-        {t(
-          'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
-        )}
+        {t('chat.common.temperature.description')}
       </span>
       <div className="grid h-4 w-full grid-cols-3 font-medium">
-        <span className="text-temperature-primary">{t('Precise')}</span>
+        <span className="text-temperature-primary">
+          {t('chat.common.precise.label')}
+        </span>
         <span className="text-center text-temperature-secondary">
-          {t('Neutral')}
+          {t('chat.common.neutral.label')}
         </span>
         <span className="text-right text-temperature-tertiary">
-          {t('Creative')}
+          {t('chat.common.creative.label')}
         </span>
       </div>
       <div className="relative">

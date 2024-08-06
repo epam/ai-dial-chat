@@ -76,7 +76,7 @@ export const ConversationSettingsModel = ({
   return (
     <div className="w-full" data-qa="entity-selector">
       <div className="mb-4 flex items-center gap-2 font-medium">
-        <div>{t('Start a discussion with')}</div>
+        <div>{t('chat.common.start_discussion_with.label')}</div>
         <TooltipContainer
           description={t(TALK_TO_TOOLTIP, { ns: Translation.Common })}
         />
@@ -108,9 +108,7 @@ export const ConversationSettingsModel = ({
                 </span>
                 <span className="text-error" data-qa="group-entity-descr">
                   <EntityMarkdownDescription isShortDescription>
-                    {t('chat.error.incorrect-selected', {
-                      context: EntityType.Model,
-                    })}
+                    {t('chat.error.incorrect_selected_model.text')}
                   </EntityMarkdownDescription>
                 </span>
               </div>
@@ -139,7 +137,7 @@ export const ConversationSettingsModel = ({
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >
-        {t('See full list...')}
+        {t('chat.common.button.see_full_list.label')}
       </button>
       <ModelsDialog
         selectedModelId={modelId}

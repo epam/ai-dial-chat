@@ -90,7 +90,7 @@ export const Application = ({
               </EntityMarkdownDescription>
             </div>
             <button
-              className="text-pr-secondary-550 hover:text-pr-secondary-650 self-end pt-2 font-semibold"
+              className="self-end pt-2 font-semibold text-pr-secondary-550 hover:text-pr-secondary-650"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -98,13 +98,15 @@ export const Application = ({
               }}
               data-qa="expand-group-entity"
             >
-              {isOpened ? t('Read less') : t('Read more')}
+              {isOpened
+                ? t('chat.common.application.button.read_less.label')
+                : t('chat.common.application.button.read_more.label')}
             </button>
           </div>
         )}
         <Tooltip
           placement="top"
-          tooltip={t('Add to Favorites')}
+          tooltip={t('chat.common.application.add_to_favorites.label')}
           triggerClassName="absolute right-3 top-3 hover:cursor-pointer"
         >
           <FavoriteIcon
@@ -143,7 +145,7 @@ export const ApplicationList = ({
   return (
     <div className="flex size-full flex-col items-center py-14">
       <h3 className="font-weave text-3xl font-bold text-pr-primary-700">
-        {t('Applications')}
+        {t('chat.common.application.header.label')}
       </h3>
       <div className="flex flex-wrap justify-center gap-10 px-4 py-14 md:px-2">
         {allApplicationsOrdered.map((app) => (

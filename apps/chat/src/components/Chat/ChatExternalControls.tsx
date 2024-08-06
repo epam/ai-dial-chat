@@ -41,7 +41,7 @@ export default function ChatExternalControls({ conversations }: Props) {
       <span className="text-secondary-bg-dark">
         <IconCopy width={18} height={18} />
       </span>
-      {t('Duplicate the conversation to be able to edit it')}
+      {t('chat.common.button.duplicate_conversation.label')}
     </button>
   );
 }

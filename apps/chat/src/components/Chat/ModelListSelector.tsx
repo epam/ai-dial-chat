@@ -140,8 +140,8 @@ export const ModelListSelector = ({
           ))}
           <MenuItem
             key={'see-full-list'}
-            className="text-pr-secondary-550 hover:text-pr-secondary-650 hover:bg-pr-grey-white max-w-full bg-layer-2 hover:underline"
-            item={t('See full list...')}
+            className="max-w-full bg-layer-2 text-pr-secondary-550 hover:bg-pr-grey-white hover:text-pr-secondary-650 hover:underline"
+            item={t('chat.common.button.see_full_list.label')}
             onClick={() => setIsModelsDialogOpen(true)}
           />
         </Menu>

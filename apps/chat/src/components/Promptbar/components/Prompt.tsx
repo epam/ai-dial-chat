@@ -71,7 +71,7 @@ export const PromptComponent = ({
 }: Props) => {
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.PromptBar);
 
   const folders = useAppSelector((state) =>
     PromptsSelectors.selectFilteredFolders(

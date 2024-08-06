@@ -66,11 +66,11 @@ export const ChatInfoTooltip = ({
     (type?: EntityType) => {
       switch (type) {
         case EntityType.Application:
-          return t('Application');
+          return t('chat.common.application.label');
         case EntityType.Assistant:
-          return t('Assistant');
+          return t('chat.common.assistant.label');
         default:
-          return t('Model');
+          return t('chat.common.model.label');
       }
     },
     [t],
@@ -86,10 +86,13 @@ export const ChatInfoTooltip = ({
           model,
           getModelLabel((model as DialAIEntityModel).type),
         )}
-      {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
+      {subModel != null &&
+        getModelTemplate(subModel, t('chat.common.assistant_model.label'))}
       {prompt && (
         <>
-          <span className="text-primary-bg-dark">{t('System prompt')}:</span>
+          <span className="text-primary-bg-dark">
+            {t('chat.common.system_prompt.label')}:
+          </span>
           <div
             className={classNames('whitespace-pre-wrap', lineClampClass)}
             data-qa="prompt-info"
@@ -100,13 +103,17 @@ export const ChatInfoTooltip = ({
       )}
       {temperature !== null && (
         <>
-          <span className="text-primary-bg-dark">{t('Temperature')}:</span>
+          <span className="text-primary-bg-dark">
+            {t('chat.common.temperature.label')}:
+          </span>
           <div data-qa="temp-info">{temperature}</div>
         </>
       )}
       {selectedAddons !== null && selectedAddons?.length > 0 && (
         <>
-          <span className="text-primary-bg-dark">{t('Addons')}:</span>
+          <span className="text-primary-bg-dark">
+            {t('chat.common.addons.label')}:
+          </span>
           <div className="flex flex-wrap gap-1">
             {selectedAddons.map((addon) => (
               <span

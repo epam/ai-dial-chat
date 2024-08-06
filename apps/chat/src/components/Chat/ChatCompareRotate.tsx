@@ -13,7 +13,7 @@ export const ChatCompareRotate = () => {
         <Rotate width={60} height={60} />
       </div>
       <div className="text-base">
-        {t('Please rotate the screen to use compare mode')}
+        {t('chat.common.compare.rotate_screen.text')}
       </div>
     </div>
   );

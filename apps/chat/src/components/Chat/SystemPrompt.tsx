@@ -165,7 +165,9 @@ export const SystemPrompt: FC<Props> = ({
   return (
     <div className="flex flex-col">
       <div className="mb-4 flex items-center gap-2 font-medium">
-        <label className="text-left">{t('System prompt')}</label>
+        <label className="text-left">
+          {t('chat.common.system_prompt.label')}
+        </label>
         <TooltipContainer
           description={t(SYSTEM_PROMPT_TOOLTIP, { ns: Translation.Common })}
         />
@@ -175,7 +177,7 @@ export const SystemPrompt: FC<Props> = ({
         <AdjustedTextarea
           ref={textareaRef}
           className="w-full resize-none overflow-y-auto rounded-3xl border border-secondary bg-transparent px-4 py-3 outline-none placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary focus-within:shadow-primary hover:border-accent-quaternary"
-          placeholder={t('Type a text or «/» to use a prompt...') || ''}
+          placeholder={t('chat.common.type_text_to_use_prompt.text') || ''}
           maxHeight={MAX_HEIGHT}
           value={content}
           rows={1}
@@ -206,13 +208,20 @@ export const SystemPrompt: FC<Props> = ({
 
       <ConfirmDialog
         isOpen={isPromptLimitModalOpen}
-        heading={t('Prompt limit exceeded')}
+        heading={t('chat.chat_input.dialog.prompt_limit_exceeded.header')}
         description={
-          t(
-            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content) ?? 0, maxTokensLength)}`,
-          ) || ''
+          t('hat.chat_input.dialog.prompt_limit_exceeded.description', {
+            maxTokensLength: maxTokensLength,
+            promptLimitDescription: getPromptLimitDescription(
+              getTokensLength(content) ?? 0,
+              maxTokensLength,
+              t,
+            ),
+          }) || ''
         }
-        confirmLabel={t('Confirm')}
+        confirmLabel={t(
+          'chat.chat_input.dialog.prompt_limit_exceeded.button.confirm',
+        )}
         onClose={() => {
           setIsPromptLimitModalOpen(false);
         }}

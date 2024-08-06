@@ -84,9 +84,14 @@ export const AttachButton = ({
     () =>
       [
         {
-          name: t(
-            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
-          ),
+          name:
+            canAttachFiles && canAttachFolders
+              ? t('files.button.attach_folders_and_uploaded_files')
+              : canAttachFolders
+                ? t('files.button.attach_folders')
+                : canAttachFiles
+                  ? t('files.button.attach_uploaded_files')
+                  : t('files.button.attach'),
           dataQa: 'attach_uploaded',
           display: canAttachFiles || canAttachFolders,
           Icon: !canAttachFiles ? IconFolder : IconFileDescription,

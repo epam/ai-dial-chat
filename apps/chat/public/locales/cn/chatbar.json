@@ -42,5 +42,12 @@
 
   "chatbar.header.export": "Xxxxxx",
 
+  "chatbar.chronology.today.label": "Xxxxx",
+  "chatbar.chronology.yesterday.label": "Xxxxxxxxx",
+  "chatbar.chronology.last_7_days.label": "Xxxx 7 xxxx",
+  "chatbar.chronology.last_30_days.label": "Xxxx 30 xxxx",
+  "chatbar.chronology.older.label": "Xxxxx",
+  "chatbar.chronology.other.label": "Xxxxx",
+
   "chatbar.conversation_will_no_longer_be_visible": "Xxxxxxxxxxxxx xxxx xx xxxxxx xx xxxxxxx xx xxx xxxxxxxxxxxxxxx"
 }

@@ -352,9 +352,16 @@ export const MessageAttachment = ({
                 ? 'max-w-full'
                 : 'max-w-[calc(100%-20px)]',
             )}
-            title={attachment.title || attachment.url || t('Attachment') || ''}
+            title={
+              attachment.title ||
+              attachment.url ||
+              t('chat.common.button.attachment.label') ||
+              ''
+            }
           >
-            {attachment.title || attachment.url || t('Attachment')}
+            {attachment.title ||
+              attachment.url ||
+              t('chat.common.button.attachment.label')}
           </span>
           {isOpenable && !isFolder ? (
             <div className="flex gap-2">
@@ -413,7 +420,7 @@ export const MessageAttachment = ({
               rel="noopener noreferrer"
               className="mt-3 block text-pr-primary-700"
             >
-              {t('Reference...')}
+              {t('chat.common.link.reference.label')}
             </a>
           )}
         </div>

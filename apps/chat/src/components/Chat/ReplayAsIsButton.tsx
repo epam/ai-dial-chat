@@ -38,7 +38,7 @@ export const ReplayAsIsButton = ({ replay, conversationId }: Props) => {
     <NonModelButton
       onClickHandler={handleOnSelectReplayAsIs}
       icon={<ReplayAsIsIcon />}
-      buttonLabel={t('Replay as is')}
+      buttonLabel={t('chat.common.button.replay_as_is.label')}
       isSelected={replay.replayAsIs}
     />
   );

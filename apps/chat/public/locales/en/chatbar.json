@@ -42,5 +42,12 @@
 
   "chatbar.header.export": "Export",
 
+  "chatbar.chronology.today.label": "Today",
+  "chatbar.chronology.yesterday.label": "Yesterday",
+  "chatbar.chronology.last_7_days.label": "Last 7 days",
+  "chatbar.chronology.last_30_days.label": "Last 30 days",
+  "chatbar.chronology.older.label": "Older",
+  "chatbar.chronology.other.label": "Other",
+
   "chatbar.conversation_will_no_longer_be_visible": "Conversation will no longer be visible to the organization"
 }

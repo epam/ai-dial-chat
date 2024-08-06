@@ -48,7 +48,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
         onClick={() => setIsSectionOpened((val) => !val)}
         data-qa="grouped-attachments"
       >
-        {t('Attachments')}
+        {t('chat.common.button.attachments.label')}
         <ChevronDown
           height={18}
           width={18}
