@@ -198,7 +198,9 @@ export function PublicationItemsList({
               ))
             ) : (
               <p className="pl-3.5 text-secondary">
-                {type === SharingType.Conversation
+                {type === SharingType.Conversation ||
+                (type === SharingType.ConversationFolder &&
+                  entities.length === 1)
                   ? t("This conversation doesn't contain any files")
                   : t("These conversations don't contain any files")}
               </p>

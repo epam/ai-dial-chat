@@ -251,9 +251,10 @@ export const ChatHeader = ({
             {isShowModelSelect && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary"
+                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
+                  disabled={conversation.isMessageStreaming}
                 >
                   <IconSettings size={iconSize} />
                 </button>
