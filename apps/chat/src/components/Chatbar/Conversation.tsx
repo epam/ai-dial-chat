@@ -673,7 +673,7 @@ export const ConversationComponent = ({
             )}
           </ShareIcon>
           <input
-            className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+            className="w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
             name="edit-input"
