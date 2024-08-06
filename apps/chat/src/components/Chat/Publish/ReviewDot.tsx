@@ -14,7 +14,7 @@ export function ReviewDot({ className }: Props) {
           viewBox="0 0 4 4"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="m-[3px] rounded-[1px] bg-accent-secondary"
+          className="m-[3px] rounded-[1px] bg-accent-primary"
         >
           <rect width="4" height="4" rx="1" />
         </svg>
