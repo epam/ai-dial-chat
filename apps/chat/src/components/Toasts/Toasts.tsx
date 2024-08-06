@@ -40,7 +40,7 @@ const getToastConfigByType = (toastType: ToastType) => {
 };
 
 export const Toasts = () => (
-  <Toaster toastOptions={{ duration: 190000000 }} containerClassName="mt-1">
+  <Toaster toastOptions={{ duration: 9000 }} containerClassName="mt-1">
     {(toast: Toast) => {
       const { Icon, iconClass, type } = getToastConfigByType(
         toast.id as ToastType,
