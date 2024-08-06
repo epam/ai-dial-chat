@@ -92,10 +92,6 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       ? PromptPublicationResources
       : null;
 
-  const isLeftSidePublication =
-    featureTypes.includes(FeatureType.Chat) ||
-    featureTypes.includes(FeatureType.File);
-
   return (
     <div className="flex flex-col gap-1">
       <div
@@ -118,14 +114,10 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
               publication.uploadStatus !== UploadStatus.LOADED) && (
               <ReviewDot
                 className={classNames(
-                  isLeftSidePublication
-                    ? 'group-hover:bg-accent-secondary-alpha'
-                    : 'group-hover:bg-accent-tertiary-alpha',
+                  'group-hover:bg-accent-primary-alpha',
                   selectedPublication?.url === publication.url &&
                     !selectedConversationIds.length &&
-                    (isLeftSidePublication
-                      ? 'bg-accent-secondary-alpha'
-                      : 'bg-accent-tertiary-alpha'),
+                    'bg-accent-primary-alpha',
                 )}
               />
             )}
