@@ -1,4 +1,4 @@
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntity } from '@/src/types/models';
@@ -62,6 +62,9 @@ export const PublishedWithMeFilter: EntityFilters = {
 
 export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
   !!item.isPublished;
+
+export const NotReplayFilter: EntityFilter<ConversationInfo> = (conv) =>
+  !conv.isReplay;
 
 export const getNewSearchFiltersValue = (
   filter: SearchFilters,

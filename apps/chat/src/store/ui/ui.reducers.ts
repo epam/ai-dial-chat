@@ -2,6 +2,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
 import { Theme } from '@/src/types/themes';
+import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
@@ -121,13 +122,16 @@ export const uiSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string | null;
-        type?: 'error' | 'loading' | 'success';
+        type?: ToastType;
         response?: Response;
+        icon?: JSX.Element;
       }>,
     ) => state,
     showErrorToast: (state, _action: PayloadAction<string>) => state,
-    showLoadingToast: (state, _action: PayloadAction<string>) => state,
+    showWarningToast: (state, _action: PayloadAction<string>) => state,
+    showInfoToast: (state, _action: PayloadAction<string>) => state,
     showSuccessToast: (state, _action: PayloadAction<string>) => state,
+    showLoadingToast: (state, _action: PayloadAction<string>) => state,
     setOpenedFoldersIds: (
       state,
       {

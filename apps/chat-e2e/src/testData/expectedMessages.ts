@@ -175,6 +175,8 @@ export enum ExpectedMessages {
   buttonBackgroundColorIsValid = 'Button background color is valid',
   newPromptButtonIsHighlighted = 'New prompt button is highlighted',
   newPromptButtonCursorIsPointer = 'New prompt button cursor is a pointer',
+  selectConversationCursorIsPointer = 'Conversation cursor is a pointer',
+  selectConversationCursorIsNotAllowed = 'Conversation cursor is a not-allowed',
   playbackControlsHidden = 'PlayBack controls are hidden',
   playbackNextButtonEnabled = 'PlayBack next button is enabled',
   playbackNextButtonDisabled = 'PlayBack next button is disabled',
