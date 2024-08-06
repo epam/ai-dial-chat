@@ -5,7 +5,7 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -42,6 +42,9 @@ interface ModelGroupProps {
   searchTerm?: string;
   disabled?: boolean;
   isReplayAsIs?: boolean;
+  setIsDeleteModalOpen: (open: boolean) => void;
+  setCurrentEntityName: (name: string) => void;
+  setCurrentEntityReference: (reference: string) => void;
   openApplicationModal?: () => void;
 }
 
@@ -53,13 +56,15 @@ const ModelGroup = ({
   searchTerm,
   disabled,
   isReplayAsIs,
+  setIsDeleteModalOpen,
   openApplicationModal,
+  setCurrentEntityName,
+  setCurrentEntityReference,
 }: ModelGroupProps) => {
   const dispatch = useAppDispatch();
 
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
   const currentEntity = useMemo(() => {
     // if only 1 model without group
@@ -88,12 +93,6 @@ const ModelGroup = ({
     return entities[minIndex === Number.MAX_SAFE_INTEGER ? 0 : minIndex];
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
-  const handleDelete = () => {
-    if (currentEntity.name) {
-      dispatch(ApplicationActions.delete(currentEntity.name));
-    }
-  };
-
   const description = currentEntity.description;
   const applicationId = currentEntity.id;
 
@@ -105,12 +104,9 @@ const ModelGroup = ({
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-
           dispatch(ApplicationActions.getOne(applicationId));
-
-          if (openApplicationModal) {
-            openApplicationModal();
-          }
+          openApplicationModal && openApplicationModal();
+          setCurrentEntityReference(currentEntity?.reference);
         },
       },
       {
@@ -133,6 +129,7 @@ const ModelGroup = ({
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
+          setCurrentEntityName(currentEntity.name);
           setIsDeleteModalOpen(true);
         },
       },
@@ -237,19 +234,6 @@ const ModelGroup = ({
             </button>
           )}
       </div>
-      <ConfirmDialog
-        isOpen={isDeleteModalOpen}
-        heading="Confirm deleting application"
-        description="Are you sure you want to delete the application?"
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
-        onClose={(result) => {
-          setIsDeleteModalOpen(false);
-          if (result) {
-            handleDelete();
-          }
-        }}
-      />
     </div>
   );
 };
@@ -281,11 +265,18 @@ export const ModelList = ({
   disabled,
   isReplayAsIs,
 }: ModelListProps) => {
-  const [applicationModalStatus, setApplicationModalStatus] =
-    useState('closed');
-  const modalIsOpen = applicationModalStatus !== 'closed';
-  const modalIsClosed = () => setApplicationModalStatus('closed');
-  const openEditApplicationModal = () => setApplicationModalStatus('edit');
+  const dispatch = useAppDispatch();
+
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [currentEntityName, setCurrentEntityName] = useState('');
+  const [currentEntityReference, setCurrentEntityReference] = useState('');
+
+  const handleDelete = () => {
+    if (currentEntityName) {
+      dispatch(ApplicationActions.delete(currentEntityName));
+    }
+  };
 
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
@@ -319,16 +310,35 @@ export const ModelList = ({
             disabled={disabled}
             searchTerm={searchTerm}
             isReplayAsIs={isReplayAsIs}
-            openApplicationModal={openEditApplicationModal}
+            openApplicationModal={() => setModalIsOpen(true)}
+            setIsDeleteModalOpen={setIsDeleteModalOpen}
+            setCurrentEntityName={setCurrentEntityName}
+            setCurrentEntityReference={setCurrentEntityReference}
           />
         ))}
       </div>
+      {isDeleteModalOpen && (
+        <ConfirmDialog
+          isOpen={isDeleteModalOpen}
+          heading="Confirm deleting application"
+          description="Are you sure you want to delete the application?"
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          onClose={(result) => {
+            setIsDeleteModalOpen(false);
+            if (result) {
+              handleDelete();
+            }
+          }}
+        />
+      )}
       {modalIsOpen && (
         <ApplicationDialog
           isOpen={modalIsOpen}
-          onClose={modalIsClosed}
-          mode={applicationModalStatus}
+          onClose={() => setModalIsOpen(false)}
+          mode="edit"
           selectedApplication={applicationDetail}
+          currentReference={currentEntityReference}
         />
       )}
     </div>

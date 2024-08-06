@@ -72,6 +72,8 @@ export const applicationSlice = createSlice({
       _action: PayloadAction<{
         oldApplicationName: string;
         applicationData: CreateApplicationModel;
+        currentReference: string;
+        oldApplicationId: string;
       }>,
     ) => {
       state.loading = true;

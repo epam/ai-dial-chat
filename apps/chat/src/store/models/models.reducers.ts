@@ -140,24 +140,57 @@ export const modelsSlice = createSlice({
       state.models.push(payload.model);
       state.modelsMap[payload.model.id] = payload.model;
     },
+    // updateModel: (
+    //   state,
+    //   { payload }: PayloadAction<{ model: DialAIEntityModel }>,
+    // ) => {
+    //   const index = state.models.findIndex(
+    //     (model) => model?.reference === payload.model.reference,
+    //   );
+    //   if (index > -1) {
+    //     state.models[index] = payload.model;
+    //   }
+
+    //   if (state.modelsMap[payload.model?.reference]) {
+    //     state.modelsMap[payload.model?.reference] = payload.model;
+    //   }
+      
+    // },
+    // deleteModel: (state, { payload }: PayloadAction<{ modelId: string }>) => {
+    //   state.models = state.models.filter(
+    //     (model) => model.name !== payload.modelId,
+    //   );
+    //   state.recentModelsIds = state.recentModelsIds.filter(
+    //     (id) => id !== payload.modelId,
+    //   );
+    // },
     updateModel: (
       state,
-      { payload }: PayloadAction<{ model: DialAIEntityModel }>,
+      { payload }: PayloadAction<{ model: DialAIEntityModel, oldApplicationName: string }>,
     ) => {
       const index = state.models.findIndex(
-        (model) => model?.id === payload.model.id,
+        (model) => model?.reference === payload.model.reference,
       );
+    
       if (index > -1) {
         state.models[index] = payload.model;
+        const recentModelIndex = state.recentModelsIds.findIndex((id) => id === payload.oldApplicationName);
+        
+        if (recentModelIndex > -1) {
+          state.recentModelsIds[recentModelIndex] = payload.model.id;
+        }
       }
-
-      if (state.modelsMap[payload.model?.id]) {
-        state.modelsMap[payload.model?.id] = payload.model;
+    
+      if (state.modelsMap[payload.model?.reference]) {
+        state.modelsMap[payload.model?.reference] = payload.model;
       }
     },
     deleteModel: (state, { payload }: PayloadAction<{ modelId: string }>) => {
       state.models = state.models.filter(
         (model) => model.name !== payload.modelId,
+      );
+      state.recentModelsIds = state.recentModelsIds.filter(
+        (id) => id !== payload.modelId,
       );
     },
   },

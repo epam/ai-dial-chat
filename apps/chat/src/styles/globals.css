@@ -89,6 +89,13 @@ pre:has(div.codeblock) {
   .input.dirty.invalid {
     @apply border-error;
   }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f3f4f6;
+    transition: background-color 5000s ease-in-out 0s;
+    color: transparent;
+  }
 }
 
 @layer components {

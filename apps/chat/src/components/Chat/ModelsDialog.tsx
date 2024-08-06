@@ -14,12 +14,15 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
 import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { ModelList } from './ModelList';
+
+import { Feature, validateFeature } from '@epam/ai-dial-shared';
 
 interface ModelsDialogProps {
   selectedModelId: string | undefined;
@@ -48,9 +51,13 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const [applicationModalStatus, setApplicationModalStatus] =
-    useState('closed');
-  const openAddApplicationModal = () => setApplicationModalStatus('add');
+  const [applicationModalIsOpen, setApplicationModalIsOpen] = useState(false);
+
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
+  const hasCustomApplications = enabledFeatures.has(Feature.CustomApplications);
 
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
     EntityType.Model,
@@ -67,8 +74,13 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     useState<DialAIEntity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const modalIsOpen = applicationModalStatus !== 'closed';
-  const modalIsClosed = () => setApplicationModalStatus('closed');
+  const openAddApplicationModal = () => {
+    setApplicationModalIsOpen(true);
+  };
+
+  const closeAddApplicationModal = () => {
+    setApplicationModalIsOpen(false);
+  };
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(
@@ -85,11 +97,21 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         (entity) => entity.type === EntityType.Assistant,
       ),
     );
-    setFilteredApplicationsEntities(
-      newFilteredEntities.filter(
-        (entity) => entity.type === EntityType.Application,
-      ),
-    );
+    if (hasCustomApplications) {
+      setFilteredApplicationsEntities(
+        newFilteredEntities.filter(
+          (entity) => entity.type === EntityType.Application,
+        ),
+      );
+    } else {
+      setFilteredApplicationsEntities(
+        newFilteredEntities.filter(
+          (entity) =>
+            entity.type === EntityType.Application &&
+            !entity.id.startsWith('applications/'),
+        ),
+      );
+    }
   }, [models, entityTypes, searchTerm]);
 
   const handleSearch = useCallback((searchValue: string) => {
@@ -156,20 +178,24 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           }}
           className="m-0 w-full grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         ></input>
-        <button
-          onClick={openAddApplicationModal}
-          className="absolute right-3 flex h-full w-[100px] items-center gap-2 text-accent-primary"
-        >
-          <IconLayoutGridAdd height={18} width={18} />
-          <span>Add app</span>
-        </button>
+        {hasCustomApplications ? (
+          <button
+            onClick={openAddApplicationModal}
+            className="absolute right-3 flex h-full w-[100px] items-center gap-2 text-accent-primary"
+          >
+            <IconLayoutGridAdd height={18} width={18} />
+            <span>Add app</span>
+          </button>
+        ) : (
+          ''
+        )}
       </div>
 
-      {modalIsOpen && (
+      {applicationModalIsOpen && (
         <ApplicationDialog
-          isOpen={modalIsOpen}
-          onClose={modalIsClosed}
-          mode={applicationModalStatus}
+          isOpen={applicationModalIsOpen}
+          onClose={closeAddApplicationModal}
+          mode={'add'}
         />
       )}
 

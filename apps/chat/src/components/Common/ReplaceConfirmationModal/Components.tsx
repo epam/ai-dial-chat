@@ -30,6 +30,7 @@ import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Select, SelectOption } from '../Select';
 import Tooltip from '../Tooltip';
+import { ShareEntity } from '@/src/types/common';
 
 interface ReplaceSelectorProps {
   selectedOption: ReplaceOptions;
@@ -376,3 +377,77 @@ export const FilesRow = ({
     </EntityRow>
   );
 };
+
+interface ApplicationViewProps {
+  item: ShareEntity;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
+}
+
+export interface ApplicationRowProps extends ApplicationViewProps {
+  level?: number;
+  onEvent?: (eventId: ReplaceOptions, data: string) => void;
+  additionalItemData?: Record<string, unknown>;
+  itemComponentClassNames?: string;
+}
+
+const ApplicationView = ({ item: application, onSelect, isChosen }: ApplicationViewProps) => {
+  return (
+    <FeatureContainer>
+      {onSelect && (
+        <div className="relative flex size-[18px] shrink-0">
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([application.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
+      <span className="flex shrink-0">
+        <IconBulb size={18} className="text-secondary" />
+      </span>
+      <Tooltip
+        tooltip={application.name}
+        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        triggerClassName={classNames(
+          'truncate whitespace-pre',
+          application.publicationInfo?.isNotExist && 'text-secondary',
+          application.publicationInfo?.action === PublishActions.DELETE &&
+            'text-error',
+        )}
+      >
+        {application.name}
+      </Tooltip>
+    </FeatureContainer>
+  );
+};
+
+export const ApplicationRow = ({
+  level,
+  item: application,
+  additionalItemData,
+  onEvent,
+  itemComponentClassNames,
+  isChosen,
+  onSelect,
+}: PromptRowProps) => {
+  return (
+    <EntityRow
+      entityId={application.id}
+      level={level}
+      additionalItemData={additionalItemData}
+      onEvent={onEvent}
+      entityRowClassNames={itemComponentClassNames}
+    >
+      <ApplicationView isChosen={isChosen} onSelect={onSelect} item={application} />
+    </EntityRow>
+  );
+};
+

@@ -41,7 +41,15 @@ export const getValidEntitiesFromIds = <T>(
   entitiesIds: string[],
   addonsMap: Partial<Record<string, T>>,
 ): T[] =>
-  entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
+  entitiesIds.map((entityId) => {
+    console.log(entityId,'entityId');
+    if(entityId){
+      
+    }
+    console.table(addonsMap);
+    
+    return addonsMap[entityId]}
+  ).filter(Boolean) as T[];
 
 export const getSelectedAddons = (
   selectedAddons: string[],

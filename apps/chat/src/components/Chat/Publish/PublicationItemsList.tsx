@@ -273,6 +273,26 @@ export function PublicationItemsList({
           )}
         </CollapsibleSection>
       )}
+      {type === SharingType.Application && (
+        <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
+          name={t('Applications')}
+          openByDefault
+          dataQa="applications-to-send-request"
+          className="!pl-0"
+        >
+          <PromptsRow
+            onSelect={handleSelect}
+            itemComponentClassNames={classNames(
+              'group/prompt-item cursor-pointer',
+              publishAction === PublishActions.DELETE && 'text-error',
+            )}
+            item={entity}
+            level={0}
+            isChosen={chosenItemsIds.some((id) => id === entity.id)}
+          />
+        </CollapsibleSection>
+      )}
     </div>
   );
 }

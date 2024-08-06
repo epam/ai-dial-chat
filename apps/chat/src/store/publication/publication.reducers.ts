@@ -25,6 +25,7 @@ export interface PublicationState {
     [FeatureType.Chat]: boolean;
     [FeatureType.Prompt]: boolean;
     [FeatureType.File]: boolean;
+    [FeatureType.Application]: boolean;
   };
   selectedItemsToPublish: string[];
 }
@@ -39,6 +40,7 @@ const initialState: PublicationState = {
     [FeatureType.Chat]: false,
     [FeatureType.Prompt]: false,
     [FeatureType.File]: false,
+    [FeatureType.Application]: false,
   },
   selectedItemsToPublish: [],
 };

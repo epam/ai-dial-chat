@@ -12,6 +12,7 @@ export enum FeatureType {
   Chat = 'chat',
   Prompt = 'prompt',
   File = 'file',
+  Application = 'application',
 }
 
 export enum BackendDataNodeType {
@@ -23,6 +24,7 @@ export enum BackendResourceType {
   FILE = 'FILE',
   PROMPT = 'PROMPT',
   CONVERSATION = 'CONVERSATION',
+  APPLICATION = 'APPLICATION',
 }
 
 export interface EntityPublicationInfo {

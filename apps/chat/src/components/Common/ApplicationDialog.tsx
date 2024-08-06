@@ -15,6 +15,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { prepareEntityName } from '@/src/utils/app/common';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -23,6 +24,8 @@ import {
   CreateApplicationModel,
 } from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
+import { PublishActions } from '@/src/types/publication';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -31,6 +34,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import Modal from '@/src/components/Common/Modal';
 
+import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
 import { ConfirmDialog } from './ConfirmDialog';
 import EmptyRequiredInputMessage from './EmptyRequiredInputMessage';
@@ -43,6 +47,7 @@ interface Props {
   onClose: (result: boolean) => void;
   mode: string;
   selectedApplication?: ApplicationDetailsResponse;
+  currentReference?: string;
 }
 
 export const ApplicationDialog = ({
@@ -50,6 +55,7 @@ export const ApplicationDialog = ({
   onClose,
   mode,
   selectedApplication,
+  currentReference,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.PromptBar);
@@ -76,6 +82,8 @@ export const ApplicationDialog = ({
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+
+  const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
   const [formData, setFormData] = useState<CreateApplicationModel>({
     endpoint: '',
@@ -268,14 +276,22 @@ export const ApplicationDialog = ({
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      const applicationName = ApiUtils.encodeApiUrl(name);
+      const applicationName = name;
       const applicationData = formData;
 
       if (mode === 'edit') {
         const oldApplicationName = selectedApplication?.display_name;
-        oldApplicationName &&
+        const oldApplicationId = selectedApplication?.name;
+        oldApplicationId &&
+          oldApplicationName &&
+          currentReference &&
           dispatch(
-            ApplicationActions.edit({ oldApplicationName, applicationData }),
+            ApplicationActions.edit({
+              oldApplicationName,
+              applicationData,
+              currentReference,
+              oldApplicationId,
+            }),
           );
       } else {
         dispatch(
@@ -289,13 +305,17 @@ export const ApplicationDialog = ({
     [name, formData, mode, selectedApplication, dispatch, handleClose],
   );
 
+  const handlePublish = () => {
+    setIsPublishing(true);
+  };
+
+  const handlePublishClose = () => {
+    setIsPublishing(false);
+  };
+
   const handleDelete = () => {
     if (selectedApplication) {
-      dispatch(
-        ApplicationActions.delete(
-          ApiUtils.encodeApiUrl(selectedApplication.display_name),
-        ),
-      );
+      dispatch(ApplicationActions.delete(selectedApplication.display_name));
     }
     handleClose();
   };
@@ -424,289 +444,280 @@ export const ApplicationDialog = ({
     !name.trim() || !version.trim() || !localLogoFile || !completionUrl.trim();
 
   return (
-    <>
-      <Modal
-        portalId="theme-main"
-        state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-        onClose={handleClose}
-        dataQa="application-dialog"
-        containerClassName="flex flex-col min-h-[579px] md:h-[747px] sm:w-[525px] w-full"
-        dismissProps={{ outsidePressEvent: 'mousedown' }}
-        hideClose
-        initialFocus={nameInputRef}
+    <Modal
+      portalId="theme-main"
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      onClose={handleClose}
+      dataQa="application-dialog"
+      containerClassName="flex flex-col min-h-[579px] md:h-[747px] sm:w-[525px] w-full"
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      hideClose
+      initialFocus={nameInputRef}
+    >
+      <button
+        onClick={handleClose}
+        className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+        data-qa="close-application-dialog"
       >
-        <button
-          onClick={handleClose}
-          className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-          data-qa="close-application-dialog"
-        >
-          <IconX height={24} width={24} />
-        </button>
-        <div className="px-3 py-4 md:pl-4 md:pr-10">
-          <h2 className="text-base font-semibold">
-            {mode === 'edit' ? 'Edit Application' : 'Add Application'}
-          </h2>
+        <IconX height={24} width={24} />
+      </button>
+      <div className="px-3 py-4 md:pl-4 md:pr-10">
+        <h2 className="text-base font-semibold">
+          {mode === 'edit' ? 'Edit Application' : 'Add Application'}
+        </h2>
+      </div>
+      {loading ? (
+        <div className="flex size-full items-center justify-center">
+          <Spinner size={48} dataQa="publication-items-spinner" />
         </div>
-        {loading ? (
-          <div className="flex size-full items-center justify-center">
-            <Spinner size={48} dataQa="publication-items-spinner" />
-          </div>
-        ) : (
-          <>
-            <div className="flex flex-col gap-4 overflow-y-auto">
-              <div className="flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="promptName"
-                >
-                  {t('Name')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
-                </label>
-                <input
-                  ref={nameInputRef}
-                  name="promptName"
-                  className={classNames(
-                    nameError &&
-                      'border-error hover:border-error focus:border-error',
-                    inputClassName,
-                  )}
-                  placeholder={t('Type name') || ''}
-                  value={name}
-                  required
-                  type="text"
-                  onFocus={() => setNameError(null)}
-                  onBlur={nameOnBlurHandler}
-                  onChange={nameOnChangeHandler}
-                  data-qa="prompt-name"
-                />
-                {nameError && (
-                  <EmptyRequiredInputMessage isShown text={nameError} />
-                )}
-              </div>
-              <div className="flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="applicationVersion"
-                >
-                  {t('Version')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
-                </label>
-                <input
-                  name="applicationVersion"
-                  className={classNames(
-                    versionError && !versionHasFocus
-                      ? 'border-error hover:border-error focus:border-error'
-                      : '',
-                    inputClassName,
-                  )}
-                  placeholder={t('0.0.0') || ''}
-                  value={version}
-                  required
-                  type="text"
-                  onFocus={() => setVersionHasFocus(true)}
-                  onBlur={() => versionOnBlurHandler()}
-                  onChange={versionOnChangeHandler}
-                  data-qa="application-version"
-                />
-                {versionError && !versionHasFocus && (
-                  <EmptyRequiredInputMessage isShown text={versionError} />
-                )}
-              </div>
-              <div className="flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="applicationIcon"
-                >
-                  {t('Icon')}
-                  <span className="ml-1 inline text-accent-primary">*</span>
-                </label>
-                <CustomLogoSelect
-                  onLogoSelect={onLogoSelect}
-                  onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
-                  localLogo={!deleteLogo ? localLogoFile : undefined}
-                  customPlaceholder="No icon"
-                  hasLeftText={false}
-                  className="max-w-full"
-                  fileManagerModalTitle="Select application icon"
-                />
-                <EmptyRequiredInputMessage
-                  isShown={!!iconError}
-                  text={iconError || ''}
-                />
-              </div>
-              <div className="flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="description"
-                >
-                  {t('Description')}
-                </label>
-                <textarea
-                  ref={descriptionInputRef}
-                  name="description"
-                  className={inputClassName}
-                  style={{ resize: 'none' }}
-                  placeholder={t('A description for your prompt.') || ''}
-                  value={description}
-                  onChange={descriptionOnChangeHandler}
-                  rows={3}
-                  data-qa="prompt-descr"
-                />
-              </div>
-              <div className="flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="featuresData"
-                >
-                  {t('Features data')}
-                </label>
-                <textarea
-                  ref={featuresDataInputRef}
-                  name="featuresData"
-                  className={classNames(
-                    featuresDataError && !featuresDataHasFocus
-                      ? 'border-error hover:border-error focus:border-error'
-                      : '',
-                    inputClassName,
-                  )}
-                  style={{ resize: 'none' }}
-                  placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
-                  value={featuresData}
-                  rows={4}
-                  onFocus={() => setFeaturesDataHasFocus(true)}
-                  onBlur={featuresDataBlurHandler}
-                  onChange={featuresDataOnChangeHandler}
-                  data-qa="features-data"
-                />
-                {featuresDataError && (
-                  <EmptyRequiredInputMessage isShown text={featuresDataError} />
-                )}
-              </div>
-              <div className="flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="attachmentTypes"
-                >
-                  {t('Attachment types')}
-                </label>
-                <MultipleComboBox
-                  initialSelectedItems={filterParams}
-                  getItemLabel={getItemLabel}
-                  getItemValue={getItemLabel}
-                  onChangeSelectedItems={handleChangeFilterParams}
-                  placeholder={
-                    t('Enter one or more attachment types') as string
-                  }
-                  className={classNames(
-                    'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
-                    inputClassName,
-                  )}
-                  hasDeleteAll
-                  itemHeight="31"
-                />
-              </div>
-              <div className="flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="maxAttachments"
-                >
-                  {t('Max attachments')}
-                </label>
-                <input
-                  name="maxAttachments"
-                  className={classNames(inputClassName)}
-                  placeholder={
-                    t('Enter the maximum number of attachments') || ''
-                  }
-                  value={maxAttachments}
-                  type="text"
-                  onChange={handleMaxAttachmentsChange}
-                  data-qa="max-attachments"
-                />
-              </div>
-              <div className="mb-4 flex flex-col px-3 md:px-6">
-                <label
-                  className="mb-1 flex text-xs text-secondary"
-                  htmlFor="completionUrl"
-                >
-                  {t('Completion URL')}
-                </label>
-                <input
-                  name="completionUrl"
-                  className={classNames(
-                    completionUrlError
-                      ? 'border-error hover:border-error focus:border-error'
-                      : '',
-                    inputClassName,
-                  )}
-                  onFocus={() => setCompletionUrlError('')}
-                  placeholder={t('Type completion URL') || ''}
-                  value={completionUrl}
-                  type="text"
-                  onBlur={completionUrlOnBlurHandler}
-                  onChange={handleCompletionUrlChange}
-                  required
-                  data-qa="completion-url"
-                />
-                {completionUrlError && (
-                  <EmptyRequiredInputMessage
-                    isShown
-                    text={completionUrlError}
-                  />
-                )}
-              </div>
-            </div>
-            <div
-              className={`flex ${mode === 'edit' ? 'justify-between' : 'justify-end'} gap-2 border-t border-primary p-4 md:px-6`}
-            >
-              {mode === 'edit' ? (
-                <div className="flex items-center gap-2">
-                  <Tooltip tooltip={t('Delete')}>
-                    <button
-                      onClick={() => setIsDeleteModalOpen(true)}
-                      className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      data-qa="application-delete"
-                    >
-                      <IconTrashX
-                        size={24}
-                        className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
-                      />
-                    </button>
-                  </Tooltip>
-                  <Tooltip tooltip={t('Publish')}>
-                    <button
-                      // onClick={handleNewFolder}
-                      className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      data-qa="application-share"
-                    >
-                      <IconWorldShare
-                        size={24}
-                        className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
-                      />
-                    </button>
-                  </Tooltip>
-                </div>
-              ) : (
-                ''
-              )}
-              <Tooltip
-                hideTooltip={!saveDisabled}
-                tooltip={t('Fill in all required fields')}
+      ) : (
+        <>
+          <div className="flex flex-col gap-4 overflow-y-auto">
+            <div className="flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="promptName"
               >
-                <button
-                  className="button button-primary"
-                  onClick={handleSubmit}
-                  onKeyPress={handleEnter}
-                  disabled={saveDisabled}
-                  data-qa="save-application-dialog"
-                >
-                  {mode === 'edit' ? t('Save') : t('Create')}
-                </button>
-              </Tooltip>
+                {t('Name')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              <input
+                ref={nameInputRef}
+                name="promptName"
+                className={classNames(
+                  nameError &&
+                    'border-error hover:border-error focus:border-error',
+                  inputClassName,
+                )}
+                placeholder={t('Type name') || ''}
+                value={name}
+                required
+                type="text"
+                onFocus={() => setNameError(null)}
+                onBlur={nameOnBlurHandler}
+                onChange={nameOnChangeHandler}
+                data-qa="prompt-name"
+              />
+              {nameError && (
+                <EmptyRequiredInputMessage isShown text={nameError} />
+              )}
             </div>
-          </>
-        )}
-      </Modal>
+            <div className="flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="applicationVersion"
+              >
+                {t('Version')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              <input
+                name="applicationVersion"
+                className={classNames(
+                  versionError && !versionHasFocus
+                    ? 'border-error hover:border-error focus:border-error'
+                    : '',
+                  inputClassName,
+                )}
+                placeholder={t('0.0.0') || ''}
+                value={version}
+                required
+                type="text"
+                onFocus={() => setVersionHasFocus(true)}
+                onBlur={() => versionOnBlurHandler()}
+                onChange={versionOnChangeHandler}
+                data-qa="application-version"
+              />
+              {versionError && !versionHasFocus && (
+                <EmptyRequiredInputMessage isShown text={versionError} />
+              )}
+            </div>
+            <div className="flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="applicationIcon"
+              >
+                {t('Icon')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              <CustomLogoSelect
+                onLogoSelect={onLogoSelect}
+                onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
+                localLogo={!deleteLogo ? localLogoFile : undefined}
+                customPlaceholder="No icon"
+                hasLeftText={false}
+                className="max-w-full"
+                fileManagerModalTitle="Select application icon"
+              />
+              <EmptyRequiredInputMessage
+                isShown={!!iconError}
+                text={iconError || ''}
+              />
+            </div>
+            <div className="flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="description"
+              >
+                {t('Description')}
+              </label>
+              <textarea
+                ref={descriptionInputRef}
+                name="description"
+                className={inputClassName}
+                style={{ resize: 'none' }}
+                placeholder={t('A description for your prompt.') || ''}
+                value={description}
+                onChange={descriptionOnChangeHandler}
+                rows={3}
+                data-qa="prompt-descr"
+              />
+            </div>
+            <div className="flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="featuresData"
+              >
+                {t('Features data')}
+              </label>
+              <textarea
+                ref={featuresDataInputRef}
+                name="featuresData"
+                className={classNames(
+                  featuresDataError && !featuresDataHasFocus
+                    ? 'border-error hover:border-error focus:border-error'
+                    : '',
+                  inputClassName,
+                )}
+                style={{ resize: 'none' }}
+                placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
+                value={featuresData}
+                rows={4}
+                onFocus={() => setFeaturesDataHasFocus(true)}
+                onBlur={featuresDataBlurHandler}
+                onChange={featuresDataOnChangeHandler}
+                data-qa="features-data"
+              />
+              {featuresDataError && (
+                <EmptyRequiredInputMessage isShown text={featuresDataError} />
+              )}
+            </div>
+            <div className="flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="attachmentTypes"
+              >
+                {t('Attachment types')}
+              </label>
+              <MultipleComboBox
+                initialSelectedItems={filterParams}
+                getItemLabel={getItemLabel}
+                getItemValue={getItemLabel}
+                onChangeSelectedItems={handleChangeFilterParams}
+                placeholder={t('Enter one or more attachment types') as string}
+                className={classNames(
+                  'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
+                  inputClassName,
+                )}
+                hasDeleteAll
+                itemHeight="31"
+              />
+            </div>
+            <div className="flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="maxAttachments"
+              >
+                {t('Max attachments')}
+              </label>
+              <input
+                name="maxAttachments"
+                className={classNames(inputClassName)}
+                placeholder={t('Enter the maximum number of attachments') || ''}
+                value={maxAttachments}
+                type="text"
+                onChange={handleMaxAttachmentsChange}
+                data-qa="max-attachments"
+              />
+            </div>
+            <div className="mb-4 flex flex-col px-3 md:px-6">
+              <label
+                className="mb-1 flex text-xs text-secondary"
+                htmlFor="completionUrl"
+              >
+                {t('Completion URL')}
+              </label>
+              <input
+                name="completionUrl"
+                className={classNames(
+                  completionUrlError
+                    ? 'border-error hover:border-error focus:border-error'
+                    : '',
+                  inputClassName,
+                )}
+                onFocus={() => setCompletionUrlError('')}
+                placeholder={t('Type completion URL') || ''}
+                value={completionUrl}
+                type="text"
+                onBlur={completionUrlOnBlurHandler}
+                onChange={handleCompletionUrlChange}
+                required
+                data-qa="completion-url"
+              />
+              {completionUrlError && (
+                <EmptyRequiredInputMessage isShown text={completionUrlError} />
+              )}
+            </div>
+          </div>
+          <div
+            className={`flex ${mode === 'edit' ? 'justify-between' : 'justify-end'} gap-2 border-t border-primary p-4 md:px-6`}
+          >
+            {mode === 'edit' ? (
+              <div className="flex items-center gap-2">
+                <Tooltip tooltip={t('Delete')}>
+                  <button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                    data-qa="application-delete"
+                  >
+                    <IconTrashX
+                      size={24}
+                      className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
+                    />
+                  </button>
+                </Tooltip>
+                <Tooltip tooltip={t('Publish')}>
+                  <button
+                    onClick={handlePublish}
+                    className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                    data-qa="application-share"
+                  >
+                    <IconWorldShare
+                      size={24}
+                      className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
+                    />
+                  </button>
+                </Tooltip>
+              </div>
+            ) : (
+              ''
+            )}
+            <Tooltip
+              hideTooltip={!saveDisabled}
+              tooltip={t('Fill in all required fields')}
+            >
+              <button
+                className="button button-primary"
+                onClick={handleSubmit}
+                onKeyPress={handleEnter}
+                disabled={saveDisabled}
+                data-qa="save-application-dialog"
+              >
+                {mode === 'edit' ? t('Save') : t('Create')}
+              </button>
+            </Tooltip>
+          </div>
+        </>
+      )}
       <ConfirmDialog
         isOpen={isDeleteModalOpen}
         heading={t('Confirm deleting application')}
@@ -722,6 +733,22 @@ export const ApplicationDialog = ({
           }
         }}
       />
-    </>
+      {selectedApplication && (
+        <PublishModal
+          entity={{
+            name: selectedApplication.display_name,
+            id: ApiUtils.decodeApiUrl(selectedApplication.name),
+            folderId: getFolderIdFromEntityId(selectedApplication.display_name),
+          }}
+          type={SharingType.Application}
+          isOpen={isPublishing}
+          onClose={handlePublishClose}
+          publishAction={
+            PublishActions.ADD
+            // isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
+        />
+      )}
+    </Modal>
   );
 };
