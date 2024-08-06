@@ -21,6 +21,7 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GPT_4_32K_0314, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_32K_0613, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_O_2024_05_13, isSysPromptAllowed: true },
+  { modelId: ModelIds.GPT_4_O_MINI_2024_07_18, isSysPromptAllowed: true },
   { modelId: ModelIds.BISON_001, isSysPromptAllowed: true },
   { modelId: ModelIds.BISON_32k_002, isSysPromptAllowed: true },
   { modelId: ModelIds.CODE_BISON_001, isSysPromptAllowed: false },
@@ -60,7 +61,7 @@ for (const modelToUse of modelsForArithmeticRequest) {
       const conversation = conversationData.prepareModelConversation(
         0,
         modelToUse.isSysPromptAllowed
-          ? 'Compute arithmetic expression. The answer should be a number, do not use natural language'
+          ? 'Evaluate the given arithmetic expression and return only the numerical result. Do not include any explanations, units, or additional text. Provide the answer in its simplest form, using scientific notation for very large or small numbers when appropriate. Support basic arithmetic operations (+, -, *, /), exponents (^), parentheses, and common mathematical functions (sqrt, sin, cos, tan, log, ln). Round the result to 6 decimal places if necessary'
           : '',
         [],
         modelToUse.modelId,
