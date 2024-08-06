@@ -108,10 +108,10 @@ export class ApiUtils {
       switchMap((response) => {
         if (!response.ok) {
           return from(response.text()).pipe(
+            catchError(() => throwError(() => new Error(response.status + ''))),
             switchMap((errorMessage) =>
               throwError(() => new Error(errorMessage)),
             ),
-            catchError(() => throwError(() => new Error(response.status + ''))),
           );
         }
 
