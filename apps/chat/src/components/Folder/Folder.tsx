@@ -913,7 +913,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
 
             <input
-              className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+              className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
               type="text"
               value={renameValue}
               onChange={(e) =>
