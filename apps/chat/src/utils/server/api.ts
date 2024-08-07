@@ -1,5 +1,7 @@
-import { Observable, catchError, from, switchMap, throwError } from 'rxjs';
+import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
+
+import { ServerUtils } from '@/src/utils/server/server';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
@@ -107,11 +109,12 @@ export class ApiUtils {
     }).pipe(
       switchMap((response) => {
         if (!response.ok) {
-          return from(response.text()).pipe(
-            catchError(() => throwError(() => new Error(response.status + ''))),
-            switchMap((errorMessage) =>
-              throwError(() => new Error(errorMessage)),
-            ),
+          return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
+            switchMap((errorMessage) => {
+              return throwError(
+                () => new Error(errorMessage || response.status + ''),
+              );
+            }),
           );
         }
 
