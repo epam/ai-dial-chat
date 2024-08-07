@@ -637,7 +637,7 @@ const dialTest = test.extend<
     const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
     await use(promptErrorToastAssertion);
   },
-  downloadAssertion: async ({}, use) => {
+  downloadAssertion: async (use) => {
     const downloadAssertion = new DownloadAssertion();
     await use(downloadAssertion);
   },

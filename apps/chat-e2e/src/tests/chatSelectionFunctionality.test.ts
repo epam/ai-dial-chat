@@ -162,7 +162,6 @@ dialTest.only(
           MenuOptions.withoutAttachments,
         ),
       );
-      //TODO add assert to download file with a specific extension
       await downloadAssertion.assertDownloadFileExtension(
         downloadedData,
         'json',
