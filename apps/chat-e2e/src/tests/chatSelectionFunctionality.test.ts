@@ -8,7 +8,7 @@ import {
 import { Colors } from '@/src/ui/domData';
 import { expect } from '@playwright/test';
 
-dialTest.only(
+dialTest(
   '[UI] Check highlight of chat1 when chat2 is opened.\n' +
     'Rename of chat1 when chat2 is opened.\n' +
     'Compare mode is opened if to click on Compare for not selected chat.\n' +
@@ -223,7 +223,7 @@ dialTest.only(
 
     await dialTest.step('Click on Share', async () => {
       await conversations.openEntityDropdownMenu(playbackConversation);
-      await conversations.getDropdownMenu().selectMenuOption(MenuOptions.share);
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.share);
       await expect
         .soft(
           shareModal.getElementLocator(),
