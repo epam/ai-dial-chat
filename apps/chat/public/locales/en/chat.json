@@ -39,7 +39,6 @@
   "chat.chat_message.button.copy.label": "Copy",
   "chat.chat_message.button.regenerate.label": "Regenerate",
 
-
   "chat.migration.header.text": "Migration",
   "chat.migration.not_close_browser_tab.text": "Do not close the browser tab",
   "chat.migration.uploaded_status_of_conversations_and_prompts.text": "{{uploaded}} out of {{total}} {{newLine}}conversations and prompts are loaded",
@@ -112,6 +111,9 @@
   "chat.common.application.button.new_conversation.label": "New Conversation",
   "chat.common.application.button.remove_from_sidebar.label": "Remove from sidebar",
   "chat.common.application.button.pin_to_the_sidebar.label": "Pin to the sidebar",
+
+  "chat.common.empty_message.hr-buddy.text": "Welcome to the dedicated chatbot for HR Campaigns!",
+  "chat.common.empty_message.dall_e.text": "Let me turn your imagination into imagery.",
 
   "chat.common.temperature.label": "Temperature",
   "chat.common.temperature.description": "Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.",

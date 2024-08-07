@@ -39,7 +39,6 @@
   "chat.chat_message.button.copy.label": "Xxxx",
   "chat.chat_message.button.regenerate.label": "Xxxxxxxxxx",
 
-
   "chat.migration.header.text": "Xxxxxxxx",
   "chat.migration.not_close_browser_tab.text": "Xx xxx xxxx xxx xxxxxxx xxx",
   "chat.migration.uploaded_status_of_conversations_and_prompts.text": "{{uploaded}} xxx xx {{total}} {{newLine}}xxxxxxxxxxxxxx xxx xxxxxxx xxx xxxxxx",
@@ -59,10 +58,10 @@
   "chat.migration.button.backup_chats.text": "xxxxx",
   "chat.migration.button.next.text": "Xxxx",
   "chat.migration.all_items.label": "Xxx xxxxx",
-  "chat.migration.ready_to_lose_data.text.part_one": "X xxx'x xxxx xx xxxxxxx xxxxxxxxxxxxxxx/xxxxxxx xxx X’m xxxxx ",
+  "chat.migration.ready_to_lose_data.text.part_one": "X xxx'x xxxx xx xxxxxxx xxxxxxxxxxxxxxx/xxxxxxx xxx X’x xxxxx ",
   "chat.migration.ready_to_lose_data.text.part_two": "XX XXXX XXXX",
   "chat.migration.contact_us.text.part_one": "Xx xxx xxxx x xxxxxxx xxxxxx ",
-  "chat.migration.contact_us.text.part_two": "contact us.",
+  "chat.migration.contact_us.text.part_two": "xxxxxxx xx.",
 
   "chat.playback.type_message.text": "Xxxx x xxxxxxxx",
   "chat.playback.button.playback.label": "Xxxxxxxx",
@@ -112,6 +111,9 @@
   "chat.common.application.button.new_conversation.label": "Xxx Xxxxxxxxxxxxxx",
   "chat.common.application.button.remove_from_sidebar.label": "Xxxxxxx xxxx xxxxxxx",
   "chat.common.application.button.pin_to_the_sidebar.label": "Xxx xx xxx xxxxxxx",
+
+  "chat.common.empty_message.hr-buddy.text": "Xxxxxxx xx xxx xxxxxxxxx xxxxxxx xxx XX Xxxxxxxxx!",
+  "chat.common.empty_message.dall_e.text": "Xxx xx xxxx xxxx xxxxxxxxxxx xxxx xxxxxxx.",
 
   "chat.common.temperature.label": "Xxxxxxxxxxxx",
   "chat.common.temperature.description": "Xxxxxx xxxxxx xxxx 0.8 xxxx xxxx xxx xxxxxx xxxx xxxxxx, xxxxx xxxxx xxxxxx xxxx 0.2 xxxx xxxx xx xxxx xxxxxxxx xxx xxxxxxxxxxxxxx.",

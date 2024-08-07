@@ -541,7 +541,7 @@ export const ChatInputMessage = ({
         isOpen={isPromptLimitModalOpen}
         heading={t('chat.chat_input.dialog.prompt_limit_exceeded.header')}
         description={
-          t('hat.chat_input.dialog.prompt_limit_exceeded.description', {
+          t('chat.chat_input.dialog.prompt_limit_exceeded.description', {
             maxTokensLength: maxTokensLength,
             promptLimitDescription: getPromptLimitDescription(
               getTokensLength(content),

@@ -1,6 +1,6 @@
 {
-  "common.footer.message": "XX XXX - Xxxxxxxxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>XXX</strong></u></a> xxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>xxxxx xx xxx</strong></u></a> - Xxxx xxxx ❤️ xx Xxxx",
-  "footer_msg_zh": "XX XXX - xxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>xxxxxx xxxxxxx</strong></u></a> xxx <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>xxxxxx xxxxxx</strong></u></a> - xxx Xxxx ❤️ xxxxxx",
+  "common.footer.message": "PR GPT - 可用 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>常见问题</strong></u></a> 和 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>使用条款</strong></u></a> - 由 Tech ❤️ 制作",
+  "footer_msg_zh": "PR GPT - 可用 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>常见问题</strong></u></a> 和 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>使用条款</strong></u></a> - 由 Tech ❤️ 制作",
 
   "common.dialog.replace_confirmation.header": "Xxxx xxxx xxxxxx xx xxxxxx xxx xx xxxxxxxxx xxxxx",
   "common.dialog.replace_confirmation.description": "Xxx x xxxxxxx, xxxxxx xx xxxxxxx xxxxxxxx xxxx xxxx xxxxxxxxx xxxx.",
@@ -44,7 +44,6 @@
   "common.tooltip.shared": "Xxxxxx",
   "common.tooltip.talk_to": "Xxxxxx xx xxxxxxxxxx xxxxxx xxx xxxxxxxxxxxxxxxx xxx xxx xxx. Xxxxxx xx xxx xxxx xx xxxxxx xxxxxx xxx xxxx xxxxxxxxxxx xxxx. Xxx xxx xxxx xx “Xxx xxxx xxxx…” xxx x xxxxxxxx xxxx xx xxxxxxxxxx xxxxxx xxx xxxxxxxxxxxxxxxx",
   "common.tooltip.system_prompt": "Xxxxxx xxxx xxxx xxxxxx xx xxxxxxxxx xx xxxxxxxx xx xxxx xxxxxxx xxxxxxx. Xxxx xx xxxx xxxx xxxxxxxxxxxx xx xxxxxxxxxx xxx xxxx xxxxxxxxxxxxx, xxx xxxxxxx “Xxx xx x xxxxxx xxxxxxx xxxxxxx xxx xxxxxx xx x xxxxxxx xxx“",
-
 
   "common.errors.forms.field_is_required": "Xxxxx xx xxxxxxxx",
   "common.errors.forms.url_is_not_correct": "XXX xx xxx xxxxxxx"
