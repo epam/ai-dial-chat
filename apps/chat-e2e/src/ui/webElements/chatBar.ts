@@ -1,8 +1,12 @@
-import { ChatBarSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatBarSelectors,
+  MenuSelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { Conversations } from './conversations';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { API } from '@/src/testData';
+import { API, MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
@@ -27,7 +31,7 @@ export class ChatBar extends SideBar {
     ChatBarSelectors.attachments,
   );
   public bottomDotsMenuIcon = this.bottomPanel.getChildElementBySelector(
-    SideBarSelectors.dotsMenu,
+    MenuSelectors.dotsMenu,
   );
 
   getConversations(): Conversations {
@@ -89,9 +93,10 @@ export class ChatBar extends SideBar {
   }
 
   public async openCompareMode() {
+    await this.bottomDotsMenuIcon.click();
     const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
     const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.compareButton.click();
+    await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
     await modelsResponsePromise;
     await addonsResponsePromise;
   }
@@ -113,7 +118,7 @@ export class ChatBar extends SideBar {
   ) {
     const folder = this.getFolderConversations().getFolderByName(folderName);
     const conversation =
-      this.getConversations().getConversationByName(conversationName);
+      this.getConversations().getEntityByName(conversationName);
     await this.dragEntityToFolder(conversation, folder);
   }
 
@@ -128,7 +133,7 @@ export class ChatBar extends SideBar {
       folderConversationName,
     );
     const conversation =
-      this.getConversations().getConversationByName(conversationName);
+      this.getConversations().getEntityByName(conversationName);
     await this.dragAndDropEntityToFolder(conversation, folderConversation, {
       isHttpMethodTriggered,
     });
@@ -138,8 +143,7 @@ export class ChatBar extends SideBar {
     folderName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folder =
-      await this.getFolderConversations().getFolderByName(folderName);
+    const folder = this.getFolderConversations().getFolderByName(folderName);
     await this.dragFolderToRoot(folder, { isHttpMethodTriggered });
   }
 }

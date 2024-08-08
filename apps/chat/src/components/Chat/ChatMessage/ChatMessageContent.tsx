@@ -16,6 +16,7 @@ import classNames from 'classnames';
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
   getDialFilesFromAttachments,
+  getDialFoldersFromAttachments,
   getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
@@ -110,6 +111,9 @@ export const ChatMessageContent = ({
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const isReplay = useAppSelector(
+    ConversationsSelectors.selectIsReplaySelectedConversations,
+  );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
@@ -146,7 +150,12 @@ export const ChatMessageContent = ({
   const codeDetection = (content: string) => content.match(codeRegEx);
 
   const mappedUserEditableAttachments = useMemo(() => {
-    return getDialFilesFromAttachments(message.custom_content?.attachments);
+    return [
+      ...(getDialFoldersFromAttachments(
+        message.custom_content?.attachments,
+      ) as unknown as Omit<DialFile, 'contentLength'>[]),
+      ...getDialFilesFromAttachments(message.custom_content?.attachments),
+    ];
   }, [message.custom_content?.attachments]);
   const mappedUserEditableAttachmentsIds = useMemo(() => {
     return mappedUserEditableAttachments.map(({ id }) => id);
@@ -182,16 +191,23 @@ export const ChatMessageContent = ({
       (id) => !mappedUserEditableAttachmentsIds.includes(id),
     );
     const newFiles = newIds
-      .map(
-        (id) =>
-          files.find((file) => file.id === id) ||
-          (canAttachFolders && folders.find((folder) => folder.id === id)),
-      )
+      .map((id) => files.find((file) => file.id === id))
       .filter(Boolean) as DialFile[];
+
+    const newFolders = newIds
+      .map(
+        (id) => canAttachFolders && folders.find((folder) => folder.id === id),
+      )
+      .filter(Boolean)
+      .map((folder) => ({
+        ...folder,
+        contentType: FOLDER_ATTACHMENT_CONTENT_TYPE,
+      })) as DialFile[];
 
     return mappedUserEditableAttachments
       .filter(({ id }) => newEditableAttachmentsIds.includes(id))
-      .concat(newFiles);
+      .concat(newFiles)
+      .concat(newFolders);
   }, [
     canAttachFolders,
     files,
@@ -301,6 +317,11 @@ export const ChatMessageContent = ({
               message.custom_content?.attachments && !attachments
                 ? { attachments: [] }
                 : attachments,
+            templateMapping: Object.fromEntries(
+              Object.entries(message.templateMapping ?? {}).filter(([key]) =>
+                messageContent.includes(key),
+              ),
+            ),
           },
           messageIndex,
         );
@@ -385,7 +406,7 @@ export const ChatMessageContent = ({
       ? MOBILE_ICON_SIZE
       : DEFAULT_ICON_SIZE;
   const showUserButtons =
-    !isPlayback && !isEditing && !isExternal && withButtons;
+    !isReplay && !isPlayback && !isEditing && !isExternal && withButtons;
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
 
   return (

@@ -9,22 +9,6 @@ export class Prompts extends SideBarEntities {
     super(page, PromptBarSelectors.prompts, PromptBarSelectors.prompt);
   }
 
-  public getPromptByName(name: string, index?: number) {
-    return this.getEntityByName(this.entitySelector, name, index);
-  }
-
-  public getPromptArrowIcon(name: string, index?: number) {
-    return this.getEntityArrowIcon(this.entitySelector, name, index);
-  }
-
-  public getPromptArrowIconColor(name: string, index?: number) {
-    return this.getEntityArrowIconColor(this.entitySelector, name, index);
-  }
-
-  public async openPromptDropdownMenu(name: string, index?: number) {
-    await this.openEntityDropdownMenu(this.entitySelector, name, index);
-  }
-
   public async duplicatePrompt() {
     const response = await this.selectEntityMenuOption(MenuOptions.duplicate, {
       triggeredHttpMethod: 'POST',
@@ -32,11 +16,5 @@ export class Prompts extends SideBarEntities {
     if (response !== undefined) {
       return response.request().postDataJSON();
     }
-  }
-
-  public async getPromptsCount() {
-    return this.getChildElementBySelector(
-      this.entitySelector,
-    ).getElementsCount();
   }
 }

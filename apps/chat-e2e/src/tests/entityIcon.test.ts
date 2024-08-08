@@ -18,6 +18,7 @@ dialTest(
     talkToModelsGroupEntities,
     talkToAssistantsGroupEntities,
     talkToApplicationGroupEntities,
+    localStorageManager,
     setTestIds,
   }) => {
     dialTest.slow();
@@ -25,12 +26,20 @@ dialTest(
 
     const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities();
     const randomEntity = GeneratorUtil.randomArrayElement(allExpectedEntities);
+    const randomUpdateEntity = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModels(),
+    );
+    const defaultModel = ModelsUtil.getDefaultModel()!;
 
     await dialTest.step(
       'Open initial screen and click "See full list" to view all available entities',
       async () => {
+        await localStorageManager.setRecentModelsIds(
+          defaultModel,
+          randomUpdateEntity,
+        );
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
@@ -100,10 +109,9 @@ dialTest(
     await dialTest.step(
       'Verify default model icon is displayed on chat bar panel',
       async () => {
-        const defaultConversationIcon = await conversations.getConversationIcon(
+        const defaultConversationIcon = await conversations.getEntityIcon(
           ExpectedConstants.newConversationTitle,
         );
-        const defaultModel = ModelsUtil.getDefaultModel()!;
         const expectedDefaultIcon =
           await iconApiHelper.getEntityIcon(defaultModel);
         expect
@@ -115,15 +123,13 @@ dialTest(
     await dialTest.step(
       'Select any entity and verify corresponding icon is displayed on chat bar panel',
       async () => {
-        const randomEntity = GeneratorUtil.randomArrayElement(
-          ModelsUtil.getLatestModels(),
-        );
-        await talkToSelector.selectModel(randomEntity);
+        await talkToSelector.selectModel(randomUpdateEntity);
 
-        const conversationIcon = await conversations.getConversationIcon(
+        const conversationIcon = await conversations.getEntityIcon(
           ExpectedConstants.newConversationTitle,
         );
-        const expectedIcon = await iconApiHelper.getEntityIcon(randomEntity);
+        const expectedIcon =
+          await iconApiHelper.getEntityIcon(randomUpdateEntity);
 
         expect
           .soft(conversationIcon, ExpectedMessages.entityIconIsValid)

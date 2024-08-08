@@ -4,6 +4,7 @@ import SVG from 'react-inlinesvg';
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { getThemeIconUrl } from '@/src/utils/app/themes';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
@@ -38,8 +39,8 @@ const ModelIconTemplate = memo(
   }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
       entity?.type === EntityType.Addon
-        ? 'api/themes/image?name=default-addon'
-        : 'api/themes/image?name=default-model';
+        ? getThemeIconUrl('default-addon')
+        : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
     return (
@@ -53,7 +54,7 @@ const ModelIconTemplate = memo(
       >
         <SVG
           key={entityId}
-          src={entity?.iconUrl ? `${entity.iconUrl}?v2` : ''}
+          src={entity?.iconUrl ? `${getThemeIconUrl(entity.iconUrl)}?v2` : ''}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height="100%"

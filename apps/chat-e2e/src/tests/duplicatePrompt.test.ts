@@ -28,11 +28,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
-          await prompts.openPromptDropdownMenu(prompt.name, i);
+          await prompts.openEntityDropdownMenu(prompt.name, i);
           const request = await prompts.duplicatePrompt();
           await expect
             .soft(
-              await prompts.getPromptByName(
+              prompts.getEntityByName(
                 ExpectedConstants.entityWithIndexTitle(prompt.name, i),
               ),
               ExpectedMessages.promptIsVisible,
@@ -87,7 +87,7 @@ dialTest(
         const request = await prompts.duplicatePrompt();
         await expect
           .soft(
-            await folderPrompts.getFolderEntity(
+            folderPrompts.getFolderEntity(
               folderPrompt.folders.name,
               ExpectedConstants.entityWithIndexTitle(
                 folderPrompt.prompts[0].name,

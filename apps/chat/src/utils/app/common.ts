@@ -134,15 +134,19 @@ export const prepareEntityName = (
         .split('\n')
         .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
         .filter(Boolean)[0] ?? '';
-
   const result =
     clearName.length > MAX_ENTITY_LENGTH
       ? substring(clearName, 0, MAX_ENTITY_LENGTH)
       : clearName;
 
+  const additionalCuttedResult =
+    result.length > MAX_ENTITY_LENGTH
+      ? result.substring(0, MAX_ENTITY_LENGTH)
+      : result;
+
   return !options?.forRenaming || options?.trimEndDotsRequired
-    ? trimEndDots(result)
-    : result.trim();
+    ? trimEndDots(additionalCuttedResult)
+    : additionalCuttedResult.trim();
 };
 
 export const getTimeZoneOffset = () => new Date().getTimezoneOffset() / -60;

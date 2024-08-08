@@ -221,6 +221,7 @@ interface TooltipOptions extends TooltipContainerOptions {
   children: ReactNode;
   triggerClassName?: string;
   contentClassName?: string;
+  dataQa?: string;
 }
 
 export default function Tooltip({
@@ -229,13 +230,16 @@ export default function Tooltip({
   children,
   triggerClassName,
   contentClassName,
+  dataQa,
   ...tooltipProps
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
     return <span className={triggerClassName}>{children}</span>;
   return (
     <TooltipContainer {...tooltipProps}>
-      <TooltipTrigger className={triggerClassName}>{children}</TooltipTrigger>
+      <TooltipTrigger className={triggerClassName} data-qa={dataQa}>
+        {children}
+      </TooltipTrigger>
       <TooltipContent className={contentClassName}>{tooltip}</TooltipContent>
     </TooltipContainer>
   );

@@ -26,6 +26,7 @@ export interface UIState {
   timeZoneOffset?: number | undefined;
   chatbarWidth?: number;
   promptbarWidth?: number;
+  chatSettingsWidth?: number;
   customLogo?: string;
   collapsedSections: Record<FeatureType, string[]>;
   tourStepIndex?: number;
@@ -84,6 +85,10 @@ export const uiSlice = createSlice({
     },
     setPromptbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.promptbarWidth = payload;
+    },
+
+    setChatSettingsWidth: (state, { payload }: PayloadAction<number>) => {
+      state.chatSettingsWidth = payload;
     },
     setShowChatbar: (
       state,
@@ -297,6 +302,9 @@ const selectPromptbarWidth = createSelector([rootSelector], (state) => {
   return state.promptbarWidth;
 });
 
+const selectChatSettingsWidth = createSelector([rootSelector], (state) => {
+  return state.chatSettingsWidth;
+});
 const selectIsChatFullWidth = createSelector([rootSelector], (state) => {
   return state.isChatFullWidth;
 });
@@ -343,6 +351,7 @@ export const UISelectors = {
   selectPromptbarWidth,
   selectIsChatFullWidth,
   selectTimeZoneOffset,
+  selectChatSettingsWidth,
   selectCustomLogo,
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,

@@ -220,6 +220,7 @@ dialTest(
     chatMessages,
     page,
     talkToRecentGroupEntities,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817', 'EPMRTC-1568');
@@ -227,6 +228,7 @@ dialTest(
     await dialTest.step(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
       async () => {
+        await localStorageManager.setRecentModelsIds(bison);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
@@ -344,13 +346,15 @@ dialTest(
     talkToSelector,
     talkToRecentGroupEntities,
     addons,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-406');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     const randomModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModels(),
     );
+    await localStorageManager.setRecentModelsIds(randomModel);
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await talkToSelector.selectModel(randomModel);
     const sysPrompt = 'test prompt';
     const temp = 0;

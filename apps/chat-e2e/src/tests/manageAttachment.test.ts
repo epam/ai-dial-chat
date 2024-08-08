@@ -77,7 +77,7 @@ dialTest(
         await confirmationDialog.cancelDialog();
         await expect
           .soft(
-            await attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal.attachedFile(Attachment.sunImageName),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();
@@ -94,7 +94,7 @@ dialTest(
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await expect
           .soft(
-            await attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal.attachedFile(Attachment.sunImageName),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
@@ -175,7 +175,7 @@ dialTest(
         for (const file of attachedFiles) {
           await expect
             .soft(
-              await attachFilesModal.attachedFile(file),
+              attachFilesModal.attachedFile(file),
               ExpectedMessages.fileIsAttached,
             )
             .toBeVisible();
@@ -191,7 +191,7 @@ dialTest(
         for (const file of attachedFiles) {
           await expect
             .soft(
-              await attachFilesModal.attachedFile(file),
+              attachFilesModal.attachedFile(file),
               ExpectedMessages.fileIsNotAttached,
             )
             .toBeHidden();
@@ -240,12 +240,12 @@ dialTest(
       async () => {
         await expect
           .soft(
-            await attachFilesModal.attachedFileLoadingIndicator(
+            attachFilesModal.attachedFileLoadingIndicator(
               Attachment.sunImageName,
             ),
             ExpectedMessages.attachmentLoadingIndicatorIsVisible,
           )
-          .toBeVisible();
+          .toBeAttached();
 
         await attachFilesModal
           .removeAttachedFileIcon(Attachment.sunImageName)
@@ -270,7 +270,7 @@ dialTest(
           .click();
         await expect
           .soft(
-            await attachFilesModal.attachedFileLoadingIndicator(
+            attachFilesModal.attachedFileLoadingIndicator(
               Attachment.sunImageName,
             ),
             ExpectedMessages.attachmentLoadingIndicatorNotVisible,
@@ -278,7 +278,7 @@ dialTest(
           .toBeHidden();
         await expect
           .soft(
-            await attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal.attachedFile(Attachment.sunImageName),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
@@ -331,9 +331,7 @@ dialTest(
           .toBe(Colors.textError);
         await expect
           .soft(
-            await attachFilesModal.attachedFileErrorIcon(
-              Attachment.sunImageName,
-            ),
+            attachFilesModal.attachedFileErrorIcon(Attachment.sunImageName),
             ExpectedMessages.attachmentHasErrorIcon,
           )
           .toBeVisible();
@@ -349,7 +347,7 @@ dialTest(
           .click();
         await expect
           .soft(
-            await attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal.attachedFile(Attachment.sunImageName),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
@@ -405,9 +403,7 @@ dialTest(
           .click();
         await expect
           .soft(
-            await attachFilesModal.attachedFileLoadingRetry(
-              Attachment.sunImageName,
-            ),
+            attachFilesModal.attachedFileLoadingRetry(Attachment.sunImageName),
             ExpectedMessages.attachmentLoadingIndicatorNotVisible,
           )
           .toBeHidden();
@@ -451,7 +447,7 @@ dialTest(
         );
         await uploadFromDeviceModal.setUploadedFilename(
           Attachment.sunImageName,
-          ExpectedConstants.allowedSpecialSymbolsInName,
+          ExpectedConstants.allowedSpecialSymbolsInName(),
         );
         await uploadFromDeviceModal.uploadFiles();
       },
@@ -461,7 +457,7 @@ dialTest(
       'Select "Download" option from file dropdown menu and verify file is successfully downloaded, file is not highlighted in "Manage attachments" modal',
       async () => {
         await attachFilesModal.openFileDropdownMenu(
-          ExpectedConstants.allowedSpecialSymbolsInName,
+          ExpectedConstants.allowedSpecialSymbolsInName(),
         );
         const downloadedData = await dialHomePage.downloadData(() =>
           attachFilesModal
@@ -476,7 +472,7 @@ dialTest(
           .toContain(ExpectedConstants.winAllowedSpecialSymbolsInName);
 
         const fileBackgroundColor = await attachFilesModal
-          .attachedFileName(ExpectedConstants.allowedSpecialSymbolsInName)
+          .attachedFileName(ExpectedConstants.allowedSpecialSymbolsInName())
           .getComputedStyleProperty(Styles.backgroundColor);
         expect
           .soft(fileBackgroundColor[0], ExpectedMessages.fileIsNotHighlighted)
@@ -545,8 +541,7 @@ dialTest(
         );
 
         for (const file of attachedFiles) {
-          const isFileChecked =
-            await attachFilesModal.attachedFileCheckBox(file);
+          const isFileChecked = attachFilesModal.attachedFileCheckBox(file);
           await expect
             .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
             .toBeChecked();

@@ -703,7 +703,11 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
     switchMap(() =>
-      merge(of(ModelsActions.getModels()), of(AddonsActions.getAddons())),
+      merge(
+        of(ModelsActions.getModels()),
+        of(AddonsActions.getAddons()),
+        of(ConversationsActions.resetChosenConversations()),
+      ),
     ),
   );
 
@@ -1717,6 +1721,14 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         );
       }
       const activeMessage = messagesStack[conv.replay?.activeReplayIndex ?? 0];
+
+      if (Object.keys(activeMessage.templateMapping ?? {}).length) {
+        return concat(
+          of(ConversationsActions.setIsReplayRequiresVariables(true)),
+          of(ConversationsActions.stopReplayConversation()),
+        );
+      }
+
       let updatedConversation: Conversation = conv;
 
       if (
@@ -1887,7 +1899,9 @@ const hideChatbarEpic: AppEpic = (action$) =>
         ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
-        ConversationsActions.addConversations.match(action),
+        (ConversationsActions.addConversations.match(action) &&
+          !action.payload?.suspendHideSidebar),
+      // will be fixed with https://github.com/epam/ai-dial-chat/issues/792
     ),
     switchMap(() =>
       isSmallScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
@@ -2591,6 +2605,7 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (action$) =>
             of(
               ConversationsActions.addConversations({
                 conversations,
+                suspendHideSidebar: true,
               }),
             ),
             of(
@@ -2742,6 +2757,69 @@ const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.deleteChosenConversations.match(action),
+    ),
+    switchMap(() => {
+      const actions: Observable<AnyAction>[] = [];
+      const chosenConversationIds =
+        ConversationsSelectors.selectChosenConversationIds(state$.value);
+      const chosenFolderIds = ConversationsSelectors.selectChosenFolderIds(
+        state$.value,
+      );
+      const searchedConversationIds =
+        ConversationsSelectors.selectSearchedConversations(state$.value).map(
+          (conv) => conv.id,
+        );
+      const allConversationIds = ConversationsSelectors.selectConversations(
+        state$.value,
+      ).map((conv) => conv.id);
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const deletedConversationIds = uniq([
+        ...chosenConversationIds,
+        ...searchedConversationIds.filter((id) =>
+          chosenFolderIds.some((folderId) => id.startsWith(folderId)),
+        ),
+      ]);
+      const deletedFolderIds = chosenFolderIds.filter((id) => {
+        const folderConversationIds = allConversationIds.filter((convId) =>
+          convId.startsWith(id),
+        );
+        const deletedFolderConvIds = deletedConversationIds.filter((convId) =>
+          convId.startsWith(id),
+        );
+
+        return folderConversationIds.length === deletedFolderConvIds.length;
+      });
+
+      if (searchedConversationIds.length) {
+        actions.push(
+          of(
+            ConversationsActions.deleteConversations({
+              conversationIds: deletedConversationIds,
+            }),
+          ),
+        );
+      }
+
+      return concat(
+        of(
+          ConversationsActions.setFolders({
+            folders: folders.filter((folder) =>
+              deletedFolderIds.every(
+                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
+              ),
+            ),
+          }),
+        ),
+        of(ConversationsActions.resetChosenConversations()),
+        ...actions,
+      );
+    }),
+  );
+
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
@@ -2803,4 +2881,6 @@ export const ConversationsEpics = combineEpics(
   getCustomAttachmentDataEpic,
   saveConversationSuccessEpic,
   saveConversationFailEpic,
+
+  deleteChosenConversationsEpic,
 );

@@ -73,12 +73,10 @@ dialTest(
         playbackConversationName = `[${MenuOptions.playback}] ${conversation.name}`;
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(conversation.name);
+        await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
 
-        await conversations
-          .getConversationByName(playbackConversationName)
-          .waitFor();
+        await conversations.getEntityByName(playbackConversationName).waitFor();
 
         const expectedButtonBorderColor =
           theme === Theme.light
@@ -200,16 +198,12 @@ dialTest(
           .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedDefaultModelIcon);
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -266,16 +260,12 @@ dialTest(
           .soft(headerIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedSecondModelIcon);
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -330,16 +320,12 @@ dialTest(
           .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedDefaultModelIcon);
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
 
@@ -393,16 +379,12 @@ dialTest(
           )
           .toBeFalsy();
 
-        const isConversationHasPlaybackIcon =
-          await conversations.isConversationHasPlaybackIcon(
-            playbackConversationName,
-          );
-        expect
+        await expect
           .soft(
-            isConversationHasPlaybackIcon,
+            conversations.getConversationPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
-          .toBeTruthy();
+          .toBeVisible();
       },
     );
   },
@@ -466,7 +448,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations
-          .getConversationByName(playbackConversation.name)
+          .getEntityByName(playbackConversation.name)
           .waitFor();
 
         for (let i = 0; i < playNextKeys.length; i++) {
@@ -720,7 +702,7 @@ dialTest(
         await chatHeader.leavePlaybackMode.click();
         await expect
           .soft(
-            await playbackControl.getElementLocator(),
+            playbackControl.getElementLocator(),
             ExpectedMessages.playbackControlsHidden,
           )
           .toBeHidden();
@@ -790,9 +772,7 @@ dialTest(
     await dialTest.step('Verify playback next message has scroll', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations
-        .getConversationByName(playbackConversation.name)
-        .waitFor();
+      await conversations.getEntityByName(playbackConversation.name).waitFor();
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable =
         await playbackControl.playbackMessage.isElementScrollableVertically();
@@ -807,19 +787,19 @@ dialTest(
       async () => {
         await dialHomePage.throttleAPIResponse('**/*');
         await chat.playNextChatMessage(false);
-        await playbackControl.playbackNextButton.waitForState({
-          state: 'hidden',
-        });
-
-        const isResponseLoading = await chatMessages.isResponseLoading();
-        expect
-          .soft(isResponseLoading, ExpectedMessages.responseIsLoading)
-          .toBeTruthy();
+        await expect(
+          chatMessages.loadingCursor.getElementLocator(),
+          ExpectedMessages.playbackNextMessageIsScrollable,
+        ).toBeVisible();
+        await expect(
+          playbackControl.playbackNextButton.getElementLocator(),
+          ExpectedMessages.playbackNextMessageIsScrollable,
+        ).toBeDisabled();
 
         await sendMessage.waitForMessageInputLoaded();
         await chatMessages.waitForResponseReceived();
 
-        const playedBackResponse = await chatMessages.getChatMessage(
+        const playedBackResponse = chatMessages.getChatMessage(
           conversation.messages[1].content,
         );
         await expect(

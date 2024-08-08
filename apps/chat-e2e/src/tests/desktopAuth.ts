@@ -1,4 +1,4 @@
-import config from '../../config/playwright.config';
+import config from '../../config/chat.playwright.config';
 import { stateFilePath } from '../core/dialFixtures';
 
 import test from '@/src/core/baseFixtures';
@@ -9,7 +9,6 @@ const usernames = process.env
   .slice(0, +config.workers! + 2);
 
 for (let i = 0; i < usernames.length; i++) {
-  // eslint-disable-next-line playwright/expect-expect
   test(`Authenticate user: ${usernames[i]}`, async ({
     page,
     loginPage,

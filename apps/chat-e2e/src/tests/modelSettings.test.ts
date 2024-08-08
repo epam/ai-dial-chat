@@ -26,15 +26,17 @@ dialTest(
     setTestIds,
     talkToSelector,
     talkToRecentGroupEntities,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1046');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     const randomModel = GeneratorUtil.randomArrayElement(
       models.filter(
         (m) => m.id !== defaultModel.id && m.features?.systemPrompt === true,
       ),
     );
+    await localStorageManager.setRecentModelsIds(randomModel);
+    await dialHomePage.openHomePage();
+    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
     await talkToSelector.selectModel(randomModel);
     await talkToRecentGroupEntities.waitForGroupEntitySelected(randomModel);

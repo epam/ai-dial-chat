@@ -9,7 +9,7 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.E2E_WORKERS ? +process.env.E2E_WORKERS : 2,
+  workers: process.env.E2E_WORKERS ? +process.env.E2E_WORKERS : 3,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['list'],
@@ -17,7 +17,7 @@ export default defineConfig({
       'allure-playwright',
       {
         detail: true,
-        outputFolder: `apps/chat-e2e/${ResultFolder.allureReport}`,
+        outputFolder: `apps/chat-e2e/${ResultFolder.allureChatReport}`,
       },
     ],
   ],
@@ -71,7 +71,7 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      testIgnore: /\/chatApi|listingApi\/.*\.test\.ts/,
+      testIgnore: /\/chatApi|listingApi|\/overlay\/.*\.test\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1536, height: 864 },

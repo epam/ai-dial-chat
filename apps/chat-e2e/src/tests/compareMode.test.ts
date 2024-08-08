@@ -7,6 +7,7 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
   ModelIds,
   Rate,
   Side,
@@ -130,7 +131,7 @@ dialTest(
           ],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
+        await conversations.openEntityDropdownMenu(
           thirdModelConversation.name,
           3,
         );
@@ -239,10 +240,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
-          modelConversation.name,
-          3,
-        );
+        await conversations.openEntityDropdownMenu(modelConversation.name, 3);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
         await compareConversationSelector.click();
@@ -269,10 +267,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(replayConversation.name);
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
       },
     );
@@ -289,6 +284,7 @@ dialTest(
     localStorageManager,
     dataInjector,
     compare,
+    chatHeader,
     rightChatHeader,
     leftChatHeader,
   }) => {
@@ -331,14 +327,10 @@ dialTest(
         }
 
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
 
-        const activeChatHeader =
-          await leftChatHeader.chatTitle.getElementContent();
+        const activeChatHeader = await chatHeader.chatTitle.getElementContent();
         expect
           .soft(activeChatHeader, ExpectedMessages.headerTitleIsValid)
           .toBe(activeChat);
@@ -423,9 +415,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
-          firstConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
         await compareConversationSelector.click();
@@ -594,7 +584,6 @@ dialTest(
     dataInjector,
     leftChatHeader,
     rightChatHeader,
-    page,
   }) => {
     setTestIds('EPMRTC-555');
     const request = ['beautiful'];
@@ -631,12 +620,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await page.route(API.chatHost, async (route) => {
-          await route.fulfill({
-            status: 200,
-            body: '{"content":"Response"}\u0000{}\u0000',
-          });
-        });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
 
         for (const side of Object.values(Side)) {
           await chat.regenerateResponseInCompareMode(
@@ -723,6 +709,10 @@ dialTest(
           firstConversation,
           secondConversation,
         );
+        await localStorageManager.setRecentModelsIds(
+          firstUpdatedRandomModel,
+          secondUpdatedRandomModel,
+        );
       },
     );
 
@@ -781,14 +771,14 @@ dialTest(
           )
           .toBe(expectedFirstUpdatedRandomModelIcon);
 
-        const firstConversationIcon = await conversations.getConversationIcon(
+        const firstConversationIcon = await conversations.getEntityIcon(
           firstConversation.name,
         );
         expect
           .soft(firstConversationIcon, ExpectedMessages.entityIconIsValid)
           .toBe(expectedFirstUpdatedRandomModelIcon);
 
-        const secondConversationIcon = await conversations.getConversationIcon(
+        const secondConversationIcon = await conversations.getEntityIcon(
           secondConversation.name,
         );
         expect
@@ -921,7 +911,7 @@ dialTest(
           .toBeFalsy();
         await expect
           .soft(
-            await sendMessage.stopGenerating.getElementLocator(),
+            sendMessage.stopGenerating.getElementLocator(),
             ExpectedMessages.responseLoadingStopped,
           )
           .toBeHidden();
@@ -1021,9 +1011,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
-          firstConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
         await compareConversationSelector.click();
@@ -1231,10 +1219,7 @@ dialTest(
         await compare.waitForState();
         await conversations.selectConversation(firstConversation.name);
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
       },
     );
@@ -1242,14 +1227,12 @@ dialTest(
     await dialTest.step(
       'Open compare mode for 1st conversation and verify long compare options are shown in different rows',
       async () => {
-        await conversations.openConversationDropdownMenu(
-          firstConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
         await expect
           .soft(
-            await leftChatHeader.deleteConversationFromComparison.getElementLocator(),
+            leftChatHeader.deleteConversationFromComparison.getElementLocator(),
             ExpectedMessages.closeChatIconIsNotVisible,
           )
           .toBeHidden();
@@ -1496,10 +1479,7 @@ dialTest(
       'Edit left chat title and verify it is updated in the header',
       async () => {
         const newLeftChatName = GeneratorUtil.randomString(7);
-        await conversations.openConversationDropdownMenu(
-          updatedRequestContent,
-          1,
-        );
+        await conversations.openEntityDropdownMenu(updatedRequestContent, 1);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.editConversationNameWithTick(newLeftChatName);
 
@@ -1513,17 +1493,14 @@ dialTest(
     await dialTest.step(
       'Delete right chat and compare mode closed, left chat is active',
       async () => {
-        await conversations.openConversationDropdownMenu(updatedRequestContent);
+        await conversations.openEntityDropdownMenu(updatedRequestContent);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await conversations
-          .getConversationByName(updatedRequestContent)
+          .getEntityByName(updatedRequestContent)
           .waitFor({ state: 'hidden' });
         await expect
-          .soft(
-            await compare.getElementLocator(),
-            ExpectedMessages.compareModeClosed,
-          )
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();
       },
     );

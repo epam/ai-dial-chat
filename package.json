@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.13.0-rc",
+  "version": "0.15.2",
   "private": true,
   "scripts": {
     "start": "nx serve chat",
@@ -35,14 +35,18 @@
     "@dqbd/tiktoken": "^1.0.13",
     "@floating-ui/react": "^0.26.7",
     "@nx/next": "17.2.8",
-    "@opentelemetry/exporter-prometheus": "^0.47.0",
+    "@opentelemetry/api": "^1.7.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.47.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.47.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.47.0",
+    "@opentelemetry/exporter-prometheus": "^0.52.1",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.47.0",
     "@opentelemetry/instrumentation": "^0.47.0",
     "@opentelemetry/instrumentation-http": "^0.47.0",
     "@opentelemetry/instrumentation-pino": "^0.34.5",
     "@opentelemetry/resources": "^1.20.0",
     "@opentelemetry/sdk-metrics": "^1.20.0",
-    "@opentelemetry/sdk-node": "^0.47.0",
+    "@opentelemetry/sdk-node": "^0.52.1",
     "@opentelemetry/sdk-trace-base": "^1.20.0",
     "@opentelemetry/semantic-conventions": "^1.20.0",
     "@reduxjs/toolkit": "^1.9.5",
@@ -61,6 +65,7 @@
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
     "pino": "^8.15.1",
+    "pino-opentelemetry-transport": "^1.0.0",
     "pino-pretty": "^10.2.0",
     "plotly.js": "^2.30.0",
     "rc-slider": "^10.2.1",
@@ -152,14 +157,19 @@
     "argparse": "2.0.1"
   },
   "optionalDependencies": {
-    "@nx/playwright": "^18.2.2",
-    "@playwright/test": "^1.44.0",
-    "playwright-chromium": "^1.44.0",
-    "allure-playwright": "^2.15.0",
-    "eslint-plugin-playwright": "^1.6.1"
+    "@nx/playwright": "^19.3.1",
+    "@playwright/test": "^1.46.0",
+    "allure-playwright": "^2.15.1",
+    "eslint-plugin-playwright": "^1.6.2",
+    "playwright-chromium": "^1.46.0"
   },
   "engines": {
     "node": ">=18.18.2",
     "npm": ">=9.8.1"
+  },
+  "browser": {
+    "fs": false,
+    "net": false,
+    "tls": false
   }
 }

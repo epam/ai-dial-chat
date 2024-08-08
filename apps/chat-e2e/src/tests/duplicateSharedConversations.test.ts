@@ -55,7 +55,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
@@ -65,7 +65,7 @@ dialSharedWithMeTest(
           },
         );
         await additionalShareUserConversations
-          .getConversationByName(conversation.name)
+          .getEntityByName(conversation.name)
           .waitFor();
       },
     );
@@ -147,9 +147,7 @@ dialSharedWithMeTest(
 
         await expect
           .soft(
-            await additionalShareUserConversations.getConversationByName(
-              conversationName,
-            ),
+            additionalShareUserConversations.getEntityByName(conversationName),
             ExpectedMessages.newConversationCreated,
           )
           .toBeVisible();
@@ -165,7 +163,7 @@ dialSharedWithMeTest(
         await additionalShareUserChat.duplicateSharedConversation();
 
         await additionalShareUserConversations
-          .getConversationByName(`${conversationName} 1`)
+          .getEntityByName(`${conversationName} 1`)
           .waitFor();
       },
     );
@@ -244,7 +242,7 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           firstComparedConversation.name,
         );
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
@@ -295,14 +293,14 @@ dialSharedWithMeTest(
 
         await expect
           .soft(
-            await additionalShareUserChat.duplicate.getElementLocator(),
+            additionalShareUserChat.duplicate.getElementLocator(),
             ExpectedMessages.duplicateButtonIsNotVisible,
           )
           .toBeHidden();
 
         for (const conversation of conversationsToShare) {
           const conversationBackgroundColor =
-            await additionalShareUserConversations.getConversationBackgroundColor(
+            await additionalShareUserConversations.getEntityBackgroundColor(
               conversation.name,
             );
           expect
@@ -318,7 +316,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open compare mode for shared conversation and conversation from Today section',
       async () => {
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           firstComparedConversation.name,
         );
         await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
@@ -340,7 +338,7 @@ dialSharedWithMeTest(
 
         await expect
           .soft(
-            await additionalShareUserChat.duplicate.getElementLocator(),
+            additionalShareUserChat.duplicate.getElementLocator(),
             ExpectedMessages.duplicateButtonIsNotVisible,
           )
           .toBeHidden();
@@ -350,7 +348,7 @@ dialSharedWithMeTest(
           thirdComparedConversation.name,
         ]) {
           const conversationBackgroundColor =
-            await additionalShareUserConversations.getConversationBackgroundColor(
+            await additionalShareUserConversations.getEntityBackgroundColor(
               conversationName,
             );
           expect

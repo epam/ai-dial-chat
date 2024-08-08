@@ -1,11 +1,12 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconBulb } from '@tabler/icons-react';
+import { IconBulb, IconCheck } from '@tabler/icons-react';
 import {
   DragEvent,
   MouseEvent,
   MouseEventHandler,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -113,6 +114,19 @@ export const PromptComponent = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const chosenPromptIds = useAppSelector(
+    PromptsSelectors.selectChosenPromptIds,
+  );
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const chosenFolderIds = useAppSelector(
+    PromptsSelectors.selectChosenFolderIds,
+  );
+  const isChosen = useMemo(
+    () =>
+      chosenPromptIds.includes(prompt.id) ||
+      chosenFolderIds.some((folderId) => prompt.id.startsWith(folderId)),
+    [chosenPromptIds, chosenFolderIds, prompt.id],
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -189,12 +203,12 @@ export const PromptComponent = ({
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, prompt: Prompt) => {
-      if (e.dataTransfer && !isExternal) {
+      if (e.dataTransfer && !isExternal && !isSelectMode) {
         e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(MoveType.Prompt, JSON.stringify(prompt));
       }
     },
-    [isExternal],
+    [isExternal, isSelectMode],
   );
 
   const handleOpenEditModal = useCallback(
@@ -296,8 +310,9 @@ export const PromptComponent = ({
     e.stopPropagation();
     setIsContextMenu(true);
   };
-  const isHighlited =
-    isDeleting || isRenaming || (showModal && isSelected) || isContextMenu;
+  const isHighlited = !isSelectMode
+    ? isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
+    : isChosen;
 
   const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -307,6 +322,28 @@ export const PromptComponent = ({
     },
     [dispatch, prompt],
   );
+
+  // const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+  //   (e) => {
+  //     e.stopPropagation();
+  //     setIsContextMenu(false);
+  //     dispatch(
+  //       PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
+  //     );
+  //   },
+  //   [dispatch, isChosen, prompt.id],
+  // );
+
+  useEffect(() => {
+    if (isSelectMode) {
+      setIsRenaming(false);
+      setIsDeleting(false);
+    }
+  }, [isSelectMode]);
+
+  const handleToggle = useCallback(() => {
+    PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen });
+  }, [isChosen, prompt.id]);
 
   const onPromptClick = () => {
     if (selectedConversationsIds.length) {
@@ -323,31 +360,66 @@ export const PromptComponent = ({
 
   return (
     <>
-      <div
+      <button
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
+          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
           isSelected ? 'hover:pr-3' : 'hover:pr-9',
         )}
+        onClick={() => {
+          if (isSelectMode && !isExternal) {
+            setIsDeleting(false);
+            setIsRenaming(false);
+            dispatch(
+              PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
+            );
+          }
+        }}
         style={{
           paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
         }}
         onContextMenu={handleContextMenuOpen}
         data-qa="prompt"
+        disabled={isSelectMode && isExternal}
       >
         <div
           className={classNames('flex size-full items-center gap-2', {
-            'pr-6': !isDeleting && !isRenaming && isSelected,
+            'pr-6': !isSelectMode && !isDeleting && !isRenaming && isSelected,
           })}
-          draggable={!isExternal && !isNameOrPathInvalid}
+          draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
         >
+          <div
+            className={classNames(
+              'relative size-[18px]',
+              isSelectMode &&
+                !isExternal &&
+                'shrink-0 group-hover/prompt-item:flex',
+              isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
+            )}
+          >
+            <input
+              className="checkbox peer size-[18px] bg-layer-3"
+              type="checkbox"
+              checked={isChosen}
+              onChange={handleToggle}
+              data-qa={isChosen ? 'checked' : 'unchecked'}
+            />
+            <IconCheck
+              size={18}
+              className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+            />
+          </div>
           <ShareIcon
             {...prompt}
             isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
+            containerClassName={classNames(
+              isSelectMode && !isExternal && 'group-hover/prompt-item:hidden',
+              isChosen && !isExternal && 'hidden',
+            )}
           >
             <IconBulb size={18} />
           </ShareIcon>
@@ -372,13 +444,12 @@ export const PromptComponent = ({
             </Tooltip>
           </div>
         </div>
-        {!isDeleting && !isRenaming && (
+        {!isSelectMode && !isDeleting && !isRenaming && (
           <div
             ref={refs.setFloating}
             {...getFloatingProps()}
             className={classNames(
-              'absolute right-3 z-50 flex justify-end group-hover:visible',
-              isSelected ? 'visible' : 'invisible',
+              'invisible absolute right-3 z-50 flex justify-end group-hover/prompt-item:visible',
             )}
             onClick={stopBubbling}
           >
@@ -405,6 +476,7 @@ export const PromptComponent = ({
               onDuplicate={handleDuplicate}
               onView={undefined}
               isOpen={isContextMenu}
+              onSelect={undefined}
             />
           </div>
         )}
@@ -436,7 +508,7 @@ export const PromptComponent = ({
             onDelete={!resourceToReview ? () => setIsDeleting(true) : undefined}
           />
         )}
-      </div>
+      </button>
 
       {isPublishing && (
         <PublishModal

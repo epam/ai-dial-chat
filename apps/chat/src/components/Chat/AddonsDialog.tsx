@@ -62,7 +62,7 @@ const Addon = ({
           size={24}
           isSmallIconSize={false}
         />
-        <span className="whitespace-pre text-left" data-qa="addon-name">
+        <span className="whitespace-pre-wrap text-left" data-qa="addon-name">
           {addon.name}
         </span>
       </div>

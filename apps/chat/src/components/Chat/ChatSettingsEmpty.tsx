@@ -5,6 +5,8 @@ import { Prompt } from '@/src/types/prompt';
 
 import { HEADER_TITLE_TEXT } from '@/src/constants/chat';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 
@@ -63,7 +65,11 @@ export const ChatSettingsEmpty = ({
         {isShowSettings && isModels && (
           <ConversationSettings
             conversation={conversation}
-            modelId={conversation.model.id}
+            modelId={
+              conversation.replay?.replayAsIs
+                ? REPLAY_AS_IS_MODEL
+                : conversation.model.id
+            }
             assistantModelId={conversation.assistantModelId}
             prompt={conversation.prompt}
             selectedAddons={conversation.selectedAddons}

@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import { Settings } from '@/chat/types/settings';
 import { Page } from '@playwright/test';
@@ -29,6 +30,14 @@ export class LocalStorageManager {
 
   setSettingsKey = () => (settings: string) => {
     window.localStorage.setItem('settings', settings);
+  };
+
+  setRecentModelsIdsKey = () => (modelIds: string) => {
+    window.localStorage.setItem('recentModelsIds', modelIds);
+  };
+
+  setChatbarWidthKey = () => (width: string) => {
+    window.localStorage.setItem('chatbarWidth', width);
   };
 
   async setConversationHistory(...conversation: Conversation[]) {
@@ -96,5 +105,16 @@ export class LocalStorageManager {
       this.setSettingsKey(),
       JSON.stringify(settings),
     );
+  }
+
+  async setRecentModelsIds(...models: DialAIEntityModel[]) {
+    await this.page.addInitScript(
+      this.setRecentModelsIdsKey(),
+      JSON.stringify(models.map((m) => m.id)),
+    );
+  }
+
+  async setChatbarWidth(width: string) {
+    await this.page.addInitScript(this.setChatbarWidthKey(), width);
   }
 }
