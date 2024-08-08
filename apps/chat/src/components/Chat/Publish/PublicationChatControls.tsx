@@ -64,6 +64,11 @@ export function PublicationControlsView<
         isPreview: false,
       }),
     );
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [],
+      }),
+    );
   }, [dispatch]);
 
   const unselectConversation = useCallback(() => {

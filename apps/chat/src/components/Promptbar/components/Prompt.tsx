@@ -42,7 +42,10 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -84,10 +87,17 @@ export const PromptComponent = ({
   );
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
+  const isInCurrentPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
   const isSelected =
     selectedPromptId === prompt.id &&
-    isApproveRequiredResource === isSelectedPromptApproveRequiredResource;
+    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
+    isInCurrentPublication;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
@@ -209,10 +219,22 @@ export const PromptComponent = ({
           isApproveRequiredResource,
         }),
       );
+      if (additionalItemData?.publicationUrl) {
+        dispatch(
+          PublicationActions.selectPublication(
+            additionalItemData?.publicationUrl,
+          ),
+        );
+      }
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
-    [dispatch, isApproveRequiredResource, prompt.id],
+    [
+      additionalItemData?.publicationUrl,
+      dispatch,
+      isApproveRequiredResource,
+      prompt.id,
+    ],
   );
 
   const handleExportPrompt = useCallback(
