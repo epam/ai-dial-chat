@@ -35,20 +35,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       },
     );
 
-    let json: unknown;
     if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch (err) {
-        json = undefined;
-      }
-
-      throw new DialAIError(
-        (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
-      );
+      throw new DialAIError(proxyRes.statusText, '', '', proxyRes.status + '');
     }
 
     return res.status(200).send(JSON.stringify({}));
