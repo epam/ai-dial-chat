@@ -104,11 +104,7 @@ export class UploadFromDeviceModal extends BaseElement {
     );
   }
 
-  public getUploadError = this.getChildElementBySelector(
-    ErrorLabelSelectors.fieldError,
-  );
-
-  public getUploadErrorText = this.getUploadError.getChildElementBySelector(
+  public getUploadErrorText = this.getChildElementBySelector(
     ErrorLabelSelectors.errorText,
   );
 
