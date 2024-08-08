@@ -25,6 +25,7 @@ import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
 import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
+import { DownloadAssertion } from '@/src/assertions/downloadAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
@@ -194,6 +195,7 @@ const dialTest = test.extend<
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion;
     errorToastAssertion: ErrorToastAssertion;
+    downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
     tooltipAssertion: TooltipAssertion;
     confirmationDialogAssertion: ConfirmationDialogAssertion;
@@ -638,6 +640,11 @@ const dialTest = test.extend<
   errorToastAssertion: async ({ errorToast }, use) => {
     const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
     await use(promptErrorToastAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  downloadAssertion: async ({}, use) => {
+    const downloadAssertion = new DownloadAssertion();
+    await use(downloadAssertion);
   },
   promptModalAssertion: async ({ promptModalDialog }, use) => {
     const promptModalAssertion = new PromptModalAssertion(promptModalDialog);

@@ -103,6 +103,9 @@ export const hardLimitMessages = (messages: Message[]) => {
 export function getMessageCustomContent(
   message: Message,
 ): Partial<Message> | undefined {
+  if (message.role === Role.Assistant && !message.custom_content?.state) {
+    return;
+  }
   return message.custom_content?.state ||
     message.custom_content?.attachments?.length
     ? {
