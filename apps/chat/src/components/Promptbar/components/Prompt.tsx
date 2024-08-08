@@ -29,7 +29,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { FeatureType } from '@/src/types/common';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { PublishActions } from '@/src/types/publication';
@@ -62,7 +62,7 @@ import { PreviewPromptModal } from './PreviewPromptModal';
 interface Props {
   item: PromptInfo;
   level?: number;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
 }
 
 export const PromptComponent = ({

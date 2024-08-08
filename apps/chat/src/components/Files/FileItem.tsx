@@ -11,7 +11,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  UploadStatus,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -34,7 +38,7 @@ export enum FileItemEventIds {
 interface Props {
   item: DialFile;
   level: number;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
 
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
 }
@@ -92,19 +96,14 @@ export const FileItem = ({
 
   useEffect(() => {
     setIsSelected(
-      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
-        item.id,
-      ) ||
-        (!!additionalItemData?.selectedFolderIds &&
-          (additionalItemData.selectedFolderIds as string[]).some((folderId) =>
-            item.id.startsWith(folderId),
-          )),
+      (additionalItemData?.selectedFilesIds ?? []).includes(item.id) ||
+        (additionalItemData?.selectedFolderIds ?? []).some((folderId) =>
+          item.id.startsWith(folderId),
+        ),
     );
 
     setIsHighlighted(
-      ((additionalItemData?.selectedFilesIds as string[]) || []).includes(
-        item.id,
-      ),
+      (additionalItemData?.selectedFilesIds ?? []).includes(item.id),
     );
   }, [
     additionalItemData?.selectedFilesIds,

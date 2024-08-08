@@ -36,7 +36,12 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, UploadStatus, isNotLoaded } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  UploadStatus,
+  isNotLoaded,
+} from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
@@ -75,7 +80,7 @@ interface ViewProps {
   isInvalid: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   isContextMenu: boolean;
 }
 
@@ -203,7 +208,7 @@ export function ConversationView({
 interface Props {
   item: ConversationInfo;
   level?: number;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
 }
 
 export const ConversationComponent = ({

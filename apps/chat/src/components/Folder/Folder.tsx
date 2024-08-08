@@ -50,7 +50,11 @@ import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  UploadStatus,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
@@ -85,7 +89,7 @@ export interface FolderProps<T, P = unknown> {
     item: T;
     level: number;
     readonly?: boolean;
-    additionalItemData?: Record<string, unknown>;
+    additionalItemData?: AdditionalItemData;
     onEvent?: (eventId: string, data: P) => void;
     itemComponentClassNames?: string;
   }>;
@@ -99,7 +103,7 @@ export interface FolderProps<T, P = unknown> {
   newAddedFolderId?: string;
   loadingFolderIds?: string[];
   displayCaretAlways?: boolean;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
@@ -220,9 +224,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
     setIsSelected(
       parentFolderIds.some((id) =>
-        ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
-          `${id}/`,
-        ),
+        (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
       ),
     );
   }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
@@ -231,9 +233,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     const currentId = `${currentFolder.id}/`;
     setIsPartialSelected(
       !isSelected &&
-        (
-          (additionalItemData?.partialSelectedFolderIds as string[]) || []
-        ).includes(currentId),
+        (additionalItemData?.partialSelectedFolderIds ?? []).includes(
+          currentId,
+        ),
     );
   }, [
     additionalItemData?.partialSelectedFolderIds,
@@ -782,7 +784,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isHighlighted =
     isRenaming ||
     isContextMenu ||
-    (((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+    ((additionalItemData?.selectedFolderIds ?? []).includes(
       `${currentFolder.id}/`,
     ) &&
       !isSelectAlwaysVisible) ||
