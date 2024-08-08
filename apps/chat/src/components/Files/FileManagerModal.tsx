@@ -21,7 +21,7 @@ import {
   getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
 import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
+import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   defaultMyItemsFilters,
@@ -195,6 +195,9 @@ export const FileManagerModal = ({
       ? initialSelectedFilesIds.filter((id) => !isFolderId(id))
       : [],
   );
+  const [selectedNoDeleteFilesIds, setSelectedNoDeleteFilesIds] = useState<
+    string[]
+  >([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState(
     canAttachFolders
       ? initialSelectedFilesIds.filter((id) => isFolderId(id))
@@ -356,7 +359,11 @@ export const FileManagerModal = ({
   );
 
   const handleItemCallback = useCallback(
-    (eventId: string, data: unknown) => {
+    (
+      eventId: string,
+      data: unknown,
+      options?: { deleteUnavailable?: boolean },
+    ) => {
       if (typeof data !== 'string') {
         return;
       }
@@ -373,6 +380,20 @@ export const FileManagerModal = ({
             if (
               selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
             ) {
+              if (options?.deleteUnavailable) {
+                setSelectedNoDeleteFilesIds((oldFileIds) =>
+                  oldFileIds.concat(
+                    files
+                      .filter((file) =>
+                        selectedFolderIds.some((parentId) =>
+                          file.id.startsWith(parentId),
+                        ),
+                      )
+                      .map((f) => f.id),
+                  ),
+                );
+              }
+
               setSelectedFilesIds((oldFileIds) =>
                 oldFileIds.concat(
                   files
@@ -400,6 +421,16 @@ export const FileManagerModal = ({
                   );
               });
             }
+            if (options?.deleteUnavailable) {
+              setSelectedNoDeleteFilesIds((oldValues) => {
+                if (oldValues.includes(data)) {
+                  return oldValues.filter((oldValue) => oldValue !== data);
+                }
+
+                return oldValues.concat(data);
+              });
+            }
+
             setSelectedFilesIds((oldValues) => {
               if (oldValues.includes(data)) {
                 return oldValues.filter((oldValue) => oldValue !== data);
@@ -626,9 +657,6 @@ export const FileManagerModal = ({
                     );
                   })}
                   {organizationRootFiles.map((file) => {
-                    if (!isRootId(file.folderId)) {
-                      return null;
-                    }
                     return (
                       <FileItem
                         key={file.id}
@@ -637,9 +665,14 @@ export const FileManagerModal = ({
                         additionalItemData={{
                           selectedFolderIds,
                           selectedFilesIds,
-                          canAttachFiles: canAttachFiles,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
                         }}
-                        onEvent={handleItemCallback}
+                        onEvent={(eventId, data) =>
+                          handleItemCallback(eventId, data, {
+                            deleteUnavailable: true,
+                          })
+                        }
                       />
                     );
                   })}
@@ -696,7 +729,8 @@ export const FileManagerModal = ({
                         additionalItemData={{
                           selectedFolderIds,
                           selectedFilesIds,
-                          canAttachFiles: canAttachFiles,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
                         }}
                         onEvent={handleItemCallback}
                       />
@@ -712,11 +746,19 @@ export const FileManagerModal = ({
         <div className="flex items-center justify-center gap-2">
           {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
-              onClick={handleStartDeleteMultipleFiles}
-              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              onClick={() => handleStartDeleteMultipleFiles()}
+              disabled={!!selectedNoDeleteFilesIds.length}
+              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
               data-qa="delete-files"
             >
-              <Tooltip tooltip="Delete files" isTriggerClickable>
+              <Tooltip
+                tooltip={
+                  selectedNoDeleteFilesIds.length
+                    ? t('Deletion of organization files is forbidden')
+                    : t('Delete files')
+                }
+                isTriggerClickable
+              >
                 <IconTrash size={24} />
               </Tooltip>
             </button>
@@ -727,7 +769,7 @@ export const FileManagerModal = ({
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               data-qa="download-files"
             >
-              <Tooltip tooltip="Download files" isTriggerClickable>
+              <Tooltip tooltip={t('Download files')} isTriggerClickable>
                 <IconDownload size={24} />
               </Tooltip>
             </button>
