@@ -3,7 +3,7 @@ import {
   MenuSelectors,
   SideBarSelectors,
 } from '../selectors';
-import { BaseElement } from './baseElement';
+import { BaseElement, elementIndexExceptionError } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, ExpectedConstants } from '@/src/testData';
@@ -289,6 +289,9 @@ export class Folders extends BaseElement {
     folderIndex?: number,
     entityIndex?: number,
   ) {
+    if (entityIndex === 0) {
+      throw new Error(elementIndexExceptionError);
+    }
     return this.getFolderEntities(folderName, folderIndex)
       .filter({
         hasText: entityName,
