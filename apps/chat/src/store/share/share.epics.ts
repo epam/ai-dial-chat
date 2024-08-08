@@ -287,7 +287,7 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           let message = errorsMessages.acceptShareFailed;
-          if (err.message === '404') {
+          if (err.message.trim().toLowerCase() === 'not found') {
             message = errorsMessages.acceptShareNotExists;
           }
           return of(ShareActions.acceptShareInvitationFail({ message }));
