@@ -147,6 +147,7 @@ module.exports = {
       fontFamily: {
         DEFAULT: ['var(--theme-font, var(--font-inter))'],
         weave: ['var(--font-weave)'],
+        codeblock: ['var(--codeblock-font, var(--theme-font))'],
       },
       fontSize: {
         xxs: '10px',

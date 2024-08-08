@@ -43,7 +43,7 @@ export const Prompts: FC<Props> = ({ prompts }) => {
       name={t('promptbar.recent_prompts.label')}
       onToggle={handleToggle}
       openByDefault={isExpanded}
-      dataQa="promps-section"
+      dataQa="prompts-section"
     >
       <div
         className="flex size-full flex-col gap-1 py-1 pr-0.5"

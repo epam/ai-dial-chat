@@ -8,4 +8,11 @@ export enum Tags {
   a = 'a',
   desc = 'desc',
   closingTag = '/>',
+  table = 'table',
+  thead = 'thead',
+  th = 'th',
+  tbody = 'tbody',
+  td = 'td',
+  html = 'html',
+  label = 'label',
 }

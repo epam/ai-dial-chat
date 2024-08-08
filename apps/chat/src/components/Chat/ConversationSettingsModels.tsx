@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,7 +14,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import { RECENT_MODELS_COUNT, TALK_TO_TOOLTIP } from '@/src/constants/chat';
+import { RECENT_MODELS_COUNT, TALK_TO_TOOLTIP, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
 import { TooltipContainer } from '@/src/components/Common/TooltipContainer';
 
@@ -45,6 +45,16 @@ export const ConversationSettingsModel = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
+  const isPlayback = conversation.playback?.isPlayback;
+  const isReplay = conversation.replay?.isReplay;
+  const [isReplayAsIs, setIsReplayAsIs] = useState(
+    conversation.replay?.replayAsIs ?? false,
+  );
+
+  useEffect(() => {
+    setIsReplayAsIs(conversation.replay?.replayAsIs ?? false);
+  }, [conversation.replay?.replayAsIs]);
+
   const enitities = useMemo(() => {
     return getValidEntitiesFromIds(
       modelId &&
@@ -58,20 +68,19 @@ export const ConversationSettingsModel = ({
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
+      setIsReplayAsIs(entityId === REPLAY_AS_IS_MODEL);
       onModelSelect(entityId);
-      dispatch(
-        ModelsActions.updateRecentModels({
-          modelId: entityId,
-          rearrange,
-        }),
-      );
+      if (entityId !== REPLAY_AS_IS_MODEL) {
+        dispatch(
+          ModelsActions.updateRecentModels({
+            modelId: entityId,
+            rearrange,
+          }),
+        );
+      }
     },
     [dispatch, onModelSelect],
   );
-
-  const isPlayback = conversation.playback?.isPlayback;
-  const isReplay = conversation.replay?.isReplay;
-  const isReplayAsIs = conversation.replay?.replayAsIs;
 
   return (
     <div className="w-full" data-qa="entity-selector">
@@ -87,8 +96,8 @@ export const ConversationSettingsModel = ({
           {isPlayback && <PlaybackModelButton />}
           {isReplay && conversation.replay && (
             <ReplayAsIsButton
-              replay={conversation.replay}
-              conversationId={conversation.id}
+              selected={isReplayAsIs}
+              onSelect={handleModelSelect}
             />
           )}
           {!isPlayback && !isReplay && unavailableModelId && (

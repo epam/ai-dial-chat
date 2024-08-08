@@ -21,4 +21,6 @@ export interface PromptsState {
   popularPrompts: PromptInfo[];
   popularPromptsIsLoading: boolean;
   selectedPopularPromptId: string | undefined;
+  chosenPromptIds: string[];
+  chosenFolderIds: string[];
 }

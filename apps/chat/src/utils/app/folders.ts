@@ -513,5 +513,9 @@ export const updateMovedEntityId = (
 export const getFolderIdFromEntityId = (id: string) =>
   id.split('/').slice(0, -1).join('/');
 
-export const getRootFolderIdFromEntityId = (id: string) =>
-  id.split('/').slice(0, 3).join('/');
+export const getRootFolderIdFromEntityId = (id: string) => {
+  const splittedId = id.split('/');
+  const isRootEntity = splittedId.length === 3;
+
+  return splittedId.slice(0, isRootEntity ? 2 : 3).join('/');
+};

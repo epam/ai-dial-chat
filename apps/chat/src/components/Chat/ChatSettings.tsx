@@ -14,6 +14,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -50,7 +51,9 @@ export const ChatSettings = ({
   const isTourRun = useAppSelector(UISelectors.selectIsTourRun);
   const talkTo = useAppSelector(ConversationsSelectors.selectTalkTo);
 
-  const [currentModelId, setCurrentModelId] = useState<string>(modelId);
+  const [currentModelId, setCurrentModelId] = useState<string>(
+    conversation.replay?.replayAsIs ? REPLAY_AS_IS_MODEL : modelId,
+  );
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,

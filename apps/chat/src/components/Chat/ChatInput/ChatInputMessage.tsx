@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -20,6 +21,7 @@ import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { Message, Role } from '@/src/types/chat';
 import { DialFile, DialLink } from '@/src/types/files';
+import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -47,6 +49,7 @@ import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
+import { ReplayVariables } from './ReplayVariables';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -74,6 +77,7 @@ export const ChatInputMessage = ({
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
+  const promptTemplateMappingRef = useRef(new Map<string, string>());
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -129,6 +133,7 @@ export const ChatInputMessage = ({
   const {
     content,
     setContent,
+    addPromptContent,
     activePromptIndex,
     setActivePromptIndex,
     isModalVisible,
@@ -259,6 +264,10 @@ export const ChatInputMessage = ({
     dispatch(ConversationsActions.setIsMessageSending(true));
     dispatch(PromptsActions.setSelectedPrompt({ promptId: undefined }));
 
+    const usedTemplates = Array.from(promptTemplateMappingRef.current).filter(
+      ([key]) => content.includes(key),
+    );
+
     onSend({
       role: Role.User,
       content,
@@ -267,6 +276,7 @@ export const ChatInputMessage = ({
         selectedFolders,
         selectedDialLinks,
       ),
+      templateMapping: Object.fromEntries(usedTemplates),
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
@@ -324,6 +334,15 @@ export const ChatInputMessage = ({
         return;
       }
 
+      addPromptContent(newContent);
+      if (promptTemplateMappingRef.current) {
+        promptTemplateMappingRef.current.set(
+          newContent.trim(),
+          (
+            (filteredPrompts[activePromptIndex] as Prompt)?.content || ''
+          ).trim(),
+        );
+      }
       setContent(newContent);
       dispatch(PromptsActions.setPopularPromptId({ id: selectedPrompt?.id }));
       clearPromptCopying();
@@ -334,9 +353,11 @@ export const ChatInputMessage = ({
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      activePromptIndex,
+      addPromptContent,
+      filteredPrompts,
       getTokensLength,
       maxTokensLength,
-      setContent,
       setIsPromptLimitModalOpen,
       textareaRef,
       selectedPrompt?.id,
@@ -535,6 +556,7 @@ export const ChatInputMessage = ({
             }}
           />
         )}
+        <ReplayVariables />
       </div>
 
       <ConfirmDialog

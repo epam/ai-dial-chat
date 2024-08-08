@@ -20,17 +20,23 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
+import { ScrollDownButton } from '../../Common/ScrollDownButton';
+
 interface Props<T extends PromptInfo | ConversationInfo> {
   entity: T;
-  wrapperClassName?: string;
+  showScrollDownButton?: boolean;
+  onScrollDownClick?: () => void;
+  controlsClassNames?: string;
 }
 
 export function PublicationControlsView<
   T extends PromptInfo | ConversationInfo,
 >({
   entity,
-  wrapperClassName,
   resourceToReview,
+  showScrollDownButton,
+  onScrollDownClick,
+  controlsClassNames,
 }: Props<T> & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -46,9 +52,39 @@ export function PublicationControlsView<
     (r) => r.reviewUrl === resourceToReview.reviewUrl,
   );
 
+  const unselectPrompt = useCallback(() => {
+    dispatch(
+      PromptsActions.setSelectedPrompt({
+        promptId: undefined,
+      }),
+    );
+    dispatch(
+      PromptsActions.setIsEditModalOpen({
+        isOpen: false,
+        isPreview: false,
+      }),
+    );
+  }, [dispatch]);
+
+  const unselectConversation = useCallback(() => {
+    dispatch(
+      PublicationActions.uploadPublication({
+        url: resourceToReview.publicationUrl,
+      }),
+    );
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [],
+      }),
+    );
+  }, [dispatch, resourceToReview.publicationUrl]);
+
   const toggleResource = useCallback(
     (offset: number) => {
-      if (isConversationId(resourceToReview.reviewUrl)) {
+      if (
+        isConversationId(resourcesToReview[publicationIdx + offset].reviewUrl)
+      ) {
+        unselectPrompt();
         dispatch(
           ConversationsActions.selectConversations({
             conversationIds: [
@@ -57,6 +93,7 @@ export function PublicationControlsView<
           }),
         );
       } else {
+        unselectConversation();
         dispatch(
           PromptsActions.uploadPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
@@ -68,9 +105,21 @@ export function PublicationControlsView<
             isApproveRequiredResource: true,
           }),
         );
+        dispatch(
+          PromptsActions.setIsEditModalOpen({
+            isOpen: true,
+            isPreview: true,
+          }),
+        );
       }
     },
-    [dispatch, publicationIdx, resourceToReview.reviewUrl, resourcesToReview],
+    [
+      dispatch,
+      publicationIdx,
+      resourcesToReview,
+      unselectConversation,
+      unselectPrompt,
+    ],
   );
 
   useEffect(() => {
@@ -84,73 +133,61 @@ export function PublicationControlsView<
   }, [entity, resourceToReview, dispatch]);
 
   return (
-    <div className={classNames('!-top-10 flex h-[38px]', wrapperClassName)}>
-      <div className="flex justify-center gap-3">
-        <button
-          className={classNames(
-            'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
-            publicationIdx !== 0 && 'hover:bg-layer-4',
-          )}
-          data-qa="prev-chat-review-button"
-          disabled={publicationIdx === 0}
-          onClick={() => toggleResource(-1)}
-        >
-          <span>
-            <IconPlayerPlay className="rotate-180" height={18} width={18} />
-          </span>
-        </button>
-        <button
-          className={classNames(
-            'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
-            resourcesToReview.length - 1 && 'hover:bg-layer-4',
-          )}
-          data-qa="next-chat-review-button"
-          disabled={publicationIdx === resourcesToReview.length - 1}
-          onClick={() => toggleResource(1)}
-        >
-          <span>
-            <IconPlayerPlay height={18} width={18} />
-          </span>
-        </button>
-        <button
-          onClick={() => {
-            if (isConversationId(resourceToReview.reviewUrl)) {
-              dispatch(
-                ConversationsActions.selectConversations({
-                  conversationIds: [],
-                }),
-              );
-              dispatch(
-                PublicationActions.uploadPublication({
-                  url: resourceToReview.publicationUrl,
-                }),
-              );
-            } else {
-              dispatch(
-                PromptsActions.setSelectedPrompt({
-                  promptId: undefined,
-                }),
-              );
-              dispatch(
-                PromptsActions.setIsEditModalOpen({
-                  isOpen: false,
-                  isPreview: false,
-                }),
-              );
-            }
-          }}
-          className="button button-primary button-medium flex items-center"
-        >
-          {t('chat.publish.button.back_to_publication_request.label')}
-        </button>
-      </div>
+    <div
+      className={classNames(
+        'relative flex items-center justify-center gap-3',
+        controlsClassNames,
+      )}
+    >
+      <button
+        className={classNames(
+          'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
+          publicationIdx !== 0 && 'hover:bg-layer-4',
+        )}
+        data-qa="prev-chat-review-button"
+        disabled={publicationIdx === 0}
+        onClick={() => toggleResource(-1)}
+      >
+        <IconPlayerPlay
+          className="shrink-0 rotate-180"
+          height={18}
+          width={18}
+        />
+      </button>
+      <button
+        className={classNames(
+          'button flex size-[38px] items-center justify-center border-primary bg-layer-2 p-3 outline-none disabled:cursor-not-allowed disabled:bg-layer-2',
+          resourcesToReview.length - 1 && 'hover:bg-layer-4',
+        )}
+        data-qa="next-chat-review-button"
+        disabled={publicationIdx === resourcesToReview.length - 1}
+        onClick={() => toggleResource(1)}
+      >
+        <IconPlayerPlay className="shrink-0" height={18} width={18} />
+      </button>
+      <button
+        onClick={() =>
+          isConversationId(resourceToReview.reviewUrl)
+            ? unselectConversation()
+            : unselectPrompt()
+        }
+        className="button button-primary button-medium flex max-h-[38px] items-center"
+      >
+        {t('chat.publish.button.back_to_publication_request.label')}
+      </button>
+      {showScrollDownButton && onScrollDownClick && (
+        <ScrollDownButton
+          className="-top-16 right-0 md:-top-20"
+          onScrollDownClick={onScrollDownClick}
+        />
+      )}
     </div>
   );
 }
 
 export function PublicationControls<T extends PromptInfo | ConversationInfo>({
   entity,
-  wrapperClassName,
+  ...props
 }: Props<T>) {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
@@ -164,7 +201,7 @@ export function PublicationControls<T extends PromptInfo | ConversationInfo>({
     <PublicationControlsView
       resourceToReview={resourceToReview}
       entity={entity}
-      wrapperClassName={wrapperClassName}
+      {...props}
     />
   );
 }

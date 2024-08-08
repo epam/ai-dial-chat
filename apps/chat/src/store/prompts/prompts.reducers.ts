@@ -6,8 +6,12 @@ import {
   addGeneratedFolderId,
   getNextDefaultName,
 } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -20,6 +24,8 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
+
+import uniq from 'lodash-es/uniq';
 
 export { PromptsSelectors };
 
@@ -42,6 +48,8 @@ const initialState: PromptsState = {
   popularPrompts: [],
   popularPromptsIsLoading: false,
   selectedPopularPromptId: undefined,
+  chosenPromptIds: [],
+  chosenFolderIds: [],
 };
 
 export const promptsSlice = createSlice({
@@ -425,6 +433,179 @@ export const promptsSlice = createSlice({
     ) => {
       state.selectedPopularPromptId = payload.id;
     },
+    setChosenPrompt: (
+      state,
+      {
+        payload: { promptId, isChosen },
+      }: PayloadAction<{ promptId: string; isChosen: boolean }>,
+    ) => {
+      if (isChosen) {
+        const parentFolderIds = state.chosenFolderIds.filter((folderId) =>
+          promptId.startsWith(folderId),
+        );
+        if (parentFolderIds.length) {
+          state.chosenFolderIds = uniq([
+            ...state.chosenFolderIds.filter(
+              (folderId) => !promptId.startsWith(folderId),
+            ),
+            ...state.folders
+              .map((folder) => `${folder.id}/`)
+              .filter(
+                (folderId) =>
+                  !promptId.startsWith(folderId) &&
+                  parentFolderIds.some((parentId) =>
+                    folderId.startsWith(parentId),
+                  ) &&
+                  state.prompts
+                    .filter((prompt) =>
+                      doesEntityContainSearchTerm(prompt, state.searchTerm),
+                    )
+                    .some((prompt) => prompt.id.startsWith(folderId)),
+              ),
+          ]);
+          state.chosenPromptIds = uniq([
+            ...state.chosenPromptIds.filter(
+              (convId: string) => convId !== promptId,
+            ),
+            ...state.prompts
+              .filter(
+                (prompt) =>
+                  prompt.id !== promptId &&
+                  parentFolderIds.some((parentId) =>
+                    prompt.id.startsWith(parentId),
+                  ) &&
+                  doesEntityContainSearchTerm(prompt, state.searchTerm),
+              )
+              .map((prompt) => prompt.id),
+          ]);
+        } else {
+          state.chosenPromptIds = state.chosenPromptIds.filter(
+            (prId: string) => prId !== promptId,
+          );
+        }
+      } else {
+        state.chosenPromptIds = uniq([...state.chosenPromptIds, promptId]);
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (folderId) =>
+                promptId.startsWith(folderId) &&
+                !state.prompts
+                  .filter((prompt) =>
+                    doesEntityContainSearchTerm(prompt, state.searchTerm),
+                  )
+                  .some(
+                    (prompt) =>
+                      prompt.id.startsWith(folderId) &&
+                      !state.chosenPromptIds.includes(prompt.id) &&
+                      !state.chosenFolderIds.some((chosenFolderId) =>
+                        prompt.id.startsWith(chosenFolderId),
+                      ),
+                  ),
+            ),
+        ]);
+      }
+    },
+    setChosenFolder: (
+      state,
+      {
+        payload: { folderId, isChosen },
+      }: PayloadAction<{ folderId: string; isChosen: boolean }>,
+    ) => {
+      if (isChosen) {
+        const parentFolderIds = state.chosenFolderIds.filter(
+          (chosenId) => folderId.startsWith(chosenId) || chosenId !== folderId,
+        );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) =>
+              !folderId.startsWith(chosenId) && !chosenId.startsWith(folderId),
+          ),
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                !fid.startsWith(folderId) &&
+                !folderId.startsWith(fid) &&
+                parentFolderIds.some((parentId) => fid.startsWith(parentId)),
+            ),
+        ]);
+        state.chosenPromptIds = uniq([
+          ...state.chosenPromptIds.filter(
+            (convId: string) => !convId.startsWith(folderId),
+          ),
+          ...state.prompts
+            .filter(
+              (prompt) =>
+                doesEntityContainSearchTerm(prompt, state.searchTerm) &&
+                !prompt.id.startsWith(folderId) &&
+                parentFolderIds.some((parentId) =>
+                  prompt.id.startsWith(parentId),
+                ),
+            )
+            .map((prompt) => prompt.id),
+        ]);
+      } else {
+        state.chosenPromptIds = state.chosenPromptIds.filter(
+          (convId: string) => !convId.startsWith(folderId),
+        );
+        state.chosenFolderIds = uniq([
+          ...state.chosenFolderIds.filter(
+            (chosenId) => !chosenId.startsWith(folderId),
+          ),
+          folderId,
+          ...state.folders
+            .map((folder) => `${folder.id}/`)
+            .filter(
+              (fid) =>
+                folderId.startsWith(fid) &&
+                !state.prompts
+                  .filter((prompt) =>
+                    doesEntityContainSearchTerm(prompt, state.searchTerm),
+                  )
+                  .some(
+                    (prompt) =>
+                      prompt.id.startsWith(fid) &&
+                      !prompt.id.startsWith(folderId) &&
+                      !state.chosenPromptIds.includes(prompt.id) &&
+                      !state.chosenFolderIds.some((chosenFolderId) =>
+                        prompt.id.startsWith(chosenFolderId),
+                      ),
+                  ),
+            ),
+        ]);
+      }
+    },
+    resetChosenPrompts: (state) => {
+      state.chosenPromptIds = [];
+      state.chosenFolderIds = [];
+    },
+    setAllChosenPrompts: (state) => {
+      if (state.searchTerm) {
+        state.chosenPromptIds = state.prompts
+          .filter(
+            (prompt) =>
+              !isEntityExternal(prompt) &&
+              doesEntityContainSearchTerm(prompt, state.searchTerm),
+          )
+          .map(({ id }) => id);
+      } else {
+        state.chosenPromptIds = state.prompts
+          .filter(
+            (conv) => !isEntityExternal(conv) && isRootPromptId(conv.folderId),
+          )
+          .map(({ id }) => id);
+        state.chosenFolderIds = state.folders
+          .filter(
+            (folder) =>
+              !isEntityExternal(folder) && isRootPromptId(folder.folderId),
+          )
+          .map(({ id }) => `${id}/`);
+      }
+    },
+    deleteChosenPrompts: (state) => state,
   },
 });
 

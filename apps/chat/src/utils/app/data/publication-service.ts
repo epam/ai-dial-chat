@@ -4,26 +4,28 @@ import { BackendResourceType, FeatureType } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
-  PublicationRequest,
+  PublicationRequestModel,
   PublicationRule,
   PublicationsListModel,
   PublishedByMeItem,
   PublishedItem,
 } from '@/src/types/publication';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
 
+import mapKeys from 'lodash-es/mapKeys';
+
 export class PublicationService {
   public static publish(
-    publicationData: PublicationRequest,
+    publicationData: PublicationRequestModel,
   ): Observable<Publication> {
     return ApiUtils.request('api/publication/create', {
       method: 'POST',
-      body: JSON.stringify({
-        ...publicationData,
-      }),
+      body: JSON.stringify(publicationData),
     });
   }
 
@@ -80,6 +82,7 @@ export class PublicationService {
   }
 
   public static deletePublication(data: {
+    name: string;
     targetFolder: string;
     resources: { targetUrl: string }[];
   }): Observable<void> {
@@ -103,7 +106,7 @@ export class PublicationService {
         'api',
         'publication',
         EnumMapper.getApiKeyByFeatureType(featureType),
-        'public',
+        PUBLIC_URL_PREFIX,
         ApiUtils.encodeApiUrl(parentPath),
       )}${resultQuery ? `?${resultQuery}` : ''}`);
   }
@@ -133,14 +136,18 @@ export class PublicationService {
 
   public static getRules(
     path: string,
-  ): Observable<{ rules: Record<string, PublicationRule[]> }> {
+  ): Observable<Record<string, PublicationRule[]>> {
     return ApiUtils.request('api/publication/rulesList', {
       method: 'POST',
       body: JSON.stringify({
         url: `${ApiUtils.encodeApiUrl(
-          path ? constructPath('public', path) : 'public',
+          path ? constructPath(PUBLIC_URL_PREFIX, path) : PUBLIC_URL_PREFIX,
         )}/`,
       }),
-    });
+    }).pipe(
+      map(({ rules }: { rules: Record<string, PublicationRule[]> }) =>
+        mapKeys(rules, (_, key) => ApiUtils.decodeApiUrl(key)),
+      ),
+    );
   }
 }

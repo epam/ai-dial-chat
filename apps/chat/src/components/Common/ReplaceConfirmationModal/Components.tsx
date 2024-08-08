@@ -19,6 +19,7 @@ import {
   ReplaceOptions,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
+import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -160,7 +161,12 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
       <Tooltip
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
-        triggerClassName="truncate whitespace-pre"
+        triggerClassName={classNames(
+          'truncate whitespace-pre',
+          conversation.publicationInfo?.isNotExist && 'text-secondary',
+          conversation.publicationInfo?.action === PublishActions.DELETE &&
+            'text-error',
+        )}
       >
         {conversation.name}
       </Tooltip>
@@ -202,11 +208,18 @@ interface PromptViewProps {
 const PromptView = ({ item: prompt }: PromptViewProps) => {
   return (
     <FeatureContainer>
-      <IconBulb size={18} className="text-secondary-bg-dark" />
+      <span className="flex shrink-0">
+        <IconBulb size={18} className="text-secondary-bg-dark" />
+      </span>
       <Tooltip
         tooltip={prompt.name}
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-        triggerClassName="truncate whitespace-pre"
+        triggerClassName={classNames(
+          'truncate whitespace-pre',
+          prompt.publicationInfo?.isNotExist && 'text-secondary',
+          prompt.publicationInfo?.action === PublishActions.DELETE &&
+            'text-error',
+        )}
       >
         {prompt.name}
       </Tooltip>
@@ -248,11 +261,19 @@ interface FileViewProps {
 const FileView = ({ item: file }: FileViewProps) => {
   return (
     <FeatureContainer>
-      <IconFile size={18} className="text-secondary-bg-dark" />
+      <div className="flex shrink-0">
+        <IconFile size={18} className="text-secondary-bg-dark" />
+      </div>
       <Tooltip
         tooltip={file.name}
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-        triggerClassName="truncate whitespace-pre"
+        triggerClassName={classNames(
+          'truncate whitespace-pre',
+          file.publicationInfo?.isNotExist &&
+            'bg-controls-disable text-secondary',
+          file.publicationInfo?.action === PublishActions.DELETE &&
+            'text-error',
+        )}
       >
         {file.name}
       </Tooltip>

@@ -37,7 +37,7 @@ dialTest.skip(
     await dialTest.step(
       'Prepare nested folders and single shared and not shared conversations',
       async () => {
-        nestedFolders = conversationData.prepareNestedFolder(3);
+        nestedFolders = conversationData.prepareNestedFolder(4);
         conversationData.resetData();
         nestedSharedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
@@ -231,7 +231,7 @@ dialTest.skip(
     await dialTest.step(
       'Prepare nested folders and single shared and not shared prompts',
       async () => {
-        nestedFolders = promptData.prepareNestedFolder(3);
+        nestedFolders = promptData.prepareNestedFolder(4);
         promptData.resetData();
         nestedSharedPrompts =
           promptData.preparePromptsForNestedFolders(nestedFolders);
@@ -284,7 +284,7 @@ dialTest.skip(
           await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
         const actualFilteredSingleFolderPromptsCount =
           await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
-        const actualFilteredPromptsCount = await prompts.getPromptsCount();
+        const actualFilteredPromptsCount = await prompts.getEntitiesCount();
         expect
           .soft(
             actualFilteredNestedFolderPromptsCount +
@@ -315,7 +315,7 @@ dialTest.skip(
           await folderPrompts.getFolderEntitiesCount(nestedFolders[0].name);
         const actualFilteredSingleFolderPromptsCount =
           await folderPrompts.getFolderEntitiesCount(folderPrompt.folders.name);
-        const actualPromptsCount = await prompts.getPromptsCount();
+        const actualPromptsCount = await prompts.getEntitiesCount();
         expect
           .soft(
             actualFilteredNestedFolderPromptsCount +
@@ -378,7 +378,7 @@ dialTest.skip(
         );
         await promptBarSearch.setSearchValue(searchTerm);
 
-        const filteredPromptsCount = await prompts.getPromptsCount();
+        const filteredPromptsCount = await prompts.getEntitiesCount();
         expect
           .soft(filteredPromptsCount, ExpectedMessages.promptsCountIsValid)
           .toBe(2);

@@ -29,7 +29,7 @@ dialTest(
     await chatBar.createNewFolder();
     await expect
       .soft(
-        await folderConversations.getFolderByName(
+        folderConversations.getFolderByName(
           ExpectedConstants.newFolderWithIndexTitle(1),
         ),
         ExpectedMessages.newFolderCreated,
@@ -42,7 +42,7 @@ dialTest(
     const actualMenuOptions = await folderDropdownMenu.getAllMenuOptions();
     expect
       .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([MenuOptions.rename, MenuOptions.delete]);
+      .toEqual([MenuOptions.select, MenuOptions.rename, MenuOptions.delete]);
   },
 );
 
@@ -96,7 +96,7 @@ dialTest(
     await folderConversations.editFolderNameWithEnter(newNameWithSpaces);
     await expect
       .soft(
-        await folderConversations.getFolderByName(newNameWithSpaces.trim()),
+        folderConversations.getFolderByName(newNameWithSpaces.trim()),
         ExpectedMessages.folderNameUpdated,
       )
       .toBeVisible();
@@ -105,7 +105,7 @@ dialTest(
       if (i !== randomFolderIndex) {
         await expect
           .soft(
-            await folderConversations.getFolderByName(
+            folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(i),
             ),
             ExpectedMessages.folderNameNotUpdated,
@@ -184,9 +184,7 @@ dialTest(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
         await editFolderInput.click();
-        await editFolderInput.editValue(
-          ExpectedConstants.prohibitedNameSymbols,
-        );
+        await editFolderInput.editValue(ExpectedConstants.restrictedNameChars);
         const inputContent = await editFolderInput.getElementContent();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
@@ -198,7 +196,7 @@ dialTest(
       'Paste prohibited symbols and verify they are not displayed in text input',
       async () => {
         await sendMessage.fillRequestData(
-          ExpectedConstants.prohibitedNameSymbols,
+          ExpectedConstants.restrictedNameChars,
         );
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusC);
@@ -232,18 +230,24 @@ dialTest(
 
 dialTest(
   'Rename chat folder when chats are inside using check button\n' +
-    'Long Folder name is cut',
+    'Long Folder name is cut.\n' +
+    'Rename chat folder with 161 symbols with dot in the end',
   async ({
     dialHomePage,
     conversationData,
     folderConversations,
     dataInjector,
     folderDropdownMenu,
+    errorToast,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-573', 'EPMRTC-574');
+    setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
     const folderName = GeneratorUtil.randomString(70);
-    const newConversationName = 'updated folder name';
+    const newFolderNameToSet = `${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength)}.`;
+    const expectedNewFolderName = newFolderNameToSet.substring(
+      0,
+      ExpectedConstants.maxEntityNameLength,
+    );
 
     await dialTest.step(
       'Prepare folder with long name and conversation inside folder',
@@ -303,13 +307,21 @@ dialTest(
     await dialTest.step(
       'Edit folder name using tick button and verify it is renamed',
       async () => {
-        await folderConversations.editFolderNameWithTick(newConversationName);
+        await folderConversations.editFolderNameWithTick(newFolderNameToSet);
         await expect
           .soft(
-            await folderConversations.getFolderByName(newConversationName),
+            errorToast.getElementLocator(),
+            ExpectedMessages.noErrorToastIsShown,
+          )
+          .toBeHidden();
+        expect
+          .soft(
+            await folderConversations
+              .getFolderName(expectedNewFolderName)
+              .getElementInnerContent(),
             ExpectedMessages.folderNameUpdated,
           )
-          .toBeVisible();
+          .toBe(expectedNewFolderName);
       },
     );
   },
@@ -346,7 +358,7 @@ dialTest(
             conversationInFolder.folders.name,
           );
         expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.folderCaretIsExpanded)
+          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
           .toBeFalsy();
 
         await folderConversations.expandCollapseFolder(
@@ -356,7 +368,7 @@ dialTest(
           conversationInFolder.folders.name,
         );
         expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.folderCaretIsExpanded)
+          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
           .toBeTruthy();
       },
     );
@@ -411,7 +423,7 @@ dialTest(
         await confirmationDialog.cancelDialog();
         await expect
           .soft(
-            await folderConversations.getFolderByName(
+            folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(1),
             ),
             ExpectedMessages.folderNotDeleted,
@@ -476,9 +488,7 @@ dialTest(
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
     await expect
       .soft(
-        await folderConversations.getFolderByName(
-          conversationInFolder.folders.name,
-        ),
+        folderConversations.getFolderByName(conversationInFolder.folders.name),
         ExpectedMessages.folderDeleted,
       )
       .toBeHidden();
@@ -506,7 +516,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1372');
-    const levelsCount = 3;
+    const levelsCount = 4;
     const levelToDelete = 2;
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
@@ -538,33 +548,31 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-        for (let i = levelToDelete; i <= levelsCount; i++) {
+        for (let i = levelToDelete; i < levelsCount; i++) {
           await expect
             .soft(
-              await folderConversations.getFolderByName(nestedFolders[i].name),
+              folderConversations.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderDeleted,
             )
             .toBeHidden();
           await expect
             .soft(
-              await conversations.getConversationByName(
-                nestedConversations[i].name,
-              ),
+              conversations.getEntityByName(nestedConversations[i].name),
               ExpectedMessages.conversationDeleted,
             )
             .toBeHidden();
         }
 
-        for (let i = 0; i <= levelsCount - levelToDelete; i++) {
+        for (let i = 0; i < levelsCount - levelToDelete; i++) {
           await expect
             .soft(
-              await folderConversations.getFolderByName(nestedFolders[i].name),
+              folderConversations.getFolderByName(nestedFolders[i].name),
               ExpectedMessages.folderNotDeleted,
             )
             .toBeVisible();
           await expect
             .soft(
-              await folderConversations.getFolderEntity(
+              folderConversations.getFolderEntity(
                 nestedFolders[i].name,
                 nestedConversations[i].name,
               ),
@@ -587,7 +595,6 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1277');
-    const specialSymbols = `(\`~!@#$^*-_+[]'|<>.?")`;
 
     await dialTest.step(
       'Create a new folder and rename to name with special symbols',
@@ -599,11 +606,15 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.editFolderName(specialSymbols);
+        await folderConversations.editFolderName(
+          ExpectedConstants.allowedSpecialChars,
+        );
         await folderConversations.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
-            folderConversations.getFolderByName(specialSymbols),
+            folderConversations.getFolderByName(
+              ExpectedConstants.allowedSpecialChars,
+            ),
             ExpectedMessages.folderNameUpdated,
           )
           .toBeVisible();

@@ -7,6 +7,7 @@ import {
   MouseEventHandler,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -70,12 +71,16 @@ interface ViewProps {
   conversation: ConversationInfo;
   isHighlited: boolean;
   isInvalid: boolean;
+  isChosen?: boolean;
+  isSelectMode?: boolean;
 }
 
 export function ConversationView({
   conversation,
   isHighlited,
   isInvalid,
+  isChosen = false,
+  isSelectMode,
 }: ViewProps) {
   const { t } = useTranslation(Translation.ChatBar);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -86,13 +91,45 @@ export function ConversationView({
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
 
+  const handleToggle = useCallback(() => {
+    ConversationsActions.setChosenConversation({
+      conversationId: conversation.id,
+      isChosen,
+    });
+  }, [conversation.id, isChosen]);
+
   return (
     <>
+      <div
+        className={classNames(
+          'relative size-[18px]',
+          isSelectMode &&
+            !isExternal &&
+            'shrink-0 group-hover/conversation-item:flex',
+          isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
+        )}
+      >
+        <input
+          className="checkbox peer size-[18px] bg-layer-3"
+          type="checkbox"
+          checked={isChosen}
+          onChange={handleToggle}
+          data-qa={isChosen ? 'checked' : 'unchecked'}
+        />
+        <IconCheck
+          size={18}
+          className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        />
+      </div>
       <ShareIcon
         {...conversation}
         isHighlighted={isHighlited}
         featureType={FeatureType.Chat}
         isInvalid={isInvalid}
+        containerClassName={classNames(
+          isSelectMode && !isExternal && 'group-hover/conversation-item:hidden',
+          isChosen && !isExternal && 'hidden',
+        )}
       >
         {conversation.isReplay && (
           <span className="flex shrink-0">
@@ -148,6 +185,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -183,6 +221,22 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isSelected = selectedConversationIds.includes(conversation.id);
+
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
+  const chosenConversationIds = useAppSelector(
+    ConversationsSelectors.selectChosenConversationIds,
+  );
+  const chosenFolderIds = useAppSelector(
+    ConversationsSelectors.selectChosenFolderIds,
+  );
+  const isChosen = useMemo(
+    () =>
+      chosenConversationIds.includes(conversation.id) ||
+      chosenFolderIds.some((folderId) => conversation.id.startsWith(folderId)),
+    [chosenConversationIds, chosenFolderIds, conversation.id],
+  );
 
   const { refs, context } = useFloating({
     open: isContextMenu,
@@ -282,7 +336,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
 
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
-      if (e.dataTransfer && !isExternal) {
+      if (e.dataTransfer && !isExternal && !isSelectMode) {
         e.dataTransfer.setDragImage(getDragImage(), 0, 0);
         e.dataTransfer.setData(
           MoveType.Conversation,
@@ -290,7 +344,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         );
       }
     },
-    [isExternal],
+    [isExternal, isSelectMode],
   );
 
   const handleDelete = useCallback(() => {
@@ -372,6 +426,20 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     },
     [conversation, dispatch, talkTo],
   );
+
+  // const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+  //   (e) => {
+  //     e.stopPropagation();
+  //     setIsContextMenu(false);
+  //     dispatch(
+  //       ConversationsActions.setChosenConversation({
+  //         conversationId: conversation.id,
+  //         isChosen,
+  //       }),
+  //     );
+  //   },
+  //   [conversation.id, dispatch, isChosen],
+  // );
 
   useEffect(() => {
     if (isRenaming) {
@@ -514,16 +582,26 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     setIsContextMenu(true);
   };
 
-  const isHighlighted = isSelected || isRenaming || isDeleting;
+  const isHighlighted = !isSelectMode
+    ? isSelected || isRenaming || isDeleting
+    : isChosen;
   const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
+
+  useEffect(() => {
+    if (isSelectMode) {
+      setIsRenaming(false);
+      setIsDeleting(false);
+    }
+  }, [isSelectMode]);
 
   return (
     <div
       className={classNames(
-        'group relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
-        isHighlighted
-          ? 'border-l-accent-primary bg-accent-primary-alpha'
+        'group/conversation-item relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
+        !isSelectMode && isHighlighted
+          ? 'border-l-accent-primary'
           : 'border-l-transparent',
+        isHighlighted && 'bg-accent-primary-alpha',
         { 'bg-accent-primary-alpha': isContextMenu },
         isNameOrPathInvalid && !isRenaming && 'text-secondary-bg-dark',
       )}
@@ -581,12 +659,26 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       ) : (
         <button
           className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed [&:not(:disabled)]:group-hover:pr-6',
-            isSelected && 'pr-0',
+            'group/conversation-item flex size-full cursor-pointer items-center gap-2 transition-colors duration-200 disabled:cursor-not-allowed',
+            isSelectMode
+              ? 'pr-0'
+              : '[&:not(:disabled)]:group-hover/conversation-item:pr-6',
           )}
           onClick={() => {
             setIsDeleting(false);
             setIsRenaming(false);
+            if (!isSelectMode || !isExternal) {
+              dispatch(
+                !isSelectMode
+                  ? ConversationsActions.selectConversations({
+                      conversationIds: [conversation.id],
+                    })
+                  : ConversationsActions.setChosenConversation({
+                      conversationId: conversation.id,
+                      isChosen,
+                    }),
+              );
+            }
             if (talkTo && selectedConversationIds[0] !== conversation.id) {
               dispatch(ConversationsActions.setTalkTo(''));
             }
@@ -596,8 +688,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
               }),
             );
           }}
-          disabled={messageIsStreaming}
-          draggable={!isExternal && !isNameOrPathInvalid}
+          disabled={messageIsStreaming || (isSelectMode && isExternal)}
+          draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, conversation)}
           ref={buttonRef}
           data-qa={isSelected ? 'selected' : null}
@@ -606,16 +698,18 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             conversation={conversation}
             isHighlited={isHighlighted || isContextMenu}
             isInvalid={isNameOrPathInvalid}
+            isChosen={isChosen}
+            isSelectMode={isSelectMode}
           />
         </button>
       )}
 
-      {!isDeleting && !isRenaming && !messageIsStreaming && (
+      {!isSelectMode && !isDeleting && !isRenaming && !messageIsStreaming && (
         <div
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
+            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover/conversation-item:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
           )}
@@ -647,6 +741,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}
+            onSelect={undefined}
           />
         </div>
       )}

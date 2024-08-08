@@ -3,6 +3,8 @@ import {
   IconFileArrowRight,
   IconPaperclip,
   IconScale,
+  IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -57,6 +59,9 @@ export const ChatbarSettings = () => {
   const isMyItemsExist = useAppSelector(
     ConversationsSelectors.selectDoesAnyMyItemExist,
   );
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
 
   const handleToggleCompare = useCallback(() => {
     dispatch(
@@ -84,8 +89,28 @@ export const ChatbarSettings = () => {
     [dispatch],
   );
 
+  const deleteTerm = isSelectMode ? 'selected' : 'all';
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Select all'),
+        dataQa: 'select-all',
+        Icon: IconSquareCheck,
+        onClick: () => {
+          dispatch(ConversationsActions.setAllChosenConversations());
+        },
+        display: false
+      },
+      {
+        name: t('Unselect all'),
+        dataQa: 'unselect-all',
+        Icon: IconSquareOff,
+        onClick: () => {
+          dispatch(ConversationsActions.resetChosenConversations());
+        },
+        display: isSelectMode,
+      },
       {
         name: t('chatbar.button.create_new_folder'),
         dataQa: 'create-folder',
@@ -158,7 +183,9 @@ export const ChatbarSettings = () => {
     ],
     [
       t,
+      isSelectMode,
       isMyItemsExist,
+      deleteTerm,
       isStreaming,
       isActiveNewConversationRequest,
       enabledFeatures,
@@ -183,6 +210,8 @@ export const ChatbarSettings = () => {
           }}
           headerLabel={t('chatbar.button.manage_attachments')}
           forceShowSelectCheckBox
+          forceHideSelectFolders
+          showTooltip
         />
       )}
 
@@ -200,7 +229,11 @@ export const ChatbarSettings = () => {
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {
-            dispatch(ConversationsActions.clearConversations());
+            if (!isSelectMode) {
+              dispatch(ConversationsActions.clearConversations());
+            } else {
+              dispatch(ConversationsActions.deleteChosenConversations());
+            }
           }
         }}
       />

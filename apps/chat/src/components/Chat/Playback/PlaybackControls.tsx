@@ -273,7 +273,7 @@ export const PlaybackControls = ({
         </div>
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-16 right-0 md:-right-14 md:top-[50%] md:-translate-y-1/2"
+            className="-top-16 right-0 md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}

@@ -8,6 +8,9 @@ export enum PublicationFunctions {
   Equal = 'Equal',
   Contain = 'Contain',
   Regex = 'Regex',
+  // TODO: uncomment when it will be supported on core
+  // True = 'True',
+  // False = 'False',
 }
 
 export enum PublishActions {
@@ -21,7 +24,8 @@ export interface PublicationRule {
   targets: string[];
 }
 
-export interface PublicationRequest {
+export interface PublicationRequestModel {
+  name: string;
   targetFolder: string;
   resources: {
     action: PublishActions;
@@ -45,8 +49,9 @@ export interface PublicationResource {
 }
 
 export interface Publication {
+  name?: string;
   url: string;
-  targetFolder?: string;
+  targetFolder: string;
   publicationStatus: PublicationStatus;
   uploadStatus?: UploadStatus;
   createdAt: number;
@@ -56,8 +61,9 @@ export interface Publication {
 }
 
 export interface PublicationInfo {
+  name?: string;
   url: string;
-  targetFolder?: string;
+  targetFolder: string;
   status: PublicationStatus;
   createdAt: number;
   resourceTypes: BackendResourceType[];
@@ -99,7 +105,6 @@ export interface PublishedList {
 
 export interface TargetAudienceFilterItem {
   id: string;
-  name: string;
 }
 
 export interface TargetAudienceFilter extends TargetAudienceFilterItem {

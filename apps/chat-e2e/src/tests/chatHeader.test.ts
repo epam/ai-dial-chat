@@ -1,7 +1,8 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedMessages } from '@/src/testData';
+import { API, ExpectedMessages } from '@/src/testData';
+import { responseThrottlingTimeout } from '@/src/ui/pages';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -55,6 +56,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.throttleAPIResponse(
+          API.chatHost,
+          responseThrottlingTimeout * 2,
+        );
         const requestsData = await chat.sendRequestWithKeyboard(request, false);
 
         expect
@@ -212,7 +217,7 @@ dialTest(
 
         await expect
           .soft(
-            await conversationSettings.getElementLocator(),
+            conversationSettings.getElementLocator(),
             ExpectedMessages.conversationSettingsVisible,
           )
           .toBeVisible();

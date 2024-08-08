@@ -1,3 +1,4 @@
+import { Attributes } from '@/src/ui/domData';
 import { HeaderSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
@@ -16,6 +17,11 @@ export class AccountSettings extends BaseElement {
     }
     return this.dropdownMenu;
   }
+
+  public accountSettingsCaret = this.getChildElementBySelector(
+    `.${Attributes.rotated180}`,
+  );
+
   public async openAccountDropdownMenu() {
     await this.click();
     await this.getDropdownMenu().waitForState();

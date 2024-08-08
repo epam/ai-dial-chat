@@ -19,7 +19,7 @@ import { FileUtil } from '@/src/utils/fileUtil';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 
-const levelsCount = 3;
+const levelsCount = 4;
 let folderConversationData: UploadDownloadData;
 let rootConversationData: UploadDownloadData;
 let newFolderConversationData: UploadDownloadData;
@@ -110,7 +110,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               conversationInFolder.folders.name,
               conversationInFolder.conversations[0].name,
             ),
@@ -134,7 +134,7 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               conversationInFolder.folders.name,
               conversationInFolder.conversations[0].name,
             ),
@@ -181,7 +181,7 @@ dialTest(
           ...nestedFolders,
         );
         await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount],
+          nestedConversations[levelsCount - 1],
         );
       },
     );
@@ -199,7 +199,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Delete all conversations and folders, re-import again and verify they are displayed',
+      'Delete all conversations and folders, re-import again and verify that all entities except empty folders are displayed',
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -208,25 +208,23 @@ dialTest(
         );
         await expect
           .soft(
-            await folderConversations.getFolderByName(
+            folderConversations.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(1),
             ),
-            ExpectedMessages.folderExpanded,
+            ExpectedMessages.folderIsNotVisible,
           )
-          .toBeVisible();
+          .toBeHidden();
         await expect
           .soft(
-            await conversations.getConversationByName(
-              conversationOutsideFolder.name,
-            ),
+            conversations.getEntityByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
 
-        for (let i = 0; i <= levelsCount; i++) {
+        for (let i = 0; i < levelsCount; i++) {
           await expect
             .soft(
-              await folderConversations.getFolderEntity(
+              folderConversations.getFolderEntity(
                 nestedFolders[i].name,
                 nestedConversations[i].name,
               ),
@@ -351,13 +349,11 @@ dialTest(
           chatBar.importButton.click(),
         );
         await conversations
-          .getConversationByName(importedRootConversation.name)
+          .getEntityByName(importedRootConversation.name)
           .waitFor();
         await expect
           .soft(
-            await conversations.getConversationByName(
-              conversationOutsideFolder.name,
-            ),
+            conversations.getEntityByName(conversationOutsideFolder.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -532,7 +528,7 @@ dialTest(
           .toBeTruthy();
 
         await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+          .getEntityByName(ExpectedConstants.newConversationTitle, 2)
           .waitFor();
 
         await folderConversations.selectFolderEntity(
@@ -554,10 +550,10 @@ dialTest(
       'Verify New conversation with Gpt-4 icon is imported',
       async () => {
         await conversations
-          .getConversationByName(ExpectedConstants.newConversationTitle, 2)
+          .getEntityByName(ExpectedConstants.newConversationTitle, 2)
           .waitFor();
         const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
-        const newGpt4ConversationIcon = await conversations.getConversationIcon(
+        const newGpt4ConversationIcon = await conversations.getEntityIcon(
           ExpectedConstants.newConversationTitle,
           isApiStorageType ? 1 : 2,
         );
@@ -571,13 +567,13 @@ dialTest(
       'Verify Bison conversation with default icon is imported',
       async () => {
         await conversations
-          .getConversationByName(Import.v14AppBisonChatName)
+          .getEntityByName(Import.v14AppBisonChatName)
           .waitFor();
 
         const defaultIcon = await iconApiHelper.getEntityIcon(
           ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
         );
-        const bisonConversationIcon = await conversations.getConversationIcon(
+        const bisonConversationIcon = await conversations.getEntityIcon(
           Import.v14AppBisonChatName,
         );
         expect
@@ -590,7 +586,7 @@ dialTest(
     );
 
     await dialTest.step('Verify no prompts are imported', async () => {
-      const promptsCount = await prompts.getPromptsCount();
+      const promptsCount = await prompts.getEntitiesCount();
       expect.soft(promptsCount, ExpectedMessages.noPromptsImported).toBe(0);
     });
 
@@ -659,7 +655,7 @@ dialTest(
           ...nestedFolders,
         );
         await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount],
+          nestedConversations[levelsCount - 1],
         );
       },
     );
@@ -674,8 +670,8 @@ dialTest(
         }
 
         await folderConversations.openFolderEntityDropdownMenu(
-          nestedFolders[levelsCount].name,
-          nestedConversations[levelsCount].name,
+          nestedFolders[levelsCount - 1].name,
+          nestedConversations[levelsCount - 1].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(() =>
@@ -697,18 +693,18 @@ dialTest(
 
         await folderConversations
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedConversations[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
+            nestedConversations[levelsCount - 1].name,
           )
           .waitFor();
 
-        for (let i = 0; i <= levelsCount; i++) {
+        for (let i = 0; i < levelsCount; i++) {
           await folderConversations
             .getFolderByName(nestedFolders[i].name)
             .waitFor();
         }
 
-        for (let i = 0; i < levelsCount; i++) {
+        for (let i = 0; i < levelsCount - 1; i++) {
           expect
             .soft(
               await folderConversations.isFolderEntityVisible(
@@ -726,28 +722,6 @@ dialTest(
       'Delete last folder with its conversation, re-import exported file and verify last nested folder with its conversation imported',
       async () => {
         await folderConversations.openFolderDropdownMenu(
-          nestedFolders[levelsCount].name,
-        );
-        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-
-        await dialHomePage.importFile(exportedData, () =>
-          chatBar.importButton.click(),
-        );
-
-        await folderConversations
-          .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedConversations[levelsCount].name,
-          )
-          .waitFor();
-      },
-    );
-
-    await dialTest.step(
-      'Delete 2nd level folder with its nested content, re-import exported file and verify 2nd level folder with its nested content imported',
-      async () => {
-        await folderConversations.openFolderDropdownMenu(
           nestedFolders[levelsCount - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
@@ -759,13 +733,35 @@ dialTest(
 
         await folderConversations
           .getFolderEntity(
-            nestedFolders[levelsCount].name,
-            nestedConversations[levelsCount].name,
+            nestedFolders[levelsCount - 1].name,
+            nestedConversations[levelsCount - 1].name,
+          )
+          .waitFor();
+      },
+    );
+
+    await dialTest.step(
+      'Delete 2nd level folder with its nested content, re-import exported file and verify 2nd level folder with its nested content imported',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          nestedFolders[levelsCount - 2].name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
+        await dialHomePage.importFile(exportedData, () =>
+          chatBar.importButton.click(),
+        );
+
+        await folderConversations
+          .getFolderEntity(
+            nestedFolders[levelsCount - 1].name,
+            nestedConversations[levelsCount - 1].name,
           )
           .waitFor();
 
         await folderConversations
-          .getFolderByName(nestedFolders[levelsCount - 1].name)
+          .getFolderByName(nestedFolders[levelsCount - 2].name)
           .waitFor();
       },
     );
@@ -802,7 +798,7 @@ dialTest(
           ...nestedFolders,
         );
         await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount],
+          nestedConversations[levelsCount - 1],
         );
       },
     );
@@ -858,13 +854,13 @@ dialTest(
     await dialTest.step(
       'Verify new conversations are added to root and 2nd level folders, folders structure remains the same',
       async () => {
-        for (let i = 0; i <= levelsCount; i++) {
+        for (let i = 0; i < levelsCount; i++) {
           await folderConversations
             .getFolderByName(nestedFolders[i].name)
             .waitFor();
         }
 
-        for (let i = 0; i < levelsCount; i++) {
+        for (let i = 0; i < levelsCount - 1; i++) {
           expect
             .soft(
               await folderConversations.isFolderEntityVisible(
@@ -925,7 +921,8 @@ dialTest(
         nestedFolders = conversationData.prepareNestedFolder(levelsCount);
         thirdLevelFolderConversation =
           conversationData.prepareDefaultConversation();
-        thirdLevelFolderConversation.folderId = nestedFolders[levelsCount].id;
+        thirdLevelFolderConversation.folderId =
+          nestedFolders[levelsCount - 1].id;
         thirdLevelFolderConversation.id = `${thirdLevelFolderConversation.folderId}/${thirdLevelFolderConversation.id}`;
 
         await dataInjector.createConversations(
@@ -942,7 +939,7 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await folderConversations.openFolderEntityDropdownMenu(
-        nestedFolders[levelsCount].name,
+        nestedFolders[levelsCount - 1].name,
         thirdLevelFolderConversation.name,
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
@@ -955,7 +952,7 @@ dialTest(
       'Move 3rd level folder on the root folder level and import exported conversation',
       async () => {
         await chatBar.dragAndDropFolderToRootLevel(
-          nestedFolders[levelsCount].name,
+          nestedFolders[levelsCount - 1].name,
           { isHttpMethodTriggered: true },
         );
         await dialHomePage.importFile(exportedData, () =>
@@ -969,15 +966,15 @@ dialTest(
       async () => {
         await folderConversations
           .getNestedFolder(
+            nestedFolders[levelsCount - 2].name,
             nestedFolders[levelsCount - 1].name,
-            nestedFolders[levelsCount].name,
           )
           .waitFor();
 
         const foldersCount = await folderConversations.getFoldersCount();
         expect
           .soft(foldersCount, ExpectedMessages.foldersCountIsValid)
-          .toBe(levelsCount + 2);
+          .toBe(levelsCount + 1);
       },
     );
   },

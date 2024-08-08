@@ -169,13 +169,58 @@ const ChatFolderTemplate = ({
     [dispatch],
   );
 
+  const handleFolderRename = useCallback(
+    (name: string, folderId: string) => {
+      dispatch(
+        ConversationsActions.updateFolder({
+          folderId,
+          values: { name, isShared: false },
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const handleFolderDelete = useCallback(
+    (folderId: string) => {
+      if (folder.sharedWithMe) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceId: folder.id,
+            isFolder: true,
+            featureType: FeatureType.Chat,
+          }),
+        );
+      } else {
+        dispatch(ConversationsActions.deleteFolder({ folderId }));
+      }
+    },
+    [dispatch, folder.id, folder.sharedWithMe],
+  );
+
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
+  const selectedFolderIds = useAppSelector(
+    ConversationsSelectors.selectAllChosenFolderIds,
+  );
+  const partialSelectedFolderIds = useAppSelector(
+    ConversationsSelectors.selectPartialChosenFolderIds,
+  );
+  const handleFolderSelect = useCallback(
+    (folderId: string, isChosen: boolean) => {
+      dispatch(ConversationsActions.setChosenFolder({ folderId, isChosen }));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Chat}
-        denyDrop={isExternal}
+        denyDrop={isExternal || isSelectMode}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -190,37 +235,24 @@ const ChatFolderTemplate = ({
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
         handleDrop={handleDrop}
-        onRenameFolder={(name, folderId) => {
-          dispatch(
-            ConversationsActions.updateFolder({
-              folderId,
-              values: { name, isShared: false },
-            }),
-          );
-        }}
-        onDeleteFolder={(folderId: string) => {
-          if (folder.sharedWithMe) {
-            dispatch(
-              ShareActions.discardSharedWithMe({
-                resourceId: folder.id,
-                isFolder: true,
-                featureType: FeatureType.Chat,
-              }),
-            );
-          } else {
-            dispatch(ConversationsActions.deleteFolder({ folderId }));
-          }
-        }}
+        onRenameFolder={handleFolderRename}
+        onDeleteFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Chat}
         loadingFolderIds={loadingFolderIds}
+        onSelectFolder={handleFolderSelect}
+        canSelectFolders={isSelectMode}
+        additionalItemData={{
+          selectedFolderIds,
+          partialSelectedFolderIds,
+        }}
       />
       {isLast && (
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Chat}
-          denyDrop={isExternal}
+          denyDrop={isExternal || isSelectMode}
         />
       )}
     </>

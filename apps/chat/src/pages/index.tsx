@@ -102,6 +102,9 @@ export default function Home({ initialState }: HomeProps) {
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
   );
+  const isSignInInSameWindow = useAppSelector(
+    SettingsSelectors.selectIsSignInInSameWindow,
+  );
 
   const isReplaceModalOpened = useAppSelector(
     ImportExportSelectors.selectIsShowReplaceDialog,
@@ -167,6 +170,7 @@ export default function Home({ initialState }: HomeProps) {
       (async () => {
         const authWindowLocation = new AuthWindowLocationLike(
           `api/auth/signin`,
+          isSignInInSameWindow,
         );
 
         await authWindowLocation.ready; // ready after redirects
@@ -249,7 +253,7 @@ export default function Home({ initialState }: HomeProps) {
                   <Chatbar />
                 )}
 
-                <div className="flex min-w-0 grow flex-col overflow-y-auto">
+                <div className="flex min-w-0 grow flex-col">
                   <AnnouncementsBanner />
                   <Chat />
 
@@ -359,6 +363,7 @@ export const getServerSideProps: GetServerSideProps = async ({
       (process.env.FAVORITE_APPS_IDS &&
         process.env.FAVORITE_APPS_IDS.split(',')) ||
       [],
+    allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

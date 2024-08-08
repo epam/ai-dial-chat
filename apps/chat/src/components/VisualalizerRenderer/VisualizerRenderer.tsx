@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { Role } from '@/src/types/chat';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
 
@@ -11,6 +12,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
@@ -54,6 +56,14 @@ export const VisualizerRenderer = ({
 
   const customAttachmentData = useAppSelector((state) =>
     ConversationsSelectors.selectCustomAttachmentData(state, attachmentUrl),
+  );
+
+  const currentConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const isAllowedSendMessage = useAppSelector(
+    SettingsSelectors.selectAllowVisualizerSendMessages,
   );
 
   const scrollWidth =
@@ -139,12 +149,40 @@ export const VisualizerRenderer = ({
       ) {
         setReady(true);
       }
+
+      if (
+        isAllowedSendMessage &&
+        event.data.type ===
+          `${visualizerTitle}/${VisualizerConnectorEvents.sendMessage}` &&
+        event.data.payload &&
+        typeof event.data.payload === 'object' &&
+        Object.prototype.hasOwnProperty.call(event.data.payload, 'message')
+      ) {
+        const content = (event.data.payload as { message: string }).message;
+        dispatch(
+          ConversationsActions.sendMessages({
+            conversations: currentConversations,
+            deleteCount: 0,
+            message: {
+              role: Role.User,
+              content,
+            },
+            activeReplayIndex: 0,
+          }),
+        );
+      }
     };
 
     window.addEventListener('message', postMessageListener, false);
 
     return () => window.removeEventListener('message', postMessageListener);
-  }, [visualizerTitle, rendererUrl]);
+  }, [
+    visualizerTitle,
+    rendererUrl,
+    dispatch,
+    currentConversations,
+    isAllowedSendMessage,
+  ]);
 
   if (!attachmentUrl) {
     return null;

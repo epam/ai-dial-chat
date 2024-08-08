@@ -8,6 +8,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { programmingLanguages } from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
@@ -131,13 +133,10 @@ export const CodeBlock: FC<Props> = memo(
             fontSize: 14,
             padding: 12,
             letterSpacing: 0,
-            fontFamily: 'var(--theme-font)',
           }}
           className={`${isInner ? '!bg-layer-3' : '!bg-layer-2'}`}
           codeTagProps={{
-            style: {
-              fontFamily: 'var(--theme-font)',
-            },
+            className: 'font-codeblock',
           }}
         >
           {value}

@@ -2,6 +2,7 @@ import { Rate } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 
 export const appContainer = '#theme-main';
+export const overlayFrame = '[name="overlay"]';
 
 export const SendMessageSelectors = {
   message: '[data-qa="message"]',
@@ -140,4 +141,16 @@ export const ChatSelectors = {
   attachmentCollapsed: '[data-qa="attachment-collapsed"]',
   attachmentsGroup: '[data-qa="grouped-attachments"]',
   messageSpinner: '[data-qa="message-input-spinner"]',
+  plotlyContainer: '.plot-container',
+  maxWidth: '.max-w-none',
+  showMore: '[data-qa="show-more"]',
+  showLess: '[data-qa="show-less"]',
+};
+
+export const TableSelectors = {
+  tableContainer: '[data-qa="table"]',
+  tableControls: '[data-qa="table-controls"]',
+  copyAsCsvIcon: '[data-qa="csv-icon"]',
+  copyAsTxtIcon: '[data-qa="txt-icon"]',
+  copyAsMdIcon: '[data-qa="md-icon"]',
 };

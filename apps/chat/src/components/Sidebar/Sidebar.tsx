@@ -2,6 +2,7 @@ import {
   DragEvent,
   ReactNode,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -13,6 +14,7 @@ import classNames from 'classnames';
 
 import { hasDragEventEntityData } from '@/src/utils/app/move';
 
+import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
@@ -22,6 +24,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import {
+  CENTRAL_CHAT_MIN_WIDTH,
+  DESKTOP_BREAKPOINT,
+} from '@/src/constants/chat';
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 import { TourGuideId } from '@/src/constants/share';
 
@@ -31,7 +37,7 @@ import { NoResultsFound } from '../Common/NoResultsFound';
 import Search from '../Search';
 import { LeftSideResizeIcon, RightSideResizeIcon } from './ResizeIcons';
 
-import { Resizable, ResizableProps } from 're-resizable';
+import { Resizable, ResizableProps, ResizeCallback } from 're-resizable';
 
 interface Props<T> {
   isOpen: boolean;
@@ -77,10 +83,18 @@ const Sidebar = <T,>({
   const dispatch = useAppDispatch();
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
+
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
-  const isLeftSidebar = side === 'left';
-  const isRightSidebar = side === 'right';
+  const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth;
+    }
+  });
+
+  const isLeftSidebar = side === SidebarSide.Left;
+  const isRightSidebar = side === SidebarSide.Right;
+
   const dataQa = useMemo(
     () => (isLeftSidebar ? 'chatbar' : 'promptbar'),
     [isLeftSidebar],
@@ -97,10 +111,16 @@ const Sidebar = <T,>({
     isResizing ? 'xl:visible' : 'xl:invisible',
   );
 
-  const SIDEBAR_DEFAULT_WIDTH = useMemo(
+  const SIDEBAR_WIDTH = useMemo(
     () => (isLeftSidebar ? chatbarWidth : promptbarWidth),
     [isLeftSidebar, chatbarWidth, promptbarWidth],
   );
+
+  const maxWidth = useMemo(() => {
+    if (!windowWidth) return;
+    return windowWidth - SIDEBAR_MIN_WIDTH - CENTRAL_CHAT_MIN_WIDTH;
+  }, [windowWidth]);
+
   const SIDEBAR_HEIGHT = 'auto';
 
   const allowDrop = useCallback(
@@ -139,6 +159,44 @@ const Sidebar = <T,>({
     setIsResizing(true);
   }, []);
 
+  const onResize: ResizeCallback = useCallback(() => {
+    if (!windowWidth || windowWidth < DESKTOP_BREAKPOINT) return;
+
+    const sidebarCurrentWidth =
+      sideBarElementRef.current?.resizable?.getClientRects()[0].width;
+    const resizableWidth =
+      sidebarCurrentWidth && Math.round(sidebarCurrentWidth);
+
+    const width = resizableWidth ?? SIDEBAR_MIN_WIDTH;
+
+    const sidebarAndCentralWidth = width + CENTRAL_CHAT_MIN_WIDTH;
+    const maxOppositeSidebarWidth = windowWidth - sidebarAndCentralWidth;
+
+    const centralChatWidth = (sidebarWidth: number | undefined) =>
+      windowWidth - (width + (sidebarWidth ?? SIDEBAR_MIN_WIDTH));
+
+    if (
+      isLeftSidebar &&
+      centralChatWidth(promptbarWidth) <= CENTRAL_CHAT_MIN_WIDTH
+    ) {
+      dispatch(UIActions.setPromptbarWidth(maxOppositeSidebarWidth));
+    }
+
+    if (
+      isRightSidebar &&
+      centralChatWidth(chatbarWidth) <= CENTRAL_CHAT_MIN_WIDTH
+    ) {
+      dispatch(UIActions.setChatbarWidth(maxOppositeSidebarWidth));
+    }
+  }, [
+    dispatch,
+    isLeftSidebar,
+    isRightSidebar,
+    chatbarWidth,
+    promptbarWidth,
+    windowWidth,
+  ]);
+
   const onResizeStop = useCallback(() => {
     setIsResizing(false);
     const resizibleWidth =
@@ -161,7 +219,14 @@ const Sidebar = <T,>({
   const resizeSettings: ResizableProps = useMemo(() => {
     return {
       defaultSize: {
-        width: SIDEBAR_DEFAULT_WIDTH ?? SIDEBAR_MIN_WIDTH,
+        width: SIDEBAR_WIDTH ?? SIDEBAR_MIN_WIDTH,
+        height: SIDEBAR_HEIGHT,
+      },
+      minWidth: SIDEBAR_MIN_WIDTH,
+      maxWidth,
+
+      size: {
+        width: SIDEBAR_WIDTH ?? SIDEBAR_MIN_WIDTH,
         height: SIDEBAR_HEIGHT,
       },
       enable: {
@@ -185,16 +250,27 @@ const Sidebar = <T,>({
       },
       onResizeStart: onResizeStart,
       onResizeStop: onResizeStop,
+      onResize: onResize,
     };
   }, [
     onResizeStart,
     onResizeStop,
+    onResize,
     resizeTriggerClassName,
     isLeftSidebar,
     isRightSidebar,
     SIDEBAR_HEIGHT,
-    SIDEBAR_DEFAULT_WIDTH,
+    SIDEBAR_WIDTH,
+    maxWidth,
   ]);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex min-w-[260px] max-w-[95%] md:max-w-[45%] xl:!relative xl:top-0 xl:!h-full',
