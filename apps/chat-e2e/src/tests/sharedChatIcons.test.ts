@@ -362,7 +362,11 @@ dialTest(
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
         randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
-        randomModel = GeneratorUtil.randomArrayElement(ModelsUtil.getModels());
+        randomModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getLatestModels().filter(
+            (model) => model.id !== ModelsUtil.getDefaultModel()!.id,
+          ),
+        );
         await localStorageManager.setSelectedConversation(
           firstConversationToShare,
         );
