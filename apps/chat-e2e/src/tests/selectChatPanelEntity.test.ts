@@ -1467,3 +1467,130 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  'Select folder from search result select only visible conversations',
+  async ({
+    dialHomePage,
+    folderDropdownMenu,
+    conversationData,
+    folderConversations,
+    localStorageManager,
+    dataInjector,
+    chatBarFolderAssertion,
+    chatBarSearch,
+    chatBar,
+    confirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3911');
+    let nestedFolders: FolderInterface[];
+    let nestedConversations: Conversation[] = [];
+    let lowLevelFolderConversation: Conversation;
+    const duplicatedConversationName =
+      ExpectedConstants.newConversationWithIndexTitle(1);
+
+    await dialTest.step(
+      'Prepare nested folders with conversations inside each one and one more conversation on the lowest folder level',
+      async () => {
+        nestedFolders = conversationData.prepareNestedFolder(twoNestedLevels);
+        nestedConversations =
+          conversationData.prepareConversationsForNestedFolders(nestedFolders, {
+            1: duplicatedConversationName,
+            2: ExpectedConstants.newConversationWithIndexTitle(2),
+          });
+        conversationData.resetData();
+
+        lowLevelFolderConversation =
+          conversationData.prepareDefaultConversation(
+            undefined,
+            duplicatedConversationName,
+          );
+        lowLevelFolderConversation.folderId =
+          nestedFolders[twoNestedLevels - 1].id;
+        lowLevelFolderConversation.id = `${lowLevelFolderConversation.folderId}/${lowLevelFolderConversation.id}`;
+
+        await dataInjector.createConversations(
+          [...nestedConversations, lowLevelFolderConversation],
+          ...nestedFolders,
+        );
+
+        await localStorageManager.setSelectedConversation(
+          nestedConversations[twoNestedLevels - 1],
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Search conversations from nested folders, select root folder and verify hierarchy checked',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBarSearch.setSearchValue(duplicatedConversationName);
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await chatBarFolderAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedConversationName,
+              index: twoNestedLevels - i,
+            },
+            'visible',
+          );
+        }
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: nestedFolders[twoNestedLevels - 1].name },
+          { name: ExpectedConstants.newConversationWithIndexTitle(2) },
+          'hidden',
+        );
+
+        await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.select);
+
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await chatBarFolderAssertion.assertFolderCheckboxState(
+            { name: nestedFolders[i].name },
+            CheckboxState.checked,
+          );
+          await chatBarFolderAssertion.assertFolderEntityCheckboxState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedConversationName,
+              index: twoNestedLevels - i,
+            },
+            CheckboxState.checked,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Click "Delete selected conversations" button, confirm and verify only selected entities are deleted',
+      async () => {
+        await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await chatBarSearch.setSearchValue('');
+
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: nestedFolders[twoNestedLevels - 1].name },
+          { name: ExpectedConstants.newConversationWithIndexTitle(2) },
+          'visible',
+        );
+
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await chatBarFolderAssertion.assertFolderState(
+            { name: nestedFolders[i].name },
+            'visible',
+          );
+          await chatBarFolderAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedConversationName,
+              index: twoNestedLevels - i,
+            },
+            'hidden',
+          );
+        }
+      },
+    );
+  },
+);
