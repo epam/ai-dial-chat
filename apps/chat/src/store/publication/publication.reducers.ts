@@ -17,7 +17,7 @@ export { PublicationSelectors };
 
 export interface PublicationState {
   publications: (PublicationInfo & Partial<Publication>)[];
-  selectedPublication: Publication | null;
+  selectedPublicationUrl: string | null;
   resourcesToReview: ResourceToReview[];
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;
@@ -31,7 +31,7 @@ export interface PublicationState {
 
 const initialState: PublicationState = {
   publications: [],
-  selectedPublication: null,
+  selectedPublicationUrl: null,
   resourcesToReview: [],
   rules: {},
   isRulesLoading: false,
@@ -118,11 +118,8 @@ export const publicationSlice = createSlice({
       );
     },
     rejectPublicationFail: (state) => state,
-    selectPublication: (
-      state,
-      { payload }: PayloadAction<{ publication: Publication }>,
-    ) => {
-      state.selectedPublication = payload.publication;
+    selectPublication: (state, { payload }: PayloadAction<string>) => {
+      state.selectedPublicationUrl = payload;
     },
     setPublicationsToReview: (
       state,

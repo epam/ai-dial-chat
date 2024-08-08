@@ -41,8 +41,8 @@ interface PublicationProps {
 const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   const dispatch = useAppDispatch();
 
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
   );
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -55,7 +55,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   );
 
   const [isOpen, setIsOpen] = useState(
-    selectedPublication?.url === publication.url,
+    selectedPublicationUrl === publication.url,
   );
 
   const selectedItemIsPublication = useMemo(
@@ -72,11 +72,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
     if (publication.uploadStatus !== UploadStatus.LOADED) {
       dispatch(PublicationActions.uploadPublication({ url: publication.url }));
     } else {
-      dispatch(
-        PublicationActions.selectPublication({
-          publication: publication as Publication,
-        }),
-      );
+      dispatch(PublicationActions.selectPublication(publication.url));
     }
 
     dispatch(
@@ -98,7 +94,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         onClick={handlePublicationSelect}
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
-          selectedPublication?.url === publication.url &&
+          selectedPublicationUrl === publication.url &&
             !selectedConversationIds.length
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
@@ -115,7 +111,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
               <ReviewDot
                 className={classNames(
                   'group-hover:bg-accent-primary-alpha',
-                  selectedPublication?.url === publication.url &&
+                  selectedPublicationUrl === publication.url &&
                     !selectedConversationIds.length &&
                     'bg-accent-primary-alpha',
                 )}
@@ -137,7 +133,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         <ResourcesComponent
           resources={publication.resources}
           isOpen={isOpen}
-          additionalItemData={{ isApproveRequiredResource: true }}
+          additionalItemData={{ publicationUrl: publication.url }}
         />
       )}
     </div>

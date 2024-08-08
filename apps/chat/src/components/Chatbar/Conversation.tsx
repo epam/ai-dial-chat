@@ -54,7 +54,10 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -193,7 +196,7 @@ export function ConversationView({
           triggerClassName={classNames(
             'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
             conversation.publicationInfo?.isNotExist && 'text-secondary',
-            !!additionalItemData?.isApproveRequiredResource &&
+            !!additionalItemData?.publicationUrl &&
               conversation.publicationInfo?.action === PublishActions.DELETE &&
               'text-error',
           )}
@@ -273,6 +276,10 @@ export const ConversationComponent = ({
   const isChosen = useMemo(
     () => chosenConversationIds.includes(conversation.id),
     [chosenConversationIds, conversation.id],
+  );
+
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const { refs, context } = useFloating({
@@ -620,7 +627,11 @@ export const ConversationComponent = ({
   };
 
   const isHighlighted = !isSelectMode
-    ? isSelected || isRenaming || isDeleting
+    ? (isSelected &&
+        (!additionalItemData?.publicationUrl ||
+          selectedPublicationUrl === additionalItemData.publicationUrl)) ||
+      isRenaming ||
+      isDeleting
     : isChosen;
   const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
 
@@ -713,6 +724,13 @@ export const ConversationComponent = ({
                       ids: [conversation.id],
                     }),
               );
+              if (!isSelectMode && additionalItemData?.publicationUrl) {
+                dispatch(
+                  PublicationActions.selectPublication(
+                    additionalItemData.publicationUrl,
+                  ),
+                );
+              }
             }
           }}
           disabled={messageIsStreaming || (isSelectMode && isExternal)}
@@ -772,7 +790,7 @@ export const ConversationComponent = ({
             onUnshare={!isReplay ? handleUnshare : undefined}
             onPublish={!isReplay ? handleOpenPublishing : undefined}
             onUnpublish={
-              isReplay || additionalItemData?.isApproveRequiredResource
+              isReplay || additionalItemData?.publicationUrl
                 ? undefined
                 : handleOpenUnpublishing
             }

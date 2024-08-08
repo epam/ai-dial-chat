@@ -108,7 +108,7 @@ export enum ApiKeys {
 }
 
 export interface AdditionalItemData {
-  isApproveRequiredResource?: boolean;
+  publicationUrl?: string;
   canAttachFiles?: boolean;
   selectedFilesIds?: string[];
   selectedFolderIds?: string[];

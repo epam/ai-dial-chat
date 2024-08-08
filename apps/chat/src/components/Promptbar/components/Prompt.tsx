@@ -84,8 +84,7 @@ export const PromptComponent = ({
   );
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
-  const isApproveRequiredResource =
-    !!additionalItemData?.isApproveRequiredResource;
+  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
   const isSelected =
     selectedPromptId === prompt.id &&
     isApproveRequiredResource === isSelectedPromptApproveRequiredResource;
@@ -419,7 +418,7 @@ export const PromptComponent = ({
                 'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                 (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
                   'text-secondary',
-                !!additionalItemData?.isApproveRequiredResource &&
+                !!additionalItemData?.publicationUrl &&
                   prompt.publicationInfo?.action === PublishActions.DELETE &&
                   'text-error',
               )}
@@ -453,7 +452,7 @@ export const PromptComponent = ({
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
               onUnpublish={
-                additionalItemData?.isApproveRequiredResource
+                additionalItemData?.publicationUrl
                   ? undefined
                   : handleOpenUnpublishing
               }
