@@ -1356,3 +1356,121 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  'Select folder from search result select only visible prompts',
+  async ({
+    dialHomePage,
+    folderDropdownMenu,
+    promptData,
+    folderPrompts,
+    dataInjector,
+    promptBarFolderAssertion,
+    promptBarSearch,
+    promptBar,
+    confirmationDialog,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3912');
+    let nestedFolders: FolderInterface[];
+    let nestedPrompts: Prompt[] = [];
+    let lowLevelFolderPrompt: Prompt;
+    const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
+
+    await dialTest.step(
+      'Prepare nested folders with prompts inside each one and one more prompt on the lowest folder level',
+      async () => {
+        nestedFolders = promptData.prepareNestedFolder(twoNestedLevels);
+        nestedPrompts = promptData.preparePromptsForNestedFolders(
+          nestedFolders,
+          {
+            1: duplicatedPromptName,
+            2: ExpectedConstants.newPromptTitle(2),
+          },
+        );
+        promptData.resetData();
+        lowLevelFolderPrompt =
+          promptData.prepareDefaultPrompt(duplicatedPromptName);
+        lowLevelFolderPrompt.folderId = nestedFolders[twoNestedLevels - 1].id;
+        lowLevelFolderPrompt.id = `${lowLevelFolderPrompt.folderId}/${lowLevelFolderPrompt.id}`;
+
+        await dataInjector.createPrompts(
+          [...nestedPrompts, lowLevelFolderPrompt],
+          ...nestedFolders,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Search prompts from nested folders, select root folder and verify hierarchy checked',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await promptBarSearch.setSearchValue(duplicatedPromptName);
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await promptBarFolderAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedPromptName,
+              index: twoNestedLevels - i,
+            },
+            'visible',
+          );
+        }
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: nestedFolders[twoNestedLevels - 1].name },
+          { name: ExpectedConstants.newConversationWithIndexTitle(2) },
+          'hidden',
+        );
+
+        await folderPrompts.openFolderDropdownMenu(nestedFolders[0].name);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.select);
+
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await promptBarFolderAssertion.assertFolderCheckboxState(
+            { name: nestedFolders[i].name },
+            CheckboxState.checked,
+          );
+          await promptBarFolderAssertion.assertFolderEntityCheckboxState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedPromptName,
+              index: twoNestedLevels - i,
+            },
+            CheckboxState.checked,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Click "Delete selected prompts" button, confirm and verify only selected entities are deleted',
+      async () => {
+        await promptBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await promptBarSearch.setSearchValue('');
+
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: nestedFolders[twoNestedLevels - 1].name },
+          { name: ExpectedConstants.newPromptTitle(2) },
+          'visible',
+        );
+
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await promptBarFolderAssertion.assertFolderState(
+            { name: nestedFolders[i].name },
+            'visible',
+          );
+          await promptBarFolderAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedPromptName,
+              index: twoNestedLevels - i,
+            },
+            'hidden',
+          );
+        }
+      },
+    );
+  },
+);

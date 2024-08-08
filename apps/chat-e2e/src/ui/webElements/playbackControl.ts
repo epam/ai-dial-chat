@@ -1,14 +1,22 @@
 import { PlaybackSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { PlaybackMessage } from '@/src/ui/webElements/playbackMessage';
 import { Page } from '@playwright/test';
 
 export class PlaybackControl extends BaseElement {
   constructor(page: Page) {
     super(page, PlaybackSelectors.playbackControl);
   }
-  public playbackMessage = this.getChildElementBySelector(
-    PlaybackSelectors.playbackMessage,
-  );
+
+  private playbackMessage!: PlaybackMessage;
+
+  getPlaybackMessage(): PlaybackMessage {
+    if (!this.playbackMessage) {
+      this.playbackMessage = new PlaybackMessage(this.page, this.rootLocator);
+    }
+    return this.playbackMessage;
+  }
+
   public playbackNextButton = this.getChildElementBySelector(
     PlaybackSelectors.playbackNext,
   );
