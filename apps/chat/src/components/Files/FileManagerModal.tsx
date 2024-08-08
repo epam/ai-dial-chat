@@ -81,6 +81,8 @@ const FilesSectionWrapper = ({
       name={name}
       openByDefault={isExpanded}
       dataQa={dataQa}
+      className="!p-0"
+      togglerClassName="ml-0.5"
     >
       <div className="flex flex-col overflow-auto" data-qa="all-files">
         <div className="flex grow flex-col gap-0.5 overflow-auto">
@@ -612,7 +614,7 @@ export const FileManagerModal = ({
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
             <div
-              className="flex min-h-[350px] flex-col overflow-auto"
+              className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto"
               data-qa="all-files"
             >
               <FilesSectionWrapper
