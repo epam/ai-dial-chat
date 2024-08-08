@@ -1,5 +1,5 @@
 import { IconClipboard } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -31,8 +31,6 @@ import {
 } from './PublicationResources';
 import { ReviewDot } from './ReviewDot';
 
-import some from 'lodash-es/some';
-
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
   featureTypes: FeatureType[];
@@ -56,14 +54,6 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
 
   const [isOpen, setIsOpen] = useState(
     selectedPublicationUrl === publication.url,
-  );
-
-  const selectedItemIsPublication = useMemo(
-    () =>
-      some(publication.resources, (r) =>
-        some(selectedConversationIds, (id) => id.startsWith(r.reviewUrl)),
-      ),
-    [publication.resources, selectedConversationIds],
   );
 
   const handlePublicationSelect = useCallback(() => {
@@ -121,7 +111,8 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              selectedItemIsPublication && 'text-accent-primary',
+              selectedPublicationUrl === publication.url &&
+                'text-accent-primary',
             )}
             data-qa="folder-name"
           >
@@ -181,7 +172,7 @@ export const ApproveRequiredSection = ({
 
   useEffect(() => {
     const publicationReviewIds = publicationItems.flatMap((p) =>
-      p.resources?.map((r) => r.reviewUrl),
+      p.resources?.map((res) => res.reviewUrl),
     );
     const shouldBeHighlighted = !!(
       (selectedPublication &&

@@ -210,6 +210,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
+
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
@@ -354,10 +358,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [currentFolder.id, dispatch, featureType, isUploadedForUnpublishing],
   );
-
+  const toggleFolderId = useMemo(
+    () => `${additionalItemData?.publicationUrl ?? ''}${currentFolder.id}`,
+    [additionalItemData?.publicationUrl, currentFolder.id],
+  );
   const isFolderOpened = useMemo(() => {
-    return openedFoldersIds.includes(currentFolder.id);
-  }, [currentFolder.id, openedFoldersIds]);
+    return openedFoldersIds.includes(toggleFolderId);
+  }, [openedFoldersIds, toggleFolderId]);
   const filteredChildFolders = useMemo(() => {
     return sortByName(
       allFolders.filter((folder) => folder.folderId === currentFolder.id),
@@ -781,6 +788,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
   }, [currentFolder.id, dispatch, featureType, searchTerm]);
 
+  const isInCurrentPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
+
   const isHighlighted =
     isRenaming ||
     isContextMenu ||
@@ -788,7 +799,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       `${currentFolder.id}/`,
     ) &&
       !isSelectAlwaysVisible) ||
-    (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
+    (allItems === undefined &&
+      highlightedFolders?.includes(currentFolder.id) &&
+      isInCurrentPublication);
 
   const hideContextMenu =
     (canSelectFolders && featureType !== FeatureType.File) ||
@@ -829,7 +842,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               'data-item-checkbox',
             )
           ) {
-            onClickFolder(currentFolder.id);
+            onClickFolder(toggleFolderId);
           }
         }}
         draggable={
@@ -1043,6 +1056,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   isNameOrPathInvalid
                     ? 'text-secondary'
                     : highlightedFolders?.includes(currentFolder.id) &&
+                        isInCurrentPublication &&
                         featureType &&
                         !canSelectFolders
                       ? 'text-accent-primary'

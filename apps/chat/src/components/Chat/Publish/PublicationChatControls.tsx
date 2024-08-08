@@ -49,7 +49,7 @@ export function PublicationControlsView<
     ),
   );
   const publicationIdx = resourcesToReview.findIndex(
-    (r) => r.reviewUrl === resourceToReview.reviewUrl,
+    (res) => res.reviewUrl === resourceToReview.reviewUrl,
   );
 
   const unselectPrompt = useCallback(() => {
