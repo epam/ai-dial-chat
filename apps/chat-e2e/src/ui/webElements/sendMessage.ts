@@ -87,6 +87,10 @@ export class SendMessage extends BaseElement {
     await this.page.keyboard.press(keys.ctrlPlusV);
   }
 
+  public async clearMessageInput() {
+    await this.messageInput.getElementLocator().clear();
+  }
+
   public async fillRequestData(message?: string) {
     await this.messageInput.waitForState();
     await this.sendMessageButton.waitForState();

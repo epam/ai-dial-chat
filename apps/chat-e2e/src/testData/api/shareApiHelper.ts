@@ -37,9 +37,25 @@ export class ShareApiHelper extends BaseApiHelper {
         resources.push({ url: url });
       }
       entity.messages.map((m) =>
-        m.custom_content?.attachments?.forEach((a) =>
-          resources.push({ url: a.url! }),
-        ),
+        m.custom_content?.attachments?.forEach((a) => {
+          if (a.reference_url === undefined) {
+            resources.push({ url: a.url! });
+          }
+        }),
+      );
+      entity.playback?.messagesStack.map((m) =>
+        m.custom_content?.attachments?.forEach((a) => {
+          if (a.reference_url === undefined) {
+            resources.push({ url: a.url! });
+          }
+        }),
+      );
+    }
+
+    for (const r of resources) {
+      r.url = r.url.replace(
+        ExpectedConstants.playbackConversation,
+        encodeURIComponent(ExpectedConstants.playbackConversation),
       );
     }
 
@@ -76,13 +92,21 @@ export class ShareApiHelper extends BaseApiHelper {
     ).toBe(expectedHttpCode);
   }
 
-  public async listSharedWithMeEntities() {
+  public async listSharedWithMeFiles() {
+    return this.listSharedWithMeEntities(BackendResourceType.FILE);
+  }
+
+  public async listSharedWithMeConversations() {
+    return this.listSharedWithMeEntities(BackendResourceType.CONVERSATION);
+  }
+
+  public async listSharedWithMeEntities(resourceType: BackendResourceType) {
     const requestData: ShareListingRequestModel = {
-      resourceTypes: [BackendResourceType.CONVERSATION],
+      resourceTypes: [resourceType],
       with: ShareRelations.me,
       order: 'popular_asc',
     };
-    const response = await this.request.post(API.shareWithMeListing, {
+    const response = await this.request.post(API.shareListing, {
       data: requestData,
     });
     const statusCode = response.status();

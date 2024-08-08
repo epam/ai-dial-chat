@@ -40,7 +40,7 @@ export class PromptBar extends SideBar {
     promptName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folderPrompt = await this.getFolderPrompts().getFolderEntity(
+    const folderPrompt = this.getFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
@@ -51,7 +51,7 @@ export class PromptBar extends SideBar {
 
   public async drugPromptToFolder(folderName: string, promptName: string) {
     const folder = this.getFolderPrompts().getFolderByName(folderName);
-    const prompt = this.getPrompts().getPromptByName(promptName);
+    const prompt = this.getPrompts().getEntityByName(promptName);
     await this.dragEntityToFolder(prompt, folder);
   }
 
@@ -65,7 +65,7 @@ export class PromptBar extends SideBar {
       folderName,
       folderPromptName,
     );
-    const prompt = this.getPrompts().getPromptByName(promptName);
+    const prompt = this.getPrompts().getEntityByName(promptName);
     await this.dragAndDropEntityToFolder(prompt, folderPrompt, {
       isHttpMethodTriggered,
     });

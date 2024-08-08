@@ -378,14 +378,15 @@ export const PreUploadDialog = ({
               <span className="text-xs text-secondary-bg-light">&nbsp;*</span>
             </div>
             <button
-              className="flex grow items-center justify-between rounded-primary border border-accent-quaternary bg-transparent px-3 py-2 placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"
-              onClick={handleFolderChange}
+              className="flex grow cursor-default items-center justify-between rounded-primary border border-accent-quaternary bg-transparent px-3 py-2 placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"
+              data-qa="upload-to"
             >
-              <span className="truncate">
+              <span className="truncate" data-qa="upload-to-path">
                 {constructPath(t('All files'), folderPath)}
               </span>
               <span
                 className="text-tertiary-bg-light"
+                onClick={handleFolderChange}
                 data-qa="change-upload-to"
               >
                 {t('Change')}

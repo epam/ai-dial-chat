@@ -55,6 +55,7 @@ export interface Message {
   model?: ConversationEntityModel;
   settings?: MessageSettings;
   responseId?: string;
+  templateMapping?: Record<string, string>;
 }
 
 export enum Role {
@@ -135,4 +136,9 @@ export interface PrepareNameOptions {
   forRenaming: boolean;
   replaceWithSpacesForRenaming: boolean;
   trimEndDotsRequired: boolean;
+}
+
+export enum SidebarSide {
+  Left = 'left',
+  Right = 'right',
 }

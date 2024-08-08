@@ -1,26 +1,19 @@
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntity } from '@/src/types/models';
-import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { Prompt } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
 import { getOpenAIEntityFullName } from './conversation';
 import { getConversationRootId, getPromptRootId } from './id';
 
-export const doesPromptOrConversationContainSearchTerm = (
-  conversation: ConversationInfo | PromptInfo,
+export const doesEntityContainSearchTerm = (
+  entity: ShareEntity,
   searchTerm: string,
 ) => {
-  return conversation.name.toLowerCase().includes(searchTerm.toLowerCase());
-};
-
-export const doesFileContainSearchTerm = (
-  file: DialFile,
-  searchTerm: string,
-) => {
-  return file.name.toLowerCase().includes(searchTerm.toLowerCase());
+  return entity.name.toLowerCase().includes(searchTerm.toLowerCase());
 };
 
 export const doesOpenAIEntityContainSearchTerm = (
@@ -38,12 +31,8 @@ export const doesEntityContainSearchItem = <
     return true;
   }
 
-  if ('contentType' in item) {
-    // DialFile
-    return doesFileContainSearchTerm(item, searchTerm);
-  } else if ('name' in item) {
-    // Conversation or Prompt
-    return doesPromptOrConversationContainSearchTerm(item, searchTerm);
+  if ((item as DialFile).contentType || (item as ShareEntity).name) {
+    return doesEntityContainSearchTerm(item, searchTerm);
   }
 
   return false;

@@ -739,6 +739,67 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => PromptsActions.deleteChosenPrompts.match(action)),
+    switchMap(() => {
+      const actions: Observable<AnyAction>[] = [];
+      const chosenPromptIds = PromptsSelectors.selectChosenPromptIds(
+        state$.value,
+      );
+      const chosenFolderIds = PromptsSelectors.selectChosenFolderIds(
+        state$.value,
+      );
+      const allPromptIds = PromptsSelectors.selectPrompts(state$.value).map(
+        (prompt) => prompt.id,
+      );
+      const searchedPromptIds = PromptsSelectors.selectSearchedPrompts(
+        state$.value,
+      ).map((prompt) => prompt.id);
+      const folders = PromptsSelectors.selectFolders(state$.value);
+      const deletedPromptIds = uniq([
+        ...chosenPromptIds,
+        ...searchedPromptIds.filter((id) =>
+          chosenFolderIds.some((folderId) => id.startsWith(folderId)),
+        ),
+      ]);
+      const deletedFolderIds = chosenFolderIds.filter((id) => {
+        const folderPromptIds = allPromptIds.filter((promptId) =>
+          promptId.startsWith(id),
+        );
+        const deletedFolderPromptIds = deletedPromptIds.filter((promptId) =>
+          promptId.startsWith(id),
+        );
+
+        return folderPromptIds.length === deletedFolderPromptIds.length;
+      });
+
+      if (searchedPromptIds.length) {
+        actions.push(
+          of(
+            PromptsActions.deletePrompts({
+              promptIds: deletedPromptIds,
+            }),
+          ),
+        );
+      }
+
+      return concat(
+        of(
+          PromptsActions.setFolders({
+            folders: folders.filter((folder) =>
+              deletedFolderIds.every(
+                (id) => !folder.id.startsWith(id) && `${folder.id}/` !== id,
+              ),
+            ),
+          }),
+        ),
+        of(PromptsActions.resetChosenPrompts()),
+        ...actions,
+      );
+    }),
+  );
+
 export const PromptsEpics = combineEpics(
   initEpic,
   uploadPromptsWithFoldersRecursiveEpic,
@@ -759,4 +820,5 @@ export const PromptsEpics = combineEpics(
   duplicatePromptEpic,
   uploadPromptEpic,
   uploadPopularPromptsEpic,
+  deleteChosenPromptsEpic,
 );

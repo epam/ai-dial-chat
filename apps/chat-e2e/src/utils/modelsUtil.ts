@@ -91,9 +91,9 @@ export class ModelsUtil {
       .map((m) => m.id);
   }
 
-  public static getModelsWithAttachment() {
+  public static getModelsWithoutAttachment() {
     return ModelsUtil.getModels().filter(
-      (m) => m.inputAttachmentTypes !== undefined,
+      (m) => m.inputAttachmentTypes === undefined,
     );
   }
 

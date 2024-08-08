@@ -12,6 +12,8 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
   ConversationRow,
@@ -33,6 +35,7 @@ interface Props {
   containerClassNames?: string;
   collapsibleSectionClassNames?: string;
   publishAction: PublishActions;
+  showTooltip?: boolean;
 }
 
 export function PublicationItemsList({
@@ -50,16 +53,17 @@ export function PublicationItemsList({
   return (
     <div
       className={classNames(
-        'flex w-full flex-col gap-[2px] md:max-w-[550px]',
+        'flex w-full flex-col gap-[2px] overflow-y-visible md:max-w-[550px]',
         containerClassNames,
       )}
     >
       {(type === SharingType.Conversation ||
         type === SharingType.ConversationFolder) && (
         <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
           name={t('Conversations')}
           openByDefault
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
           dataQa="conversations-to-send-request"
         >
           {type === SharingType.Conversation ? (
@@ -76,7 +80,7 @@ export function PublicationItemsList({
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
                   ApiKeys.Conversations,
-                  'public',
+                  PUBLIC_URL_PREFIX,
                   path,
                   splitEntityId(entity.id).name,
                 ),
@@ -90,24 +94,27 @@ export function PublicationItemsList({
       )}
       {!!files.length && (
         <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
           name={t('Files')}
           openByDefault
           dataQa="files-to-send-request"
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
         >
           <FilePublicationResources
             uploadedFiles={files}
             resources={[]}
             forViewOnly
+            showTooltip
           />
         </CollapsibleSection>
       )}
       {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
         <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
           name={t('Prompts')}
           openByDefault
           dataQa="prompts-to-send-request"
-          className={collapsibleSectionClassNames}
+          className={classNames('!pl-0', collapsibleSectionClassNames)}
         >
           {type === SharingType.Prompt ? (
             <PromptsRow
@@ -123,7 +130,7 @@ export function PublicationItemsList({
                 sourceUrl: entity.id,
                 targetUrl: constructPath(
                   ApiKeys.Prompts,
-                  'public',
+                  PUBLIC_URL_PREFIX,
                   path,
                   splitEntityId(entity.id).name,
                 ),

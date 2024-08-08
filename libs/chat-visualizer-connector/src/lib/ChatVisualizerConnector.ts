@@ -41,6 +41,36 @@ export class ChatVisualizerConnector {
   }
 
   /**
+   * Sends the post message to the DIAL Chat
+   * @param type Visualizer Event name
+   * @param payload Event payload
+   * @param dialHost host of the DIAL Chat
+   */
+  public send({
+    type,
+    payload,
+    dialHost = this.dialHost,
+  }: {
+    type: VisualizerConnectorEvents;
+    payload?: unknown;
+    dialHost?: string;
+  }) {
+    if (!window?.parent) {
+      throw new Error(
+        `[${this.appName}] There is no parent window to send requests`,
+      );
+    }
+
+    window.parent.postMessage(
+      {
+        type: `${this.appName}/${type}`,
+        payload,
+      },
+      dialHost,
+    );
+  }
+
+  /**
    * Sends response via postMessage to the DIAL CHAT to notify it data received
    * @param requestParams {PostMessageRequestParams}
    */
@@ -90,20 +120,25 @@ export class ChatVisualizerConnector {
    * Sends 'READY' event via postMessage to the DIAL CHAT to notify that Visualizer loaded
    */
   public sendReady() {
-    window?.parent.postMessage(
-      { type: `${this.appName}/${VisualizerConnectorEvents.ready}` },
-      this.dialHost,
-    );
+    this.send({ type: VisualizerConnectorEvents.ready });
   }
 
   /**
    * Sends 'READY_TO_INTERACT' event via postMessage to the DIAL CHAT to notify that Visualizer ready to get data
    */
   public sendReadyToInteract() {
-    window?.parent.postMessage(
-      { type: `${this.appName}/${VisualizerConnectorEvents.readyToInteract}` },
-      this.dialHost,
-    );
+    this.send({ type: VisualizerConnectorEvents.readyToInteract });
+  }
+
+  /**
+   * Send message into the selected conversations
+   * @param content {string} text of message that should be sent to the chat
+   */
+  public async sendMessage(content: string) {
+    this.send({
+      type: VisualizerConnectorEvents.sendMessage,
+      payload: { message: content },
+    });
   }
 
   /**

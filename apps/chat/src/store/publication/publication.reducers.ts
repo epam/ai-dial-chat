@@ -18,6 +18,11 @@ export interface PublicationState {
   resourcesToReview: ResourceToReview[];
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;
+  allPublishedWithMeItemsUploaded: {
+    [FeatureType.Chat]: boolean;
+    [FeatureType.Prompt]: boolean;
+    [FeatureType.File]: boolean;
+  };
 }
 
 const initialState: PublicationState = {
@@ -26,6 +31,11 @@ const initialState: PublicationState = {
   resourcesToReview: [],
   rules: {},
   isRulesLoading: false,
+  allPublishedWithMeItemsUploaded: {
+    [FeatureType.Chat]: false,
+    [FeatureType.Prompt]: false,
+    [FeatureType.File]: false,
+  },
 };
 
 export const publicationSlice = createSlice({
@@ -36,6 +46,7 @@ export const publicationSlice = createSlice({
     publish: (
       state,
       _action: PayloadAction<{
+        name: string;
         resources: { sourceUrl: string; targetUrl: string }[];
         targetFolder: string;
         rules: PublicationRule[];
@@ -66,6 +77,7 @@ export const publicationSlice = createSlice({
     deletePublication: (
       state,
       _action: PayloadAction<{
+        name: string;
         targetFolder: string;
         resources: { targetUrl: string }[];
       }>,
@@ -75,6 +87,17 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{ featureType: FeatureType }>,
     ) => state,
+    uploadAllPublishedWithMeItems: (
+      state,
+      _action: PayloadAction<{ featureType: FeatureType }>,
+    ) => state,
+    uploadAllPublishedWithMeItemsSuccess: (
+      state,
+      { payload }: PayloadAction<{ featureType: FeatureType }>,
+    ) => {
+      state.allPublishedWithMeItemsUploaded[payload.featureType] = true;
+    },
+    uploadAllPublishedWithMeItemsFail: (state) => state,
     uploadPublishedWithMeItemsFail: (state) => state,
     approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
       state,

@@ -1,6 +1,8 @@
 import {
   IconFileArrowLeft,
   IconFileArrowRight,
+  IconSquareCheck,
+  IconSquareOff,
   IconTrashX,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
@@ -36,8 +38,29 @@ export function PromptbarSettings() {
     PromptsSelectors.selectDoesAnyMyItemExist,
   );
 
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+
+  const deleteTerm = isSelectMode ? 'selected' : 'all';
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Select all'),
+        dataQa: 'select-all',
+        Icon: IconSquareCheck,
+        onClick: () => {
+          dispatch(PromptsActions.setAllChosenPrompts());
+        },
+      },
+      {
+        name: t('Unselect all'),
+        dataQa: 'unselect-all',
+        Icon: IconSquareOff,
+        onClick: () => {
+          dispatch(PromptsActions.resetChosenPrompts());
+        },
+        display: isSelectMode,
+      },
       {
         name: t('Create new folder'),
         dataQa: 'create-folder',
@@ -49,6 +72,7 @@ export function PromptbarSettings() {
             }),
           );
         },
+        display: !isSelectMode,
       },
       {
         name: t('Import prompts'),
@@ -63,9 +87,10 @@ export function PromptbarSettings() {
         Icon: IconFileArrowLeft,
         dataQa: 'import',
         CustomTriggerRenderer: Import,
+        display: !isSelectMode,
       },
       {
-        display: isMyItemsExist,
+        display: isMyItemsExist && !isSelectMode,
         name: t('Export prompts'),
         dataQa: 'export',
         Icon: IconFileArrowRight,
@@ -74,7 +99,7 @@ export function PromptbarSettings() {
         },
       },
       {
-        name: t('Delete all'),
+        name: t(`Delete ${deleteTerm} prompts`),
         display: isMyItemsExist,
         dataQa: 'delete-entities',
         Icon: IconTrashX,
@@ -83,7 +108,7 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [dispatch, isMyItemsExist, t],
+    [deleteTerm, dispatch, isMyItemsExist, isSelectMode, t],
   );
 
   return (
@@ -92,16 +117,20 @@ export function PromptbarSettings() {
 
       <ConfirmDialog
         isOpen={isClearModalOpen}
-        heading={t('Confirm clearing all prompts')}
+        heading={t(`Confirm deleting ${deleteTerm} prompts`)}
         description={
-          t('Are you sure that you want to delete all prompts?') || ''
+          t(`Are you sure that you want to delete ${deleteTerm} prompts?`) || ''
         }
-        confirmLabel={t('Clear')}
+        confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {
           setIsClearModalOpen(false);
           if (result) {
-            dispatch(PromptsActions.clearPrompts());
+            if (!isSelectMode) {
+              dispatch(PromptsActions.clearPrompts());
+            } else {
+              dispatch(PromptsActions.deleteChosenPrompts());
+            }
           }
         }}
       />

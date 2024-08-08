@@ -168,13 +168,27 @@ const PromptFolderTemplate = ({
     [dispatch],
   );
 
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const selectedFolderIds = useAppSelector(
+    PromptsSelectors.selectAllChosenFolderIds,
+  );
+  const partialSelectedFolderIds = useAppSelector(
+    PromptsSelectors.selectPartialChosenFolderIds,
+  );
+  const handleFolderSelect = useCallback(
+    (folderId: string, isChosen: boolean) => {
+      dispatch(PromptsActions.setChosenFolder({ folderId, isChosen }));
+    },
+    [dispatch],
+  );
+
   return (
     <>
       <BetweenFoldersLine
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Prompt}
-        denyDrop={isExternal}
+        denyDrop={isExternal || isSelectMode}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -212,13 +226,19 @@ const PromptFolderTemplate = ({
         }}
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
+        canSelectFolders={isSelectMode}
+        additionalItemData={{
+          selectedFolderIds,
+          partialSelectedFolderIds,
+        }}
+        onSelectFolder={handleFolderSelect}
       />
       {isLast && (
         <BetweenFoldersLine
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Prompt}
-          denyDrop={isExternal}
+          denyDrop={isExternal || isSelectMode}
         />
       )}
     </>

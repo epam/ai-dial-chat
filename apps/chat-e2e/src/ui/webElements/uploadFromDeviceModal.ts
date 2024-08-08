@@ -1,6 +1,6 @@
 import { BaseElement } from './baseElement';
 
-import { Attachment } from '@/src/testData';
+import { Attachment, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
   ErrorLabelSelectors,
@@ -39,7 +39,15 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public changeUploadToButton = this.getChildElementBySelector(
+  public uploadToButton = this.getChildElementBySelector(
+    UploadFromDeviceModalSelectors.uploadTo,
+  );
+
+  public uploadToPath = this.uploadToButton.getChildElementBySelector(
+    UploadFromDeviceModalSelectors.uploadToPath,
+  );
+
+  public changeUploadToButton = this.uploadToButton.getChildElementBySelector(
     UploadFromDeviceModalSelectors.changeUploadTo,
   );
 
@@ -55,9 +63,11 @@ export class UploadFromDeviceModal extends BaseElement {
     const dotIndex = filename.lastIndexOf('.');
     let filenameValue =
       dotIndex !== -1 ? filename.substring(0, dotIndex) : filename;
-    if (filename.includes('\\')) {
-      filenameValue = filenameValue.replaceAll('\\', '\\\\');
-    }
+    ExpectedConstants.charsToEscape.forEach((char) => {
+      if (filename.includes(char)) {
+        filenameValue = filenameValue.replaceAll(char, `\\${char}`);
+      }
+    });
     const inputValue = new BaseElement(
       this.page,
       `[${Attributes.value} = "${filenameValue}"]`,

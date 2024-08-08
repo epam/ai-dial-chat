@@ -67,7 +67,7 @@ dialTest(
 
         await expect
           .soft(
-            await folderConversations.getFolderByName(expectedFolderName),
+            folderConversations.getFolderByName(expectedFolderName),
             ExpectedMessages.newFolderCreated,
           )
           .toBeVisible();
@@ -75,7 +75,7 @@ dialTest(
         await folderConversations.expandFolder(expectedFolderName);
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               expectedFolderName,
               conversation.name,
             ),
@@ -99,7 +99,7 @@ dialTest(
         await chatBar.createNewFolder();
         await expect
           .soft(
-            await folderConversations.getFolderByName(incrementedFolderName),
+            folderConversations.getFolderByName(incrementedFolderName),
             ExpectedMessages.newFolderCreated,
           )
           .toBeVisible();
@@ -118,7 +118,7 @@ dialTest(
         await chatBar.createNewFolder();
         await expect
           .soft(
-            await folderConversations.getFolderByName(incrementedFolderName),
+            folderConversations.getFolderByName(incrementedFolderName),
             ExpectedMessages.newFolderCreated,
           )
           .toBeVisible();
@@ -144,7 +144,7 @@ dialTest(
     setTestIds('EPMRTC-2949', 'EPMRTC-2952');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
-    const nestedFolderLevel = 1;
+    const nestedFolderLevel = 2;
     let expectedDuplicatedFolderName: string;
 
     await dialTest.step('Create nested folder hierarchy', async () => {
@@ -156,9 +156,9 @@ dialTest(
         ...nestedFolders,
       );
       await localStorageManager.setSelectedConversation(
-        nestedConversations[nestedFolderLevel],
+        nestedConversations[nestedFolderLevel - 1],
       );
-      expectedDuplicatedFolderName = nestedFolders[nestedFolderLevel - 1].name;
+      expectedDuplicatedFolderName = nestedFolders[nestedFolderLevel - 2].name;
     });
 
     await dialTest.step(
@@ -167,7 +167,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderConversations.openFolderDropdownMenu(
-          nestedFolders[nestedFolderLevel].name,
+          nestedFolders[nestedFolderLevel - 1].name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await folderConversations.editFolderNameWithTick(
@@ -177,7 +177,7 @@ dialTest(
         for (const nestedConversation of nestedConversations) {
           await expect
             .soft(
-              await folderConversations.getFolderEntity(
+              folderConversations.getFolderEntity(
                 expectedDuplicatedFolderName,
                 nestedConversation.name,
               ),
@@ -228,7 +228,7 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
     let folderConversationToMove: FolderConversation;
-    const nestedFolderLevel = 1;
+    const nestedFolderLevel = 2;
     let duplicatedFolderName: string;
 
     await dialTest.step(
@@ -237,7 +237,7 @@ dialTest(
         nestedFolders = conversationData.prepareNestedFolder(nestedFolderLevel);
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
-        duplicatedFolderName = nestedFolders[nestedFolderLevel].name;
+        duplicatedFolderName = nestedFolders[nestedFolderLevel - 1].name;
 
         conversationData.resetData();
         folderConversationToMove =
@@ -261,7 +261,7 @@ dialTest(
         await chatBar.dragAndDropEntityToFolder(
           folderConversations.getFolderByName(duplicatedFolderName),
           folderConversations.getFolderByName(
-            nestedFolders[nestedFolderLevel - 1].name,
+            nestedFolders[nestedFolderLevel - 2].name,
           ),
         );
         await expect
@@ -286,10 +286,10 @@ dialTest(
       'Drag & drop low level folder to the root and verify error message is displayed',
       async () => {
         await folderConversations.expandFolder(
-          nestedFolders[nestedFolderLevel - 1].name,
+          nestedFolders[nestedFolderLevel - 2].name,
         );
         const elementLocator = folderConversations.getNestedFolder(
-          nestedFolders[nestedFolderLevel - 1].name,
+          nestedFolders[nestedFolderLevel - 2].name,
           duplicatedFolderName,
         );
         await chatBar.dragFolderToRoot(elementLocator);

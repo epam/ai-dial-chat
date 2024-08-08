@@ -114,7 +114,7 @@ const PublicationItem = ({
             )}
             data-qa="folder-name"
           >
-            {`Approve request ${index + 1}`}
+            {publication.name || `Approve request ${index + 1}`}
           </div>
         </div>
       </div>

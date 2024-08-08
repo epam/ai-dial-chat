@@ -9,21 +9,21 @@ import { ChatMessages } from './chatMessages';
 import { ConversationSettings } from './conversationSettings';
 import { SendMessage } from './sendMessage';
 
-import { API, ScrollState, Side } from '@/src/testData';
+import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
+import { Footer } from '@/src/ui/webElements/footer';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
-import { Playback } from '@/src/ui/webElements/playback';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export const PROMPT_APPLY_DELAY = 500;
 export const SCROLL_MOVING_DELAY = 100;
 
 export class Chat extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chat);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.chat, parentLocator);
   }
 
   private chatHeader!: ChatHeader;
@@ -31,9 +31,9 @@ export class Chat extends BaseElement {
   private sendMessage!: SendMessage;
   private chatMessages!: ChatMessages;
   private compare!: Compare;
-  private playBack!: Playback;
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
+  private footer!: Footer;
   public replay = new BaseElement(this.page, ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(
@@ -45,7 +45,6 @@ export class Chat extends BaseElement {
     ChatSelectors.proceedGenerating,
   );
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
-  public footer = this.getChildElementBySelector(ChatSelectors.footer);
   public notAllowedModelLabel = this.getChildElementBySelector(
     ErrorLabelSelectors.notAllowedModel,
   );
@@ -56,14 +55,17 @@ export class Chat extends BaseElement {
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
-      this.chatHeader = new ChatHeader(this.page);
+      this.chatHeader = new ChatHeader(this.page, this.rootLocator);
     }
     return this.chatHeader;
   }
 
   getConversationSettings(): ConversationSettings {
     if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
+      this.conversationSettings = new ConversationSettings(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.conversationSettings;
   }
@@ -89,13 +91,6 @@ export class Chat extends BaseElement {
     return this.compare;
   }
 
-  getPlayBack(): Playback {
-    if (!this.playBack) {
-      this.playBack = new Playback(this.page);
-    }
-    return this.playBack;
-  }
-
   getPlaybackControl(): PlaybackControl {
     if (!this.playbackControl) {
       this.playbackControl = new PlaybackControl(this.page);
@@ -108,6 +103,13 @@ export class Chat extends BaseElement {
       this.isolatedView = new MoreInfo(this.page, this.rootLocator);
     }
     return this.isolatedView;
+  }
+
+  getFooter(): Footer {
+    if (!this.footer) {
+      this.footer = new Footer(this.page, this.rootLocator);
+    }
+    return this.footer;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {
@@ -185,12 +187,18 @@ export class Chat extends BaseElement {
   }
 
   public waitForRequestSent(userRequest: string | undefined) {
-    return userRequest
-      ? this.page.waitForRequest(
-          (request) =>
+    return userRequest !== undefined
+      ? this.page.waitForRequest((request) => {
+          ExpectedConstants.charsToEscape.forEach((char) => {
+            if (userRequest?.includes(char)) {
+              userRequest = userRequest.replaceAll(char, `\\${char}`);
+            }
+          });
+          return (
             request.url().includes(API.chatHost) &&
-            request.postData()!.includes(userRequest),
-        )
+            request.postData()!.includes(userRequest!)
+          );
+        })
       : this.page.waitForRequest(API.chatHost);
   }
 

@@ -55,7 +55,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await dialHomePage.throttleAPIResponse('**/*');
-        await conversations.openConversationDropdownMenu(
+        await conversations.openEntityDropdownMenu(
           cancelExportConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
@@ -193,9 +193,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
-          historyConversation.name,
-        );
+        await conversations.openEntityDropdownMenu(historyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(() =>
           conversationDropdownMenu.selectMenuOption(
@@ -224,9 +222,7 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
-        await conversations
-          .getConversationByName(historyConversation.name)
-          .waitFor();
+        await conversations.getEntityByName(historyConversation.name).waitFor();
         await conversations.selectConversation(historyConversation.name);
         await chatMessages.waitForState({ state: 'attached' });
         const messagesCount =
@@ -281,7 +277,7 @@ dialTest(
           () => chatBar.importButton.click(),
         );
         await conversations
-          .getConversationByName(Import.importedConversationWithAttachmentsName)
+          .getEntityByName(Import.importedConversationWithAttachmentsName)
           .waitFor();
         await conversations.selectConversation(
           Import.importedConversationWithAttachmentsName,

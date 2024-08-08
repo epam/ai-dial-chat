@@ -85,6 +85,7 @@ export class ChatOverlay {
 
     iframe.src = this.options.domain;
     iframe.allow = 'clipboard-write';
+    iframe.name = 'overlay';
 
     iframe.sandbox.add('allow-same-origin');
     iframe.sandbox.add('allow-scripts');
@@ -206,7 +207,6 @@ export class ChatOverlay {
 
   /**
    * Callback to post message event, contains mapping event to this.requests, mapping event to this.subscriptions
-   * If event.data.type === '@DIAL_OVERLAY/READY' means that DIAL ready to receive message -> this.iframeInteraction.complete()
    * @param event {MessageEvent} post message event
    */
   protected process = (event: MessageEvent<OverlayRequest>): void => {

@@ -1,23 +1,29 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
+  getChildAndCurrentFoldersById,
   getChildAndCurrentFoldersIdsById,
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
+  sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
-  doesPromptOrConversationContainSearchTerm,
+  doesEntityContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
+import {
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
+import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -53,8 +59,7 @@ export const selectFilteredPrompts = createSelector(
   (prompts, filters, searchTerm?, ignoreSectionFilter?) => {
     return prompts.filter(
       (prompt) =>
-        (!searchTerm ||
-          doesPromptOrConversationContainSearchTerm(prompt, searchTerm)) &&
+        (!searchTerm || doesEntityContainSearchTerm(prompt, searchTerm)) &&
         (filters.searchFilter?.(prompt) ?? true) &&
         (ignoreSectionFilter || (filters.sectionFilter?.(prompt) ?? true)),
     );
@@ -169,7 +174,7 @@ export const selectSearchedPrompts = createSelector(
   [selectPrompts, selectSearchTerm],
   (prompts, searchTerm) => {
     return prompts.filter((prompt) =>
-      doesPromptOrConversationContainSearchTerm(prompt, searchTerm),
+      doesEntityContainSearchTerm(prompt, searchTerm),
     );
   },
 );
@@ -300,21 +305,25 @@ export const selectPublishedWithMeFolders = createSelector(
   },
 );
 
-export const selectTemporaryAndFilteredFolders = createSelector(
+export const selectTemporaryAndPublishedFolders = createSelector(
   [
     selectFolders,
     selectPublishedWithMeFolders,
     selectTemporaryFolders,
     (_state, searchTerm?: string) => searchTerm,
   ],
-  (allFolders, filteredFolders, temporaryFolders, searchTerm = '') => {
-    const filtered = [...filteredFolders, ...temporaryFolders].filter(
-      (folder) => folder.name.includes(searchTerm.toLowerCase()),
+  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
+    const allPublishedFolders = publishedFolders.flatMap((folder) =>
+      getChildAndCurrentFoldersById(folder.id, allFolders),
     );
+    const filteredFolders = [
+      ...sortByName(allPublishedFolders),
+      ...temporaryFolders,
+    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
 
     return getParentAndChildFolders(
-      [...allFolders, ...temporaryFolders],
-      filtered,
+      sortByName([...allFolders, ...temporaryFolders]),
+      filteredFolders,
     );
   },
 );
@@ -421,4 +430,66 @@ export const selectPopularPromptsIsLoading = createSelector(
 export const selectSelectedPopularPromptId = createSelector(
   [rootSelector],
   (state) => state.selectedPopularPromptId,
+);
+
+export const selectIsSelectMode = createSelector([rootSelector], (state) => {
+  return state.chosenPromptIds.length > 0 || state.chosenFolderIds.length > 0;
+});
+
+export const selectChosenPromptIds = createSelector([rootSelector], (state) => {
+  return state.chosenPromptIds;
+});
+
+export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
+  return state.chosenFolderIds;
+});
+
+export const selectAllChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter((folderId) => {
+        const filteredPrompts = state.prompts.filter(
+          (prompt) =>
+            doesEntityContainSearchTerm(prompt, state.searchTerm) &&
+            prompt.id.startsWith(folderId) &&
+            !isEntityOrParentsExternal(
+              { prompts: state },
+              prompt,
+              FeatureType.Prompt,
+            ),
+        );
+
+        return (
+          state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) ||
+          (filteredPrompts.length &&
+            filteredPrompts.every((prompt) =>
+              state.chosenPromptIds.includes(prompt.id),
+            ))
+        );
+      });
+  },
+);
+
+export const selectPartialChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) &&
+          (state.chosenFolderIds.some((chosenId) =>
+            chosenId.startsWith(folderId),
+          ) ||
+            state.chosenPromptIds.some((promptId) =>
+              promptId.startsWith(folderId),
+            )),
+      );
+  },
 );

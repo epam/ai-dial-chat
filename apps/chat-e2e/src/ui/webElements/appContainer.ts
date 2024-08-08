@@ -28,21 +28,21 @@ export class AppContainer extends BaseElement {
 
   getHeader(): Header {
     if (!this.header) {
-      this.header = new Header(this.page);
+      this.header = new Header(this.page, this.rootLocator);
     }
     return this.header;
   }
 
   getBanner(): Banner {
     if (!this.banner) {
-      this.banner = new Banner(this.page);
+      this.banner = new Banner(this.page, this.rootLocator);
     }
     return this.banner;
   }
 
   getChat(): Chat {
     if (!this.chat) {
-      this.chat = new Chat(this.page);
+      this.chat = new Chat(this.page, this.rootLocator);
     }
     return this.chat;
   }
@@ -63,7 +63,10 @@ export class AppContainer extends BaseElement {
 
   getConversationSettings(): ConversationSettings {
     if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(this.page);
+      this.conversationSettings = new ConversationSettings(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.conversationSettings;
   }

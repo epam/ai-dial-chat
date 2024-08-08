@@ -31,6 +31,7 @@ export const MessageStages = ({ stages }: Props) => {
         <button
           onClick={() => setShowMore(!showMore)}
           className="mt-2 flex leading-[18px] text-quaternary-bg-light hover:text-primary-bg-light"
+          data-qa={showMore ? 'show-less' : 'show-more'}
         >
           {showMore ? 'Show less' : 'Show more'}
           <ChevronDown

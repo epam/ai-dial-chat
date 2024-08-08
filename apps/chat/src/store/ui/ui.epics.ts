@@ -109,7 +109,8 @@ const saveThemeEpic: AppEpic = (action$) =>
     filter(UIActions.setTheme.match),
     tap(({ payload }) => {
       // Needed for fast work with theme initial load
-      document.documentElement.className = payload || '';
+      document.documentElement.className =
+        `${payload} ${payload.startsWith('dark') ? 'dark' : 'light'}` || '';
     }),
     switchMap(({ payload }) => DataService.setTheme(payload)),
     ignoreElements(),

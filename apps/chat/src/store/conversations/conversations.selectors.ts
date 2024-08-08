@@ -8,6 +8,7 @@ import {
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import {
+  getChildAndCurrentFoldersById,
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
@@ -15,12 +16,13 @@ import {
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
+  sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
-  doesPromptOrConversationContainSearchTerm,
+  doesEntityContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
 import {
@@ -53,11 +55,12 @@ export const selectConversations = createSelector(
   (state) => state.conversations,
 );
 
-export const selectExternalConversations = createSelector(
+export const selectNotExternalConversations = createSelector(
   [(state: RootState) => state, selectConversations],
   (state, conversations) =>
-    conversations.filter((conversation) =>
-      isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
+    conversations.filter(
+      (conversation) =>
+        !isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
     ),
 );
 
@@ -78,10 +81,7 @@ export const selectFilteredConversations = createSelector(
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
-          doesPromptOrConversationContainSearchTerm(
-            conversation,
-            searchTerm,
-          )) &&
+          doesEntityContainSearchTerm(conversation, searchTerm)) &&
         (filters.searchFilter?.(conversation) ?? true) &&
         (ignoreSectionFilter ||
           (filters.sectionFilter?.(conversation) ?? true)),
@@ -92,7 +92,7 @@ export const selectFilteredConversations = createSelector(
 export const selectFolders = createSelector(
   [rootSelector],
   (state: ConversationsState) => {
-    return state.folders;
+    return state.folders || [];
   },
 );
 
@@ -145,10 +145,10 @@ export const selectFilteredFolders = createSelector(
 );
 
 export const selectLastConversation = createSelector(
-  [selectConversations],
-  (conversations): ConversationInfo | undefined => {
-    if (!conversations.length) return undefined;
-    return sortByDateAndName([...conversations])[0];
+  [selectNotExternalConversations],
+  (ownConversations): ConversationInfo | undefined => {
+    if (!ownConversations.length) return undefined;
+    return sortByDateAndName(ownConversations)[0];
   },
 );
 export const selectConversation = createSelector(
@@ -276,13 +276,32 @@ export const selectSearchedConversations = createSelector(
   [selectConversations, selectSearchTerm],
   (conversations, searchTerm) =>
     conversations.filter((conversation) =>
-      doesPromptOrConversationContainSearchTerm(conversation, searchTerm),
+      doesEntityContainSearchTerm(conversation, searchTerm),
     ),
 );
 
 export const selectIsReplayPaused = createSelector([rootSelector], (state) => {
   return state.isReplayPaused;
 });
+export const selectIsReplayRequiresVariables = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isReplayRequiresVariables;
+  },
+);
+export const selectWillReplayRequireVariables = createSelector(
+  [selectFirstSelectedConversation],
+  (conversation) => {
+    if (!conversation?.replay) return false;
+    const replay = conversation.replay;
+    return (
+      Object.keys(
+        replay.replayUserMessagesStack?.[replay.activeReplayIndex ?? 0]
+          ?.templateMapping ?? {},
+      ).length > 0
+    );
+  },
+);
 export const selectIsSendMessageAborted = createSelector(
   [selectConversationSignal],
   (state) => {
@@ -556,21 +575,25 @@ export const selectPublishedWithMeFolders = createSelector(
   },
 );
 
-export const selectTemporaryAndFilteredFolders = createSelector(
+export const selectTemporaryAndPublishedFolders = createSelector(
   [
     selectFolders,
     selectPublishedWithMeFolders,
     selectTemporaryFolders,
     (_state, searchTerm?: string) => searchTerm,
   ],
-  (allFolders, filteredFolders, temporaryFolders, searchTerm = '') => {
-    const filtered = [...filteredFolders, ...temporaryFolders].filter(
-      (folder) => folder.name.includes(searchTerm.toLowerCase()),
+  (allFolders, publishedFolders, temporaryFolders, searchTerm = '') => {
+    const allPublishedFolders = publishedFolders.flatMap((folder) =>
+      getChildAndCurrentFoldersById(folder.id, allFolders),
     );
+    const filteredFolders = [
+      ...sortByName(allPublishedFolders),
+      ...temporaryFolders,
+    ].filter((folder) => doesEntityContainSearchTerm(folder, searchTerm));
 
     return getParentAndChildFolders(
-      [...allFolders, ...temporaryFolders],
-      filtered,
+      sortByName([...allFolders, ...temporaryFolders]),
+      filteredFolders,
     );
   },
 );
@@ -765,4 +788,80 @@ export const selectShouldClearChatInputContent = createSelector(
 export const selectChatInputContent = createSelector(
   [rootSelector],
   (state) => state.chatInputContent,
+);
+
+export const selectIsConversationsEmpty = createSelector(
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => {
+      return conv.messages.length === 0;
+    });
+  },
+);
+
+export const selectIsSelectMode = createSelector([rootSelector], (state) => {
+  return (
+    state.chosenConversationIds.length > 0 || state.chosenFolderIds.length > 0
+  );
+});
+
+export const selectChosenConversationIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.chosenConversationIds;
+  },
+);
+
+export const selectChosenFolderIds = createSelector([rootSelector], (state) => {
+  return state.chosenFolderIds;
+});
+
+export const selectAllChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter((folderId) => {
+        const filteredConversations = state.conversations.filter(
+          (conv) =>
+            doesEntityContainSearchTerm(conv, state.searchTerm) &&
+            conv.id.startsWith(folderId) &&
+            !isEntityOrParentsExternal(
+              { conversations: state },
+              conv,
+              FeatureType.Chat,
+            ),
+        );
+
+        return (
+          state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) ||
+          (filteredConversations.length &&
+            filteredConversations.every((conv) =>
+              state.chosenConversationIds.includes(conv.id),
+            ))
+        );
+      });
+  },
+);
+
+export const selectPartialChosenFolderIds = createSelector(
+  [rootSelector, selectFolders],
+  (state, folders) => {
+    return folders
+      .map((folder) => `${folder.id}/`)
+      .filter(
+        (folderId) =>
+          !state.chosenFolderIds.some((chosenId) =>
+            folderId.startsWith(chosenId),
+          ) &&
+          (state.chosenFolderIds.some((chosenId) =>
+            chosenId.startsWith(folderId),
+          ) ||
+            state.chosenConversationIds.some((convId) =>
+              convId.startsWith(folderId),
+            )),
+      );
+  },
 );

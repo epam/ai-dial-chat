@@ -1,6 +1,8 @@
 import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
 
+import { getThemeIconUrl } from '../utils/app/themes';
+
 import i18nextConfig from '../../next-i18next.config';
 
 type Props = DocumentProps & {
@@ -28,13 +30,13 @@ export default function Document(props: Props) {
         )}
         <link
           rel="icon"
-          href="api/themes/image?name=favicon"
+          href={getThemeIconUrl('favicon')}
           sizes="any"
           type="image/png"
         />
         <link
           rel="apple-touch-icon"
-          href="api/themes/image?name=favicon"
+          href={getThemeIconUrl('favicon')}
           type="image/png"
         />
       </Head>

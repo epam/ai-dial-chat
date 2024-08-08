@@ -94,3 +94,9 @@ export const HR_BUDDY_PERSONAS_DISPLAYING_ORDER: Record<string, number> = {
   [HR_BUDDY_PERSONAS.Manager]: 1,
   [HR_BUDDY_PERSONAS.HR]: 2,
 };
+
+export const MIN_TWO_CAL_CHAT_SETTINGS_WIDTH = 510;
+export const CENTRAL_CHAT_MIN_WIDTH = 800;
+export const DESKTOP_BREAKPOINT = 1280;
+
+export const REPLAY_AS_IS_MODEL = 'REPLAY_AS_IS_MODEL';

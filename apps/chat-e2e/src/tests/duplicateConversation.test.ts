@@ -48,16 +48,13 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
-          await conversations.openConversationDropdownMenu(
-            conversation.name,
-            i,
-          );
+          await conversations.openEntityDropdownMenu(conversation.name, i);
           await conversations.selectEntityMenuOption(MenuOptions.duplicate, {
             triggeredHttpMethod: 'POST',
           });
           await expect
             .soft(
-              await conversations.getConversationByName(
+              conversations.getEntityByName(
                 ExpectedConstants.entityWithIndexTitle(conversation.name, i),
               ),
               ExpectedMessages.conversationIsVisible,
@@ -115,7 +112,7 @@ dialTest(
         });
         await expect
           .soft(
-            await folderConversations.getFolderEntity(
+            folderConversations.getFolderEntity(
               folderConversation.folders.name,
               ExpectedConstants.entityWithIndexTitle(
                 folderConversation.conversations[0].name,

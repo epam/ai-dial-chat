@@ -2,6 +2,7 @@ import { IconX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   FC,
+  FocusEvent,
   FormEvent,
   KeyboardEvent,
   useCallback,
@@ -15,6 +16,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -23,18 +25,22 @@ import { Translation } from '@/src/types/translation';
 
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
   onClose: () => void;
+  ignoreOutsideClicks?: string;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
   prompt,
   onSubmit,
   onClose,
+  ignoreOutsideClicks,
 }) => {
   const variables = useMemo(
     () => parseVariablesFromContent(prompt.content),
@@ -44,7 +50,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     { key: string; value: string }[]
   >(
     variables
-      .map((variable) => ({ key: variable, value: '' }))
+      .map((variable) => ({ key: variable.name, value: variable.defaultValue }))
       .filter(
         (item, index, array) =>
           array.findIndex((t) => t.key === item.key) === index,
@@ -63,7 +69,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       setUpdatedVariables((prev) => {
         const updated = [...prev];
         updated[index].value = e.target.value;
-        return [...updated];
+        return updated;
       });
     },
     [],
@@ -78,14 +84,30 @@ export const PromptVariablesDialog: FC<Props> = ({
       }
       const content = prompt.content as string;
 
-      const newContent = content.replace(/{{(.*?)}}/g, (match, variable) => {
-        return updatedVariables.find((v) => v.key === variable)?.value ?? '';
-      });
+      const newContent = content.replace(
+        PROMPT_VARIABLE_REGEX,
+        (_, variable) => {
+          return updatedVariables.find((v) => v.key === variable)?.value ?? '';
+        },
+      );
 
       onSubmit(newContent);
       onClose();
     },
     [onClose, onSubmit, prompt.content, updatedVariables],
+  );
+
+  const handleOnBlur = useCallback(
+    (index: number, e: FocusEvent<HTMLTextAreaElement>) => {
+      e.target.value = e.target.value.trim();
+      setUpdatedVariables((prev) => {
+        const updated = [...prev];
+        updated[index].value = e.target.value;
+        return updated;
+      });
+      onBlur(e);
+    },
+    [],
   );
 
   const handleKeyDown = useCallback(
@@ -110,6 +132,12 @@ export const PromptVariablesDialog: FC<Props> = ({
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        ignoreOutsideClicks &&
+        hasParentWithAttribute(e.target as Element, ignoreOutsideClicks)
+      ) {
+        return;
+      }
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -120,7 +148,7 @@ export const PromptVariablesDialog: FC<Props> = ({
     return () => {
       window.removeEventListener('click', handleOutsideClick);
     };
-  }, [onClose]);
+  }, [ignoreOutsideClicks, onClose]);
 
   const inputClassName = classNames(
     'input-form',
@@ -184,7 +212,7 @@ export const PromptVariablesDialog: FC<Props> = ({
             <div className="mb-1" key={variable.key}>
               <div className="mb-1 flex text-xs font-medium text-primary-bg-light">
                 <span>
-                  {variable.key}
+                  <span className="break-all">{variable.key}</span>
                   <span className="text-pr-alert-500 inline">*</span>
                 </span>
               </div>
@@ -201,7 +229,9 @@ export const PromptVariablesDialog: FC<Props> = ({
                   }) as string
                 }
                 value={variable.value}
-                onBlur={onBlur}
+                onBlur={(e) => {
+                handleOnBlur(index, e);
+              }}
                 onChange={(e) => {
                   handleChange(index, e);
                 }}

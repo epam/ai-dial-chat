@@ -17,16 +17,16 @@ dialTest(
       BucketUtil.getAdditionalSecondShareUserBucket(),
     );
 
-    const additionalUserSharedEntities =
-      await additionalUserShareApiHelper.listSharedWithMeEntities();
+    const additionalUserSharedConversations =
+      await additionalUserShareApiHelper.listSharedWithMeConversations();
     await additionalUserShareApiHelper.deleteSharedWithMeEntities(
-      additionalUserSharedEntities.resources,
+      additionalUserSharedConversations.resources,
     );
 
-    const additionalSecondUserSharedEntities =
-      await additionalSecondUserShareApiHelper.listSharedWithMeEntities();
+    const additionalSecondUserSharedConversations =
+      await additionalSecondUserShareApiHelper.listSharedWithMeConversations();
     await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
-      additionalSecondUserSharedEntities.resources,
+      additionalSecondUserSharedConversations.resources,
     );
   },
 );
