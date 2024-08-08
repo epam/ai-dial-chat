@@ -1,5 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-import { ExpectedMessages } from '@/src/testData';
+import { ElementState, ExpectedMessages } from '@/src/testData';
 import { RecentEntities } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -8,6 +8,18 @@ export class RecentEntitiesAssertion {
 
   constructor(recentEntities: RecentEntities) {
     this.recentEntities = recentEntities;
+  }
+
+  public async assertPlaybackIconState(expectedState: ElementState) {
+    const playbackButton =
+      this.recentEntities.playbackButton.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(playbackButton, ExpectedMessages.playbackIconIsSelected)
+          .toBeVisible()
+      : await expect
+          .soft(playbackButton, ExpectedMessages.playbackIconIsHidden)
+          .toBeVisible();
   }
 
   public async assertReplayAsIsBordersColor(expectedColor: string) {
