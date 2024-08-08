@@ -32,7 +32,7 @@ export const CustomLogoSelect = ({
   return (
     <div className="flex items-center gap-5">
       <div className="basis-1/3 md:basis-1/4">{t('Custom logo')}</div>
-      <div className="flex h-[38px] max-w-[331px] grow  items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary">
+      <div className="flex h-[38px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4">
         <div
           className={classNames(
             'block w-full max-w-full truncate',
