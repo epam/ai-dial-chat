@@ -323,16 +323,16 @@ export const PromptComponent = ({
     [dispatch, prompt],
   );
 
-  const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(
-        PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
-      );
-    },
-    [dispatch, isChosen, prompt.id],
-  );
+  // const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+  //   (e) => {
+  //     e.stopPropagation();
+  //     setIsContextMenu(false);
+  //     dispatch(
+  //       PromptsActions.setChosenPrompt({ promptId: prompt.id, isChosen }),
+  //     );
+  //   },
+  //   [dispatch, isChosen, prompt.id],
+  // );
 
   useEffect(() => {
     if (isSelectMode) {
@@ -362,7 +362,7 @@ export const PromptComponent = ({
     <>
       <button
         className={classNames(
-          'group relative flex h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
+          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 transition-colors duration-200 hover:bg-accent-primary-alpha',
           isHighlited
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
@@ -386,8 +386,7 @@ export const PromptComponent = ({
       >
         <div
           className={classNames('flex size-full items-center gap-2', {
-            'pr-6':
-              !isSelectMode && !isDeleting && !isRenaming && isSelected,
+            'pr-6': !isSelectMode && !isDeleting && !isRenaming && isSelected,
           })}
           draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
           onDragStart={(e) => handleDragStart(e, prompt)}
@@ -450,8 +449,7 @@ export const PromptComponent = ({
             ref={refs.setFloating}
             {...getFloatingProps()}
             className={classNames(
-              'absolute right-3 z-50 flex justify-end group-hover/prompt-item:visible',
-              isSelected ? 'visible' : 'invisible',
+              'invisible absolute right-3 z-50 flex justify-end group-hover/prompt-item:visible',
             )}
             onClick={stopBubbling}
           >
@@ -478,7 +476,7 @@ export const PromptComponent = ({
               onDuplicate={handleDuplicate}
               onView={undefined}
               isOpen={isContextMenu}
-              onSelect={handleSelect}
+              onSelect={undefined}
             />
           </div>
         )}

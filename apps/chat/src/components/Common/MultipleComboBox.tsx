@@ -229,7 +229,6 @@ export function MultipleComboBox<T>({
           }}
           className={classNames(
             'relative flex w-full flex-wrap gap-1 rounded-primary border border-secondary bg-layer-2 p-1 shadow-primary placeholder:text-tertiary-bg-light hover:border-accent-quaternary',
-            !readonly && 'focus-within:border-accent-quaternary',
           )}
         >
           {selectedItems &&

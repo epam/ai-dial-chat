@@ -63,7 +63,7 @@ interface ItemContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
-  onSelect: MouseEventHandler<unknown>;
+  onSelect?: MouseEventHandler<unknown>;
   isLoading?: boolean;
 }
 
@@ -112,7 +112,7 @@ export default function ItemContextMenu({
     () => [
       {
         name: t('Select'),
-        display: !isExternal,
+        display: !!onSelect,
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,

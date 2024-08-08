@@ -428,19 +428,19 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     [conversation, dispatch, talkTo],
   );
 
-  const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(
-        ConversationsActions.setChosenConversation({
-          conversationId: conversation.id,
-          isChosen,
-        }),
-      );
-    },
-    [conversation.id, dispatch, isChosen],
-  );
+  // const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
+  //   (e) => {
+  //     e.stopPropagation();
+  //     setIsContextMenu(false);
+  //     dispatch(
+  //       ConversationsActions.setChosenConversation({
+  //         conversationId: conversation.id,
+  //         isChosen,
+  //       }),
+  //     );
+  //   },
+  //   [conversation.id, dispatch, isChosen],
+  // );
 
   useEffect(() => {
     if (isRenaming) {
@@ -743,7 +743,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
             onOpenChange={setIsContextMenu}
             isOpen={isContextMenu}
             isLoading={conversation.status !== UploadStatus.LOADED}
-            onSelect={handleSelect}
+            onSelect={undefined}
           />
         </div>
       )}
