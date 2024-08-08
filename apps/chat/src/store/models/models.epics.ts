@@ -3,6 +3,7 @@ import { signOut } from 'next-auth/react';
 import {
   EMPTY,
   catchError,
+  concat,
   filter,
   from,
   ignoreElements,
@@ -22,9 +23,11 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 
+import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
+import { PublicationActions } from '../publication/publication.reducers';
 import {
   SettingsActions,
   SettingsSelectors,
@@ -93,7 +96,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        map((response: DialAIEntityModel[]) => {
+        switchMap((response: DialAIEntityModel[]) => {
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
@@ -102,7 +105,14 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           if (response.length === 0 && isOverlay && !isHeaderFeatureEnabled) {
             signOut();
           }
-          return ModelsActions.getModelsSuccess({ models: response });
+          return concat(
+            of(ModelsActions.getModelsSuccess({ models: response })),
+            of(
+              PublicationActions.uploadAllPublishedWithMeItems({
+                featureType: FeatureType.Application,
+              }),
+            ),
+          );
         }),
         catchError((err) => {
           return of(ModelsActions.getModelsFail({ error: err }));

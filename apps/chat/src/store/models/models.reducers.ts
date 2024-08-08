@@ -1,5 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
 import { EntityType, UploadStatus } from '@/src/types/common';
@@ -11,6 +12,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { RootState } from '../index';
 
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -19,6 +21,8 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  publishRequestModels: (DialAIEntityModel & { folderId: string })[];
+  publishedApplicationIds: string[];
 }
 
 const initialState: ModelsState = {
@@ -27,6 +31,8 @@ const initialState: ModelsState = {
   models: [],
   modelsMap: {},
   recentModelsIds: [],
+  publishRequestModels: [],
+  publishedApplicationIds: [],
 };
 
 export const modelsSlice = createSlice({
@@ -133,64 +139,72 @@ export const modelsSlice = createSlice({
         RECENT_MODELS_COUNT,
       );
     },
-    addModel: (
+    setPublishedApplicationIds: (
       state,
-      { payload }: PayloadAction<{ model: DialAIEntityModel }>,
+      {
+        payload,
+      }: PayloadAction<{
+        modelIds: string[];
+      }>,
     ) => {
-      state.models.push(payload.model);
-      state.modelsMap[payload.model.id] = payload.model;
+      state.publishedApplicationIds = payload.modelIds;
     },
-    // updateModel: (
-    //   state,
-    //   { payload }: PayloadAction<{ model: DialAIEntityModel }>,
-    // ) => {
-    //   const index = state.models.findIndex(
-    //     (model) => model?.reference === payload.model.reference,
-    //   );
-    //   if (index > -1) {
-    //     state.models[index] = payload.model;
-    //   }
-
-    //   if (state.modelsMap[payload.model?.reference]) {
-    //     state.modelsMap[payload.model?.reference] = payload.model;
-    //   }
-      
-    // },
-    // deleteModel: (state, { payload }: PayloadAction<{ modelId: string }>) => {
-    //   state.models = state.models.filter(
-    //     (model) => model.name !== payload.modelId,
-    //   );
-    //   state.recentModelsIds = state.recentModelsIds.filter(
-    //     (id) => id !== payload.modelId,
-    //   );
-    // },
+    addModels: (
+      state,
+      { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
+    ) => {
+      state.models = [...state.models, ...payload.models];
+      payload.models.forEach((model) => {
+        state.modelsMap[model.id] = model;
+      });
+    },
     updateModel: (
       state,
-      { payload }: PayloadAction<{ model: DialAIEntityModel, oldApplicationName: string }>,
+      {
+        payload,
+      }: PayloadAction<{
+        model: DialAIEntityModel;
+        oldApplicationName: string;
+      }>,
     ) => {
-      const index = state.models.findIndex(
-        (model) => model?.reference === payload.model.reference,
+      state.models = state.models.map((model) =>
+        model?.id === payload.oldApplicationName ? payload.model : model,
       );
-    
-      if (index > -1) {
-        state.models[index] = payload.model;
-        const recentModelIndex = state.recentModelsIds.findIndex((id) => id === payload.oldApplicationName);
-        
-        if (recentModelIndex > -1) {
-          state.recentModelsIds[recentModelIndex] = payload.model.id;
-        }
+
+      if (state.recentModelsIds.includes(payload.oldApplicationName)) {
+        state.recentModelsIds = state.recentModelsIds.map((id) =>
+          id === payload.oldApplicationName ? payload.model.id : id,
+        );
       }
-    
-      if (state.modelsMap[payload.model?.reference]) {
-        state.modelsMap[payload.model?.reference] = payload.model;
+
+      if (state.modelsMap[payload.oldApplicationName]) {
+        state.modelsMap = omit(state.modelsMap, [payload.oldApplicationName]);
+        state.modelsMap[payload.model.id] = payload.model;
       }
     },
-    deleteModel: (state, { payload }: PayloadAction<{ modelId: string }>) => {
+    deleteModel: (
+      state,
+      { payload }: PayloadAction<{ modelName: string; id: string }>,
+    ) => {
       state.models = state.models.filter(
-        (model) => model.name !== payload.modelId,
+        (model) => model.name !== payload.modelName,
       );
       state.recentModelsIds = state.recentModelsIds.filter(
-        (id) => id !== payload.modelId,
+        (id) => id !== payload.id,
+      );
+      state.modelsMap = omit(state.modelsMap, [payload.id]);
+    },
+    addPublishRequestModels: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        models: (DialAIEntityModel & { folderId: string })[];
+      }>,
+    ) => {
+      state.publishRequestModels = combineEntities(
+        state.publishRequestModels,
+        payload.models,
       );
     },
   },
@@ -238,6 +252,17 @@ const selectModelsOnly = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
+const selectPublishRequestModels = createSelector([rootSelector], (state) => {
+  return state.publishRequestModels;
+});
+
+const selectPublishedApplicationIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.publishedApplicationIds;
+  },
+);
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -248,6 +273,8 @@ export const ModelsSelectors = {
   selectRecentModels,
   selectModel,
   selectModelsOnly,
+  selectPublishRequestModels,
+  selectPublishedApplicationIds,
 };
 
 export const ModelsActions = modelsSlice.actions;

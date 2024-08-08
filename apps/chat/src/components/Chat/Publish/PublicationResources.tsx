@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
 import { constructPath } from '@/src/utils/app/file';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -16,6 +17,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -26,6 +28,7 @@ import { PromptComponent } from '../../Promptbar/components/Prompt';
 
 import { ConversationComponent } from '../../Chatbar/Conversation';
 import {
+  ApplicationRow,
   ConversationRow,
   FilesRow,
   PromptsRow,
@@ -318,7 +321,9 @@ export const ApplicationPublicationResources = ({
   isOpen = true,
   additionalItemData,
 }: PublicationResources) => {
-  const dispatch = useAppDispatch();
+  const publishRequestModels = useAppSelector(
+    ModelsSelectors.selectPublishRequestModels,
+  );
 
   // const openedFoldersIds = useAppSelector((state) =>
   //   UISelectors.selectOpenedFoldersIds(state, FeatureType.Application),
@@ -331,9 +336,6 @@ export const ApplicationPublicationResources = ({
   // const highlightedFolders = useAppSelector(
   //   ConversationsSelectors.selectSelectedConversationsFoldersIds,
   // );
-
-  const { rootFolders, itemsToDisplay, folderItemsToDisplay } =
-    usePublicationResources(allFolders, resources, conversations);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
@@ -375,23 +377,9 @@ export const ApplicationPublicationResources = ({
           isSidePanelFolder={!readonly}
         />
       ))} */}
-      {itemsToDisplay.map((c) =>
-        readonly ? (
-          <ConversationRow
-            itemComponentClassNames="cursor-pointer"
-            key={c.id}
-            item={c}
-            level={0}
-          />
-        ) : (
-          <ConversationComponent
-            additionalItemData={additionalItemData}
-            key={c.id}
-            item={c}
-            level={1}
-          />
-        ),
-      )}
+      {publishRequestModels.map((application) => (
+        <ApplicationRow item={application} key={application.id} />
+      ))}
     </div>
   );
 };

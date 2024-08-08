@@ -5,13 +5,15 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isConversationId } from '@/src/utils/app/id';
+import { isConversationId, isPromptId } from '@/src/utils/app/id';
 
+import { ApplicationDetailsResponse } from '@/src/types/applications';
 import { ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
 import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
@@ -22,22 +24,23 @@ import {
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 
-interface Props<T extends PromptInfo | ConversationInfo> {
-  entity: T;
+interface Props {
+  entity:
+    | PromptInfo
+    | ConversationInfo
+    | (ApplicationDetailsResponse & { id: string });
   showScrollDownButton?: boolean;
   onScrollDownClick?: () => void;
   controlsClassNames?: string;
 }
 
-export function PublicationControlsView<
-  T extends PromptInfo | ConversationInfo,
->({
+export function PublicationControlsView({
   entity,
   resourceToReview,
   showScrollDownButton,
   onScrollDownClick,
   controlsClassNames,
-}: Props<T> & { resourceToReview: ResourceToReview }) {
+}: Props & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -79,12 +82,17 @@ export function PublicationControlsView<
     );
   }, [dispatch, resourceToReview.publicationUrl]);
 
+  const unselectApplication = useCallback(() => {
+    dispatch(PublicationActions.setIsApplicationReview(false));
+  }, [dispatch]);
+
   const toggleResource = useCallback(
     (offset: number) => {
       if (
         isConversationId(resourcesToReview[publicationIdx + offset].reviewUrl)
       ) {
         unselectPrompt();
+        unselectApplication();
         dispatch(
           ConversationsActions.selectConversations({
             conversationIds: [
@@ -92,8 +100,11 @@ export function PublicationControlsView<
             ],
           }),
         );
-      } else {
+      } else if (
+        isPromptId(resourcesToReview[publicationIdx + offset].reviewUrl)
+      ) {
         unselectConversation();
+        unselectApplication();
         dispatch(
           PromptsActions.uploadPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
@@ -111,6 +122,15 @@ export function PublicationControlsView<
             isPreview: true,
           }),
         );
+      } else {
+        unselectConversation();
+        unselectPrompt();
+        dispatch(
+          ApplicationActions.getOne(
+            resourcesToReview[publicationIdx + offset].reviewUrl,
+          ),
+        );
+        dispatch(PublicationActions.setIsApplicationReview(true));
       }
     },
     [
@@ -121,6 +141,16 @@ export function PublicationControlsView<
       unselectPrompt,
     ],
   );
+
+  const handleBackToPublication = useCallback(() => {
+    if (isConversationId(resourceToReview.reviewUrl)) {
+      unselectConversation();
+    } else if (isPromptId(resourceToReview.reviewUrl)) {
+      unselectPrompt();
+    } else {
+      unselectApplication();
+    }
+  }, [unselectConversation, unselectPrompt, unselectApplication]);
 
   useEffect(() => {
     if (!resourceToReview.reviewed) {
@@ -166,11 +196,7 @@ export function PublicationControlsView<
         <IconPlayerPlay className="shrink-0" height={18} width={18} />
       </button>
       <button
-        onClick={() =>
-          isConversationId(resourceToReview.reviewUrl)
-            ? unselectConversation()
-            : unselectPrompt()
-        }
+        onClick={handleBackToPublication}
         className="button button-primary flex max-h-[38px] items-center"
       >
         {t('Back to publication request')}
@@ -185,10 +211,7 @@ export function PublicationControlsView<
   );
 }
 
-export function PublicationControls<T extends PromptInfo | ConversationInfo>({
-  entity,
-  ...props
-}: Props<T>) {
+export function PublicationControls({ entity, ...props }: Props) {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );

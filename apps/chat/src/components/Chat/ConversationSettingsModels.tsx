@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
 
 import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
-import { useSelector } from 'react-redux';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -44,16 +44,11 @@ export const ConversationSettingsModel = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
-  console.log(recentModelsIds,'recentModelsIds');
-  
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
   const [isReplayAsIs, setIsReplayAsIs] = useState(
     conversation.replay?.replayAsIs ?? false,
   );
-
-  const modelGroupId = '';
-  const modelGroup = useSelector((state) => ModelsSelectors.selectModel(state, modelGroupId));
 
   useEffect(() => {
     setIsReplayAsIs(conversation.replay?.replayAsIs ?? false);
@@ -69,32 +64,6 @@ export const ConversationSettingsModel = ({
       modelsMap,
     );
   }, [modelId, modelsMap, recentModelsIds, unavailableModelId]);
-
-  // const initialEntities = getValidEntitiesFromIds(
-  //   modelId &&
-  //     modelId !== unavailableModelId &&
-  //     !recentModelsIds.includes(modelId)
-  //     ? [modelId, ...recentModelsIds]
-  //     : recentModelsIds,
-  //   modelsMap,
-  // );
-  // const [entities, setEntities] = useState(initialEntities);
-
-  // useEffect(() => {
-  //   const newEntitytities = getValidEntitiesFromIds(
-  //     modelId &&
-  //       modelId !== unavailableModelId &&
-  //       !recentModelsIds.includes(modelId)
-  //       ? [modelId, ...recentModelsIds]
-  //       : recentModelsIds,
-  //     modelsMap,
-  //   );
-  //   console.log(recentModelsIds, 'newentity');
-    
-  //   setEntities(newEntitytities);
-  // }, [modelId, modelsMap, recentModelsIds, unavailableModelId]);
-
-  console.log(entities,'enitities');
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
@@ -145,7 +114,7 @@ export const ConversationSettingsModel = ({
           <ModelList
             entities={entities}
             onSelect={handleModelSelect}
-            selectedModelId={modelId}
+            selectedModelId={modelId || recentModelsIds[0]}
             showInOneColumn
             displayCountLimit={
               isReplay || isPlayback || unavailableModelId

@@ -86,5 +86,9 @@ export interface FeaturesData {
   urlAttachments?: boolean;
   folderAttachments?: boolean;
 }
+export interface DeleteApplicationPayload {
+  currentEntityName: string;
+  currentEntityId: string;
+}
 
-export type DeleteApplicationAction = PayloadAction<string>;
+export type DeleteApplicationAction = PayloadAction<DeleteApplicationPayload>;

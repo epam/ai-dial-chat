@@ -33,7 +33,7 @@ export const applicationSlice = createSlice({
         applicationData: CreateApplicationModel;
       }>,
     ) => {
-      state.loading = true;
+      state.loading = false;
     },
     createSuccess: (state, action: PayloadAction<CreateApplicationModel>) => {
       state.loading = false;
@@ -57,7 +57,13 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
-    delete: (state, _action: PayloadAction<string>) => {
+    delete: (
+      state,
+      _action: PayloadAction<{
+        currentEntityName: string;
+        currentEntityId: string;
+      }>,
+    ) => {
       state.loading = true;
     },
     deleteSuccess: (state, _action: PayloadAction<void>) => {

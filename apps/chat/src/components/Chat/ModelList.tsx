@@ -25,6 +25,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { applicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
@@ -33,6 +34,9 @@ import ContextMenu from '../Common/ContextMenu';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
+
+import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { Feature } from '@epam/ai-dial-shared';
 
 interface ModelGroupProps {
   entities: DialAIEntity[];
@@ -44,6 +48,7 @@ interface ModelGroupProps {
   isReplayAsIs?: boolean;
   setIsDeleteModalOpen: (open: boolean) => void;
   setCurrentEntityName: (name: string) => void;
+  setCurrentEntityId: (name: string) => void;
   setCurrentEntityReference: (reference: string) => void;
   openApplicationModal?: () => void;
 }
@@ -59,12 +64,16 @@ const ModelGroup = ({
   setIsDeleteModalOpen,
   openApplicationModal,
   setCurrentEntityName,
+  setCurrentEntityId,
   setCurrentEntityReference,
 }: ModelGroupProps) => {
   const dispatch = useAppDispatch();
 
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const publishedApplicationIds = useAppSelector(
+    ModelsSelectors.selectPublishedApplicationIds,
+  );
 
   const currentEntity = useMemo(() => {
     // if only 1 model without group
@@ -96,11 +105,16 @@ const ModelGroup = ({
   const description = currentEntity.description;
   const applicationId = currentEntity.id;
 
+  const isPublishedEntity = publishedApplicationIds.some(
+    (id) => id === applicationId,
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: 'Edit',
         dataQa: 'edit',
+        display: !isPublishedEntity,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -112,29 +126,35 @@ const ModelGroup = ({
       {
         name: 'Publish',
         dataQa: 'publish',
-        display: true,
+        display: !isPublishedEntity,
         Icon: IconWorldShare,
         // onClick: () => console.log('publish'),
       },
       {
         name: 'Unpublish',
         dataQa: 'unpublish',
-        display: false,
-        Icon: IconWorldShare,
+        display: isPublishedEntity,
+        Icon: UnpublishIcon,
         // onClick: () => console.log('unpublish'),
       },
       {
         name: 'Delete',
         dataQa: 'delete',
+        display: !isPublishedEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
+          setCurrentEntityId(currentEntity.id);
           setCurrentEntityName(currentEntity.name);
           setIsDeleteModalOpen(true);
         },
       },
     ],
     [openApplicationModal, dispatch, applicationId],
+  );
+
+  const isCustomApplicationsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
   );
 
   return (
@@ -183,18 +203,17 @@ const ModelGroup = ({
                 onSelect={onSelect}
                 currentEntity={currentEntity}
               />
-              {isApplicationId(currentEntity.id) ? (
-                <ContextMenu
-                  menuItems={menuItems}
-                  TriggerIcon={IconDots}
-                  triggerIconSize={18}
-                  className="m-0 justify-self-end"
-                  featureType={FeatureType.Chat}
-                  onOpenChange={() => openApplicationModal}
-                />
-              ) : (
-                ''
-              )}
+              {isCustomApplicationsEnabled &&
+                isApplicationId(currentEntity.id) && (
+                  <ContextMenu
+                    menuItems={menuItems}
+                    TriggerIcon={IconDots}
+                    triggerIconSize={18}
+                    className="m-0 justify-self-end"
+                    featureType={FeatureType.Chat}
+                    onOpenChange={() => openApplicationModal}
+                  />
+                )}
             </div>
           </div>
           {description && (
@@ -270,11 +289,14 @@ export const ModelList = ({
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [currentEntityName, setCurrentEntityName] = useState('');
+  const [currentEntityId, setCurrentEntityId] = useState('');
   const [currentEntityReference, setCurrentEntityReference] = useState('');
 
   const handleDelete = () => {
-    if (currentEntityName) {
-      dispatch(ApplicationActions.delete(currentEntityName));
+    if (currentEntityName && currentEntityId) {
+      dispatch(
+        ApplicationActions.delete({ currentEntityName, currentEntityId }),
+      );
     }
   };
 
@@ -313,6 +335,7 @@ export const ModelList = ({
             openApplicationModal={() => setModalIsOpen(true)}
             setIsDeleteModalOpen={setIsDeleteModalOpen}
             setCurrentEntityName={setCurrentEntityName}
+            setCurrentEntityId={setCurrentEntityId}
             setCurrentEntityReference={setCurrentEntityReference}
           />
         ))}

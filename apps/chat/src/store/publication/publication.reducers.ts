@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
+import { DialAIEntityModel } from '@/src/types/models';
 import {
   Publication,
   PublicationInfo,
@@ -28,6 +29,7 @@ export interface PublicationState {
     [FeatureType.Application]: boolean;
   };
   selectedItemsToPublish: string[];
+  isApplicationReview: boolean;
 }
 
 const initialState: PublicationState = {
@@ -43,6 +45,7 @@ const initialState: PublicationState = {
     [FeatureType.Application]: false,
   },
   selectedItemsToPublish: [],
+  isApplicationReview: false,
 };
 
 export const publicationSlice = createSlice({
@@ -184,6 +187,9 @@ export const publicationSlice = createSlice({
     },
     resetItemsToPublish: (state) => {
       state.selectedItemsToPublish = [];
+    },
+    setIsApplicationReview: (state, { payload }: PayloadAction<boolean>) => {
+      state.isApplicationReview = payload;
     },
   },
 });

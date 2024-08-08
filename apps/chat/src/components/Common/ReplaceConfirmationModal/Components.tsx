@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { ConversationInfo } from '@/src/types/chat';
+import { ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import {
   MappedReplaceActions,
@@ -30,7 +31,6 @@ import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Select, SelectOption } from '../Select';
 import Tooltip from '../Tooltip';
-import { ShareEntity } from '@/src/types/common';
 
 interface ReplaceSelectorProps {
   selectedOption: ReplaceOptions;
@@ -391,7 +391,11 @@ export interface ApplicationRowProps extends ApplicationViewProps {
   itemComponentClassNames?: string;
 }
 
-const ApplicationView = ({ item: application, onSelect, isChosen }: ApplicationViewProps) => {
+const ApplicationView = ({
+  item: application,
+  onSelect,
+  isChosen,
+}: ApplicationViewProps) => {
   return (
     <FeatureContainer>
       {onSelect && (
@@ -437,7 +441,7 @@ export const ApplicationRow = ({
   itemComponentClassNames,
   isChosen,
   onSelect,
-}: PromptRowProps) => {
+}: ApplicationRowProps) => {
   return (
     <EntityRow
       entityId={application.id}
@@ -446,8 +450,11 @@ export const ApplicationRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <ApplicationView isChosen={isChosen} onSelect={onSelect} item={application} />
+      <ApplicationView
+        isChosen={isChosen}
+        onSelect={onSelect}
+        item={application}
+      />
     </EntityRow>
   );
 };
-

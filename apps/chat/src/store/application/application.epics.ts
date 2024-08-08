@@ -42,20 +42,22 @@ const createApplicationEpic = (action$: Observable<AnyAction>) =>
           switchMap((application: ApplicationListItemModel) =>
             ApplicationService.getOne(application.url).pipe(
               map((response) => {
-                return ModelsActions.addModel({
-                  model: {
-                    id: response.name,
-                    name: response.display_name,
-                    version: response.display_version,
-                    description: response.description,
-                    iconUrl: response.icon_url,
-                    type: EntityType.Application,
-                    features: response.features,
-                    inputAttachmentTypes: response.input_attachment_types,
-                    isDefault: false,
-                    maxInputAttachments: response.max_input_attachments,
-                    reference: response.reference,
-                  },
+                return ModelsActions.addModels({
+                  models: [
+                    {
+                      id: response.name,
+                      name: response.display_name,
+                      version: response.display_version,
+                      description: response.description,
+                      iconUrl: response.icon_url,
+                      type: EntityType.Application,
+                      features: response.features,
+                      inputAttachmentTypes: response.input_attachment_types,
+                      isDefault: false,
+                      maxInputAttachments: response.max_input_attachments,
+                      reference: response.reference,
+                    },
+                  ],
                 });
               }),
             ),
@@ -80,11 +82,14 @@ const deleteApplicationEpic = (action$: Observable<AnyAction>) =>
   action$.pipe(
     filter(ApplicationActions.delete.match),
     switchMap((action: DeleteApplicationAction) =>
-      ApplicationService.delete(action.payload).pipe(
+      ApplicationService.delete(action.payload.currentEntityName).pipe(
         switchMap(() => {
           return of(
             ApplicationActions.deleteSuccess(),
-            ModelsActions.deleteModel({ modelId: action.payload }),
+            ModelsActions.deleteModel({
+              modelName: action.payload.currentEntityName,
+              id: action.payload.currentEntityId,
+            }),
           );
         }),
         catchError((err) => {
@@ -113,54 +118,64 @@ const listApplicationsEpic = (action$: Observable<AnyAction>) =>
     ),
   );
 
-  const editApplicationEpic = (action$: Observable<AnyAction>) =>
-    action$.pipe(
-      filter((action: any) => action.type === ApplicationActions.edit.type),
-      switchMap(
-        ({
-          payload,
-        }: {
-          payload: {
-            applicationData: CreateApplicationModel;
-            oldApplicationName: string;
-            currentReference: string;
-            oldApplicationId: string;
-          };
-        }) => {
-          const move = iif(
-            () =>
-              payload.oldApplicationName !== payload.applicationData.display_name,
-            ApplicationService.move({
-              sourceUrl: payload.oldApplicationName,
-              destinationUrl: payload.applicationData.display_name,
-              overwrite: false,
-            }).pipe(
-              catchError((err) => {
-                console.error('Move failed', err);
-                return EMPTY;
-              }),
-            ),
-            of(payload),
+const editApplicationEpic = (action$: Observable<AnyAction>) =>
+  action$.pipe(
+    filter((action: any) => action.type === ApplicationActions.edit.type),
+    switchMap(
+      ({
+        payload,
+      }: {
+        payload: {
+          applicationData: CreateApplicationModel;
+          oldApplicationName: string;
+          currentReference: string;
+          oldApplicationId: string;
+        };
+      }) => {
+        const move = iif(
+          () =>
+            payload.oldApplicationName !== payload.applicationData.display_name,
+          ApplicationService.move({
+            sourceUrl: payload.oldApplicationName,
+            destinationUrl: payload.applicationData.display_name,
+            overwrite: false,
+          }).pipe(
+            catchError((err) => {
+              console.error('Move failed', err);
+              return EMPTY;
+            }),
+          ),
+          of(payload),
+        );
+
+        const applicationDataWithReference = {
+          ...payload.applicationData,
+          reference: payload.currentReference,
+        };
+
+        const edit: Observable<ApplicationListItemModel> =
+          ApplicationService.edit(applicationDataWithReference).pipe(
+            catchError((err) => {
+              console.error('Edit failed', err);
+              return EMPTY;
+            }),
           );
-  
-          const applicationDataWithReference = { ...payload.applicationData, reference: payload.currentReference };
-  
-          const edit: Observable<ApplicationListItemModel> =
-            ApplicationService.edit(applicationDataWithReference).pipe(
-              catchError((err) => {
-                console.error('Edit failed', err);
-                return EMPTY;
-              }),
-            );
-  
-          return forkJoin({
-            moveResult: move,
-            editResult: edit,
-            oldApplicationId: of(payload.oldApplicationId),
-          });
-        },
-      ),
-      switchMap(({ editResult, oldApplicationId }: { editResult: ApplicationListItemModel, oldApplicationId: string }) =>
+
+        return forkJoin({
+          moveResult: move,
+          editResult: edit,
+          oldApplicationId: of(payload.oldApplicationId),
+        });
+      },
+    ),
+    switchMap(
+      ({
+        editResult,
+        oldApplicationId,
+      }: {
+        editResult: ApplicationListItemModel;
+        oldApplicationId: string;
+      }) =>
         ApplicationService.getOne(editResult.url).pipe(
           map((response) => {
             return ModelsActions.updateModel({
@@ -177,7 +192,7 @@ const listApplicationsEpic = (action$: Observable<AnyAction>) =>
                 maxInputAttachments: response.max_input_attachments,
                 reference: response.reference,
               },
-              oldApplicationName: oldApplicationId
+              oldApplicationName: oldApplicationId,
             });
           }),
           catchError((err) => {
@@ -185,13 +200,13 @@ const listApplicationsEpic = (action$: Observable<AnyAction>) =>
             return EMPTY;
           }),
         ),
-      ),
-    );
+    ),
+  );
 
 const getApplicationEpic = (action$: Observable<AnyAction>) =>
   action$.pipe(
     filter(ApplicationActions.getOne.match),
-    switchMap(({ payload }: { payload: string }) =>
+    switchMap(({ payload }) =>
       ApplicationService.getOne(payload).pipe(
         map((response) => {
           return ApplicationActions.getOneSuccess(response);

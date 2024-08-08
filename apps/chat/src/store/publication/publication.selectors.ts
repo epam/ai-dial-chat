@@ -201,3 +201,10 @@ export const selectIsFolderContainsResourcesToApprove = createSelector(
     );
   },
 );
+
+export const selectIsApplicationReview = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isApplicationReview;
+  },
+);

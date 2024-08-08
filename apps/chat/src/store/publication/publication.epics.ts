@@ -34,6 +34,7 @@ import {
   getConversationRootId,
   getPromptRootId,
   getRootId,
+  isApplicationId,
   isConversationId,
   isFileId,
   isPromptId,
@@ -46,7 +47,7 @@ import {
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
@@ -60,6 +61,7 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
+import { ModelsActions } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
@@ -329,6 +331,36 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       }),
                     }),
                   ),
+                ),
+              );
+            }
+
+            const applicationResources = publication.resources.filter((r) =>
+              isApplicationId(r.targetUrl),
+            );
+
+            if (applicationResources.length) {
+              actions.push(
+                of(
+                  ModelsActions.addPublishRequestModels({
+                    models: applicationResources.map((r) => {
+                      const parsedApiKey = parsePromptApiKey(
+                        splitEntityId(r.targetUrl).name,
+                      );
+
+                      return {
+                        id: r.reviewUrl,
+                        name: parsedApiKey.name,
+                        isDefault: false,
+                        reference: r.reviewUrl,
+                        type: EntityType.Application,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        // publicationInfo: {
+                        //   action: r.action,
+                        // },
+                      };
+                    }),
+                  }),
                 ),
               );
             }
@@ -948,6 +980,20 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
         switchMap((publications) => {
           if (!publications.items) {
             return EMPTY;
+          }
+          if (payload.featureType === FeatureType.Application) {
+            return concat(
+              of(
+                ModelsActions.setPublishedApplicationIds({
+                  modelIds: publications.items.map((item) => item.url),
+                }),
+              ),
+              of(
+                PublicationActions.uploadAllPublishedWithMeItemsSuccess({
+                  featureType: payload.featureType,
+                }),
+              ),
+            );
           }
 
           const actions: Observable<AnyAction>[] = [];

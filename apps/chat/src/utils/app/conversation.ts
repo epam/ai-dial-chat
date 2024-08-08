@@ -41,15 +41,7 @@ export const getValidEntitiesFromIds = <T>(
   entitiesIds: string[],
   addonsMap: Partial<Record<string, T>>,
 ): T[] =>
-  entitiesIds.map((entityId) => {
-    console.log(entityId,'entityId');
-    if(entityId){
-      
-    }
-    console.table(addonsMap);
-    
-    return addonsMap[entityId]}
-  ).filter(Boolean) as T[];
+  entitiesIds.map((entityId) => addonsMap[entityId]).filter(Boolean) as T[];
 
 export const getSelectedAddons = (
   selectedAddons: string[],
@@ -244,54 +236,4 @@ export const groupModelsAndSaveOrder = (
   });
 
   return result;
-};
-
-export const addPausedError = (
-  conversation: Conversation,
-  models: DialAIEntityModel[],
-  messages: Message[],
-): Message[] => {
-  if (
-    models.every(
-      (m) => m.features?.allowResume && !conversation.selectedAddons.length,
-    )
-  ) {
-    return messages;
-  }
-  let assistentMessageIndex = -1;
-  messages.forEach((message, index) => {
-    if (message.role === Role.Assistant) {
-      assistentMessageIndex = index;
-    }
-  });
-  if (
-    assistentMessageIndex === -1 ||
-    assistentMessageIndex !== messages.length - 1
-  ) {
-    return messages;
-  }
-
-  const assistentMessage = messages[assistentMessageIndex];
-  const updatedMessage: Message = {
-    ...assistentMessage,
-    ...(assistentMessage.custom_content?.stages?.length && {
-      custom_content: {
-        ...assistentMessage.custom_content,
-        stages: assistentMessage.custom_content.stages.filter(
-          (stage) => stage.status != null,
-        ),
-      },
-    }),
-    errorMessage:
-      assistentMessage.errorMessage ??
-      'Response generation was stopped. Please regenerate to continue working with conversation',
-  };
-
-  return messages.map((message, index) => {
-    if (index === assistentMessageIndex) {
-      return updatedMessage;
-    }
-
-    return message;
-  });
 };

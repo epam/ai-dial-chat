@@ -315,7 +315,12 @@ export const ApplicationDialog = ({
 
   const handleDelete = () => {
     if (selectedApplication) {
-      dispatch(ApplicationActions.delete(selectedApplication.display_name));
+      dispatch(
+        ApplicationActions.delete({
+          currentEntityName: selectedApplication.display_name,
+          currentEntityId: selectedApplication.name,
+        }),
+      );
     }
     handleClose();
   };
@@ -737,7 +742,11 @@ export const ApplicationDialog = ({
         <PublishModal
           entity={{
             name: selectedApplication.display_name,
-            id: ApiUtils.decodeApiUrl(selectedApplication.name),
+            id: ApiUtils.decodeApiUrl(
+              selectedApplication.name ||
+                (selectedApplication as unknown as { application: string })
+                  .application,
+            ),
             folderId: getFolderIdFromEntityId(selectedApplication.display_name),
           }}
           type={SharingType.Application}

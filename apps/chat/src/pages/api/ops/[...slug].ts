@@ -47,19 +47,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    const moveRes = await fetch(url, {
+    const opsRes = await fetch(url, {
       method: 'POST',
       headers: getApiHeaders({ jwt: token?.access_token as string }),
       body: JSON.stringify(req.body),
     });
 
-    if (!moveRes.ok) {
-      throw new DialAIError(
-        `Move operation failed`,
-        '',
-        '',
-        moveRes.status + '',
-      );
+    if (!opsRes.ok) {
+      throw new DialAIError(`Operation failed`, '', '', opsRes.status + '');
     }
     return res.status(200).send({});
   } catch (error: unknown) {

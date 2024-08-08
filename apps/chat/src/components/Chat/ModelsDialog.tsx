@@ -57,7 +57,9 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     SettingsSelectors.selectEnabledFeatures,
   );
 
-  const hasCustomApplications = enabledFeatures.has(Feature.CustomApplications);
+  const isCustomApplicationsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
+  );
 
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
     EntityType.Model,
@@ -97,7 +99,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         (entity) => entity.type === EntityType.Assistant,
       ),
     );
-    if (hasCustomApplications) {
+    if (isCustomApplicationsEnabled) {
       setFilteredApplicationsEntities(
         newFilteredEntities.filter(
           (entity) => entity.type === EntityType.Application,
@@ -178,7 +180,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           }}
           className="m-0 w-full grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         ></input>
-        {hasCustomApplications ? (
+        {isCustomApplicationsEnabled ? (
           <button
             onClick={openAddApplicationModal}
             className="absolute right-3 flex h-full w-[100px] items-center gap-2 text-accent-primary"
