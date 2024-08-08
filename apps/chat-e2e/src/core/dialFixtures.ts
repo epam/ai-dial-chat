@@ -36,6 +36,7 @@ import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { RecentEntitiesAssertion } from '@/src/assertions/recentEntitiesAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
+import { ShareModalAssertion } from '@/src/assertions/shareModalAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
@@ -215,6 +216,7 @@ const dialTest = test.extend<
     chatAssertion: ChatAssertion;
     recentEntitiesAssertion: RecentEntitiesAssertion;
     playbackAssertion: PlaybackAssertion;
+    shareModalAssertion: ShareModalAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -735,6 +737,10 @@ const dialTest = test.extend<
   playbackAssertion: async ({ playbackControl }, use) => {
     const playbackAssertion = new PlaybackAssertion(playbackControl);
     await use(playbackAssertion);
+  },
+  shareModalAssertion: async ({ shareModal }, use) => {
+    const shareModalAssertion = new ShareModalAssertion(shareModal);
+    await use(shareModalAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

@@ -729,7 +729,7 @@ dialSharedWithMeTest(
           '',
         );
         await dataInjector.updateConversations([sharedConversation]);
-        await itemApiHelper.deleteConversation(sharedConversationToDelete);
+        await itemApiHelper.deleteEntity(sharedConversationToDelete);
       },
     );
 
@@ -950,10 +950,8 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Delete shared folder and conversation by main user',
       async () => {
-        await itemApiHelper.deleteConversation(
-          conversationInFolder.conversations[0],
-        );
-        await itemApiHelper.deleteConversation(conversation);
+        await itemApiHelper.deleteEntity(conversationInFolder.conversations[0]);
+        await itemApiHelper.deleteEntity(conversation);
       },
     );
 
