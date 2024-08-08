@@ -131,6 +131,7 @@ export class FolderAssertion {
     const folderEntityLocator = this.folder.getFolderEntity(
       folder.name,
       folderEntity.name,
+      folder.index,
       folderEntity.index,
     );
     expectedState === 'visible'
@@ -177,6 +178,8 @@ export class FolderAssertion {
         await this.folder.getFolderEntityCheckboxState(
           folder.name,
           folderEntity.name,
+          folder.index,
+          folderEntity.index,
         ),
         message,
       )

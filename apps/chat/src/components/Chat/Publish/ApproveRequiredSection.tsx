@@ -92,10 +92,6 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       ? PromptPublicationResources
       : null;
 
-  const isLeftSidePublication =
-    featureTypes.includes(FeatureType.Chat) ||
-    featureTypes.includes(FeatureType.File);
-
   return (
     <div className="flex flex-col gap-1">
       <div
@@ -118,14 +114,10 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
               publication.uploadStatus !== UploadStatus.LOADED) && (
               <ReviewDot
                 className={classNames(
-                  isLeftSidePublication
-                    ? 'group-hover:bg-accent-secondary-alpha'
-                    : 'group-hover:bg-accent-tertiary-alpha',
+                  'group-hover:bg-accent-primary-alpha',
                   selectedPublication?.url === publication.url &&
                     !selectedConversationIds.length &&
-                    (isLeftSidePublication
-                      ? 'bg-accent-secondary-alpha'
-                      : 'bg-accent-tertiary-alpha'),
+                    'bg-accent-primary-alpha',
                 )}
               />
             )}
@@ -232,8 +224,8 @@ export const ApproveRequiredSection = ({
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
       additionalNode={
-        publicationsToReviewCount && (
-          <span className="absolute right-4 flex h-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-[10px] font-semibold text-controls-disable">
+        !!publicationsToReviewCount && (
+          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-primary px-[2px] text-[10px] font-semibold text-controls-disable">
             {publicationsToReviewCount}
           </span>
         )

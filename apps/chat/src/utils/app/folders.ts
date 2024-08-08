@@ -389,9 +389,13 @@ export const getConversationAttachmentWithPath = <
   const attachments =
     'messages' in conversation
       ? (
-          (isReplay && conversation.replay?.replayUserMessagesStack) ||
           conversation.playback?.messagesStack ||
-          conversation.messages
+          (isReplay && conversation.replay?.replayUserMessagesStack
+            ? [
+                ...conversation.replay.replayUserMessagesStack,
+                ...conversation.messages,
+              ]
+            : conversation.messages)
         ).flatMap((message) => {
           const messageAttachments: Attachment[] =
             message.custom_content?.attachments || [];

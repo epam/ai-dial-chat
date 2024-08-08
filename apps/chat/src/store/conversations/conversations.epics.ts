@@ -40,6 +40,7 @@ import {
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
+  addPausedError,
   getConversationInfoFromId,
   getGeneratedConversationId,
   getNewConversationName,
@@ -67,7 +68,7 @@ import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
@@ -1573,14 +1574,23 @@ const cleanMessagesEpic: AppEpic = (action$, state$) =>
       selectedConversations: ConversationsSelectors.selectSelectedConversations(
         state$.value,
       ),
+      selectedModels: ConversationsSelectors.selectSelectedConversationsModels(
+        state$.value,
+      ),
     })),
-    switchMap(({ selectedConversations }) => {
+    switchMap(({ selectedConversations, selectedModels }) => {
       return concat(
         ...selectedConversations.map((conv) => {
           return of(
             ConversationsActions.updateConversation({
               id: conv.id,
-              values: { messages: filterUnfinishedStages(conv.messages) },
+              values: {
+                messages: addPausedError(
+                  conv,
+                  selectedModels,
+                  filterUnfinishedStages(conv.messages),
+                ),
+              },
             }),
           );
         }),
@@ -1858,7 +1868,7 @@ const hideChatbarEpic: AppEpic = (action$) =>
       // will be fixed with https://github.com/epam/ai-dial-chat/issues/792
     ),
     switchMap(() =>
-      isSmallScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
+      isMediumScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
     ),
   );
 
@@ -2171,18 +2181,23 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.uploadConversationsByIds.match),
     switchMap(({ payload }) => {
       return forkJoin({
-        uploadedConversations: zip(
-          payload.conversationIds.map((id) =>
-            ConversationService.getConversation(
-              ConversationsSelectors.selectConversation(state$.value, id)!,
-            ).pipe(
-              catchError((err) => {
-                console.error('The selected conversation was not found:', err);
-                return of(null);
-              }),
-            ),
-          ),
-        ),
+        uploadedConversations: payload.conversationIds.length
+          ? zip(
+              payload.conversationIds.map((id) =>
+                ConversationService.getConversation(
+                  ConversationsSelectors.selectConversation(state$.value, id)!,
+                ).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The selected conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                ),
+              ),
+            )
+          : of([]),
         setIds: of(new Set(payload.conversationIds as string[])),
         showLoader: of(payload.showLoader),
       });
@@ -2339,13 +2354,34 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
+const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ConversationsActions.uploadConversationsWithFolders.match),
-    switchMap(({ payload }) =>
+    filter(ConversationsActions.uploadFoldersIfNotLoaded.match),
+    mergeMap(({ payload }) => {
+      const folders = ConversationsSelectors.selectFolders(state$.value);
+      const notUploadedPaths = folders
+        .filter(
+          (folder) =>
+            payload.ids.includes(folder.id) &&
+            folder.status !== UploadStatus.LOADED,
+        )
+        .map((folder) => folder.id);
+
+      if (!notUploadedPaths.length) {
+        return EMPTY;
+      }
+
+      return of(ConversationsActions.uploadFolders({ ids: notUploadedPaths }));
+    }),
+  );
+
+const uploadFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadFolders.match),
+    mergeMap(({ payload }) =>
       zip(
-        payload.ids.map((ids) =>
-          ConversationService.getConversationsAndFolders(ids),
+        payload.ids.map((id) =>
+          ConversationService.getConversationsAndFolders(id),
         ),
       ).pipe(
         switchMap((foldersAndEntities) => {
@@ -2357,8 +2393,16 @@ const uploadConversationsWithFoldersEpic: AppEpic = (action$) =>
               ConversationsActions.uploadChildConversationsWithFoldersSuccess({
                 parentIds: payload.ids,
                 folders: folders,
-                conversations: conversations,
+                conversations,
               }),
+            ),
+            ...payload.ids.map((id) =>
+              of(
+                ConversationsActions.updateFolder({
+                  folderId: id,
+                  values: { status: UploadStatus.LOADED },
+                }),
+              ),
             ),
           );
         }),
@@ -2545,29 +2589,20 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$, state$) =>
+const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
         UIActions.openFolder.match(action) &&
         action.payload.featureType === FeatureType.Chat,
     ),
-    switchMap(({ payload }) => {
-      const folder = ConversationsSelectors.selectFolders(state$.value).find(
-        (f) => f.id === payload.id,
-      );
-      if (folder?.status === UploadStatus.LOADED) {
-        return EMPTY;
-      }
-
-      return concat(
-        of(
-          ConversationsActions.uploadConversationsWithFolders({
-            ids: [payload.id],
-          }),
-        ),
-      );
-    }),
+    switchMap(({ payload }) =>
+      of(
+        ConversationsActions.uploadFoldersIfNotLoaded({
+          ids: [payload.id],
+        }),
+      ),
+    ),
   );
 
 const getChartAttachmentEpic: AppEpic = (action$) =>
@@ -2752,7 +2787,8 @@ export const ConversationsEpics = combineEpics(
   duplicateConversationEpic,
   uploadConversationsByIdsEpic,
 
-  uploadConversationsWithFoldersEpic,
+  uploadFolderIfNotLoadedEpic,
+  uploadFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
   uploadConversationsWithContentRecursiveEpic,
   uploadConversationsFailEpic,

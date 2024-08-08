@@ -29,6 +29,7 @@ import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
+import { PlaybackAssertion } from '@/src/assertions/playbackAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
@@ -213,6 +214,7 @@ const dialTest = test.extend<
     apiAssertion: ApiAssertion;
     chatAssertion: ChatAssertion;
     recentEntitiesAssertion: RecentEntitiesAssertion;
+    playbackAssertion: PlaybackAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -729,6 +731,10 @@ const dialTest = test.extend<
   recentEntitiesAssertion: async ({ recentEntities }, use) => {
     const recentEntitiesAssertion = new RecentEntitiesAssertion(recentEntities);
     await use(recentEntitiesAssertion);
+  },
+  playbackAssertion: async ({ playbackControl }, use) => {
+    const playbackAssertion = new PlaybackAssertion(playbackControl);
+    await use(playbackAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

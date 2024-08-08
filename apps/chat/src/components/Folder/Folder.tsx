@@ -873,14 +873,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     }
                   >
                     {hasResourcesToReview && isSidePanelFolder && (
-                      <ReviewDot
-                        className={classNames(
-                          featureType === FeatureType.Chat &&
-                            'group-hover/folder-item:bg-accent-secondary-alpha',
-                          featureType === FeatureType.Prompt &&
-                            'group-hover/folder-item:bg-accent-tertiary-alpha',
-                        )}
-                      />
+                      <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
                     )}
                     <IconFolder
                       size={18}
@@ -920,7 +913,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
 
             <input
-              className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+              className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
               type="text"
               value={renameValue}
               onChange={(e) =>
@@ -1011,14 +1004,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     }
                   >
                     {hasResourcesToReview && isSidePanelFolder && (
-                      <ReviewDot
-                        className={classNames(
-                          featureType === FeatureType.Chat &&
-                            'group-hover/folder-item:bg-accent-secondary-alpha',
-                          featureType === FeatureType.Prompt &&
-                            'group-hover/folder-item:bg-accent-tertiary-alpha',
-                        )}
-                      />
+                      <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
                     )}
                     <IconFolder size={18} className="mr-1 text-secondary" />
                   </ShareIcon>

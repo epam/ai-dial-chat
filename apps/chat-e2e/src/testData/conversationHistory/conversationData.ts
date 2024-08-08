@@ -232,6 +232,7 @@ export class ConversationData extends FolderData {
         (m) => (m.model!.id = updatedModel.id),
       );
       defaultReplayConversation.replay!.replayAsIs = false;
+      defaultReplayConversation.selectedAddons = [];
     }
     return defaultReplayConversation;
   }
@@ -350,17 +351,17 @@ export class ConversationData extends FolderData {
 
   public prepareConversationsForNestedFolders(
     nestedFolders: FolderInterface[],
-    name?: string,
+    conversationNames?: Record<number, string>,
   ) {
     const nestedConversations: Conversation[] = [];
-    for (const item of nestedFolders) {
+    for (let i = 0; i < nestedFolders.length; i++) {
       const nestedConversation = this.prepareDefaultConversation(
         undefined,
-        name,
+        conversationNames ? conversationNames[i + 1] : undefined,
       );
       nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = item.id;
-      nestedConversation.id = `${item.id}/${nestedConversation.id}`;
+      nestedConversation.folderId = nestedFolders[i].id;
+      nestedConversation.id = `${nestedFolders[i].id}/${nestedConversation.id}`;
       this.resetData();
     }
     return nestedConversations;

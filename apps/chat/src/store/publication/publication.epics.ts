@@ -97,7 +97,7 @@ const publishEpic: AppEpic = (action$) =>
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.publishFail());
+          return of(PublicationActions.publishFail(err.message));
         }),
       );
     }),
@@ -106,8 +106,10 @@ const publishEpic: AppEpic = (action$) =>
 const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publishFail.match),
-    map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.publicationFailed)),
+    map(({ payload }) =>
+      UIActions.showErrorToast(
+        translate(payload ?? errorsMessages.publicationFailed),
+      ),
     ),
   );
 
@@ -860,7 +862,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.approvePublicationFail());
+          return of(PublicationActions.approvePublicationFail(err.message));
         }),
       ),
     ),
@@ -869,9 +871,9 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 const approvePublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.approvePublicationFail.match),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationApproveFailed),
+        translate(payload ?? errorsMessages.publicationApproveFailed),
       ),
     ),
   );
@@ -954,7 +956,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadRulesFail());
+          return of(PublicationActions.uploadRulesFail(err.message));
         }),
       ),
     ),
@@ -963,8 +965,10 @@ const uploadRulesEpic: AppEpic = (action$) =>
 const uploadRulesFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.uploadRulesFail.match),
-    map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.rulesUploadingFailed)),
+    map(({ payload }) =>
+      UIActions.showErrorToast(
+        translate(payload ?? errorsMessages.rulesUploadingFailed),
+      ),
     ),
   );
 
