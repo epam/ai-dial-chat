@@ -397,20 +397,24 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
   action$.pipe(
     filter(
       (action) =>
-        FilesActions.getFilesSuccess.match(action) ||
+        FilesActions.getFilesWithFolders.match(action) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
-    filter(() =>
-      SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat),
-    ),
+    filter(({ payload }) => {
+      return (
+        SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat) &&
+        !payload.id
+      );
+    }),
     switchMap(() => {
       return concat(
-        of(
-          ShareActions.getSharedListing({
-            featureType: FeatureType.File,
-            sharedWith: ShareRelations.me,
-          }),
-        ),
+        // Uncomment when shared section will be added to file manager
+        // of(
+        //   ShareActions.getSharedListing({
+        //     featureType: FeatureType.File,
+        //     sharedWith: ShareRelations.me,
+        //   }),
+        // ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
@@ -645,6 +649,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.featureType === FeatureType.File) {
         if (payload.sharedWith === ShareRelations.others) {
           const files = FilesSelectors.selectFiles(state$.value);
+
+          actions.push(
+            FilesActions.setSharedFileIds({
+              ids: payload.resources.entities.map((entity) => entity.id),
+            }),
+          );
 
           actions.push(
             ...(payload.resources.entities

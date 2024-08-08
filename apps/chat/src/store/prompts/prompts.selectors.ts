@@ -45,7 +45,7 @@ export const selectFilteredPrompts = createSelector(
     (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
       ignoreSectionFilter,
   ],
-  (prompts, filters, searchTerm?, ignoreSectionFilter?) => {
+  (prompts, filters, searchTerm, ignoreSectionFilter) => {
     return prompts.filter(
       (prompt) =>
         (!searchTerm || doesEntityContainSearchTerm(prompt, searchTerm)) &&

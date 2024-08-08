@@ -180,4 +180,17 @@ export class DataService {
       collapsedSections,
     );
   }
+
+  public static getFileCollapsedSections(): Observable<string[]> {
+    return BrowserStorage.getData(UIStorageKeys.FileCollapsedSections, []);
+  }
+
+  public static setFileCollapsedSections(
+    collapsedSections: string[],
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.FileCollapsedSections,
+      collapsedSections,
+    );
+  }
 }

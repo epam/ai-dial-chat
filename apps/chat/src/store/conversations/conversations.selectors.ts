@@ -77,7 +77,7 @@ export const selectFilteredConversations = createSelector(
     (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
       ignoreSectionFilter,
   ],
-  (conversations, filters, searchTerm?, ignoreSectionFilter?) => {
+  (conversations, filters, searchTerm, ignoreSectionFilter) => {
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||

@@ -282,7 +282,7 @@ export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
     .map((type) => `.${type}`);
 };
 
-export const getShortExtentionsListFromMimeType = (
+export const getShortExtensionsListFromMimeType = (
   mimeTypes: string[],
   t: TFunction,
 ) => {

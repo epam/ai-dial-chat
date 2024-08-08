@@ -20,11 +20,24 @@ import { triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { UploadStatus } from '@/src/types/common';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
+import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
+
+const initEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(FilesActions.init.match),
+    switchMap(() =>
+      of(
+        PublicationActions.uploadPublishedWithMeItems({
+          featureType: FeatureType.File,
+        }),
+      ),
+    ),
+  );
 
 const uploadFileEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -256,6 +269,8 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
   );
 
 export const FilesEpics = combineEpics(
+  initEpic,
+
   uploadFileEpic,
   getFileFoldersEpic,
   getFilesEpic,
