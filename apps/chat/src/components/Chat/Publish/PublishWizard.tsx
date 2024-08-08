@@ -300,7 +300,7 @@ export function PublishModal({
       entitiesArray.length === 0
     ) {
       dispatch(
-        UIActions.showErrorToast(t('There is no valid items to publish')),
+        UIActions.showErrorToast(t('There are no valid items to publish')),
       );
       onClose();
     }

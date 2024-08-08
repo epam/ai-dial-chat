@@ -18,7 +18,7 @@ export function PlaybackAttachments({ attachments }: PlaybackAttachmentsProps) {
   const links = getDialLinksFromAttachments(attachments);
 
   return (
-    <div className="relative rounded">
+    <div className="relative rounded" data-qa="attachment-container">
       <div className="flex max-h-[100px] flex-col gap-1 overflow-auto pt-3 md:grid md:grid-cols-3">
         <ChatInputAttachments files={files} folders={folders} links={links} />
       </div>
