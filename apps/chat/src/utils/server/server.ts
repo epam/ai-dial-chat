@@ -3,7 +3,7 @@ import { NextApiRequest } from 'next';
 import { constructPath } from '../app/file';
 import { ApiUtils } from './api';
 
-import { Response } from 'node-fetch';
+import { Response as NodeFetchResponse } from 'node-fetch';
 
 export class ServerUtils {
   public static getEntityTypeFromPath = (
@@ -20,16 +20,18 @@ export class ServerUtils {
     );
 
   public static getErrorMessageFromResponse = async (
-    res: Response,
+    res: Response | NodeFetchResponse,
   ): Promise<string | null> => {
     try {
-      return (await res.json()) as string;
-    } catch {
+      const text = await res.text();
       try {
-        return await res?.text();
+        const json = JSON.parse(text);
+        return typeof json === 'string' ? json : JSON.stringify(json);
       } catch {
-        return null;
+        return text;
       }
+    } catch {
+      return null;
     }
   };
 }
