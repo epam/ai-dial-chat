@@ -5,6 +5,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useChatSelectors } from '@/src/components/Chat/hooks/useChatSelectors';
+import { useChatViewAutoScroll } from '@/src/components/Chat/hooks/useChatViewAutoScroll';
+import { useChatViewSelectors } from '@/src/components/Chat/hooks/useChatViewSelectors';
+
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
@@ -20,23 +24,10 @@ import {
 import { EntityType, UploadStatus } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import {
-  AddonsActions,
-  AddonsSelectors,
-} from '@/src/store/addons/addons.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { AddonsActions } from '@/src/store/addons/addons.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch } from '@/src/store/hooks';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
@@ -60,58 +51,34 @@ import { PublicationHandler } from './Publish/PublicationHandler';
 import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
-import throttle from 'lodash/throttle';
-
-const scrollThrottlingTimeout = 250;
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
-  const appName = useAppSelector(SettingsSelectors.selectAppName);
-  const models = useAppSelector(ModelsSelectors.selectModels);
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const modelError = useAppSelector(ModelsSelectors.selectModelsError);
-  const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
-  const addons = useAppSelector(AddonsSelectors.selectAddons);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-  const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
-  const selectedConversationsIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
-  );
-  const messageIsStreaming = useAppSelector(
-    ConversationsSelectors.selectIsConversationsStreaming,
-  );
-  const conversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
-  const isReplay = useAppSelector(
-    ConversationsSelectors.selectIsReplaySelectedConversations,
-  );
-  const isReplayPaused = useAppSelector(
-    ConversationsSelectors.selectIsReplayPaused,
-  );
-  const isReplayRequiresVariables = useAppSelector(
-    ConversationsSelectors.selectIsReplayRequiresVariables,
-  );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
-  );
-  const isPlayback = useAppSelector(
-    ConversationsSelectors.selectIsPlaybackSelectedConversations,
-  );
-  const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const {
+    appName,
+    models,
+    modelsMap,
+    modelError,
+    isModelsLoaded,
+    addons,
+    addonsMap,
+    isCompareMode,
+    selectedConversationsIds,
+    selectedConversations,
+    messageIsStreaming,
+    conversations,
+    prompts,
+    enabledFeatures,
+    isReplay,
+    isReplayPaused,
+    isReplayRequiresVariables,
+    isExternal,
+    isPlayback,
+    isAnyMenuOpen,
+    isIsolatedView,
+  } = useChatViewSelectors();
 
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
-  const [showScrollDownButton, setShowScrollDownButton] =
-    useState<boolean>(false);
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isShowChatSettings, setIsShowChatSettings] = useState(false);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
@@ -126,8 +93,20 @@ export const ChatView = memo(() => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextMessageBoxRef = useRef<HTMLDivElement | null>(null);
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
-  const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const lastScrollTop = useRef(0);
+
+  const {
+    showScrollDownButton,
+    setShowScrollDownButton,
+    handleScroll,
+    handleScrollDown,
+    setAutoScroll,
+    scrollToContainerHeight,
+  } = useChatViewAutoScroll(
+    chatContainerRef,
+    chatMessagesRef,
+    mergedMessages.length,
+    messageIsStreaming,
+  );
 
   const showReplayControls = useMemo(() => {
     return (
@@ -196,62 +175,6 @@ export const ChatView = memo(() => {
     [dispatch],
   );
 
-  const setAutoScroll = () => {
-    clearTimeout(disableAutoScrollTimeoutRef.current);
-    setAutoScrollEnabled(true);
-    setShowScrollDownButton(false);
-  };
-
-  const scrollDown = useCallback(
-    (force = false) => {
-      if (autoScrollEnabled || force) {
-        setAutoScroll();
-        chatContainerRef.current?.scrollTo({
-          top: chatContainerRef.current.scrollHeight,
-        });
-      }
-    },
-    [autoScrollEnabled],
-  );
-
-  useEffect(() => {
-    scrollDown();
-  }, [scrollDown]);
-
-  const throttledScrollDown = throttle(scrollDown, scrollThrottlingTimeout);
-
-  useEffect(() => {
-    throttledScrollDown();
-  }, [conversations, throttledScrollDown]);
-
-  const handleScrollDown = useCallback(() => {
-    scrollDown(true);
-  }, [scrollDown]);
-
-  const handleScroll = useCallback(() => {
-    if (chatContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } =
-        chatContainerRef.current;
-      const bottomTolerance = 25;
-
-      if (lastScrollTop.current > scrollTop) {
-        setAutoScrollEnabled(false);
-        setShowScrollDownButton(true);
-      } else if (scrollTop + clientHeight < scrollHeight - bottomTolerance) {
-        clearTimeout(disableAutoScrollTimeoutRef.current);
-
-        disableAutoScrollTimeoutRef.current = setTimeout(() => {
-          setAutoScrollEnabled(false);
-          setShowScrollDownButton(true);
-        }, scrollThrottlingTimeout);
-      } else {
-        setAutoScroll();
-      }
-
-      lastScrollTop.current = scrollTop;
-    }
-  }, []);
-
   useEffect(() => {
     const lastMergedMessages = mergedMessages.length
       ? mergedMessages[mergedMessages.length - 1]
@@ -316,7 +239,7 @@ export const ChatView = memo(() => {
     } else {
       handleScroll();
     }
-  }, [handleScroll, selectedConversations]);
+  }, [handleScroll, selectedConversations, setShowScrollDownButton]);
 
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
@@ -412,14 +335,11 @@ export const ChatView = memo(() => {
 
   useEffect(() => {
     if (!selectedConversationsIds.some((id) => prevSelectedIds.includes(id))) {
-      setAutoScroll();
-      chatContainerRef.current?.scrollTo({
-        top: chatContainerRef.current.scrollHeight,
-      });
+      setAutoScroll(true);
       setPrevSelectedIds(selectedConversationsIds);
       setIsShowChatSettings(false);
     }
-  }, [prevSelectedIds, selectedConversationsIds]);
+  }, [prevSelectedIds, selectedConversationsIds, setAutoScroll]);
 
   const handleOnChangeAddon = useCallback(
     (conversation: Conversation, addonId: string) => {
@@ -527,13 +447,8 @@ export const ChatView = memo(() => {
       }),
     );
 
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTo({
-        top: chatContainerRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
-  }, [dispatch, selectedConversations]);
+    scrollToContainerHeight('smooth');
+  }, [dispatch, scrollToContainerHeight, selectedConversations]);
 
   const onEditMessage = useCallback(
     (editedMessage: Message, index: number) => {
@@ -581,16 +496,6 @@ export const ChatView = memo(() => {
     },
     [],
   );
-
-  const setChatContainerRef = useCallback((ref: HTMLDivElement | null) => {
-    chatContainerRef.current = ref;
-
-    if (!ref) {
-      return;
-    }
-
-    ref.scrollTo({ top: ref.scrollHeight });
-  }, []);
 
   const onChatInputResize = useCallback((inputHeight: number) => {
     setInputHeight(inputHeight);
@@ -716,7 +621,7 @@ export const ChatView = memo(() => {
                         handleScroll();
                       }
                     }}
-                    ref={setChatContainerRef}
+                    ref={chatContainerRef}
                     className="h-full overflow-x-hidden"
                     data-qa="scrollable-area"
                   >
@@ -961,25 +866,15 @@ ChatView.displayName = 'ChatView';
 export function Chat() {
   const { t } = useTranslation(Translation.Chat);
 
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
-  );
-  const selectedConversationsIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
-  );
-  const modelIsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
-  const isolatedModelId = useAppSelector(
-    SettingsSelectors.selectIsolatedModelId,
-  );
-  const activeModel = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, isolatedModelId || ''),
-  );
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
+  const {
+    areSelectedConversationsLoaded,
+    selectedConversationsIds,
+    selectedConversations,
+    modelIsLoaded,
+    isolatedModelId,
+    activeModel,
+    selectedPublication,
+  } = useChatSelectors();
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
