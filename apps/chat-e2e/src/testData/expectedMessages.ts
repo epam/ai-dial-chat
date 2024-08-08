@@ -209,6 +209,8 @@ export enum ExpectedMessages {
   sharedInvitationLinkIsUnique = 'Shared invitation link is unique',
   shareConversationLinkIsValid = 'Share conversation link is valid',
   shareInviteAcceptanceErrorShown = 'Share invite acceptance error toast is shown',
+  entityIsNotShared = 'Entity is not shared',
+  entityIsShared = 'Entity is shared',
   conversationIsNotShared = 'Conversation is not shared',
   conversationIsShared = 'Conversation is shared',
   folderIsNotShared = 'Folder is not shared',
