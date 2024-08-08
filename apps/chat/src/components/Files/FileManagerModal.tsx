@@ -377,6 +377,7 @@ export const FileManagerModal = ({
             const parentFolderIds = getParentFolderIdsFromFolderId(data)
               .slice(0, -1)
               .map((fid) => `${fid}/`);
+
             if (
               selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
             ) {
@@ -385,7 +386,7 @@ export const FileManagerModal = ({
                   oldFileIds.concat(
                     files
                       .filter((file) =>
-                        selectedFolderIds.some((parentId) =>
+                        selectedNoDeleteFilesIds.some((parentId) =>
                           file.id.startsWith(parentId),
                         ),
                       )
@@ -450,7 +451,7 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [dispatch, files, folders, selectedFolderIds],
+    [dispatch, files, folders, selectedFolderIds, selectedNoDeleteFilesIds],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -641,7 +642,16 @@ export const FileManagerModal = ({
                           canAttachFiles:
                             canAttachFiles || forceShowSelectCheckBox,
                         }}
-                        itemComponent={FileItem}
+                        itemComponent={(props) => (
+                          <FileItem
+                            {...props}
+                            onEvent={(eventId, data) =>
+                              handleItemCallback(eventId, data, {
+                                deleteUnavailable: true,
+                              })
+                            }
+                          />
+                        )}
                         onClickFolder={handleFolderSelect}
                         onAddFolder={handleAddFolder}
                         onFileUpload={handleUploadFile}
