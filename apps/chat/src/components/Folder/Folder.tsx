@@ -1050,7 +1050,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
                     isSidePanelFolder={isSidePanelFolder}
-                    onSelect={onSelectFolder && onSelect}
+                    onSelect={undefined}
                   />
                 </div>
               )}
