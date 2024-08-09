@@ -570,10 +570,10 @@ dialTest(
       async () => {
         nestedFolders = conversationData.prepareNestedFolder(nestedFolderLevel);
         nestedConversations =
-          conversationData.prepareConversationsForNestedFolders(
-            nestedFolders,
-            duplicatedConversationName,
-          );
+          conversationData.prepareConversationsForNestedFolders(nestedFolders, {
+            1: duplicatedConversationName,
+            2: duplicatedConversationName,
+          });
 
         await dataInjector.createConversations(
           nestedConversations,

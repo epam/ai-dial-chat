@@ -676,27 +676,14 @@ const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadFoldersEpic: AppEpic = (action$, state$) =>
+const uploadFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.uploadFolders.match),
-    mergeMap(({ payload }) => {
-      const folders = PromptsSelectors.selectFolders(state$.value);
-      const notUploadedPaths = folders
-        .filter(
-          (folder) =>
-            payload.ids.includes(folder.id) &&
-            folder.status !== UploadStatus.LOADED,
-        )
-        .map((folder) => folder.id);
-
-      if (!notUploadedPaths.length) {
-        return EMPTY;
-      }
-
-      return zip(
+    mergeMap(({ payload }) =>
+      zip(
         payload.ids.map((path) => PromptService.getPromptsAndFolders(path)),
       ).pipe(
-        mergeMap((foldersAndEntities) => {
+        switchMap((foldersAndEntities) => {
           const folders = foldersAndEntities.flatMap((f) => f.folders);
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
 
@@ -726,8 +713,8 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
             ),
           );
         }),
-      );
-    }),
+      ),
+    ),
   );
 
 export const uploadPromptEpic: AppEpic = (action$, state$) =>

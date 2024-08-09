@@ -49,7 +49,7 @@ export function PublicationControlsView<
     ),
   );
   const publicationIdx = resourcesToReview.findIndex(
-    (r) => r.reviewUrl === resourceToReview.reviewUrl,
+    (res) => res.reviewUrl === resourceToReview.reviewUrl,
   );
 
   const unselectPrompt = useCallback(() => {
@@ -62,6 +62,11 @@ export function PublicationControlsView<
       PromptsActions.setIsEditModalOpen({
         isOpen: false,
         isPreview: false,
+      }),
+    );
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [],
       }),
     );
   }, [dispatch]);

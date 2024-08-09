@@ -40,6 +40,7 @@ import {
   updateEntitiesFoldersAndIds,
 } from '@/src/utils/app/common';
 import {
+  addPausedError,
   getConversationInfoFromId,
   getGeneratedConversationId,
   getNewConversationName,
@@ -67,7 +68,7 @@ import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
@@ -1573,14 +1574,23 @@ const cleanMessagesEpic: AppEpic = (action$, state$) =>
       selectedConversations: ConversationsSelectors.selectSelectedConversations(
         state$.value,
       ),
+      selectedModels: ConversationsSelectors.selectSelectedConversationsModels(
+        state$.value,
+      ),
     })),
-    switchMap(({ selectedConversations }) => {
+    switchMap(({ selectedConversations, selectedModels }) => {
       return concat(
         ...selectedConversations.map((conv) => {
           return of(
             ConversationsActions.updateConversation({
               id: conv.id,
-              values: { messages: filterUnfinishedStages(conv.messages) },
+              values: {
+                messages: addPausedError(
+                  conv,
+                  selectedModels,
+                  filterUnfinishedStages(conv.messages),
+                ),
+              },
             }),
           );
         }),
@@ -1858,7 +1868,7 @@ const hideChatbarEpic: AppEpic = (action$) =>
       // will be fixed with https://github.com/epam/ai-dial-chat/issues/792
     ),
     switchMap(() =>
-      isSmallScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
+      isMediumScreen() ? of(UIActions.setShowChatbar(false)) : EMPTY,
     ),
   );
 

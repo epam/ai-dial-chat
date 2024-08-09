@@ -13,7 +13,9 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isMediumScreen } from '@/src/utils/app/mobile';
 import { hasDragEventEntityData } from '@/src/utils/app/move';
+import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -25,10 +27,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  CENTRAL_CHAT_MIN_WIDTH,
-  DESKTOP_BREAKPOINT,
-} from '@/src/constants/chat';
+import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
@@ -85,6 +84,9 @@ const Sidebar = <T,>({
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
 
+  const isChatbarOpen = useAppSelector(UISelectors.selectShowChatbar);
+  const isPromptbarOpen = useAppSelector(UISelectors.selectShowPromptbar);
+
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
@@ -112,15 +114,34 @@ const Sidebar = <T,>({
     isResizing ? 'xl:visible' : 'xl:invisible',
   );
 
-  const SIDEBAR_WIDTH = useMemo(
+  const sidebarWidth = useMemo(
     () => (isLeftSidebar ? chatbarWidth : promptbarWidth),
     [isLeftSidebar, chatbarWidth, promptbarWidth],
   );
 
+  const centralChatMinWidth =
+    windowWidth && isMediumScreen()
+      ? windowWidth / 12 // windowWidth / 12 = 8% of the windowWidth
+      : CENTRAL_CHAT_MIN_WIDTH; // fallback min width
+
+  const oppositeSidebarMinWidth = useMemo(
+    () =>
+      (isLeftSidebar && isPromptbarOpen) || (!isLeftSidebar && isChatbarOpen)
+        ? SIDEBAR_MIN_WIDTH
+        : 0,
+    [isChatbarOpen, isLeftSidebar, isPromptbarOpen],
+  );
+
   const maxWidth = useMemo(() => {
     if (!windowWidth) return;
-    return windowWidth - SIDEBAR_MIN_WIDTH - CENTRAL_CHAT_MIN_WIDTH;
-  }, [windowWidth]);
+    return Math.round(
+      getNewSidebarWidth({
+        windowWidth,
+        oppositeSidebarWidth: oppositeSidebarMinWidth,
+        centralChatMinWidth,
+      }),
+    );
+  }, [windowWidth, centralChatMinWidth, oppositeSidebarMinWidth]);
 
   const SIDEBAR_HEIGHT = 'auto';
 
@@ -161,7 +182,7 @@ const Sidebar = <T,>({
   }, []);
 
   const onResize: ResizeCallback = useCallback(() => {
-    if (!windowWidth || windowWidth < DESKTOP_BREAKPOINT) return;
+    if (!windowWidth) return;
 
     const sidebarCurrentWidth =
       sideBarElementRef.current?.resizable?.getClientRects()[0].width;
@@ -169,25 +190,35 @@ const Sidebar = <T,>({
       sidebarCurrentWidth && Math.round(sidebarCurrentWidth);
 
     const width = resizableWidth ?? SIDEBAR_MIN_WIDTH;
-
-    const sidebarAndCentralWidth = width + CENTRAL_CHAT_MIN_WIDTH;
+    const sidebarAndCentralWidth = width + centralChatMinWidth;
     const maxOppositeSidebarWidth = windowWidth - sidebarAndCentralWidth;
+    const maxSafeOppositeSidebarWidth =
+      maxOppositeSidebarWidth > SIDEBAR_MIN_WIDTH
+        ? maxOppositeSidebarWidth
+        : SIDEBAR_MIN_WIDTH;
 
-    const centralChatWidth = (sidebarWidth: number | undefined) =>
-      windowWidth - (width + (sidebarWidth ?? SIDEBAR_MIN_WIDTH));
+    if (!isMediumScreen()) {
+      if (
+        isLeftSidebar &&
+        centralChatWidth({
+          oppositeSidebarWidth: promptbarWidth,
+          windowWidth,
+          currentSidebarWidth: width,
+        }) <= centralChatMinWidth
+      ) {
+        dispatch(UIActions.setPromptbarWidth(maxSafeOppositeSidebarWidth));
+      }
 
-    if (
-      isLeftSidebar &&
-      centralChatWidth(promptbarWidth) <= CENTRAL_CHAT_MIN_WIDTH
-    ) {
-      dispatch(UIActions.setPromptbarWidth(maxOppositeSidebarWidth));
-    }
-
-    if (
-      isRightSidebar &&
-      centralChatWidth(chatbarWidth) <= CENTRAL_CHAT_MIN_WIDTH
-    ) {
-      dispatch(UIActions.setChatbarWidth(maxOppositeSidebarWidth));
+      if (
+        isRightSidebar &&
+        centralChatWidth({
+          oppositeSidebarWidth: chatbarWidth,
+          windowWidth,
+          currentSidebarWidth: width,
+        }) <= centralChatMinWidth
+      ) {
+        dispatch(UIActions.setChatbarWidth(maxSafeOppositeSidebarWidth));
+      }
     }
   }, [
     dispatch,
@@ -196,17 +227,18 @@ const Sidebar = <T,>({
     chatbarWidth,
     promptbarWidth,
     windowWidth,
+    centralChatMinWidth,
   ]);
 
   const onResizeStop = useCallback(() => {
     setIsResizing(false);
-    const resizibleWidth =
+    const resizableWidth =
       sideBarElementRef.current?.resizable?.getClientRects()[0].width &&
       Math.round(
         sideBarElementRef.current?.resizable?.getClientRects()[0].width,
       );
 
-    const width = resizibleWidth ?? SIDEBAR_MIN_WIDTH;
+    const width = resizableWidth ?? SIDEBAR_MIN_WIDTH;
 
     if (isLeftSidebar) {
       dispatch(UIActions.setChatbarWidth(width));
@@ -220,14 +252,14 @@ const Sidebar = <T,>({
   const resizeSettings: ResizableProps = useMemo(() => {
     return {
       defaultSize: {
-        width: SIDEBAR_WIDTH ?? SIDEBAR_MIN_WIDTH,
+        width: sidebarWidth ?? SIDEBAR_MIN_WIDTH,
         height: SIDEBAR_HEIGHT,
       },
       minWidth: SIDEBAR_MIN_WIDTH,
       maxWidth,
 
       size: {
-        width: SIDEBAR_WIDTH ?? SIDEBAR_MIN_WIDTH,
+        width: sidebarWidth ?? SIDEBAR_MIN_WIDTH,
         height: SIDEBAR_HEIGHT,
       },
       enable: {
@@ -261,7 +293,7 @@ const Sidebar = <T,>({
     isLeftSidebar,
     isRightSidebar,
     SIDEBAR_HEIGHT,
-    SIDEBAR_WIDTH,
+    sidebarWidth,
     maxWidth,
   ]);
 

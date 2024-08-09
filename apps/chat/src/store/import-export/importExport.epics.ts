@@ -430,29 +430,25 @@ const importPromptsEpic: AppEpic = (action$) =>
             },
           );
 
-          if (!existedImportNamesPrompts.length) {
-            return of(
-              ImportExportActions.uploadImportedPrompts({
-                itemsToUpload: nonExistedImportNamesPrompts,
-              }),
-            );
-          }
-
-          if (!nonExistedImportNamesPrompts.length) {
-            return of(
-              ImportExportActions.showReplaceDialog({
-                duplicatedItems: existedImportNamesPrompts,
-                featureType: FeatureType.Prompt,
-              }),
-            );
-          }
-
           return concat(
-            of(
-              ImportExportActions.showReplaceDialog({
-                duplicatedItems: existedImportNamesPrompts,
-                featureType: FeatureType.Prompt,
-              }),
+            iif(
+              () => !!existedImportNamesPrompts.length,
+              of(
+                ImportExportActions.showReplaceDialog({
+                  duplicatedItems: existedImportNamesPrompts,
+                  featureType: FeatureType.Prompt,
+                }),
+              ),
+              EMPTY,
+            ),
+            iif(
+              () => !!nonExistedImportNamesPrompts.length,
+              of(
+                ImportExportActions.uploadImportedPrompts({
+                  itemsToUpload: nonExistedImportNamesPrompts,
+                }),
+              ),
+              EMPTY,
             ),
           );
         }),
@@ -597,7 +593,6 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                     folders: promptsFolders,
                   }),
                 ),
-
                 iif(
                   () => !isShowReplaceDialog,
                   concat(
@@ -1392,7 +1387,6 @@ const resetStateEpic: AppEpic = (action$) =>
         ImportExportActions.importFail.match(action) ||
         ImportExportActions.importStop.match(action) ||
         ImportExportActions.importPromptsFail.match(action) ||
-        PromptsActions.importPromptsSuccess.match(action) ||
         PromptsActions.initFoldersAndPromptsSuccess.match(action),
     ),
     switchMap(() => {
