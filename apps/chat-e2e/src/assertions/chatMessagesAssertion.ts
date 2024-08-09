@@ -119,4 +119,26 @@ export class ChatMessagesAssertion {
       .soft(messagesCount.length, ExpectedMessages.messageCountIsCorrect)
       .toBe(expectedCount);
   }
+
+  public async assertMessageAttachmentUrl(
+    message: string | number,
+    expectedUrl: string | null,
+  ) {
+    const attachmentUrl =
+      await this.chatMessages.getChatMessageAttachmentUrl(message);
+    expect
+      .soft(attachmentUrl, ExpectedMessages.attachmentUrlIsValid)
+      .toContain(expectedUrl);
+  }
+
+  public async assertMessageDownloadUrl(
+    message: string | number,
+    expectedUrl: string | null,
+  ) {
+    const downloadUrl =
+      await this.chatMessages.getChatMessageDownloadUrl(message);
+    expect
+      .soft(downloadUrl, ExpectedMessages.attachmentUrlIsValid)
+      .toContain(expectedUrl);
+  }
 }

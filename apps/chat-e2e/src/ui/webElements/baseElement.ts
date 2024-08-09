@@ -4,6 +4,8 @@ import { ScrollState } from '@/src/testData';
 import { Locator, Page } from '@playwright/test';
 import path from 'path';
 
+export const elementIndexExceptionError = 'Element index should start from 1';
+
 export interface EntityIcon {
   entityName: string;
   icon: string;
@@ -40,6 +42,9 @@ export class BaseElement {
     text: string | RegExp,
     index?: number,
   ): Locator {
+    if (index === 0) {
+      throw new Error(elementIndexExceptionError);
+    }
     return this.rootLocator
       .filter({ hasText: text })
       .nth(index ? index - 1 : 0);

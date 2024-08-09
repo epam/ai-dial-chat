@@ -39,14 +39,12 @@ export const CustomLogoSelect = ({
 
   return (
     <div className="flex items-center gap-5">
-      {hasLeftText ? (
+      {hasLeftText && (
         <div className="basis-1/3 md:basis-1/4">{t('Custom logo')}</div>
-      ) : (
-        ''
       )}
       <div
         className={classNames(
-          'flex h-[38px] max-w-[331px] grow  items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary',
+          'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4',
           className,
         )}
       >
