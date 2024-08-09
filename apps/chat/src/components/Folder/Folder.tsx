@@ -788,7 +788,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
   }, [currentFolder.id, dispatch, featureType, searchTerm]);
 
-  const isInCurrentPublication =
+  const isPartOfSelectedPublication =
     !additionalItemData?.publicationUrl ||
     selectedPublicationUrl === additionalItemData?.publicationUrl;
 
@@ -801,7 +801,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       !isSelectAlwaysVisible) ||
     (allItems === undefined &&
       highlightedFolders?.includes(currentFolder.id) &&
-      isInCurrentPublication);
+      isPartOfSelectedPublication);
 
   const hideContextMenu =
     (canSelectFolders && featureType !== FeatureType.File) ||
@@ -1056,7 +1056,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   isNameOrPathInvalid
                     ? 'text-secondary'
                     : highlightedFolders?.includes(currentFolder.id) &&
-                        isInCurrentPublication &&
+                        isPartOfSelectedPublication &&
                         featureType &&
                         !canSelectFolders
                       ? 'text-accent-primary'

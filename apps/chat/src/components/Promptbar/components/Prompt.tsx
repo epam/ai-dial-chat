@@ -91,13 +91,13 @@ export const PromptComponent = ({
     PublicationSelectors.selectSelectedPublicationUrl,
   );
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
-  const isInCurrentPublication =
+  const isPartOfSelectedPublication =
     !additionalItemData?.publicationUrl ||
     selectedPublicationUrl === additionalItemData?.publicationUrl;
   const isSelected =
     selectedPromptId === prompt.id &&
     isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
-    isInCurrentPublication;
+    isPartOfSelectedPublication;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
