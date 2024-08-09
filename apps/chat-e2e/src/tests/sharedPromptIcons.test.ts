@@ -317,24 +317,20 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-3159');
     let prompt: Prompt;
-    let promptName: string;
+    let recreatedPrompt: Prompt;
 
     await dialTest.step(
       'Prepare shared prompt, delete it and recreate with the same name and content',
       async () => {
-        promptName = GeneratorUtil.randomString(7);
-        const promptContent = GeneratorUtil.randomString(7);
-        prompt = promptData.preparePrompt(promptContent, undefined, promptName);
-        promptData.resetData();
+        prompt = promptData.prepareDefaultPrompt();
+        recreatedPrompt = JSON.parse(JSON.stringify(prompt));
         await dataInjector.createPrompts([prompt]);
 
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([prompt]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         await itemApiHelper.deleteEntity(prompt);
-
-        prompt = promptData.preparePrompt(promptContent, undefined, promptName);
-        await dataInjector.createPrompts([prompt]);
+        await dataInjector.createPrompts([recreatedPrompt]);
       },
     );
 
@@ -344,11 +340,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await promptAssertion.assertEntityState(
-          { name: promptName },
+          { name: recreatedPrompt.name },
           'visible',
         );
         await promptAssertion.assertEntityArrowIconState(
-          { name: promptName },
+          { name: recreatedPrompt.name },
           'hidden',
         );
       },
