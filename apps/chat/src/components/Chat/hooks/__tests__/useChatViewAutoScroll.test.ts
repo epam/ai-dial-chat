@@ -94,7 +94,7 @@ describe('useChatViewAutoScroll', () => {
       useChatViewAutoScroll(chatContainerRef, chatMessagesRef, 0, false),
     );
 
-    result.current.scrollToContainerHeight();
+    result.current.handleScrollToContainerHeight();
 
     expect(chatContainerRef.current!.scrollTo).toHaveBeenCalledWith({
       top: chatContainerRef.current!.scrollHeight,

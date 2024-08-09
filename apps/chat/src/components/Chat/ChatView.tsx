@@ -66,7 +66,7 @@ export const ChatView = memo(() => {
     isIsolatedView,
   } = useChatViewSelectors();
 
-  const [isShowChatSettings, setIsShowChatSettings] = useState(false);
+  const [showChatSettings, setShowChatSettings] = useState(false);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
 
@@ -76,12 +76,12 @@ export const ChatView = memo(() => {
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
 
   const {
-    showScrollDownButton,
-    setShowScrollDownButton,
     handleScroll,
     handleScrollDown,
+    handleScrollToContainerHeight,
+    showScrollDownButton,
+    setShowScrollDownButton,
     setAutoScroll,
-    scrollToContainerHeight,
   } = useChatViewAutoScroll(
     chatContainerRef,
     chatMessagesRef,
@@ -130,14 +130,6 @@ export const ChatView = memo(() => {
       selectedConversationsTemporarySettings.current,
     );
   }, [applyChatSettings, selectedConversations]);
-
-  const showReplayControls = useMemo(() => {
-    return (
-      isReplay &&
-      !messageIsStreaming &&
-      (isReplayPaused || !!isReplayRequiresVariables)
-    );
-  }, [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming]);
 
   const isNotEmptyConversations =
     isReplayRequiresVariables ||
@@ -192,6 +184,17 @@ export const ChatView = memo(() => {
     [rateMessage],
   );
 
+  const handleSetShowSettings = useCallback(
+    (isShow: boolean) => {
+      if (isShow) {
+        dispatch(ModelsActions.getModels());
+        dispatch(AddonsActions.getAddons());
+      }
+      setShowChatSettings(isShow);
+    },
+    [dispatch],
+  );
+
   const handleClearConversation = useCallback(
     (conversation: Conversation) => {
       if (conversation) {
@@ -211,6 +214,16 @@ export const ChatView = memo(() => {
     },
     [updateConversation, modelsMap],
   );
+
+  const handleContainerScroll = useCallback(() => {
+    if (
+      selectedConversations.some(
+        (conv) => !!conv.messages.find((m) => m.role !== Role.Assistant),
+      )
+    ) {
+      handleScroll();
+    }
+  }, [handleScroll, selectedConversations]);
 
   const handleSelectAssistantSubModel = useCallback(
     (conversation: Conversation, modelId: string) => {
@@ -289,8 +302,8 @@ export const ChatView = memo(() => {
       selectedConversations[0].messages.length - lastUserMessageIndex,
       0,
     );
-    scrollToContainerHeight('smooth');
-  }, [sendMessages, scrollToContainerHeight, selectedConversations]);
+    handleScrollToContainerHeight('smooth');
+  }, [sendMessages, handleScrollToContainerHeight, selectedConversations]);
 
   const onEditMessage = useCallback(
     (editedMessage: Message, index: number) => {
@@ -314,21 +327,55 @@ export const ChatView = memo(() => {
     (conversation: Conversation, args: ConversationsTemporarySettings) => {
       selectedConversationsTemporarySettings.current[conversation.id] = args;
     },
-    [],
+    [selectedConversationsTemporarySettings],
   );
 
   const onChatInputResize = useCallback((inputHeight: number) => {
     setInputHeight(inputHeight);
   }, []);
 
+  const showChatHeader = useCallback(
+    (conv: Conversation) =>
+      conv.messages.length !== 0 && enabledFeatures.has(Feature.TopSettings),
+    [enabledFeatures],
+  );
+  const showFloatingOverlay =
+    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
   const showLastMessageRegenerate =
     !isReplay &&
     !isPlayback &&
     !isExternal &&
     !messageIsStreaming &&
     !isLastMessageError;
-  const showFloatingOverlay =
-    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
+  const showPublicationControls =
+    isExternal && selectedConversations.length === 1;
+  const showNotAllowedModel = !isPlayback && notAllowedType;
+  const showChatCompare = isCompareMode && selectedConversations.length < 2;
+  const showChatInput = (!isReplay || isNotEmptyConversations) && !isExternal;
+  const showPlaybackControls = isPlayback;
+  const showReplayControls = useMemo(
+    () =>
+      isReplay &&
+      !messageIsStreaming &&
+      (isReplayPaused || !!isReplayRequiresVariables),
+    [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming],
+  );
+  const showModelSelect = useMemo(
+    () =>
+      enabledFeatures.has(Feature.TopChatModelSettings) &&
+      !isPlayback &&
+      !isExternal,
+    [enabledFeatures, isPlayback, isExternal],
+  );
+  const showClearConversations = useMemo(
+    () =>
+      enabledFeatures.has(Feature.TopClearConversation) &&
+      !isPlayback &&
+      !isReplay &&
+      !messageIsStreaming &&
+      !isExternal,
+    [enabledFeatures, isExternal, isPlayback, isReplay, messageIsStreaming],
+  );
 
   return (
     <div
@@ -376,67 +423,33 @@ export const ChatView = memo(() => {
                             : 'w-full',
                         )}
                       >
-                        {conv.messages.length !== 0 &&
-                          enabledFeatures.has(Feature.TopSettings) && (
-                            <div className="z-10 flex flex-col">
-                              <ChatHeader
-                                conversation={conv}
-                                isCompareMode={isCompareMode}
-                                isShowChatInfo={enabledFeatures.has(
-                                  Feature.TopChatInfo,
-                                )}
-                                isShowClearConversation={
-                                  enabledFeatures.has(
-                                    Feature.TopClearConversation,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isReplay &&
-                                  !messageIsStreaming &&
-                                  !isExternal
-                                }
-                                isShowModelSelect={
-                                  enabledFeatures.has(
-                                    Feature.TopChatModelSettings,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isExternal
-                                }
-                                isShowSettings={isShowChatSettings}
-                                setShowSettings={(isShow) => {
-                                  if (isShow) {
-                                    dispatch(ModelsActions.getModels());
-                                    dispatch(AddonsActions.getAddons());
-                                  }
-                                  setIsShowChatSettings(isShow);
-                                }}
-                                selectedConversationIds={
-                                  selectedConversationsIds
-                                }
-                                onClearConversation={() =>
-                                  handleClearConversation(conv)
-                                }
-                                onUnselectConversation={(id) =>
-                                  unselectConversations([id])
-                                }
-                              />
-                            </div>
-                          )}
+                        {showChatHeader(conv) && (
+                          <div className="z-10 flex flex-col">
+                            <ChatHeader
+                              conversation={conv}
+                              isCompareMode={isCompareMode}
+                              isShowChatInfo={enabledFeatures.has(
+                                Feature.TopChatInfo,
+                              )}
+                              isShowClearConversation={showClearConversations}
+                              isShowModelSelect={showModelSelect}
+                              isShowSettings={showChatSettings}
+                              setShowSettings={handleSetShowSettings}
+                              selectedConversationIds={selectedConversationsIds}
+                              onClearConversation={() =>
+                                handleClearConversation(conv)
+                              }
+                              onUnselectConversation={(id) =>
+                                unselectConversations([id])
+                              }
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                   <div
-                    onScroll={() => {
-                      if (
-                        selectedConversations.some(
-                          (conv) =>
-                            !!conv.messages.find(
-                              (m) => m.role !== Role.Assistant,
-                            ),
-                        )
-                      ) {
-                        handleScroll();
-                      }
-                    }}
+                    onScroll={handleContainerScroll}
                     ref={chatContainerRef}
                     className="h-full overflow-x-hidden"
                     data-qa="scrollable-area"
@@ -564,7 +577,7 @@ export const ChatView = memo(() => {
                       )}
                     </div>
                   </div>
-                  {!isPlayback && notAllowedType ? (
+                  {showNotAllowedModel ? (
                     <NotAllowedModel
                       showScrollDownButton={showScrollDownButton}
                       onScrollDownClick={handleScrollDown}
@@ -572,7 +585,7 @@ export const ChatView = memo(() => {
                     />
                   ) : (
                     <>
-                      {isExternal && selectedConversations.length === 1 && (
+                      {showPublicationControls && (
                         <PublicationControls
                           showScrollDownButton={showScrollDownButton}
                           entity={selectedConversations[0]}
@@ -592,10 +605,7 @@ export const ChatView = memo(() => {
                           isLastMessageError={isLastMessageError}
                           onStopConversation={() => stopStreamMessage()}
                           onResize={onChatInputResize}
-                          isShowInput={
-                            (!isReplay || isNotEmptyConversations) &&
-                            !isExternal
-                          }
+                          isShowInput={showChatInput}
                         >
                           {showReplayControls && !isNotEmptyConversations && (
                             <StartReplayButton />
@@ -610,7 +620,7 @@ export const ChatView = memo(() => {
                         </ChatInput>
                       )}
 
-                      {isPlayback && (
+                      {showPlaybackControls && (
                         <PlaybackControls
                           nextMessageBoxRef={nextMessageBoxRef}
                           showScrollDownButton={showScrollDownButton}
@@ -622,7 +632,7 @@ export const ChatView = memo(() => {
                   )}
                 </div>
               </div>
-              {isShowChatSettings && (
+              {showChatSettings && (
                 <div
                   className={classNames(
                     'absolute left-0 top-0 grid size-full',
@@ -642,15 +652,15 @@ export const ChatView = memo(() => {
                         handleTemporarySettingsSave(conv, args)
                       }
                       onApplySettings={onApplySettings}
-                      onClose={() => setIsShowChatSettings(false)}
-                      isOpen={isShowChatSettings}
+                      onClose={() => setShowChatSettings(false)}
+                      isOpen={showChatSettings}
                       isRight={index === 1}
                       isCompareMode={isCompareMode}
                     />
                   ))}
                 </div>
               )}
-              {isCompareMode && selectedConversations.length < 2 && (
+              {showChatCompare && (
                 <div className="flex h-full w-[50%] flex-col overflow-auto">
                   <ChatCompareSelect
                     conversations={conversations}

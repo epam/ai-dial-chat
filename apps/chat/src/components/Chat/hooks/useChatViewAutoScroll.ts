@@ -16,7 +16,7 @@ export const useChatViewAutoScroll = (
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
 
-  const scrollToContainerHeight = useCallback(
+  const handleScrollToContainerHeight = useCallback(
     (behavior?: 'smooth') => {
       chatContainerRef.current?.scrollTo?.({
         top: chatContainerRef.current.scrollHeight,
@@ -33,10 +33,10 @@ export const useChatViewAutoScroll = (
       setShowScrollDownButton(false);
 
       if (scrollTo) {
-        scrollToContainerHeight();
+        handleScrollToContainerHeight();
       }
     },
-    [scrollToContainerHeight],
+    [handleScrollToContainerHeight],
   );
 
   const scrollDown = useCallback(
@@ -122,11 +122,11 @@ export const useChatViewAutoScroll = (
   }, [chatContainerRef]);
 
   return {
-    showScrollDownButton,
-    setShowScrollDownButton,
     handleScroll,
     handleScrollDown: () => scrollDown(true),
+    handleScrollToContainerHeight,
+    showScrollDownButton,
+    setShowScrollDownButton,
     setAutoScroll,
-    scrollToContainerHeight,
   };
 };
