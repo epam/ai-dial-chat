@@ -724,10 +724,10 @@ export const ConversationComponent = ({
                       ids: [conversation.id],
                     }),
               );
-              if (!isSelectMode && additionalItemData?.publicationUrl) {
+              if (!isSelectMode) {
                 dispatch(
                   PublicationActions.selectPublication(
-                    additionalItemData.publicationUrl,
+                    additionalItemData?.publicationUrl ?? null,
                   ),
                 );
               }

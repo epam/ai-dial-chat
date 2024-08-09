@@ -118,7 +118,7 @@ export const publicationSlice = createSlice({
       );
     },
     rejectPublicationFail: (state) => state,
-    selectPublication: (state, { payload }: PayloadAction<string>) => {
+    selectPublication: (state, { payload }: PayloadAction<string | null>) => {
       state.selectedPublicationUrl = payload;
     },
     setPublicationsToReview: (
