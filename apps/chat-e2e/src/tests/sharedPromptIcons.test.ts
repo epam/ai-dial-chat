@@ -3,7 +3,6 @@ import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, MenuOptions } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
@@ -23,7 +22,6 @@ dialTest(
     promptBar,
     shareModal,
     additionalUserShareApiHelper,
-    page,
     confirmationDialogAssertion,
     shareModalAssertion,
     promptAssertion,
@@ -93,8 +91,7 @@ dialTest(
         await prompts.openEntityDropdownMenu(prompt.name);
         await prompts.shareEntity();
         await shareModal.shareLinkInput.click();
-        await page.keyboard.press(keys.ctrlPlusA);
-        await page.keyboard.press(keys.ctrlPlusC);
+        await dialHomePage.copyWithKeyboard();
         await shareModal.closeButton.click();
         await promptAssertion.assertEntityArrowIconState(
           { name: prompt.name },
