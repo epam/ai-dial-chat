@@ -120,7 +120,7 @@ export const ChatInputMessage = ({
   const modelTokenizer =
     selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
   const maxTokensLength =
-    selectedModels.length === 1
+    selectedModels?.length === 1
       ? selectedModels[0]?.limits?.maxRequestTokens ?? Infinity
       : Infinity;
   const { getTokensLength } = useTokenizer(modelTokenizer);
