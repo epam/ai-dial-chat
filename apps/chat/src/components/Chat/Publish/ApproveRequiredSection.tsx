@@ -1,5 +1,5 @@
 import { IconClipboard } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -31,8 +31,6 @@ import {
 } from './PublicationResources';
 import { ReviewDot } from './ReviewDot';
 
-import some from 'lodash-es/some';
-
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
   featureTypes: FeatureType[];
@@ -41,8 +39,8 @@ interface PublicationProps {
 const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   const dispatch = useAppDispatch();
 
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
   );
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
@@ -55,15 +53,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   );
 
   const [isOpen, setIsOpen] = useState(
-    selectedPublication?.url === publication.url,
-  );
-
-  const selectedItemIsPublication = useMemo(
-    () =>
-      some(publication.resources, (r) =>
-        some(selectedConversationIds, (id) => id.startsWith(r.reviewUrl)),
-      ),
-    [publication.resources, selectedConversationIds],
+    selectedPublicationUrl === publication.url,
   );
 
   const handlePublicationSelect = useCallback(() => {
@@ -72,11 +62,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
     if (publication.uploadStatus !== UploadStatus.LOADED) {
       dispatch(PublicationActions.uploadPublication({ url: publication.url }));
     } else {
-      dispatch(
-        PublicationActions.selectPublication({
-          publication: publication as Publication,
-        }),
-      );
+      dispatch(PublicationActions.selectPublication(publication.url));
     }
 
     dispatch(
@@ -98,7 +84,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         onClick={handlePublicationSelect}
         className={classNames(
           'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
-          selectedPublication?.url === publication.url &&
+          selectedPublicationUrl === publication.url &&
             !selectedConversationIds.length
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
@@ -115,7 +101,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
               <ReviewDot
                 className={classNames(
                   'group-hover:bg-accent-primary-alpha',
-                  selectedPublication?.url === publication.url &&
+                  selectedPublicationUrl === publication.url &&
                     !selectedConversationIds.length &&
                     'bg-accent-primary-alpha',
                 )}
@@ -125,7 +111,8 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
           <div
             className={classNames(
               'relative max-h-5 flex-1 truncate break-all text-left',
-              selectedItemIsPublication && 'text-accent-primary',
+              selectedPublicationUrl === publication.url &&
+                'text-accent-primary',
             )}
             data-qa="folder-name"
           >
@@ -137,7 +124,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         <ResourcesComponent
           resources={publication.resources}
           isOpen={isOpen}
-          additionalItemData={{ isApproveRequiredResource: true }}
+          additionalItemData={{ publicationUrl: publication.url }}
         />
       )}
     </div>
@@ -185,7 +172,7 @@ export const ApproveRequiredSection = ({
 
   useEffect(() => {
     const publicationReviewIds = publicationItems.flatMap((p) =>
-      p.resources?.map((r) => r.reviewUrl),
+      p.resources?.map((res) => res.reviewUrl),
     );
     const shouldBeHighlighted = !!(
       (selectedPublication &&

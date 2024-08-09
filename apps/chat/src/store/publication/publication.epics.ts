@@ -432,14 +432,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                   },
                 }),
               ),
-              of(
-                PublicationActions.selectPublication({
-                  publication: {
-                    ...publication,
-                    resources: publication.resources,
-                  },
-                }),
-              ),
+              of(PublicationActions.selectPublication(publication.url)),
               ...actions,
             );
           },
