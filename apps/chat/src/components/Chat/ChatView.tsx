@@ -23,13 +23,13 @@ import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 
-import { ChatCompare } from './ChatCompare';
 import { ChatCompareRotate } from './ChatCompareRotate';
+import { ChatCompareSection } from './ChatCompareSection';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
-import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
+import { ChatSettingsSection } from './ChatSettingsSection';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
@@ -380,6 +380,11 @@ export const ChatView = memo(() => {
     [enabledFeatures, isExternal, isPlayback, isReplay, messageIsStreaming],
   );
 
+  const showCompareChatSection = useMemo(
+    () => isCompareMode && selectedConversations.length < 2,
+    [isCompareMode, selectedConversations.length],
+  );
+
   return (
     <div
       className="relative min-w-0 flex-auto shrink grow overflow-y-auto"
@@ -599,16 +604,16 @@ export const ChatView = memo(() => {
 
                       {!isPlayback && (
                         <ChatInput
-                          showReplayControls={showReplayControls}
-                          textareaRef={textareaRef}
-                          showScrollDownButton={showScrollDownButton}
-                          onSend={onSendMessage}
-                          onScrollDownClick={handleScrollDown}
-                          onRegenerate={onRegenerateMessage}
                           isLastMessageError={isLastMessageError}
-                          onStopConversation={() => stopStreamMessage()}
-                          onResize={onChatInputResize}
                           isShowInput={showChatInput}
+                          showReplayControls={showReplayControls}
+                          showScrollDownButton={showScrollDownButton}
+                          textareaRef={textareaRef}
+                          onRegenerate={onRegenerateMessage}
+                          onResize={onChatInputResize}
+                          onScrollDownClick={handleScrollDown}
+                          onSend={onSendMessage}
+                          onStopConversation={() => stopStreamMessage()}
                         >
                           {showReplayControls && !isNotEmptyConversations && (
                             <StartReplayButton />
@@ -636,40 +641,25 @@ export const ChatView = memo(() => {
                 </div>
               </div>
               {showChatSettings && (
-                <div
-                  className={classNames(
-                    'absolute left-0 top-0 grid size-full',
-                    selectedConversations.length === 1
-                      ? 'grid-cols-1'
-                      : 'grid-cols-2',
-                  )}
-                >
-                  {selectedConversations.map((conv, index) => (
-                    <ChatSettings
-                      key={conv.id}
-                      conversation={conv}
-                      modelId={conv.model.id}
-                      prompts={prompts}
-                      addons={addons}
-                      onChangeSettings={(args) =>
-                        handleTemporarySettingsSave(conv, args)
-                      }
-                      onApplySettings={onApplySettings}
-                      onClose={() => setShowChatSettings(false)}
-                      isOpen={showChatSettings}
-                      isRight={index === 1}
-                      isCompareMode={isCompareMode}
-                    />
-                  ))}
-                </div>
+                <ChatSettingsSection
+                  addons={addons}
+                  isCompareMode={isCompareMode}
+                  prompts={prompts}
+                  selectedConversations={selectedConversations}
+                  showChatSettings={showChatSettings}
+                  onApplySettings={onApplySettings}
+                  onChangeSettings={handleTemporarySettingsSave}
+                  onClose={() => setShowChatSettings(false)}
+                />
               )}
-              <ChatCompare
-                conversations={conversations}
-                selectedConversations={selectedConversations}
-                inputHeight={inputHeight}
-                isCompareMode={isCompareMode}
-                handleSelectForCompare={selectForCompare}
-              />
+              {showCompareChatSection && (
+                <ChatCompareSection
+                  conversations={conversations}
+                  inputHeight={inputHeight}
+                  selectedConversations={selectedConversations}
+                  onConversationSelect={selectForCompare}
+                />
+              )}
             </div>
           </div>
         </>
