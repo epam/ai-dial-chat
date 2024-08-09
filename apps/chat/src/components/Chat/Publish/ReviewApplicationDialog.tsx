@@ -32,7 +32,7 @@ export function ReviewApplicationDialog() {
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       {isLoading ? (
-        <div className="flex flex-col justify-center h-[250px]">
+        <div className="flex h-[250px] flex-col justify-center">
           <Spinner className="mx-auto" size={30} />
         </div>
       ) : (
@@ -73,8 +73,8 @@ export function ReviewApplicationDialog() {
                   <br />
                   {Object.keys(application?.features || {}).map((key) => (
                     <>
-                      <span>"{key}"</span>:{' '}
-                      <span>"{application?.features[key]}"</span>
+                      <span>&quot;{key}&quot;</span>{' '}
+                      <span>&quot;{application?.features[key]}&quot;</span>
                       <br />
                     </>
                   ))}

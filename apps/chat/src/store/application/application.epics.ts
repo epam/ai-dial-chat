@@ -1,11 +1,10 @@
-import { EMPTY, Observable, forkJoin, iif, of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
-
-import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { constructPath } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -23,7 +22,6 @@ import { errorsMessages } from '../../constants/errors';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { ModelsActions } from '../models/models.reducers';
-import { constructPath } from '@/src/utils/app/file';
 
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -154,7 +152,12 @@ const editApplicationEpic: AppEpic = (action$) =>
           return of(
             ModelsActions.updateModel({
               model: {
-                id: constructPath(...payload.oldApplicationId.split('/').slice(0, -1), ApiUtils.encodeApiUrl(applicationDataWithReference.display_name)),
+                id: constructPath(
+                  ...payload.oldApplicationId.split('/').slice(0, -1),
+                  ApiUtils.encodeApiUrl(
+                    applicationDataWithReference.display_name,
+                  ),
+                ),
                 name: applicationDataWithReference.display_name,
                 version: applicationDataWithReference.display_version,
                 description: applicationDataWithReference.description,

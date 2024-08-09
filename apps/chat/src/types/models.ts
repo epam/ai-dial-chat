@@ -1,5 +1,4 @@
 import { EntityType } from './common';
-import { ShareInterface } from './share';
 
 import { TiktokenEncoding } from '@dqbd/tiktoken';
 

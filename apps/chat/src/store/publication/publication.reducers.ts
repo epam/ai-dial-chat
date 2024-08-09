@@ -1,7 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
 import {
   Publication,
   PublicationInfo,

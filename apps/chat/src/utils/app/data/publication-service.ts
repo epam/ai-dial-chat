@@ -41,8 +41,6 @@ export class PublicationService {
       }),
     }).pipe(
       map(({ publications }: PublicationsListModel) => {
-        console.log(publications,'publications');
-        
         return publications.map((p) => {
           if (!p.targetFolder) return p;
 

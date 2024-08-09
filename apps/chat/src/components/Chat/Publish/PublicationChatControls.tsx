@@ -139,6 +139,7 @@ export function PublicationControlsView({
       resourcesToReview,
       unselectConversation,
       unselectPrompt,
+      unselectApplication,
     ],
   );
 
@@ -150,7 +151,12 @@ export function PublicationControlsView({
     } else {
       unselectApplication();
     }
-  }, [unselectConversation, unselectPrompt, unselectApplication]);
+  }, [
+    unselectConversation,
+    unselectPrompt,
+    unselectApplication,
+    resourceToReview.reviewUrl,
+  ]);
 
   useEffect(() => {
     if (!resourceToReview.reviewed) {

@@ -5,7 +5,7 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -13,13 +13,17 @@ import {
   getOpenAIEntityFullName,
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntity } from '@/src/types/models';
+import { PublishActions } from '@/src/types/publication';
+import { SharingType } from '@/src/types/share';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { applicationSelectors } from '@/src/store/application/application.selectors';
@@ -34,14 +38,10 @@ import ContextMenu from '../Common/ContextMenu';
 import { DisableOverlay } from '../Common/DisableOverlay';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelVersionSelect } from './ModelVersionSelect';
+import { PublishModal } from './Publish/PublishWizard';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature } from '@epam/ai-dial-shared';
-import { ApiUtils } from '@/src/utils/server/api';
-import { SharingType } from '@/src/types/share';
-import { PublishActions } from '@/src/types/publication';
-import { PublishModal } from './Publish/PublishWizard';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
 interface ModelGroupProps {
   entities: DialAIEntity[];
@@ -135,7 +135,7 @@ const ModelGroup = ({
         dataQa: 'publish',
         display: !isPublishedEntity,
         Icon: IconWorldShare,
-        onClick: ()=>handlePublish(),
+        onClick: () => handlePublish(),
       },
       {
         name: 'Unpublish',

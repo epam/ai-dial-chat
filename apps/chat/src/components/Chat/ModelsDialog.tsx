@@ -22,7 +22,7 @@ import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { ModelList } from './ModelList';
 
-import { Feature, validateFeature } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 
 interface ModelsDialogProps {
   selectedModelId: string | undefined;
@@ -52,10 +52,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const { t } = useTranslation(Translation.Chat);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const [applicationModalIsOpen, setApplicationModalIsOpen] = useState(false);
-
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
-  );
 
   const isCustomApplicationsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
@@ -116,9 +112,12 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     }
   }, [models, entityTypes, searchTerm]);
 
-  const handleSearch = useCallback((searchValue: string) => {
-    setSearchTerm(searchValue.trim().toLowerCase());
-  }, []);
+  const handleSearch = useCallback(
+    (searchValue: string) => {
+      setSearchTerm(searchValue.trim().toLowerCase());
+    },
+    [isCustomApplicationsEnabled],
+  );
 
   useEffect(() => {
     setSearchTerm('');

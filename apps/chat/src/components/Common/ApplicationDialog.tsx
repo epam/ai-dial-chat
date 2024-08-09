@@ -283,7 +283,7 @@ export const ApplicationDialog = ({
         const oldApplicationName = selectedApplication?.display_name;
         const oldApplicationId = selectedApplication?.name;
         console.log(selectedApplication?.name);
-        
+
         oldApplicationId &&
           oldApplicationName &&
           currentReference &&
@@ -304,7 +304,15 @@ export const ApplicationDialog = ({
       handleClose();
       resetForm();
     },
-    [name, formData, mode, selectedApplication, dispatch, handleClose],
+    [
+      name,
+      formData,
+      mode,
+      selectedApplication,
+      dispatch,
+      handleClose,
+      currentReference,
+    ],
   );
 
   const handlePublish = () => {

@@ -5,7 +5,6 @@ import classNames from 'classnames';
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -315,11 +314,11 @@ export const FilePublicationResources = ({
 };
 
 export const ApplicationPublicationResources = ({
-  resources,
-  readonly,
-  showTooltip,
+  // resources,
+  // readonly,
+  // showTooltip,
   isOpen = true,
-  additionalItemData,
+  // additionalItemData,
 }: PublicationResources) => {
   const publishRequestModels = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
