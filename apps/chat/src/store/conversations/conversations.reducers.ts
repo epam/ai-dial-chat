@@ -7,6 +7,7 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getNextDefaultName,
+  isFolderEmpty,
 } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
@@ -57,6 +58,7 @@ const initialState: ConversationsState = {
   loadedCustomAttachmentsData: [],
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
+  chosenEmptyFoldersIds: [],
 };
 
 export const conversationsSlice = createSlice({
@@ -798,7 +800,36 @@ export const conversationsSlice = createSlice({
           .map(({ id }) => id);
       }
     },
+    setAllChosenEmptyFolders: (state) => {
+      if (state.searchTerm) {
+        return state;
+      }
+      state.chosenEmptyFoldersIds = state.folders
+        .filter(
+          (folder) =>
+            !isEntityOrParentsExternal(state, folder, FeatureType.Chat) &&
+            isFolderEmpty({
+              id: folder.id,
+              folders: state.folders,
+              entities: state.conversations,
+            }),
+        )
+        .map(({ id }) => `${id}/`);
+    },
+
     deleteChosenConversations: (state) => state,
+    resetChosenEmptyFolders: (state) => {
+      state.chosenEmptyFoldersIds = [];
+    },
+    addToChosenEmptyFolders: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.chosenEmptyFoldersIds = xor(
+        state.chosenEmptyFoldersIds,
+        payload.ids,
+      );
+    },
   },
 });
 

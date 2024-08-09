@@ -99,6 +99,7 @@ export const ChatbarSettings = () => {
         Icon: IconSquareCheck,
         onClick: () => {
           dispatch(ConversationsActions.setAllChosenConversations());
+          dispatch(ConversationsActions.setAllChosenEmptyFolders());
         },
         disabled: isStreaming,
       },
@@ -108,6 +109,7 @@ export const ChatbarSettings = () => {
         Icon: IconSquareOff,
         onClick: () => {
           dispatch(ConversationsActions.resetChosenConversations());
+          dispatch(ConversationsActions.resetChosenEmptyFolders());
         },
         display: isSelectMode,
         disabled: isStreaming,

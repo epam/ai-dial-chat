@@ -775,6 +775,9 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         (prompt) => prompt.id,
       );
       const folders = PromptsSelectors.selectFolders(state$.value);
+      const emptyFoldersIds = PromptsSelectors.selectEmptyFolderIds(
+        state$.value,
+      );
       const deletedPromptIds = uniq([
         ...chosenPromptIds,
         ...promptIds.filter((id) =>
@@ -798,11 +801,13 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
             folders: folders.filter(
               (folder) =>
                 !fullyChosenFolderIds.includes(`${folder.id}/`) &&
-                prompts.some((p) => p.id.startsWith(`${folder.id}/`)),
+                (prompts.some((p) => p.id.startsWith(`${folder.id}/`)) ||
+                  emptyFoldersIds.some((id) => id === folder.id)),
             ),
           }),
         ),
         of(PromptsActions.resetChosenPrompts()),
+        of(PromptsActions.resetChosenEmptyFolders()),
         ...actions,
       );
     }),
