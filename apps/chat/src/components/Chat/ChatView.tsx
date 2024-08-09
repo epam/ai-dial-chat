@@ -23,8 +23,8 @@ import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 
+import { ChatCompare } from './ChatCompare';
 import { ChatCompareRotate } from './ChatCompareRotate';
-import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
@@ -129,7 +129,11 @@ export const ChatView = memo(() => {
       selectedConversations,
       selectedConversationsTemporarySettings.current,
     );
-  }, [applyChatSettings, selectedConversations]);
+  }, [
+    applyChatSettings,
+    selectedConversations,
+    selectedConversationsTemporarySettings,
+  ]);
 
   const isNotEmptyConversations =
     isReplayRequiresVariables ||
@@ -350,7 +354,6 @@ export const ChatView = memo(() => {
   const showPublicationControls =
     isExternal && selectedConversations.length === 1;
   const showNotAllowedModel = !isPlayback && notAllowedType;
-  const showChatCompare = isCompareMode && selectedConversations.length < 2;
   const showChatInput = (!isReplay || isNotEmptyConversations) && !isExternal;
   const showPlaybackControls = isPlayback;
   const showReplayControls = useMemo(
@@ -660,21 +663,13 @@ export const ChatView = memo(() => {
                   ))}
                 </div>
               )}
-              {showChatCompare && (
-                <div className="flex h-full w-[50%] flex-col overflow-auto">
-                  <ChatCompareSelect
-                    conversations={conversations}
-                    selectedConversations={selectedConversations}
-                    onConversationSelect={(conversation) => {
-                      selectForCompare(conversation);
-                    }}
-                  />
-                  <div
-                    className="shrink-0"
-                    style={{ height: inputHeight + 56 }}
-                  />
-                </div>
-              )}
+              <ChatCompare
+                conversations={conversations}
+                selectedConversations={selectedConversations}
+                inputHeight={inputHeight}
+                isCompareMode={isCompareMode}
+                handleSelectForCompare={selectForCompare}
+              />
             </div>
           </div>
         </>

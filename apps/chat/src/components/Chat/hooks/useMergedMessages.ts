@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { Conversation, MergedMessages, Role } from '@/src/types/chat';
+import {
+  Conversation,
+  ConversationsTemporarySettings,
+  MergedMessages,
+  Role,
+} from '@/src/types/chat';
 
 interface UseMergedMessagesProps {
   selectedConversations: Conversation[];
@@ -18,9 +23,9 @@ export function useMergedMessages({
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
   const prevSelectedIds = useRef<string[]>([]);
-  const selectedConversationsTemporarySettings = useRef<Record<string, any>>(
-    {},
-  );
+  const selectedConversationsTemporarySettings = useRef<
+    Record<string, ConversationsTemporarySettings>
+  >({});
 
   useEffect(() => {
     if (selectedConversations.length > 0) {
