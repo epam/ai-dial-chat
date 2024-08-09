@@ -15,6 +15,7 @@ import {
   DeleteApplicationAction,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { AppEpic } from '@/src/types/store';
 
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -22,8 +23,9 @@ import { errorsMessages } from '../../constants/errors';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { ModelsActions } from '../models/models.reducers';
+import { constructPath } from '@/src/utils/app/file';
 
-const createApplicationEpic = (action$: Observable<AnyAction>) =>
+const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.create.match),
     switchMap(
@@ -70,7 +72,7 @@ const createApplicationEpic = (action$: Observable<AnyAction>) =>
     ),
   );
 
-const createFailEpic = (action$: Observable<AnyAction>) =>
+const createFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.createFail.match),
     switchMap(() =>
@@ -78,7 +80,7 @@ const createFailEpic = (action$: Observable<AnyAction>) =>
     ),
   );
 
-const deleteApplicationEpic = (action$: Observable<AnyAction>) =>
+const deleteApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.delete.match),
     switchMap((action: DeleteApplicationAction) =>
@@ -102,7 +104,7 @@ const deleteApplicationEpic = (action$: Observable<AnyAction>) =>
   );
 
 // Fetch listings epic
-const listApplicationsEpic = (action$: Observable<AnyAction>) =>
+const listApplicationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.list.match),
     switchMap(() =>
@@ -118,92 +120,112 @@ const listApplicationsEpic = (action$: Observable<AnyAction>) =>
     ),
   );
 
-const editApplicationEpic = (action$: Observable<AnyAction>) =>
+const moveApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action: any) => action.type === ApplicationActions.edit.type),
-    switchMap(
-      ({
-        payload,
-      }: {
-        payload: {
-          applicationData: CreateApplicationModel;
-          oldApplicationName: string;
-          currentReference: string;
-          oldApplicationId: string;
-        };
-      }) => {
-        const move = iif(
-          () =>
-            payload.oldApplicationName !== payload.applicationData.display_name,
-          ApplicationService.move({
-            sourceUrl: payload.oldApplicationName,
-            destinationUrl: payload.applicationData.display_name,
-            overwrite: false,
-          }).pipe(
-            catchError((err) => {
-              console.error('Move failed', err);
-              return EMPTY;
-            }),
-          ),
-          of(payload),
-        );
-
-        const applicationDataWithReference = {
-          ...payload.applicationData,
-          reference: payload.currentReference,
-        };
-
-        const edit: Observable<ApplicationListItemModel> =
-          ApplicationService.edit(applicationDataWithReference).pipe(
-            catchError((err) => {
-              console.error('Edit failed', err);
-              return EMPTY;
-            }),
-          );
-
-        return forkJoin({
-          moveResult: move,
-          editResult: edit,
-          oldApplicationId: of(payload.oldApplicationId),
-        });
-      },
-    ),
-    switchMap(
-      ({
-        editResult,
-        oldApplicationId,
-      }: {
-        editResult: ApplicationListItemModel;
-        oldApplicationId: string;
-      }) =>
-        ApplicationService.getOne(editResult.url).pipe(
-          map((response) => {
-            return ModelsActions.updateModel({
-              model: {
-                id: response.name,
-                name: response.display_name,
-                version: response.display_version,
-                description: response.description,
-                iconUrl: response.icon_url,
-                type: EntityType.Application,
-                features: response.features,
-                inputAttachmentTypes: response.input_attachment_types,
-                isDefault: false,
-                maxInputAttachments: response.max_input_attachments,
-                reference: response.reference,
-              },
-              oldApplicationName: oldApplicationId,
-            });
-          }),
+    filter(ApplicationActions.move.match),
+    switchMap(({ payload }) => {
+      if (payload.oldApplicationName !== payload.applicationData.display_name) {
+        return ApplicationService.move({
+          sourceUrl: payload.oldApplicationName,
+          destinationUrl: payload.applicationData.display_name,
+          overwrite: false,
+        }).pipe(
+          switchMap(() => of(ApplicationActions.edit(payload))),
           catchError((err) => {
-            console.error(`Fetch details failed`, err);
+            console.error('Move failed', err);
             return EMPTY;
           }),
-        ),
-    ),
+        );
+      }
+      return of(ApplicationActions.edit(payload));
+    }),
   );
 
-const getApplicationEpic = (action$: Observable<AnyAction>) =>
+const editApplicationEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.edit.match),
+    switchMap(({ payload }) => {
+      const applicationDataWithReference = {
+        ...payload.applicationData,
+        reference: payload.currentReference,
+      };
+      return ApplicationService.edit(applicationDataWithReference).pipe(
+        switchMap(() => {
+          return of(
+            ModelsActions.updateModel({
+              model: {
+                id: constructPath(...payload.oldApplicationId.split('/').slice(0, -1), ApiUtils.encodeApiUrl(applicationDataWithReference.display_name)),
+                name: applicationDataWithReference.display_name,
+                version: applicationDataWithReference.display_version,
+                description: applicationDataWithReference.description,
+                iconUrl: applicationDataWithReference.icon_url,
+                type: EntityType.Application,
+                features: applicationDataWithReference.features,
+                inputAttachmentTypes:
+                  applicationDataWithReference.input_attachment_types,
+                isDefault: false,
+                maxInputAttachments:
+                  applicationDataWithReference.max_input_attachments,
+                reference: applicationDataWithReference.reference,
+              },
+              oldApplicationName: payload.oldApplicationId,
+            }),
+          );
+        }),
+        catchError((err) => {
+          console.error('Edit failed', err);
+          return EMPTY;
+        }),
+      );
+    }),
+  );
+
+// const editApplicationEpic: AppEpic = (action$) =>
+//   action$.pipe(
+//     filter(ApplicationActions.edit.match),
+//     switchMap(({ payload }) => {
+//       const applicationDataWithReference = {
+//         ...payload.applicationData,
+//         reference: payload.currentReference,
+//       };
+//       return ApplicationService.edit(applicationDataWithReference).pipe(
+//         switchMap((application) =>
+//           ApplicationService.getOne(application.url).pipe(
+//             switchMap((app) => {
+//               return of(
+//                 ModelsActions.updateModel({
+//                   model: {
+//                     id: app.name,
+//                     name: app.display_name,
+//                     version: app.display_version,
+//                     description: app.description,
+//                     iconUrl: app.icon_url,
+//                     type: EntityType.Application,
+//                     features: app.features,
+//                     inputAttachmentTypes: app.input_attachment_types,
+//                     isDefault: false,
+//                     maxInputAttachments: app.max_input_attachments,
+//                     reference: app.reference,
+//                   },
+//                   oldApplicationName: payload.oldApplicationId,
+//                 }),
+//               );
+//             }),
+//             catchError((err) => {
+//               console.error(`Fetch details failed`, err);
+//               return EMPTY;
+//             }),
+//           ),
+//         ),
+//         catchError((err) => {
+//           console.error('Edit failed', err);
+//           return EMPTY;
+//         }),
+//       );
+//     }),
+//   );
+
+const getApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.getOne.match),
     switchMap(({ payload }) =>
@@ -219,11 +241,12 @@ const getApplicationEpic = (action$: Observable<AnyAction>) =>
     ),
   );
 
-export const ApplicationEpics = combineEpics<AnyAction>(
+export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
   listApplicationsEpic,
   deleteApplicationEpic,
+  moveApplicationEpic,
   editApplicationEpic,
   getApplicationEpic,
 );

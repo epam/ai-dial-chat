@@ -1,11 +1,8 @@
 import { IconBulb } from '@tabler/icons-react';
 
-import classNames from 'classnames';
-
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ModalState } from '@/src/types/modal';
-import { DialAIEntityModel } from '@/src/types/models';
 
 import { applicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -35,7 +32,9 @@ export function ReviewApplicationDialog() {
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       {isLoading ? (
-        <Spinner className="mx-auto" size={30} />
+        <div className="flex flex-col justify-center h-[250px]">
+          <Spinner className="mx-auto" size={30} />
+        </div>
       ) : (
         <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
           <div className="flex justify-between">

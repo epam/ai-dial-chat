@@ -981,21 +981,6 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           if (!publications.items) {
             return EMPTY;
           }
-          if (payload.featureType === FeatureType.Application) {
-            return concat(
-              of(
-                ModelsActions.setPublishedApplicationIds({
-                  modelIds: publications.items.map((item) => item.url),
-                }),
-              ),
-              of(
-                PublicationActions.uploadAllPublishedWithMeItemsSuccess({
-                  featureType: payload.featureType,
-                }),
-              ),
-            );
-          }
-
           const actions: Observable<AnyAction>[] = [];
 
           const paths = uniq(

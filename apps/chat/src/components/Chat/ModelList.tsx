@@ -37,6 +37,11 @@ import { ModelVersionSelect } from './ModelVersionSelect';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature } from '@epam/ai-dial-shared';
+import { ApiUtils } from '@/src/utils/server/api';
+import { SharingType } from '@/src/types/share';
+import { PublishActions } from '@/src/types/publication';
+import { PublishModal } from './Publish/PublishWizard';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
 interface ModelGroupProps {
   entities: DialAIEntity[];
@@ -51,6 +56,7 @@ interface ModelGroupProps {
   setCurrentEntityId: (name: string) => void;
   setCurrentEntityReference: (reference: string) => void;
   openApplicationModal?: () => void;
+  handlePublish: () => void;
 }
 
 const ModelGroup = ({
@@ -66,6 +72,7 @@ const ModelGroup = ({
   setCurrentEntityName,
   setCurrentEntityId,
   setCurrentEntityReference,
+  handlePublish,
 }: ModelGroupProps) => {
   const dispatch = useAppDispatch();
 
@@ -128,7 +135,7 @@ const ModelGroup = ({
         dataQa: 'publish',
         display: !isPublishedEntity,
         Icon: IconWorldShare,
-        // onClick: () => console.log('publish'),
+        onClick: ()=>handlePublish(),
       },
       {
         name: 'Unpublish',
@@ -291,6 +298,15 @@ export const ModelList = ({
   const [currentEntityName, setCurrentEntityName] = useState('');
   const [currentEntityId, setCurrentEntityId] = useState('');
   const [currentEntityReference, setCurrentEntityReference] = useState('');
+  const [isPublishing, setIsPublishing] = useState<boolean>(false);
+
+  const handlePublish = () => {
+    setIsPublishing(true);
+  };
+
+  const handlePublishClose = () => {
+    setIsPublishing(false);
+  };
 
   const handleDelete = () => {
     if (currentEntityName && currentEntityId) {
@@ -337,6 +353,7 @@ export const ModelList = ({
             setCurrentEntityName={setCurrentEntityName}
             setCurrentEntityId={setCurrentEntityId}
             setCurrentEntityReference={setCurrentEntityReference}
+            handlePublish={handlePublish}
           />
         ))}
       </div>
@@ -362,6 +379,26 @@ export const ModelList = ({
           mode="edit"
           selectedApplication={applicationDetail}
           currentReference={currentEntityReference}
+        />
+      )}
+      {applicationDetail && (
+        <PublishModal
+          entity={{
+            name: applicationDetail.display_name,
+            id: ApiUtils.decodeApiUrl(
+              applicationDetail.name ||
+                (applicationDetail as unknown as { application: string })
+                  .application,
+            ),
+            folderId: getFolderIdFromEntityId(applicationDetail.display_name),
+          }}
+          type={SharingType.Application}
+          isOpen={isPublishing}
+          onClose={handlePublishClose}
+          publishAction={
+            PublishActions.ADD
+            // isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
         />
       )}
     </div>

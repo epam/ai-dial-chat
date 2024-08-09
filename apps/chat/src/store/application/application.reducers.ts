@@ -92,6 +92,17 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
+    move: (
+      state,
+      _action: PayloadAction<{
+        oldApplicationName: string;
+        applicationData: CreateApplicationModel;
+        currentReference: string;
+        oldApplicationId: string;
+      }>,
+    ) => {
+      state.loading = true;
+    },
     getOne: (state, _action: PayloadAction<string>) => {
       state.loading = true;
     },

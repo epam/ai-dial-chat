@@ -282,11 +282,13 @@ export const ApplicationDialog = ({
       if (mode === 'edit') {
         const oldApplicationName = selectedApplication?.display_name;
         const oldApplicationId = selectedApplication?.name;
+        console.log(selectedApplication?.name);
+        
         oldApplicationId &&
           oldApplicationName &&
           currentReference &&
           dispatch(
-            ApplicationActions.edit({
+            ApplicationActions.move({
               oldApplicationName,
               applicationData,
               currentReference,

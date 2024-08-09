@@ -757,8 +757,8 @@ export const conversationsSlice = createSlice({
         })),
       );
       state.conversations = combineEntities(
-        state.conversations,
         payload.conversations,
+        state.conversations,
       );
     },
     setChosenConversations: (
