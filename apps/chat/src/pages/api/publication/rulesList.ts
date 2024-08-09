@@ -14,6 +14,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import fetch from 'node-fetch';
+import { HTTPMethod } from '@/src/types/http';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);
@@ -29,7 +30,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/ops/publication/rule/list`,
       {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
         body: JSON.stringify(req.body),
       },

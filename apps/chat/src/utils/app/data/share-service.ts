@@ -11,6 +11,7 @@ import {
   BackendResourceType,
 } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 import {
   InvitationDetails,
@@ -31,7 +32,7 @@ export class ShareService {
     shareData: ShareRequestModel,
   ): Observable<ShareByLinkResponseModel> {
     return ApiUtils.request('api/share/create', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify(shareData),
     });
   }
@@ -40,7 +41,7 @@ export class ShareService {
     shareAcceptData: ShareAcceptRequestModel,
   ): Observable<void> {
     return ApiUtils.request('api/share/accept', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify(shareAcceptData),
     });
   }
@@ -49,14 +50,14 @@ export class ShareService {
     shareAcceptData: ShareAcceptRequestModel,
   ): Observable<InvitationDetails> {
     return ApiUtils.request('api/share/details', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify(shareAcceptData),
     });
   }
 
   public static shareRevoke(resourceUrls: string[]): Observable<void> {
     return ApiUtils.request('api/share/revoke', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         resources: resourceUrls.map((url) => ({ url })),
       } as ShareRevokeRequestModel),
@@ -65,7 +66,7 @@ export class ShareService {
 
   public static shareDiscard(resourceUrls: string[]): Observable<void> {
     return ApiUtils.request('api/share/discard', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         resources: resourceUrls.map((url) => ({ url })),
       } as ShareRevokeRequestModel),
@@ -79,7 +80,7 @@ export class ShareService {
     folders: FolderInterface[];
   }> {
     return ApiUtils.request('api/share/listing', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify(sharedListingData),
     }).pipe(
       map((resp: { resources: BackendDataEntity[] }) => {
