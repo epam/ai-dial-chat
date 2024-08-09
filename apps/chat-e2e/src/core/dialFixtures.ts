@@ -25,11 +25,13 @@ import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
 import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
+import { DownloadAssertion } from '@/src/assertions/downloadAssertion';
 import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
+import { PlaybackAssertion } from '@/src/assertions/playbackAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
@@ -193,6 +195,7 @@ const dialTest = test.extend<
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion;
     errorToastAssertion: ErrorToastAssertion;
+    downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
     tooltipAssertion: TooltipAssertion;
     confirmationDialogAssertion: ConfirmationDialogAssertion;
@@ -215,6 +218,7 @@ const dialTest = test.extend<
     chatAssertion: ChatAssertion;
     recentEntitiesAssertion: RecentEntitiesAssertion;
     entitySettingAssertion: EntitySettingAssertion;
+    playbackAssertion: PlaybackAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -637,6 +641,11 @@ const dialTest = test.extend<
     const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
     await use(promptErrorToastAssertion);
   },
+  // eslint-disable-next-line no-empty-pattern
+  downloadAssertion: async ({}, use) => {
+    const downloadAssertion = new DownloadAssertion();
+    await use(downloadAssertion);
+  },
   promptModalAssertion: async ({ promptModalDialog }, use) => {
     const promptModalAssertion = new PromptModalAssertion(promptModalDialog);
     await use(promptModalAssertion);
@@ -735,6 +744,10 @@ const dialTest = test.extend<
   entitySettingAssertion: async ({ entitySettings }, use) => {
     const entitySettingAssertion = new EntitySettingAssertion(entitySettings);
     await use(entitySettingAssertion);
+  },
+  playbackAssertion: async ({ playbackControl }, use) => {
+    const playbackAssertion = new PlaybackAssertion(playbackControl);
+    await use(playbackAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

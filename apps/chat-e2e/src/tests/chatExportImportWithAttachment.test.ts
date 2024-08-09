@@ -349,3 +349,156 @@ dialTest(
     );
   },
 );
+
+dialTest(
+  'Export and import file with attachments in playback mode',
+  async ({
+    conversationData,
+    fileApiHelper,
+    dataInjector,
+    localStorageManager,
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    chatBar,
+    confirmationDialog,
+    recentEntitiesAssertion,
+    chatMessages,
+    chat,
+    playbackAssertion,
+    chatMessagesAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3521');
+    let dalleConversation: Conversation;
+    let gptProVisionConversation: Conversation;
+    let historyConversation: Conversation;
+    let playbackConversation: Conversation;
+    let exportedData: UploadDownloadData;
+
+    await dialTest.step(
+      'Prepare conversation with attachments in the request and response and playback conversation based on it',
+      async () => {
+        dalleImageUrl = await fileApiHelper.putFile(
+          Attachment.sunImageName,
+          API.modelFilePath(ModelIds.DALLE),
+        );
+        gptProVisionImageUrl = await fileApiHelper.putFile(
+          Attachment.heartImageName,
+        );
+
+        dalleConversation =
+          conversationData.prepareConversationWithAttachmentInResponse(
+            dalleImageUrl,
+            ModelIds.DALLE,
+          );
+        conversationData.resetData();
+        gptProVisionConversation =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            ModelIds.GPT_4_VISION_PREVIEW,
+            true,
+            gptProVisionImageUrl,
+          );
+        conversationData.resetData();
+        historyConversation = conversationData.prepareHistoryConversation(
+          dalleConversation,
+          gptProVisionConversation,
+        );
+        playbackConversation =
+          conversationData.prepareDefaultPlaybackConversation(
+            historyConversation,
+          );
+        await dataInjector.createConversations([
+          historyConversation,
+          playbackConversation,
+        ]);
+        await localStorageManager.setSelectedConversation(playbackConversation);
+      },
+    );
+
+    await dialTest.step(
+      'Export playback conversation with attachments',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(playbackConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
+        exportedData = await dialHomePage.downloadData(() =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withAttachments,
+          ),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Remove all entities, import exported file and verify playback conversation is shown on chat bar panel',
+      async () => {
+        await fileApiHelper.deleteAllFiles();
+        await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.importFile(exportedData, () =>
+          chatBar.importButton.click(),
+        );
+        await conversations
+          .getEntityByName(playbackConversation.name)
+          .waitFor();
+        await recentEntitiesAssertion.assertPlaybackIconState('visible');
+      },
+    );
+
+    await dialTest.step(
+      'Playback first conversation message and verify attachment is visible in the response and can be downloaded',
+      async () => {
+        await chat.playNextChatMessage(false);
+        await playbackAssertion.assertPlaybackMessageContent(
+          historyConversation.messages[0].content,
+        );
+
+        await chat.playNextChatMessage();
+        dalleAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.DALLE)}/${Attachment.sunImageName}`;
+        await chatMessages.expandChatMessageAttachment(
+          2,
+          Attachment.sunImageName,
+        );
+        await chatMessagesAssertion.assertMessageAttachmentUrl(
+          2,
+          dalleAttachmentPath,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          2,
+          dalleAttachmentPath,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Playback second conversation message and verify attachment is visible in the input field and request',
+      async () => {
+        await chat.playNextChatMessage(false);
+        await playbackAssertion.assertPlaybackMessageContent(
+          historyConversation.messages[2].content,
+        );
+        await playbackAssertion.assertPlaybackMessageAttachmentState(
+          Attachment.heartImageName,
+          'visible',
+        );
+
+        await chat.playNextChatMessage();
+        gptProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.heartImageName}`;
+        await chatMessages.expandChatMessageAttachment(
+          3,
+          Attachment.heartImageName,
+        );
+        await chatMessagesAssertion.assertMessageAttachmentUrl(
+          3,
+          gptProVisionAttachmentPath,
+        );
+        await chatMessagesAssertion.assertMessageDownloadUrl(
+          3,
+          gptProVisionAttachmentPath,
+        );
+      },
+    );
+  },
+);

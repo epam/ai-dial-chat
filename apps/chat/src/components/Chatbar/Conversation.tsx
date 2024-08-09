@@ -36,7 +36,12 @@ import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, UploadStatus, isNotLoaded } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  UploadStatus,
+  isNotLoaded,
+} from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
@@ -49,7 +54,10 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -75,7 +83,7 @@ interface ViewProps {
   isInvalid: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   isContextMenu: boolean;
 }
 
@@ -188,7 +196,7 @@ export function ConversationView({
           triggerClassName={classNames(
             'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
             conversation.publicationInfo?.isNotExist && 'text-secondary',
-            !!additionalItemData?.isApproveRequiredResource &&
+            !!additionalItemData?.publicationUrl &&
               conversation.publicationInfo?.action === PublishActions.DELETE &&
               'text-error',
           )}
@@ -203,7 +211,7 @@ export function ConversationView({
 interface Props {
   item: ConversationInfo;
   level?: number;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
 }
 
 export const ConversationComponent = ({
@@ -268,6 +276,10 @@ export const ConversationComponent = ({
   const isChosen = useMemo(
     () => chosenConversationIds.includes(conversation.id),
     [chosenConversationIds, conversation.id],
+  );
+
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
   );
 
   const { refs, context } = useFloating({
@@ -615,7 +627,11 @@ export const ConversationComponent = ({
   };
 
   const isHighlighted = !isSelectMode
-    ? isSelected || isRenaming || isDeleting
+    ? (isSelected &&
+        (!additionalItemData?.publicationUrl ||
+          selectedPublicationUrl === additionalItemData.publicationUrl)) ||
+      isRenaming ||
+      isDeleting
     : isChosen;
   const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
 
@@ -673,7 +689,7 @@ export const ConversationComponent = ({
             )}
           </ShareIcon>
           <input
-            className="flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+            className="w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
             type="text"
             value={renameValue}
             name="edit-input"
@@ -708,6 +724,13 @@ export const ConversationComponent = ({
                       ids: [conversation.id],
                     }),
               );
+              if (!isSelectMode) {
+                dispatch(
+                  PublicationActions.selectPublication(
+                    additionalItemData?.publicationUrl ?? null,
+                  ),
+                );
+              }
             }
           }}
           disabled={messageIsStreaming || (isSelectMode && isExternal)}
@@ -767,7 +790,7 @@ export const ConversationComponent = ({
             onUnshare={!isReplay ? handleUnshare : undefined}
             onPublish={!isReplay ? handleOpenPublishing : undefined}
             onUnpublish={
-              isReplay || additionalItemData?.isApproveRequiredResource
+              isReplay || additionalItemData?.publicationUrl
                 ? undefined
                 : handleOpenUnpublishing
             }

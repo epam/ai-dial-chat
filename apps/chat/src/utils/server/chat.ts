@@ -103,17 +103,22 @@ export const hardLimitMessages = (messages: Message[]) => {
 export function getMessageCustomContent(
   message: Message,
 ): Partial<Message> | undefined {
-  return (
-    (message.custom_content?.state || message.custom_content?.attachments) && {
-      custom_content: {
-        attachments:
-          message.role !== Role.Assistant
-            ? message.custom_content?.attachments
-            : undefined,
-        state: message.custom_content?.state,
-      },
-    }
-  );
+  if (message.role === Role.Assistant && !message.custom_content?.state) {
+    return;
+  }
+  return message.custom_content?.state ||
+    message.custom_content?.attachments?.length
+    ? {
+        custom_content: {
+          attachments:
+            message.role !== Role.Assistant &&
+            message.custom_content?.attachments?.length
+              ? message.custom_content?.attachments
+              : undefined,
+          state: message.custom_content?.state,
+        },
+      }
+    : undefined;
 }
 
 const getResponseBody = (

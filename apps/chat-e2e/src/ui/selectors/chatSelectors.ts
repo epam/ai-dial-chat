@@ -54,6 +54,7 @@ export const PlaybackSelectors = {
   playbackChatTitle: '[data-qa="conversation-name"]',
   playbackControl: '[data-qa="playback-control"]',
   playbackMessage: '[data-qa="playback-message"]',
+  playbackMessageContent: '[data-qa="playback-message-content"]',
   playbackNext: '[data-qa="playback-next"]',
   playbackNextDisabled: () =>
     `${PlaybackSelectors.playbackNext}[${Attributes.disabled}]`,

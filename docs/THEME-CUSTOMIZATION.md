@@ -1,6 +1,8 @@
 # Theme Customization
 
-You have the ability to tailor the appearance of your chat application using **themes** - a collection of static resources including images, fonts, and colors. AI DIAL Chat provides two pre-set themes - dark (which is the default) and light. However, you can deploy a specific service that allows you to modify the default themes or create and configure your own custom themes. This independent service allows you to alter themes without having to redeploy the chat application.
+You can tailor the appearance of your chat application using **themes** - a collection of static resources including images, fonts, and colors. AI DIAL Chat provides two pre-set themes - dark (which is the default theme) and light. However, you can deploy a specific service that allows you to modify the default themes or create and configure your own custom themes. This independent service allows you to alter themes without having to rebuild the the chat application Docker image.
+
+**Note**: after making changes into themes, it is necessary to restart the chat application to apply changes.
 
 > Refer to [AI DIAL Chat Themes](https://github.com/epam/ai-dial-chat-themes) to learn how to deploy and configure a special server for chat themes.
 

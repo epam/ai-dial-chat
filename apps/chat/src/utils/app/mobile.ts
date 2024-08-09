@@ -7,4 +7,5 @@ export const isMobile = () => {
 };
 
 export const isSmallScreen = () => window.innerWidth < 768;
-export const isSmallScreenOrMobile = () => isSmallScreen() || isMobile();
+export const isMediumScreen = () => window.innerWidth < 1280;
+export const isMediumScreenOrMobile = () => isMediumScreen() || isMobile();
