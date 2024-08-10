@@ -126,7 +126,7 @@ export function PublicationControlsView({
         unselectConversation();
         unselectPrompt();
         dispatch(
-          ApplicationActions.getOne(
+          ApplicationActions.get(
             resourcesToReview[publicationIdx + offset].reviewUrl,
           ),
         );

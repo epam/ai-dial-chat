@@ -46,7 +46,7 @@ interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   mode: string;
-  selectedApplication?: ApplicationDetailsResponse;
+  selectedApplication: ApplicationDetailsResponse;
   currentReference?: string;
 }
 
@@ -84,6 +84,15 @@ export const ApplicationDialog = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
+
+  const entity = selectedApplication && {
+    name: selectedApplication.display_name,
+    id: ApiUtils.decodeApiUrl(
+      selectedApplication.name ||
+        (selectedApplication as unknown as { application: string }).application,
+    ),
+    folderId: getFolderIdFromEntityId(selectedApplication.display_name),
+  };
 
   const [formData, setFormData] = useState<CreateApplicationModel>({
     endpoint: '',
@@ -282,7 +291,6 @@ export const ApplicationDialog = ({
       if (mode === 'edit') {
         const oldApplicationName = selectedApplication?.display_name;
         const oldApplicationId = selectedApplication?.name;
-        console.log(selectedApplication?.name);
 
         oldApplicationId &&
           oldApplicationName &&
@@ -750,15 +758,7 @@ export const ApplicationDialog = ({
       />
       {selectedApplication && (
         <PublishModal
-          entity={{
-            name: selectedApplication.display_name,
-            id: ApiUtils.decodeApiUrl(
-              selectedApplication.name ||
-                (selectedApplication as unknown as { application: string })
-                  .application,
-            ),
-            folderId: getFolderIdFromEntityId(selectedApplication.display_name),
-          }}
+          entity={entity}
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}

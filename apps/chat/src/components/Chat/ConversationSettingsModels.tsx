@@ -113,7 +113,7 @@ export const ConversationSettingsModel = ({
           <ModelList
             entities={entities}
             onSelect={handleModelSelect}
-            selectedModelId={modelId || recentModelsIds[0]}
+            selectedModelId={modelId}
             showInOneColumn
             displayCountLimit={
               isReplay || isPlayback || unavailableModelId

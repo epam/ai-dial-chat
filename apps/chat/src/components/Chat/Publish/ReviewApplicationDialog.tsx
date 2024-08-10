@@ -4,7 +4,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { ModalState } from '@/src/types/modal';
 
-import { applicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
@@ -13,8 +13,8 @@ import { Spinner } from '../../Common/Spinner';
 import { PublicationControls } from './PublicationChatControls';
 
 export function ReviewApplicationDialog() {
-  const application = useAppSelector(applicationSelectors.applicationDetail);
-  const isLoading = useAppSelector(applicationSelectors.isLoading);
+  const application = useAppSelector(ApplicationSelectors.applicationDetail);
+  const isLoading = useAppSelector(ApplicationSelectors.isLoading);
   const dispatch = useAppDispatch();
 
   const handleClose = () => {

@@ -255,7 +255,7 @@ export function PublicationHandler({ publication }: Props) {
 
     const startApplicationsReview = () => {
       dispatch(
-        ApplicationActions.getOne(
+        ApplicationActions.get(
           applicationsToReviewIds.length
             ? applicationsToReviewIds[0].reviewUrl
             : reviewedApplicationsIds[0].reviewUrl,

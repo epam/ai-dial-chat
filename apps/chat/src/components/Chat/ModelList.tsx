@@ -26,7 +26,7 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { applicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationSelectors } from '@/src/store/application/application.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -111,7 +111,6 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const applicationId = currentEntity.id;
-
   const isPublishedEntity = publishedApplicationIds.some(
     (id) => id === applicationId,
   );
@@ -125,7 +124,7 @@ const ModelGroup = ({
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          dispatch(ApplicationActions.getOne(applicationId));
+          dispatch(ApplicationActions.get(applicationId));
           openApplicationModal && openApplicationModal();
           setCurrentEntityReference(currentEntity?.reference);
         },
@@ -135,7 +134,12 @@ const ModelGroup = ({
         dataQa: 'publish',
         display: !isPublishedEntity,
         Icon: IconWorldShare,
-        onClick: () => handlePublish(),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setCurrentEntityId(currentEntity.id);
+          setCurrentEntityName(currentEntity.name);
+          handlePublish();
+        },
       },
       {
         name: 'Unpublish',
@@ -299,6 +303,20 @@ export const ModelList = ({
   const [currentEntityId, setCurrentEntityId] = useState('');
   const [currentEntityReference, setCurrentEntityReference] = useState('');
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
+  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const applicationDetail = useAppSelector(
+    ApplicationSelectors.applicationDetail,
+  );
+
+  const entity = currentEntityName &&
+    currentEntityId && {
+      name: currentEntityName,
+      id: ApiUtils.decodeApiUrl(
+        currentEntityId ||
+          (currentEntityName as unknown as { application: string }).application,
+      ),
+      folderId: getFolderIdFromEntityId(currentEntityName),
+    };
 
   const handlePublish = () => {
     setIsPublishing(true);
@@ -314,6 +332,7 @@ export const ModelList = ({
         ApplicationActions.delete({ currentEntityName, currentEntityId }),
       );
     }
+    onSelect(recentModelsIds[0]);
   };
 
   const groupedModels = useMemo(() => {
@@ -324,10 +343,6 @@ export const ModelList = ({
       displayCountLimit ?? Number.MAX_SAFE_INTEGER,
     );
   }, [allEntities, displayCountLimit, entities]);
-
-  const applicationDetail = useAppSelector((state) =>
-    applicationSelectors.applicationDetail(state),
-  );
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
@@ -372,7 +387,7 @@ export const ModelList = ({
           }}
         />
       )}
-      {modalIsOpen && (
+      {modalIsOpen && applicationDetail && (
         <ApplicationDialog
           isOpen={modalIsOpen}
           onClose={() => setModalIsOpen(false)}
@@ -381,17 +396,9 @@ export const ModelList = ({
           currentReference={currentEntityReference}
         />
       )}
-      {applicationDetail && (
+      {currentEntityName && currentEntityId && (
         <PublishModal
-          entity={{
-            name: applicationDetail.display_name,
-            id: ApiUtils.decodeApiUrl(
-              applicationDetail.name ||
-                (applicationDetail as unknown as { application: string })
-                  .application,
-            ),
-            folderId: getFolderIdFromEntityId(applicationDetail.display_name),
-          }}
+          entity={entity}
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}

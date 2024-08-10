@@ -97,7 +97,7 @@ export class ApplicationService {
     );
   }
 
-  public static getOne(appID: string): Observable<ApplicationDetailsResponse> {
+  public static get(appID: string): Observable<ApplicationDetailsResponse> {
     const oneData = ApiUtils.request(constructPath('api', appID), {
       method: 'GET',
     });

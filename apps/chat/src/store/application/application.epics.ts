@@ -40,7 +40,7 @@ const createApplicationEpic: AppEpic = (action$) =>
           payload.applicationData,
         ).pipe(
           switchMap((application: ApplicationListItemModel) =>
-            ApplicationService.getOne(application.url).pipe(
+            ApplicationService.get(application.url).pipe(
               map((response) => {
                 return ModelsActions.addModels({
                   models: [
@@ -183,62 +183,17 @@ const editApplicationEpic: AppEpic = (action$) =>
     }),
   );
 
-// const editApplicationEpic: AppEpic = (action$) =>
-//   action$.pipe(
-//     filter(ApplicationActions.edit.match),
-//     switchMap(({ payload }) => {
-//       const applicationDataWithReference = {
-//         ...payload.applicationData,
-//         reference: payload.currentReference,
-//       };
-//       return ApplicationService.edit(applicationDataWithReference).pipe(
-//         switchMap((application) =>
-//           ApplicationService.getOne(application.url).pipe(
-//             switchMap((app) => {
-//               return of(
-//                 ModelsActions.updateModel({
-//                   model: {
-//                     id: app.name,
-//                     name: app.display_name,
-//                     version: app.display_version,
-//                     description: app.description,
-//                     iconUrl: app.icon_url,
-//                     type: EntityType.Application,
-//                     features: app.features,
-//                     inputAttachmentTypes: app.input_attachment_types,
-//                     isDefault: false,
-//                     maxInputAttachments: app.max_input_attachments,
-//                     reference: app.reference,
-//                   },
-//                   oldApplicationName: payload.oldApplicationId,
-//                 }),
-//               );
-//             }),
-//             catchError((err) => {
-//               console.error(`Fetch details failed`, err);
-//               return EMPTY;
-//             }),
-//           ),
-//         ),
-//         catchError((err) => {
-//           console.error('Edit failed', err);
-//           return EMPTY;
-//         }),
-//       );
-//     }),
-//   );
-
 const getApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.getOne.match),
+    filter(ApplicationActions.get.match),
     switchMap(({ payload }) =>
-      ApplicationService.getOne(payload).pipe(
+      ApplicationService.get(payload).pipe(
         map((response) => {
-          return ApplicationActions.getOneSuccess(response);
+          return ApplicationActions.getSuccess(response);
         }),
         catchError((err) => {
           console.error(err);
-          return of(ApplicationActions.getOneFail());
+          return of(ApplicationActions.getFail());
         }),
       ),
     ),

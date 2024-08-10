@@ -22,7 +22,7 @@ export const singleSelectors = {
 };
 
 // createSelector-based Selectors
-export const applicationSelectors = {
+export const ApplicationSelectors = {
   isLoading: createSelector([rootSelector], singleSelectors.isLoading),
   application: createSelector([rootSelector], singleSelectors.application),
   applications: createSelector([rootSelector], singleSelectors.applications),
