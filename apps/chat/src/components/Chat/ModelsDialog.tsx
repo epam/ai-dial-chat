@@ -110,14 +110,11 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         ),
       );
     }
-  }, [models, entityTypes, searchTerm]);
+  }, [models, entityTypes, searchTerm, isCustomApplicationsEnabled]);
 
-  const handleSearch = useCallback(
-    (searchValue: string) => {
-      setSearchTerm(searchValue.trim().toLowerCase());
-    },
-    [isCustomApplicationsEnabled],
-  );
+  const handleSearch = useCallback((searchValue: string) => {
+    setSearchTerm(searchValue.trim().toLowerCase());
+  }, []);
 
   useEffect(() => {
     setSearchTerm('');

@@ -161,7 +161,13 @@ const ModelGroup = ({
         },
       },
     ],
-    [openApplicationModal, dispatch, applicationId],
+    [
+      openApplicationModal,
+      dispatch,
+      applicationId,
+      currentEntity,
+      isPublishedEntity,
+    ],
   );
 
   const isCustomApplicationsEnabled = useAppSelector((state) =>

@@ -12,8 +12,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
-import { AdditionalItemData } from '@/src/types/common';
+import { AdditionalItemData, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
