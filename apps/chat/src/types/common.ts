@@ -1,3 +1,4 @@
+import { MappedReplaceActions } from './import-export';
 import { PublishActions } from './publication';
 import { ShareInterface } from './share';
 
@@ -108,4 +109,13 @@ export enum ApiKeys {
   Conversations = 'conversations',
   Prompts = 'prompts',
   Applications = 'applications',
+}
+
+export interface AdditionalItemData {
+  publicationUrl?: string;
+  canAttachFiles?: boolean;
+  selectedFilesIds?: string[];
+  selectedFolderIds?: string[];
+  partialSelectedFolderIds?: string[];
+  mappedActions?: MappedReplaceActions;
 }

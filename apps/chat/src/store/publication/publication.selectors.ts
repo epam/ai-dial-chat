@@ -4,7 +4,7 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
-import { PublicationResource } from '@/src/types/publication';
+import { Publication, PublicationResource } from '@/src/types/publication';
 
 import {
   selectFolders as selectConversationFolders,
@@ -54,10 +54,19 @@ export const selectFilteredPublicationResources = createSelector(
   },
 );
 
+export const selectSelectedPublicationUrl = createSelector(
+  [rootSelector],
+  (state) => state.selectedPublicationUrl,
+);
+
 export const selectSelectedPublication = createSelector(
   [rootSelector],
   (state) => {
-    return state.selectedPublication;
+    return state.selectedPublicationUrl
+      ? (state.publications.find(
+          (publication) => publication.url === state.selectedPublicationUrl,
+        ) as Publication)
+      : null;
   },
 );
 
@@ -69,9 +78,16 @@ export const selectResourcesToReview = createSelector(
 );
 
 export const selectResourceToReviewByReviewUrl = createSelector(
-  [selectResourcesToReview, (_state, id: string) => id],
-  (resourcesToReview, id) => {
-    return resourcesToReview.find((r) => r.reviewUrl === id);
+  [
+    selectResourcesToReview,
+    selectSelectedPublication,
+    (_state, id: string) => id,
+  ],
+  (resourcesToReview, selectedPublication, id) => {
+    return resourcesToReview.find(
+      (res) =>
+        res.reviewUrl === id && selectedPublication?.url === res.publicationUrl,
+    );
   },
 );
 

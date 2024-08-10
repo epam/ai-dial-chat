@@ -8,7 +8,11 @@ import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  UploadStatus,
+} from '@/src/types/common';
 import { PublicationResource } from '@/src/types/publication';
 
 import {
@@ -41,7 +45,7 @@ interface PublicationResources {
   readonly?: boolean;
   showTooltip?: boolean;
   isOpen?: boolean;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
 }
 
 export const PromptPublicationResources = ({

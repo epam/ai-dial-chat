@@ -1,3 +1,5 @@
+import { FolderInterface } from '@/chat/types/folder';
+import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
@@ -203,6 +205,8 @@ dialTest(
     'Error message is shown if you try to drag & drop prompt from folder to root where the prompt with the same name exists',
   async ({
     dialHomePage,
+    promptData,
+    dataInjector,
     prompts,
     promptBar,
     promptDropdownMenu,
@@ -218,60 +222,55 @@ dialTest(
       'EPMRTC-2989',
       'EPMRTC-2990',
     );
+    let nestedFolders: FolderInterface[];
+    let nestedFolderPrompts: Prompt[];
     const duplicatedPromptName = ExpectedConstants.newPromptTitle(1);
     let errorMessage;
     const promptValue = 'That is just a test prompt';
 
-    await dialTest.step('Create nested folders structure', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-
-      for (let i = 1; i <= 2; i++) {
-        await promptBar.createNewFolder();
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(
-              ExpectedConstants.newPromptFolderWithIndexTitle(i),
-            ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
-      }
-
-      await promptBar.drugAndDropFolderToFolder(
-        ExpectedConstants.newPromptFolderWithIndexTitle(2),
-        ExpectedConstants.newPromptFolderWithIndexTitle(1),
-      );
-    });
+    await dialTest.step(
+      'Create nested folders structure with different prompt names inside',
+      async () => {
+        nestedFolders = promptData.prepareNestedFolder(2, {
+          1: ExpectedConstants.newFolderWithIndexTitle(1),
+          2: ExpectedConstants.newFolderWithIndexTitle(2),
+        });
+        nestedFolderPrompts = promptData.preparePromptsForNestedFolders(
+          nestedFolders,
+          { 1: ExpectedConstants.newPromptTitle(2), 2: duplicatedPromptName },
+        );
+        await dataInjector.createPrompts(nestedFolderPrompts, ...nestedFolders);
+      },
+    );
 
     await dialTest.step(
-      'Create new prompts and move them to corresponding folders',
+      'Verify prompts with equal names can be created in the root folder and Recent section',
       async () => {
-        for (let i = 1; i <= 2; i++) {
-          await promptBar.createNewPrompt();
-          await promptModalDialog.setField(
-            promptModalDialog.prompt,
-            promptValue,
-          );
-          await promptModalDialog.saveButton.click();
-
-          await promptBar.dragAndDropEntityToFolder(
-            prompts.getEntityByName(duplicatedPromptName),
-            folderPrompts.getFolderByName(
-              ExpectedConstants.newPromptFolderWithIndexTitle(i),
-            ),
-          );
-
-          await expect
-            .soft(
-              folderPrompts.getFolderEntity(
-                ExpectedConstants.newPromptFolderWithIndexTitle(i),
-                duplicatedPromptName,
-              ),
-              ExpectedMessages.promptIsVisible,
-            )
-            .toBeVisible();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        for (const nestedFolder of nestedFolders) {
+          await folderPrompts.expandFolder(nestedFolder.name);
         }
+        await promptBar.createNewPrompt();
+        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
+        await promptModalDialog.saveButton.click();
+
+        await promptBar.dragAndDropEntityToFolder(
+          prompts.getEntityByName(duplicatedPromptName),
+          folderPrompts.getFolderByName(
+            ExpectedConstants.newPromptFolderWithIndexTitle(1),
+          ),
+        );
+
+        await expect
+          .soft(
+            folderPrompts.getFolderEntity(
+              ExpectedConstants.newPromptFolderWithIndexTitle(1),
+              duplicatedPromptName,
+            ),
+            ExpectedMessages.promptIsVisible,
+          )
+          .toBeVisible();
 
         await promptBar.createNewPrompt();
         await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
@@ -288,19 +287,6 @@ dialTest(
     await dialTest.step(
       'Try to rename prompt to already existing name in the same folder and verify error message is shown',
       async () => {
-        // Create one more prompt
-        await promptBar.createNewPrompt();
-        await promptModalDialog.setField(promptModalDialog.prompt, promptValue);
-        await promptModalDialog.saveButton.click();
-
-        // Move it
-        await promptBar.dragAndDropEntityToFolder(
-          prompts.getEntityByName(ExpectedConstants.newPromptTitle(2)),
-          folderPrompts.getFolderByName(
-            ExpectedConstants.newPromptFolderWithIndexTitle(1),
-          ),
-        );
-
         // Try to rename it
         await folderPrompts.openFolderEntityDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
@@ -374,12 +360,12 @@ dialTest(
       'Try to drag and drop prompt to folder with already existing name and verify error message is shown',
       async () => {
         await promptBar.dragAndDropEntityToFolder(
-          folderPrompts
-            .getFolderEntity(
-              ExpectedConstants.newPromptFolderWithIndexTitle(1),
-              duplicatedPromptName,
-            )
-            .nth(1),
+          folderPrompts.getFolderEntity(
+            ExpectedConstants.newPromptFolderWithIndexTitle(1),
+            duplicatedPromptName,
+            1,
+            2,
+          ),
           folderPrompts.getFolderByName(
             ExpectedConstants.newPromptFolderWithIndexTitle(2),
           ),
