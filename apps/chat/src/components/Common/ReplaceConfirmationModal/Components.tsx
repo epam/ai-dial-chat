@@ -4,7 +4,6 @@ import {
   ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
@@ -14,11 +13,9 @@ import classNames from 'classnames';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { ShareEntity } from '@/src/types/common';
+import { AdditionalItemData } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import {
-  MappedReplaceActions,
-  ReplaceOptions,
-} from '@/src/types/import-export';
+import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -63,7 +60,7 @@ export const ReplaceSelector = ({
 
 interface EntityRowProps {
   children?: ReactElement;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   entityId: string;
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
@@ -82,14 +79,6 @@ export const EntityRow = ({
     ReplaceOptions.Postfix,
   );
 
-  const mappedActions = useMemo(
-    () =>
-      additionalItemData &&
-      (additionalItemData as { mappedActions: MappedReplaceActions })
-        .mappedActions,
-    [additionalItemData],
-  );
-
   const onOptionChangeHandler = useCallback(
     (option: string) => {
       const typedOption = option as ReplaceOptions;
@@ -100,10 +89,11 @@ export const EntityRow = ({
   );
 
   useEffect(() => {
-    setSelectedOption(() =>
-      mappedActions ? mappedActions[entityId] : ReplaceOptions.Postfix,
+    setSelectedOption(
+      () =>
+        additionalItemData?.mappedActions?.[entityId] ?? ReplaceOptions.Postfix,
     );
-  }, [additionalItemData, mappedActions, entityId]);
+  }, [additionalItemData, additionalItemData?.mappedActions, entityId]);
 
   return (
     <div
@@ -116,7 +106,7 @@ export const EntityRow = ({
       }}
     >
       {children}
-      {!!mappedActions && (
+      {!!additionalItemData?.mappedActions && (
         <ReplaceSelector
           selectedOption={selectedOption}
           onOptionChangeHandler={onOptionChangeHandler}
@@ -201,7 +191,7 @@ const ConversationView = ({
 export interface ConversationRowProps extends ConversationViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -278,7 +268,7 @@ const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
 export interface PromptRowProps extends PromptViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -352,7 +342,7 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
 export interface FileRowProps extends FileViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
