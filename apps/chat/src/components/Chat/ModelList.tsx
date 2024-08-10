@@ -5,7 +5,7 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -314,15 +314,21 @@ export const ModelList = ({
     ApplicationSelectors.applicationDetail,
   );
 
-  const entity = currentEntityName &&
-    currentEntityId && {
-      name: currentEntityName,
-      id: ApiUtils.decodeApiUrl(
-        currentEntityId ||
-          (currentEntityName as unknown as { application: string }).application,
-      ),
-      folderId: getFolderIdFromEntityId(currentEntityName),
-    };
+  const [entity, setEntity] = useState<any>(null);
+
+  useEffect(() => {
+    if (currentEntityName && currentEntityId) {
+      setEntity({
+        name: currentEntityName,
+        id: ApiUtils.decodeApiUrl(
+          currentEntityId ||
+            (currentEntityName as unknown as { application: string })
+              .application,
+        ),
+        folderId: getFolderIdFromEntityId(currentEntityName),
+      });
+    }
+  }, [currentEntityName, currentEntityId]);
 
   const handlePublish = () => {
     setIsPublishing(true);
