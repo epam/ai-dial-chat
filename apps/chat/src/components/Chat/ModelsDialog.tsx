@@ -193,7 +193,6 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         <ApplicationDialog
           isOpen={applicationModalIsOpen}
           onClose={closeAddApplicationModal}
-          mode={'add'}
         />
       )}
 

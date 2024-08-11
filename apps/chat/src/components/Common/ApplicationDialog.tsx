@@ -45,15 +45,15 @@ import Tooltip from './Tooltip';
 interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
-  mode: string;
-  selectedApplication: ApplicationDetailsResponse;
+  isEdit?: boolean;
+  selectedApplication?: ApplicationDetailsResponse;
   currentReference?: string;
 }
 
 export const ApplicationDialog = ({
   isOpen,
   onClose,
-  mode,
+  isEdit,
   selectedApplication,
   currentReference,
 }: Props) => {
@@ -85,14 +85,14 @@ export const ApplicationDialog = ({
 
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
-  const entity = selectedApplication && {
-    name: selectedApplication.display_name,
-    id: ApiUtils.decodeApiUrl(
-      selectedApplication.name ||
-        (selectedApplication as unknown as { application: string }).application,
-    ),
-    folderId: getFolderIdFromEntityId(selectedApplication.display_name),
-  };
+  // const entity = selectedApplication && {
+  //   name: selectedApplication.display_name,
+  //   id: ApiUtils.decodeApiUrl(
+  //     selectedApplication.name ||
+  //       (selectedApplication as unknown as { application: string }).application,
+  //   ),
+  //   folderId: getFolderIdFromEntityId(selectedApplication.display_name),
+  // };
 
   const [formData, setFormData] = useState<CreateApplicationModel>({
     endpoint: '',
@@ -288,7 +288,7 @@ export const ApplicationDialog = ({
       const applicationName = name;
       const applicationData = formData;
 
-      if (mode === 'edit') {
+      if (isEdit) {
         const oldApplicationName = selectedApplication?.display_name;
         const oldApplicationId = selectedApplication?.name;
 
@@ -315,7 +315,7 @@ export const ApplicationDialog = ({
     [
       name,
       formData,
-      mode,
+      isEdit,
       selectedApplication,
       dispatch,
       handleClose,
@@ -425,7 +425,7 @@ export const ApplicationDialog = ({
   }, []);
 
   useEffect(() => {
-    if (mode === 'edit' && selectedApplication) {
+    if (isEdit && selectedApplication) {
       setName(selectedApplication.display_name || '');
       setVersion(selectedApplication.display_version || '');
       setDescription(selectedApplication.description || '');
@@ -456,7 +456,7 @@ export const ApplicationDialog = ({
     } else {
       resetForm();
     }
-  }, [mode, selectedApplication]);
+  }, [isEdit, selectedApplication]);
 
   const inputClassName = classNames('input-form', 'mx-0', 'peer', {
     'input-invalid': submitted,
@@ -486,7 +486,7 @@ export const ApplicationDialog = ({
       </button>
       <div className="px-3 py-4 md:pl-4 md:pr-10">
         <h2 className="text-base font-semibold">
-          {mode === 'edit' ? 'Edit Application' : 'Add Application'}
+          {isEdit ? 'Edit Application' : 'Add Application'}
         </h2>
       </div>
       {loading ? (
@@ -692,9 +692,9 @@ export const ApplicationDialog = ({
             </div>
           </div>
           <div
-            className={`flex ${mode === 'edit' ? 'justify-between' : 'justify-end'} gap-2 border-t border-primary p-4 md:px-6`}
+            className={`flex ${isEdit ? 'justify-between' : 'justify-end'} gap-2 border-t border-primary p-4 md:px-6`}
           >
-            {mode === 'edit' ? (
+            {isEdit ? (
               <div className="flex items-center gap-2">
                 <Tooltip tooltip={t('Delete')}>
                   <button
@@ -735,7 +735,7 @@ export const ApplicationDialog = ({
                 disabled={saveDisabled}
                 data-qa="save-application-dialog"
               >
-                {mode === 'edit' ? t('Save') : t('Create')}
+                {isEdit ? t('Save') : t('Create')}
               </button>
             </Tooltip>
           </div>
@@ -758,7 +758,15 @@ export const ApplicationDialog = ({
       />
       {selectedApplication && (
         <PublishModal
-          entity={entity}
+          entity={{
+            name: selectedApplication.display_name,
+            id: ApiUtils.decodeApiUrl(
+              selectedApplication.name ||
+                (selectedApplication as unknown as { application: string })
+                  .application,
+            ),
+            folderId: getFolderIdFromEntityId(selectedApplication.display_name),
+          }}
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}

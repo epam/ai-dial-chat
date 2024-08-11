@@ -403,9 +403,9 @@ export const ModelList = ({
         <ApplicationDialog
           isOpen={modalIsOpen}
           onClose={() => setModalIsOpen(false)}
-          mode="edit"
           selectedApplication={applicationDetail}
           currentReference={currentEntityReference}
+          isEdit
         />
       )}
       {currentEntityName && currentEntityId && (
