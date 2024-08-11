@@ -11,6 +11,7 @@ import {
   UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { EntityStorage } from '@/src/types/storage';
 
 import { constructPath } from '../../../file';
@@ -143,7 +144,7 @@ export abstract class ApiEntityStorage<
   createEntity(entity: TEntity): Observable<TEntityInfo> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -157,7 +158,7 @@ export abstract class ApiEntityStorage<
   updateEntity(entity: TEntity): Observable<void> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
-        method: 'PUT',
+        method: HTTPMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -171,7 +172,7 @@ export abstract class ApiEntityStorage<
   deleteEntity(info: TEntityInfo): Observable<void> {
     try {
       return ApiUtils.request(this.getEntityUrl(info), {
-        method: 'DELETE',
+        method: HTTPMethod.DELETE,
         headers: {
           'Content-Type': 'application/json',
         },
