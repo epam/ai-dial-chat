@@ -417,6 +417,7 @@ export const promptsSlice = createSlice({
     },
     resetChosenPrompts: (state) => {
       state.chosenPromptIds = [];
+      state.chosenEmptyFoldersIds = [];
     },
     setAllChosenPrompts: (state) => {
       if (state.searchTerm) {
@@ -442,13 +443,7 @@ export const promptsSlice = createSlice({
           )
           .map(({ id }) => id);
       }
-    },
-    deleteChosenPrompts: (state) => state,
 
-    setAllChosenEmptyFolders: (state) => {
-      if (state.searchTerm) {
-        return state;
-      }
       state.chosenEmptyFoldersIds = state.folders
         .filter(
           (folder) =>
@@ -462,9 +457,8 @@ export const promptsSlice = createSlice({
         )
         .map(({ id }) => `${id}/`);
     },
-    resetChosenEmptyFolders: (state) => {
-      state.chosenEmptyFoldersIds = [];
-    },
+    deleteChosenPrompts: (state) => state,
+
     addToChosenEmptyFolders: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,

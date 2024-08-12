@@ -794,7 +794,6 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
           }),
         ),
         of(PromptsActions.resetChosenPrompts()),
-        of(PromptsActions.resetChosenEmptyFolders()),
         ...actions,
       );
     }),

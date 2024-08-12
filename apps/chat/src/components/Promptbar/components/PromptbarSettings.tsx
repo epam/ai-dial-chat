@@ -50,7 +50,6 @@ export function PromptbarSettings() {
         Icon: IconSquareCheck,
         onClick: () => {
           dispatch(PromptsActions.setAllChosenPrompts());
-          dispatch(PromptsActions.setAllChosenEmptyFolders());
         },
       },
       {
@@ -59,7 +58,6 @@ export function PromptbarSettings() {
         Icon: IconSquareOff,
         onClick: () => {
           dispatch(PromptsActions.resetChosenPrompts());
-          dispatch(PromptsActions.resetChosenEmptyFolders());
         },
         display: isSelectMode,
       },

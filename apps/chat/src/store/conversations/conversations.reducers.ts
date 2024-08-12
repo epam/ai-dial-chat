@@ -774,6 +774,7 @@ export const conversationsSlice = createSlice({
     },
     resetChosenConversations: (state) => {
       state.chosenConversationIds = [];
+      state.chosenEmptyFoldersIds = [];
     },
     setAllChosenConversations: (state) => {
       if (state.searchTerm) {
@@ -799,8 +800,6 @@ export const conversationsSlice = createSlice({
           )
           .map(({ id }) => id);
       }
-    },
-    setAllChosenEmptyFolders: (state) => {
       if (state.searchTerm) {
         return state;
       }
@@ -818,9 +817,6 @@ export const conversationsSlice = createSlice({
     },
 
     deleteChosenConversations: (state) => state,
-    resetChosenEmptyFolders: (state) => {
-      state.chosenEmptyFoldersIds = [];
-    },
     addToChosenEmptyFolders: (
       state,
       { payload }: PayloadAction<{ ids: string[] }>,

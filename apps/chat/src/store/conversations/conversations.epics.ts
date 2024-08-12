@@ -2743,7 +2743,6 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
           }),
         ),
         of(ConversationsActions.resetChosenConversations()),
-        of(ConversationsActions.resetChosenEmptyFolders()),
         ...actions,
       );
     }),
