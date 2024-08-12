@@ -41,23 +41,9 @@ const createApplicationEpic: AppEpic = (action$) =>
         ).pipe(
           switchMap((application: ApplicationListItemModel) =>
             ApplicationService.get(application.url).pipe(
-              map((response) => {
+              map((application) => {
                 return ModelsActions.addModels({
-                  models: [
-                    {
-                      id: response.name,
-                      name: response.display_name,
-                      version: response.display_version,
-                      description: response.description,
-                      iconUrl: response.icon_url,
-                      type: EntityType.Application,
-                      features: response.features,
-                      inputAttachmentTypes: response.input_attachment_types,
-                      isDefault: false,
-                      maxInputAttachments: response.max_input_attachments,
-                      reference: response.reference,
-                    },
-                  ],
+                  models: [application],
                 });
               }),
             ),
@@ -188,8 +174,8 @@ const getApplicationEpic: AppEpic = (action$) =>
     filter(ApplicationActions.get.match),
     switchMap(({ payload }) =>
       ApplicationService.get(payload).pipe(
-        map((response) => {
-          return ApplicationActions.getSuccess(response);
+        map((application) => {
+          return ApplicationActions.getSuccess(application);
         }),
         catchError((err) => {
           console.error(err);

@@ -19,11 +19,9 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  ApplicationDetailsResponse,
-  CreateApplicationModel,
-} from '@/src/types/applications';
+import { CreateApplicationModel } from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
+import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -46,7 +44,7 @@ interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   isEdit?: boolean;
-  selectedApplication?: ApplicationDetailsResponse;
+  selectedApplication?: DialAIEntityModel & { completionUrl: string };
   currentReference?: string;
 }
 
@@ -289,8 +287,8 @@ export const ApplicationDialog = ({
       const applicationData = formData;
 
       if (isEdit) {
-        const oldApplicationName = selectedApplication?.display_name;
-        const oldApplicationId = selectedApplication?.name;
+        const oldApplicationName = selectedApplication?.name;
+        const oldApplicationId = selectedApplication?.id;
 
         oldApplicationId &&
           oldApplicationName &&
@@ -335,8 +333,8 @@ export const ApplicationDialog = ({
     if (selectedApplication) {
       dispatch(
         ApplicationActions.delete({
-          currentEntityName: selectedApplication.display_name,
-          currentEntityId: selectedApplication.name,
+          currentEntityName: selectedApplication.name,
+          currentEntityId: selectedApplication.id,
         }),
       );
     }
@@ -426,31 +424,30 @@ export const ApplicationDialog = ({
 
   useEffect(() => {
     if (isEdit && selectedApplication) {
-      setName(selectedApplication.display_name || '');
-      setVersion(selectedApplication.display_version || '');
+      setName(selectedApplication.name || '');
+      setVersion(selectedApplication.version || '');
       setDescription(selectedApplication.description || '');
       setFeaturesData(safeStringify(selectedApplication.features));
-      setFilterParams(selectedApplication.input_attachment_types || []);
+      setFilterParams(selectedApplication.inputAttachmentTypes || []);
       setMaxAttachments(
-        selectedApplication.max_input_attachments.toString() || '',
+        selectedApplication.maxInputAttachments?.toString() || '',
       );
       setLocalLogoFile(
-        selectedApplication.icon_url?.substring(
-          selectedApplication.icon_url.lastIndexOf('/') + 1,
+        selectedApplication.iconUrl?.substring(
+          selectedApplication.iconUrl.lastIndexOf('/') + 1,
         ) || '',
       );
-      setDeleteLogo(!selectedApplication.icon_url);
-      setCompletionUrl(selectedApplication.endpoint || '');
+      setDeleteLogo(!selectedApplication.iconUrl);
+      setCompletionUrl(selectedApplication.completionUrl || '');
       setFormData({
-        endpoint: selectedApplication.endpoint || '',
-        display_name: selectedApplication.display_name || '',
-        display_version: selectedApplication.display_version || '',
+        endpoint: selectedApplication.completionUrl || '',
+        display_name: selectedApplication.name || '',
+        display_version: selectedApplication.version || '',
         description: selectedApplication.description || '',
         features: selectedApplication.features,
-        input_attachment_types:
-          selectedApplication.input_attachment_types || [],
-        max_input_attachments: selectedApplication.max_input_attachments || 0,
-        icon_url: selectedApplication.icon_url || '',
+        input_attachment_types: selectedApplication.inputAttachmentTypes || [],
+        max_input_attachments: selectedApplication.maxInputAttachments || 0,
+        icon_url: selectedApplication.iconUrl || '',
         defaults: {},
       });
     } else {
@@ -759,13 +756,13 @@ export const ApplicationDialog = ({
       {selectedApplication && (
         <PublishModal
           entity={{
-            name: selectedApplication.display_name,
+            name: selectedApplication.name,
             id: ApiUtils.decodeApiUrl(
               selectedApplication.name ||
                 (selectedApplication as unknown as { application: string })
                   .application,
             ),
-            folderId: getFolderIdFromEntityId(selectedApplication.display_name),
+            folderId: getFolderIdFromEntityId(selectedApplication.name),
           }}
           type={SharingType.Application}
           isOpen={isPublishing}
