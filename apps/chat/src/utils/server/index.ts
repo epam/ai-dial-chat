@@ -1,6 +1,7 @@
 import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import {
@@ -103,7 +104,7 @@ export const OpenAIStream = async ({
 
     res = await fetch(url, {
       headers: requestHeaders,
-      method: 'POST',
+      method: HTTPMethod.POST,
       body,
     });
 
