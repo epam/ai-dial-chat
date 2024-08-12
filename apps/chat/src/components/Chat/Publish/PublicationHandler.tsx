@@ -107,6 +107,7 @@ export function PublicationHandler({ publication }: Props) {
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
 
+  // TODO: reminder to include applications then
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const conversations = useAppSelector(
