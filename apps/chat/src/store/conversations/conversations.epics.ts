@@ -85,6 +85,7 @@ import {
 } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -996,7 +997,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       };
 
       return fromFetch('api/rate', {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1348,7 +1349,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
       return from(
         fetch('api/chat', {
-          method: 'POST',
+          method: HTTPMethod.POST,
           headers: {
             'Content-Type': 'application/json',
           },

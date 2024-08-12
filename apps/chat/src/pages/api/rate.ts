@@ -8,6 +8,7 @@ import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { logger } from '@/src/utils/server/logger';
 
 import { RateBody } from '../../types/chat';
+import { HTTPMethod } from '@/src/types/http';
 
 import { DIAL_API_HOST } from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -45,7 +46,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         jwt: token?.access_token as string,
         jobTitle: token?.jobTitle as string,
       }),
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         rate: value,
         responseId,
