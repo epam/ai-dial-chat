@@ -20,6 +20,7 @@ import {
 
 import { AccountSettingsAssertion } from '@/src/assertions/accountSettingsAssertion';
 import { ApiAssertion } from '@/src/assertions/api/apiAssertion';
+import { ShareApiAssertion } from '@/src/assertions/api/shareApiAssertion';
 import { ChatAssertion } from '@/src/assertions/chatAssertion';
 import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
 import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
@@ -220,6 +221,7 @@ const dialTest = test.extend<
     recentEntitiesAssertion: RecentEntitiesAssertion;
     entitySettingAssertion: EntitySettingAssertion;
     playbackAssertion: PlaybackAssertion;
+    shareApiAssertion: ShareApiAssertion;
     shareModalAssertion: ShareModalAssertion;
   }
 >({
@@ -759,6 +761,11 @@ const dialTest = test.extend<
   apiAssertion: async ({}, use) => {
     const apiAssertion = new ApiAssertion();
     await use(apiAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  shareApiAssertion: async ({}, use) => {
+    const shareApiAssertion = new ShareApiAssertion();
+    await use(shareApiAssertion);
   },
 });
 
