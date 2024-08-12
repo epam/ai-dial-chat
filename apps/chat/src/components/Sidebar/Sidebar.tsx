@@ -105,7 +105,7 @@ const Sidebar = <T,>({
 
   const resizeTriggerColor = classNames(
     'xl:bg-accent-primary xl:text-accent-primary',
-    isResizing ? 'bg-accent-primary text-accent-primary' : '',
+    isResizing ? 'md:bg-accent-primary md:text-accent-primary' : '',
   );
 
   const resizeTriggerClassName = classNames(
