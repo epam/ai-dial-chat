@@ -103,15 +103,11 @@ const Sidebar = <T,>({
     [isLeftSidebar],
   );
 
-  const resizeTriggerColor = classNames(
-    'xl:bg-accent-primary xl:text-accent-primary',
-    isResizing ? 'bg-accent-primary text-accent-primary' : '',
-  );
-
   const resizeTriggerClassName = classNames(
-    'invisible h-full w-0.5 bg-layer-3 text-secondary group-hover:visible md:visible',
-    resizeTriggerColor,
-    isResizing ? 'xl:visible' : 'xl:invisible',
+    'invisible h-full w-0.5 group-hover:visible md:visible xl:bg-accent-primary xl:text-accent-primary',
+    isResizing
+      ? 'bg-accent-primary text-accent-primary xl:visible'
+      : 'bg-layer-3 text-secondary xl:invisible',
   );
 
   const sidebarWidth = useMemo(
