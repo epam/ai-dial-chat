@@ -50,6 +50,18 @@ interface Props {
   currentReference?: string;
 }
 
+const validateUrl = (url: string) => {
+  const pattern = new RegExp(
+    '^(https?:\\/\\/)?' +
+      '(?:(?:[a-z\\d][a-z\\d-]*[a-z\\d])\\.)+[a-z]{2,}|' +
+      '((\\d{1,3}\\.){3}\\d{1,3})' +
+      '(\\:\\d+)?(\\/?[-a-z\\d%_.~+]*)*' +
+      '(\\?[;&a-z\\d%_.~+=-]*)?',
+  );
+
+  return pattern.test(url);
+};
+
 export const ApplicationDialog = ({
   isOpen,
   onClose,
@@ -85,14 +97,14 @@ export const ApplicationDialog = ({
 
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
 
-  // const entity = selectedApplication && {
-  //   name: selectedApplication.display_name,
-  //   id: ApiUtils.decodeApiUrl(
-  //     selectedApplication.name ||
-  //       (selectedApplication as unknown as { application: string }).application,
-  //   ),
-  //   folderId: getFolderIdFromEntityId(selectedApplication.display_name),
-  // };
+  const entity = selectedApplication && {
+    name: selectedApplication.display_name,
+    id: ApiUtils.decodeApiUrl(
+      selectedApplication.name ||
+        (selectedApplication as unknown as { application: string }).application,
+    ),
+    folderId: getFolderIdFromEntityId(selectedApplication.display_name),
+  };
 
   const [formData, setFormData] = useState<CreateApplicationModel>({
     endpoint: '',
@@ -241,18 +253,6 @@ export const ApplicationDialog = ({
         max_input_attachments: Number(event.target.value),
       });
     }
-  };
-
-  const validateUrl = (url: string) => {
-    const pattern = new RegExp(
-      '^(https?:\\/\\/)?' +
-        '(?:(?:[a-z\\d][a-z\\d-]*[a-z\\d])\\.)+[a-z]{2,}|' +
-        '((\\d{1,3}\\.){3}\\d{1,3})' +
-        '(\\:\\d+)?(\\/?[-a-z\\d%_.~+]*)*' +
-        '(\\?[;&a-z\\d%_.~+=-]*)?',
-    );
-
-    return pattern.test(url);
   };
 
   const handleUrlValidation = (url: string) => {
@@ -756,17 +756,9 @@ export const ApplicationDialog = ({
           }
         }}
       />
-      {selectedApplication && (
+      {entity && (
         <PublishModal
-          entity={{
-            name: selectedApplication.display_name,
-            id: ApiUtils.decodeApiUrl(
-              selectedApplication.name ||
-                (selectedApplication as unknown as { application: string })
-                  .application,
-            ),
-            folderId: getFolderIdFromEntityId(selectedApplication.display_name),
-          }}
+          entity={entity}
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}

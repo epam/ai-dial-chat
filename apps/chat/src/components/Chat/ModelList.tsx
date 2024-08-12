@@ -19,7 +19,7 @@ import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntity } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
@@ -316,7 +316,7 @@ export const ModelList = ({
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const [entity, setEntity] = useState<any>(null);
+  const [entity, setEntity] = useState<ShareEntity | null>(null);
 
   useEffect(() => {
     if (currentEntityName && currentEntityId) {
@@ -410,7 +410,7 @@ export const ModelList = ({
           isEdit
         />
       )}
-      {currentEntityName && currentEntityId && (
+      {currentEntityName && currentEntityId && entity && (
         <PublishModal
           entity={entity}
           type={SharingType.Application}
