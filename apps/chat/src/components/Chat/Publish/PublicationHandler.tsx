@@ -174,17 +174,17 @@ export function PublicationHandler({ publication }: Props) {
       mappedNotExistEntitiesIds.includes(id),
     );
 
-    dispatch(
-      PublicationActions.setPublicationsToReview({
-        items: isSomeResourceNotExist
-          ? []
-          : resourcesToReview.map((r) => ({
-              reviewed: false,
-              reviewUrl: r.reviewUrl,
-              publicationUrl: publication.url,
-            })),
-      }),
-    );
+    if (!isSomeResourceNotExist) {
+      dispatch(
+        PublicationActions.setPublicationsToReview({
+          items: resourcesToReview.map((r) => ({
+            reviewed: false,
+            reviewUrl: r.reviewUrl,
+            publicationUrl: publication.url,
+          })),
+        }),
+      );
+    }
   }, [
     dispatch,
     mappedNotExistEntitiesIds,

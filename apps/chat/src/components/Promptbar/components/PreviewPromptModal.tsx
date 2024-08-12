@@ -35,15 +35,11 @@ export const PreviewPromptModal = ({
   onDuplicate,
   onDelete,
   onClose,
-  isPublicationPreview,
   prompt,
 }: Props) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
-  const selectedPublication = useAppSelector(
-    PublicationSelectors.selectSelectedPublication,
-  );
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
   );
@@ -112,30 +108,22 @@ export const PreviewPromptModal = ({
             )}
           </ul>
           <div className="flex items-center justify-between px-3 md:p-6">
-            {!isPublicationPreview || !resourceToReview ? (
+            {!resourceToReview ? (
               <>
                 <div className="flex h-[34px] gap-2">
                   {exportButton}
-                  {(!selectedPublication ||
-                    (selectedPublication &&
-                      selectedPublication.resources.some((r) =>
-                        prompt.id.startsWith(
-                          r.sourceUrl ? r.sourceUrl : r.targetUrl,
-                        ),
-                      ))) && (
-                    <Tooltip
-                      placement="top"
-                      isTriggerClickable
-                      tooltip={t('Delete prompt')}
+                  <Tooltip
+                    placement="top"
+                    isTriggerClickable
+                    tooltip={t('Delete prompt')}
+                  >
+                    <button
+                      onClick={onDelete}
+                      className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                     >
-                      <button
-                        onClick={onDelete}
-                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      >
-                        <IconTrashX size={24} strokeWidth="1.5" />
-                      </button>
-                    </Tooltip>
-                  )}
+                      <IconTrashX size={24} strokeWidth="1.5" />
+                    </button>
+                  </Tooltip>
                 </div>
                 <button
                   className="button button-secondary"

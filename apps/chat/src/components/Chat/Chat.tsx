@@ -94,6 +94,9 @@ export const ChatView = memo(() => {
   const isReplay = useAppSelector(
     ConversationsSelectors.selectIsReplaySelectedConversations,
   );
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
   const isReplayPaused = useAppSelector(
     ConversationsSelectors.selectIsReplayPaused,
   );
@@ -287,8 +290,6 @@ export const ChatView = memo(() => {
   }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
   useEffect(() => {
-    setIsShowChatSettings(false);
-
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
       const firstConversationMessages =
@@ -414,6 +415,7 @@ export const ChatView = memo(() => {
 
   useEffect(() => {
     if (!selectedConversationsIds.some((id) => prevSelectedIds.includes(id))) {
+      setIsShowChatSettings(false);
       setAutoScroll();
       chatContainerRef.current?.scrollTo({
         top: chatContainerRef.current.scrollHeight,
@@ -852,14 +854,16 @@ export const ChatView = memo(() => {
                     />
                   ) : (
                     <>
-                      {isExternal && selectedConversations.length === 1 && (
-                        <PublicationControls
-                          showScrollDownButton={showScrollDownButton}
-                          entity={selectedConversations[0]}
-                          onScrollDownClick={handleScrollDown}
-                          controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
-                        />
-                      )}
+                      {isExternal &&
+                        selectedConversations.length === 1 &&
+                        selectedPublication?.url && (
+                          <PublicationControls
+                            showScrollDownButton={showScrollDownButton}
+                            entity={selectedConversations[0]}
+                            onScrollDownClick={handleScrollDown}
+                            controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
+                          />
+                        )}
 
                       {!isPlayback && (
                         <ChatInput
