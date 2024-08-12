@@ -16,6 +16,7 @@ export const SideBarSelectors = {
   search: '[data-qa="search"]',
   folderSeparator: '.h-1',
   pinnedEntities: '[data-qa^="pinned"]',
+  sharedWithMeContainer: '[data-qa="shared-with-me-container"]',
 };
 
 export const ChatBarSelectors = {
@@ -32,7 +33,7 @@ export const ChatBarSelectors = {
   pinnedChats: () =>
     `${ChatBarSelectors.chatFolders} > [data-qa="pinned-chats-container"]`,
   sharedWithMeChats: () =>
-    `${ChatBarSelectors.chatFolders} > [data-qa="shared-with-me-container"]`,
+    `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
 };
 
 export const PromptBarSelectors = {
@@ -45,5 +46,7 @@ export const PromptBarSelectors = {
   deletePrompts: '[data-qa="delete-prompts"]',
   pinnedChats: () =>
     `${PromptBarSelectors.promptFolders} > [data-qa="pinned-prompts-container"]`,
+  sharedWithMePrompts: () =>
+    `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
 };
