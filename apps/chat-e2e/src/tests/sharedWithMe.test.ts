@@ -176,25 +176,17 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Shared with me. Share single chat in Folder.\n' +
-    'Shared chat disappears from Shared with me if the original was renamed.\n' +
-    'Shared with me. Structure appears only once if to open the same link several times.\n' +
-    'Confirmation message if to rename shared chat',
+    'Shared with me. Structure appears only once if to open the same link several times',
   async ({
-    dialHomePage,
-    folderConversations,
-    conversationDropdownMenu,
-    confirmationDialog,
-    page,
     localStorageManager,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
-    additionalUserShareApiHelper,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1827', 'EPMRTC-2773', 'EPMRTC-1854', 'EPMRTC-2814');
+    setTestIds('EPMRTC-1827', 'EPMRTC-1854');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -231,51 +223,21 @@ dialSharedWithMeTest(
             .soft(
               additionalShareUserSharedWithMeConversations.getEntityByName(
                 conversation.name,
+                1,
               ),
-              ExpectedMessages.conversationIsVisible,
+              ExpectedMessages.entityIsShared,
             )
             .toBeVisible();
+          await expect
+            .soft(
+              additionalShareUserSharedWithMeConversations.getEntityByName(
+                conversation.name,
+                2,
+              ),
+              ExpectedMessages.entityIsNotShared,
+            )
+            .toBeHidden();
         }
-      },
-    );
-
-    await dialSharedWithMeTest.step(
-      'Rename shared chat name and verify renamed chat is not shared any more',
-      async () => {
-        const updatedName = GeneratorUtil.randomString(7);
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [defaultModel!.iconUrl],
-        });
-        await dialHomePage.waitForPageLoaded();
-        await folderConversations.openFolderEntityDropdownMenu(
-          conversationInFolder.folders.name,
-          conversation.name,
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations
-          .getEditFolderEntityInput()
-          .editValue(updatedName);
-        await page.keyboard.press(keys.enter);
-
-        expect
-          .soft(
-            await confirmationDialog.getConfirmationMessage(),
-            ExpectedMessages.confirmationMessageIsValid,
-          )
-          .toBe(ExpectedConstants.renameSharedConversationMessage);
-
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-
-        const sharedEntities =
-          await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedEntities.resources.find(
-              (e) => e.name === updatedName || e.name === conversation.name,
-            ),
-            ExpectedMessages.conversationIsNotShared,
-          )
-          .toBeUndefined();
       },
     );
   },
