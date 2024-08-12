@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import {
   ApplicationDetailsResponse,
@@ -7,6 +7,9 @@ import {
   ApplicationMoveModel,
   CreateApplicationModel,
 } from '@/src/types/applications';
+import { EntityType } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
@@ -97,10 +100,24 @@ export class ApplicationService {
     );
   }
 
-  public static get(appID: string): Observable<ApplicationDetailsResponse> {
-    const oneData = ApiUtils.request(constructPath('api', appID), {
-      method: 'GET',
-    });
-    return oneData;
+  public static get(
+    appID: string,
+  ): Observable<DialAIEntityModel & { completionUrl: string }> {
+    return ApiUtils.request(constructPath('api', appID), {
+      method: HTTPMethod.GET,
+    }).pipe(
+      map((application: ApplicationDetailsResponse) => ({
+        ...application,
+        isDefault: false,
+        type: EntityType.Application,
+        id: application.name,
+        inputAttachmentTypes: application.input_attachment_types,
+        iconUrl: application.icon_url,
+        maxInputAttachments: application.max_input_attachments,
+        version: application.display_version,
+        name: application.display_name,
+        completionUrl: application.endpoint,
+      })),
+    );
   }
 }
