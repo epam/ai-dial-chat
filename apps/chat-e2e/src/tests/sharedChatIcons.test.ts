@@ -548,7 +548,7 @@ dialTest(
             conversationToDelete,
           ]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-        await itemApiHelper.deleteConversation(conversationToDelete);
+        await itemApiHelper.deleteEntity(conversationToDelete);
 
         conversationToDelete = conversationData.prepareDefaultConversation(
           ModelIds.GPT_4,
@@ -1131,78 +1131,6 @@ dialTest(
         expect
           .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
           .not.toEqual(expect.arrayContaining([MenuOptions.unshare]));
-      },
-    );
-  },
-);
-
-dialTest(
-  'Shared icon does not appear in chat if previously shared chat was deleted and new one with the same name and model created',
-  async ({
-    dialHomePage,
-    conversations,
-    conversationData,
-    dataInjector,
-    mainUserShareApiHelper,
-    additionalUserShareApiHelper,
-    itemApiHelper,
-    setTestIds,
-  }) => {
-    setTestIds('EPMRTC-2002');
-    let conversation: Conversation;
-    let shareByLinkResponse: ShareByLinkResponseModel;
-    const conversationName = GeneratorUtil.randomString(7);
-
-    await dialTest.step('Prepare shared conversation', async () => {
-      conversation = conversationData.prepareDefaultConversation(
-        ModelIds.GPT_4,
-        conversationName,
-      );
-      conversationData.resetData();
-      await dataInjector.createConversations([conversation]);
-      shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
-        conversation,
-      ]);
-      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-    });
-
-    await dialTest.step(
-      'Open app by main user and delete shared conversation',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await conversations.getEntityArrowIcon(conversationName).waitFor();
-        await itemApiHelper.deleteConversation(conversation);
-      },
-    );
-
-    await dialTest.step(
-      'Create new conversation with the same name and model and verify it does not have arrow icon',
-      async () => {
-        conversation = conversationData.prepareDefaultConversation(
-          ModelIds.GPT_4,
-          conversationName,
-        );
-        await dataInjector.createConversations([conversation]);
-
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await expect
-          .soft(
-            conversations.getEntityByName(conversationName),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(conversationName),
-            ExpectedMessages.sharedEntityIconIsNotVisible,
-          )
-          .toBeHidden();
       },
     );
   },

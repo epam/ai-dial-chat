@@ -77,9 +77,10 @@ export class PromptModalDialog extends BaseElement {
   ) {
     await this.fillPromptDetails(name, description, value);
     if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
+      const respPromise = this.page.waitForResponse((resp) => {
+        const method = resp.request().method();
+        return method === 'POST' || method === 'PUT';
+      });
       await method();
       return respPromise;
     }

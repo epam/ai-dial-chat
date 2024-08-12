@@ -127,4 +127,29 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
           .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
           .toBeHidden();
   }
+
+  public async assertEntityArrowIconColor(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const arrowIconColor = await this.sideBarEntities.getEntityArrowIconColor(
+      entity.name,
+      entity.index,
+    );
+    expect
+      .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
+      .toBe(expectedColor);
+  }
+
+  public async assertEntityArrowIconsCount(
+    entity: TreeEntity,
+    expectedCount: number,
+  ) {
+    const arrowIconsCount = await this.sideBarEntities
+      .getEntityArrowIcon(entity.name, entity.index)
+      .count();
+    expect
+      .soft(arrowIconsCount, ExpectedMessages.entitiesIconsCountIsValid)
+      .toBe(expectedCount);
+  }
 }
