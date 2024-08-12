@@ -165,10 +165,10 @@ export function PublicationHandler({ publication }: Props) {
   useEffect(() => {
     // we do not need to review files
     const resourcesToReview = publication.resources.filter(
-      (resourcesToReview) => !isFileId(resourcesToReview.targetUrl),
+      (resource) => !isFileId(resource.targetUrl),
     );
     const resourcesToReviewIds = resourcesToReview.map(
-      (resourceToReview) => resourceToReview.reviewUrl,
+      (resource) => resource.reviewUrl,
     );
     const isSomeResourceNotExist = resourcesToReviewIds.some((id) =>
       mappedNotExistEntitiesIds.includes(id),
