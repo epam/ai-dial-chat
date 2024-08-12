@@ -63,7 +63,7 @@ export interface DialAIEntity {
     tokensPerMessage?: number;
   };
   isDefault?: boolean;
-  reference: string;
+  reference?: string;
 }
 
 export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
