@@ -6,6 +6,10 @@ import {
   CreateApplicationModel,
 } from '@/src/types/applications';
 
+import * as ApplicationSelectors from './application.selectors';
+
+export { ApplicationSelectors };
+
 export interface ApplicationState {
   loading: boolean;
   error: boolean;

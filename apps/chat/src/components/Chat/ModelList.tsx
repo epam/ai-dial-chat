@@ -26,7 +26,7 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ApplicationSelectors } from '@/src/store/application/application.selectors';
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -126,7 +126,7 @@ const ModelGroup = ({
           e.stopPropagation();
           dispatch(ApplicationActions.get(applicationId));
           openApplicationModal && openApplicationModal();
-          setCurrentEntityReference(currentEntity?.reference);
+          setCurrentEntityReference(currentEntity?.reference || '');
         },
       },
       {
@@ -311,7 +311,7 @@ export const ModelList = ({
   const [isPublishing, setIsPublishing] = useState<boolean>(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const applicationDetail = useAppSelector(
-    ApplicationSelectors.applicationDetail,
+    ApplicationSelectors.selectApplicationDetail,
   );
 
   const [entity, setEntity] = useState<any>(null);
