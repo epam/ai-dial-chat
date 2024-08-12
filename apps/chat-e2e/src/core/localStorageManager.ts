@@ -36,6 +36,10 @@ export class LocalStorageManager {
     window.localStorage.setItem('recentModelsIds', modelIds);
   };
 
+  setRecentAddonsIdsKey = () => (addonIds: string) => {
+    window.localStorage.setItem('recentAddonsIds', addonIds);
+  };
+
   setChatbarWidthKey = () => (width: string) => {
     window.localStorage.setItem('chatbarWidth', width);
   };
@@ -111,6 +115,13 @@ export class LocalStorageManager {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
       JSON.stringify(models.map((m) => m.id)),
+    );
+  }
+
+  async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
+    await this.page.addInitScript(
+      this.setRecentAddonsIdsKey(),
+      JSON.stringify(addons.map((a) => a.id)),
     );
   }
 
