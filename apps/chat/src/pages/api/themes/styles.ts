@@ -4,6 +4,7 @@ import { isAbsoluteUrl } from '@/src/utils/app/file';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
+import { HTTPMethod } from '@/src/types/http';
 import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -99,7 +100,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const response = await fetch(
     `${process.env.THEMES_CONFIG_HOST}/config.json`,
     {
-      method: 'GET',
+      method: HTTPMethod.GET,
       headers: {
         'Content-Type': 'application/json',
       },

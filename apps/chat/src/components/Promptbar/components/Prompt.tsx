@@ -29,7 +29,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { FeatureType } from '@/src/types/common';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { PublishActions } from '@/src/types/publication';
@@ -42,7 +42,10 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -62,7 +65,7 @@ import { PreviewPromptModal } from './PreviewPromptModal';
 interface Props {
   item: PromptInfo;
   level?: number;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
 }
 
 export const PromptComponent = ({
@@ -84,11 +87,17 @@ export const PromptComponent = ({
   );
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
-  const isApproveRequiredResource =
-    !!additionalItemData?.isApproveRequiredResource;
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
+  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
+  const isPartOfSelectedPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
   const isSelected =
     selectedPromptId === prompt.id &&
-    isApproveRequiredResource === isSelectedPromptApproveRequiredResource;
+    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
+    isPartOfSelectedPublication;
 
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
@@ -210,10 +219,20 @@ export const PromptComponent = ({
           isApproveRequiredResource,
         }),
       );
+      dispatch(
+        PublicationActions.selectPublication(
+          additionalItemData?.publicationUrl ?? null,
+        ),
+      );
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
-    [dispatch, isApproveRequiredResource, prompt.id],
+    [
+      additionalItemData?.publicationUrl,
+      dispatch,
+      isApproveRequiredResource,
+      prompt.id,
+    ],
   );
 
   const handleExportPrompt = useCallback(
@@ -419,7 +438,7 @@ export const PromptComponent = ({
                 'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
                 (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
                   'text-secondary',
-                !!additionalItemData?.isApproveRequiredResource &&
+                !!additionalItemData?.publicationUrl &&
                   prompt.publicationInfo?.action === PublishActions.DELETE &&
                   'text-error',
               )}
@@ -453,7 +472,7 @@ export const PromptComponent = ({
               onUnshare={handleOpenUnsharing}
               onPublish={handleOpenPublishing}
               onUnpublish={
-                additionalItemData?.isApproveRequiredResource
+                additionalItemData?.publicationUrl
                   ? undefined
                   : handleOpenUnpublishing
               }
