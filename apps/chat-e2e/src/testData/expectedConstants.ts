@@ -269,6 +269,7 @@ export const Attachment = {
   restrictedEqualCharFilename: 'restricted=char.jpg',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
+  pdfName: 'pdf_attachment.pdf',
 };
 
 export enum Side {
