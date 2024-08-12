@@ -532,8 +532,6 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-914');
-    let geminiProVisionConversation: Conversation;
-    let gptProVisionConversation: Conversation;
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     let exportedData: UploadDownloadData;
@@ -545,25 +543,19 @@ dialTest(
           Attachment.sunImageName,
         );
         gptProVisionImageUrl = await fileApiHelper.putFile(Attachment.pdfName);
-
-        geminiProVisionConversation =
-          conversationData.prepareConversationWithAttachmentsInRequest(
-            ModelIds.GEMINI_PRO_VISION,
-            true,
-            geminiProVisionImageUrl,
-          );
-        conversationData.resetData();
-        gptProVisionConversation =
-          conversationData.prepareConversationWithAttachmentsInRequest(
-            ModelIds.GPT_4_VISION_PREVIEW,
-            true,
-            gptProVisionImageUrl,
-          );
-        conversationData.resetData();
-        historyConversation = conversationData.prepareHistoryConversation(
-          geminiProVisionConversation,
-          gptProVisionConversation,
-        );
+        historyConversation =
+          conversationData.prepareHistoryConversationWithAttachmentsInRequest({
+            1: {
+              model: ModelIds.GEMINI_PRO_VISION,
+              hasRequest: true,
+              attachmentUrl: [geminiProVisionImageUrl],
+            },
+            2: {
+              model: ModelIds.GPT_4_VISION_PREVIEW,
+              hasRequest: true,
+              attachmentUrl: [gptProVisionImageUrl],
+            },
+          });
         replayConversation =
           conversationData.prepareDefaultReplayConversation(
             historyConversation,
@@ -632,23 +624,26 @@ dialTest(
     await dialTest.step(
       'Verify request attachments can be opened and downloaded',
       async () => {
+        const geminiProVisionMessageIndex = 1;
+        const gptProVisionMessageIndex = 3;
+
         geminiProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.sunImageName}`;
         await chatMessages.expandChatMessageAttachment(
-          1,
+          geminiProVisionMessageIndex,
           Attachment.sunImageName,
         );
         await chatMessagesAssertion.assertMessageAttachmentUrl(
-          1,
+          geminiProVisionMessageIndex,
           geminiProVisionAttachmentPath,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
-          1,
+          geminiProVisionMessageIndex,
           geminiProVisionAttachmentPath,
         );
 
         gptProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.pdfName}`;
         await chatMessagesAssertion.assertMessageDownloadUrl(
-          3,
+          gptProVisionMessageIndex,
           gptProVisionAttachmentPath,
         );
       },
@@ -676,8 +671,6 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3942');
-    let dalleConversation: Conversation;
-    let stableDiffusionConversation: Conversation;
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     let exportedData: UploadDownloadData;
@@ -693,25 +686,14 @@ dialTest(
           Attachment.cloudImageName,
           API.modelFilePath(ModelIds.STABLE_DIFFUSION),
         );
-
-        dalleConversation =
-          conversationData.prepareConversationWithAttachmentInResponse(
-            dalleImageUrl,
-            ModelIds.DALLE,
-          );
-        conversationData.resetData();
-        stableDiffusionConversation =
-          conversationData.prepareConversationWithAttachmentInResponse(
-            stableDiffusionImageUrl,
-            ModelIds.STABLE_DIFFUSION,
-          );
-        conversationData.resetData();
-
-        historyConversation = conversationData.prepareHistoryConversation(
-          dalleConversation,
-          stableDiffusionConversation,
-        );
-
+        historyConversation =
+          conversationData.prepareHistoryConversationWithAttachmentsInResponse({
+            1: { attachmentUrl: dalleImageUrl, model: ModelIds.DALLE },
+            2: {
+              attachmentUrl: stableDiffusionImageUrl,
+              model: ModelIds.STABLE_DIFFUSION,
+            },
+          });
         replayConversation =
           conversationData.preparePartiallyReplayedConversation(
             historyConversation,
@@ -760,17 +742,18 @@ dialTest(
     await dialTest.step(
       'Verify first response attachment is visible and can be downloaded',
       async () => {
+        const responseMessageIndex = 2;
         dalleAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.DALLE)}/${Attachment.sunImageName}`;
         await chatMessages.expandChatMessageAttachment(
-          2,
+          responseMessageIndex,
           Attachment.sunImageName,
         );
         await chatMessagesAssertion.assertMessageAttachmentUrl(
-          2,
+          responseMessageIndex,
           dalleAttachmentPath,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
-          2,
+          responseMessageIndex,
           dalleAttachmentPath,
         );
       },

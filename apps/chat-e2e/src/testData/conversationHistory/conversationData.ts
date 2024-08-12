@@ -178,10 +178,10 @@ export class ConversationData extends FolderData {
 
   public prepareDefaultReplayConversation(
     conversation: Conversation,
-    replayIndex?: number,
+    activeReplayIndex?: number,
   ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    return this.fillReplayData(conversation, userMessages!, replayIndex);
+    return this.fillReplayData(conversation, userMessages!, activeReplayIndex);
   }
 
   public preparePartiallyReplayedStagedConversation(
@@ -208,25 +208,30 @@ export class ConversationData extends FolderData {
 
   public preparePartiallyReplayedConversation(
     conversation: Conversation,
-    replayIndex?: number,
+    activeReplayIndex?: number,
     updatedModel?: DialAIEntityModel,
   ) {
     const defaultReplayConversation = this.prepareDefaultReplayConversation(
       conversation,
-      replayIndex,
+      activeReplayIndex,
     );
-    const conversationCopy = JSON.parse(
-      JSON.stringify(conversation),
-    ) as Conversation;
-    const partialAssistantMessage = replayIndex
-      ? conversationCopy.messages[replayIndex + 2]
-      : conversationCopy.messages.findLast((m) => m.role === 'assistant');
+    const conversationMessagesCopy = JSON.parse(
+      JSON.stringify(conversation.messages),
+    ) as Message[];
+    //activeReplayIndex=0 corresponds to the 1st request/response pair, activeReplayIndex=1 corresponds to the 2nd one, and so on. Therefore, in case of partial response the index of assistant message is calculated as [activeReplayIndex + 2]
+    //if activeReplayIndex is not defined, the latest assistant response is considered as partial
+    const partialAssistantMessage = activeReplayIndex
+      ? conversationMessagesCopy[activeReplayIndex + 2]
+      : conversationMessagesCopy.findLast((m) => m.role === 'assistant');
+    //set partial assistant response
     partialAssistantMessage!.content = 'partial response';
     partialAssistantMessage!.custom_content = {};
-    defaultReplayConversation.messages = conversationCopy.messages.slice(
+    //set partially replayed messages
+    defaultReplayConversation.messages = conversationMessagesCopy.slice(
       0,
-      conversationCopy.messages.indexOf(partialAssistantMessage!) + 1,
+      conversationMessagesCopy.indexOf(partialAssistantMessage!) + 1,
     );
+    //update conversation model if replay with a new one
     if (updatedModel) {
       defaultReplayConversation.model.id = updatedModel.id;
       defaultReplayConversation.messages.forEach(
@@ -467,6 +472,30 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
+  public prepareHistoryConversationWithAttachmentsInRequest(
+    conversations: Record<
+      number,
+      {
+        model: DialAIEntityModel | string;
+        hasRequest?: boolean;
+        attachmentUrl: string[];
+      }
+    >,
+  ) {
+    const historyConversations: Conversation[] = [];
+    for (const index in conversations) {
+      const conversationData = conversations[index];
+      const conversation = this.prepareConversationWithAttachmentsInRequest(
+        conversationData.model,
+        conversationData.hasRequest,
+        ...conversationData.attachmentUrl,
+      );
+      historyConversations.push(conversation);
+      this.resetData();
+    }
+    return this.prepareHistoryConversation(...historyConversations);
+  }
+
   public prepareConversationWithAttachmentsInRequest(
     model: DialAIEntityModel | string,
     hasRequest?: boolean,
@@ -503,6 +532,28 @@ export class ConversationData extends FolderData {
       .withMessage(assistantMessage)
       .withModel(modelToUse)
       .build();
+  }
+
+  public prepareHistoryConversationWithAttachmentsInResponse(
+    conversations: Record<
+      number,
+      {
+        model: DialAIEntityModel | string;
+        attachmentUrl: string;
+      }
+    >,
+  ) {
+    const historyConversations: Conversation[] = [];
+    for (const index in conversations) {
+      const conversationData = conversations[index];
+      const conversation = this.prepareConversationWithAttachmentInResponse(
+        conversationData.attachmentUrl,
+        conversationData.model,
+      );
+      historyConversations.push(conversation);
+      this.resetData();
+    }
+    return this.prepareHistoryConversation(...historyConversations);
   }
 
   public prepareConversationWithAttachmentInResponse(
@@ -678,8 +729,17 @@ export class ConversationData extends FolderData {
   private fillReplayData(
     conversation: Conversation,
     userMessages: Message[],
-    replayIndex?: number,
+    activeReplayIndex?: number,
   ): Conversation {
+    if (
+      activeReplayIndex &&
+      (activeReplayIndex < 0 ||
+        activeReplayIndex > conversation.messages.length / 2 - 1)
+    ) {
+      throw new Error(
+        'Invalid activeReplayIndex error: the value should range from 0 to one less than the total number of request/response pairs',
+      );
+    }
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
@@ -689,7 +749,7 @@ export class ConversationData extends FolderData {
     }
     replayConversation.replay.isReplay = true;
     replayConversation.replay.activeReplayIndex =
-      replayIndex ?? userMessages.length - 1;
+      activeReplayIndex ?? userMessages.length - 1;
     if (!replayConversation.replay.replayUserMessagesStack) {
       replayConversation.replay.replayUserMessagesStack = [];
     }
