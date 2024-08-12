@@ -76,4 +76,23 @@ export class ApiAssertion {
       .soft(request.selectedAddons, ExpectedMessages.chatRequestAddonsAreValid)
       .toEqual(expectedAddons);
   }
+
+  public async verifyRequestAttachments(
+    request: ChatBody,
+    ...expectedAttachmentUrls: string[]
+  ) {
+    for (const attachmentUrl of expectedAttachmentUrls) {
+      const requestAttachmentUrl = request.messages.filter(
+        (m) =>
+          m.role === 'user' &&
+          m.custom_content?.attachments?.find((a) => a.url === attachmentUrl),
+      );
+      expect
+        .soft(
+          requestAttachmentUrl,
+          ExpectedMessages.chatRequestAttachmentIsValid,
+        )
+        .toBeDefined();
+    }
+  }
 }

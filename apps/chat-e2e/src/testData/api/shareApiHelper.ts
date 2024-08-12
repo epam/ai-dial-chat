@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { BackendChatEntity, BackendResourceType } from '@/chat/types/common';
+import { Prompt } from '@/chat/types/prompt';
 import {
   ShareAcceptRequestModel,
   ShareByLinkResponseModel,
@@ -15,7 +16,7 @@ import { expect } from '@playwright/test';
 
 export class ShareApiHelper extends BaseApiHelper {
   public async shareEntityByLink(
-    entities: Conversation[],
+    entities: Conversation[] | Prompt[],
     isFolder = false,
     folderToShare?: string,
   ) {
@@ -36,20 +37,23 @@ export class ShareApiHelper extends BaseApiHelper {
       if (!resources.find((r) => r.url === url)) {
         resources.push({ url: url });
       }
-      entity.messages.map((m) =>
-        m.custom_content?.attachments?.forEach((a) => {
-          if (a.reference_url === undefined) {
-            resources.push({ url: a.url! });
-          }
-        }),
-      );
-      entity.playback?.messagesStack.map((m) =>
-        m.custom_content?.attachments?.forEach((a) => {
-          if (a.reference_url === undefined) {
-            resources.push({ url: a.url! });
-          }
-        }),
-      );
+
+      if ('messages' in entity) {
+        entity.messages.map((m) =>
+          m.custom_content?.attachments?.forEach((a) => {
+            if (a.reference_url === undefined) {
+              resources.push({ url: a.url! });
+            }
+          }),
+        );
+        entity.playback?.messagesStack.map((m) =>
+          m.custom_content?.attachments?.forEach((a) => {
+            if (a.reference_url === undefined) {
+              resources.push({ url: a.url! });
+            }
+          }),
+        );
+      }
     }
 
     for (const r of resources) {
@@ -98,6 +102,10 @@ export class ShareApiHelper extends BaseApiHelper {
 
   public async listSharedWithMeConversations() {
     return this.listSharedWithMeEntities(BackendResourceType.CONVERSATION);
+  }
+
+  public async listSharedWithMePrompts() {
+    return this.listSharedWithMeEntities(BackendResourceType.PROMPT);
   }
 
   public async listSharedWithMeEntities(resourceType: BackendResourceType) {

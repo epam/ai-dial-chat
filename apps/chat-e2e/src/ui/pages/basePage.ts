@@ -197,6 +197,11 @@ export class BasePage {
     await fileChooser.setFiles(path.join(directory, uploadData.path));
   }
 
+  public async copyWithKeyboard() {
+    await this.page.keyboard.press(keys.ctrlPlusA);
+    await this.page.keyboard.press(keys.ctrlPlusC);
+  }
+
   public async pasteFromClipboard() {
     await this.page.keyboard.press(keys.ctrlPlusV);
   }
