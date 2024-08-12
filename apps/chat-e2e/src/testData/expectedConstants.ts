@@ -55,7 +55,11 @@ export const ExpectedConstants = {
   deleteSharedPromptMessage:
     'Are you sure that you want to delete a prompt?\n' +
     'Deleting will stop sharing and other users will no longer see this prompt.',
+  sharedConversationModelChangeDialogTitle: 'Confirm model changing',
+  renameSharedConversationDialogTitle: 'Confirm renaming conversation',
   renameSharedPromptDialogTitle: 'Confirm renaming prompt',
+  sharedConversationModelChangeMessage:
+    'Model changing will stop sharing and other users will no longer see this conversation.',
   renameSharedPromptMessage:
     'Renaming will stop sharing and other users will no longer see this prompt.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
