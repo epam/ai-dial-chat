@@ -156,6 +156,7 @@ export const ExpectedConstants = {
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
   deleteSelectedPromptsTooltip: 'Delete selected prompts',
   promptLimitExceededTitle: 'Prompt limit exceeded',
+  tooManyNestedFolders: 'It\'s not allowed to have more nested folders',
   promptLimitExceededMessage: (
     maxPromptTokens: number,
     enteredTokens: number,

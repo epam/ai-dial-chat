@@ -27,6 +27,7 @@ export enum ExpectedMessages {
   folderNotDeleted = 'Folder is not deleted',
   folderConversationDeleted = 'Conversation inside folder is deleted',
   foldersCountIsValid = 'Folders count is valid',
+  tooManyNestedFolders = 'It\'s not allowed to have more nested folders',
   defaultTalkToIsValid = 'Default Talk to is GPT-3.5',
   talkToEntityIsSelected = 'Talk to entity is selected',
   defaultAssistantModelIsValid = 'Default Assistant model to is GPT-4',
