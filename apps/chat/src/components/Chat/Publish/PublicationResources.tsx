@@ -318,68 +318,14 @@ export const FilePublicationResources = ({
 };
 
 export const ApplicationPublicationResources = ({
-  // resources,
-  // readonly,
-  // showTooltip,
   isOpen = true,
-  // additionalItemData,
 }: PublicationResources) => {
   const publishRequestModels = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
   );
 
-  // const openedFoldersIds = useAppSelector((state) =>
-  //   UISelectors.selectOpenedFoldersIds(state, FeatureType.Application),
-  // );
-  // const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  // const conversations = useAppSelector(
-  //   ConversationsSelectors.selectConversations,
-  // );
-  // const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
-  // const highlightedFolders = useAppSelector(
-  //   ConversationsSelectors.selectSelectedConversationsFoldersIds,
-  // );
-
   return (
     <div className={classNames(!isOpen && 'hidden')}>
-      {/* {rootFolders.map((f) => (
-        <Folder
-          readonly
-          key={f.id}
-          noCaretIcon={!!readonly}
-          level={readonly ? 0 : 1}
-          currentFolder={f}
-          allFolders={allFolders.filter((f) =>
-            folderItemsToDisplay.some((item) => item.id.startsWith(`${f.id}/`)),
-          )}
-          searchTerm={readonly ? '' : searchTerm}
-          openedFoldersIds={
-            readonly ? allFolders.map((f) => f.id) : openedFoldersIds
-          }
-          allItems={folderItemsToDisplay}
-          itemComponent={readonly ? ConversationRow : ConversationComponent}
-          onClickFolder={(folderId: string) => {
-            if (readonly) return;
-            dispatch(ConversationsActions.toggleFolder({ id: folderId }));
-
-            if (f.status !== UploadStatus.LOADED) {
-              dispatch(
-                ConversationsActions.uploadConversationsWithFoldersRecursive({
-                  path: folderId,
-                  noLoader: true,
-                }),
-              );
-            }
-          }}
-          featureType={FeatureType.Application}
-          highlightedFolders={readonly ? undefined : highlightedFolders}
-          folderClassName={classNames(readonly && 'h-[38px]')}
-          itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
-          additionalItemData={additionalItemData}
-          showTooltip={showTooltip}
-          isSidePanelFolder={!readonly}
-        />
-      ))} */}
       {publishRequestModels.map((application) => (
         <ApplicationRow item={application} key={application.id} />
       ))}

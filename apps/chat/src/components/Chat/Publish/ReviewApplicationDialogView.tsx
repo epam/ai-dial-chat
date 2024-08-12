@@ -66,13 +66,13 @@ export function ReviewApplicationDialogView() {
                 <pre className="flex max-w-[414px] flex-wrap leading-5 text-primary">
                   <br />
                   {Object.keys(
-                    (application?.features as { [key: string]: any }) || {},
+                    (application?.features as Record<string, any>) || {},
                   ).map((key) => (
                     <>
                       <span>&quot;{key}&quot;</span>{' '}
                       <span>
                         &quot;
-                        {(application?.features as { [key: string]: any })[key]}
+                        {(application?.features as Record<string, any>)[key]}
                         &quot;
                       </span>
                       <br />

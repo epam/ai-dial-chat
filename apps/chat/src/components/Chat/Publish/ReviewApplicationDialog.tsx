@@ -1,7 +1,4 @@
-import { useTranslation } from 'next-i18next';
-
 import { ModalState } from '@/src/types/modal';
-import { Translation } from '@/src/types/translation';
 
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
