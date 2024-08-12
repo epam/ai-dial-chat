@@ -13,7 +13,9 @@ import { Spinner } from '../../Common/Spinner';
 import { PublicationControls } from './PublicationChatControls';
 
 export function ReviewApplicationDialog() {
-  const application = useAppSelector(ApplicationSelectors.selectApplicationDetail);
+  const application = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
   const isLoading = useAppSelector(ApplicationSelectors.selectIsLoading);
   const dispatch = useAppDispatch();
 
