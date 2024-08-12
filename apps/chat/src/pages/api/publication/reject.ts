@@ -7,6 +7,7 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -28,7 +29,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/ops/publication/reject`,
       {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
         body: JSON.stringify(req.body),
       },

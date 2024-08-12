@@ -968,7 +968,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {canSelectFolders &&
                   ((!isExternal &&
                     !loadingFolderIds.includes(currentFolder.id)) ||
-                    !isSidePanelFolder) && (
+                    !isSidePanelFolder ||
+                    isSelectAlwaysVisible) && (
                     <div
                       className={classNames(
                         'relative mr-1 size-[18px] group-hover/folder-item:flex',

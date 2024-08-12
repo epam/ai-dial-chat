@@ -5,6 +5,7 @@ import { combineEpics } from 'redux-observable';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -19,7 +20,7 @@ const reportIssueEpic: AppEpic = (action$) =>
       const controller = new AbortController();
 
       return ApiUtils.request('api/report-issue', {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -61,7 +62,7 @@ const requestApiKeyEpic: AppEpic = (action$) =>
       const controller = new AbortController();
 
       return ApiUtils.request('api/request-api-key', {
-        method: 'POST',
+        method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },

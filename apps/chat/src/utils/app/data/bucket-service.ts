@@ -1,12 +1,14 @@
 import { Observable } from 'rxjs';
 
+import { HTTPMethod } from '@/src/types/http';
+
 import { ApiUtils } from '../../server/api';
 
 export class BucketService {
   private static bucket: string;
   public static requestBucket(): Observable<{ bucket: string }> {
     return ApiUtils.request('api/bucket', {
-      method: 'GET',
+      method: HTTPMethod.GET,
       headers: {
         'Content-Type': 'application/json',
       },
