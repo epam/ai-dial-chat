@@ -1,5 +1,7 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
+import { DialAIEntityModel } from './models';
+
 export interface ApplicationFeatures {
   rate_endpoint?: string;
   configuration_endpoint?: string;
@@ -92,3 +94,7 @@ export interface DeleteApplicationPayload {
 }
 
 export type DeleteApplicationAction = PayloadAction<DeleteApplicationPayload>;
+
+export interface ApplicationInfo extends DialAIEntityModel {
+  completionUrl: string;
+}

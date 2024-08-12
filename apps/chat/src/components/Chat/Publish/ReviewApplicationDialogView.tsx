@@ -1,0 +1,128 @@
+import { IconBulb } from '@tabler/icons-react';
+
+import { useTranslation } from 'next-i18next';
+
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { ApiUtils } from '@/src/utils/server/api';
+
+import { Translation } from '@/src/types/translation';
+
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
+import { PublicationControls } from './PublicationChatControls';
+
+export function ReviewApplicationDialogView() {
+  const { t } = useTranslation(Translation.Chat);
+  const application = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+  const entity = application && {
+    id: ApiUtils.decodeApiUrl(application.id),
+    name: application.name,
+    folderId: getFolderIdFromEntityId(application.id),
+  };
+
+  return (
+    <>
+      <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
+        <div className="flex justify-between">
+          <h2 className="text-base font-semibold">{t('Application')}</h2>
+        </div>
+        <div className="flex gap-4">
+          <span className="w-[122px] text-secondary">{t('Name:')}</span>
+          <span className="max-w-[414px] text-primary">
+            {application?.name}
+          </span>
+        </div>
+        <div className="flex gap-4">
+          <span className="w-[122px] text-secondary">{t('Version:')}</span>
+          <span className="max-w-[414px] text-primary">
+            {application?.version}
+          </span>
+        </div>
+        <div className="flex gap-4">
+          <span className="w-[122px] text-secondary">{t('Icon:')}</span>
+          <IconBulb size={18} className="text-secondary" />
+        </div>
+        {application?.description && (
+          <div className="flex gap-4">
+            <span className="w-[122px] text-secondary">
+              {t('Description:')}
+            </span>
+            <span className="max-w-[414px] text-primary">
+              {application?.description}
+            </span>
+          </div>
+        )}
+        {application?.features &&
+          Object.keys(application?.features).length !== 0 && (
+            <div className="flex gap-4">
+              <span className="w-[122px] text-secondary">
+                {t('Features data:')}
+              </span>
+              <div className="flex flex-col justify-start">
+                {'{'}
+                <pre className="flex max-w-[414px] flex-wrap leading-5 text-primary">
+                  <br />
+                  {Object.keys(
+                    (application?.features as { [key: string]: any }) || {},
+                  ).map((key) => (
+                    <>
+                      <span>&quot;{key}&quot;</span>{' '}
+                      <span>
+                        &quot;
+                        {(application?.features as { [key: string]: any })[key]}
+                        &quot;
+                      </span>
+                      <br />
+                    </>
+                  ))}
+                </pre>
+                {'}'}
+              </div>
+            </div>
+          )}
+        {application?.inputAttachmentTypes &&
+          application?.inputAttachmentTypes.length !== 0 && (
+            <div className="flex gap-4">
+              <span className="w-[122px] text-secondary">
+                {t('Attachment types:')}
+              </span>
+              <div className="flex max-w-[414px] flex-wrap text-primary">
+                {application?.inputAttachmentTypes.map((item, index) => (
+                  <span
+                    key={index}
+                    className="m-1 h-[31] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        {application?.maxInputAttachments !== undefined && (
+          <div className="flex gap-4">
+            <span className="w-[122px] text-secondary">
+              {t('Max. attachments number:')}
+            </span>
+            <span className="max-w-[414px] text-primary">
+              {application?.maxInputAttachments}
+            </span>
+          </div>
+        )}
+        <div className="flex gap-4">
+          <span className="w-[122px] text-secondary">
+            {t('Completion URL:')}
+          </span>
+          <span className="max-w-[414px] text-primary">
+            {application?.completionUrl}
+          </span>
+        </div>
+      </div>
+      <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 py-4 md:px-5">
+        {entity && <PublicationControls entity={entity} />}
+      </div>
+    </>
+  );
+}
