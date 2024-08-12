@@ -5,6 +5,7 @@ import {
   BackendResourceType,
   FeatureType,
 } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
 import {
   Publication,
   PublicationInfo,
@@ -28,14 +29,14 @@ export class PublicationService {
     publicationData: PublicationRequestModel,
   ): Observable<Publication> {
     return ApiUtils.request('api/publication/create', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify(publicationData),
     });
   }
 
   public static publicationList(): Observable<PublicationInfo[]> {
     return ApiUtils.request('api/publication/listing', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         url: 'publications/public/',
       }),
@@ -55,7 +56,7 @@ export class PublicationService {
 
   public static getPublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/details', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     }).pipe(
       map((publication: Publication) => {
@@ -128,21 +129,21 @@ export class PublicationService {
     resourceTypes: BackendResourceType[],
   ): Observable<PublishedByMeItem[]> {
     return ApiUtils.request('api/publication/resourceListing', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ resourceTypes }),
     });
   }
 
   public static approvePublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/approve', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
 
   public static rejectPublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/reject', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
@@ -151,7 +152,7 @@ export class PublicationService {
     path: string,
   ): Observable<Record<string, PublicationRule[]>> {
     return ApiUtils.request('api/publication/rulesList', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         url: `${ApiUtils.encodeApiUrl(
           path ? constructPath(PUBLIC_URL_PREFIX, path) : PUBLIC_URL_PREFIX,
