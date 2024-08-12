@@ -78,16 +78,9 @@ export const selectResourcesToReview = createSelector(
 );
 
 export const selectResourceToReviewByReviewUrl = createSelector(
-  [
-    selectResourcesToReview,
-    selectSelectedPublication,
-    (_state, id: string) => id,
-  ],
-  (resourcesToReview, selectedPublication, id) => {
-    return resourcesToReview.find(
-      (res) =>
-        res.reviewUrl === id && selectedPublication?.url === res.publicationUrl,
-    );
+  [selectResourcesToReview, (_state, id: string) => id],
+  (resourcesToReview, id) => {
+    return resourcesToReview.find((resource) => resource.reviewUrl === id);
   },
 );
 
